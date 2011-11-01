@@ -58,7 +58,7 @@ def reanimate_skeleton(skeleton_path, new_app_path, data=None, filter_ext=None,
     env_options.setdefault('autoescape', False)
     
     print 'Using skeleton:', skeleton_path
-    print '\n   %s/' % new_app_path
+    print '\n  %s/' % new_app_path
     
     jinja_env = jinja2.Environment(**env_options)
 
@@ -83,8 +83,11 @@ def reanimate_skeleton(skeleton_path, new_app_path, data=None, filter_ext=None,
                 content = tmpl.render(data).encode('utf-8')
             filename = re.sub(r'%PNAME%', pname, filename)
             
-            print COLOR_OKGREEN, '    create ', COLOR_END, \
-                os.path.join(ffolder, filename).lstrip('.').lstrip('/')
+            msg = ''.join([
+                COLOR_OKGREEN, '    create', COLOR_END, '  ',
+                os.path.join(ffolder, filename).lstrip('.').lstrip('/'),
+                ])
+            print msg
             
             final_path = make_dirs(new_app_path, ffolder, filename)
             f = open(final_path, 'wb')
