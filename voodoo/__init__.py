@@ -6,7 +6,6 @@
     Reanimates an application skeleton, just for you.
     
     ---------------------------------------
-    Coded by Juan-Pablo Scaletti <juanpablo@lucumalabs.com>
     Copyright © 2010-2011 by Lúcuma labs (http://lucumalabs.com).
     MIT License. (http://www.opensource.org/licenses/mit-license.php)
 
@@ -18,6 +17,9 @@ import re
 
 import jinja2
 
+
+COLOR_OKGREEN = '\033[92m'
+COLOR_END = '\033[0m'
 
 DEFAULT_DATA = {
     'PS': os.path.sep,
@@ -81,8 +83,8 @@ def reanimate_skeleton(skeleton_path, new_app_path, data=None, filter_ext=None,
                 content = tmpl.render(data).encode('utf-8')
             filename = re.sub(r'%PNAME%', pname, filename)
             
-            print formatm('     create  ', 
-                os.path.join(ffolder, filename).lstrip('./'), 'OKGREEN')
+            print COLOR_OKGREEN, '    create ', COLOR_END,
+                os.path.join(ffolder, filename).lstrip('/')
             
             final_path = make_dirs(new_app_path, ffolder, filename)
             f = open(final_path, 'wb')
