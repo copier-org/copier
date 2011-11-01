@@ -84,7 +84,7 @@ def reanimate_skeleton(skeleton_path, new_app_path, data=None, filter_ext=None,
             filename = re.sub(r'%PNAME%', pname, filename)
             
             print COLOR_OKGREEN, '    create ', COLOR_END, \
-                os.path.join(ffolder, filename).lstrip('/')
+                os.path.join(ffolder, filename).lstrip('.').lstrip('/')
             
             final_path = make_dirs(new_app_path, ffolder, filename)
             f = open(final_path, 'wb')
