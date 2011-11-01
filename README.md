@@ -19,4 +19,4 @@ Coded by Juan-Pablo Scaletti <juanpablo@lucumalabs.com>.<br />
 Copyright © 2011 by [Lúcuma labs] (http://lucumalabs.com).<br />
 License: [MIT License] (http://www.opensource.org/licenses/mit-license.php).
 
-Thanks to @Yaraher for the project name suggestion.
+Thanks to [@Yaraher] (http://twitter.com/Yaraher) for the project name suggestion.
