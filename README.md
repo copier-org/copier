@@ -17,6 +17,6 @@ Reanimates an application skeleton, just for you.
 
 Coded by Juan-Pablo Scaletti <juanpablo@lucumalabs.com>.<br />
 Copyright © 2011 by [Lúcuma labs] (http://lucumalabs.com).<br />
-[MIT License] (http://www.opensource.org/licenses/mit-license.php).
+License: [MIT License] (http://www.opensource.org/licenses/mit-license.php).
 
 Thanks to @Yaraher for the project name suggestion.
