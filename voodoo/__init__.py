@@ -48,7 +48,7 @@ def reanimate_skeleton(skeleton_path, new_app_path, data=None, filter_ext=None,
     data = {} if data is None else data
     _data = DEFAULT_DATA.copy()
     _data.update(data)
-    _data.setdefault('pname', pname)
+    _data.setdefault('PNAME', pname)
     data = _data
 
     filter_ext = DEFAULT_FILTER_EXT if filter_ext is None else filter_ext
