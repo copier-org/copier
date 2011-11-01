@@ -28,6 +28,14 @@ DEFAULT_DATA = {
 
 DEFAULT_FILTER_EXT = ('.pyc', '.DS_Store', '.pyo')
 
+DEFAULT_ENV_OPTIONS = {
+    'autoescape': False,
+    'block_start_string': '[%',
+    'block_end_string': '%]',
+    'variable_start_string': '[[',
+    'variable_end_string': ']]',
+}
+
 
 def make_dirs(*lpath):
     path = os.path.join(*lpath)
@@ -54,8 +62,10 @@ def reanimate_skeleton(skeleton_path, new_app_path, data=None, filter_ext=None,
     filter_ext = DEFAULT_FILTER_EXT if filter_ext is None else filter_ext
 
     env_options = {} if env_options is None else {}
-    env_options.setdefault('loader', jinja_loader)
-    env_options.setdefault('autoescape', False)
+    _env_options = DEFAULT_ENV_OPTIONS.copy()
+    _env_options.update(env_options)
+    _env_options.setdefault('loader', jinja_loader)
+    env_options = _env_options
     
     print 'Using skeleton:', skeleton_path
     print '\n  %s/' % new_app_path
