@@ -83,7 +83,7 @@ def reanimate_skeleton(skeleton_path, new_app_path, data=None, filter_ext=None,
                 content = tmpl.render(data).encode('utf-8')
             filename = re.sub(r'%PNAME%', pname, filename)
             
-            print COLOR_OKGREEN, '    create ', COLOR_END,
+            print COLOR_OKGREEN, '    create ', COLOR_END, \
                 os.path.join(ffolder, filename).lstrip('/')
             
             final_path = make_dirs(new_app_path, ffolder, filename)
