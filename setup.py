@@ -15,7 +15,7 @@ def run_tests():
 
 setup(
     name='Voodoo',
-    version='0.2.1',
+    version='0.2.2',
     author='Juan-Pablo Scaletti',
     author_email='juanpablo@lucumalabs.com',
     packages=['voodoo'],
