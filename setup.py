@@ -15,16 +15,13 @@ def run_tests():
 
 setup(
     name='Voodoo',
-    version='0.2',
+    version='0.2.1',
     author='Juan-Pablo Scaletti',
     author_email='juanpablo@lucumalabs.com',
     packages=['voodoo'],
-    package_data={
-        'voodoo': [
-            '*.py',
-            '*.md',
-        ]
-    },
+    package_data={'voodoo': [
+            '*.*',
+        ]},
     zip_safe=False,
     url='http://github.com/lucuma/Voodoo',
     license='MIT license (http://www.opensource.org/licenses/mit-license.php)',
