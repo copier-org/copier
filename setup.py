@@ -15,13 +15,12 @@ def run_tests():
 
 setup(
     name='Voodoo',
-    version='0.2.10',
+    version='0.3',
     author='Juan-Pablo Scaletti',
     author_email='juanpablo@lucumalabs.com',
     packages=['voodoo'],
     package_data={'voodoo': [
-            '*.py',
-            '*.md',
+            '*.*',
         ]},
     zip_safe=False,
     url='http://github.com/lucuma/Voodoo',
