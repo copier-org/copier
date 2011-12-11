@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# Voodoo
+    # Voodoo
 
-Reanimates an application skeleton, just for you.
-
----------------------------------------
-Copyright © 2010-2011 by Lúcuma labs (http://lucumalabs.com).
-MIT License. (http://www.opensource.org/licenses/mit-license.php)
+    Reanimates an application skeleton, just for you.
+    
+    ------------
+    Copyright © 2011 by [Lúcuma labs] (http://lucumalabs.com).
+    See `AUTHORS.md` for more details.
+    License: [MIT License] (http://www.opensource.org/licenses/mit-license.php).
 
 """
 import datetime
@@ -16,6 +17,9 @@ import os
 import re
 
 import jinja2
+
+
+__version__ = '0.5'
 
 
 COLOR_OKGREEN = '\033[92m'
