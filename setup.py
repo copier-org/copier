@@ -46,6 +46,12 @@ def find_package_data(root, include_files=None):
     return files
 
 
+def get_requirements():
+    data = read_from(get_path('requirements.txt'))
+    lines = map(lambda s: s.strip(), data.splitlines())
+    return [l for l in lines if l and not l.startswith('#')]
+
+
 def find_packages_data(*roots):
     return dict([(root, find_package_data(root)) for root in roots])
 
@@ -62,13 +68,13 @@ setup(
     author = 'Juan-Pablo Scaletti',
     author_email = 'juanpablo@lucumalabs.com',
     packages = [PACKAGE],
-    package_data = find_packages_data(PACKAGE),
+    package_data = find_packages_data(PACKAGE, 'tests'),
     zip_safe = False,
     url = 'http://github.com/lucuma/Voodoo',
     license = 'MIT license (http://www.opensource.org/licenses/mit-license.php)',
     description = 'Reanimates an application skeleton, just for you.',
     long_description = read_from(get_path('README.rst')),
-    install_requires = [],
+    install_requires = get_requirements(),
     classifiers = [
         'Development Status :: 4 - Beta',
         'Environment :: Web Environment',

@@ -1,0 +1,7 @@
+# This file collects all required third-party applications that are needed
+# to run this project. Later you can install all these apps in a row
+# using pip. Example:
+#
+#     pip install -r requirements.txt
+
+Jinja2>=2.4
