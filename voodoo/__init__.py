@@ -20,7 +20,7 @@ import re
 import jinja2
 
 
-__version__ = '0.5'
+__version__ = '0.6'
 
 
 DEFAULT_DATA = {
