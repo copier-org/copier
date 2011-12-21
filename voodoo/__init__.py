@@ -20,7 +20,7 @@ import re
 import jinja2
 
 
-__version__ = '0.6'
+__version__ = '0.7'
 
 
 DEFAULT_DATA = {
@@ -49,7 +49,7 @@ COLORS = {
 
 def formatm(action, msg='', color='OKGREEN'):
     color = COLORS.get(color, '')
-    lparts = [color, action, COLORS['ENDC'], msg]
+    lparts = [color, action, COLORS['ENDC'], '  ', msg]
     return ''.join(lparts)
 
 
@@ -70,8 +70,6 @@ def read_from(filepath, mode='rb'):
 
 
 def make_file(filepath, content, mode='wb'):
-    if not isinstance(content, unicode):
-        content = unicode(content, 'utf-8')
     with io.open(filepath, mode) as f:
         f.write(content)
 
