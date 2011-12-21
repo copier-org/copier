@@ -5,3 +5,4 @@
 #     pip install -r requirements.txt
 
 Jinja2>=2.4
+termcolor

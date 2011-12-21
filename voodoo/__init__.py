@@ -18,6 +18,7 @@ import os
 import re
 
 import jinja2
+from termcolor import colored
 
 
 __version__ = '0.7'
@@ -38,18 +39,17 @@ DEFAULT_ENV_OPTIONS = {
     'variable_end_string': ']]',
 }
 
-COLORS = {
-    'OKGREEN': '\033[92m',
-    'INFO': '\033[93m',
-    'FAIL': '\033[91m',
-    'BOLD': '\033[1m',
-    'ENDC': '\033[0m',
-}
 
-
-def formatm(action, msg='', color='OKGREEN'):
-    color = COLORS.get(color, '')
-    lparts = [color, action, COLORS['ENDC'], '  ', msg]
+def formatm(action, msg='', color='green', on_color=None, attrs=None,
+        indent=12):
+    if attrs is None:
+        attrs = ['bold']
+    action = action.rjust(indent, ' ')
+    lparts = [
+        colored(action, color=color, on_color=on_color, attrs=attrs),
+        '  ',
+        msg,
+    ]
     return ''.join(lparts)
 
 
@@ -60,7 +60,7 @@ def make_dirs(*lpath):
     except (OSError), e:
         if e.errno != errno.EEXIST:
             raise
-    return path
+    return os.path.abspath(path)
 
 
 def read_from(filepath, mode='rb'):
@@ -69,9 +69,79 @@ def read_from(filepath, mode='rb'):
     return source
 
 
-def make_file(filepath, content, mode='wb'):
-    with io.open(filepath, mode) as f:
-        f.write(content)
+def prompt(text, default=None, _test=None):
+    """Ask a question via raw_input() and return their answer.
+    
+    param text: prompt text
+    param default: default value if no answer is provided.
+    """
+    
+    text += ' [%s]' % default if default else ''
+    while True:
+        if _test is not None:
+            print text
+            resp = _test
+        else:
+            resp = raw_input(text)
+        if resp:
+            return resp
+        if default is not None:
+            return default
+
+
+def prompt_bool(text, default=False, yes_choices=None, no_choices=None,
+      _test=None):
+    """Ask a yes/no question via raw_input() and return their answer.
+    
+    :param text: prompt text
+    :param default: default value if no answer is provided.
+    :param yes_choices: default 'y', 'yes', '1', 'on', 'true', 't'
+    :param no_choices: default 'n', 'no', '0', 'off', 'false', 'f'
+    """
+    
+    yes_choices = yes_choices or ('y', 'yes', 't', 'true', 'on', '1')
+    no_choices = no_choices or ('n', 'no', 'f', 'false', 'off', '0')
+    
+    default = yes_choices[0] if default else no_choices[0]
+    while True:
+        if _test is not None:
+            print text
+            resp = _test
+        else:
+            resp = prompt(text, default)
+        if not resp:
+            return default
+        resp = str(resp).lower()
+        if resp in yes_choices:
+            return True
+        if resp in no_choices:
+            return False
+
+
+def make_file(new_app_path, ffolder, filename, content, mode='wb'):
+    created_path = os.path.join(ffolder, filename).lstrip('.').lstrip('/')
+    final_path = make_dirs(new_app_path, ffolder, filename)
+
+    if not os.path.exists(final_path):
+        print formatm('create', created_path, color='green')
+        with io.open(final_path, mode) as f:
+            f.write(content)
+        return
+    
+    # An identical file already exists.
+    if content == read_from(final_path):
+        print formatm('identical', created_path, color='magenta', attrs=[])
+        return
+    
+    # A different file already exists.
+    print formatm('conflict', created_path, color='red')
+    msg = '  Overwrite %s? (y/n)' % final_path
+    overwrite = prompt_bool(msg, default=True)
+    action = 'force' if overwrite else 'skip' 
+    print formatm(action, created_path, color='yellow')
+    if overwrite:
+        with io.open(final_path, mode) as f:
+            f.write(content)    
 
 
 def reanimate_skeleton(skeleton_path, new_app_path, data=None, filter_ext=None,
@@ -113,10 +183,6 @@ def reanimate_skeleton(skeleton_path, new_app_path, data=None, filter_ext=None,
                 content = tmpl.render(data).encode('utf-8')
             filename = re.sub(r'%PNAME%', pname, filename)
             
-            created_path = os.path.join(ffolder, filename) \
-                .lstrip('.').lstrip('/')
-            print formatm('    create', created_path)
+            make_file(new_app_path, ffolder, filename, content)
             
-            final_path = make_dirs(new_app_path, ffolder, filename)
-            make_file(final_path, content)
 
