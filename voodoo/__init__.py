@@ -21,7 +21,7 @@ import jinja2
 from termcolor import colored
 
 
-__version__ = '0.7'
+__version__ = '0.8'
 
 
 DEFAULT_DATA = {
@@ -40,7 +40,7 @@ DEFAULT_ENV_OPTIONS = {
 }
 
 
-def formatm(action, msg='', color='green', on_color=None, attrs=None,
+def formatm(action, msg='', color=None, on_color=None, attrs=None,
         indent=12):
     if attrs is None:
         attrs = ['bold']
@@ -63,10 +63,23 @@ def make_dirs(*lpath):
     return os.path.abspath(path)
 
 
-def read_from(filepath, mode='rb'):
+def read_from(filepath, binary=True):
+    mode = 'rb' if binary else 'r'
     with io.open(filepath, mode) as f:
         source = f.read()
     return source
+
+
+def write_to(filepath, content, binary=True):
+    if not binary:
+        if not isinstance(content, unicode):
+            try:
+                content = unicode(content, 'utf-8')
+            except:
+                pass
+    mode = 'wb' if binary else 'w'
+    with io.open(filepath, mode) as f:
+        f.write(content)
 
 
 def prompt(text, default=None, _test=None):
@@ -118,47 +131,99 @@ def prompt_bool(text, default=False, yes_choices=None, no_choices=None,
             return False
 
 
-def make_file(new_app_path, ffolder, filename, content, mode='wb'):
-    created_path = os.path.join(ffolder, filename).lstrip('.').lstrip('/')
-    final_path = make_dirs(new_app_path, ffolder, filename)
+def make_file(dst_path, ffolder, filename, content, options):
+    pretend = options.get('pretend', False)
+    force = options.get('force', False)
+    skip = options.get('skip', False)
+    quiet = options.get('quiet', False)
 
+    mode ='wb'
+    created_path = os.path.join(ffolder, filename).lstrip('.').lstrip('/')
+    
+    if pretend:
+        final_path = os.path.join(dst_path, ffolder, filename)
+    else:
+        final_path = make_dirs(dst_path, ffolder, filename)
+    
     if not os.path.exists(final_path):
-        print formatm('create', created_path, color='green')
-        with io.open(final_path, mode) as f:
-            f.write(content)
+        if not quiet:
+            print formatm('create', created_path, color='green')
+        if not pretend:
+            with io.open(final_path, mode) as f:
+                f.write(content)
         return
     
     # An identical file already exists.
     if content == read_from(final_path):
-        print formatm('identical', created_path, color='magenta', attrs=[])
+        if not quiet:
+            print formatm('identical', created_path, color='magenta', attrs=[])
         return
     
     # A different file already exists.
-    print formatm('conflict', created_path, color='red')
-    msg = '  Overwrite %s? (y/n)' % final_path
-    overwrite = prompt_bool(msg, default=True)
-    action = 'force' if overwrite else 'skip' 
-    print formatm(action, created_path, color='yellow')
-    if overwrite:
+    if not quiet:
+        print formatm('conflict', created_path, color='red')
+    if force:
+        overwrite = True
+    elif skip:
+        overwrite = False
+    else:
+        msg = '  Overwrite %s? (y/n)' % final_path
+        overwrite = prompt_bool(msg, default=True)
+    
+    action = 'force' if overwrite else 'skip'
+    if not quiet:
+        print formatm(action, created_path, color='yellow')
+    if overwrite and not pretend:
         with io.open(final_path, mode) as f:
             f.write(content)    
 
 
-def reanimate_skeleton(skeleton_path, new_app_path, data=None, filter_ext=None,
-        env_options=None):
-    
-    ppath, pname = os.path.split(new_app_path)
-    jinja_loader = jinja2.FileSystemLoader(skeleton_path)
+def reanimate_skeleton(src_path, dst_path, data=None, filter_ext=None,
+        env_options=None, **options):
+    """
+    src_path
+    :   Absolute path to the files to copy
 
-    data = {} if data is None else data
+    dst_path
+    :   
+
+    data
+    :   Data to be passed to the templates
+    
+    filter_ext
+    :   Don't copy files with extensions in this list
+    
+    env_options
+    :   Extra options for the template environment.
+
+    options
+    :   General options:
+        -p, [--pretend]
+        :   Run but do not make any changes
+        -f, [--force]
+        :   Overwrite files that already exist
+        -s, [--skip]
+        :   Skip files that already exist
+        -q, [--quiet]
+        :   Suppress status output
+    """
+    options['pretend'] = options.get('pretend', options.get('p', False))
+    options['force'] = options.get('force', options.get('f', False))
+    options['skip'] = options.get('skip', options.get('s', False))
+    options['quiet'] = options.get('quiet', options.get('q', False))
+
+    ppath, pname = os.path.split(dst_path)
+    jinja_loader = jinja2.FileSystemLoader(src_path)
+
+    data = data or {}
     _data = DEFAULT_DATA.copy()
     _data.update(data)
     _data.setdefault('PNAME', pname)
     data = _data
 
-    filter_ext = DEFAULT_FILTER_EXT if filter_ext is None else filter_ext
+    filter_ext = filter_ext or DEFAULT_FILTER_EXT
 
-    env_options = {} if env_options is None else {}
+    env_options = env_options or {}
     _env_options = DEFAULT_ENV_OPTIONS.copy()
     _env_options.update(env_options)
     _env_options.setdefault('loader', jinja_loader)
@@ -166,15 +231,15 @@ def reanimate_skeleton(skeleton_path, new_app_path, data=None, filter_ext=None,
     
     jinja_env = jinja2.Environment(**env_options)
 
-    for folder, subs, files in os.walk(skeleton_path):
-        ffolder = os.path.relpath(folder, skeleton_path)
+    for folder, subs, files in os.walk(src_path):
+        ffolder = folder.replace(src_path, '').lstrip(os.path.sep)
         
         for filename in files:
             if filename.endswith(filter_ext):
                 continue
-            src_path = os.path.join(folder, filename)
-            content = read_from(src_path)
-            
+            file_path = os.path.join(folder, filename)
+            content = read_from(file_path)
+
             if filename.endswith('.tmpl'):
                 if not isinstance(content, unicode):
                     content = unicode(content, 'utf-8')
@@ -182,7 +247,7 @@ def reanimate_skeleton(skeleton_path, new_app_path, data=None, filter_ext=None,
                 tmpl = jinja_env.from_string(content)
                 content = tmpl.render(data).encode('utf-8')
             filename = re.sub(r'%PNAME%', pname, filename)
-            
-            make_file(new_app_path, ffolder, filename, content)
+
+            make_file(dst_path, ffolder, filename, content, options)
             
 
