@@ -21,7 +21,7 @@ import jinja2
 from termcolor import colored
 
 
-__version__ = '0.8'
+__version__ = '0.9'
 
 
 DEFAULT_DATA = {
