@@ -18,10 +18,10 @@ import os
 import re
 
 import jinja2
-from termcolor import colored
+from colorama import init, Fore, Back, Style
 
 
-__version__ = '0.9'
+__version__ = '1.0.0'
 
 
 DEFAULT_DATA = {
@@ -40,13 +40,16 @@ DEFAULT_ENV_OPTIONS = {
 }
 
 
-def formatm(action, msg='', color=None, on_color=None, attrs=None,
-        indent=12):
-    if attrs is None:
-        attrs = ['bold']
+def formatm(action, msg='', color='', on_color='', bright=True, indent=12):
     action = action.rjust(indent, ' ')
+    color = getattr(Fore, color.upper(), '')
+    on_color = getattr(Back, on_color.upper(), '')
+    style = Style.BRIGHT if bright else Style.DIM if bright is False else ''
+
     lparts = [
-        colored(action, color=color, on_color=on_color, attrs=attrs),
+        color, on_color, style,
+        action,
+        Fore.RESET, Back.RESET, Style.RESET_ALL,
         '  ',
         msg,
     ]
@@ -156,7 +159,7 @@ def make_file(dst_path, ffolder, filename, content, options):
     # An identical file already exists.
     if content == read_from(final_path):
         if not quiet:
-            print formatm('identical', created_path, color='magenta', attrs=[])
+            print formatm('identical', created_path, color='cyan', bright=None)
         return
     
     # A different file already exists.
