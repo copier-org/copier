@@ -1,4 +1,3 @@
-include *.py *.txt *.md *.rst
+include *.py *.txt *.md *.rst Makefile
 recursive-include voodoo *
-recursive-exclude voodoo *.pyc
-recursive-exclude voodoo .DS_Store
+recursive-include tests *
