@@ -15,7 +15,7 @@ clean-pyc:
 
 test:
 	rm -rf tests/res/t
-	python runtests.py
+	python runtests.py tests
 	rm -rf tests/__pycache__
 
 upload: clean

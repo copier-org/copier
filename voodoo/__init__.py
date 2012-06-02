@@ -21,7 +21,7 @@ import jinja2
 from colorama import init, Fore, Back, Style
 
 
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 
 
 DEFAULT_DATA = {

@@ -14,7 +14,7 @@ def get_path(*args):
 
 
 def read_from(filepath):
-    with io.open(filepath) as f:
+    with io.open(filepath, 'rt', encoding='utf-8') as f:
         source = f.read()
     return source
 
