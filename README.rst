@@ -9,19 +9,16 @@ It generates a beatiful output and take care of not overwrite existing files, un
 
 .. image:: docs/images/output.png
 
-
 How to use
 ------------
 
-The interface is very simple. A `reanimate_skeleton` function that takes two absolute paths: the project skeleton to process, and where to copy it.
-    
-::
+The interface is very simple. A `reanimate_skeleton` function that takes two absolute paths: the project skeleton to process, and where to copy it.:
+
     from voodoo import reanimate_skeleton
 
     reanimate_skeleton(skeleton_path, new_project_path)
 
 It also has the `prompt` and `prompt_bool` functions that take user input, to help you to make interactive scripts.
-
 
 API
 -----
@@ -46,10 +43,10 @@ env_options:
 options:
    General options:
 
-    'pretend':  Run but do not make any changes
-    'force':  Overwrite files that already exist
-    'skip':  Skip files that already exist
-    'quiet':  Suppress any print output
+    * 'pretend':  Run but do not make any changes
+    * 'force':  Overwrite files that already exist
+    * 'skip':  Skip files that already exist
+    * 'quiet':  Suppress any print output
 
 
 ---------------------------------------
