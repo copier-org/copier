@@ -3,14 +3,14 @@
 """
 # Voodoo
 
-Reanimates an application skeleton, just for you.
+Template system for project skeletons, similar to the template part of PasteScript.
 
 ------------
-Copyright © 2011 by [Lúcuma labs] (http://lucumalabs.com).  
-See `AUTHORS.md` for more details.  
+© 2011 by [Lúcuma labs] (http://lucumalabs.com).
 License: [MIT License] (http://www.opensource.org/licenses/mit-license.php).
 
 """
+from __future__ import print_function
 import datetime
 import errno
 import io
@@ -18,10 +18,10 @@ import os
 import re
 
 import jinja2
-from colorama import init, Fore, Back, Style
+from colorama import Fore, Back, Style
 
 
-__version__ = '1.0.2'
+__version__ = '1.1'
 
 
 DEFAULT_DATA = {
@@ -60,7 +60,7 @@ def make_dirs(*lpath):
     path = os.path.join(*lpath)
     try:
         os.makedirs(os.path.dirname(path))
-    except (OSError), e:
+    except OSError as e:
         if e.errno != errno.EEXIST:
             raise
     return os.path.abspath(path)
@@ -87,15 +87,15 @@ def write_to(filepath, content, binary=True):
 
 def prompt(text, default=None, _test=None):
     """Ask a question via raw_input() and return their answer.
-    
+
     param text: prompt text
     param default: default value if no answer is provided.
     """
-    
+
     text += ' [%s]' % default if default else ''
     while True:
         if _test is not None:
-            print text
+            print(text)
             resp = _test
         else:
             resp = raw_input(text)
@@ -106,22 +106,22 @@ def prompt(text, default=None, _test=None):
 
 
 def prompt_bool(text, default=False, yes_choices=None, no_choices=None,
-      _test=None):
+                _test=None):
     """Ask a yes/no question via raw_input() and return their answer.
-    
+
     :param text: prompt text
     :param default: default value if no answer is provided.
     :param yes_choices: default 'y', 'yes', '1', 'on', 'true', 't'
     :param no_choices: default 'n', 'no', '0', 'off', 'false', 'f'
     """
-    
+
     yes_choices = yes_choices or ('y', 'yes', 't', 'true', 'on', '1')
     no_choices = no_choices or ('n', 'no', 'f', 'false', 'off', '0')
-    
+
     default = yes_choices[0] if default else no_choices[0]
     while True:
         if _test is not None:
-            print text
+            print(text)
             resp = _test
         else:
             resp = prompt(text, default)
@@ -140,31 +140,32 @@ def make_file(dst_path, ffolder, filename, content, options):
     skip = options.get('skip', False)
     quiet = options.get('quiet', False)
 
-    mode ='wb'
+    mode = 'wb'
     created_path = os.path.join(ffolder, filename).lstrip('.').lstrip('/')
-    
+
     if pretend:
         final_path = os.path.join(dst_path, ffolder, filename)
     else:
         final_path = make_dirs(dst_path, ffolder, filename)
-    
+
     if not os.path.exists(final_path):
         if not quiet:
-            print formatm('create', created_path, color='green')
+            print(formatm('create', created_path, color='green'))
         if not pretend:
             with io.open(final_path, mode) as f:
                 f.write(content)
         return
-    
+
     # An identical file already exists.
     if content == read_from(final_path):
         if not quiet:
-            print formatm('identical', created_path, color='cyan', bright=None)
+            print(formatm(
+                'identical', created_path, color='cyan', bright=None))
         return
-    
+
     # A different file already exists.
     if not quiet:
-        print formatm('conflict', created_path, color='red')
+        print(formatm('conflict', created_path, color='red'))
     if force:
         overwrite = True
     elif skip:
@@ -172,32 +173,32 @@ def make_file(dst_path, ffolder, filename, content, options):
     else:
         msg = '  Overwrite %s? (y/n)' % final_path
         overwrite = prompt_bool(msg, default=True)
-    
+
     action = 'force' if overwrite else 'skip'
     if not quiet:
-        print formatm(action, created_path, color='yellow')
+        print(formatm(action, created_path, color='yellow'))
     if overwrite and not pretend:
         with io.open(final_path, mode) as f:
-            f.write(content)    
+            f.write(content)
 
 
-def reanimate_skeleton(src_path, dst_path, data=None, filter_ext=None,
-        env_options=None, **options):
+def render_skeleton(src_path, dst_path, data=None, filter_ext=None,
+                       env_options=None, **options):
     """
     src_path
-    :   Absolute path to the files to copy
+    :   Absolute path to the project skeleton
 
     dst_path
-    :   
+    :   Absolute path to where to render the skeleton 
 
     data
-    :   Data to be passed to the templates
-    
+    :   Data to be passed to the templates, as context.
+
     filter_ext
     :   Don't copy files with extensions in this list
-    
+
     env_options
-    :   Extra options for the template environment.
+    :   Extra options for the jinja template environment.
 
     options
     :   General options:
@@ -231,12 +232,12 @@ def reanimate_skeleton(src_path, dst_path, data=None, filter_ext=None,
     _env_options.update(env_options)
     _env_options.setdefault('loader', jinja_loader)
     env_options = _env_options
-    
+
     jinja_env = jinja2.Environment(**env_options)
 
     for folder, subs, files in os.walk(src_path):
         ffolder = folder.replace(src_path, '').lstrip(os.path.sep)
-        
+
         for filename in files:
             if filename.endswith(filter_ext):
                 continue
@@ -252,5 +253,7 @@ def reanimate_skeleton(src_path, dst_path, data=None, filter_ext=None,
             filename = re.sub(r'%PNAME%', pname, filename)
 
             make_file(dst_path, ffolder, filename, content, options)
-            
+
+
+reanimate_skeleton = render_skeleton
 
