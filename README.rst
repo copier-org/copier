@@ -51,5 +51,6 @@ options:
 
 ---------------------------------------
 
-© 2011 by [Lúcuma labs] (http://lucumalabs.com).  
+© 2011 by [Lúcuma labs] (http://lucumalabs.com).
+ 
 License: [MIT License] (http://www.opensource.org/licenses/mit-license.php).
