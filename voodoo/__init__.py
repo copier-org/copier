@@ -3,7 +3,14 @@
 """
 # Voodoo
 
-Template system for project skeletons, similar to the template part of PasteScript.
+Voodoo is a template system for project skeletons (similar to the template
+part of PasteScript):
+
+It can make a copy of a project skeleton processing some files, filter
+others, etc.
+
+It generates a beatiful and colored output and take care of not overwrite
+existing files, unless instructed to do so.
 
 ------------
 © 2011 by [Lúcuma labs] (http://lucumalabs.com).
@@ -76,10 +83,7 @@ def read_from(filepath, binary=True):
 def write_to(filepath, content, binary=True):
     if not binary:
         if not isinstance(content, unicode):
-            try:
-                content = unicode(content, 'utf-8')
-            except:
-                pass
+            content = unicode(content, 'utf-8', errors='ignore')
     mode = 'wb' if binary else 'w'
     with io.open(filepath, mode) as f:
         f.write(content)
@@ -183,13 +187,13 @@ def make_file(dst_path, ffolder, filename, content, options):
 
 
 def render_skeleton(src_path, dst_path, data=None, filter_ext=None,
-                       env_options=None, **options):
+                    env_options=None, **options):
     """
     src_path
     :   Absolute path to the project skeleton
 
     dst_path
-    :   Absolute path to where to render the skeleton 
+    :   Absolute path to where to render the skeleton
 
     data
     :   Data to be passed to the templates, as context.
@@ -205,9 +209,9 @@ def render_skeleton(src_path, dst_path, data=None, filter_ext=None,
         -p, [--pretend]
         :   Run but do not make any changes
         -f, [--force]
-        :   Overwrite files that already exist
+        :   Overwrite files that already exist, without asking
         -s, [--skip]
-        :   Skip files that already exist
+        :   Skip files that already exist, without asking
         -q, [--quiet]
         :   Suppress status output
     """

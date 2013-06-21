@@ -13,11 +13,11 @@ It generates a beatiful output and take care of not overwrite existing files, un
 How to use
 ------------
 
-The interface is very simple. A `reanimate_skeleton` function that takes two absolute paths: the project skeleton to process, and where to copy it.:
+The API is very simple. A `render_skeleton` function that takes two absolute paths: the project skeleton to process, and where to copy it.:
 
-    from voodoo import reanimate_skeleton
+    from voodoo import render_skeleton
 
-    reanimate_skeleton(skeleton_path, new_project_path)
+    render_skeleton(skeleton_path, new_project_path)
 
 It also has the `prompt` and `prompt_bool` functions that take user input, to help you to make interactive scripts.
 
