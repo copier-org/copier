@@ -6,6 +6,6 @@
 
 ## Tests TO DO
 
-* stdout output
 * pretend option
+* stdout output
 * `prompt` and `prompt_bool` helpers

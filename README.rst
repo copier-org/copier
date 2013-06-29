@@ -7,7 +7,10 @@ It can make a copy of a project skeleton processing some files, filter others, e
 
 It generates a beatiful output and take care of not overwrite existing files, unless instructed to do so.
 
-.. image:: docs/images/output.png
+.. figure:: docs/images/output.png
+   :alt: Voodoo sample output
+
+   Voodoo sample output as used in a program.
 
 
 How to use
