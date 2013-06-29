@@ -4,5 +4,5 @@
 #
 #     pip install -r requirements.txt
 
-Jinja2==2.7
-colorama==0.2.5
+Jinja2>=2.7
+colorama>=0.2.5

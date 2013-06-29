@@ -1,4 +1,4 @@
-.PHONY: clean clean-pyc test upload
+.PHONY: clean clean-pyc test publish
 
 all: clean clean-pyc test
 
@@ -16,8 +16,8 @@ clean-pyc:
 	find . -name '*~' -delete
 
 test:
-	py.test --cov-config .coveragerc --cov vodoo tests/
+	py.test --cov-config .coveragerc --cov voodoo tests/
 
-upload: clean
+publish: clean
 	python setup.py sdist upload
 

@@ -11,29 +11,31 @@ It generates a beatiful output and take care of not overwrite existing files, un
 
 
 How to use
-------------
+------------------------
 
-The API is very simple. A `render_skeleton` function that takes two absolute paths: the project skeleton to process, and where to copy it.:
+The API is very simple. A ``render_skeleton`` function that takes two absolute paths: the project skeleton to process, and where to copy it.:
+
+.. code:: python
 
     from voodoo import render_skeleton
 
     render_skeleton(skeleton_path, new_project_path)
 
-It also has the `prompt` and `prompt_bool` functions that take user input, to help you to make interactive scripts.
+It also has the ``prompt`` and ``prompt_bool`` functions that take user input, to help you to make interactive scripts.
 
 
 How it works
-------------
+------------------------
 
-Files inside the skeleton are be copied to destination directly, unless are suffixed with the extension `.tmpl`. In that case, the templating engine will be used to render them.
+Files inside the skeleton are be copied to destination directly, unless are suffixed with the extension `'.tmpl'`. In that case, the templating engine will be used to render them.
 
-A slightly customized Jinja2 templating is used. The main difference is that variables are referenced with [[ name ]] instead of {{ name }} and blocks are [% if name %] instead of {% if name %}. To read more about templating see the `Jinja2 documentation <http://jinja.pocoo.org/docs>`_.
+A slightly customized Jinja2 templating is used. The main difference is that variables are referenced with ``[[ name ]]`` instead of ``{{ name }}`` and blocks are ``[% if name %]`` instead of ``{% if name %}``. To read more about templating see the `Jinja2 documentation <http://jinja.pocoo.org/docs>`_.
 
 
 API
------
+------------------------
 
-`render_skeleton(src_path, dst_path, data=None, filter_ext=None, env_options=None, **options)`
+``render_skeleton(src_path, dst_path, data=None, filter_ext=None, pretend=False, force=False, skip=False, quiet=False, envops=None)``
 
 src_path:
     Absolute path to the project skeleton
@@ -44,25 +46,34 @@ dst_path:
 data:
     Data to be passed to the templates, as context.
 
-filter_ext:
-    Don't copy files with extensions in this list
+filter_this:
+    A list of names or shell-style patterns matching files or folders
+    that musn't be copied. The default is: ``['.*', '~*', '*.py[co]']``
 
-env_options:
-    Extra options for the jinja template environment.
+include_this:
+    A list of names or shell-style patterns matching files or folders that
+    must be included, even if its name are in the `filter_this` list.
+    Eg: ``['.gitignore']``. The default is an empty list.
 
-options:
-    General options:
+pretend:
+    Run but do not make any changes
 
-    * 'pretend':  Run but do not make any changes
-    * 'force':  Overwrite files that already exist
-    * 'skip':  Skip files that already exist
-    * 'quiet':  Suppress any print output
+force:
+    Overwrite files that already exist, without asking
 
+skip:
+    Skip files that already exist, without asking
 
----------------------------------------
+quiet:
+    Suppress the status output
 
-© 2011 by [Lúcuma labs] (http://lucumalabs.com).
+envops:
+    Extra options for the Jinja template environment.
 
-License: [MIT License] (http://www.opensource.org/licenses/mit-license.php).
+---------------------------------------------------------------
+
+© 2011 by `Lúcuma labs <http://http://lucumalabs.com/>`_. See `AUTHORS.md` for more details.
+
+License: `MIT License <http://www.opensource.org/licenses/mit-license.php>`_.
 
 
