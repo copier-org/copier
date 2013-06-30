@@ -7,5 +7,4 @@
 
 ## Tests TO DO
 
-* stdout output
 * `prompt` and `prompt_bool` helpers
