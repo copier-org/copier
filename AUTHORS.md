@@ -8,3 +8,7 @@ Project Leader / Developer:
 - Juan-Pablo Scaletti <juanpablo@lucumalabs.com>
 
 
+Contributors:
+
+
+
