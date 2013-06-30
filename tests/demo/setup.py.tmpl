@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 import io
 import os
+import re
 try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
-
-import [[ package ]]
 
 
 def get_path(*args):
@@ -16,6 +15,12 @@ def get_path(*args):
 def read_from(filepath):
     with io.open(filepath, 'rt', encoding='utf-8') as f:
         return f.read()
+
+
+def get_version():
+    data = read_from(get_path(PACKAGE, '__init__.py'))
+    version = re.search(r"__version__\s*=\s*u?'([^']+)'", data).group(1)
+    return version.encode('utf8')
 
 
 def find_package_data(root, include_files=('.gitignore', )):
@@ -50,7 +55,7 @@ def get_requirements(filename='requirements.txt'):
 
 setup(
     name='Demo',
-    version=[[ package ]].__version__,
+    version=get_version(),
     author='John Pouteria',
     author_email='john@example.com',
     packages=['[[ package ]]'],

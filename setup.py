@@ -2,12 +2,11 @@
 b'This library requires Python 2.6, 2.7, 3.3 or newer'
 import io
 import os
+import re
 try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
-
-import voodoo
 
 
 PACKAGE = 'voodoo'
@@ -18,8 +17,14 @@ def get_path(*args):
 
 
 def read_from(filepath):
-    with io.open(filepath, 'rt', encoding='utf-8') as f:
+    with io.open(filepath, 'rt', encoding='utf8') as f:
         return f.read()
+
+
+def get_version():
+    data = read_from(get_path(PACKAGE, '__init__.py'))
+    version = re.search(r"__version__\s*=\s*u?'([^']+)'", data).group(1)
+    return version.encode('utf8')
 
 
 def find_package_data(root, include_files=('.gitignore', )):
@@ -54,7 +59,7 @@ def get_requirements(filename='requirements.txt'):
 
 setup(
     name='Voodoo',
-    version=voodoo.__version__,
+    version=get_version(),
     author='Juan-Pablo Scaletti',
     author_email='juanpablo@lucumalabs.com',
     packages=[PACKAGE],
