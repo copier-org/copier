@@ -204,10 +204,6 @@ Make sure to add yourself to AUTHORS.
 
 ---------------------------------------------------------------
 
-.. image:: https://travis-ci.org/lucuma/Voodoo.png
-   :alt: Build Status
-   :target: https://travis-ci.org/lucuma/Voodoo
-
 © 2011 by `Lúcuma labs <http://http://lucumalabs.com/>`_.
 See `AUTHORS.md` for more details.
 
