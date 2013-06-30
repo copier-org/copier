@@ -2,10 +2,10 @@
 # TO DO
 
 * A CONTRIBUTE file.
+* Better documentation
 
 
 ## Tests TO DO
 
-* pretend option
 * stdout output
 * `prompt` and `prompt_bool` helpers

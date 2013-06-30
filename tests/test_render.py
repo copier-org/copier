@@ -54,3 +54,9 @@ class RenderTests(RenderMixin, unittest.TestCase):
         self.render_skeleton(force=True)
         assert read_content(path) != content
 
+    def test_pretend_option(self):
+        self.render_skeleton(pretend=True)
+        assert not exists(join(self.dst_path, 'doc'))
+        assert not exists(join(self.dst_path, 'config.py'))
+        assert not exists(join(self.dst_path, 'setup.py'))
+

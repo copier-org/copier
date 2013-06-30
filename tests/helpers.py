@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
+from hashlib import sha1
+from os import urandom
 from os.path import join, dirname
 from tempfile import mkdtemp
-from uuid import uuid4
 import filecmp
 import io
 import shutil
@@ -39,7 +40,7 @@ class RenderMixin(object):
         data = {
             'package': 'demo',
             'py3': True,
-            'make_uid': lambda: str(uuid4())
+            'make_secret': lambda: sha1(urandom(48)).hexdigest()
         }
         kwargs.setdefault('quiet', True)
         render_skeleton(SKELETON_PATH, self.dst_path, data=data, **kwargs)

@@ -1,19 +1,22 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
+from hashlib import sha512
+from os import urandom
 from os.path import join, dirname, basename
 
 from voodoo import render_skeleton
 
 
 default_context = {
-    'foo': 'bar',
+    'py3': True,
+    'make_secret': lambda: sha512(urandom(48)).hexdigest()
 }
 SKELETON_PATH = join(dirname(__file__), '..', 'tests', 'demo')
 
 
 def new_project(path, options):
     data = default_context.copy()
-    data['project_name'] = basename(path)
+    data['package'] = basename(path)
     # print(SKELETON_PATH, path, data, options)
     render_skeleton(SKELETON_PATH, path, data=data, **options)
 
