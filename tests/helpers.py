@@ -2,15 +2,23 @@
 from hashlib import sha1
 from os import urandom
 from os.path import join, dirname
-from tempfile import mkdtemp
 import filecmp
 import io
-import shutil
 
-from voodoo import render_skeleton
+import voodoo
 
 
 SKELETON_PATH = join(dirname(__file__), 'demo')
+
+
+def render(dst, **kwargs):
+    data = {
+        'package': 'demo',
+        'py3': True,
+        'make_secret': lambda: sha1(urandom(48)).hexdigest()
+    }
+    kwargs.setdefault('quiet', True)
+    voodoo.render_skeleton(SKELETON_PATH, dst, data=data, **kwargs)
 
 
 def read_content(path):
@@ -23,24 +31,7 @@ def write_content(path, content):
         return f.write(content)
 
 
-class RenderMixin(object):
-
-    def setUp(self):
-        self.dst_path = mkdtemp()
-
-    def tearDown(self):
-        shutil.rmtree(self.dst_path)
-
-    def assert_file(self, *path):
-        p1 = join(self.dst_path, *path)
-        p2 = join(SKELETON_PATH, *path)
-        assert filecmp.cmp(p1, p2)
-
-    def render_skeleton(self, **kwargs):
-        data = {
-            'package': 'demo',
-            'py3': True,
-            'make_secret': lambda: sha1(urandom(48)).hexdigest()
-        }
-        kwargs.setdefault('quiet', True)
-        render_skeleton(SKELETON_PATH, self.dst_path, data=data, **kwargs)
+def assert_file(dst, *path):
+    p1 = join(dst, *path)
+    p2 = join(SKELETON_PATH, *path)
+    assert filecmp.cmp(p1, p2)

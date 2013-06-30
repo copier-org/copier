@@ -18,6 +18,8 @@ Requires
 
 Pypy or Python 2.6, 2.7, 3.3 or newer.
 
+It also uses the Jinja2 and Colorama python libraries.
+
 How to use
 ------------------------
 
@@ -117,77 +119,87 @@ An interactive version of this script could be made using the ``voodoo.prompt`` 
 API
 ------------------------
 
+render_skeleton
+~~~~~~~~~~~~~~~~~~~~~~~~
+
 ``render_skeleton (src_path, dst_path, data=None, filter_ext=None, pretend=False, force=False, skip=False, quiet=False, envops=None)``
 
-src_path:
+src_path
     Absolute path to the project skeleton
 
-dst_path:
+dst_path
     Absolute path to where to render the skeleton
 
-data:
+data
     Data to be passed to the templates, as context.
 
-filter_this:
+filter_this
     A list of names or shell-style patterns matching files or folders
     that musn't be copied. The default is: ``['.*', '~*', '*.py[co]']``
 
-include_this:
+include_this
     A list of names or shell-style patterns matching files or folders that
     must be included, even if its name are in the `filter_this` list.
     Eg: ``['.gitignore']``. The default is an empty list.
 
-pretend:
+pretend
     Run but do not make any changes
 
-force:
+force
     Overwrite files that already exist, without asking
 
-skip:
+skip
     Skip files that already exist, without asking
 
-quiet:
+quiet
     Suppress the status output
 
-envops:
+envops
     Extra options for the Jinja template environment.
 
-------------
+
+prompt
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``prompt (text, default=None)``
 
 Ask a question via raw_input() and return their answer.
 
-text:
+text
     prompt text
 
-default:
+default
     default value if no answer is provided.
 
-------------
+
+prompt_bool
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``prompt_bool (text, default=False, yes_choices=None, no_choices=None)``
 
 Ask a yes/no question via raw_input() and return their answer.
 
-text:
+text
     prompt text
 
-default:
+default
     default value if no answer is provided.
 
-yes_choices:
+yes_choices
     default ``['y', 'yes', '1', 'on', 'true', 't']``
 
-no_choices:
+no_choices
     default ``['n', 'no', '0', 'off', 'false', 'f']``
 
 
 ---------------------------------------------------------------
 
+.. image:: https://travis-ci.org/lucuma/voodoo.png
+   :alt: Build Status
+   :target: https://travis-ci.org/lucuma/voodoo
+
 © 2011 by `Lúcuma labs <http://http://lucumalabs.com/>`_.
 See `AUTHORS.md` for more details.
 
 License: `MIT License <http://www.opensource.org/licenses/mit-license.php>`_.
-
 
