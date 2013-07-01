@@ -51,6 +51,12 @@ def find_packages_data(*roots):
     return dict([(root, find_package_data(root)) for root in roots])
 
 
+def get_description():
+    data = read_from(get_path(PACKAGE, '__init__.py'))
+    desc = re.search('"""(.+)"""', data, re.DOTALL).group(1)
+    return desc.strip()
+
+
 def get_requirements(filename='requirements.txt'):
     data = read_from(get_path(filename))
     lines = map(lambda s: s.strip(), data.splitlines())
@@ -68,7 +74,7 @@ setup(
     url='http://github.com/lucuma/Voodoo',
     license='MIT license (http://www.opensource.org/licenses/mit-license.php)',
     description='Template system for project skeletons',
-    long_description=read_from(get_path('README.rst')),
+    long_description=get_description(),
     install_requires=get_requirements(),
     classifiers=[
         'Development Status :: 4 - Beta',

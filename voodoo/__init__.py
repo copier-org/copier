@@ -1,20 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# Voodoo
+============
+Voodoo
+============
 
-Voodoo is a template system for project skeletons (similar to the template
-part of PasteScript):
+Voodoo is a template system for project skeletons (similar to the template part
+of PasteScript): It can make a copy of a project skeleton processing some files,
+filter others, etc.
 
-It can make a copy of a project skeleton processing some files, filter
-others, etc.
+It generates a beautiful output and take care of not overwrite existing files,
+unless instructed to do so.
 
-It generates a beatiful and colored output and take care of not overwrite
-existing files, unless instructed to do so.
-
-------------
-© 2011 by [Lúcuma labs] (http://lucumalabs.com).
-License: [MIT License] (http://www.opensource.org/licenses/mit-license.php).
+See the documentation and code at: `<http://github.com/lucuma/Voodoo>`_
 
 """
 from .main import render_skeleton

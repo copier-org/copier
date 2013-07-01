@@ -5,9 +5,9 @@ Voodoo
 Voodoo is a template system for project skeletons (similar to the template part of PasteScript):
 It can make a copy of a project skeleton processing some files, filter others, etc.
 
-It generates a beatiful output and take care of not overwrite existing files, unless instructed to do so.
+It generates a beautiful output and take care of not overwrite existing files, unless instructed to do so.
 
-.. figure:: docs/images/output.png
+.. figure:: ./docs/images/output.png
    :alt: Voodoo sample output
 
    Voodoo sample output as used in a program.
@@ -204,7 +204,7 @@ Contribute
 
 ---------------------------------------------------------------
 
-© 2011 by `Lúcuma labs <http://http://lucumalabs.com/>`_.
+© 2011–2013 by `Lúcuma labs <http://http://lucumalabs.com/>`_.
 See `AUTHORS.md` for more details.
 
 License: `MIT License <http://www.opensource.org/licenses/mit-license.php>`_.
