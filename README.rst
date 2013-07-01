@@ -13,15 +13,20 @@ It generates a beautiful output and take care of not overwrite existing files, u
    Voodoo sample output as used in a program.
 
 
-Requires
+Requirements
 ------------------------
 
 Pypy or Python 2.6, 2.7, 3.3 or newer.
 
 It also uses the Jinja2 and Colorama python libraries.
 
+
 How to use
 ------------------------
+
+First of all install it and/or add it to your `requirements.txt`::
+
+    pip install voodoo
 
 The API is very simple. A ``render_skeleton`` function that takes two absolute paths: the project skeleton to process, and where to copy it.:
 
