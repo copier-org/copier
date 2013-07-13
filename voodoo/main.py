@@ -11,7 +11,7 @@ import jinja2
 from ._compat import to_unicode
 from .cli import prompt_bool
 from .helpers import (pformat, make_dirs, create_file, copy_file, unormalize,
-                      files_are_identical)
+                      file_has_this_content, files_are_identical)
 
 
 DEFAULT_DATA = {
@@ -166,13 +166,22 @@ def render_file(dst_path, rel_folder, folder, src_name, render_tmpl,
             make_file(src_name, render_tmpl, fullpath, final_path)
         return
 
-    # An identical file already exists.
-    if files_are_identical(fullpath, final_path):
+    ## A file with this name already exists
+
+    content = None
+    if src_name.endswith('.tmpl'):
+        content = render_tmpl(fullpath)
+        identical = file_has_this_content(final_path, content)
+    else:
+        identical = files_are_identical(fullpath, final_path)
+
+    # The existing file is identical.
+    if identical:
         if not quiet:
             pformat('identical', created_path, color='cyan', bright=None)
         return
 
-    # A different file already exists.
+    # The existing file is different.
     if not quiet:
         pformat('conflict', created_path, color='red')
     if force:
@@ -187,7 +196,10 @@ def render_file(dst_path, rel_folder, folder, src_name, render_tmpl,
         pformat('force' if overwrite else 'skip', created_path, color='yellow')
 
     if overwrite and not pretend:
-        make_file(src_name, render_tmpl, fullpath, final_path)
+        if content is None:
+            copy_file(fullpath, final_path)
+        else:
+            create_file(final_path, content)
 
 
 def make_file(src_name, render_tmpl, fullpath, final_path):
@@ -196,3 +208,4 @@ def make_file(src_name, render_tmpl, fullpath, final_path):
         create_file(final_path, content)
     else:
         copy_file(fullpath, final_path)
+

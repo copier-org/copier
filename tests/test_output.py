@@ -27,30 +27,26 @@ def test_output_pretend(capsys, dst):
 def test_output_force(capsys, dst):
     render(dst)
     out, err = capsys.readouterr()
-    write_content(join(dst, 'setup.py'), u'')
     render(dst, quiet=False, force=True)
     out, err = capsys.readouterr()
     print(out)
 
     assert re.search(r'conflict[^\s]+  config\.py', out)
     assert re.search(r'force[^\s]+  config\.py', out)
-    assert re.search(r'conflict[^\s]+  setup\.py', out)
-    assert re.search(r'force[^\s]+  setup\.py', out)
+    assert re.search(r'identical[^\s]+  setup\.py', out)
     assert re.search(r'identical[^\s]+  doc/images/nslogo\.gif', out)
 
 
 def test_output_skip(capsys, dst):
     render(dst)
     out, err = capsys.readouterr()
-    write_content(join(dst, 'setup.py'), u'')
     render(dst, quiet=False, skip=True)
     out, err = capsys.readouterr()
     print(out)
 
     assert re.search(r'conflict[^\s]+  config\.py', out)
     assert re.search(r'skip[^\s]+  config\.py', out)
-    assert re.search(r'conflict[^\s]+  setup\.py', out)
-    assert re.search(r'skip[^\s]+  setup\.py', out)
+    assert re.search(r'identical[^\s]+  setup\.py', out)
     assert re.search(r'identical[^\s]+  doc/images/nslogo\.gif', out)
 
 

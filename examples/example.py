@@ -18,7 +18,8 @@ def new_project(path, options):
     data = default_context.copy()
     data['package'] = basename(path)
     # print(SKELETON_PATH, path, data, options)
-    render_skeleton(SKELETON_PATH, path, data=data, **options)
+    render_skeleton(SKELETON_PATH, path, data=data,
+                    include_this=['.gittouch'], **options)
 
 
 if __name__ == '__main__':

@@ -40,8 +40,14 @@ def make_dirs(*lpath):
     return os.path.abspath(path)
 
 
+def file_has_this_content(path, content, encoding='utf8'):
+    with io.open(path, 'rt', encoding=encoding) as f:
+        indeed = content == f.read()
+    return indeed
+
+
 def files_are_identical(path_1, path_2):
-    return filecmp.cmp(path_1, path_2)
+    return filecmp.cmp(path_1, path_2, shallow=False)
 
 
 def unormalize(text, form='NFD'):
@@ -50,7 +56,7 @@ def unormalize(text, form='NFD'):
 
 def create_file(path, content, encoding='utf8'):
     content = to_unicode(content, encoding)
-    with io.open(path, 'w+t', encoding=encoding) as f:
+    with io.open(path, 'wt', encoding=encoding) as f:
         f.write(content)
 
 
