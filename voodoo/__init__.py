@@ -18,6 +18,6 @@ See the documentation and code at: `<http://github.com/lucuma/Voodoo>`_
 from .main import render_skeleton
 from .cli import prompt, prompt_bool
 
-__version__ = '1.1'
+__version__ = '1.1.1'
 
 reanimate_skeleton = render_skeleton  # backward compat
