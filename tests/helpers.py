@@ -10,15 +10,17 @@ import voodoo
 
 SKELETON_PATH = join(dirname(__file__), 'demo')
 
+DATA = {
+    'package': 'demo',
+    'py3': True,
+    'make_secret': lambda: sha1(urandom(48)).hexdigest(),
+    'myvar': 'awesome',
+}
+
 
 def render(dst, **kwargs):
-    data = {
-        'package': 'demo',
-        'py3': True,
-        'make_secret': lambda: sha1(urandom(48)).hexdigest()
-    }
     kwargs.setdefault('quiet', True)
-    voodoo.render_skeleton(SKELETON_PATH, dst, data=data, **kwargs)
+    voodoo.render_skeleton(SKELETON_PATH, dst, data=DATA, **kwargs)
 
 
 def read_content(path):

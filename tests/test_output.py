@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
-from os.path import join
 import re
 
-from .helpers import render, write_content
+from .helpers import render
 
 
 def test_output(capsys, dst):

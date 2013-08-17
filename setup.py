@@ -3,13 +3,10 @@ b'This library requires Python 2.6, 2.7, 3.3 or newer'
 import io
 import os
 import re
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
+from setuptools import setup
 
 
-PACKAGE = 'voodoo'
+package = 
 
 
 def get_path(*args):
@@ -21,8 +18,8 @@ def read_from(filepath):
         return f.read()
 
 
-def get_version():
-    data = read_from(get_path(PACKAGE, '__init__.py'))
+def get_version(package):
+    data = read_from(get_path(package, '__init__.py'))
     version = re.search(r"__version__\s*=\s*u?'([^']+)'", data).group(1)
     return str(version)
 
@@ -51,8 +48,8 @@ def find_packages_data(*roots):
     return dict([(root, find_package_data(root)) for root in roots])
 
 
-def get_description():
-    data = read_from(get_path(PACKAGE, '__init__.py'))
+def get_description(package):
+    data = read_from(get_path(package, '__init__.py'))
     desc = re.search('"""(.+)"""', data, re.DOTALL).group(1)
     return desc.strip()
 
@@ -65,17 +62,17 @@ def get_requirements(filename='requirements.txt'):
 
 setup(
     name='Voodoo',
-    version=get_version(),
+    version=get_version('voodoo'),
     author='Juan-Pablo Scaletti',
     author_email='juanpablo@lucumalabs.com',
-    packages=[PACKAGE],
-    package_data=find_packages_data(PACKAGE, 'tests'),
+    packages=['voodoo'],
+    package_data=find_packages_data('voodoo', 'tests'),
     zip_safe=False,
     url='http://github.com/lucuma/Voodoo',
     license='MIT license (http://www.opensource.org/licenses/mit-license.php)',
     description='Template system for project skeletons',
-    long_description=get_description(),
-    install_requires=get_requirements(),
+    long_description=get_description('voodoo'),
+    install_requires=get_requirements('voodoo'),
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Web Environment',

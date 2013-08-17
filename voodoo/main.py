@@ -1,17 +1,21 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
+
 import datetime
 from fnmatch import fnmatch
 from functools import reduce
 import os
 import re
+import shutil
 
 import jinja2
 
-from ._compat import to_unicode
-from .cli import prompt_bool
-from .helpers import (pformat, make_dirs, create_file, copy_file, unormalize,
-                      file_has_this_content, files_are_identical)
+from voodoo._compat import to_unicode
+from voodoo.cli import prompt_bool
+from voodoo.download import get_vcs_from_url, download
+from voodoo.helpers import (
+    pformat, make_dirs, create_file, copy_file, unormalize,
+    file_has_this_content, files_are_identical)
 
 
 DEFAULT_DATA = {
@@ -30,10 +34,9 @@ DEFAULT_ENV_OPTIONS = {
 }
 
 
-def render_skeleton(src_path, dst_path, data=None,
-                    filter_this=None, include_this=None,
-                    pretend=False, force=False, skip=False, quiet=False,
-                    envops=None):
+def render_skeleton(
+        src_path, dst_path, data=None, filter_this=None, include_this=None,
+        pretend=False, force=False, skip=False, quiet=False, envops=None):
     """
     src_path:
         Absolute path to the project skeleton
@@ -70,6 +73,26 @@ def render_skeleton(src_path, dst_path, data=None,
 
     """
     src_path = to_unicode(src_path)
+    vcs = get_vcs_from_url(src_path)
+    if vcs:
+        src_path = download(vcs, quiet)
+
+    render_local_skeleton(
+        src_path, dst_path, data=data,
+        filter_this=filter_this, include_this=include_this,
+        pretend=pretend, force=force, skip=skip, quiet=quiet, envops=envops)
+
+    if vcs:
+        shutil.rmtree(src_path)
+
+
+def render_local_skeleton(
+        src_path, dst_path, data=None, filter_this=None, include_this=None,
+        pretend=False, force=False, skip=False, quiet=False, envops=None):
+    if not os.path.exists(src_path):
+        raise ValueError('Project skeleton not found')
+    if not os.path.isdir(src_path):
+        raise ValueError('Project skeleton must be a folder')
     data = clean_data(data)
     data.setdefault('name', os.path.basename(dst_path))
     must_filter = get_name_filter(filter_this, include_this)
@@ -77,6 +100,7 @@ def render_skeleton(src_path, dst_path, data=None,
 
     for folder, subs, files in os.walk(src_path):
         rel_folder = folder.replace(src_path, '').lstrip(os.path.sep)
+        rel_folder = parametrize_path(rel_folder, data)
         if must_filter(rel_folder):
             continue
         for name in files:
@@ -144,6 +168,15 @@ def get_name_filter(filter_this, include_this):
         return must_be_filtered(path) and not must_be_included(path)
 
     return must_filter
+
+
+rx_param_path = re.compile(r'\{(\w+)\}', flags=re.IGNORECASE)
+
+
+def parametrize_path(path, data):
+    def get_data_value(match):
+        return data.get(match.group(1), match.group(0))
+    return rx_param_path.sub(get_data_value, path)
 
 
 def render_file(dst_path, rel_folder, folder, src_name, render_tmpl,

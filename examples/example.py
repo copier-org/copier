@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function
 from hashlib import sha512
 from os import urandom
 from os.path import join, dirname, basename
@@ -14,11 +13,12 @@ default_context = {
 SKELETON_PATH = join(dirname(__file__), '..', 'tests', 'demo')
 
 
-def new_project(path, options):
+def new_project(path, tmpl=None, **options):
     data = default_context.copy()
     data['package'] = basename(path)
-    # print(SKELETON_PATH, path, data, options)
-    render_skeleton(SKELETON_PATH, path, data=data,
+    tmpl = tmpl or SKELETON_PATH
+    print(tmpl, path)
+    render_skeleton(tmpl, path, data=data,
                     include_this=['.gittouch'], **options)
 
 
@@ -26,7 +26,10 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description='Create a new project')
-    parser.add_argument('path', help='The name or fullpath of the new project')
+    parser.add_argument('path',
+                        help='The name or fullpath of the new project')
+    parser.add_argument('tmpl', nargs='?',
+                        help='Optional fullpath of project template or a git/hg/bzr URL (see README)')
     parser.add_argument('-p', '--pretend', action='store_true',
                         help='Run but do not make any changes')
     parser.add_argument('-f', '--force', action='store_true',
@@ -38,4 +41,4 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     da = vars(args)
-    new_project(da.pop('path'), da)
+    new_project(da.pop('path'), **da)

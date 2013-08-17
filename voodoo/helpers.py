@@ -8,7 +8,7 @@ import unicodedata
 
 from colorama import Fore, Back, Style
 
-from ._compat import to_unicode
+from voodoo._compat import to_unicode
 
 
 def formatm(action, msg='', color='', on_color='', bright=True, indent=12):

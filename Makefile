@@ -16,7 +16,7 @@ clean-pyc:
 	find . -name '*~' -delete
 
 test:
-	py.test --cov-config .coveragerc --cov voodoo tests/
+	py.test -m "not slow" --cov-config .coveragerc --cov voodoo tests/
 
 publish: clean
 	python setup.py sdist upload

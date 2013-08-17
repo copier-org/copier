@@ -15,9 +15,9 @@ unless instructed to do so.
 See the documentation and code at: `<http://github.com/lucuma/Voodoo>`_
 
 """
-from .main import render_skeleton
-from .cli import prompt, prompt_bool
+from voodoo.main import render_skeleton
+from voodoo.cli import prompt, prompt_bool
 
-__version__ = '1.1.1'
+__version__ = '1.2.0'
 
 reanimate_skeleton = render_skeleton  # backward compat

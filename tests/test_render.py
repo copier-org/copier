@@ -1,8 +1,18 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function
 from os.path import join, dirname, exists
 
-from .helpers import read_content, write_content, assert_file, render
+import pytest
+import voodoo
+
+from .helpers import (read_content, write_content, assert_file, render,
+                      SKELETON_PATH, DATA, filecmp)
+
+
+def test_skeleton_not_found(dst):
+    with pytest.raises(ValueError):
+        voodoo.render_skeleton('foobar', dst)
+    with pytest.raises(ValueError):
+        voodoo.render_skeleton(__file__, dst)
 
 
 def test_render(dst):
@@ -12,8 +22,12 @@ def test_render(dst):
     control = read_content(join(dirname(__file__), 'ref.txt')).strip()
     assert generated == control
 
-    assert_file(dst, 'doc', u'mañana.txt')
-    assert_file(dst, 'doc', 'images', 'nslogo.gif')
+    assert_file(dst, u'doc', u'mañana.txt')
+    assert_file(dst, u'doc', u'images', u'nslogo.gif')
+
+    p1 = join(dst, u'awesome', u'hello.txt')
+    p2 = join(SKELETON_PATH, u'{myvar}', u'hello.txt')
+    assert filecmp.cmp(p1, p2)
 
 
 def test_default_filter(dst):
@@ -63,4 +77,3 @@ def test_pretend_option(dst):
     assert not exists(join(dst, 'doc'))
     assert not exists(join(dst, 'config.py'))
     assert not exists(join(dst, 'setup.py'))
-
