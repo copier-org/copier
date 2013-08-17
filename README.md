@@ -192,31 +192,31 @@ Tags or revisions can be installed like so:
 src_path:  
     Absolute path to the project skeleton
 
-dst_path:
+dst_path:  
     Absolute path to where to render the skeleton
 
 data:  
     Data to be passed to the templates, as context.
 
-filter_this:
+filter_this:  
     A list of names or shell-style patterns matching files or folders that musn't be copied. The default is: `['.*', '~*', '*.py[co]']`
 
-include_this:
+include_this:  
     A list of names or shell-style patterns matching files or folders that must be included, even if its name are in the filter_this list. Eg: `['.gitignore']`. The default is an empty list.
 
-pretend:
+pretend:  
     Run but do not make any changes
 
-force :
+force:  
     Overwrite files that already exist, without asking
 
 skip:  
     Skip files that already exist, without asking
 
-quiet:
+quiet:  
     Suppress the status output
 
-envops:
+envops:  
     Extra options for the Jinja template environment.
 
 
@@ -226,10 +226,10 @@ envops:
 
 Ask a question via raw_input() and return their answer.
 
-text:
+text:  
     prompt text
 
-default :
+default:  
     default value if no answer is provided.
 
 
@@ -239,16 +239,16 @@ default :
 
 Ask a yes/no question via raw_input() and return their answer.
 
-text:
+text:  
     prompt text
 
-default:
+default:  
     default value if no answer is provided.
 
-yes_choices:
+yes_choices:  
     default `['y', 'yes', '1', 'on', 'true', 't']`
 
-no_choices:
+no_choices:  
     default `['n', 'no', '0', 'off', 'false', 'f']`
 
 

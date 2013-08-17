@@ -26,7 +26,7 @@ def test_render(dst):
     assert_file(dst, u'doc', u'images', u'nslogo.gif')
 
     p1 = join(dst, u'awesome', u'hello.txt')
-    p2 = join(SKELETON_PATH, u'{myvar}', u'hello.txt')
+    p2 = join(SKELETON_PATH, u'{{myvar}}', u'hello.txt')
     assert filecmp.cmp(p1, p2)
 
 

@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
-b'This library requires Python 2.6, 2.7, 3.3 or newer'
+b'This library requires pypy or Python 2.6, 2.7, 3.3 or newer'
 import io
 import os
 import re
-from setuptools import setup
-
-
-package = 
+from setuptools import setup, find_packages
 
 
 def get_path(*args):
@@ -18,61 +15,30 @@ def read_from(filepath):
         return f.read()
 
 
-def get_version(package):
-    data = read_from(get_path(package, '__init__.py'))
-    version = re.search(r"__version__\s*=\s*u?'([^']+)'", data).group(1)
-    return str(version)
-
-
-def find_package_data(root, include_files=('.gitignore', )):
-    files = []
-    src_root = get_path(root).rstrip('/') + '/'
-    for dirpath, subdirs, filenames in os.walk(src_root):
-        path, dirname = os.path.split(dirpath)
-        if dirname.startswith(('.', '_')):
-            continue
-        dirpath = dirpath.replace(src_root, '')
-        for filename in filenames:
-            is_valid_filename = not (
-                filename.startswith('.') or
-                filename.endswith('.pyc')
-            )
-            include_it_anyway = filename in include_files
-
-            if is_valid_filename or include_it_anyway:
-                files.append(os.path.join(dirpath, filename))
-    return files
-
-
-def find_packages_data(*roots):
-    return dict([(root, find_package_data(root)) for root in roots])
-
-
-def get_description(package):
-    data = read_from(get_path(package, '__init__.py'))
-    desc = re.search('"""(.+)"""', data, re.DOTALL).group(1)
-    return desc.strip()
-
-
 def get_requirements(filename='requirements.txt'):
     data = read_from(get_path(filename))
     lines = map(lambda s: s.strip(), data.splitlines())
     return [l for l in lines if l and not l.startswith('#')]
 
 
+data = read_from(get_path('voodoo', '__init__.py'))
+version = str(re.search(r"__version__\s*=\s*u?'([^']+)'", data).group(1)).strip()
+desc = str(re.search('"""(.+)"""', data, re.DOTALL).group(1)).strip()
+
+
 setup(
     name='Voodoo',
-    version=get_version('voodoo'),
+    version=version,
     author='Juan-Pablo Scaletti',
     author_email='juanpablo@lucumalabs.com',
-    packages=['voodoo'],
-    package_data=find_packages_data('voodoo', 'tests'),
+    packages=find_packages(),
+    include_package_data=True,
     zip_safe=False,
-    url='http://github.com/lucuma/Voodoo',
+    url='http://github.com/lucuma/voodoo',
     license='MIT license (http://www.opensource.org/licenses/mit-license.php)',
     description='Template system for project skeletons',
-    long_description=get_description('voodoo'),
-    install_requires=get_requirements('voodoo'),
+    long_description=desc,
+    install_requires=get_requirements(),
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Web Environment',

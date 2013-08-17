@@ -170,7 +170,7 @@ def get_name_filter(filter_this, include_this):
     return must_filter
 
 
-rx_param_path = re.compile(r'\{(\w+)\}', flags=re.IGNORECASE)
+rx_param_path = re.compile(r'\{\{\s*(\w+)\s*\}\}', flags=re.IGNORECASE)
 
 
 def parametrize_path(path, data):
