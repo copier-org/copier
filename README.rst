@@ -15,16 +15,17 @@ of PasteScript):
 * It generates a beautiful output and take care of not overwrite existing files, unless instructed to do so.
 * BSD License. See ``LICENSE`` for more details.
 
-.. image:: ./docs/static/images/output.png
+
+.. image:: https://raw.github.com/lucuma/Voodoo/master/docs/static/images/output.png
     :alt: Voodoo sample output as used in a program.
-    :caption: Voodoo sample output as used in a program.
 
+*Above, Voodoo sample output as used in a program*
 
-**Requirements**
+**Requirements:**
 
-Pypy or Python 2.6, 2.7, 3.3 or newer.
+* Pypy or Python 2.6, 2.7, 3.3 or newer.
 
-It also uses the Jinja2 and Colorama python libraries.
+* It also uses the Jinja2 and Colorama Python libraries.
 
 
 How to use
