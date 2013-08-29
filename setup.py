@@ -1,5 +1,6 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-b'This library requires pypy or Python 2.6, 2.7, 3.3 or newer'
+b'This library requires pypy or Python 2.6, 2.7, 3.3, pypy or newer'
 import io
 import os
 import re
@@ -22,8 +23,9 @@ def get_requirements(filename='requirements.txt'):
 
 
 data = read_from(get_path('voodoo', '__init__.py'))
-version = str(re.search(r"__version__\s*=\s*u?'([^']+)'", data).group(1)).strip()
-desc = str(re.search('"""(.+)"""', data, re.DOTALL).group(1)).strip()
+version = re.search(u"__version__\s*=\s*u?'([^']+)'", data).group(1).strip()
+readme = read_from(get_path('README.rst'))
+history = read_from(get_path('HISTORY.rst'))
 
 
 setup(
@@ -35,19 +37,21 @@ setup(
     include_package_data=True,
     zip_safe=False,
     url='http://github.com/lucuma/voodoo',
-    license='MIT license (http://www.opensource.org/licenses/mit-license.php)',
+    license='BSD License',
     description='Template system for project skeletons',
-    long_description=desc,
+    long_description=readme + '\n\n' + history,
     install_requires=get_requirements(),
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: MIT License',
+        'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
+        "Programming Language :: Python :: 2",
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
         'Topic :: Software Development :: Libraries :: Python Modules'

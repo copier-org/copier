@@ -25,17 +25,6 @@ def test_get_vcs_from_url():
     assert get('hg+http://hg.myproject.org/MyProject@v1.0').name == 'hg'
     assert get('hg+http://hg.myproject.org/MyProject@special_feature').name == 'hg'
 
-    assert get('svn+svn://svn.myproject.org/svn/MyProject').name == 'svn'
-    assert get('svn+http://svn.myproject.org/svn/MyProject/trunk@2019').name == 'svn'
-    
-    assert get('bzr+http://bzr.myproject.org/MyProject/trunk').name == 'bzr'
-    assert get('bzr+sftp://user@myproject.org/MyProject/trunk').name == 'bzr'
-    assert get('bzr+ssh://user@myproject.org/MyProject/trunk').name == 'bzr'
-    assert get('bzr+ftp://user@myproject.org/MyProject/trunk').name == 'bzr'
-    assert get('bzr+lp:MyProject').name == 'bzr'
-    assert get('bzr+https://bzr.myproject.org/MyProject/trunk@2019').name == 'bzr'
-    assert get('bzr+http://bzr.myproject.org/MyProject/trunk@v1.0').name == 'bzr'
-
     assert get('http://google.com') == None
     assert get('git.myproject.org/MyProject') == None
 

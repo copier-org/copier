@@ -8,7 +8,7 @@ from pip.vcs import vcs as pip_vcs
 from voodoo._compat import urlparse
 
 
-VCS = ('git', 'hg', 'svn', 'bzr')
+VCS = ('git', 'hg')
 
 
 def get_vcs_from_url(url):
