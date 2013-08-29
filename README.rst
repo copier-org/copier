@@ -15,8 +15,8 @@ of PasteScript):
 * It generates a beautiful output and take care of not overwrite existing files, unless instructed to do so.
 * BSD License. See ``LICENSE`` for more details.
 
-.. figure:: ./docs/static/images/output.png
-    :alt: Voodoo sample output as used in a program.  
+.. image:: ./docs/static/images/output.png
+    :alt: Voodoo sample output as used in a program.
     :caption: Voodoo sample output as used in a program.
 
 
