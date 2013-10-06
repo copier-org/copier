@@ -32,17 +32,17 @@ of PasteScript):
 How to use it as a command line tool
 ------------------------------------
 
-Install it by doing:
+Install it by doing::
 
     $  pip install voodoo
 
-Then, whenever you want to clone a project template to make a new project, do:
+Then, whenever you want to clone a project template to make a new project, do::
 
-    voodoo <Git URL or path to another folder> <New project name>
+    $  voodoo <Git URL or path to another folder> <New project name>
 
-Example:
+Example::
 
-    voodoo git@github.com:lucuma/voodoo-flask.git myapp
+    $  voodoo git@github.com:lucuma/voodoo-flask.git myapp
 
 
 How to use it in your programs
