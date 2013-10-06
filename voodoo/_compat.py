@@ -10,10 +10,8 @@ PY2 = sys.version_info[0] == 2
 
 if PY2:
     string_types = basestring
-    from urllib2 import urlparse
 else:
     string_types = str
-    from urllib import parse as urlparse
 
 
 def to_unicode(txt, encoding='utf8'):

@@ -8,7 +8,7 @@ import unicodedata
 
 from colorama import Fore, Back, Style
 
-from voodoo._compat import to_unicode
+from ._compat import to_unicode
 
 
 def formatm(action, msg='', color='', on_color='', bright=True, indent=12):
@@ -38,6 +38,12 @@ def make_dirs(*lpath):
         if e.errno != errno.EEXIST:
             raise
     return os.path.abspath(path)
+
+
+def read_file(path, encoding='utf8'):
+    with io.open(path, 'rt', encoding=encoding) as f:
+        content = f.read()
+    return content
 
 
 def file_has_this_content(path, content, encoding='utf8'):

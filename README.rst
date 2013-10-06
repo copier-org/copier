@@ -11,7 +11,8 @@ Voodoo
 Voodoo is a template system for project skeletons (similar to the template part
 of PasteScript):
 
-* It can make a copy of a project skeleton processing some files, filter others, etc.
+* It can make a copy of a  project skeleton processing some files, filter others, etc.
+* Works with **local** paths and **git/hg URLs**.
 * It generates a beautiful output and take care of not overwrite existing files, unless instructed to do so.
 * BSD License. See ``LICENSE`` for more details.
 
@@ -28,8 +29,24 @@ of PasteScript):
 * It also uses the Jinja2 and Colorama Python libraries.
 
 
-How to use
------------
+How to use it as a command line tool
+------------------------------------
+
+Install it by doing:
+
+    $  pip install voodoo
+
+Then, whenever you want to clone a project template to make a new project, do:
+
+    voodoo <Git URL or path to another folder> <New project name>
+
+Example:
+
+    voodoo git@github.com:lucuma/voodoo-flask.git myapp
+
+
+How to use it in your programs
+------------------------------
 
 First of all install it and/or add it to your requirements.txt::
 

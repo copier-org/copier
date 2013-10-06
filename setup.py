@@ -55,5 +55,8 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
         'Topic :: Software Development :: Libraries :: Python Modules'
-    ]
+    ],
+    entry_points={
+        'console_scripts': ['voodoo = voodoo.script:run', ],
+    },
 )

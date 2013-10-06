@@ -1,20 +1,25 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 
-import datetime
 from fnmatch import fnmatch
 from functools import reduce
+try:
+    from collections import OrderedDict
+except ImportError:
+    from .ordereddict import OrderedDict
+import datetime
+import json
 import os
 import re
 import shutil
 
 import jinja2
 
-from voodoo._compat import to_unicode
-from voodoo.cli import prompt_bool
-from voodoo.download import get_vcs_from_url, download
-from voodoo.helpers import (
-    pformat, make_dirs, create_file, copy_file, unormalize,
+from ._compat import to_unicode
+from .cli import prompt_bool, prompt
+from .vcs import get_vcs_from_url, clone
+from .helpers import (
+    pformat, make_dirs, create_file, copy_file, unormalize, read_file,
     file_has_this_content, files_are_identical)
 
 
@@ -32,6 +37,13 @@ DEFAULT_ENV_OPTIONS = {
     'variable_start_string': '[[',
     'variable_end_string': ']]',
 }
+
+VOODOO_JSON_FILE = 'voodoo.json'
+
+COLOR_OK = 'green'
+COLOR_WARNING = 'yellow'
+COLOR_IGNORE = 'cyan'
+COLOR_DANGER = 'red'
 
 
 def render_skeleton(
@@ -75,20 +87,49 @@ def render_skeleton(
     src_path = to_unicode(src_path)
     vcs = get_vcs_from_url(src_path)
     if vcs:
-        src_path = download(vcs, quiet)
+        src_path = clone(vcs, quiet)
+
+    data = data or {}
+    user_data = get_user_data(src_path, force, quiet)
+    data.update(user_data)
 
     render_local_skeleton(
         src_path, dst_path, data=data,
         filter_this=filter_this, include_this=include_this,
         pretend=pretend, force=force, skip=skip, quiet=quiet, envops=envops)
 
-    if vcs:
-        shutil.rmtree(src_path)
+    # if vcs:
+    #     shutil.rmtree(src_path)
+
+
+def get_user_data(src_path, force, quiet):
+    json_path = os.path.join(src_path, VOODOO_JSON_FILE)
+    if not os.path.exists(json_path):
+        return {}
+    json_src = read_file(json_path)
+    try:
+        # Load the default user data in order
+        def_user_data = json.loads(json_src, object_pairs_hook=OrderedDict)
+    except ValueError as e:
+        if not quiet:
+            pformat('Invalid `voodoo.json`', color=COLOR_WARNING)
+            print(e)
+            def_user_data = {}
+
+    user_data = {}
+    if force:
+        return def_user_data
+    print('\n' + '-' * 50 + '\n')
+    for key, value in def_user_data.items():
+        user_data[key] = prompt('{0}?'.format(key), value)
+    print('\n' + '-' * 50 + '\n')
+    return user_data
 
 
 def render_local_skeleton(
         src_path, dst_path, data=None, filter_this=None, include_this=None,
         pretend=False, force=False, skip=False, quiet=False, envops=None):
+    src_path = to_unicode(src_path)
     if not os.path.exists(src_path):
         raise ValueError('Project skeleton not found')
     if not os.path.isdir(src_path):
@@ -194,7 +235,7 @@ def render_file(dst_path, rel_folder, folder, src_name, render_tmpl,
 
     if not os.path.exists(final_path):
         if not quiet:
-            pformat('create', created_path, color='green')
+            pformat('create', created_path, color=COLOR_OK)
         if not pretend:
             make_file(src_name, render_tmpl, fullpath, final_path)
         return
@@ -211,12 +252,12 @@ def render_file(dst_path, rel_folder, folder, src_name, render_tmpl,
     # The existing file is identical.
     if identical:
         if not quiet:
-            pformat('identical', created_path, color='cyan', bright=None)
+            pformat('identical', created_path, color=COLOR_IGNORE, bright=None)
         return
 
     # The existing file is different.
     if not quiet:
-        pformat('conflict', created_path, color='red')
+        pformat('conflict', created_path, color=COLOR_DANGER)
     if force:
         overwrite = True
     elif skip:
@@ -226,7 +267,7 @@ def render_file(dst_path, rel_folder, folder, src_name, render_tmpl,
         overwrite = prompt_bool(msg, default=True)
 
     if not quiet:
-        pformat('force' if overwrite else 'skip', created_path, color='yellow')
+        pformat('force' if overwrite else 'skip', created_path, color=COLOR_WARNING)
 
     if overwrite and not pretend:
         if content is None:

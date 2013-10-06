@@ -3,6 +3,12 @@
 History
 -------
 
+1.3.0 (2013-10-04)
++++++++++++++++++++++++++++++++++++++
+
+* Command line script to clone and process templates:
+Eg: `voodoo git@github.com:lucuma/voodoo-flask.git projectname`
+
 1.2.0 (2013-08-17)
 +++++++++++++++++++++++++++++++++++++
 

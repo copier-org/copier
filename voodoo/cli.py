@@ -13,7 +13,7 @@ def prompt(text, default=None, _test=None):
     param default: default value if no answer is provided.
     """
 
-    text += ' [%s]' % default if default else ''
+    text += ' [%s] ' % default if default else ' '
     while True:
         if _test is not None:
             print(text)
