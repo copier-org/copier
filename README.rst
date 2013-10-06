@@ -29,7 +29,7 @@ of PasteScript):
 * It also uses the Jinja2 and Colorama Python libraries.
 
 
-How to use it as a command line tool
+As a command line tool
 ------------------------------------
 
 Install it by doing::
@@ -45,7 +45,7 @@ Example::
     $  voodoo git@github.com:lucuma/voodoo-flask.git myapp
 
 
-How to use it in your programs
+Or in your programs
 ------------------------------
 
 First of all install it and/or add it to your requirements.txt::
