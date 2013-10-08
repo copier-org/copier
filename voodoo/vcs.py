@@ -44,5 +44,8 @@ def clone(vcs, quiet=False):
     if not quiet:
         print('Cloning from {0}'.format(vcs.url))
 
-    subprocess.check_call([vcs.type, 'clone', vcs.url, location])
+    try:
+        subprocess.check_call([vcs.type, 'clone', vcs.url, location])
+    except:
+        return None
     return location

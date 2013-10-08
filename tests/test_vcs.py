@@ -33,10 +33,10 @@ def test_get_vcs_from_url():
 @pytest.mark.slow
 def test_clone():
     urls = [
-        'git@github.com:lucuma/cookiecutter-flask-env.git',
+        'git@github.com:lucuma/Voodoo.git',
     ]
     for url in urls:
         vcs = voodoo.vcs.get_vcs_from_url(url)
         tmp = voodoo.vcs.clone(vcs)
-        assert exists(join(tmp, 'manage.py'))
+        assert exists(join(tmp, 'setup.py'))
         shutil.rmtree(tmp)

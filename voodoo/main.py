@@ -86,20 +86,23 @@ def render_skeleton(
     """
     src_path = to_unicode(src_path)
     vcs = get_vcs_from_url(src_path)
-    if vcs:
-        src_path = clone(vcs, quiet)
+    try:
+        if vcs:
+            src_path = clone(vcs, quiet)
+            if not src_path:
+                return
 
-    data = data or {}
-    user_data = get_user_data(src_path, force, quiet)
-    data.update(user_data)
+        data = data or {}
+        user_data = get_user_data(src_path, force, quiet)
+        data.update(user_data)
 
-    render_local_skeleton(
-        src_path, dst_path, data=data,
-        filter_this=filter_this, include_this=include_this,
-        pretend=pretend, force=force, skip=skip, quiet=quiet, envops=envops)
-
-    # if vcs:
-    #     shutil.rmtree(src_path)
+        render_local_skeleton(
+            src_path, dst_path, data=data,
+            filter_this=filter_this, include_this=include_this,
+            pretend=pretend, force=force, skip=skip, quiet=quiet, envops=envops)
+    finally:
+        if vcs:
+            shutil.rmtree(src_path)
 
 
 def get_user_data(src_path, force, quiet):
