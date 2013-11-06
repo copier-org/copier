@@ -4,6 +4,7 @@ import argparse
 from hashlib import sha512
 from os import urandom
 from os.path import basename
+import sys
 
 from .main import render_skeleton
 
@@ -24,8 +25,15 @@ def new_project(path, tmpl=None, **options):
     )
 
 
+class DefaultHelpParser(argparse.ArgumentParser):
+    def error(self, message):
+        sys.stderr.write('error: %s\n\n' % message)
+        self.print_help()
+        sys.exit(2)
+
+
 def run():
-    parser = argparse.ArgumentParser(description='Create a project from a Voodoo project template.')
+    parser = DefaultHelpParser(description='Create a project from a Voodoo project template.')
     parser.add_argument('tmpl',
                         help='Fullpath or a git/hg URL of a project template ')
     parser.add_argument('path',
