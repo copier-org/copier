@@ -26,8 +26,19 @@ def test_render(dst):
     assert_file(dst, u'doc', u'images', u'nslogo.gif')
 
     p1 = join(dst, u'awesome', u'hello.txt')
-    p2 = join(SKELETON_PATH, u'{{myvar}}', u'hello.txt')
+    p2 = join(SKELETON_PATH, u'[[ myvar ]]', u'hello.txt')
     assert filecmp.cmp(p1, p2)
+
+    p1 = join(dst, u'awesome.txt')
+    p2 = join(SKELETON_PATH, u'[[ myvar ]].txt')
+    assert filecmp.cmp(p1, p2)
+
+    p1 = join(dst, u'awesome_', u'hello.txt')
+    p2 = join(SKELETON_PATH, u'{{ myvar }}_', u'hello.txt')
+    assert filecmp.cmp(p1, p2)
+
+    p1 = join(dst, u'awesome_.txt')
+    assert exists(p1)
 
 
 def test_default_filter(dst):

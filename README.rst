@@ -67,9 +67,9 @@ user input, to help you to make interactive scripts.
 How it works
 -------------
 
-Files inside the skeleton are be copied to destination directly, unless
-are suffixed with the extension '.tmpl'. In that case, the templating
-engine will be used to render them.
+The content of the files inside the skeleton are copied to the destination
+without changes, **unless are suffixed with the extension '.tmpl'.**
+In that case, the templating engine will be used to render them.
 
 A slightly customized Jinja2 templating is used. The main difference is
 that variables are referenced with ``[[ name ]]`` instead of
@@ -106,6 +106,9 @@ so in your template you can have:
     [% else %]
     msg = 'meh'
     [% endif %]
+
+Your folders and files can also use the ``[[ name ]]`` notation: ``mytemplate/[[ foo ]]/something/[[ bar ]].txt``
+
 
 Using it in a script
 --------------------

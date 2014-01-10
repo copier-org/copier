@@ -148,12 +148,15 @@ def render_local_skeleton(
         rel_folder = parametrize_path(rel_folder, data)
         if must_filter(rel_folder):
             continue
-        for name in files:
-            rel_path = os.path.join(rel_folder, re.sub(r'\.tmpl$', '', name))
+        for src_name in files:
+            dst_name = re.sub(r'\.tmpl$', '', src_name)
+            dst_name = parametrize_path(dst_name, data)
+            rel_path = os.path.join(rel_folder, dst_name)
             if must_filter(rel_path):
                 continue
-            render_file(dst_path, rel_folder, folder, name, render_tmpl,
-                        pretend=pretend, force=force, skip=skip, quiet=quiet)
+            render_file(dst_path, rel_folder, folder,
+                src_name, dst_name, render_tmpl,
+                pretend=pretend, force=force, skip=skip, quiet=quiet)
 
 
 def clean_data(data):
@@ -215,21 +218,25 @@ def get_name_filter(filter_this, include_this):
     return must_filter
 
 
-rx_param_path = re.compile(r'\{\{\s*(\w+)\s*\}\}', flags=re.IGNORECASE)
+rx_param_path = re.compile(r'\[\[\s*(\w+)\s*\]\]', flags=re.IGNORECASE)
+rx_param_path_cookiecutter = re.compile(r'\{\{\s*(\w+)\s*\}\}', flags=re.IGNORECASE)
 
 
 def parametrize_path(path, data):
+    """Replace the {{varname}} slots in the path with its real values.
+    """
     def get_data_value(match):
         return data.get(match.group(1), match.group(0))
-    return rx_param_path.sub(get_data_value, path)
+    path = rx_param_path.sub(get_data_value, path)
+    path = rx_param_path_cookiecutter.sub(get_data_value, path)
+    return path
 
 
-def render_file(dst_path, rel_folder, folder, src_name, render_tmpl,
+def render_file(dst_path, rel_folder, folder, src_name, dst_name, render_tmpl,
                 pretend=False, force=False, skip=False, quiet=False):
     """Process or copy a file of the skeleton.
     """
     fullpath = os.path.join(folder, src_name)
-    dst_name = re.sub(r'\.tmpl$', '', src_name)
     created_path = os.path.join(rel_folder, dst_name).lstrip('.').lstrip('/')
 
     if pretend:

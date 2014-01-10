@@ -14,7 +14,7 @@ DATA = {
     'package': 'demo',
     'py3': True,
     'make_secret': lambda: sha1(urandom(48)).hexdigest(),
-    'myvar': 'awesome',
+    'myvar': 'awesome'
 }
 
 
