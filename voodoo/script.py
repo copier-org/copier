@@ -3,7 +3,6 @@
 import argparse
 from hashlib import sha512
 from os import urandom
-from os.path import basename
 import sys
 
 from .main import render_skeleton
@@ -16,7 +15,6 @@ default_context = {
 
 def new_project(path, tmpl=None, **options):
     data = default_context.copy()
-    data['project_name'] = basename(path)
     render_skeleton(
         tmpl, path, data=data,
         filter_this=['voodoo.json', '.git/*', '.hg/*'],

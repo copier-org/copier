@@ -139,7 +139,7 @@ def render_local_skeleton(
     if not os.path.isdir(src_path):
         raise ValueError('Project skeleton must be a folder')
     data = clean_data(data)
-    data.setdefault('name', os.path.basename(dst_path))
+    data.setdefault('folder_name', os.path.basename(dst_path))
     must_filter = get_name_filter(filter_this, include_this)
     render_tmpl = get_jinja_renderer(src_path, data, envops)
 
