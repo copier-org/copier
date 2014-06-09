@@ -101,7 +101,7 @@ def render_skeleton(
             filter_this=filter_this, include_this=include_this,
             pretend=pretend, force=force, skip=skip, quiet=quiet, envops=envops)
     finally:
-        if vcs:
+        if src_path and vcs:
             shutil.rmtree(src_path)
 
 
