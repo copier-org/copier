@@ -3,10 +3,7 @@ from __future__ import print_function
 
 from fnmatch import fnmatch
 from functools import reduce
-try:
-    from collections import OrderedDict
-except ImportError:
-    from .ordereddict import OrderedDict
+from collections import OrderedDict
 import datetime
 import json
 import os
