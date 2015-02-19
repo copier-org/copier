@@ -16,7 +16,7 @@ from ._compat import to_unicode
 from .cli import prompt_bool, prompt
 from .vcs import get_vcs_from_url, clone
 from .helpers import (
-    pformat, make_dirs, create_file, copy_file, unormalize, read_file,
+    print_format, make_dirs, create_file, copy_file, normalize, read_file,
     file_has_this_content, files_are_identical)
 
 
@@ -115,7 +115,7 @@ def get_user_data(src_path, force, quiet):
         def_user_data = json.loads(json_src, object_pairs_hook=OrderedDict)
     except ValueError as e:
         if not quiet:
-            pformat('Invalid `voodoo.json`', color=COLOR_WARNING)
+            print_format('Invalid `voodoo.json`', color=COLOR_WARNING)
             print(e)
             def_user_data = {}
 
@@ -194,13 +194,13 @@ def get_name_filter(filter_this, include_this):
     decomposed unicode string. In those systems, u'ñ' is read as `\u0303`
     instead of `\xf1`.
     """
-    filter_this = [unormalize(to_unicode(f)) for f in
+    filter_this = [normalize(to_unicode(f)) for f in
                    filter_this or DEFAULT_FILTER]
-    include_this = [unormalize(to_unicode(f)) for f in
+    include_this = [normalize(to_unicode(f)) for f in
                     include_this or DEFAULT_INCLUDE]
 
     def fullmatch(path, pattern):
-        path = unormalize(path)
+        path = normalize(path)
         name = os.path.basename(path)
         return fnmatch(name, pattern) or fnmatch(path, pattern)
 
@@ -242,7 +242,7 @@ def render_file(dst_path, rel_folder, folder, src_name, dst_name, render_tmpl,
 
     if not os.path.exists(final_path):
         if not quiet:
-            pformat('create', created_path, color=COLOR_OK)
+            print_format('create', created_path, color=COLOR_OK)
         if not pretend:
             make_file(src_name, render_tmpl, fullpath, final_path)
         return
@@ -259,12 +259,12 @@ def render_file(dst_path, rel_folder, folder, src_name, dst_name, render_tmpl,
     # The existing file is identical.
     if identical:
         if not quiet:
-            pformat('identical', created_path, color=COLOR_IGNORE, bright=None)
+            print_format('identical', created_path, color=COLOR_IGNORE, bright=None)
         return
 
     # The existing file is different.
     if not quiet:
-        pformat('conflict', created_path, color=COLOR_DANGER)
+        print_format('conflict', created_path, color=COLOR_DANGER)
     if force:
         overwrite = True
     elif skip:
@@ -274,7 +274,7 @@ def render_file(dst_path, rel_folder, folder, src_name, dst_name, render_tmpl,
         overwrite = prompt_bool(msg, default=True)
 
     if not quiet:
-        pformat('force' if overwrite else 'skip', created_path, color=COLOR_WARNING)
+        print_format('force' if overwrite else 'skip', created_path, color=COLOR_WARNING)
 
     if overwrite and not pretend:
         if content is None:

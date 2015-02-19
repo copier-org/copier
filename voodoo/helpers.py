@@ -11,7 +11,7 @@ from colorama import Fore, Back, Style
 from ._compat import to_unicode
 
 
-def formatm(action, msg='', color='', on_color='', bright=True, indent=12):
+def format_message(action, msg='', color='', on_color='', bright=True, indent=12):
     action = action.rjust(indent, ' ')
     color = getattr(Fore, color.upper(), '')
     on_color = getattr(Back, on_color.upper(), '')
@@ -26,8 +26,8 @@ def formatm(action, msg='', color='', on_color='', bright=True, indent=12):
     ])
 
 
-def pformat(*args, **kwargs):
-    print(formatm(*args, **kwargs))
+def print_format(*args, **kwargs):
+    print(format_message(*args, **kwargs))
 
 
 def make_dirs(*lpath):
@@ -56,7 +56,7 @@ def files_are_identical(path_1, path_2):
     return filecmp.cmp(path_1, path_2, shallow=False)
 
 
-def unormalize(text, form='NFD'):
+def normalize(text, form='NFD'):
     return unicodedata.normalize(form, text)
 
 
