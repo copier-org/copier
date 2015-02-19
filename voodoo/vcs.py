@@ -10,13 +10,12 @@ import tempfile
 
 rx_vcs = re.compile(r'^(git|hg)(@|\+[a-z]+://|://)', re.IGNORECASE)
 
-
 VCS = namedtuple('VCS', 'type url')
 
 
 def get_vcs_from_url(url):
-    """Try to identify the URL as a git or mercurial repo and return a
-    namedtuple `(type url)` if have success.
+    """Try to identify the URL as a git or mercurial repo and return a namedtuple
+    `(type url)` if have success.
     """
     match = rx_vcs.match(url)
     if match:
@@ -31,6 +30,7 @@ def get_vcs_from_url(url):
 
 
 def normalize_url(url):
+    """Ensure the url doesn't start with either git or hg."""
     if not url.startswith(('git+', 'hg+')):
         return url
     return url[4:]
