@@ -45,6 +45,9 @@ COLOR_WARNING = 'yellow'
 COLOR_IGNORE = 'cyan'
 COLOR_DANGER = 'red'
 
+RX_PARAM_PATH = re.compile(r'\[\[\s*(\w+)\s*\]\]', flags=re.IGNORECASE)
+RX_PARAM_PATH_COOKIECUTTER = re.compile(r'\{\{\s*(\w+)\s*\}\}', flags=re.IGNORECASE)
+
 
 def render_skeleton(
         src_path, dst_path, data=None, filter_this=None, include_this=None,
@@ -218,17 +221,13 @@ def get_name_filter(filter_this, include_this):
     return must_filter
 
 
-rx_param_path = re.compile(r'\[\[\s*(\w+)\s*\]\]', flags=re.IGNORECASE)
-rx_param_path_cookiecutter = re.compile(r'\{\{\s*(\w+)\s*\}\}', flags=re.IGNORECASE)
-
-
 def parametrize_path(path, data):
     """Replace the {{varname}} slots in the path with its real values.
     """
     def get_data_value(match):
         return data.get(match.group(1), match.group(0))
-    path = rx_param_path.sub(get_data_value, path)
-    path = rx_param_path_cookiecutter.sub(get_data_value, path)
+    path = RX_PARAM_PATH.sub(get_data_value, path)
+    path = RX_PARAM_PATH_COOKIECUTTER.sub(get_data_value, path)
     return path
 
 
