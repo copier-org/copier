@@ -1,5 +1,7 @@
 *.py[cod]
 .DS_Store
+*.sublime-*
+.idea
 
 # C extensions
 *.so
