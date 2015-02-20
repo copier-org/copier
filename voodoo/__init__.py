@@ -16,7 +16,7 @@ See the documentation and code at: `<http://github.com/lucuma/Voodoo>`_
 
 """
 from voodoo.main import render_skeleton
-from voodoo.cli import prompt, prompt_bool
+from voodoo.cli import prompt, prompt_bool  # noqa
 
 __version__ = '1.3.6'
 

@@ -71,7 +71,7 @@ Ready to contribute? Here's how to set up `voodoo` for local development.
 
 5. When you\'re done making changes, check that your changes pass all tests, including testing other Python versions with ``tox`::
 
-    $  flake8 solution tests
+    $  flake8 voodoo tests
     $  py.test tests
     $  tox
 
@@ -101,4 +101,4 @@ Tips
 
 To run a subset of tests::
 
-  $  py.test tests/tests_file.py
+  $  py.test tests/the-tests-file.py

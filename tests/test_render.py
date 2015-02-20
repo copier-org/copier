@@ -4,8 +4,10 @@ from os.path import join, dirname, exists
 import pytest
 import voodoo
 
-from .helpers import (read_content, write_content, assert_file, render,
-                      SKELETON_PATH, DATA, filecmp)
+from .helpers import (
+    read_content, write_content, assert_file, render,
+    SKELETON_PATH, filecmp
+)
 
 
 def test_skeleton_not_found(dst):
