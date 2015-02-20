@@ -8,4 +8,4 @@ install:
     - python setup.py install
     - pip install -r requirements-tests.txt
 script:
-    py.test -x tests/
+    py.test tests/

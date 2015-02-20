@@ -154,9 +154,11 @@ def render_local_skeleton(
             rel_path = os.path.join(rel_folder, dst_name)
             if must_filter(rel_path):
                 continue
-            render_file(dst_path, rel_folder, folder,
+            render_file(
+                dst_path, rel_folder, folder,
                 src_name, dst_name, render_tmpl,
-                pretend=pretend, force=force, skip=skip, quiet=quiet)
+                pretend=pretend, force=force, skip=skip, quiet=quiet
+            )
 
 
 def clean_data(data):
@@ -247,8 +249,7 @@ def render_file(dst_path, rel_folder, folder, src_name, dst_name, render_tmpl,
             make_file(src_name, render_tmpl, fullpath, final_path)
         return
 
-    ## A file with this name already exists
-
+    # A file with this name already exists
     content = None
     if src_name.endswith('.tmpl'):
         content = render_tmpl(fullpath)
@@ -289,4 +290,3 @@ def make_file(src_name, render_tmpl, fullpath, final_path):
         create_file(final_path, content)
     else:
         copy_file(fullpath, final_path)
-

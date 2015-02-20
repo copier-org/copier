@@ -40,7 +40,7 @@ def clone(vcs, quiet=False):
     """Clone a repo to a temporal folder and return the path.
     """
     location = tempfile.mkdtemp()
-    shutil.rmtree(location)  # Path must not exists
+    shutil.rmtree(location)  # Path must not exists
     if not quiet:
         print('Cloning from {0}'.format(vcs.url))
 

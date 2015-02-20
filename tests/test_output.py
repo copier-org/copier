@@ -53,4 +53,3 @@ def test_output_quiet(capsys, dst):
     render(dst, quiet=True)
     out, err = capsys.readouterr()
     assert out == u''
-
