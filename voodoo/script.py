@@ -14,6 +14,9 @@ default_context = {
 
 
 def new_project(path, tmpl=None, **options):
+    """Creates a new project using tmpl at path."""
+    if tmpl is None:
+        raise ValueError("tmpl must be be a path to the template.")
     data = default_context.copy()
     render_skeleton(
         tmpl, path, data=data,
@@ -31,6 +34,7 @@ class DefaultHelpParser(argparse.ArgumentParser):
 
 
 def run():
+    """Voodoo's CLI entry point."""
     parser = DefaultHelpParser(description='Create a project from a Voodoo project template.')
     parser.add_argument('tmpl',
                         help='Fullpath or a git/hg URL of a project template ')
@@ -46,8 +50,8 @@ def run():
                         help='Suppress status output')
 
     args = parser.parse_args()
-    da = vars(args)
-    new_project(da.pop('path'), **da)
+    dict_args = vars(args)
+    new_project(dict_args.pop('path'), **dict_args)
 
 
 if __name__ == '__main__':
