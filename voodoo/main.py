@@ -12,12 +12,12 @@ import shutil
 
 import jinja2
 
-from ._compat import to_unicode
-from .cli import prompt_bool, prompt
-from .vcs import get_vcs_from_url, clone
-from .helpers import (
-    print_format, make_dirs, create_file, copy_file, normalize, read_file,
-    file_has_this_content, files_are_identical)
+from voodoo._compat import to_unicode
+from voodoo.cli import prompt_bool, prompt
+from voodoo.vcs import get_vcs_from_url, clone
+from voodoo.helpers import (print_format, make_dirs, create_file, copy_file,
+                            normalize, read_file, file_has_this_content,
+                            files_are_identical)
 
 
 DEFAULT_DATA = {

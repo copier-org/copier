@@ -25,6 +25,7 @@ def get_vcs_from_url(url):
         vcs_type = 'git'
         vcs_url = url
     else:
+        # TODO: Raise exception if unable to process URL.
         return
     return VCS(vcs_type, vcs_url)
 
@@ -37,9 +38,13 @@ def normalize_url(url):
 
 
 def clone(vcs, quiet=False):
-    """Clone a repo to a temporal folder and return the path.
+    """Clone a repo to `location` folder, if no location is given, create a
+    temporary folder.
+
+    Returns the path where the repository was cloned to.
     """
     location = tempfile.mkdtemp()
+
     shutil.rmtree(location)  # Path must not exists
     if not quiet:
         print('Cloning from {0}'.format(vcs.url))
@@ -49,3 +54,10 @@ def clone(vcs, quiet=False):
     except:
         return None
     return location
+
+def clone_install(vcs, cwd=None):
+    """Clone a repo inside the `cwd` directory."""
+    try:
+        subprocess.Popen([vcs.type, 'clone', vcs.url], cwd=cwd)
+    except:
+        return None

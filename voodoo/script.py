@@ -1,16 +1,29 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import argparse
-from hashlib import sha512
-from os import urandom
+from __future__ import print_function
 import sys
+from os import getenv, urandom, getcwd
+from os.path import join, expanduser, isdir
+from hashlib import sha512
+from shutil import copytree
 
-from .main import render_skeleton
+import baker
+
+from voodoo.main import render_skeleton
+from voodoo.vcs import get_vcs_from_url, clone_install
+from voodoo.dir_utils import ensure_directory, list_dirs
 
 
 default_context = {
     'make_secret': lambda: sha512(urandom(48)).hexdigest()
 }
+
+
+
+VOODOO_TEMPLATES_DEFAULT_DIR = join(expanduser("~/"), ".voodoo/templates/")
+VOODOO_TEMPLATES_DIR = getenv('VOODOO_TEMPLATES_DIR',
+                              VOODOO_TEMPLATES_DEFAULT_DIR)
+ensure_directory(VOODOO_TEMPLATES_DIR)
 
 
 def new_project(path, tmpl=None, **options):
@@ -25,34 +38,31 @@ def new_project(path, tmpl=None, **options):
         **options
     )
 
+@baker.command
+def list():
+    print("Voodoo Templates installed:")
+    for index, template_dir in enumerate(list_dirs(VOODOO_TEMPLATES_DIR)):
+        print("{index}: {template_dir}".format(index=index, template_dir=template_dir))
 
-class DefaultHelpParser(argparse.ArgumentParser):
-    def error(self, message):
-        sys.stderr.write('error: %s\n\n' % message)
-        self.print_help()
-        sys.exit(2)
+@baker.command
+def new(template_name, destination_directory=None):
+    """Render the `template_name` template at the `destination_directory`."""
+    if destination_directory is None:
+       destination_directory = getcwd()
 
+    template_dir = join(VOODOO_TEMPLATES_DIR, template_name)
+    if not isdir(template_dir):
+        raise IOError("Template {template_name} does not exist.".format(
+            template_name=template_name))
 
-def run():
-    """Voodoo's CLI entry point."""
-    parser = DefaultHelpParser(description='Create a project from a Voodoo project template.')
-    parser.add_argument('tmpl',
-                        help='Fullpath or a git/hg URL of a project template ')
-    parser.add_argument('path',
-                        help='The name or final fullpath of the new project')
-    parser.add_argument('-p', '--pretend', action='store_true',
-                        help='Run but do not make any changes')
-    parser.add_argument('-f', '--force', action='store_true',
-                        help='Overwrite files that already exist, without asking')
-    parser.add_argument('-s', '--skip', action='store_true',
-                        help='Skip files that already exist, without asking')
-    parser.add_argument('-q', '--quiet', action='store_true',
-                        help='Suppress status output')
+    new_project(desination_directory, template_dir)
 
-    args = parser.parse_args()
-    dict_args = vars(args)
-    new_project(dict_args.pop('path'), **dict_args)
-
+@baker.command
+def install(template_url, template_name=None):
+    """Installs the template in VOODOO_TEMPLATES_DIR"""
+    # TODO: Use template_name
+    vcs = get_vcs_from_url(template_url)
+    clone_install(vcs, VOODOO_TEMPLATES_DIR)
 
 if __name__ == '__main__':
-    run()
+    baker.run()
