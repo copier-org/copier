@@ -8,7 +8,7 @@ import subprocess
 import tempfile
 
 
-rx_vcs = re.compile(r'^(git|hg)(@|\+[a-z]+://|://)', re.IGNORECASE)
+RX_VCS = re.compile(r'^(git|hg)(@|\+[a-z]+://|://)', re.IGNORECASE)
 
 VCS = namedtuple('VCS', 'type url')
 
@@ -17,7 +17,7 @@ def get_vcs_from_url(url):
     """Try to identify the URL as a git or mercurial repo and return a namedtuple
     `(type url)` if have success.
     """
-    match = rx_vcs.match(url)
+    match = RX_VCS.match(url)
     if match:
         vcs_type = match.group(1)
         vcs_url = normalize_url(url)
@@ -54,6 +54,7 @@ def clone(vcs, quiet=False):
     except:
         return None
     return location
+
 
 def clone_install(vcs, cwd=None):
     """Clone a repo inside the `cwd` directory."""

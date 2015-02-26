@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import print_function
-import sys
 from os import getenv, urandom, getcwd
-from os.path import join, expanduser, isdir
+from os.path import join, expanduser, isdir, basename
 from hashlib import sha512
-from shutil import copytree
 
 import baker
 
@@ -17,7 +15,6 @@ from voodoo.dir_utils import ensure_directory, list_dirs
 default_context = {
     'make_secret': lambda: sha512(urandom(48)).hexdigest()
 }
-
 
 
 VOODOO_TEMPLATES_DEFAULT_DIR = join(expanduser("~/"), ".voodoo/templates/")
@@ -38,31 +35,40 @@ def new_project(path, tmpl=None, **options):
         **options
     )
 
+
 @baker.command
 def list():
     print("Voodoo Templates installed:")
     for index, template_dir in enumerate(list_dirs(VOODOO_TEMPLATES_DIR)):
-        print("{index}: {template_dir}".format(index=index, template_dir=template_dir))
+        print("{index}: {template_dir}".format(index=index,
+                                               template_dir=basename(template_dir)))
+
 
 @baker.command
 def new(template_name, destination_directory=None):
     """Render the `template_name` template at the `destination_directory`."""
     if destination_directory is None:
-       destination_directory = getcwd()
+        destination_directory = getcwd()
 
     template_dir = join(VOODOO_TEMPLATES_DIR, template_name)
     if not isdir(template_dir):
         raise IOError("Template {template_name} does not exist.".format(
             template_name=template_name))
 
-    new_project(desination_directory, template_dir)
+    new_project(destination_directory, template_dir)
+
 
 @baker.command
 def install(template_url, template_name=None):
     """Installs the template in VOODOO_TEMPLATES_DIR"""
     # TODO: Use template_name
     vcs = get_vcs_from_url(template_url)
-    clone_install(vcs, VOODOO_TEMPLATES_DIR)
+    if vcs:
+        clone_install(vcs, VOODOO_TEMPLATES_DIR)
+        print('done')
+    else:
+        print("Couldn't process URL.")
+
 
 if __name__ == '__main__':
     baker.run()
