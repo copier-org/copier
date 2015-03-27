@@ -26,8 +26,8 @@ def test_get_vcs_from_url():
     assert get('hg+http://hg.myproject.org/MyProject@v1.0').type == 'hg'
     assert get('hg+http://hg.myproject.org/MyProject@special_feature').type == 'hg'
 
-    assert get('http://google.com') == None
-    assert get('git.myproject.org/MyProject') == None
+    assert get('http://google.com') is None
+    assert get('git.myproject.org/MyProject') is None
 
 
 @pytest.mark.slow

@@ -45,26 +45,23 @@ def test_render(dst):
 
 def test_default_filter(dst):
     render(dst)
-    assert not exists(join(dst, '.gitignore'))
-    assert not exists(join(dst, 'build', '.gittouch'))
+    assert not exists(join(dst, '.svn'))
 
 
 def test_include_file(dst):
-    render(dst, include_this=['.gitignore'])
-    assert_file(dst, '.gitignore')
-    assert not exists(join(dst, 'build', '.gittouch'))
+    render(dst, include_this=['.svn'])
+    assert_file(dst, '.svn')
 
 
 def test_include_pattern(dst):
-    render(dst, include_this=['build/.git*'])
-    assert not exists(join(dst, '.gitignore'))
-    assert_file(dst, 'build', '.gittouch')
+    render(dst, include_this=['.*'])
+    assert exists(join(dst, '.svn'))
 
 
 def test_filter_file(dst):
     render(dst, filter_this=[u'mañana.txt'])
-    copied = exists(join(dst, 'doc', u'mañana.txt'))
-    assert not copied
+    path = join(dst, 'doc', u'mañana.txt')
+    assert not exists(path)
 
 
 def test_skip_option(dst):
