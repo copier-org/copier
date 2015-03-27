@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# coding=utf-8
 import argparse
 from hashlib import sha512
 from os import urandom
@@ -18,12 +18,7 @@ def new_project(path, tmpl=None, **options):
     if tmpl is None:
         raise ValueError("tmpl must be be a path to the template.")
     data = default_context.copy()
-    render_skeleton(
-        tmpl, path, data=data,
-        filter_this=['voodoo.json', '.git/*', '.hg/*'],
-        include_this=['.gittouch'],
-        **options
-    )
+    render_skeleton(tmpl, path, data=data, **options)
 
 
 class DefaultHelpParser(argparse.ArgumentParser):

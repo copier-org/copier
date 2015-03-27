@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# coding=utf-8
 b'This library requires pypy or Python 2.6, 2.7, 3.3, pypy or newer'
 import io
 import os

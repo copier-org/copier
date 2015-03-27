@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# coding=utf-8
 from hashlib import sha512
 from os import urandom
 from os.path import join, dirname, basename

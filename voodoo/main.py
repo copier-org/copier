@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# coding=utf-8
 from __future__ import print_function
 
 from fnmatch import fnmatch
@@ -9,6 +9,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 
 import jinja2
 
@@ -24,7 +25,10 @@ DEFAULT_DATA = {
     'now': datetime.datetime.utcnow,
 }
 
-DEFAULT_FILTER = ('.*', '~*', '*.py[co]')
+DEFAULT_FILTER = (
+    '~*', '*.py[co]',
+    '.git', '.git/*', '.hg', '.hg/*', '.svn', '.svn/*',
+)
 DEFAULT_INCLUDE = ()
 
 DEFAULT_ENV_OPTIONS = {
@@ -86,6 +90,10 @@ def render_skeleton(
     """
     src_path = to_unicode(src_path)
     vcs = get_vcs_from_url(src_path)
+    if filter_this is None:
+        filter_this = DEFAULT_FILTER
+    if include_this is None:
+        include_this = DEFAULT_INCLUDE
     try:
         if vcs:
             src_path = clone(vcs, quiet)
@@ -100,6 +108,7 @@ def render_skeleton(
             src_path, dst_path, data=data,
             filter_this=filter_this, include_this=include_this,
             pretend=pretend, force=force, skip=skip, quiet=quiet, envops=envops)
+        run_setup(dst_path)
     finally:
         if src_path and vcs:
             shutil.rmtree(src_path)
@@ -127,6 +136,11 @@ def get_user_data(src_path, force, quiet):
         resp = prompt('{0}?'.format(key), value)
         user_data[key] = resp.decode('utf8')
     print('\n' + '-' * 50 + '\n')
+
+    try:
+        os.remove(json_path)
+    except OSError:
+        pass
     return user_data
 
 
@@ -159,6 +173,19 @@ def render_local_skeleton(
                 src_name, dst_name, render_tmpl,
                 pretend=pretend, force=force, skip=skip, quiet=quiet
             )
+
+
+def run_setup(dst_path):
+    setup_path = os.path.join(dst_path, 'voodoo_setup.py')
+    if not os.path.exists(setup_path):
+        return
+    os.chdir(dst_path)
+    setup_cmd = 'python ' + setup_path
+    subprocess.Popen(setup_cmd, shell=True).communicate()
+    try:
+        os.remove(setup_path)
+    except OSError:
+        pass
 
 
 def clean_data(data):
@@ -196,10 +223,8 @@ def get_name_filter(filter_this, include_this):
     decomposed unicode string. In those systems, u'ñ' is read as `\u0303`
     instead of `\xf1`.
     """
-    filter_this = [normalize(to_unicode(f)) for f in
-                   filter_this or DEFAULT_FILTER]
-    include_this = [normalize(to_unicode(f)) for f in
-                    include_this or DEFAULT_INCLUDE]
+    filter_this = [normalize(to_unicode(f)) for f in filter_this]
+    include_this = [normalize(to_unicode(f)) for f in include_this]
 
     def fullmatch(path, pattern):
         path = normalize(path)

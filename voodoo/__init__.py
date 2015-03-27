@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# coding=utf-8
 """
 ============
 Voodoo
@@ -18,6 +18,6 @@ See the documentation and code at: `<http://github.com/lucuma/Voodoo>`_
 from voodoo.main import render_skeleton
 from voodoo.cli import prompt, prompt_bool  # noqa
 
-__version__ = '1.3.6'
+__version__ = '1.4.0'
 
 reanimate_skeleton = render_skeleton  # backward compat
