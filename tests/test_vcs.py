@@ -38,5 +38,6 @@ def test_clone():
     for url in urls:
         vcs = voodoo.vcs.get_vcs_from_url(url)
         tmp = voodoo.vcs.clone(vcs)
+        assert tmp
         assert exists(join(tmp, 'setup.py'))
         shutil.rmtree(tmp)

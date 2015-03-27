@@ -46,6 +46,7 @@ def clone(vcs, quiet=False):
 
     try:
         subprocess.check_call([vcs.type, 'clone', vcs.url, location])
-    except:
+    except Exception as e:
+        print(e)
         return None
     return location
