@@ -33,7 +33,7 @@ def test_get_vcs_from_url():
 @pytest.mark.slow
 def test_clone():
     urls = [
-        'git@github.com:lucuma/Voodoo.git',
+        'https://github.com/lucuma/Voodoo.git',
     ]
     for url in urls:
         vcs = voodoo.vcs.get_vcs_from_url(url)

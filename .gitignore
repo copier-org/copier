@@ -29,6 +29,7 @@ pip-log.txt
 .tox
 nosetests.xml
 htmlcov
+__pycache__
 
 # Translations
 *.mo

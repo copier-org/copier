@@ -28,13 +28,14 @@ lint:
 	flake8 voodoo tests
 
 test:
-	py.test tests/
+	find . -name '__pycache__' -exec rm -rf {} +
+	py.test -x tests/
 
 test-all:
 	tox
 
 coverage:
-	py.test --cov-config .coveragerc --cov-report html --cov voodoo tests/ 
+	py.test --cov-config .coveragerc --cov-report html --cov voodoo tests/
 	open htmlcov/index.html
 
 docs:

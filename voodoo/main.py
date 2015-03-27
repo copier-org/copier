@@ -26,7 +26,7 @@ DEFAULT_DATA = {
 }
 
 DEFAULT_FILTER = (
-    '~*', '*.py[co]',
+    '~*', '*.py[co]', '__pycache__', '__pycache__/*',
     '.git', '.git/*', '.hg', '.hg/*', '.svn', '.svn/*',
 )
 DEFAULT_INCLUDE = ()
