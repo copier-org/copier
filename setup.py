@@ -25,7 +25,6 @@ def get_requirements(filename='requirements.txt'):
 data = read_from(get_path('voodoo', '__init__.py'))
 version = re.search(u"__version__\s*=\s*u?'([^']+)'", data).group(1).strip()
 readme = read_from(get_path('README.rst'))
-history = read_from(get_path('HISTORY.rst'))
 
 
 setup(
@@ -39,7 +38,7 @@ setup(
     url='http://github.com/lucuma/voodoo',
     license='MIT license (see LICENSE)',
     description='Template system for project skeletons',
-    long_description=readme + '\n\n' + history,
+    long_description=readme,
     install_requires=get_requirements(),
     classifiers=[
         'Development Status :: 4 - Beta',
