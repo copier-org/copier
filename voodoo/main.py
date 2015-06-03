@@ -134,7 +134,7 @@ def get_user_data(src_path, force, quiet):
     print('\n' + '-' * 50 + '\n')
     for key, value in def_user_data.items():
         resp = prompt('{0}?'.format(key), value)
-        user_data[key] = resp.decode('utf8')
+        user_data[key] = to_unicode(resp).decode('utf8')
     print('\n' + '-' * 50 + '\n')
 
     try:
