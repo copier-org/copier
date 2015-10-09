@@ -67,5 +67,9 @@ def install(template_url, template_name=None):
         print("Couldn't process URL.")
 
 
-if __name__ == '__main__':
+def run():
     baker.run()
+
+
+if __name__ == '__main__':
+    run()
