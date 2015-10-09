@@ -2,12 +2,6 @@
 Voodoo
 ===============================
 
-.. image:: https://badge.fury.io/py/Voodoo.png
-    :target: http://badge.fury.io/py/Voodoo
-
-.. image:: https://pypip.in/d/Voodoo/badge.png
-    :target: https://crate.io/packages/Voodoo?version=latest
-
 Voodoo is a template system for project skeletons (similar to the template part
 of PasteScript):
 
