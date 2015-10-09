@@ -1,9 +1,10 @@
 language: python
 python:
-  - "3.4"
+  - "3.5"
   - "2.7"
   - "pypy"
   - "3.3"
+  - "3.4"
 install:
     - python setup.py install
     - pip install -r requirements-tests.txt

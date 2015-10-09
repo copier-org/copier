@@ -1,4 +1,6 @@
 # coding=utf-8
+from __future__ import print_function
+
 import io
 import os
 import errno
@@ -8,7 +10,7 @@ import unicodedata
 
 from colorama import Fore, Back, Style
 
-from ._compat import to_unicode
+from voodoo._compat import to_unicode
 
 
 def format_message(action, msg='', color='', on_color='', bright=True, indent=12):
@@ -35,7 +37,7 @@ def print_format(*args, **kwargs):
 def make_dirs(*lpath):
     """Ensure the directories exist.
 
-    lpath: list of directories
+    lpath: path fragments
     """
     path = os.path.join(*lpath)
     try:
@@ -44,6 +46,15 @@ def make_dirs(*lpath):
         if e.errno != errno.EEXIST:
             raise
     return os.path.abspath(path)
+
+
+def list_dirs(path):
+    """Return the subdirectories in `path`."""
+    dirpath = os.path.abspath(path)
+    for filename in os.listdir(path):
+        fullpath = os.path.join(dirpath, filename)
+        if os.path.isdir(fullpath):
+            yield fullpath
 
 
 def read_file(path, encoding='utf8'):
