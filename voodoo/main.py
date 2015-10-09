@@ -25,12 +25,15 @@ DEFAULT_DATA = {
     'now': datetime.datetime.utcnow,
 }
 
+# Files to ignore in the folders
 DEFAULT_FILTER = (
     '~*', '*.py[co]', '__pycache__', '__pycache__/*',
     '.git', '.git/*', '.hg', '.hg/*', '.svn', '.svn/*',
 )
+
 DEFAULT_INCLUDE = ()
 
+# The default env options for jinja2
 DEFAULT_ENV_OPTIONS = {
     'autoescape': True,
     'block_start_string': '[%',
@@ -39,6 +42,7 @@ DEFAULT_ENV_OPTIONS = {
     'variable_end_string': ']]',
 }
 
+# Variables that need user input when rendering the template.
 VOODOO_JSON_FILE = 'voodoo.json'
 
 COLOR_OK = 'green'
@@ -54,8 +58,10 @@ def render_skeleton(
         src_path, dst_path, data=None, filter_this=None, include_this=None,
         pretend=False, force=False, skip=False, quiet=False, envops=None):
     """
+    Uses the template in src_path to generate the scaffold/skeleton at dst_path
+
     src_path:
-        Absolute path to the project skeleton
+        Absolute path to the project skeleton. May be a version control system URL
 
     dst_path:
         Absolute path to where to render the skeleton
@@ -115,6 +121,8 @@ def render_skeleton(
 
 
 def get_user_data(src_path, force, quiet):
+    """Query to user for information needed as per the template's ``vooodoo.json``.
+    """
     json_path = os.path.join(src_path, VOODOO_JSON_FILE)
     if not os.path.exists(json_path):
         return {}
@@ -147,6 +155,11 @@ def get_user_data(src_path, force, quiet):
 def render_local_skeleton(
         src_path, dst_path, data=None, filter_this=None, include_this=None,
         pretend=False, force=False, skip=False, quiet=False, envops=None):
+    """Uses the template in ``src_path`` to generate the scaffold/skeleton at
+    ``dst_path``. ``src_path`` **must be** an absolute local path.
+
+    Called by ``render_skeleton``.
+    """
     src_path = to_unicode(src_path)
     if not os.path.exists(src_path):
         raise ValueError('Project skeleton not found')
@@ -310,6 +323,9 @@ def render_file(dst_path, rel_folder, folder, src_name, dst_name, render_tmpl,
 
 
 def make_file(src_name, render_tmpl, fullpath, final_path):
+    """If src_name is a template, render it and place it at final_path, otherwise
+    just copy the file to the final_path.
+    """
     if src_name.endswith('.tmpl'):
         content = render_tmpl(fullpath)
         create_file(final_path, content)
