@@ -14,7 +14,7 @@ of PasteScript):
 * It can make a copy of a  project skeleton processing some files, filter others, etc.
 * Works with **local** paths and **git/hg URLs**.
 * It generates a beautiful output and take care of not overwrite existing files, unless instructed to do so.
-* MIT License. See ``LICENSE`` for more details.
+* BSD License. See ``LICENSE`` for more details.
 
 
 .. image:: https://raw.github.com/lucuma/Voodoo/master/voodoo-output.png
@@ -279,4 +279,4 @@ no_choices:
 ______
 
 :copyright: `Juan-Pablo Scaletti <http://jpscaletti.com>`_.
-:license: MIT, see LICENSE for more details.
+:license: BSD, see LICENSE for more details.

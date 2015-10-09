@@ -30,6 +30,7 @@ pip-log.txt
 nosetests.xml
 htmlcov
 __pycache__
+.cache
 
 # Translations
 *.mo
