@@ -35,7 +35,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
-    url='http://github.com/lucuma/voodoo',
+    url='http://github.com/jpscaletti/voodoo',
     license='BSD license (see LICENSE)',
     description='Template system for project skeletons',
     long_description=readme,

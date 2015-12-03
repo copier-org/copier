@@ -12,7 +12,7 @@ filter others, etc.
 It generates a beautiful output and take care of not overwrite existing files,
 unless instructed to do so.
 
-See the documentation and code at: `<http://github.com/lucuma/Voodoo>`_
+See the documentation and code at: `<http://github.com/jpscaletti/Voodoo>`_
 
 """
 from voodoo.main import render_skeleton

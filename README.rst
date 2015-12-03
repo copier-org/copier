@@ -11,7 +11,7 @@ of PasteScript):
 * BSD License. See ``LICENSE`` for more details.
 
 
-.. image:: https://raw.github.com/lucuma/Voodoo/master/voodoo-output.png
+.. image:: https://raw.github.com/jpscaletti/Voodoo/master/voodoo-output.png
     :alt: Voodoo sample output as used in a program.
 
 *Above, Voodoo sample output as used in a program*

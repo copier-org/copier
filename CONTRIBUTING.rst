@@ -12,7 +12,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs at https://github.com/lucuma/voodoo/issues.
+Report bugs at https://github.com/jpscaletti/voodoo/issues.
 
 If you are reporting a bug, please include:
 
@@ -38,7 +38,7 @@ Voodoo could always use more documentation, whether as part of the official Vood
 Submit Feedback
 ~~~~~~~~~~~~~~~
 
-The best way to send feedback is to file an issue at https://github.com/lucuma/voodoo/issues.
+The best way to send feedback is to file an issue at https://github.com/jpscaletti/voodoo/issues.
 
 If you are proposing a feature:
 
