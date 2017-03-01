@@ -55,8 +55,9 @@ absolute paths: the project skeleton to process, and where to copy it.:
 
     render_skeleton(skeleton_path, new_project_path)
 
-It also provide a ``prompt`` and ``prompt_bool`` functions that take
-user input, to help you to make interactive scripts.
+It also provides some prompt functions that take user input, to help you to
+make interactive scripts. See the 'API' section of this README for more
+information.
 
 How it works
 -------------
@@ -240,7 +241,7 @@ envops:
 prompt
 ~~~~~~
 
-``prompt (text, default=None)``
+``prompt (text, default=None, validator=None)``
 
 Ask a question via raw_input() and return their answer.
 
@@ -249,6 +250,9 @@ text:
 
 default:
     default value if no answer is provided.
+
+validator:
+    Optional. A function that will validate the provided value. If the validator raises a ValueError, the error message is printed and the user prompted for another value. The return value from the validator is returned from ``prompt``, allowing a validator to change the value as required.
 
 prompt_bool
 ~~~~~~~~~~~~
@@ -268,6 +272,40 @@ yes_choices:
 
 no_choices:
     default ``['n', 'no', '0', 'off', 'false', 'f']``
+
+
+prompt_int
+~~~~~~~~~~
+
+``prompt_int (text, default=None, min_value=None, max_value=None)``
+
+text:
+    prompt text
+
+default:
+    default value if no answer is provided. Optional.
+
+min_value:
+    Optional. Numbers below this are rejected
+
+max_value:
+    Optional. Numbers above this are rejected
+
+@as_validated_prompt
+~~~~~~~~~~~~~~~~~~~~
+
+``voodoo.cli.as_validated_prompt (validator)``
+
+Used as a decorator. Makes a new ``prompt`` function from a validator. For example, to make a prompt that casts its input to a float you could write:
+
+.. code-block:: python
+
+    @as_validated_prompt
+    def prompt_float(value):
+        return float(value)
+
+
+    my_float = prompt_float('Enter a number', default=3.14)
 
 
 ______
