@@ -20,8 +20,8 @@ def test_skeleton_not_found(dst):
 def test_render(dst):
     render(dst)
 
-    generated = read_content(join(dst, 'setup.py')).strip()
-    control = read_content(join(dirname(__file__), 'ref.txt')).strip()
+    generated = read_content(join(dst, 'setup.py'))
+    control = read_content(join(dirname(__file__), 'ref.txt'))
     assert generated == control
 
     assert_file(dst, u'doc', u'man\u0303ana.txt')
