@@ -24,7 +24,7 @@ def test_render(dst):
     control = read_content(join(dirname(__file__), 'ref.txt')).strip()
     assert generated == control
 
-    assert_file(dst, u'doc', u'mañana.txt')
+    assert_file(dst, u'doc', u'man\u0303ana.txt')
     assert_file(dst, u'doc', u'images', u'nslogo.gif')
 
     p1 = join(dst, u'awesome', u'hello.txt')
