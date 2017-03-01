@@ -42,6 +42,16 @@ def prompt(text, default=no_value, validator=required, **kwargs):
                 print(str(e))
 
 
+def as_validated_prompt(func):
+    """
+    Make a validator function in to a prompt function that uses that validator
+    """
+    @functools.wraps(func)
+    def wrapped(text, default=no_value, **kwargs):
+        return prompt(text, default, validator=func, **kwargs)
+    return wrapped
+
+
 def prompt_bool(question, default=False, yes_choices=None, no_choices=None):
     """Prompt for a true/false yes/no boolean value"""
     yes_choices = yes_choices or ('y', 'yes', 't', 'true', 'on', '1')
@@ -58,3 +68,17 @@ def prompt_bool(question, default=False, yes_choices=None, no_choices=None):
     return prompt(
         question, default=yes_choices[0] if default else no_choices[0],
         validator=validator)
+
+
+@as_validated_prompt
+def prompt_int(value, min_value=None, max_value=None):
+    try:
+        value = int(value)
+    except ValueError:
+        raise ValueError('Enter a whole number')
+
+    if min_value and value < min_value:
+        raise ValueError('Value must be equal to or greater than {}'.format(min_value))
+    if max_value and value > max_value:
+        raise ValueError('Value must be equal to or lower than {}'.format(max_value))
+    return value
