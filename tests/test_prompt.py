@@ -53,6 +53,23 @@ def test_prompt_default_overridden(stdin, capsys):
     assert out == '{} [{}] '.format(question, default)
 
 
+def test_prompt_error_message(stdin, capsys):
+    question = 'Is this awesome?'
+    error = 'You know that is not correct'
+
+    def validator(value):
+        if value != 'yes':
+            raise ValueError(error)
+        return True
+    stdin.append('no\n')
+    stdin.append('yes\n')
+    response = prompt(question, validator=validator)
+    out, _ = capsys.readouterr()
+    print(out)
+    assert response is True
+    assert out == '{0} {1}\n{0} '.format(question, error)
+
+
 def test_prompt_bool(stdin, capsys):
     question = 'Are you sure?'
     stdin.append('yes\n')

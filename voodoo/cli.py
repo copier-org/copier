@@ -2,56 +2,59 @@
 # coding=utf-8
 from __future__ import print_function
 
+import functools
+
 try:
     input = raw_input
 except NameError:
     pass
 
 
-def prompt(text, default=None, _test=None):
-    """Ask a question via raw_input() and return their answer.
+no_value = object()
 
-    param text: prompt text
-    param default: default value if no answer is provided.
+
+def required(value):
+    if not value:
+        raise ValueError()
+    return value
+
+
+def prompt(text, default=no_value, validator=required, **kwargs):
     """
-
-    text += ' [%s] ' % default if default else ' '
+    Prompt for a value from the command line. A default value can be provided,
+    which will be used if no text is entered by the user. The value can be
+    validated, and possibly changed by supplying a validator function. Any
+    extra keyword arguments to this function will be passed along to the
+    validator. If the validator raises a ValueError, the error message will be
+    printed and the user asked to supply anther value.
+    """
+    text += ' [%s] ' % default if default is not no_value else ' '
     while True:
-        if _test is not None:
-            print(text)
-            resp = _test
-        else:
-            resp = input(text)
-        if resp:
-            return resp
-        if default is not None:
-            return default
+        resp = input(text)
+
+        if resp == '' and default is not no_value:
+            resp = default
+
+        try:
+            return validator(resp, **kwargs)
+        except ValueError as e:
+            if str(e):
+                print(str(e))
 
 
-def prompt_bool(text, default=False, yes_choices=None, no_choices=None,
-                _test=None):
-    """Ask a yes/no question via raw_input() and return their answer.
-
-    :param text: prompt text
-    :param default: default value if no answer is provided.
-    :param yes_choices: default 'y', 'yes', '1', 'on', 'true', 't'
-    :param no_choices: default 'n', 'no', '0', 'off', 'false', 'f'
-    """
-
+def prompt_bool(question, default=False, yes_choices=None, no_choices=None):
+    """Prompt for a true/false yes/no boolean value"""
     yes_choices = yes_choices or ('y', 'yes', 't', 'true', 'on', '1')
     no_choices = no_choices or ('n', 'no', 'f', 'false', 'off', '0')
 
-    default = yes_choices[0] if default else no_choices[0]
-    while True:
-        if _test is not None:
-            print(text)
-            resp = _test
-        else:
-            resp = prompt(text, default)
-        if not resp:
-            return default
-        resp = str(resp).lower()
-        if resp in yes_choices:
+    def validator(value):
+        value = value.lower()
+        if value in yes_choices:
             return True
-        if resp in no_choices:
+        if value in no_choices:
             return False
+        raise ValueError('Enter yes/no. y/n, true/false, on/off')
+
+    return prompt(
+        question, default=yes_choices[0] if default else no_choices[0],
+        validator=validator)
