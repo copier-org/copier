@@ -2,4 +2,5 @@
 flake8
 pytest
 pytest-cov
+pytest-mock
 tox
