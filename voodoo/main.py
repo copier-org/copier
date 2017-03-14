@@ -41,6 +41,7 @@ DEFAULT_ENV_OPTIONS = {
     'block_end_string': '%]',
     'variable_start_string': '[[',
     'variable_end_string': ']]',
+    'keep_trailing_newline': True,
 }
 
 # Variables that need user input when rendering the template.
