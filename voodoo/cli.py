@@ -26,7 +26,7 @@ def prompt(text, default=no_value, validator=required, **kwargs):
     validated, and possibly changed by supplying a validator function. Any
     extra keyword arguments to this function will be passed along to the
     validator. If the validator raises a ValueError, the error message will be
-    printed and the user asked to supply anther value.
+    printed and the user asked to supply another value.
     """
     text += ' [%s] ' % default if default is not no_value else ' '
     while True:
