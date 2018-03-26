@@ -41,10 +41,11 @@ Available commands:
     - The name of a previously downloaded template with `voodoo install ...`
 
 `voodoo install <URL>`
-    Installs the template in the folder specify in `VOODOO_TEMPLATES_DIR` environment variable (by default is `~/.voodoo/templates/`)
+    Download the template in the folder specified by the `VOODOO_TEMPLATES_DIR` environment variable (by default is `~/.voodoo/templates/`)
 
 `voodoo list`
-    List all the stored templates.
+    List all the downloaded templates.
+
 
 Examples::
 
