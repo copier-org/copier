@@ -31,7 +31,7 @@ setup(
     name='Voodoo',
     version=version,
     author='Juan-Pablo Scaletti',
-    author_email='juanpablo@lucumalabs.com',
+    author_email='juanpablo@jpscaletti.com',
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,

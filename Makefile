@@ -42,9 +42,9 @@ docs:
 	@(cd docs; make html)
 	open docs/_build/html/index.html
 
-publish: clean
-	python setup.py sdist upload
+publish: build
+	python setup.py sdist bdist_wheel upload
 
-sdist: clean
+build: clean
 	python setup.py sdist
-	ls -l dist
+	python setup.py bdist_wheel --universal
