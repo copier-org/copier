@@ -18,7 +18,7 @@ of PasteScript):
 
 **Requirements:**
 
-* Pypy or Python 2.6, 2.7, 3.3 or newer.
+* Pypy or Python 2.7, 3.3 or newer.
 
 * It also uses the Jinja2 and Colorama Python libraries.
 
@@ -29,17 +29,27 @@ As a command line tool
 Install it by doing::
 
     $  pip install voodoo
+    
+Available commands:
+```````````````````
 
-Then, whenever you want to clone a project template to make a new project, do::
+:install: Installs the template in VOODOO_TEMPLATES_DIR env var (.
+:list: List all the stored templates.
+:new <template> <dest>: Render the project template at the `destination` directory.
 
-    $  voodoo <Git URL or path to another folder> <New project name>
+The `template` for the `new` command can be either a Git URL (eg: `git@github.com:jpscaletti/voodoo-demo.git`), a path to a local folder or the name of a previously downloaded template.
 
-Example::
+Examples::
 
-    $  voodoo git@github.com:lucuma/voodoo-flask.git myapp
+    $  voodoo new git@github.com:jpscaletti/voodoo-demo.git mydemo
+
+or
+
+    $  voodoo install git@github.com:jpscaletti/voodoo-demo.git
+    $  voodoo new voodoo-demo anotherdemo
 
 
-Or in your programs
+In your programs
 ------------------------------
 
 First of all install it and/or add it to your requirements.txt::

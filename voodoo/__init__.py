@@ -18,6 +18,4 @@ See the documentation and code at: `<http://github.com/jpscaletti/Voodoo>`_
 from voodoo.main import render_skeleton
 from voodoo.cli import prompt, prompt_bool, prompt_int  # noqa
 
-__version__ = '1.5.0'
-
-reanimate_skeleton = render_skeleton  # backward compat
+__version__ = '1.6.0'

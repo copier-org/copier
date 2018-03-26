@@ -36,18 +36,20 @@ def normalize_url(url):
     return url[4:]
 
 
-def clone(vcs, quiet=False):
+def clone(vcs, location=None):
     """Clone a repo to `location` folder, if no location is given, create a
     temporary folder.
 
     Returns the path where the repository was cloned to.
     """
+    if not location:
+        return _clone_to_temp(vcs)
+    return _clone_to(vcs, location)
+
+
+def _clone_to_temp(vcs):
     location = tempfile.mkdtemp()
-
     shutil.rmtree(location)  # Path must not exists
-    if not quiet:
-        print('Cloning from {0}'.format(vcs.url))
-
     try:
         subprocess.check_call([vcs.type, 'clone', vcs.url, location])
     except Exception as e:
@@ -56,9 +58,9 @@ def clone(vcs, quiet=False):
     return location
 
 
-def clone_install(vcs, cwd=None):
-    """Clone a repo inside the `cwd` directory."""
+def _clone_to(vcs, location):
+    """Clone a repo inside the `location` folder."""
     try:
-        subprocess.Popen([vcs.type, 'clone', vcs.url], cwd=cwd)
+        subprocess.Popen([vcs.type, 'clone', vcs.url], cwd=location)
     except:
-        return None
+        return location
