@@ -29,15 +29,22 @@ As a command line tool
 Install it by doing::
 
     $  pip install voodoo
-    
+
 Available commands:
-```````````````````
 
-:install: Installs the template in VOODOO_TEMPLATES_DIR env var (.
-:list: List all the stored templates.
-:new <template> <dest>: Render the project template at the `destination` directory.
+`voodoo install <URL>`
+    Installs the template in the folder specify in `VOODOO_TEMPLATES_DIR` environment variable (by default is `~/.voodoo/templates/`)
 
-The `template` for the `new` command can be either a Git URL (eg: `git@github.com:jpscaletti/voodoo-demo.git`), a path to a local folder or the name of a previously downloaded template.
+`voodoo list`
+    List all the stored templates.
+
+`voodoo new <template> <dest>`
+    Render the project template at the `destination` directory.
+    The `template` can be a:
+
+    - Git URL (eg: `git@github.com:jpscaletti/voodoo-demo.git`),
+    - Path to a local folder, or
+    - The name of a previously downloaded template
 
 Examples::
 
