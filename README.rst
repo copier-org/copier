@@ -32,19 +32,19 @@ Install it by doing::
 
 Available commands:
 
-`voodoo install <URL>`
-    Installs the template in the folder specify in `VOODOO_TEMPLATES_DIR` environment variable (by default is `~/.voodoo/templates/`)
-
-`voodoo list`
-    List all the stored templates.
-
 `voodoo new <template> <dest>`
     Render the project template at the `destination` directory.
     The `template` can be a:
 
     - Git URL (eg: `git@github.com:jpscaletti/voodoo-demo.git`),
     - Path to a local folder, or
-    - The name of a previously downloaded template
+    - The name of a previously downloaded template with `voodoo install ...`
+
+`voodoo install <URL>`
+    Installs the template in the folder specify in `VOODOO_TEMPLATES_DIR` environment variable (by default is `~/.voodoo/templates/`)
+
+`voodoo list`
+    List all the stored templates.
 
 Examples::
 
