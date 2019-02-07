@@ -51,7 +51,7 @@ parser.add_argument(
     help='Suppress status output')
 
 
-def run():
+def run():  # pragma:no cover
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)

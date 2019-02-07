@@ -28,7 +28,7 @@ def load_yaml_data(src_path, quiet=False):
         if not isinstance(data, dict):
             data = {}
         return data
-    except Exception as e:  # pragma:no cover
+    except Exception as e:
         if not quiet:
             print('')
             print_format('INVALID', msg=yaml_path, color=COLOR_WARNING, indent=0)
@@ -38,15 +38,15 @@ def load_yaml_data(src_path, quiet=False):
         return {}
 
 
-def load_json_data(src_path, quiet=False):
+def load_json_data(src_path, quiet=False, warning=True):
     json_path = os.path.join(src_path, 'copier.json')
     if not os.path.exists(json_path):
-        return load_old_json_data(src_path, quiet=quiet)
+        return load_old_json_data(src_path, quiet=quiet, warning=warning)
 
     json_src = read_file(json_path)
     try:
         return json.loads(json_src)
-    except ValueError as e:  # pragma:no cover
+    except ValueError as e:
         if not quiet:
             print('')
             print_format('INVALID', msg=json_path, color=COLOR_WARNING, indent=0)
@@ -56,13 +56,13 @@ def load_json_data(src_path, quiet=False):
         return {}
 
 
-def load_old_json_data(src_path, quiet=False):
+def load_old_json_data(src_path, quiet=False, warning=True):
     # TODO: Remove on version 2.2
     json_path = os.path.join(src_path, 'voodoo.json')
     if not os.path.exists(json_path):
         return {}
 
-    if not quiet:
+    if warning and not quiet:
         print('')
         print_format(
             'WARNING',
@@ -74,21 +74,24 @@ def load_old_json_data(src_path, quiet=False):
     json_src = read_file(json_path)
     try:
         return json.loads(json_src)
-    except ValueError as e:  # pragma:no cover
+    except ValueError as e:
         if not quiet:
-            print_format('Invalid `{}`'.format(json_path), color=COLOR_WARNING)
+            print('')
+            print_format('INVALID', msg=json_path, color=COLOR_WARNING, indent=0)
+            print('-' * 42)
             print(e)
+            print('-' * 42)
         return {}
 
 
-def load_default_data(src_path, quiet=False):
+def load_default_data(src_path, quiet=False, warning=True):
     data = load_yaml_data(src_path, quiet=quiet)
     if not data:
-        data = load_json_data(src_path, quiet=quiet)
+        data = load_json_data(src_path, quiet=quiet, warning=warning)
     return data
 
 
-def get_user_data(src_path, **flags):
+def get_user_data(src_path, **flags):  # pragma:no cover
     """Query to user for information needed as per the template's ``copier.yaml``.
     """
     default_user_data = load_default_data(src_path, quiet=flags['quiet'])
@@ -97,7 +100,7 @@ def get_user_data(src_path, **flags):
 
     print('')
     user_data = {}
-    for key in default_user_data:  # pragma:no cover
+    for key in default_user_data:
         default = default_user_data[key]
         user_data[key] = prompt(INDENT + ' {0}?'.format(key), default)
 

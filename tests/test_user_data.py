@@ -4,7 +4,12 @@ import re
 import pytest
 
 from .. import copier
-from ..copier.user_data import load_yaml_data, load_json_data, load_default_data
+from ..copier.user_data import (
+    load_yaml_data,
+    load_json_data,
+    load_old_json_data,
+    load_default_data,
+)
 
 from .helpers import read_content
 
@@ -31,19 +36,33 @@ def test_bad_yaml(capsys):
 def test_invalid_yaml(capsys):
     assert {} == load_yaml_data('tests/demo_invalid')
     out, err = capsys.readouterr()
-    print(out)
     assert re.search(r'INVALID.*tests/demo_invalid/copier\.yaml', out)
 
     assert {} == load_json_data('tests/demo_invalid')
     out, err = capsys.readouterr()
     assert re.search(r'INVALID.*tests/demo_invalid/copier\.json', out)
 
-    assert {} == load_default_data('tests/demo_invalid')
-    assert re.search(r'INVALID.*tests/demo_invalid/copier\.yaml', out)
-    assert re.search(r'INVALID.*tests/demo_invalid/copier\.json', out)
+    # TODO: Remove on version 2.2
+    assert {} == load_old_json_data('tests/demo_invalid', warning=False)
+    out, err = capsys.readouterr()
+    assert re.search(r'INVALID.*tests/demo_invalid/voodoo\.json', out)
+
+    assert {} == load_default_data('tests/demo_invalid', warning=False)
+    assert re.search(r'INVALID', out)
 
 
 def test_invalid_quiet(capsys):
     assert {} == load_default_data('tests/demo_invalid', quiet=True)
     out, err = capsys.readouterr()
     assert out == ''
+
+    assert {} == load_old_json_data('tests/demo_invalid', quiet=True)
+    out, err = capsys.readouterr()
+    assert out == ''
+
+
+def test_deprecated_msg(capsys):
+    # TODO: Remove on version 2.2
+    load_old_json_data('tests/demo_json_old')
+    out, err = capsys.readouterr()
+    assert re.search(r'`voodoo\.json` is deprecated', out)
