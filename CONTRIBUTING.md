@@ -82,15 +82,12 @@ Now you can make your changes locally.
 6.  When you're done making changes, check that your changes pass all tests
 
 ```bash
-pytest tests
+pytest copier tests
 flake8 copier tests
 ```
 
-To get flake8, pytest and tox, just pip install them into your virtualenv:
-
-```bash
-pip install flake8 pytest tox
-```
+To have multiple Python versions on the same machine for ruinning `tox`, I reccomend
+using [pyenv](https://github.com/pyenv/pyenv) (do not confuse it with `pipenv`).
 
 7.  Commit your changes and push your branch to GitHub:
 

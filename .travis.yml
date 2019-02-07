@@ -19,4 +19,4 @@ before_install:
 install:
   - poetry install -v
 
-script: pytest -x copier tests
+script: poetry run pytest -x copier tests

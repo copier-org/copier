@@ -1,2 +1,3 @@
 covreport/*
 pip-wheel-metadata
+.tox

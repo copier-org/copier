@@ -39,7 +39,7 @@ def copy(
     pretend=False,
     force=False,
     skip=False,
-    quiet=False,
+    quiet=False
 ):
     """
     Uses the template in src_path to generate a new project at dst_path.
@@ -167,7 +167,7 @@ def render_file(
     src_name,
     dst_name,
     render,
-    **flags,
+    **flags
 ):
     """Process or copy a file of the skeleton.
     """

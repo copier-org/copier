@@ -66,8 +66,8 @@ def load_old_json_data(src_path, quiet=False, warning=True):
         print('')
         print_format(
             'WARNING',
-            msg='`voodoo.json` is deprecated. '
-                + 'Replace it with a `copier.yml` or `copier.json`.',
+            msg='`voodoo.json` is deprecated. ' +
+                'Replace it with a `copier.yml` or `copier.json`.',
             color=COLOR_WARNING, indent=10
         )
 
