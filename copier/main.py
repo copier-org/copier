@@ -131,7 +131,8 @@ def copy_local(
     must_filter = tools.get_name_filter(exclude, include)
     render = tools.get_jinja_renderer(src_path, data, envops)
 
-    print('')  # padding space
+    if not flags['quiet']:
+        print('')  # padding space
     for folder, _, files in os.walk(src_path):
         rel_folder = folder.replace(src_path, '').lstrip(os.path.sep)
         rel_folder = render.string(rel_folder)
@@ -154,7 +155,8 @@ def copy_local(
                 render,
                 **flags,
             )
-    print('')  # padding space
+    if not flags['quiet']:
+        print('')  # padding space
 
 
 def render_file(
