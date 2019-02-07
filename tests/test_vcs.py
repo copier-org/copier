@@ -1,30 +1,37 @@
-# coding=utf-8
 from os.path import exists, join
 
 import pytest
 import shutil
-import voodoo
+
+from ..copier import vcs
 
 
-def test_get_vcs_from_url():
-    get = voodoo.vcs.get_vcs_from_url
+def test_get_repo():
+    get = vcs.get_repo
 
-    assert get('git@git.myproject.org:MyProject').type == 'git'
-    assert get('git://git.myproject.org/MyProject').type == 'git'
-    assert get('git+https://git.myproject.org/MyProject').type == 'git'
-    assert get('git+ssh://git.myproject.org/MyProject').type == 'git'
-    assert get('https://github.com/lucuma/voodoo-flask.git').type == 'git'
-    assert get('git://git.myproject.org/MyProject.git@master').type == 'git'
-    assert get('git://git.myproject.org/MyProject.git@v1.0').type == 'git'
-    assert get('git://git.myproject.org/MyProject.git@da39a3ee5e6b4b0d3255bfef95601890afd80709').type == 'git'
+    assert get('git@git.myproject.org:MyProject') == \
+        'git@git.myproject.org:MyProject'
+    assert get('git://git.myproject.org/MyProject') == \
+        'git://git.myproject.org/MyProject'
+    assert get('https://github.com/jpscaletti/copier.git') == \
+        'https://github.com/jpscaletti/copier.git'
 
-    assert get('hg+http://hg.myproject.org/MyProject').type == 'hg'
-    assert get('hg+https://hg.myproject.org/MyProject').type == 'hg'
-    assert get('hg+ssh://hg.myproject.org/MyProject').type == 'hg'
-    assert get('hg+http://hg.myproject.org/MyProject@da39a3ee5e6b').type == 'hg'
-    assert get('hg+http://hg.myproject.org/MyProject@2019').type == 'hg'
-    assert get('hg+http://hg.myproject.org/MyProject@v1.0').type == 'hg'
-    assert get('hg+http://hg.myproject.org/MyProject@special_feature').type == 'hg'
+    assert get('gh:/jpscaletti/copier.git') == \
+        'https://github.com/jpscaletti/copier.git'
+    assert get('gh:jpscaletti/copier.git') == \
+        'https://github.com/jpscaletti/copier.git'
+
+    assert get('gl:jpscaletti/copier.git') == \
+        'https://gitlab.com/jpscaletti/copier.git'
+
+    assert get('git+https://git.myproject.org/MyProject') == \
+        'https://git.myproject.org/MyProject'
+    assert get('git+ssh://git.myproject.org/MyProject') ==\
+        'ssh://git.myproject.org/MyProject'
+
+    assert get('git://git.myproject.org/MyProject.git@master')
+    assert get('git://git.myproject.org/MyProject.git@v1.0')
+    assert get('git://git.myproject.org/MyProject.git@da39a3ee5e6b4b0d3255bfef956018')
 
     assert get('http://google.com') is None
     assert get('git.myproject.org/MyProject') is None
@@ -32,12 +39,7 @@ def test_get_vcs_from_url():
 
 @pytest.mark.slow
 def test_clone():
-    urls = [
-        'https://github.com/jpscaletti/Voodoo.git',
-    ]
-    for url in urls:
-        vcs = voodoo.vcs.get_vcs_from_url(url)
-        tmp = voodoo.vcs.clone(vcs)
-        assert tmp
-        assert exists(join(tmp, 'setup.py'))
-        shutil.rmtree(tmp)
+    tmp = vcs.clone('https://github.com/jpscaletti/siht.git')
+    assert tmp
+    assert exists(join(tmp, 'setup.py'))
+    shutil.rmtree(tmp)

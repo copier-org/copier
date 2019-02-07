@@ -1,17 +1,10 @@
-# coding=utf-8
-
 from os import SEEK_END
 from tempfile import mkdtemp
 import six
 import shutil
 
 import pytest
-
-
-if six.PY3:
-    from unittest import mock
-else:
-    import mock
+from unittest import mock
 
 
 @pytest.fixture()
