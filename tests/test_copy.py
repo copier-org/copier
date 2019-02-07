@@ -48,17 +48,17 @@ def test_copy_repo(dst):
 
 def test_default_filter(dst):
     render(dst)
-    assert not exists(join(dst, '.git'))
+    assert not exists(join(dst, '.svn'))
 
 
 def test_include_file(dst):
-    render(dst, include=['.git'])
-    assert_file(dst, '.git')
+    render(dst, include=['.svn'])
+    assert_file(dst, '.svn')
 
 
 def test_include_pattern(dst):
     render(dst, include=['.*'])
-    assert exists(join(dst, '.git'))
+    assert exists(join(dst, '.svn'))
 
 
 def test_filter_file(dst):
