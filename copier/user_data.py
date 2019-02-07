@@ -17,7 +17,7 @@ INDENT = '  '
 
 
 def load_yaml_data(src_path, quiet=False):
-    yaml_path = os.path.join(src_path, 'copier.yaml')
+    yaml_path = os.path.join(src_path, 'copier.yml')
     if not os.path.exists(yaml_path):
         return {}
 
@@ -67,7 +67,7 @@ def load_old_json_data(src_path, quiet=False, warning=True):
         print_format(
             'WARNING',
             msg='`voodoo.json` is deprecated. '
-                + 'Replace it with a `copier.yaml` or `copier.json`.',
+                + 'Replace it with a `copier.yml` or `copier.json`.',
             color=COLOR_WARNING, indent=10
         )
 
@@ -92,7 +92,7 @@ def load_default_data(src_path, quiet=False, warning=True):
 
 
 def get_user_data(src_path, **flags):  # pragma:no cover
-    """Query to user for information needed as per the template's ``copier.yaml``.
+    """Query to user for information needed as per the template's ``copier.yml``.
     """
     default_user_data = load_default_data(src_path, quiet=flags['quiet'])
     if flags['force'] or not default_user_data:

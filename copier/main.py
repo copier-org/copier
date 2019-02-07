@@ -15,7 +15,7 @@ __all__ = (
 
 # Files of the template to exclude from the final project
 DEFAULT_EXCLUDE = (
-    'copier.yaml',
+    'copier.yml',
     '~*', '*.py[co]', '__pycache__', '__pycache__/*', '.git', '.git/*',
     '.DS_Store', '.svn'
 )

@@ -1,0 +1,22 @@
+language: python
+
+matrix:
+  include:
+    - python: 3.5
+    - python: 3.6
+    - python: 3.7
+      dist: xenial
+      sudo: true
+
+cache:
+  pip: true
+  directories:
+    - "$HOME/.cache/pypoetry"
+
+before_install:
+  - pip install -U pip poetry
+
+install:
+  - poetry install -v
+
+script: pytest -x copier tests

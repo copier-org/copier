@@ -36,7 +36,7 @@ def test_bad_yaml(capsys):
 def test_invalid_yaml(capsys):
     assert {} == load_yaml_data('tests/demo_invalid')
     out, err = capsys.readouterr()
-    assert re.search(r'INVALID.*tests/demo_invalid/copier\.yaml', out)
+    assert re.search(r'INVALID.*tests/demo_invalid/copier\.yml', out)
 
     assert {} == load_json_data('tests/demo_invalid')
     out, err = capsys.readouterr()

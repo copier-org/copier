@@ -37,7 +37,7 @@ copier path/to/project/template path/to/destination
 
 ## Prompt the user for information
 
-If a YAML file named `copier.yaml` (alternatively, a `copier.json` ) is found in the root
+If a YAML file named `copier.yml` (alternatively, a `copier.json` ) is found in the root
 of the project, it will be used to prompt the user to fill or confirm the values before
 become avaliable to the project template.
 
@@ -59,7 +59,7 @@ that variables are referenced with ``[[ name ]]`` instead of
 ``{% if name %}``. To read more about templating see the [Jinja2
 documentation](http://jinja.pocoo.org/docs>).
 
-If a `copier.yaml` is found in the root of the project, the user will be prompted to
+If a `copier.yml` is found in the root of the project, the user will be prompted to
 fill or confirm the values.
 
 Use the `extra_data` argument to pass whatever extra context you want to be available
@@ -88,7 +88,7 @@ Uses the template in src_path to generate a new project at dst_path.
 
 - **data** (dict):
     Optional. Data to be passed to the templates in addtion to the user data from
-    a `copier.yaml`.
+    a `copier.yml`.
 
 - **exclude** (list):
     Optional. A list of names or shell-style patterns matching files or folders
