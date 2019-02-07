@@ -1,5 +1,7 @@
 import re
 
+from .. import copier
+
 from .helpers import render
 
 

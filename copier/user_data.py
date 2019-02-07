@@ -23,7 +23,11 @@ def load_yaml_data(src_path, quiet=False):
 
     yaml_src = read_file(yaml_path)
     try:
-        return yaml.load(yaml_src)
+        data = yaml.load(yaml_src)
+        # The YAML parser can too permissive
+        if not isinstance(data, dict):
+            data = {}
+        return data
     except Exception as e:  # pragma:no cover
         if not quiet:
             print('')
@@ -78,16 +82,16 @@ def load_old_json_data(src_path, quiet=False):
 
 
 def load_default_data(src_path, quiet=False):
-    data = load_yaml_data(src_path)
+    data = load_yaml_data(src_path, quiet=quiet)
     if not data:
-        data = load_json_data(src_path)
+        data = load_json_data(src_path, quiet=quiet)
     return data
 
 
 def get_user_data(src_path, **flags):
     """Query to user for information needed as per the template's ``copier.yaml``.
     """
-    default_user_data = load_default_data(src_path)
+    default_user_data = load_default_data(src_path, quiet=flags['quiet'])
     if flags['force'] or not default_user_data:
         return default_user_data
 
