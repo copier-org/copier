@@ -35,7 +35,7 @@ copy('gl:jpscaletti/copier.git', 'path/to/destination')
 copier path/to/project/template path/to/destination
 ```
 
-## Prompt the user for information
+## Prompt the user for information (copier.yml)
 
 If a YAML file named `copier.yml` (alternatively, a `copier.json` ) is found in the root
 of the project, it will be used to prompt the user to fill or confirm the values before
@@ -44,19 +44,32 @@ become avaliable to the project template.
 ```yaml
 name_of_the_project: "My awesome project"
 your_email: null
+number_of_eels: 1234
 
-# Special keys, not part of the user data
+# Shell-style patterns files/folders that must not be copied.
 _exclude:
     - *.bar
 
+# Shell-style patterns files/folders that *must be* copied, even if
+# they are in the exclude list
 -include:
     - foo.bar
 
+# Commands to be executed after the copy
+_tasks:
+    - git init
+    - rm [[ name_of_the_project ]]/README.md
+
 ```
 
-In this file, the keys `_exclude` and `_include` are special and will be treated as the
-default values for the `exclude` and `include` arguments of `copier.copy()`. However, 
-any explicitely passed argument will overwrite them.
+In this file, the keys `_exclude`, `_include` and `_tasks` have special meaning.
+
+`_exclude`, `_include`, and `_tasks`  will be treated as the default values for the
+`exclude`, `include`, and `tasks`  arguments of `copier.copy()`.
+However, any explicitely passed argument will overwrite them.
+
+> **Warning:** Use only trusted project templates as these tasks
+> run with the same level of access as your user.
 
 
 ## How it works
@@ -104,12 +117,18 @@ Uses the template in src_path to generate a new project at dst_path.
 
 - **exclude** (list):
     Optional. A list of names or shell-style patterns matching files or folders
-    that musn't be copied.
+    that mus not be copied.
 
 - **include** (list):
     Optional. A list of names or shell-style patterns matching files or folders that
     must be included, even if its name are in the `exclude` list.
     Eg: `['.gitignore']`. The default is an empty list.
+
+- **tasks** (list):
+    Optional lists of commands to run in order after finishing the copy.
+    Like in the templates files, you can use variables on the commands that will
+    be replaced by the real values before running the command.
+    If one of the commands fail, the rest of them will not run.
 
 - **envops** (dict):
     Optional. Extra options for the Jinja template environment.

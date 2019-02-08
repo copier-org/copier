@@ -127,3 +127,13 @@ def test_pretend_option(dst):
     assert not exists(join(dst, 'doc'))
     assert not exists(join(dst, 'config.py'))
     assert not exists(join(dst, 'pyproject.toml'))
+
+
+def test_tasks(dst):
+    tasks = [
+        'touch [[ myvar ]]/1.txt',
+        'touch [[ myvar ]]/2.txt',
+    ]
+    render(dst, tasks=tasks)
+    assert exists(join(dst, DATA['myvar'], '1.txt'))
+    assert exists(join(dst, DATA['myvar'], '2.txt'))

@@ -2,8 +2,9 @@
 
 ### Version 2.1 (not yet released)
 
-- Use `_exclude` and `_include` keys in `copier.yml` as the default values for
-  those arguments.
+- Task runner 🎉.
+- Use `_exclude`, `_include`, and `_tasks` keys in `copier.yml` as the default
+  values for the `.copy()` arguments `exclude`, `include`, and `tasks`.
 
 ### Version 2.0
 
