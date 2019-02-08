@@ -32,8 +32,8 @@ def copy(
     dst_path,
     data=None,
     *,
-    exclude=DEFAULT_EXCLUDE,
-    include=DEFAULT_INCLUDE,
+    exclude=None,
+    include=None,
     envops=None,
 
     pretend=False,
@@ -93,8 +93,8 @@ def copy(
             src_path,
             dst_path,
             data=_data,
-            exclude=exclude or DEFAULT_EXCLUDE,
-            include=include or DEFAULT_INCLUDE,
+            exclude=exclude,
+            include=include,
             envops=envops,
 
             pretend=pretend,
@@ -126,10 +126,16 @@ def copy_local(
         raise ValueError('The project template must be a folder')
 
     user_data = get_user_data(src_path, **flags)
+
+    if exclude is None:
+        exclude = user_data.pop('_exclude', None) or DEFAULT_EXCLUDE
+    if include is None:
+        include = user_data.pop('_include', None) or DEFAULT_INCLUDE
+    must_filter = tools.get_name_filter(exclude, include)
+
     data.update(user_data)
     data.setdefault('folder_name', os.path.basename(dst_path))
 
-    must_filter = tools.get_name_filter(exclude, include)
     render = tools.get_jinja_renderer(src_path, data, envops)
 
     if not flags['quiet']:
