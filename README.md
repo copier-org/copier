@@ -108,7 +108,6 @@ _tasks:
 
 ```
 
----
 > **Warning:** Use only trusted project templates as these tasks
 > run with the same level of access as your user.
 
