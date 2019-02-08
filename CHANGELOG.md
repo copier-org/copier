@@ -1,11 +1,16 @@
 # Copier Changelog
 
-### Version 2.0.0
+### Version 2.1 (not yet released)
+
+- Use `_exclude` and `_include` keys in `copier.yml` as the default values for
+  those arguments.
+
+### Version 2.0
 
 - Rebranded from `Voodoo` to `Copier`!
 - Dropped support for Python 2.x, the minimal version is now Python 3.5.
 - Cleanup and 100% test coverage.
-- The reccomended configuration file is now `copier.yml`, but a `copier.json`
+- The reccomended configuration file is now `copier.yaml`, but a `copier.json`
   can be used as well. The old `voodoo.json` is also supported *for now* but is
   deprecated and will be removed in version 2.2.
 - Python package format updated to the latest standard (no `setup.py` 😵).

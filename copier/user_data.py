@@ -91,6 +91,9 @@ def load_default_data(src_path, quiet=False, warning=True):
     return data
 
 
+SPECIAL_KEYS = ('_exclude', '_include', )
+
+
 def get_user_data(src_path, **flags):  # pragma:no cover
     """Query to user for information needed as per the template's ``copier.yml``.
     """
@@ -101,6 +104,8 @@ def get_user_data(src_path, **flags):  # pragma:no cover
     print('')
     user_data = {}
     for key in default_user_data:
+        if key in SPECIAL_KEYS:
+            continue
         default = default_user_data[key]
         user_data[key] = prompt(INDENT + ' {0}?'.format(key), default)
 

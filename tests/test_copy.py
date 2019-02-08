@@ -3,12 +3,14 @@ from os.path import join, dirname, exists
 import pytest
 
 from .. import copier
+
 from .helpers import (
     read_content,
     write_content,
     assert_file,
     render,
     PROJECT_TEMPLATE,
+    DATA,
     filecmp,
 )
 
@@ -46,7 +48,7 @@ def test_copy_repo(dst):
     assert exists(join(dst, 'setup.py'))
 
 
-def test_default_filter(dst):
+def test_default_exclude(dst):
     render(dst)
     assert not exists(join(dst, '.svn'))
 
@@ -61,10 +63,45 @@ def test_include_pattern(dst):
     assert exists(join(dst, '.svn'))
 
 
-def test_filter_file(dst):
+def test_exclude_file(dst):
     render(dst, exclude=['mañana.txt'])
-    path = join(dst, 'doc', 'mañana.txt')
-    assert not exists(path)
+    assert not exists(join(dst, 'doc', 'mañana.txt'))
+
+
+def test_config_exclude(dst):
+    def fake_data(*_args, **_kw):
+        return {
+            '_exclude': ['*.txt']
+        }
+    copier.main._get_user_data = copier.main.get_user_data
+    copier.main.get_user_data = fake_data
+    copier.copy(PROJECT_TEMPLATE, dst, data=DATA, quiet=True)
+    assert not exists(join(dst, 'aaaa.txt'))
+    copier.main.get_user_data = copier.main._get_user_data
+
+
+def test_config_exclude_overwrited(dst):
+    def fake_data(*_args, **_kw):
+        return {
+            '_exclude': ['*.txt']
+        }
+    copier.main._get_user_data = copier.main.get_user_data
+    copier.main.get_user_data = fake_data
+    copier.copy(PROJECT_TEMPLATE, dst, data=DATA, quiet=True, exclude=[])
+    assert exists(join(dst, 'aaaa.txt'))
+    copier.main.get_user_data = copier.main._get_user_data
+
+
+def test_config_include(dst):
+    def fake_data(*_args, **_kw):
+        return {
+            '_include': ['.svn']
+        }
+    copier.main._get_user_data = copier.main.get_user_data
+    copier.main.get_user_data = fake_data
+    copier.copy(PROJECT_TEMPLATE, dst, data=DATA, quiet=True)
+    assert exists(join(dst, '.svn'))
+    copier.main.get_user_data = copier.main._get_user_data
 
 
 def test_skip_option(dst):

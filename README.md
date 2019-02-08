@@ -44,7 +44,19 @@ become avaliable to the project template.
 ```yaml
 name_of_the_project: "My awesome project"
 your_email: null
+
+# Special keys, not part of the user data
+_exclude:
+    - *.bar
+
+-include:
+    - foo.bar
+
 ```
+
+In this file, the keys `_exclude` and `_include` are special and will be treated as the
+default values for the `exclude` and `include` arguments of `copier.copy()`. However, 
+any explicitely passed argument will overwrite them.
 
 
 ## How it works
