@@ -56,7 +56,7 @@ _exclude:
 
 In this file, the keys `_exclude` and `_include` are special and will be treated as the
 default values for the `exclude` and `include` arguments of `copier.copy()`. However, 
-any explicitely passed argument will have precedence over them.
+any explicitely passed argument will overwrite them.
 
 
 ## How it works
@@ -69,7 +69,7 @@ A slightly customized Jinja2 templating is used. The main difference is
 that variables are referenced with ``[[ name ]]`` instead of
 ``{{ name }}`` and blocks are ``[% if name %]`` instead of
 ``{% if name %}``. To read more about templating see the [Jinja2
-documentation](http://jinja.pocoo.org/docs>).
+documentation](http://jinja.pocoo.org/docs).
 
 If a `copier.yml` is found in the root of the project, the user will be prompted to
 fill or confirm the values.
