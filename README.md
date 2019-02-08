@@ -35,17 +35,62 @@ copy('gl:jpscaletti/copier.git', 'path/to/destination')
 copier path/to/project/template path/to/destination
 ```
 
-## Prompt the user for information (copier.yml)
+## How it works
+
+The content of the files inside the project template are copied to the destination
+without changes, **unless are suffixed with the extension '.tmpl'.**
+In that case, the templating engine will be used to render them.
+
+A slightly customized Jinja2 templating is used. The main difference is
+that variables are referenced with ``[[ name ]]`` instead of
+``{{ name }}`` and blocks are ``[% if name %]`` instead of
+``{% if name %}``. To read more about templating see the [Jinja2
+documentation](http://jinja.pocoo.org/docs>).
+
+If a `copier.yml` is found in the root of the project, the user will be prompted to
+fill or confirm the values.
+
+Use the `data` argument to pass whatever extra context you want to be available
+in the templates. The arguments can be any valid Python value, even a
+function.
+
+
+## The copier.yml file
 
 If a YAML file named `copier.yml` (alternatively, a `copier.json` ) is found in the root
-of the project, it will be used to prompt the user to fill or confirm the values before
-become avaliable to the project template.
+of the project, it will be read and used for two purposes:
+
+### Prompt the user for information
+
+For each key found, Copier will prompt the user to fill or confirm the values before
+they become avaliable to the project template. So a content like this:
 
 ```yaml
 name_of_the_project: "My awesome project"
 your_email: null
 number_of_eels: 1234
+```
 
+will result in this series of questions:
+
+```shell
+
+   name_of_the_project? [My awesome project]
+   your_email? [None] myemail@gmail.com
+   number_of_eels? [1234] 42
+
+```
+
+### Arguments defaults
+
+The keys `_exclude`, `_include` and `_tasks` in the `copier.yml` file, will be treated
+as the default values for the `exclude`, `include`, and `tasks` arguments to
+`copier.copy()`.
+
+Note that they become just *the default*, so any explicitely-passed argument will
+overwrite them.
+
+```yaml
 # Shell-style patterns files/folders that must not be copied.
 _exclude:
     - *.bar
@@ -62,35 +107,10 @@ _tasks:
 
 ```
 
-In this file, the keys `_exclude`, `_include` and `_tasks` have special meaning.
-
-`_exclude`, `_include`, and `_tasks`  will be treated as the default values for the
-`exclude`, `include`, and `tasks`  arguments of `copier.copy()`.
-However, any explicitely passed argument will overwrite them.
-
+---
 > **Warning:** Use only trusted project templates as these tasks
 > run with the same level of access as your user.
-
-
-## How it works
-
-The content of the files inside the project template are copied to the destination
-without changes, **unless are suffixed with the extension '.tmpl'.**
-In that case, the templating engine will be used to render them.
-
-A slightly customized Jinja2 templating is used. The main difference is
-that variables are referenced with ``[[ name ]]`` instead of
-``{{ name }}`` and blocks are ``[% if name %]`` instead of
-``{% if name %}``. To read more about templating see the [Jinja2
-documentation](http://jinja.pocoo.org/docs>).
-
-If a `copier.yml` is found in the root of the project, the user will be prompted to
-fill or confirm the values.
-
-Use the `extra_data` argument to pass whatever extra context you want to be available
-in the templates. The arguments can be any valid Python value, even a
-function.
-
+---
 
 ## API
 
