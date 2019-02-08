@@ -3,6 +3,7 @@ import filecmp
 import os
 import re
 import shutil
+import subprocess
 
 from . import tools, vcs
 from .user_data import get_user_data, prompt_bool
@@ -34,6 +35,7 @@ def copy(
     *,
     exclude=None,
     include=None,
+    tasks=None,
     envops=None,
 
     pretend=False,
@@ -65,6 +67,12 @@ def copy(
         must be included, even if its name are in the `exclude` list.
         Eg: `['.gitignore']`. The default is an empty list.
 
+    - tasks (list):
+        Optional lists of commands to run in order after finishing the copy.
+        Like in the templates files, you can use variables on the commands that will
+        be replaced by the real values before running the command.
+        If one of the commands fail, the rest of them will not run.
+
     - envops (dict):
         Extra options for the Jinja template environment.
 
@@ -95,6 +103,7 @@ def copy(
             data=_data,
             exclude=exclude,
             include=include,
+            tasks=tasks,
             envops=envops,
 
             pretend=pretend,
@@ -117,6 +126,7 @@ def copy_local(
     *,
     exclude,
     include,
+    tasks,
     envops,
     **flags
 ):
@@ -132,6 +142,9 @@ def copy_local(
     if include is None:
         include = user_data.pop('_include', None) or DEFAULT_INCLUDE
     must_filter = tools.get_name_filter(exclude, include)
+
+    if tasks is None:
+        tasks = user_data.pop('_tasks', None) or []
 
     data.update(user_data)
     data.setdefault('folder_name', os.path.basename(dst_path))
@@ -164,6 +177,9 @@ def copy_local(
             )
     if not flags['quiet']:
         print('')  # padding space
+
+    if tasks:
+        run_tasks(dst_path, render, tasks)
 
 
 def render_file(
@@ -246,3 +262,14 @@ def overwrite_file(display_path, source_path, final_path, content, **flags):
         )
 
     return overwrite
+
+
+def run_tasks(dst_path, render, tasks):
+    cwd = os.getcwd()
+    os.chdir(dst_path)
+    try:
+        for task in tasks:
+            task = render.string(task)
+            subprocess.run(task, shell=True, check=True)
+    finally:
+        os.chdir(cwd)
