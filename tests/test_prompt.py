@@ -1,5 +1,6 @@
+import pytest
 
-from voodoo import prompt, prompt_bool, prompt_int
+from ..copier.user_data import prompt, prompt_bool
 
 
 def test_prompt(stdin, capsys):
@@ -97,31 +98,9 @@ def test_prompt_bool_default(stdin, capsys):
     assert stdout == '{} [n] '.format(question)
 
 
-def test_prompt_int(stdin, capsys):
-    question = 'Give me a number'
-    stdin.append('10\n')
-    response = prompt_int(question)
-    stdout, _ = capsys.readouterr()
-    assert response is 10
-    assert stdout == '{} '.format(question)
-
-
-def test_prompt_int_range(stdin, capsys):
-    question = 'Give me a number'
-    stdin.append('1\n100\n10\n')
-    response = prompt_int(question, min_value=5, max_value=50)
-    stdout, _ = capsys.readouterr()
-    assert response is 10
-    assert stdout == '{0} {1}\n{0} {2}\n{0} '.format(
-        question,
-        'Value must be equal to or greater than 5',
-        'Value must be equal to or lower than 50')
-
-
-def test_prompt_int_invalid(stdin, capsys):
-    question = 'Give me a number'
-    stdin.append('abc\n10\n')
-    response = prompt_int(question)
-    stdout, _ = capsys.readouterr()
-    assert response is 10
-    assert stdout == '{0} {1}\n{0} '.format(question, 'Enter a whole number')
+def test_prompt_bool_invalid(stdin, capsys):
+    question = 'Are you sure?'
+    stdin.append('ARRRR\n')
+    # Not ValueError because of capsys
+    with pytest.raises(Exception):
+        prompt_bool(question)

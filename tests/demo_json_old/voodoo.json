@@ -1,0 +1,7 @@
+{
+	"a_string": "lorem ipsum",
+	"a_number": 12345,
+	"a_boolean": true,
+	"a_null": null,
+	"a_list": ["one", "two", "three"] 
+}

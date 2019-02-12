@@ -1,6 +1,6 @@
-# coding=utf-8
-from __future__ import print_function
 import re
+
+from .. import copier
 
 from .helpers import render
 
@@ -8,9 +8,9 @@ from .helpers import render
 def test_output(capsys, dst):
     render(dst, quiet=False)
     out, err = capsys.readouterr()
-
+    print(out)
     assert re.search(r'create[^\s]+  config\.py', out)
-    assert re.search(r'create[^\s]+  setup\.py', out)
+    assert re.search(r'create[^\s]+  pyproject\.toml', out)
     assert re.search(r'create[^\s]+  doc/images/nslogo\.gif', out)
 
 
@@ -19,7 +19,7 @@ def test_output_pretend(capsys, dst):
     out, err = capsys.readouterr()
 
     assert re.search(r'create[^\s]+  config\.py', out)
-    assert re.search(r'create[^\s]+  setup\.py', out)
+    assert re.search(r'create[^\s]+  pyproject\.toml', out)
     assert re.search(r'create[^\s]+  doc/images/nslogo\.gif', out)
 
 
@@ -32,7 +32,7 @@ def test_output_force(capsys, dst):
 
     assert re.search(r'conflict[^\s]+  config\.py', out)
     assert re.search(r'force[^\s]+  config\.py', out)
-    assert re.search(r'identical[^\s]+  setup\.py', out)
+    assert re.search(r'identical[^\s]+  pyproject\.toml', out)
     assert re.search(r'identical[^\s]+  doc/images/nslogo\.gif', out)
 
 
@@ -45,11 +45,11 @@ def test_output_skip(capsys, dst):
 
     assert re.search(r'conflict[^\s]+  config\.py', out)
     assert re.search(r'skip[^\s]+  config\.py', out)
-    assert re.search(r'identical[^\s]+  setup\.py', out)
+    assert re.search(r'identical[^\s]+  pyproject\.toml', out)
     assert re.search(r'identical[^\s]+  doc/images/nslogo\.gif', out)
 
 
 def test_output_quiet(capsys, dst):
     render(dst, quiet=True)
     out, err = capsys.readouterr()
-    assert out == u''
+    assert out == ''

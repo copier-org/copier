@@ -1,0 +1,47 @@
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
+
+[tool.poetry]
+name = "Copier"
+version = "2.1.0"
+description = "A library for rendering projects templates"
+authors = [
+    "Juan-Pablo Scaletti <juanpablo@jpscaletti.com>"
+]
+license = "MIT"
+
+readme = "README.md"
+
+homepage = "https://github.com/jpscaletti/copier"
+repository = "https://github.com/jpscaletti/copier"
+documentation = "https://github.com/jpscaletti/copier"
+
+keywords = ["copy", "template", "scaffolding", "cookiecutter", "paste"]
+
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.5",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+]
+
+# Requirements
+[tool.poetry.dependencies]
+python = "^3.5"
+jinja2 = "^2.10"
+colorama = "^0.4"
+"ruamel.yaml" = "^0.15"
+
+[tool.poetry.dev-dependencies]
+flake8 = "^3.7"
+pytest = "^4.0"
+pytest-cov = "^2.6"
+pytest-mock = "^1.10"
+tox = "^3.6"
+
+[tool.poetry.scripts]
+copier = "copier.cli:run"

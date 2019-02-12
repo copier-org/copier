@@ -1,8 +1,0 @@
-# This file collects all required third-party packages.
-# You can install all of them in a row using pip:
-#
-#     pip install -r requirements.txt
-
-jinja2>=2.7
-colorama>=0.2.5
-Baker>=1.3
