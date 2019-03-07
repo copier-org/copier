@@ -28,5 +28,5 @@ class AppendableStringIO(six.StringIO):
 @pytest.fixture()
 def stdin():
     buffer = AppendableStringIO()
-    with mock.patch('sys.stdin', buffer):
+    with mock.patch("sys.stdin", buffer):
         yield buffer

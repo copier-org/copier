@@ -1,12 +1,20 @@
-# Copier Changelog
+# Changelog
 
-### Version 2.1
+All notable changes to this project will be documented in this file.
+This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
+
+### [Unreleased]
+- The `copier` command-line script now accepts "help" and "version" as commands.
+
+
+### Version 2.1 (2019-02)
 
 - Task runner 🎉.
 - Use `_exclude`, `_include`, and `_tasks` keys in `copier.yml` as the default
   values for the `.copy()` arguments `exclude`, `include`, and `tasks`.
 
-### Version 2.0
+
+### Version 2.0 (2019-02)
 
 - Rebranded from `Voodoo` to `Copier`!
 - Dropped support for Python 2.x, the minimal version is now Python 3.5.

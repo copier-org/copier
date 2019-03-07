@@ -6,18 +6,14 @@ from ruamel.yaml import YAML
 from .tools import read_file, print_format, COLOR_WARNING
 
 
-__all__ = (
-    'get_user_data',
-    'prompt',
-    'prompt_bool',
-)
+__all__ = ("get_user_data", "prompt", "prompt_bool")
 
 yaml = YAML(typ="safe", pure=True)
-INDENT = '  '
+INDENT = "  "
 
 
 def load_yaml_data(src_path, quiet=False):
-    yaml_path = os.path.join(src_path, 'copier.yml')
+    yaml_path = os.path.join(src_path, "copier.yml")
     if not os.path.exists(yaml_path):
         return {}
 
@@ -30,16 +26,16 @@ def load_yaml_data(src_path, quiet=False):
         return data
     except Exception as e:
         if not quiet:
-            print('')
-            print_format('INVALID', msg=yaml_path, color=COLOR_WARNING, indent=0)
-            print('-' * 42)
+            print("")
+            print_format("INVALID", msg=yaml_path, color=COLOR_WARNING, indent=0)
+            print("-" * 42)
             print(e)
-            print('-' * 42)
+            print("-" * 42)
         return {}
 
 
 def load_json_data(src_path, quiet=False, warning=True):
-    json_path = os.path.join(src_path, 'copier.json')
+    json_path = os.path.join(src_path, "copier.json")
     if not os.path.exists(json_path):
         return load_old_json_data(src_path, quiet=quiet, warning=warning)
 
@@ -48,27 +44,28 @@ def load_json_data(src_path, quiet=False, warning=True):
         return json.loads(json_src)
     except ValueError as e:
         if not quiet:
-            print('')
-            print_format('INVALID', msg=json_path, color=COLOR_WARNING, indent=0)
-            print('-' * 42)
+            print("")
+            print_format("INVALID", msg=json_path, color=COLOR_WARNING, indent=0)
+            print("-" * 42)
             print(e)
-            print('-' * 42)
+            print("-" * 42)
         return {}
 
 
 def load_old_json_data(src_path, quiet=False, warning=True):
     # TODO: Remove on version 3.0
-    json_path = os.path.join(src_path, 'voodoo.json')
+    json_path = os.path.join(src_path, "voodoo.json")
     if not os.path.exists(json_path):
         return {}
 
     if warning and not quiet:
-        print('')
+        print("")
         print_format(
-            'WARNING',
-            msg='`voodoo.json` is deprecated. ' +
-                'Replace it with a `copier.yml` or `copier.json`.',
-            color=COLOR_WARNING, indent=10
+            "WARNING",
+            msg="`voodoo.json` is deprecated. "
+            + "Replace it with a `copier.yml` or `copier.json`.",
+            color=COLOR_WARNING,
+            indent=10,
         )
 
     json_src = read_file(json_path)
@@ -76,11 +73,11 @@ def load_old_json_data(src_path, quiet=False, warning=True):
         return json.loads(json_src)
     except ValueError as e:
         if not quiet:
-            print('')
-            print_format('INVALID', msg=json_path, color=COLOR_WARNING, indent=0)
-            print('-' * 42)
+            print("")
+            print_format("INVALID", msg=json_path, color=COLOR_WARNING, indent=0)
+            print("-" * 42)
             print(e)
-            print('-' * 42)
+            print("-" * 42)
         return {}
 
 
@@ -91,25 +88,25 @@ def load_default_data(src_path, quiet=False, warning=True):
     return data
 
 
-SPECIAL_KEYS = ('_exclude', '_include', )
+SPECIAL_KEYS = ("_exclude", "_include")
 
 
 def get_user_data(src_path, **flags):  # pragma:no cover
     """Query to user for information needed as per the template's ``copier.yml``.
     """
-    default_user_data = load_default_data(src_path, quiet=flags['quiet'])
-    if flags['force'] or not default_user_data:
+    default_user_data = load_default_data(src_path, quiet=flags["quiet"])
+    if flags["force"] or not default_user_data:
         return default_user_data
 
-    print('')
+    print("")
     user_data = {}
     for key in default_user_data:
         if key in SPECIAL_KEYS:
             continue
         default = default_user_data[key]
-        user_data[key] = prompt(INDENT + ' {0}?'.format(key), default)
+        user_data[key] = prompt(INDENT + " {0}?".format(key), default)
 
-    print('\n' + INDENT + '-' * 42)
+    print("\n" + INDENT + "-" * 42)
     return user_data
 
 
@@ -131,11 +128,11 @@ def prompt(text, default=no_value, validator=required, **kwargs):
     validator. If the validator raises a ValueError, the error message will be
     printed and the user asked to supply another value.
     """
-    text += ' [%s] ' % default if default is not no_value else ' '
+    text += " [%s] " % default if default is not no_value else " "
     while True:
         resp = input(text)
 
-        if resp == '' and default is not no_value:
+        if resp == "" and default is not no_value:
             resp = default
 
         try:
@@ -147,8 +144,8 @@ def prompt(text, default=no_value, validator=required, **kwargs):
 
 def prompt_bool(question, default=False, yes_choices=None, no_choices=None):
     """Prompt for a true/false yes/no boolean value"""
-    yes_choices = yes_choices or ('y', 'yes', 't', 'true', 'on', '1')
-    no_choices = no_choices or ('n', 'no', 'f', 'false', 'off', '0')
+    yes_choices = yes_choices or ("y", "yes", "t", "true", "on", "1")
+    no_choices = no_choices or ("n", "no", "f", "false", "off", "0")
 
     def validator(value):
         value = value.lower()
@@ -156,8 +153,10 @@ def prompt_bool(question, default=False, yes_choices=None, no_choices=None):
             return True
         if value in no_choices:
             return False
-        raise ValueError('Enter yes/no. y/n, true/false, on/off')
+        raise ValueError("Enter yes/no. y/n, true/false, on/off")
 
     return prompt(
-        question, default=yes_choices[0] if default else no_choices[0],
-        validator=validator)
+        question,
+        default=yes_choices[0] if default else no_choices[0],
+        validator=validator,
+    )
