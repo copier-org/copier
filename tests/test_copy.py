@@ -1,12 +1,10 @@
-from os.path import join, dirname, exists
+from pathlib import Path
 
 import pytest
 
 from .. import copier
 
 from .helpers import (
-    read_content,
-    write_content,
     assert_file,
     render,
     PROJECT_TEMPLATE,
@@ -26,31 +24,31 @@ def test_project_not_found(dst):
 def test_copy(dst):
     render(dst)
 
-    generated = read_content(join(dst, "pyproject.toml"))
-    control = read_content(join(dirname(__file__), "pyproject.toml.ref"))
+    generated = (dst / "pyproject.toml").read_text()
+    control = (Path(__file__).parent / "pyproject.toml.ref").read_text()
     assert generated == control
 
     assert_file(dst, "doc", "mañana.txt")
     assert_file(dst, "doc", "images", "nslogo.gif")
 
-    p1 = join(dst, "awesome", "hello.txt")
-    p2 = join(PROJECT_TEMPLATE, "[[ myvar ]]", "hello.txt")
+    p1 = dst / "awesome" / "hello.txt"
+    p2 = PROJECT_TEMPLATE / "[[ myvar ]]" / "hello.txt"
     assert filecmp.cmp(p1, p2)
 
-    p1 = join(dst, "awesome.txt")
-    p2 = join(PROJECT_TEMPLATE, "[[ myvar ]].txt")
+    p1 = dst / "awesome.txt"
+    p2 = PROJECT_TEMPLATE / "[[ myvar ]].txt"
     assert filecmp.cmp(p1, p2)
 
 
 @pytest.mark.slow
 def test_copy_repo(dst):
     copier.copy("gh:jpscaletti/siht.git", dst, quiet=True)
-    assert exists(join(dst, "setup.py"))
+    assert (dst / "setup.py").exists()
 
 
 def test_default_exclude(dst):
     render(dst)
-    assert not exists(join(dst, ".svn"))
+    assert not (dst / ".svn").exists()
 
 
 def test_include_file(dst):
@@ -60,12 +58,12 @@ def test_include_file(dst):
 
 def test_include_pattern(dst):
     render(dst, include=[".*"])
-    assert exists(join(dst, ".svn"))
+    assert (dst / ".svn").exists()
 
 
 def test_exclude_file(dst):
     render(dst, exclude=["mañana.txt"])
-    assert not exists(join(dst, "doc", "mañana.txt"))
+    assert not (dst / "doc" / "mañana.txt").exists()
 
 
 def test_config_exclude(dst):
@@ -75,7 +73,7 @@ def test_config_exclude(dst):
     copier.main._get_user_data = copier.main.get_user_data
     copier.main.get_user_data = fake_data
     copier.copy(PROJECT_TEMPLATE, dst, data=DATA, quiet=True)
-    assert not exists(join(dst, "aaaa.txt"))
+    assert not (dst / "aaaa.txt").exists()
     copier.main.get_user_data = copier.main._get_user_data
 
 
@@ -86,7 +84,7 @@ def test_config_exclude_overwrited(dst):
     copier.main._get_user_data = copier.main.get_user_data
     copier.main.get_user_data = fake_data
     copier.copy(PROJECT_TEMPLATE, dst, data=DATA, quiet=True, exclude=[])
-    assert exists(join(dst, "aaaa.txt"))
+    assert (dst / "aaaa.txt").exists()
     copier.main.get_user_data = copier.main._get_user_data
 
 
@@ -97,37 +95,37 @@ def test_config_include(dst):
     copier.main._get_user_data = copier.main.get_user_data
     copier.main.get_user_data = fake_data
     copier.copy(PROJECT_TEMPLATE, dst, data=DATA, quiet=True)
-    assert exists(join(dst, ".svn"))
+    assert (dst / ".svn").exists()
     copier.main.get_user_data = copier.main._get_user_data
 
 
 def test_skip_option(dst):
     render(dst)
-    path = join(dst, "pyproject.toml")
+    path = dst / "pyproject.toml"
     content = "lorem ipsum"
-    write_content(path, content)
+    path.write_text(content)
     render(dst, skip=True)
-    assert read_content(path) == content
+    assert path.read_text() == content
 
 
 def test_force_option(dst):
     render(dst)
-    path = join(dst, "pyproject.toml")
+    path = dst / "pyproject.toml"
     content = "lorem ipsum"
-    write_content(path, content)
+    path.write_text(content)
     render(dst, force=True)
-    assert read_content(path) != content
+    assert path.read_text() != content
 
 
 def test_pretend_option(dst):
     render(dst, pretend=True)
-    assert not exists(join(dst, "doc"))
-    assert not exists(join(dst, "config.py"))
-    assert not exists(join(dst, "pyproject.toml"))
+    assert not (dst / "doc").exists()
+    assert not (dst / "config.py").exists()
+    assert not (dst / "pyproject.toml").exists()
 
 
 def test_tasks(dst):
     tasks = ["touch [[ myvar ]]/1.txt", "touch [[ myvar ]]/2.txt"]
     render(dst, tasks=tasks)
-    assert exists(join(dst, DATA["myvar"], "1.txt"))
-    assert exists(join(dst, DATA["myvar"], "2.txt"))
+    assert (dst / DATA["myvar"] / "1.txt").exists()
+    assert (dst / DATA["myvar"] / "2.txt").exists()

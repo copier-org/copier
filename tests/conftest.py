@@ -1,4 +1,5 @@
 from os import SEEK_END
+from pathlib import Path
 from tempfile import mkdtemp
 import six
 import shutil
@@ -14,7 +15,7 @@ def dst(request):
     """
     dst = mkdtemp()
     request.addfinalizer(lambda: shutil.rmtree(dst))
-    return dst
+    return Path(dst)
 
 
 class AppendableStringIO(six.StringIO):

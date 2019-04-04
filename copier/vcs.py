@@ -14,6 +14,7 @@ RE_GITLAB = re.compile(r"^gl:/?")
 
 
 def get_repo(url):
+    url = str(url)  # In case we have got a `pathlib.Path`
     if not (url.endswith(GIT_POSTFIX) or url.startswith(GIT_PREFIX)):
         return None
 

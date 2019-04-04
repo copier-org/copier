@@ -1,6 +1,6 @@
 import pytest
 
-from ..copier.user_data import prompt, prompt_bool
+from ..copier.tools import prompt, prompt_bool
 
 
 def test_prompt(stdin, capsys):

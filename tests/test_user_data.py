@@ -1,4 +1,4 @@
-from os.path import join
+from pathlib import Path
 import re
 
 import pytest
@@ -11,8 +11,6 @@ from ..copier.user_data import (
     load_default_data,
 )
 
-from .helpers import read_content
-
 
 @pytest.mark.parametrize(
     "template", ["tests/demo_yaml", "tests/demo_json", "tests/demo_json_old"]
@@ -20,10 +18,10 @@ from .helpers import read_content
 def test_read_user_data(dst, template):
     copier.copy(template, dst, force=True)
 
-    gen_file = join(dst, "user_data.txt")
-    result = read_content(gen_file)
+    gen_file = dst / "user_data.txt"
+    result = gen_file.read_text()
     print(result)
-    expected = read_content("tests/user_data.ref.txt")
+    expected = Path("tests/user_data.ref.txt").read_text()
     assert result == expected
 
 

@@ -1,8 +1,8 @@
-import os
+from pathlib import Path
 
 from ..copier import tools
 
-from .helpers import PROJECT_TEMPLATE, DATA, read_content
+from .helpers import PROJECT_TEMPLATE, DATA
 
 
 def test_render(dst):
@@ -11,8 +11,8 @@ def test_render(dst):
     assert render.string("/hello/[[ what ]]/") == "/hello/world/"
     assert render.string("/hello/world/") == "/hello/world/"
 
-    sourcepath = os.path.join(PROJECT_TEMPLATE, "pyproject.toml.tmpl")
+    sourcepath = PROJECT_TEMPLATE / "pyproject.toml.tmpl"
     result = render(sourcepath)
-    expected = read_content("./tests/pyproject.toml.ref")
+    expected = Path("./tests/pyproject.toml.ref").read_text()
     print(result)
     assert result == expected
