@@ -4,7 +4,7 @@ build-backend = "poetry.masonry.api"
 
 [tool.poetry]
 name = "Copier"
-version = "2.1.0"
+version = "2.2.0"
 description = "A library for rendering projects templates"
 authors = [
     "Juan-Pablo Scaletti <juanpablo@jpscaletti.com>"
@@ -33,15 +33,15 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.5"
 jinja2 = "^2.10"
-colorama = "^0.4"
-"ruamel.yaml" = "^0.15"
+"ruamel.yaml" = ">=0.15"
+pastel = ">=0.1.0"
 
 [tool.poetry.dev-dependencies]
-flake8 = "^3.7"
-pytest = "^4.0"
-pytest-cov = "^2.6"
-pytest-mock = "^1.10"
-tox = "^3.6"
+flake8 = ">=3.7"
+pytest = ">=4.0"
+pytest-cov = ">=2.6"
+pytest-mock = ">=1.10"
+tox = ">=3.6"
 
 [tool.poetry.scripts]
 copier = "copier.cli:run"

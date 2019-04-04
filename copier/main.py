@@ -4,9 +4,22 @@ import os
 import re
 import shutil
 import subprocess
+from pathlib import Path
 
-from . import tools, vcs
-from .user_data import get_user_data, prompt_bool
+from . import vcs
+from .user_data import get_user_data
+from .tools import (
+    copy_file,
+    get_jinja_renderer,
+    get_name_filter,
+    make_folder,
+    printf,
+    prompt_bool,
+    STYLE_OK,
+    STYLE_IGNORE,
+    STYLE_DANGER,
+    STYLE_WARNING,
+)
 
 
 __all__ = ("copy", "copy_local")
@@ -98,8 +111,8 @@ def copy(
 
     try:
         copy_local(
-            src_path,
-            dst_path,
+            Path(src_path),
+            Path(dst_path),
             data=_data,
             exclude=exclude,
             include=include,
@@ -119,45 +132,51 @@ RE_TMPL = re.compile(r"\.tmpl$", re.IGNORECASE)
 
 
 def copy_local(src_path, dst_path, data, *, exclude, include, tasks, envops, **flags):
-    if not os.path.exists(src_path):
+    if not src_path.exists():
         raise ValueError("Project template not found")
-    if not os.path.isdir(src_path):
+
+    if not src_path.is_dir():
         raise ValueError("The project template must be a folder")
 
     user_data = get_user_data(src_path, **flags)
 
     if exclude is None:
         exclude = user_data.pop("_exclude", None) or DEFAULT_EXCLUDE
+
     if include is None:
         include = user_data.pop("_include", None) or DEFAULT_INCLUDE
-    must_filter = tools.get_name_filter(exclude, include)
+
+    must_filter = get_name_filter(exclude, include)
 
     if tasks is None:
         tasks = user_data.pop("_tasks", None) or []
 
     data.update(user_data)
-    data.setdefault("folder_name", os.path.basename(dst_path))
+    data.setdefault("folder_name", dst_path.name)
 
-    render = tools.get_jinja_renderer(src_path, data, envops)
+    render = get_jinja_renderer(src_path, data, envops)
 
     if not flags["quiet"]:
         print("")  # padding space
 
     for folder, _, files in os.walk(src_path):
-        rel_folder = folder.replace(src_path, "").lstrip(os.path.sep)
+        rel_folder = folder.replace(str(src_path), "").lstrip(os.path.sep)
         rel_folder = render.string(rel_folder)
         if must_filter(rel_folder):
             continue
 
+        folder = Path(folder)
+        rel_folder = Path(rel_folder)
+
         for src_name in files:
             dst_name = re.sub(RE_TMPL, "", src_name)
             dst_name = render.string(dst_name)
-            rel_path = os.path.join(rel_folder, dst_name)
+            rel_path = rel_folder / dst_name
 
             if must_filter(rel_path):
                 continue
 
-            source_path = os.path.join(folder, src_name)
+            source_path = folder / src_name
             render_file(dst_path, rel_path, source_path, render, **flags)
 
     if not flags["quiet"]:
@@ -170,27 +189,24 @@ def copy_local(src_path, dst_path, data, *, exclude, include, tasks, envops, **f
 def render_file(dst_path, rel_path, source_path, render, **flags):
     """Process or copy a file of the skeleton.
     """
-
-    display_path = rel_path.replace("." + os.path.sep, ".", 1)
-
-    final_path = os.path.abspath(os.path.join(dst_path, rel_path))
+    final_path = dst_path.resolve() / rel_path
     if not flags["pretend"]:
-        tools.make_folder(os.path.dirname(final_path))
+        make_folder(final_path.parent)
 
-    if source_path.endswith(".tmpl"):
+    if source_path.suffix == ".tmpl":
         content = render(source_path)
     else:
         content = None
 
-    if not os.path.exists(final_path):
+    display_path = str(rel_path).replace("." + os.path.sep, ".", 1)
+
+    if not final_path.exists():
         if not flags["quiet"]:
-            tools.print_format("create", display_path, color=tools.COLOR_OK)
+            printf("create", display_path, style=STYLE_OK)
     else:
         if file_is_identical(source_path, final_path, content):
             if not flags["quiet"]:
-                tools.print_format(
-                    "identical", display_path, color=tools.COLOR_IGNORE, bright=None
-                )
+                printf("identical", display_path, style=STYLE_IGNORE)
             return
 
         if not overwrite_file(display_path, source_path, final_path, content, **flags):
@@ -200,9 +216,9 @@ def render_file(dst_path, rel_path, source_path, render, **flags):
         return
 
     if content is None:
-        tools.copy_file(source_path, final_path)
+        copy_file(source_path, final_path)
     else:
-        tools.write_file(final_path, content)
+        final_path.write_text(content)
 
 
 def file_is_identical(source_path, final_path, content):
@@ -217,12 +233,12 @@ def files_are_identical(path1, path2):
 
 
 def file_has_this_content(path, content):
-    return content == tools.read_file(path)
+    return content == path.read_text()
 
 
 def overwrite_file(display_path, source_path, final_path, content, **flags):
     if not flags["quiet"]:
-        tools.print_format("conflict", display_path, color=tools.COLOR_DANGER)
+        printf("conflict", display_path, style=STYLE_DANGER)
     if flags["force"]:
         overwrite = True
     elif flags["skip"]:
@@ -232,9 +248,7 @@ def overwrite_file(display_path, source_path, final_path, content, **flags):
         overwrite = prompt_bool(msg, default=True)
 
     if not flags["quiet"]:
-        tools.print_format(
-            "force" if overwrite else "skip", display_path, color=tools.COLOR_WARNING
-        )
+        printf("force" if overwrite else "skip", display_path, style=STYLE_WARNING)
 
     return overwrite
 

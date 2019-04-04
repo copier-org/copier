@@ -1,66 +1,100 @@
 from fnmatch import fnmatch
 from functools import reduce
 import errno
-import io
 import os
 import shutil
 import unicodedata
 
-from colorama import Fore, Back, Style
 import jinja2
 from jinja2.sandbox import SandboxedEnvironment
+import pastel
 
 
-COLOR_OK = "green"
-COLOR_WARNING = "yellow"
-COLOR_IGNORE = "cyan"
-COLOR_DANGER = "red"
+_all__ = (
+    "STYLE_OK",
+    "STYLE_WARNING",
+    "STYLE_IGNORE",
+    "STYLE_DANGER",
+    "printf",
+    "prompt",
+    "prompt_bool",
+)
+
+STYLE_OK = "fg=green;options=bold"
+STYLE_WARNING = "fg=yellow;options=bold"
+STYLE_IGNORE = "fg=cyan"
+STYLE_DANGER = "fg=red;options=bold"
 
 
-def format_message(action, msg="", color="", on_color="", bright=True, indent=12):
-    """Format message."""
+def printf(action, msg="", style=None, indent=12):
     action = action.rjust(indent, " ")
-    color = getattr(Fore, color.upper(), "")
-    on_color = getattr(Back, on_color.upper(), "")
-    style = Style.BRIGHT if bright else Style.DIM if bright is False else ""
+    if not style:
+        return action + msg
 
-    return "".join(
-        [
-            color,
-            on_color,
-            style,
-            action,
-            Fore.RESET,
-            Back.RESET,
-            Style.RESET_ALL,
-            "  ",
-            msg,
-        ]
+    text = "<{style}>{action}</>  {msg}".format(style=style, action=action, msg=msg)
+    print(text)
+    print(pastel.colorize(text))
+
+
+no_value = object()
+
+
+def required(value):
+    if not value:
+        raise ValueError()
+    return value
+
+
+def prompt(text, default=no_value, validator=required, **kwargs):
+    """
+    Prompt for a value from the command line. A default value can be provided,
+    which will be used if no text is entered by the user. The value can be
+    validated, and possibly changed by supplying a validator function. Any
+    extra keyword arguments to this function will be passed along to the
+    validator. If the validator raises a ValueError, the error message will be
+    printed and the user asked to supply another value.
+    """
+    text += " [%s] " % default if default is not no_value else " "
+    while True:
+        resp = input(text)
+
+        if resp == "" and default is not no_value:
+            resp = default
+
+        try:
+            return validator(resp, **kwargs)
+        except ValueError as e:
+            if str(e):
+                print(str(e))
+
+
+def prompt_bool(question, default=False, yes_choices=None, no_choices=None):
+    """Prompt for a true/false yes/no boolean value"""
+    yes_choices = yes_choices or ("y", "yes", "t", "true", "on", "1")
+    no_choices = no_choices or ("n", "no", "f", "false", "off", "0")
+
+    def validator(value):
+        value = value.lower()
+        if value in yes_choices:
+            return True
+        if value in no_choices:
+            return False
+        raise ValueError("Enter yes/no. y/n, true/false, on/off")
+
+    return prompt(
+        question,
+        default=yes_choices[0] if default else no_choices[0],
+        validator=validator,
     )
 
 
-def print_format(*args, **kwargs):
-    """Like format_message but prints it."""
-    print(format_message(*args, **kwargs))
-
-
 def make_folder(folder, pretend=False):
-    if not os.path.exists(folder):
+    if not folder.exists():
         try:
             os.makedirs(folder)
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
-
-
-def read_file(path, mode="rt"):
-    with io.open(path, mode=mode) as file:
-        return file.read()
-
-
-def write_file(path, content, mode="wt"):
-    with io.open(path, mode=mode) as file:
-        file.write(content)
 
 
 copy_file = shutil.copy2
@@ -84,7 +118,7 @@ class Renderer(object):
         self.data = data
 
     def __call__(self, fullpath):
-        relpath = fullpath.replace(self.src_path, "").lstrip(os.path.sep)
+        relpath = str(fullpath).replace(self.src_path, "").lstrip(os.path.sep)
         tmpl = self.env.get_template(relpath)
         return tmpl.render(**self.data)
 
@@ -96,6 +130,8 @@ class Renderer(object):
 def get_jinja_renderer(src_path, data, envops=None):
     """Returns a function that can render a Jinja template.
     """
+    # Jinja <= 2.10 does not work with `pathlib.Path`s
+    src_path = str(src_path)
     _envops = DEFAULT_ENV_OPTIONS.copy()
     _envops.update(envops or {})
     _envops.setdefault("loader", jinja2.FileSystemLoader(src_path))
@@ -127,7 +163,7 @@ def get_name_filter(exclude, include):
     include = [normalize(f) for f in include]
 
     def fullmatch(path, pattern):
-        path = normalize(path)
+        path = normalize(str(path))
         name = os.path.basename(path)
         return fnmatch(name, pattern) or fnmatch(path, pattern)
 
