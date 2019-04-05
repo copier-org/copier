@@ -32,7 +32,6 @@ def printf(action, msg="", style=None, indent=12):
         return action + msg
 
     text = "<{style}>{action}</>  {msg}".format(style=style, action=action, msg=msg)
-    print(text)
     print(pastel.colorize(text))
 
 
@@ -91,13 +90,14 @@ def prompt_bool(question, default=False, yes_choices=None, no_choices=None):
 def make_folder(folder, pretend=False):
     if not folder.exists():
         try:
-            os.makedirs(folder)
+            os.makedirs(str(folder))
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
 
 
-copy_file = shutil.copy2
+def copy_file(src, dst):
+    shutil.copy2(str(src), str(dst))
 
 
 # The default env options for jinja2
@@ -118,7 +118,9 @@ class Renderer(object):
         self.data = data
 
     def __call__(self, fullpath):
-        relpath = str(fullpath).replace(self.src_path, "").lstrip(os.path.sep)
+        relpath = str(fullpath) \
+            .replace(self.src_path, "", 1) \
+            .lstrip(os.path.sep)
         tmpl = self.env.get_template(relpath)
         return tmpl.render(**self.data)
 

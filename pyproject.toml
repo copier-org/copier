@@ -4,7 +4,7 @@ build-backend = "poetry.masonry.api"
 
 [tool.poetry]
 name = "Copier"
-version = "2.2.0"
+version = "2.2.1"
 description = "A library for rendering projects templates"
 authors = [
     "Juan-Pablo Scaletti <juanpablo@jpscaletti.com>"

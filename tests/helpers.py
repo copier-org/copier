@@ -25,6 +25,6 @@ def render(dst, **kwargs):
 
 
 def assert_file(dst, *path):
-    p1 = os.path.join(dst, *path)
-    p2 = os.path.join(PROJECT_TEMPLATE, *path)
+    p1 = os.path.join(str(dst), *path)
+    p2 = os.path.join(str(PROJECT_TEMPLATE), *path)
     assert filecmp.cmp(p1, p2)

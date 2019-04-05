@@ -31,12 +31,12 @@ def test_copy(dst):
     assert_file(dst, "doc", "mañana.txt")
     assert_file(dst, "doc", "images", "nslogo.gif")
 
-    p1 = dst / "awesome" / "hello.txt"
-    p2 = PROJECT_TEMPLATE / "[[ myvar ]]" / "hello.txt"
+    p1 = str(dst / "awesome" / "hello.txt")
+    p2 = str(PROJECT_TEMPLATE / "[[ myvar ]]" / "hello.txt")
     assert filecmp.cmp(p1, p2)
 
-    p1 = dst / "awesome.txt"
-    p2 = PROJECT_TEMPLATE / "[[ myvar ]].txt"
+    p1 = str(dst / "awesome.txt")
+    p2 = str(PROJECT_TEMPLATE / "[[ myvar ]].txt")
     assert filecmp.cmp(p1, p2)
 
 

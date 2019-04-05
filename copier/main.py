@@ -111,8 +111,8 @@ def copy(
 
     try:
         copy_local(
-            Path(src_path),
-            Path(dst_path),
+            src_path,
+            dst_path,
             data=_data,
             exclude=exclude,
             include=include,
@@ -131,37 +131,60 @@ def copy(
 RE_TMPL = re.compile(r"\.tmpl$", re.IGNORECASE)
 
 
-def copy_local(src_path, dst_path, data, *, exclude, include, tasks, envops, **flags):
+def resolve_paths(src_path, dst_path):
+    try:
+        src_path = Path(src_path).resolve()
+    except FileNotFoundError:
+        raise ValueError("Project template not found")
+
     if not src_path.exists():
         raise ValueError("Project template not found")
 
     if not src_path.is_dir():
         raise ValueError("The project template must be a folder")
 
+    return src_path, Path(dst_path).resolve()
+
+
+def copy_local(
+    src_path,
+    dst_path,
+    data,
+    *,
+    exclude=None,
+    include=None,
+    tasks=None,
+    envops=None,
+    **flags
+):
+    src_path, dst_path = resolve_paths(src_path, dst_path)
+
     user_data = get_user_data(src_path, **flags)
 
+    user_exclude = user_data.pop("_exclude", None)
     if exclude is None:
-        exclude = user_data.pop("_exclude", None) or DEFAULT_EXCLUDE
+        exclude = user_exclude or DEFAULT_EXCLUDE
 
+    user_include = user_data.pop("_include", None)
     if include is None:
-        include = user_data.pop("_include", None) or DEFAULT_INCLUDE
+        include = user_include or DEFAULT_INCLUDE
+
+    user_tasks = user_data.pop("_tasks", None)
+    if tasks is None:
+        tasks = user_tasks or []
 
     must_filter = get_name_filter(exclude, include)
-
-    if tasks is None:
-        tasks = user_data.pop("_tasks", None) or []
-
     data.update(user_data)
     data.setdefault("folder_name", dst_path.name)
-
     render = get_jinja_renderer(src_path, data, envops)
 
     if not flags["quiet"]:
         print("")  # padding space
 
-    for folder, _, files in os.walk(src_path):
-        rel_folder = folder.replace(str(src_path), "").lstrip(os.path.sep)
+    for folder, _, files in os.walk(str(src_path)):
+        rel_folder = folder.replace(str(src_path), "", 1).lstrip(os.path.sep)
         rel_folder = render.string(rel_folder)
+
         if must_filter(rel_folder):
             continue
 
@@ -229,7 +252,7 @@ def file_is_identical(source_path, final_path, content):
 
 
 def files_are_identical(path1, path2):
-    return filecmp.cmp(path1, path2, shallow=False)
+    return filecmp.cmp(str(path1), str(path2), shallow=False)
 
 
 def file_has_this_content(path, content):
@@ -254,6 +277,7 @@ def overwrite_file(display_path, source_path, final_path, content, **flags):
 
 
 def run_tasks(dst_path, render, tasks):
+    dst_path = str(dst_path)
     for task in tasks:
         task = render.string(task)
         subprocess.run(task, shell=True, check=True, cwd=dst_path)
