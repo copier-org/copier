@@ -7,7 +7,8 @@ import unicodedata
 
 import jinja2
 from jinja2.sandbox import SandboxedEnvironment
-import pastel
+import colorama
+from colorama import Fore, Style
 
 
 _all__ = (
@@ -20,10 +21,12 @@ _all__ = (
     "prompt_bool",
 )
 
-STYLE_OK = "fg=green;options=bold"
-STYLE_WARNING = "fg=yellow;options=bold"
-STYLE_IGNORE = "fg=cyan"
-STYLE_DANGER = "fg=red;options=bold"
+colorama.init()
+
+STYLE_OK = [Fore.GREEN, Style.BRIGHT]
+STYLE_WARNING = [Fore.YELLOW, Style.BRIGHT]
+STYLE_IGNORE = [Fore.CYAN]
+STYLE_DANGER = [Fore.RED, Style.BRIGHT]
 
 
 def printf(action, msg="", style=None, indent=12):
@@ -31,8 +34,8 @@ def printf(action, msg="", style=None, indent=12):
     if not style:
         return action + msg
 
-    text = "<{style}>{action}</>  {msg}".format(style=style, action=action, msg=msg)
-    print(pastel.colorize(text))
+    out = style + [action, Fore.RESET, Style.RESET_ALL, "  ", msg]
+    print(*out, sep="")
 
 
 no_value = object()

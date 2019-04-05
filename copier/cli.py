@@ -4,8 +4,12 @@ from hashlib import sha512
 from os import urandom
 import sys
 
-from .main import copy
-from .version import __version__
+try:
+    from .main import copy
+    from .version import __version__
+except Exception:
+    from copier.main import copy
+    from copier.version import __version__
 
 
 parser = argparse.ArgumentParser(
