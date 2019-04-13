@@ -8,15 +8,10 @@ matrix:
       dist: xenial
       sudo: true
 
-cache:
-  pip: true
-  directories:
-    - "$HOME/.cache/pypoetry"
-
 before_install:
-  - pip install -U pip poetry
+  - pip install -U pip pytest
 
 install:
-  - poetry install -v
+  - python setup.py install
 
-script: poetry run pytest -x copier tests
+script: pytest -x copier tests
