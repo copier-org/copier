@@ -37,6 +37,5 @@ install:
 	pip install -r requirements-dev.txt
 
 publish:
-	python setup.py install
 	pip install twine wheel
 	python publish.py

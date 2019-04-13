@@ -7,14 +7,13 @@ HERE = Path(__file__).parent.resolve()
 
 
 def call(cmd):
-    return subprocess.check_call(cmd, shell=True)
+    return subprocess.check_output(cmd, shell=True) \
+        .split(b"\n", 1)[0].decode("utf8")
 
 
 def publish():
     import twine  # noqa
     import wheel  # noqa
-
-    from copier import __version__
 
     try:
         print("Removing previous builds…")
@@ -29,7 +28,8 @@ def publish():
     call("twine upload dist/*")
 
     print("Pushing git tags…")
-    call("git tag v{0}".format(__version__))
+    version = call("python setup.py --version")
+    call("git tag v" + version)
     call("git push --tags")
 
 
