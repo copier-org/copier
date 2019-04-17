@@ -7,7 +7,7 @@ HERE = Path(__file__).parent.resolve()
 
 setup_data = {
     "name": "Copier",
-    "version": "2.2.3",
+    "version": "2.3",
     "description": "A library for rendering projects templates",
     "author": "Juan-Pablo Scaletti",
     "author_email": "juanpablo@jpscaletti.com",
@@ -19,7 +19,7 @@ setup_data = {
     "install_requires": [
         "jinja2 ~= 2.10",
         "colorama ~= 0.4",
-        "ruamel.yaml ~= 0.15",
+        "toml ~= 0.10",
     ],
     "license": "MIT",
     "packages": find_packages(exclude=["tests"]),

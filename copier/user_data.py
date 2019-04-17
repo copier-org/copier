@@ -1,33 +1,28 @@
 import json
 from pathlib import Path
 
-from ruamel.yaml import YAML
+import toml
 
 from .tools import printf, prompt, STYLE_WARNING
 
 
 __all__ = ("get_user_data", )
 
-yaml = YAML(typ="safe", pure=True)
 INDENT = "  "
 
 
-def load_yaml_data(src_path, quiet=False):
-    yaml_path = Path(src_path) / "copier.yml"
-    if not yaml_path.exists():
+def load_toml_data(src_path, quiet=False):
+    toml_path = Path(src_path) / "copier.toml"
+    if not toml_path.exists():
         return {}
 
-    yaml_src = yaml_path.read_text()
+    toml_src = toml_path.read_text()
     try:
-        data = yaml.load(yaml_src)
-        # The YAML parser can too permissive
-        if not isinstance(data, dict):
-            data = {}
-        return data
+        return toml.loads(toml_src)
     except Exception as e:
         if not quiet:
             print("")
-            printf("INVALID", msg=yaml_path, style=STYLE_WARNING, indent=0)
+            printf("INVALID", msg=toml_path, style=STYLE_WARNING, indent=0)
             print("-" * 42)
             print(e)
             print("-" * 42)
@@ -63,7 +58,7 @@ def load_old_json_data(src_path, quiet=False, warning=True):
         printf(
             "WARNING",
             msg="`voodoo.json` is deprecated. "
-            + "Replace it with a `copier.yml` or `copier.json`.",
+            + "Replace it with a `copier.toml` or `copier.json`.",
             style=STYLE_WARNING,
             indent=10,
         )
@@ -82,7 +77,7 @@ def load_old_json_data(src_path, quiet=False, warning=True):
 
 
 def load_default_data(src_path, quiet=False, warning=True):
-    data = load_yaml_data(src_path, quiet=quiet)
+    data = load_toml_data(src_path, quiet=quiet)
     if not data:
         data = load_json_data(src_path, quiet=quiet, warning=warning)
     return data
@@ -92,7 +87,7 @@ SPECIAL_KEYS = ("_exclude", "_include")
 
 
 def get_user_data(src_path, **flags):  # pragma:no cover
-    """Query to user for information needed as per the template's ``copier.yml``.
+    """Query to user for information needed as per the template's ``copier.toml``.
     """
     default_user_data = load_default_data(src_path, quiet=flags["quiet"])
     if flags["force"] or not default_user_data:

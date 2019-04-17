@@ -1,0 +1,5 @@
+# This is a comment
+a_string = "lorem ipsum"
+a_number = 12345
+a_boolean = true
+a_list = [ "one", "two", "three" ]

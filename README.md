@@ -68,10 +68,10 @@ of the project, it will be read and used for two purposes:
 For each key found, Copier will prompt the user to fill or confirm the values before
 they become avaliable to the project template. So a content like this:
 
-```yaml
-name_of_the_project: "My awesome project"
-your_email: null
-number_of_eels: 1234
+```toml
+name_of_the_project = "My awesome project"
+your_email = ""
+number_of_eels = 1234
 ```
 
 will result in this series of questions:
@@ -79,7 +79,7 @@ will result in this series of questions:
 ```shell
 
    name_of_the_project? [My awesome project]
-   your_email? [None] myemail@gmail.com
+   your_email? [] myemail@gmail.com
    number_of_eels? [1234] 42
 
 ```
@@ -93,20 +93,19 @@ as the default values for the `exclude`, `include`, and `tasks` arguments to
 Note that they become just *the default*, so any explicitely-passed argument will
 overwrite them.
 
-```yaml
+```toml
 # Shell-style patterns files/folders that must not be copied.
-_exclude:
-    - *.bar
+_exclude = [ "*.bar" ]
 
 # Shell-style patterns files/folders that *must be* copied, even if
 # they are in the exclude list
--include:
-    - foo.bar
+-include = [ "foo.bar" ]
 
 # Commands to be executed after the copy
-_tasks:
-    - git init
-    - rm [[ name_of_the_project ]]/README.md
+_tasks = []
+    "git init",
+    "rm [[ name_of_the_project ]]/README.md",
+]
 
 ```
 

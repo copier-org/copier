@@ -4,9 +4,14 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 
+### Version 2.3 (2019-04)
+- Drop the ruamel.yaml dependency,
+- Back to using a setup.py intead of a pyproject.toml.
+- The reccomended configuration file is now `copier.toml`,
+
+
 ### Version 2.2 (2019-04)
 - The `copier` command-line script now accepts "help" and "version" as commands.
-- Replace `colorama` dependency with `pastel`.
 
 
 ### Version 2.1 (2019-02)
