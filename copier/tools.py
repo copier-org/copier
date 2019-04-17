@@ -29,7 +29,7 @@ STYLE_IGNORE = [Fore.CYAN]
 STYLE_DANGER = [Fore.RED, Style.BRIGHT]
 
 
-def printf(action, msg="", style=None, indent=12):
+def printf(action, msg="", style=None, indent=10):
     action = action.rjust(indent, " ")
     if not style:
         return action + msg
@@ -47,7 +47,7 @@ def required(value):
     return value
 
 
-def prompt(text, default=no_value, validator=required, **kwargs):
+def prompt(text, default=no_value, default_show=None, validator=required, **kwargs):
     """
     Prompt for a value from the command line. A default value can be provided,
     which will be used if no text is entered by the user. The value can be
@@ -56,7 +56,11 @@ def prompt(text, default=no_value, validator=required, **kwargs):
     validator. If the validator raises a ValueError, the error message will be
     printed and the user asked to supply another value.
     """
-    text += " [%s] " % default if default is not no_value else " "
+    if default_show:
+        text += " [{}] ".format(default_show)
+    else:
+        text += " [{}] ".format(default) if default is not no_value else " "
+
     while True:
         resp = input(text)
 
@@ -90,12 +94,18 @@ def prompt_bool(question, default=False, yes_choices=None, no_choices=None):
             return True
         if value in no_choices:
             return False
-        ops = [y + "/" + n for y, n in zip(yes_choices, no_choices)]
-        raise ValueError("Enter " + _sentence(ops))
+        all_ops = [y + "/" + n for y, n in zip(yes_choices, no_choices)]
+        raise ValueError("Enter " + _sentence(all_ops))
+
+    if default:
+        default_show = yes_choices[0].upper() + "|" + no_choices[0]
+    else:
+        default_show = no_choices[0].upper() + "|" + yes_choices[0]
 
     return prompt(
         question,
         default=yes_choices[0] if default else no_choices[0],
+        default_show=default_show,
         validator=validator,
     )
 

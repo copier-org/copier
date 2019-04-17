@@ -267,7 +267,7 @@ def overwrite_file(display_path, source_path, final_path, content, **flags):
     elif flags["skip"]:
         overwrite = False
     else:  # pragma:no cover
-        msg = "  Overwrite {}? (y/n)".format(final_path)
+        msg = " Overwrite {}?".format(final_path)
         overwrite = prompt_bool(msg, default=True)
 
     if not flags["quiet"]:

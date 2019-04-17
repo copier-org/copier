@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 
+### Version 2.4 (UNRELEASED)
+- ...
+
 ### Version 2.3 (2019-04)
 - Drop the ruamel.yaml dependency,
 - Back to using a setup.py intead of a pyproject.toml.
