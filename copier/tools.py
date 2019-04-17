@@ -95,7 +95,7 @@ def prompt_bool(
     if no_choices:
         no = no_choices[0]
 
-    please_answer = f' Please answer "{yes}" or "{no}"'
+    please_answer = ' Please answer "{}" or "{}"'.format(yes, no)
 
     def validator(value):
         if value:
