@@ -94,13 +94,13 @@ def prompt_bool(question, default=False, yes_choices=None, no_choices=None):
             return True
         if value in no_choices:
             return False
-        all_ops = [y + "/" + n for y, n in zip(yes_choices, no_choices)]
+        all_ops = [y + "|" + n for y, n in zip(yes_choices, no_choices)]
         raise ValueError("Enter " + _sentence(all_ops))
 
     if default:
         default_show = yes_choices[0].upper() + "|" + no_choices[0]
     else:
-        default_show = no_choices[0].upper() + "|" + yes_choices[0]
+        default_show = yes_choices[0] + "|" + no_choices[0].upper()
 
     return prompt(
         question,

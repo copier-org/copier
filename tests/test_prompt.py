@@ -78,7 +78,7 @@ def test_prompt_bool(stdin, capsys):
     response = prompt_bool(question)
     stdout, _ = capsys.readouterr()
     assert response is True
-    assert stdout == "{} [n] ".format(question)
+    assert stdout == "{} [Y|n] ".format(question)
 
 
 def test_prompt_bool_false(stdin, capsys):
@@ -87,16 +87,25 @@ def test_prompt_bool_false(stdin, capsys):
     response = prompt_bool(question)
     stdout, _ = capsys.readouterr()
     assert response is False
-    assert stdout == "{} [n] ".format(question)
+    assert stdout == "{} [Y|n] ".format(question)
 
 
-def test_prompt_bool_default(stdin, capsys):
+def test_prompt_bool_default_true(stdin, capsys):
     question = "Are you sure?"
     stdin.append("\n")
-    response = prompt_bool(question)
+    response = prompt_bool(question, default=True)
+    stdout, _ = capsys.readouterr()
+    assert response is True
+    assert stdout == "{} [Y|n] ".format(question)
+
+
+def test_prompt_bool_default_false(stdin, capsys):
+    question = "Are you sure?"
+    stdin.append("\n")
+    response = prompt_bool(question, default=False)
     stdout, _ = capsys.readouterr()
     assert response is False
-    assert stdout == "{} [n] ".format(question)
+    assert stdout == "{} [y|N] ".format(question)
 
 
 def test_prompt_bool_invalid(stdin, capsys):
