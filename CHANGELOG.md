@@ -5,7 +5,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 
 ### Version 2.4 (UNRELEASED)
-- ...
+- `prompt_bool` can now have an undefined default (ans answer is mandatory in that case).
+
 
 ### Version 2.3 (2019-04)
 - Drop the ruamel.yaml dependency,

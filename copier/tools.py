@@ -47,7 +47,13 @@ def required(value):
     return value
 
 
-def prompt(text, default=no_value, default_show=None, validator=required, **kwargs):
+def prompt(
+    question,
+    default=no_value,
+    default_show=None,
+    validator=required,
+    **kwargs
+):
     """
     Prompt for a value from the command line. A default value can be provided,
     which will be used if no text is entered by the user. The value can be
@@ -57,14 +63,15 @@ def prompt(text, default=no_value, default_show=None, validator=required, **kwar
     printed and the user asked to supply another value.
     """
     if default_show:
-        text += " [{}] ".format(default_show)
+        question += " [{}] ".format(default_show)
+    elif default is not no_value:
+        question += " [{}] ".format(default)
     else:
-        text += " [{}] ".format(default) if default is not no_value else " "
+        question += " "
 
     while True:
-        resp = input(text)
-
-        if resp == "" and default is not no_value:
+        resp = input(question)
+        if not resp and default is not no_value:
             resp = default
 
         try:
@@ -74,37 +81,45 @@ def prompt(text, default=no_value, default_show=None, validator=required, **kwar
                 print(str(e))
 
 
-def _sentence(items, conn="or"):
-    items = list(map(str, items))
-    if len(items) < 3:
-        return " {} ".format(conn).join(items)
+def prompt_bool(
+    question,
+    default=False,
+    yes="y",
+    no="n",
+    yes_choices=None,
+    no_choices=None,
+):
+    # Backwards compatibility. Remove for version 3.0
+    if yes_choices:
+        yes = yes_choices[0]
+    if no_choices:
+        no = no_choices[0]
 
-    last = items.pop()
-    return ", ".join(items) + ", {} ".format(conn) + last
-
-
-def prompt_bool(question, default=False, yes_choices=None, no_choices=None):
-    """Prompt for a true/false yes/no boolean value"""
-    yes_choices = yes_choices or ("y", "yes", "t", "true", "on", "1")
-    no_choices = no_choices or ("n", "no", "f", "false", "off", "0")
+    please_answer = f' Please answer "{yes}" or "{no}"'
 
     def validator(value):
-        value = value.lower()
-        if value in yes_choices:
+        if value:
+            value = str(value).lower()[0]
+        if value == yes:
             return True
-        if value in no_choices:
+        elif value == no:
             return False
-        all_ops = [y + "|" + n for y, n in zip(yes_choices, no_choices)]
-        raise ValueError("Enter " + _sentence(all_ops))
+        else:
+            raise ValueError(please_answer)
 
-    if default:
-        default_show = yes_choices[0].upper() + "|" + no_choices[0]
+    if default is None:
+        default = no_value
+        default_show = yes + "/" + no
+    elif default:
+        default = yes
+        default_show = yes.upper() + "/" + no
     else:
-        default_show = yes_choices[0] + "|" + no_choices[0].upper()
+        default = no
+        default_show = yes + "/" + no.upper()
 
     return prompt(
         question,
-        default=yes_choices[0] if default else no_choices[0],
+        default=default,
         default_show=default_show,
         validator=validator,
     )
