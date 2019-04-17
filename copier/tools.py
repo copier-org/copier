@@ -70,6 +70,15 @@ def prompt(text, default=no_value, validator=required, **kwargs):
                 print(str(e))
 
 
+def _sentence(items, conn="or"):
+    items = list(map(str, items))
+    if len(items) < 3:
+        return " {} ".format(conn).join(items)
+
+    last = items.pop()
+    return ", ".join(items) + ", {} ".format(conn) + last
+
+
 def prompt_bool(question, default=False, yes_choices=None, no_choices=None):
     """Prompt for a true/false yes/no boolean value"""
     yes_choices = yes_choices or ("y", "yes", "t", "true", "on", "1")
@@ -81,7 +90,8 @@ def prompt_bool(question, default=False, yes_choices=None, no_choices=None):
             return True
         if value in no_choices:
             return False
-        raise ValueError("Enter yes/no. y/n, true/false, on/off")
+        ops = [y + "/" + n for y, n in zip(yes_choices, no_choices)]
+        raise ValueError("Enter " + _sentence(ops))
 
     return prompt(
         question,
