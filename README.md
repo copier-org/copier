@@ -102,7 +102,7 @@ _exclude = [ "*.bar" ]
 -include = [ "foo.bar" ]
 
 # Commands to be executed after the copy
-_tasks = []
+_tasks = [
     "git init",
     "rm [[ name_of_the_project ]]/README.md",
 ]
