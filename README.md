@@ -123,7 +123,7 @@ run with the same level of access as your user.
     pretend=False, force=False, skip=False, quiet=False,
 )`
 
-Uses the template in src_path to generate a new project at dst_path.
+Uses the template in *src_path* to generate a new project at *dst_path*.
 
 **Arguments**:
 
