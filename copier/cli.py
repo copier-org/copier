@@ -26,6 +26,9 @@ parser.add_argument("--version", action="version", version=__version__)
 parser.add_argument("source", help="The path of the project template")
 parser.add_argument("dest", help="The path of where to create the new project")
 
+parser.add_argument("--extra-path", help="Extra path to source templates from")
+
+
 parser.add_argument(
     "--exclude",
     nargs="*",

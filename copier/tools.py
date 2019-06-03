@@ -167,14 +167,16 @@ class Renderer(object):
         return tmpl.render(**self.data)
 
 
-def get_jinja_renderer(src_path, data, envops=None):
+def get_jinja_renderer(src_path, extra_path, data, envops=None):
     """Returns a function that can render a Jinja template.
     """
     # Jinja <= 2.10 does not work with `pathlib.Path`s
     src_path = str(src_path)
     _envops = DEFAULT_ENV_OPTIONS.copy()
     _envops.update(envops or {})
-    _envops.setdefault("loader", jinja2.FileSystemLoader(src_path))
+
+    paths = src_path if extra_path is None else [src_path, extra_path]
+    _envops.setdefault("loader", jinja2.FileSystemLoader(paths))
 
     # We want to minimize the risk of hidden malware in the templates
     # so we use the SandboxedEnvironment instead of the regular one.

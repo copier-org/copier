@@ -49,6 +49,7 @@ def copy(
     *,
     exclude=None,
     include=None,
+    extra_path=None,
     tasks=None,
     envops=None,
     pretend=False,
@@ -86,6 +87,9 @@ def copy(
         be replaced by the real values before running the command.
         If one of the commands fail, the rest of them will not run.
 
+    - extra_path (str):
+        Additional path to inform the FileSystemLoader where to look for templates.
+
     - envops (dict):
         Extra options for the Jinja template environment.
 
@@ -116,6 +120,7 @@ def copy(
             data=_data,
             exclude=exclude,
             include=include,
+            extra_path=extra_path,
             tasks=tasks,
             envops=envops,
             pretend=pretend,
@@ -153,6 +158,7 @@ def copy_local(
     *,
     exclude=None,
     include=None,
+    extra_path=None,
     tasks=None,
     envops=None,
     **flags
@@ -176,7 +182,7 @@ def copy_local(
     must_filter = get_name_filter(exclude, include)
     data.update(user_data)
     data.setdefault("folder_name", dst_path.name)
-    render = get_jinja_renderer(src_path, data, envops)
+    render = get_jinja_renderer(src_path, extra_path, data, envops)
 
     if not flags["quiet"]:
         print("")  # padding space
