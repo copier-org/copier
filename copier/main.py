@@ -47,15 +47,15 @@ def copy(
     dst_path,
     data=None,
     *,
+    extra_paths=None,
     exclude=None,
     include=None,
-    extra_path=None,
     tasks=None,
     envops=None,
     pretend=False,
     force=False,
     skip=False,
-    quiet=False
+    quiet=False,
 ):
     """
     Uses the template in src_path to generate a new project at dst_path.
@@ -72,6 +72,9 @@ def copy(
         Optional. Data to be passed to the templates in addtion to the user data from
         a `copier.json`.
 
+    - extra_paths (list):
+        Optional. Additional directories to find parent templates in.
+
     - exclude (list):
         A list of names or shell-style patterns matching files or folders
         that must not be copied.
@@ -86,9 +89,6 @@ def copy(
         Like in the templates files, you can use variables on the commands that will
         be replaced by the real values before running the command.
         If one of the commands fail, the rest of them will not run.
-
-    - extra_path (str):
-        Additional path to inform the FileSystemLoader where to look for templates.
 
     - envops (dict):
         Extra options for the Jinja template environment.
@@ -118,9 +118,9 @@ def copy(
             src_path,
             dst_path,
             data=_data,
+            extra_paths=extra_paths,
             exclude=exclude,
             include=include,
-            extra_path=extra_path,
             tasks=tasks,
             envops=envops,
             pretend=pretend,
@@ -156,12 +156,12 @@ def copy_local(
     dst_path,
     data,
     *,
+    extra_paths=None,
     exclude=None,
     include=None,
-    extra_path=None,
     tasks=None,
     envops=None,
-    **flags
+    **flags,
 ):
     src_path, dst_path = resolve_paths(src_path, dst_path)
 
@@ -182,7 +182,7 @@ def copy_local(
     must_filter = get_name_filter(exclude, include)
     data.update(user_data)
     data.setdefault("folder_name", dst_path.name)
-    render = get_jinja_renderer(src_path, extra_path, data, envops)
+    render = get_jinja_renderer(src_path, extra_paths, data, envops)
 
     if not flags["quiet"]:
         print("")  # padding space
