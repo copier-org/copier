@@ -55,7 +55,7 @@ def copy(
     pretend=False,
     force=False,
     skip=False,
-    quiet=False,
+    quiet=False
 ):
     """
     Uses the template in src_path to generate a new project at dst_path.
@@ -161,7 +161,7 @@ def copy_local(
     include=None,
     tasks=None,
     envops=None,
-    **flags,
+    **flags
 ):
     src_path, dst_path = resolve_paths(src_path, dst_path)
 
