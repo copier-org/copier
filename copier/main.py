@@ -182,7 +182,7 @@ def copy_local(
     must_filter = get_name_filter(exclude, include)
     data.update(user_data)
     data.setdefault("folder_name", dst_path.name)
-    render = get_jinja_renderer(src_path, extra_paths, data, envops)
+    render = get_jinja_renderer(src_path, data, extra_paths, envops)
 
     if not flags["quiet"]:
         print("")  # padding space

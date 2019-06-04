@@ -151,7 +151,7 @@ class Renderer(object):
         return tmpl.render(**self.data)
 
 
-def get_jinja_renderer(src_path, extra_paths, data, envops=None):
+def get_jinja_renderer(src_path, data, extra_paths=None, envops=None):
     """Returns a function that can render a Jinja template.
     """
     # Jinja <= 2.10 does not work with `pathlib.Path`s
