@@ -113,6 +113,9 @@ def copy(
     _data = DEFAULT_DATA.copy()
     _data.update(data or {})
 
+    if extra_paths is None:
+        extra_paths = []
+
     try:
         copy_local(
             src_path,
@@ -136,19 +139,26 @@ def copy(
 RE_TMPL = re.compile(r"\.tmpl$", re.IGNORECASE)
 
 
-def resolve_paths(src_path, dst_path):
+def resolve_single_path(path):
     try:
-        src_path = Path(src_path).resolve()
+        path = Path(path).resolve()
     except FileNotFoundError:
         raise ValueError("Project template not found")
 
-    if not src_path.exists():
+    if not path.exists():
         raise ValueError("Project template not found")
 
-    if not src_path.is_dir():
+    if not path.is_dir():
         raise ValueError("The project template must be a folder")
 
-    return src_path, Path(dst_path).resolve()
+    return path
+
+
+def resolve_paths(src_path, dst_path, extra_paths):
+    src_path = resolve_single_path(src_path)
+    dst_path = Path(dst_path).resolve()
+    extra_paths = [str(resolve_single_path(p)) for p in extra_paths]
+    return src_path, dst_path, extra_paths
 
 
 def copy_local(
@@ -163,7 +173,7 @@ def copy_local(
     envops=None,
     **flags
 ):
-    src_path, dst_path = resolve_paths(src_path, dst_path)
+    src_path, dst_path, extra_paths = resolve_paths(src_path, dst_path, extra_paths)
 
     user_data = get_user_data(src_path, **flags)
 
