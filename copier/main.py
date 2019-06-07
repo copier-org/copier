@@ -27,6 +27,8 @@ __all__ = ("copy", "copy_local")
 # Files of the template to exclude from the final project
 DEFAULT_EXCLUDE = (
     "copier.toml",
+    "copier.json",
+    "voodoo.json",
     "~*",
     "*.py[co]",
     "__pycache__",
