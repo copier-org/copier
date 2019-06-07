@@ -47,13 +47,7 @@ def required(value):
     return value
 
 
-def prompt(
-    question,
-    default=no_value,
-    default_show=None,
-    validator=required,
-    **kwargs
-):
+def prompt(question, default=no_value, default_show=None, validator=required, **kwargs):
     """
     Prompt for a value from the command line. A default value can be provided,
     which will be used if no text is entered by the user. The value can be
@@ -82,12 +76,7 @@ def prompt(
 
 
 def prompt_bool(
-    question,
-    default=False,
-    yes="y",
-    no="n",
-    yes_choices=None,
-    no_choices=None,
+    question, default=False, yes="y", no="n", yes_choices=None, no_choices=None
 ):
     # Backwards compatibility. Remove for version 3.0
     if yes_choices:
@@ -118,10 +107,7 @@ def prompt_bool(
         default_show = yes + "/" + no.upper()
 
     return prompt(
-        question,
-        default=default,
-        default_show=default_show,
-        validator=validator,
+        question, default=default, default_show=default_show, validator=validator
     )
 
 
@@ -156,9 +142,7 @@ class Renderer(object):
         self.data = data
 
     def __call__(self, fullpath):
-        relpath = str(fullpath) \
-            .replace(self.src_path, "", 1) \
-            .lstrip(os.path.sep)
+        relpath = str(fullpath).replace(self.src_path, "", 1).lstrip(os.path.sep)
         tmpl = self.env.get_template(relpath)
         return tmpl.render(**self.data)
 
@@ -167,14 +151,16 @@ class Renderer(object):
         return tmpl.render(**self.data)
 
 
-def get_jinja_renderer(src_path, data, envops=None):
+def get_jinja_renderer(src_path, data, extra_paths=None, envops=None):
     """Returns a function that can render a Jinja template.
     """
     # Jinja <= 2.10 does not work with `pathlib.Path`s
     src_path = str(src_path)
     _envops = DEFAULT_ENV_OPTIONS.copy()
     _envops.update(envops or {})
-    _envops.setdefault("loader", jinja2.FileSystemLoader(src_path))
+
+    paths = src_path if extra_paths is None else [src_path, *extra_paths]
+    _envops.setdefault("loader", jinja2.FileSystemLoader(paths))
 
     # We want to minimize the risk of hidden malware in the templates
     # so we use the SandboxedEnvironment instead of the regular one.

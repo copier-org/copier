@@ -133,6 +133,9 @@ Uses the template in *src_path* to generate a new project at *dst_path*.
 - **dst_path** (str):
     Absolute path to where to render the skeleton
 
+- **extra_paths** (list):
+    Optional. Additional directories to find parent templates in
+
 - **data** (dict):
     Optional. Data to be passed to the templates in addtion to the user data from
     a `copier.yml`.

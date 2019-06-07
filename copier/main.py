@@ -47,6 +47,7 @@ def copy(
     dst_path,
     data=None,
     *,
+    extra_paths=None,
     exclude=None,
     include=None,
     tasks=None,
@@ -70,6 +71,9 @@ def copy(
     - data (dict):
         Optional. Data to be passed to the templates in addtion to the user data from
         a `copier.json`.
+
+    - extra_paths (list):
+        Optional. Additional directories to find parent templates in.
 
     - exclude (list):
         A list of names or shell-style patterns matching files or folders
@@ -109,11 +113,15 @@ def copy(
     _data = DEFAULT_DATA.copy()
     _data.update(data or {})
 
+    if extra_paths is None:
+        extra_paths = []
+
     try:
         copy_local(
             src_path,
             dst_path,
             data=_data,
+            extra_paths=extra_paths,
             exclude=exclude,
             include=include,
             tasks=tasks,
@@ -131,19 +139,26 @@ def copy(
 RE_TMPL = re.compile(r"\.tmpl$", re.IGNORECASE)
 
 
-def resolve_paths(src_path, dst_path):
+def resolve_single_path(path):
     try:
-        src_path = Path(src_path).resolve()
+        path = Path(path).resolve()
     except FileNotFoundError:
         raise ValueError("Project template not found")
 
-    if not src_path.exists():
+    if not path.exists():
         raise ValueError("Project template not found")
 
-    if not src_path.is_dir():
+    if not path.is_dir():
         raise ValueError("The project template must be a folder")
 
-    return src_path, Path(dst_path).resolve()
+    return path
+
+
+def resolve_paths(src_path, dst_path, extra_paths):
+    src_path = resolve_single_path(src_path)
+    dst_path = Path(dst_path).resolve()
+    extra_paths = [str(resolve_single_path(p)) for p in extra_paths]
+    return src_path, dst_path, extra_paths
 
 
 def copy_local(
@@ -151,13 +166,14 @@ def copy_local(
     dst_path,
     data,
     *,
+    extra_paths=None,
     exclude=None,
     include=None,
     tasks=None,
     envops=None,
     **flags
 ):
-    src_path, dst_path = resolve_paths(src_path, dst_path)
+    src_path, dst_path, extra_paths = resolve_paths(src_path, dst_path, extra_paths)
 
     user_data = get_user_data(src_path, **flags)
 
@@ -176,7 +192,7 @@ def copy_local(
     must_filter = get_name_filter(exclude, include)
     data.update(user_data)
     data.setdefault("folder_name", dst_path.name)
-    render = get_jinja_renderer(src_path, data, envops)
+    render = get_jinja_renderer(src_path, data, extra_paths, envops)
 
     if not flags["quiet"]:
         print("")  # padding space

@@ -25,6 +25,11 @@ parser.add_argument("--version", action="version", version=__version__)
 
 parser.add_argument("source", help="The path of the project template")
 parser.add_argument("dest", help="The path of where to create the new project")
+parser.add_argument(
+    "--extra-paths",
+    nargs="*",
+    help="Additional directories to find parent templates in",
+)
 
 parser.add_argument(
     "--exclude",
@@ -61,6 +66,7 @@ parser.add_argument(
     dest="skip",
     help="Skip files that already exist, without asking",
 )
+
 parser.add_argument(
     "--quiet", action="store_true", dest="quiet", help="Suppress status output"
 )
