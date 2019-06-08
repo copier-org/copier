@@ -50,7 +50,7 @@ that variables are referenced with ``[[ name ]]`` instead of
 ``{% if name %}``. To read more about templating see the [Jinja2
 documentation](http://jinja.pocoo.org/docs>).
 
-If a `copier.yml` is found in the root of the project, the user will be prompted to
+If a `copier.toml` is found in the root of the project, the user will be prompted to
 fill or confirm the values.
 
 Use the `data` argument to pass whatever extra context you want to be available
@@ -58,9 +58,9 @@ in the templates. The arguments can be any valid Python value, even a
 function.
 
 
-## The copier.yml file
+## The copier.toml file
 
-If a YAML file named `copier.yml` (alternatively, a `copier.json` ) is found in the root
+If a YAML file named `copier.toml` (alternatively, a `copier.json`) is found in the root
 of the project, it will be read and used for two purposes:
 
 ### Prompt the user for information
@@ -81,12 +81,11 @@ will result in this series of questions:
    name_of_the_project? [My awesome project]
    your_email? [] myemail@gmail.com
    number_of_eels? [1234] 42
-
 ```
 
 ### Arguments defaults
 
-The keys `_exclude`, `_include` and `_tasks` in the `copier.yml` file, will be treated
+The keys `_exclude`, `_include` and `_tasks` in the `copier.toml` file, will be treated
 as the default values for the `exclude`, `include`, and `tasks` arguments to
 `copier.copy()`.
 
@@ -128,17 +127,17 @@ Uses the template in *src_path* to generate a new project at *dst_path*.
 **Arguments**:
 
 - **src_path** (str):
-    Absolute path to the project skeleton. May be a version control system URL
+    Absolute path to the project skeleton. May be a version control system URL.
 
 - **dst_path** (str):
-    Absolute path to where to render the skeleton
+    Absolute path to where to render the skeleton.
 
 - **extra_paths** (list):
-    Optional. Additional directories to find parent templates in
+    Optional. Additional directories to find parent templates in.
 
 - **data** (dict):
     Optional. Data to be passed to the templates in addtion to the user data from
-    a `copier.yml`.
+    a `copier.toml`.
 
 - **exclude** (list):
     Optional. A list of names or shell-style patterns matching files or folders
@@ -159,13 +158,13 @@ Uses the template in *src_path* to generate a new project at *dst_path*.
     Optional. Extra options for the Jinja template environment.
 
 - **pretend** (bool):
-    Optional. Run but do not make any changes
+    Optional. Run but do not make any changes.
 
 - **force** (bool):
-    Optional. Overwrite files that already exist, without asking
+    Optional. Overwrite files that already exist, without asking.
 
 - **skip** (bool):
-    Optional. Skip files that already exist, without asking
+    Optional. Skip files that already exist, without asking.
 
 - **quiet** (bool):
-    Optional. Suppress the status output
+    Optional. Suppress the status output.
