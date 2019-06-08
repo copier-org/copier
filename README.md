@@ -98,14 +98,13 @@ _exclude = [ "*.bar" ]
 
 # Shell-style patterns files/folders that *must be* copied, even if
 # they are in the exclude list
--include = [ "foo.bar" ]
+_include = [ "foo.bar" ]
 
 # Commands to be executed after the copy
 _tasks = [
     "git init",
     "rm [[ name_of_the_project ]]/README.md",
 ]
-
 ```
 
 **Warning:** Use only trusted project templates as these tasks
@@ -119,7 +118,7 @@ run with the same level of access as your user.
 
 `copier.copy(src_path, dst_path, data=None, *,
     exclude=DEFAULT_FILTER, include=DEFAULT_INCLUDE, envops=None,
-    pretend=False, force=False, skip=False, quiet=False,
+    pretend=False, force=False, skip=False, quiet=False
 )`
 
 Uses the template in *src_path* to generate a new project at *dst_path*.
