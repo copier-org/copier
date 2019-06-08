@@ -60,7 +60,7 @@ function.
 
 ## The copier.toml file
 
-If a YAML file named `copier.toml` (alternatively, a `copier.json`) is found in the root
+If a **TOML** file named `copier.toml` (alternatively, a `copier.json`) is found in the root
 of the project, it will be read and used for two purposes:
 
 ### Prompt the user for information
