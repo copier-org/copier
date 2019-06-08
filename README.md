@@ -114,12 +114,24 @@ run with the same level of access as your user.
 
 ## API
 
-#### copier.copy()
+#### The main command **copier.copy()**
 
-`copier.copy(src_path, dst_path, data=None, *,
-    exclude=DEFAULT_FILTER, include=DEFAULT_INCLUDE, envops=None,
-    pretend=False, force=False, skip=False, quiet=False
-)`
+```py
+copier.copy(
+   src_path, 
+   dst_path,
+   data=None,
+   *,
+   extra_paths=None,
+   exclude=DEFAULT_FILTER,
+   include=DEFAULT_INCLUDE,
+   envops=None,
+   pretend=False,
+   force=False,
+   skip=False,
+   quiet=False,
+)
+```
 
 Uses the template in *src_path* to generate a new project at *dst_path*.
 
