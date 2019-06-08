@@ -114,7 +114,7 @@ run with the same level of access as your user.
 
 ## API
 
-#### The main command **copier.copy()**
+#### The main command: **copier.copy()**
 
 ```py
 copier.copy(
