@@ -6,12 +6,12 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Version 2.4 (UNRELEASED)
 - `prompt_bool` can now have an undefined default (ans answer is mandatory in that case).
-
+- The new `extra_paths` argument specifies additional paths to find templates to inherit from.
 
 ### Version 2.3 (2019-04)
-- Drop the ruamel.yaml dependency,
+- Drop the ruamel.yaml dependency.
 - Back to using a setup.py intead of a pyproject.toml.
-- The reccomended configuration file is now `copier.toml`,
+- The recommended configuration file is now `copier.toml`.
 
 
 ### Version 2.2 (2019-04)
@@ -30,7 +30,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Rebranded from `Voodoo` to `Copier`!
 - Dropped support for Python 2.x, the minimal version is now Python 3.5.
 - Cleanup and 100% test coverage.
-- The reccomended configuration file is now `copier.yaml`, but a `copier.json`
+- The recommended configuration file is now `copier.yaml`, but a `copier.json`
   can be used as well. The old `voodoo.json` is also supported *for now* but is
   deprecated and will be removed in version 2.2.
 - Python package format updated to the latest standard (no `setup.py` 😵).
