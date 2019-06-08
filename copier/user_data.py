@@ -1,7 +1,4 @@
-import json
 from pathlib import Path
-
-import toml
 
 from .tools import printf, prompt, STYLE_WARNING
 
@@ -16,6 +13,8 @@ def load_toml_data(src_path, quiet=False):
     if not toml_path.exists():
         return {}
 
+    import toml
+
     toml_src = toml_path.read_text()
     try:
         return toml.loads(toml_src)
@@ -29,10 +28,34 @@ def load_toml_data(src_path, quiet=False):
         return {}
 
 
+def load_yaml_data(src_path, quiet=False):
+    yaml_path = Path(src_path) / "copier.yml"
+    if not yaml_path.exists():
+        yaml_path = Path(src_path) / "copier.yaml"
+        if not yaml_path.exists():
+            return {}
+
+    from ruamel.yaml import YAML
+    yaml = YAML(typ="safe")
+
+    try:
+        return yaml.load(yaml_path)
+    except Exception as e:
+        if not quiet:
+            print("")
+            printf("INVALID", msg=yaml_path, style=STYLE_WARNING, indent=0)
+            print("-" * 42)
+            print(e)
+            print("-" * 42)
+        return {}
+
+
 def load_json_data(src_path, quiet=False, warning=True):
     json_path = Path(src_path) / "copier.json"
     if not json_path.exists():
         return load_old_json_data(src_path, quiet=quiet, warning=warning)
+
+    import json
 
     json_src = json_path.read_text()
     try:
@@ -58,10 +81,12 @@ def load_old_json_data(src_path, quiet=False, warning=True):
         printf(
             "WARNING",
             msg="`voodoo.json` is deprecated. "
-            + "Replace it with a `copier.toml` or `copier.json`.",
+            + "Replace it with a `copier.toml`, `copier.yaml` or `copier.json`.",
             style=STYLE_WARNING,
             indent=10,
         )
+
+    import json
 
     json_src = json_path.read_text()
     try:
@@ -77,7 +102,12 @@ def load_old_json_data(src_path, quiet=False, warning=True):
 
 
 def load_default_data(src_path, quiet=False, warning=True):
-    data = load_toml_data(src_path, quiet=quiet)
+    """Try to load a `copier.yml`, or a `copier.toml`, or a `copier.json`, or
+    the deprecated `voodoo.json`, in that order. Returns as soon as it founds one.
+    """
+    data = load_yaml_data(src_path, quiet=quiet)
+    if not data:
+        data = load_toml_data(src_path, quiet=quiet)
     if not data:
         data = load_json_data(src_path, quiet=quiet, warning=warning)
     return data

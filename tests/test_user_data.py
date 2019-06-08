@@ -5,6 +5,7 @@ import pytest
 
 from .. import copier
 from ..copier.user_data import (
+    load_yaml_data,
     load_toml_data,
     load_json_data,
     load_old_json_data,
@@ -13,7 +14,13 @@ from ..copier.user_data import (
 
 
 @pytest.mark.parametrize(
-    "template", ["tests/demo_toml", "tests/demo_json", "tests/demo_json_old"]
+    "template", [
+        "tests/demo_toml",
+        "tests/demo_yaml",
+        "tests/demo_yml",
+        "tests/demo_json",
+        "tests/demo_json_old",
+    ]
 )
 def test_read_user_data(dst, template):
     copier.copy(template, dst, force=True)
@@ -30,6 +37,10 @@ def test_bad_toml(capsys):
 
 
 def test_invalid_toml(capsys):
+    assert {} == load_yaml_data("tests/demo_invalid")
+    out, err = capsys.readouterr()
+    assert re.search(r"INVALID.*tests/demo_invalid/copier\.yml", out)
+
     assert {} == load_toml_data("tests/demo_invalid")
     out, err = capsys.readouterr()
     assert re.search(r"INVALID.*tests/demo_invalid/copier\.toml", out)

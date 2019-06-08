@@ -20,6 +20,7 @@ setup_data = {
         "jinja2 ~= 2.10",
         "colorama ~= 0.4",
         "toml ~= 0.10",
+        "ruamel.yaml ~= 0.15",
     ],
     "license": "MIT",
     "packages": find_packages(exclude=["tests"]),
