@@ -4,9 +4,12 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 
-### Version 2.4 [UNRELEASED]
+### Version 2.4 (2019-06)
+- Empty folders are now copied. The folders are also displayed in the console output
+  instead of just the files.
 - `prompt_bool` can now have an undefined default (ans answer is mandatory in that case).
 - Reactivates the `copier.yml` and `copier.yaml` as configuration files.
+
 
 ### Version 2.3 (2019-04)
 - Back to using a setup.py intead of a pyproject.toml.
