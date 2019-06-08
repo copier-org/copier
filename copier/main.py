@@ -202,6 +202,7 @@ def copy_local(
     for folder, _, files in os.walk(str(src_path)):
         rel_folder = folder.replace(str(src_path), "", 1).lstrip(os.path.sep)
         rel_folder = render.string(rel_folder)
+        rel_folder = rel_folder.replace("." + os.path.sep, ".", 1)
 
         if must_filter(rel_folder):
             continue
@@ -209,15 +210,10 @@ def copy_local(
         folder = Path(folder)
         rel_folder = Path(rel_folder)
 
-        for src_name in files:
-            dst_name = re.sub(RE_TMPL, "", src_name)
-            dst_name = render.string(dst_name)
-            rel_path = rel_folder / dst_name
+        render_folder(dst_path, rel_folder, **flags)
 
-            if must_filter(rel_path):
-                continue
-
-            source_path = folder / src_name
+        source_paths = get_source_paths(folder, rel_folder, files, render, must_filter)
+        for source_path, rel_path in source_paths:
             render_file(dst_path, rel_path, source_path, render, **flags)
 
     if not flags["quiet"]:
@@ -227,24 +223,51 @@ def copy_local(
         run_tasks(dst_path, render, tasks)
 
 
+def get_source_paths(folder, rel_folder, files, render, must_filter):
+    source_paths = []
+    for src_name in files:
+        dst_name = re.sub(RE_TMPL, "", src_name)
+        dst_name = render.string(dst_name)
+        rel_path = rel_folder / dst_name
+
+        if must_filter(rel_path):
+            continue
+        source_paths.append((folder / src_name, rel_path))
+    return source_paths
+
+
+def render_folder(dst_path, rel_folder, **flags):
+    final_path = dst_path / rel_folder
+    display_path = str(rel_folder) + os.path.sep
+
+    if str(rel_folder) == ".":
+        if not flags["pretend"]:
+            make_folder(final_path)
+        return
+
+    if final_path.exists():
+        if not flags["quiet"]:
+            printf("identical", display_path, style=STYLE_IGNORE)
+        return
+
+    if not flags["pretend"]:
+        make_folder(final_path)
+    if not flags["quiet"]:
+        printf("create", display_path, style=STYLE_OK)
+
+
 def render_file(dst_path, rel_path, source_path, render, **flags):
     """Process or copy a file of the skeleton.
     """
-    final_path = dst_path.resolve() / rel_path
-    if not flags["pretend"]:
-        make_folder(final_path.parent)
-
     if source_path.suffix == ".tmpl":
         content = render(source_path)
     else:
         content = None
 
-    display_path = str(rel_path).replace("." + os.path.sep, ".", 1)
+    display_path = str(rel_path)
+    final_path = dst_path / rel_path
 
-    if not final_path.exists():
-        if not flags["quiet"]:
-            printf("create", display_path, style=STYLE_OK)
-    else:
+    if final_path.exists():
         if file_is_identical(source_path, final_path, content):
             if not flags["quiet"]:
                 printf("identical", display_path, style=STYLE_IGNORE)
@@ -252,6 +275,9 @@ def render_file(dst_path, rel_path, source_path, render, **flags):
 
         if not overwrite_file(display_path, source_path, final_path, content, **flags):
             return
+    else:
+        if not flags["quiet"]:
+            printf("create", display_path, style=STYLE_OK)
 
     if flags["pretend"]:
         return

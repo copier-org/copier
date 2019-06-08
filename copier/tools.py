@@ -111,7 +111,7 @@ def prompt_bool(
     )
 
 
-def make_folder(folder, pretend=False):
+def make_folder(folder):
     if not folder.exists():
         try:
             os.makedirs(str(folder))
@@ -120,8 +120,8 @@ def make_folder(folder, pretend=False):
                 raise
 
 
-def copy_file(src, dst):
-    shutil.copy2(str(src), str(dst))
+def copy_file(src, dst, symlinks=True):
+    shutil.copy2(str(src), str(dst), follow_symlinks=symlinks)
 
 
 # The default env options for jinja2

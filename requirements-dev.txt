@@ -2,4 +2,3 @@ pytest >=4.0
 pytest-cov >=2.0
 pytest-mock >=1.10
 tox >=3.7
-flake8 >=3.7
