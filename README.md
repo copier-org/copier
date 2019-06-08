@@ -27,7 +27,7 @@ copy('https://github.com/jpscaletti/copier.git', 'path/to/destination')
 # You can also use "gh:" as a shortcut of "https://github.com/"
 copy('gh:jpscaletti/copier.git', 'path/to/destination')
 
-# Or "gl:"  as a shortcut of "https://gitlab.com/"
+# Or "gl:" as a shortcut of "https://gitlab.com/"
 copy('gl:jpscaletti/copier.git', 'path/to/destination')
 ```
 
