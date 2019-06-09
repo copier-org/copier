@@ -27,7 +27,7 @@ copy('https://github.com/jpscaletti/copier.git', 'path/to/destination')
 # You can also use "gh:" as a shortcut of "https://github.com/"
 copy('gh:jpscaletti/copier.git', 'path/to/destination')
 
-# Or "gl:"  as a shortcut of "https://gitlab.com/"
+# Or "gl:" as a shortcut of "https://gitlab.com/"
 copy('gl:jpscaletti/copier.git', 'path/to/destination')
 ```
 
@@ -50,7 +50,7 @@ that variables are referenced with ``[[ name ]]`` instead of
 ``{% if name %}``. To read more about templating see the [Jinja2
 documentation](http://jinja.pocoo.org/docs>).
 
-If a YAML file named `copier.yml` is found in the root of the
+If a **YAML** file named `copier.yml` is found in the root of the
 project (alternatively, a TOML file named `copier.toml`, or
 a JSON file named `copier.json`), the user will be prompted to fill or confirm the values.
 
@@ -84,7 +84,6 @@ will result in this series of questions:
    name_of_the_project? [My awesome project]
    your_email? [] myemail@gmail.com
    number_of_eels? [1234] 42
-
 ```
 
 ### Arguments defaults
@@ -127,7 +126,7 @@ run with the same level of access as your user.
 copier.copy(
     src_path, dst_path, data=None,
     *,
-    exclude=None, include=None, tasks=None,
+    exclude=DEFAULT_FILTER, include=DEFAULT_INCLUDE, tasks=None,
     envops=None, extra_paths=None,
     pretend=False, force=False, skip=False, quiet=False
 )
@@ -138,10 +137,10 @@ Uses the template in *src_path* to generate a new project at *dst_path*.
 **Arguments**:
 
 - **src_path** (str):
-    Absolute path to the project skeleton. May be a version control system URL
+    Absolute path to the project skeleton. May be a version control system URL.
 
 - **dst_path** (str):
-    Absolute path to where to render the skeleton
+    Absolute path to where to render the skeleton.
 
 - **data** (dict):
     Optional. Data to be passed to the templates in addtion to the user data from
@@ -171,13 +170,13 @@ Uses the template in *src_path* to generate a new project at *dst_path*.
     with macros, etc. outside the copied project skeleton.
 
 - **pretend** (bool):
-    Optional. Run but do not make any changes
+    Optional. Run but do not make any changes.
 
 - **force** (bool):
-    Optional. Overwrite files that already exist, without asking
+    Optional. Overwrite files that already exist, without asking.
 
 - **skip** (bool):
-    Optional. Skip files that already exist, without asking
+    Optional. Skip files that already exist, without asking.
 
 - **quiet** (bool):
-    Optional. Suppress the status output
+    Optional. Suppress the status output.
