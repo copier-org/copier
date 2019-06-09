@@ -330,6 +330,7 @@ def overwrite_file(display_path, source_path, final_path, content, **flags):
 
 def run_tasks(dst_path, render, tasks):
     dst_path = str(dst_path)
-    for task in tasks:
+    for i, task in enumerate(tasks):
         task = render.string(task)
+        printf("Running task {} of {}".format(i + 1, len(tasks)), task)
         subprocess.run(task, shell=True, check=True, cwd=dst_path)
