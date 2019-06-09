@@ -40,7 +40,6 @@ def test_copy(dst):
     assert filecmp.cmp(p1, p2)
 
 
-@pytest.mark.slow
 def test_copy_repo(dst):
     copier.copy("gh:jpscaletti/siht.git", dst, quiet=True)
     assert (dst / "setup.py").exists()
@@ -70,33 +69,33 @@ def test_config_exclude(dst):
     def fake_data(*_args, **_kw):
         return {"_exclude": ["*.txt"]}
 
-    copier.main._get_user_data = copier.main.get_user_data
-    copier.main.get_user_data = fake_data
+    copier.main._load_config_data = copier.main.load_config_data
+    copier.main.load_config_data = fake_data
     copier.copy(PROJECT_TEMPLATE, dst, data=DATA, quiet=True)
     assert not (dst / "aaaa.txt").exists()
-    copier.main.get_user_data = copier.main._get_user_data
+    copier.main.load_config_data = copier.main._load_config_data
 
 
 def test_config_exclude_overwrited(dst):
     def fake_data(*_args, **_kw):
         return {"_exclude": ["*.txt"]}
 
-    copier.main._get_user_data = copier.main.get_user_data
-    copier.main.get_user_data = fake_data
+    copier.main._load_config_data = copier.main.load_config_data
+    copier.main.load_config_data = fake_data
     copier.copy(PROJECT_TEMPLATE, dst, data=DATA, quiet=True, exclude=[])
     assert (dst / "aaaa.txt").exists()
-    copier.main.get_user_data = copier.main._get_user_data
+    copier.main.load_config_data = copier.main._load_config_data
 
 
 def test_config_include(dst):
     def fake_data(*_args, **_kw):
         return {"_include": [".svn"]}
 
-    copier.main._get_user_data = copier.main.get_user_data
-    copier.main.get_user_data = fake_data
+    copier.main._load_config_data = copier.main.load_config_data
+    copier.main.load_config_data = fake_data
     copier.copy(PROJECT_TEMPLATE, dst, data=DATA, quiet=True)
     assert (dst / ".svn").exists()
-    copier.main.get_user_data = copier.main._get_user_data
+    copier.main.load_config_data = copier.main._load_config_data
 
 
 def test_skip_option(dst):

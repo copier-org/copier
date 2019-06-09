@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 
+### Version 2.4.2 (2019-06)
+- Fix MAJOR bug that was preventing the `_exclude`, `_include` and `_tasks` keys from
+`copier.yml` (or alternatives) to be used at all. It also interpreted `_tasks` as
+a user-provided variable.
+
+
 ### Version 2.4 (2019-06)
 - Empty folders are now copied. The folders are also displayed in the console output
   instead of just the files.
