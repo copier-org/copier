@@ -7,7 +7,7 @@ HERE = Path(__file__).parent.resolve()
 
 setup_data = {
     "name": "Copier",
-    "version": "2.4.1",
+    "version": "2.4.2",
     "description": "A library for rendering projects templates",
     "author": "Juan-Pablo Scaletti",
     "author_email": "juanpablo@jpscaletti.com",
