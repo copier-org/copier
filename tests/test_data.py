@@ -5,17 +5,24 @@ import pytest
 
 from .. import copier
 from ..copier.user_data import (
+    load_yaml_data,
     load_toml_data,
     load_json_data,
     load_old_json_data,
-    load_default_data,
+    load_config_data,
 )
 
 
 @pytest.mark.parametrize(
-    "template", ["tests/demo_toml", "tests/demo_json", "tests/demo_json_old"]
+    "template", [
+        "tests/demo_toml",
+        "tests/demo_yaml",
+        "tests/demo_yml",
+        "tests/demo_json",
+        "tests/demo_json_old",
+    ]
 )
-def test_read_user_data(dst, template):
+def test_read_data(dst, template):
     copier.copy(template, dst, force=True)
 
     gen_file = dst / "user_data.txt"
@@ -30,6 +37,10 @@ def test_bad_toml(capsys):
 
 
 def test_invalid_toml(capsys):
+    assert {} == load_yaml_data("tests/demo_invalid")
+    out, err = capsys.readouterr()
+    assert re.search(r"INVALID.*tests/demo_invalid/copier\.yml", out)
+
     assert {} == load_toml_data("tests/demo_invalid")
     out, err = capsys.readouterr()
     assert re.search(r"INVALID.*tests/demo_invalid/copier\.toml", out)
@@ -39,16 +50,16 @@ def test_invalid_toml(capsys):
     assert re.search(r"INVALID.*tests/demo_invalid/copier\.json", out)
 
     # TODO: Remove on version 3.0
-    assert {} == load_old_json_data("tests/demo_invalid", warning=False)
+    assert {} == load_old_json_data("tests/demo_invalid", _warning=False)
     out, err = capsys.readouterr()
     assert re.search(r"INVALID.*tests/demo_invalid/voodoo\.json", out)
 
-    assert {} == load_default_data("tests/demo_invalid", warning=False)
+    assert {} == load_config_data("tests/demo_invalid", _warning=False)
     assert re.search(r"INVALID", out)
 
 
 def test_invalid_quiet(capsys):
-    assert {} == load_default_data("tests/demo_invalid", quiet=True)
+    assert {} == load_config_data("tests/demo_invalid", quiet=True)
     out, err = capsys.readouterr()
     assert out == ""
 

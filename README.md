@@ -50,8 +50,9 @@ that variables are referenced with ``[[ name ]]`` instead of
 ``{% if name %}``. To read more about templating see the [Jinja2
 documentation](http://jinja.pocoo.org/docs>).
 
-If a `copier.yml` is found in the root of the project, the user will be prompted to
-fill or confirm the values.
+If a YAML file named `copier.yml` is found in the root of the
+project (alternatively, a TOML file named `copier.toml`, or
+a JSON file named `copier.json`), the user will be prompted to fill or confirm the values.
 
 Use the `data` argument to pass whatever extra context you want to be available
 in the templates. The arguments can be any valid Python value, even a
@@ -60,18 +61,20 @@ function.
 
 ## The copier.yml file
 
-If a YAML file named `copier.yml` (alternatively, a `copier.json` ) is found in the root
-of the project, it will be read and used for two purposes:
+If a `copier.yml`, `copier.toml`, or `copier.json` file is found in the root of the project,
+it will be read and used for two purposes:
 
 ### Prompt the user for information
 
 For each key found, Copier will prompt the user to fill or confirm the values before
 they become avaliable to the project template. So a content like this:
 
-```toml
-name_of_the_project = "My awesome project"
-your_email = ""
-number_of_eels = 1234
+```yaml
+--- 
+name_of_the_project: My awesome project
+number_of_eels: 1234
+your_email: ""
+
 ```
 
 will result in this series of questions:
@@ -93,19 +96,21 @@ as the default values for the `exclude`, `include`, and `tasks` arguments to
 Note that they become just *the default*, so any explicitely-passed argument will
 overwrite them.
 
-```toml
+```yaml
+---
 # Shell-style patterns files/folders that must not be copied.
-_exclude = [ "*.bar" ]
+_exclude:
+  - "*.bar"
 
 # Shell-style patterns files/folders that *must be* copied, even if
 # they are in the exclude list
--include = [ "foo.bar" ]
+_include:
+  - "foo.bar"
 
 # Commands to be executed after the copy
-_tasks = [
-    "git init",
-    "rm [[ name_of_the_project ]]/README.md",
-]
+_tasks:
+  - "git init"
+  - "rm [[ name_of_the_project ]]/README.md"
 
 ```
 
@@ -118,10 +123,15 @@ run with the same level of access as your user.
 
 #### copier.copy()
 
-`copier.copy(src_path, dst_path, data=None, *,
-    exclude=DEFAULT_FILTER, include=DEFAULT_INCLUDE, envops=None,
-    pretend=False, force=False, skip=False, quiet=False,
-)`
+````python
+copier.copy(
+    src_path, dst_path, data=None,
+    *,
+    exclude=None, include=None, tasks=None,
+    envops=None, extra_paths=None,
+    pretend=False, force=False, skip=False, quiet=False
+)
+````
 
 Uses the template in *src_path* to generate a new project at *dst_path*.
 
@@ -132,9 +142,6 @@ Uses the template in *src_path* to generate a new project at *dst_path*.
 
 - **dst_path** (str):
     Absolute path to where to render the skeleton
-
-- **extra_paths** (list):
-    Optional. Additional directories to find parent templates in
 
 - **data** (dict):
     Optional. Data to be passed to the templates in addtion to the user data from
@@ -157,6 +164,11 @@ Uses the template in *src_path* to generate a new project at *dst_path*.
 
 - **envops** (dict):
     Optional. Extra options for the Jinja template environment.
+
+- **extra_paths** (list):
+    Optional. Additional paths, from where to search for
+    templates. This is intended to be used with shared parent templates, files
+    with macros, etc. outside the copied project skeleton.
 
 - **pretend** (bool):
     Optional. Run but do not make any changes
