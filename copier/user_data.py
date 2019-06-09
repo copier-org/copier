@@ -3,7 +3,7 @@ from pathlib import Path
 from .tools import printf, prompt, STYLE_WARNING
 
 
-__all__ = ("get_user_data", )
+__all__ = ("load_config_data", "query_user_data", )
 
 INDENT = "  "
 
@@ -50,10 +50,10 @@ def load_yaml_data(src_path, quiet=False):
         return {}
 
 
-def load_json_data(src_path, quiet=False, warning=True):
+def load_json_data(src_path, quiet=False, _warning=True):
     json_path = Path(src_path) / "copier.json"
     if not json_path.exists():
-        return load_old_json_data(src_path, quiet=quiet, warning=warning)
+        return load_old_json_data(src_path, quiet=quiet, _warning=_warning)
 
     import json
 
@@ -70,18 +70,18 @@ def load_json_data(src_path, quiet=False, warning=True):
         return {}
 
 
-def load_old_json_data(src_path, quiet=False, warning=True):
+def load_old_json_data(src_path, quiet=False, _warning=True):
     # TODO: Remove on version 3.0
     json_path = Path(src_path) / "voodoo.json"
     if not json_path.exists():
         return {}
 
-    if warning and not quiet:
+    if _warning and not quiet:
         print("")
         printf(
             "WARNING",
             msg="`voodoo.json` is deprecated. "
-            + "Replace it with a `copier.toml`, `copier.yaml` or `copier.json`.",
+            + "Replace it with a `copier.yaml`, `copier.toml`, or `copier.json`.",
             style=STYLE_WARNING,
             indent=10,
         )
@@ -101,33 +101,27 @@ def load_old_json_data(src_path, quiet=False, warning=True):
         return {}
 
 
-def load_default_data(src_path, quiet=False, warning=True):
-    """Try to load a `copier.yml`, or a `copier.toml`, or a `copier.json`, or
-    the deprecated `voodoo.json`, in that order. Returns as soon as it founds one.
+def load_config_data(src_path, quiet=False, _warning=True):
+    """Try to load the content from a `copier.yml`, a `copier.toml`, a `copier.json`,
+    or the deprecated `voodoo.json`, in that order.
     """
     data = load_yaml_data(src_path, quiet=quiet)
     if not data:
         data = load_toml_data(src_path, quiet=quiet)
     if not data:
-        data = load_json_data(src_path, quiet=quiet, warning=warning)
+        # The `_warning` argument is for easier testing
+        data = load_json_data(src_path, quiet=quiet, _warning=_warning)
     return data
 
 
-SPECIAL_KEYS = ("_exclude", "_include")
-
-
-def get_user_data(src_path, **flags):  # pragma:no cover
-    """Query to user for information needed as per the template's ``copier.toml``.
+def query_user_data(default_user_data):  # pragma:no cover
+    """Query to user about the data of the config file.
     """
-    default_user_data = load_default_data(src_path, quiet=flags["quiet"])
-    if flags["force"] or not default_user_data:
-        return default_user_data
-
+    if not default_user_data:
+        return {}
     print("")
     user_data = {}
     for key in default_user_data:
-        if key in SPECIAL_KEYS:
-            continue
         default = default_user_data[key]
         user_data[key] = prompt(INDENT + " {0}?".format(key), default)
 

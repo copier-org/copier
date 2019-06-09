@@ -7,7 +7,7 @@ import subprocess
 from pathlib import Path
 
 from . import vcs
-from .user_data import get_user_data
+from .user_data import load_config_data, query_user_data
 from .tools import (
     copy_file,
     get_jinja_renderer,
@@ -180,22 +180,26 @@ def copy_local(
     **flags
 ):
     src_path, dst_path, extra_paths = resolve_paths(src_path, dst_path, extra_paths)
+    config_data = load_config_data(src_path, quiet=flags["quiet"])
 
-    user_data = get_user_data(src_path, **flags)
-
-    user_exclude = user_data.pop("_exclude", None)
+    user_exclude = config_data.pop("_exclude", None)
     if exclude is None:
         exclude = user_exclude or DEFAULT_EXCLUDE
 
-    user_include = user_data.pop("_include", None)
+    user_include = config_data.pop("_include", None)
     if include is None:
         include = user_include or DEFAULT_INCLUDE
 
-    user_tasks = user_data.pop("_tasks", None)
+    user_tasks = config_data.pop("_tasks", None)
     if tasks is None:
         tasks = user_tasks or []
 
+    user_extra_paths = config_data.pop("_extra_paths", None)
+    if extra_paths is None:
+        extra_paths = user_extra_paths or []
+
     must_filter = get_name_filter(exclude, include)
+    user_data = config_data if flags["force"] else query_user_data(config_data)
     data.update(user_data)
     data.setdefault("folder_name", dst_path.name)
     render = get_jinja_renderer(src_path, data, extra_paths, envops)
