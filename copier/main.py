@@ -51,11 +51,11 @@ def copy(
     dst_path,
     data=None,
     *,
-    extra_paths=None,
     exclude=None,
     include=None,
     tasks=None,
     envops=None,
+    extra_paths=None,
     pretend=False,
     force=False,
     skip=False,
@@ -76,9 +76,6 @@ def copy(
         Optional. Data to be passed to the templates in addtion to the user data from
         a `copier.json`.
 
-    - extra_paths (list):
-        Optional. Additional directories to find parent templates in.
-
     - exclude (list):
         A list of names or shell-style patterns matching files or folders
         that must not be copied.
@@ -96,6 +93,11 @@ def copy(
 
     - envops (dict):
         Extra options for the Jinja template environment.
+
+    - extra_paths (list):
+        Optional. Additional paths, outside the `src_path`, from where to search for
+        templates. This is intended to be used with shared parent templates, files
+        with macros, etc. outside the copied project skeleton.
 
     - pretend (bool):
         Run but do not make any changes

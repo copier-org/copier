@@ -123,10 +123,15 @@ run with the same level of access as your user.
 
 #### copier.copy()
 
-`copier.copy(src_path, dst_path, data=None, *,
-    exclude=DEFAULT_FILTER, include=DEFAULT_INCLUDE, envops=None,
-    pretend=False, force=False, skip=False, quiet=False,
-)`
+````python
+copier.copy(
+    src_path, dst_path, data=None,
+    *,
+    exclude=None, include=None, tasks=None,
+    envops=None, extra_paths=None,
+    pretend=False, force=False, skip=False, quiet=False
+)
+````
 
 Uses the template in *src_path* to generate a new project at *dst_path*.
 
@@ -137,9 +142,6 @@ Uses the template in *src_path* to generate a new project at *dst_path*.
 
 - **dst_path** (str):
     Absolute path to where to render the skeleton
-
-- **extra_paths** (list):
-    Optional. Additional directories to find parent templates in
 
 - **data** (dict):
     Optional. Data to be passed to the templates in addtion to the user data from
@@ -162,6 +164,11 @@ Uses the template in *src_path* to generate a new project at *dst_path*.
 
 - **envops** (dict):
     Optional. Extra options for the Jinja template environment.
+
+- **extra_paths** (list):
+    Optional. Additional paths, from where to search for
+    templates. This is intended to be used with shared parent templates, files
+    with macros, etc. outside the copied project skeleton.
 
 - **pretend** (bool):
     Optional. Run but do not make any changes
