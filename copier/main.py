@@ -181,7 +181,6 @@ def copy_local(
 ):
     src_path, dst_path, extra_paths = resolve_paths(src_path, dst_path, extra_paths)
     config_data = load_config_data(src_path, quiet=flags["quiet"])
-
     user_exclude = config_data.pop("_exclude", None)
     if exclude is None:
         exclude = user_exclude or DEFAULT_EXCLUDE
@@ -195,7 +194,7 @@ def copy_local(
         tasks = user_tasks or []
 
     user_extra_paths = config_data.pop("_extra_paths", None)
-    if extra_paths is None:
+    if not extra_paths:
         extra_paths = user_extra_paths or []
 
     must_filter = get_name_filter(exclude, include)

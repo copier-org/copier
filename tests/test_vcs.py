@@ -42,7 +42,6 @@ def test_get_repo():
     assert get("git.myproject.org/MyProject") is None
 
 
-@pytest.mark.slow
 def test_clone():
     tmp = vcs.clone("https://github.com/jpscaletti/siht.git")
     assert tmp
