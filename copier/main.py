@@ -163,7 +163,7 @@ def resolve_single_path(path):
 def resolve_paths(src_path, dst_path, extra_paths):
     src_path = resolve_single_path(src_path)
     dst_path = Path(dst_path).resolve()
-    extra_paths = [str(resolve_single_path(p)) for p in extra_paths]
+    extra_paths = [str(resolve_single_path(p)) for p in extra_paths or []]
     return src_path, dst_path, extra_paths
 
 
@@ -195,7 +195,7 @@ def copy_local(
 
     user_extra_paths = config_data.pop("_extra_paths", None)
     if not extra_paths:
-        extra_paths = [str(resolve_single_path(p)) for p in user_extra_paths]
+        extra_paths = [str(resolve_single_path(p)) for p in user_extra_paths or []]
 
     must_filter = get_name_filter(exclude, include)
     user_data = config_data if flags["force"] else query_user_data(config_data)
