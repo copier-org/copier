@@ -147,7 +147,7 @@ RE_TMPL = re.compile(r"\.tmpl$", re.IGNORECASE)
 
 def resolve_single_path(path):
     try:
-        path = Path(path).resolve()
+        path = Path(path).expanduser().resolve()
     except FileNotFoundError:
         raise ValueError("Project template not found")
 
@@ -195,7 +195,7 @@ def copy_local(
 
     user_extra_paths = config_data.pop("_extra_paths", None)
     if not extra_paths:
-        extra_paths = user_extra_paths or []
+        extra_paths = [str(resolve_single_path(p)) for p in user_extra_paths]
 
     must_filter = get_name_filter(exclude, include)
     user_data = config_data if flags["force"] else query_user_data(config_data)
