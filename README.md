@@ -70,7 +70,6 @@ For each key found, Copier will prompt the user to fill or confirm the values be
 they become avaliable to the project template. So a content like this:
 
 ```yaml
---- 
 name_of_the_project: My awesome project
 number_of_eels: 1234
 your_email: ""
@@ -96,7 +95,6 @@ Note that they become just *the default*, so any explicitely-passed argument wil
 overwrite them.
 
 ```yaml
----
 # Shell-style patterns files/folders that must not be copied.
 _exclude:
   - "*.bar"
