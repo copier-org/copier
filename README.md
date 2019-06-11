@@ -95,7 +95,6 @@ Note that they become just *the default*, so any explicitely-passed argument wil
 overwrite them.
 
 ```yaml
----
 # Shell-style patterns files/folders that must not be copied.
 _exclude:
   - "*.bar"
