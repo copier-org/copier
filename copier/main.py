@@ -59,7 +59,7 @@ def copy(
     pretend=False,
     force=False,
     skip=False,
-    quiet=False
+    quiet=False,
 ):
     """
     Uses the template in src_path to generate a new project at dst_path.
@@ -228,6 +228,8 @@ def copy_local(
 
     if tasks:
         run_tasks(dst_path, render, tasks)
+        if not flags["quiet"]:
+            print("")  # padding space
 
 
 def get_source_paths(folder, rel_folder, files, render, must_filter):
@@ -331,5 +333,8 @@ def run_tasks(dst_path, render, tasks):
     dst_path = str(dst_path)
     for i, task in enumerate(tasks):
         task = render.string(task)
-        printf("Running task {} of {}".format(i + 1, len(tasks)), task, style=STYLE_OK)
+        printf(
+            " > Running task {} of {}".format(i + 1, len(tasks)),
+            task, style=STYLE_OK,
+        )
         subprocess.run(task, shell=True, check=True, cwd=dst_path)
