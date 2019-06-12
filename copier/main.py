@@ -59,8 +59,7 @@ def copy(
     pretend=False,
     force=False,
     skip=False,
-    quiet=False
-):
+    quiet=False):
     """
     Uses the template in src_path to generate a new project at dst_path.
 
