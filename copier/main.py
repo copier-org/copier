@@ -135,7 +135,7 @@ def copy(
             pretend=pretend,
             force=force,
             skip=skip,
-            quiet=quiet,
+            quiet=quiet
         )
     except:  # noqa
         print("Something went wrong. Removing destination dir.")
