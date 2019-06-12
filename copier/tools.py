@@ -38,6 +38,15 @@ def printf(action, msg="", style=None, indent=10):
     print(*out, sep="")
 
 
+def printf_block(e, action, msg="", style=STYLE_WARNING, indent=0, quiet=False):
+    if not quiet:
+        print("")
+        printf(action, msg=msg, style=style, indent=indent)
+        print("-" * 42)
+        print(e)
+        print("-" * 42)
+
+
 no_value = object()
 
 

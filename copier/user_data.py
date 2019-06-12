@@ -1,9 +1,9 @@
 from pathlib import Path
 
-from .tools import printf, prompt, STYLE_WARNING
+from .tools import printf, printf_block, prompt, STYLE_WARNING
 
 
-__all__ = ("load_config_data", "query_user_data", )
+__all__ = ("load_config_data", "query_user_data")
 
 INDENT = "  "
 
@@ -19,12 +19,7 @@ def load_toml_data(src_path, quiet=False):
     try:
         return toml.loads(toml_src)
     except Exception as e:
-        if not quiet:
-            print("")
-            printf("INVALID", msg=toml_path, style=STYLE_WARNING, indent=0)
-            print("-" * 42)
-            print(e)
-            print("-" * 42)
+        printf_block(e, "INVALID", msg=toml_path, quiet=quiet)
         return {}
 
 
@@ -36,17 +31,13 @@ def load_yaml_data(src_path, quiet=False):
             return {}
 
     from ruamel.yaml import YAML
+
     yaml = YAML(typ="safe")
 
     try:
         return yaml.load(yaml_path)
     except Exception as e:
-        if not quiet:
-            print("")
-            printf("INVALID", msg=yaml_path, style=STYLE_WARNING, indent=0)
-            print("-" * 42)
-            print(e)
-            print("-" * 42)
+        printf_block(e, "INVALID", msg=yaml_path, quiet=quiet)
         return {}
 
 
@@ -61,12 +52,7 @@ def load_json_data(src_path, quiet=False, _warning=True):
     try:
         return json.loads(json_src)
     except ValueError as e:
-        if not quiet:
-            print("")
-            printf("INVALID", msg=json_path, style=STYLE_WARNING, indent=0)
-            print("-" * 42)
-            print(e)
-            print("-" * 42)
+        printf_block(e, "INVALID", msg=json_path, quiet=quiet)
         return {}
 
 
@@ -92,12 +78,7 @@ def load_old_json_data(src_path, quiet=False, _warning=True):
     try:
         return json.loads(json_src)
     except ValueError as e:
-        if not quiet:
-            print("")
-            printf("INVALID", msg=json_path, style=STYLE_WARNING, indent=0)
-            print("-" * 42)
-            print(e)
-            print("-" * 42)
+        printf_block(e, "INVALID", msg=json_path, quiet=quiet)
         return {}
 
 
