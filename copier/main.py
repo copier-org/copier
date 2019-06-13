@@ -59,7 +59,8 @@ def copy(
     pretend=False,
     force=False,
     skip=False,
-    quiet=False):
+    quiet=False
+):
     """
     Uses the template in src_path to generate a new project at dst_path.
 
@@ -136,7 +137,7 @@ def copy(
             skip=skip,
             quiet=quiet
         )
-    except:  # noqa
+    except:
         print("Something went wrong. Removing destination dir.")
         shutil.rmtree(dst_path, ignore_errors=True)
         raise
