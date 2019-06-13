@@ -87,11 +87,11 @@ will result in this series of questions:
 
 ### Arguments defaults
 
-The keys `_exclude`, `_include` and `_tasks` in the `copier.yml` file, will be treated
-as the default values for the `exclude`, `include`, and `tasks` arguments to
+The keys `_exclude`, `_include`, `_tasks`, and `_extra_paths` in the `copier.yml` file, will be treated
+as the default values for the `exclude`, `include`, `tasks`, and , `extra_paths` arguments to
 `copier.copy()`.
 
-Note that they become just *the default*, so any explicitely-passed argument will
+Note that they become just *the defaults*, so any explicitely-passed argument will
 overwrite them.
 
 ```yaml
@@ -109,10 +109,13 @@ _tasks:
   - "git init"
   - "rm [[ name_of_the_project ]]/README.md"
 
+# Additional paths, from where to search for templates
+_extra_paths:
+  - ~/Projects/templates
+
 ```
 
-**Warning:** Use only trusted project templates as these tasks
-run with the same level of access as your user.
+**Warning:** Use only trusted project templates as these tasks run with the same level of access as your user.
 
 ---
 
