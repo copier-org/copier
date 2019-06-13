@@ -52,7 +52,7 @@ documentation](http://jinja.pocoo.org/docs>).
 
 If a **YAML** file named `copier.yml` is found in the root of the
 project (alternatively, a TOML file named `copier.toml`, or
-a JSON file named `copier.json`), the user will be prompted to fill or confirm the values.
+a JSON file named `copier.json`), the user will be prompted to fill in or confirm the default values.
 
 Use the `data` argument to pass whatever extra context you want to be available
 in the templates. The arguments can be any valid Python value, even a
@@ -85,6 +85,18 @@ will result in this series of questions:
    number_of_eels? [1234] 42
 ```
 
+**NOTE:** All values are required. If you want some value to be optional, **do not** use `null` as the default value or copier will not allow you to continue without answering with a value. Use an empty string instead, so you can press ENTER to accept the "empty" default value.
+
+```yaml
+# DO NOT do this
+optional_value: null
+
+# DO THIS instead
+optional_value: ""
+
+```
+
+
 ### Arguments defaults
 
 The keys `_exclude`, `_include`, `_tasks`, and `_extra_paths` in the `copier.yml` file, will be treated
@@ -98,6 +110,8 @@ overwrite them.
 # Shell-style patterns files/folders that must not be copied.
 _exclude:
   - "*.bar"
+  - ".git"
+  - ".git/*"
 
 # Shell-style patterns files/folders that *must be* copied, even if
 # they are in the exclude list
@@ -149,11 +163,14 @@ Uses the template in *src_path* to generate a new project at *dst_path*.
 
 - **exclude** (list):
     Optional. A list of names or shell-style patterns matching files or folders
-    that mus not be copied.
+    that must not be copied.
+
+    Warning: To exclude a folder you should use **two** rows, one for the folder and other for its content:
+    `[".git", ".git/*"]`.
 
 - **include** (list):
     Optional. A list of names or shell-style patterns matching files or folders that
-    must be included, even if its name are in the `exclude` list.
+    must be included, even if its name are a match for the `exclude` list.
     Eg: `['.gitignore']`. The default is an empty list.
 
 - **tasks** (list):
