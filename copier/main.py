@@ -137,13 +137,14 @@ def copy(
             skip=skip,
             quiet=quiet
         )
-    except:
+    except Exception:
         print("Something went wrong. Removing destination dir.")
-        shutil.rmtree(dst_path, ignore_errors=True)
+        # Python3.5 shutil methods doesn't wok with `pathlib.Path`
+        shutil.rmtree(str(dst_path), ignore_errors=True)
         raise
     finally:
         if repo:
-            shutil.rmtree(src_path)
+            shutil.rmtree(str(src_path))
 
 
 RE_TMPL = re.compile(r"\.tmpl$", re.IGNORECASE)

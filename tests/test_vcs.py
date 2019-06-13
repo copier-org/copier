@@ -46,4 +46,4 @@ def test_clone():
     tmp = vcs.clone("https://github.com/jpscaletti/siht.git")
     assert tmp
     assert exists(join(tmp, "setup.py"))
-    shutil.rmtree(tmp)
+    shutil.rmtree(str(tmp))
