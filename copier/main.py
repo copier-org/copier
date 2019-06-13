@@ -59,7 +59,8 @@ def copy(
     pretend=False,
     force=False,
     skip=False,
-    quiet=False
+    quiet=False,
+    cleanup_on_error=True
 ):
     """
     Uses the template in src_path to generate a new project at dst_path.
@@ -111,6 +112,9 @@ def copy(
     - quiet (bool):
         Suppress the status output
 
+    - cleanup_on_error (bool):
+        Remove the destination folder if the copy process or one of the tasks fail.
+
     """
     repo = vcs.get_repo(src_path)
     if repo:
@@ -135,12 +139,13 @@ def copy(
             pretend=pretend,
             force=force,
             skip=skip,
-            quiet=quiet
+            quiet=quiet,
         )
     except Exception:
-        print("Something went wrong. Removing destination dir.")
-        # Python3.5 shutil methods doesn't wok with `pathlib.Path`
-        shutil.rmtree(str(dst_path), ignore_errors=True)
+        if cleanup_on_error:
+            print("Something went wrong. Removing destination folder.")
+            # Python3.5 shutil methods doesn't wok with `pathlib.Path`
+            shutil.rmtree(str(dst_path), ignore_errors=True)
         raise
     finally:
         if repo:

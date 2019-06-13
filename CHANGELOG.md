@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 
+### UNRELEASED
+- Expanduser on all paths (so "~/foo/bar" is expanded to "<YOUR_HOME_FOLDER>/foo/bar").
+- Improve the output when running tasks.
+- Remove the destination folder if the copy process or one of the tasks fail.
+- Add a `cleanup_on_error` flag to optionally disable the cleanup feature.
+
+
 ### Version 2.4.2 (2019-06)
 - Fix MAJOR bug that was preventing the `_exclude`, `_include` and `_tasks` keys from
 `copier.yml` (or alternatives) to be used at all. It also interpreted `_tasks` as

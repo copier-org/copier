@@ -143,7 +143,7 @@ copier.copy(
     *,
     exclude=DEFAULT_FILTER, include=DEFAULT_INCLUDE, tasks=None,
     envops=None, extra_paths=None,
-    pretend=False, force=False, skip=False, quiet=False
+    pretend=False, force=False, skip=False, quiet=False, cleanup_on_error=True
 )
 ````
 
@@ -165,8 +165,7 @@ Uses the template in *src_path* to generate a new project at *dst_path*.
     Optional. A list of names or shell-style patterns matching files or folders
     that must not be copied.
 
-    Warning: To exclude a folder you should use **two** rows, one for the folder and other for its content:
-    `[".git", ".git/*"]`.
+    To exclude a folder you should use **two** entries, one for the folder and the other for its content: `[".git", ".git/*"]`.
 
 - **include** (list):
     Optional. A list of names or shell-style patterns matching files or folders that
@@ -198,3 +197,6 @@ Uses the template in *src_path* to generate a new project at *dst_path*.
 
 - **quiet** (bool):
     Optional. Suppress the status output.
+
+- **cleanup_on_error** (bool):
+    Remove the destination folder if the copy process or one of the tasks fail. True by default.
