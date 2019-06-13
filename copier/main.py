@@ -135,8 +135,12 @@ def copy(
             pretend=pretend,
             force=force,
             skip=skip,
-            quiet=quiet,
+            quiet=quiet
         )
+    except:
+        print("Something went wrong. Removing destination dir.")
+        shutil.rmtree(dst_path, ignore_errors=True)
+        raise
     finally:
         if repo:
             shutil.rmtree(src_path)
