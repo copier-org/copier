@@ -14,7 +14,7 @@ def dst(request):
     function invocation. This folder is deleted after the test has finished.
     """
     dst = mkdtemp()
-    request.addfinalizer(lambda: shutil.rmtree(dst))
+    request.addfinalizer(lambda: shutil.rmtree(dst, ignore_errors=True))
     return Path(dst)
 
 
