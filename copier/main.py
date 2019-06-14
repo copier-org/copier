@@ -219,11 +219,13 @@ def copy_local(
     if not extra_paths:
         extra_paths = [str(resolve_source_path(p)) for p in user_extra_paths or []]
 
-    must_filter, must_skip = get_name_filters(exclude, include, skip_if_exists)
     user_data = config_data if flags["force"] else query_user_data(config_data)
     data.update(user_data)
     data.setdefault("folder_name", dst_path.name)
     render = get_jinja_renderer(src_path, data, extra_paths, envops)
+
+    skip_if_exists = [render.string(pattern) for pattern in skip_if_exists]
+    must_filter, must_skip = get_name_filters(exclude, include, skip_if_exists)
 
     if not flags["quiet"]:
         print("")  # padding space

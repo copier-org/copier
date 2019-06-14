@@ -68,8 +68,10 @@ def test_exclude_file(dst):
 def test_skip_if_exists(dst):
     copier.copy("tests/demo_skip_dst", dst)
     copier.copy(
-        "tests/demo_skip_src", dst,
-        force=True, skip_if_exists=["b.txt", "meh/c.txt"]
+        "tests/demo_skip_src",
+        dst,
+        skip_if_exists=["b.txt", "meh/c.txt"],
+        force=True
     )
 
     assert (dst / "a.txt").read_text() == "OVERWRITTEN"
@@ -77,13 +79,18 @@ def test_skip_if_exists(dst):
     assert (dst / "meh" / "c.txt").read_text() == "SKIPPED"
 
 
-def test_skip_if_exists_from_config(dst):
+def test_skip_if_exists_rendered_patterns(dst):
     copier.copy("tests/demo_skip_dst", dst)
-    copier.copy("tests/demo_skip_src", dst, force=True)
-
-    assert (dst / "a.txt").read_text() == "SKIPPED"
+    copier.copy(
+        "tests/demo_skip_src",
+        dst,
+        data={"name": "meh"},
+        skip_if_exists=["[[ name ]]/c.txt"],
+        force=True
+    )
+    assert (dst / "a.txt").read_text() == "OVERWRITTEN"
     assert (dst / "b.txt").read_text() == "OVERWRITTEN"
-    assert (dst / "meh" / "c.txt").read_text() == "OVERWRITTEN"
+    assert (dst / "meh" / "c.txt").read_text() == "SKIPPED"
 
 
 def test_config_exclude(dst):
