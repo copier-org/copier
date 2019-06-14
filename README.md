@@ -99,8 +99,7 @@ optional_value: ""
 
 ### Arguments defaults
 
-The keys `_exclude`, `_include`, `_tasks`, and `_extra_paths` in the `copier.yml` file, will be treated
-as the default values for the `exclude`, `include`, `tasks`, and , `extra_paths` arguments to
+The keys `_exclude`, `_include`, `_skip_if_exists`, `_tasks`, and `_extra_paths` in the `copier.yml` file, will be treated as the default values for the `exclude`, `include`, `tasks`, and , `extra_paths` arguments to
 `copier.copy()`.
 
 Note that they become just *the defaults*, so any explicitely-passed argument will
@@ -117,6 +116,10 @@ _exclude:
 # they are in the exclude list
 _include:
   - "foo.bar"
+
+# Shell-style patterns files to skip, without asking, if they already exists
+# in the destination folder
+_skip_if_exists:
 
 # Commands to be executed after the copy
 _tasks:
@@ -139,11 +142,24 @@ _extra_paths:
 
 ````python
 copier.copy(
-    src_path, dst_path, data=None,
+    src_path,
+    dst_path,
+
+    data=DEFAULT_DATA,
     *,
-    exclude=DEFAULT_FILTER, include=DEFAULT_INCLUDE, tasks=None,
-    envops=None, extra_paths=None,
-    pretend=False, force=False, skip=False, quiet=False, cleanup_on_error=True
+    exclude=DEFAULT_FILTER,
+    include=DEFAULT_INCLUDE,
+    skip_if_exists=[],
+    tasks=[],
+
+    envops={},
+    extra_paths=[],
+
+    pretend=False,
+    force=False,
+    skip=False,
+    quiet=False,
+    cleanup_on_error=True
 )
 ````
 
@@ -151,52 +167,55 @@ Uses the template in *src_path* to generate a new project at *dst_path*.
 
 **Arguments**:
 
-- **src_path** (str):
+- **src_path** (str):<br>
     Absolute path to the project skeleton. May be a version control system URL.
 
-- **dst_path** (str):
+- **dst_path** (str):<br>
     Absolute path to where to render the skeleton.
 
-- **data** (dict):
-    Optional. Data to be passed to the templates in addtion to the user data from
+- **data** (dict):<br>
+    Data to be passed to the templates in addtion to the user data from
     a `copier.yml`.
 
-- **exclude** (list):
-    Optional. A list of names or shell-style patterns matching files or folders
+- **exclude** (list):<br>
+    A list of names or shell-style patterns matching files or folders
     that must not be copied.
 
     To exclude a folder you should use **two** entries, one for the folder and the other for its content: `[".git", ".git/*"]`.
 
-- **include** (list):
-    Optional. A list of names or shell-style patterns matching files or folders that
+- **include** (list):<br>
+    A list of names or shell-style patterns matching files or folders that
     must be included, even if its name are a match for the `exclude` list.
     Eg: `['.gitignore']`. The default is an empty list.
 
-- **tasks** (list):
+- **skip_if_exists** (list):<br>
+    Skip any of these files, without asking, if another with the same name already exists in the destination folder. (it only makes sense if you are copying to a folder that already exists).
+
+- **tasks** (list):<br>
     Optional lists of commands to run in order after finishing the copy.
     Like in the templates files, you can use variables on the commands that will
     be replaced by the real values before running the command.
     If one of the commands fail, the rest of them will not run.
 
-- **envops** (dict):
-    Optional. Extra options for the Jinja template environment.
+- **envops** (dict):<br>
+    Extra options for the Jinja template environment.
 
-- **extra_paths** (list):
-    Optional. Additional paths, from where to search for
+- **extra_paths** (list):<br>
+    Additional paths, from where to search for
     templates. This is intended to be used with shared parent templates, files
     with macros, etc. outside the copied project skeleton.
 
-- **pretend** (bool):
-    Optional. Run but do not make any changes.
+- **pretend** (bool):<br>
+    Run but do not make any changes.
 
-- **force** (bool):
-    Optional. Overwrite files that already exist, without asking.
+- **force** (bool):<br>
+    Overwrite files that already exist, without asking.
 
-- **skip** (bool):
-    Optional. Skip files that already exist, without asking.
+- **skip** (bool):<br>
+    Skip files that already exist, without asking.
 
-- **quiet** (bool):
-    Optional. Suppress the status output.
+- **quiet** (bool):<br>
+    Suppress the status output.
 
-- **cleanup_on_error** (bool):
+- **cleanup_on_error** (bool):<br>
     Remove the destination folder if the copy process or one of the tasks fail. True by default.

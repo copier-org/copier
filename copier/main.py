@@ -11,7 +11,7 @@ from .user_data import load_config_data, query_user_data
 from .tools import (
     copy_file,
     get_jinja_renderer,
-    get_name_filter,
+    get_name_filters,
     make_folder,
     printf,
     prompt_bool,
@@ -53,6 +53,7 @@ def copy(
     *,
     exclude=None,
     include=None,
+    skip_if_exists=None,
     tasks=None,
     envops=None,
     extra_paths=None,
@@ -85,6 +86,11 @@ def copy(
         A list of names or shell-style patterns matching files or folders that
         must be included, even if its name are in the `exclude` list.
         Eg: `['.gitignore']`. The default is an empty list.
+
+    - skip_if_exists (list):
+        Skip any of these files if another with the same name already exists in the
+        destination folder. (it only makes sense if you are copying to a folder that
+        already exists).
 
     - tasks (list):
         Optional lists of commands to run in order after finishing the copy.
@@ -134,6 +140,7 @@ def copy(
             extra_paths=extra_paths,
             exclude=exclude,
             include=include,
+            skip_if_exists=skip_if_exists,
             tasks=tasks,
             envops=envops,
             pretend=pretend,
@@ -185,6 +192,7 @@ def copy_local(
     extra_paths=None,
     exclude=None,
     include=None,
+    skip_if_exists=None,
     tasks=None,
     envops=None,
     **flags
@@ -199,6 +207,10 @@ def copy_local(
     if include is None:
         include = user_include or DEFAULT_INCLUDE
 
+    user_skip_if_exists = config_data.pop("_skip_if_exists", None)
+    if skip_if_exists is None:
+        skip_if_exists = user_skip_if_exists or []
+
     user_tasks = config_data.pop("_tasks", None)
     if tasks is None:
         tasks = user_tasks or []
@@ -207,7 +219,7 @@ def copy_local(
     if not extra_paths:
         extra_paths = [str(resolve_source_path(p)) for p in user_extra_paths or []]
 
-    must_filter = get_name_filter(exclude, include)
+    must_filter, must_skip = get_name_filters(exclude, include, skip_if_exists)
     user_data = config_data if flags["force"] else query_user_data(config_data)
     data.update(user_data)
     data.setdefault("folder_name", dst_path.name)
@@ -227,11 +239,12 @@ def copy_local(
         folder = Path(folder)
         rel_folder = Path(rel_folder)
 
-        render_folder(dst_path, rel_folder, **flags)
+        render_folder(dst_path, rel_folder, flags)
 
         source_paths = get_source_paths(folder, rel_folder, files, render, must_filter)
+
         for source_path, rel_path in source_paths:
-            render_file(dst_path, rel_path, source_path, render, **flags)
+            render_file(dst_path, rel_path, source_path, render, must_skip, flags)
 
     if not flags["quiet"]:
         print("")  # padding space
@@ -255,7 +268,7 @@ def get_source_paths(folder, rel_folder, files, render, must_filter):
     return source_paths
 
 
-def render_folder(dst_path, rel_folder, **flags):
+def render_folder(dst_path, rel_folder, flags):
     final_path = dst_path / rel_folder
     display_path = str(rel_folder) + os.path.sep
 
@@ -275,7 +288,7 @@ def render_folder(dst_path, rel_folder, **flags):
         printf("create", display_path, style=STYLE_OK)
 
 
-def render_file(dst_path, rel_path, source_path, render, **flags):
+def render_file(dst_path, rel_path, source_path, render, must_skip, flags):
     """Process or copy a file of the skeleton.
     """
     if source_path.suffix == ".tmpl":
@@ -292,7 +305,19 @@ def render_file(dst_path, rel_path, source_path, render, **flags):
                 printf("identical", display_path, style=STYLE_IGNORE)
             return
 
-        if not overwrite_file(display_path, source_path, final_path, content, **flags):
+        if must_skip(rel_path):
+            if not flags["quiet"]:
+                printf("skip", display_path, style=STYLE_WARNING)
+            return
+
+        if overwrite_file(
+            display_path, source_path, final_path, content, flags
+        ):
+            if not flags["quiet"]:
+                printf("force", display_path, style=STYLE_WARNING)
+        else:
+            if not flags["quiet"]:
+                printf("skip", display_path, style=STYLE_WARNING)
             return
     else:
         if not flags["quiet"]:
@@ -322,21 +347,16 @@ def file_has_this_content(path, content):
     return content == path.read_text()
 
 
-def overwrite_file(display_path, source_path, final_path, content, **flags):
+def overwrite_file(display_path, source_path, final_path, content, flags):
     if not flags["quiet"]:
         printf("conflict", display_path, style=STYLE_DANGER)
     if flags["force"]:
-        overwrite = True
-    elif flags["skip"]:
-        overwrite = False
-    else:  # pragma:no cover
-        msg = " Overwrite {}?".format(final_path)
-        overwrite = prompt_bool(msg, default=True)
+        return True
+    if flags["skip"]:
+        return False
 
-    if not flags["quiet"]:
-        printf("force" if overwrite else "skip", display_path, style=STYLE_WARNING)
-
-    return overwrite
+    msg = " Overwrite {}?".format(final_path)  # pragma:no cover
+    return prompt_bool(msg, default=True)  # pragma:no cover
 
 
 def run_tasks(dst_path, render, tasks):

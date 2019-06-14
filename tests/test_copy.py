@@ -65,6 +65,27 @@ def test_exclude_file(dst):
     assert not (dst / "doc" / "mañana.txt").exists()
 
 
+def test_skip_if_exists(dst):
+    copier.copy("tests/demo_skip_dst", dst)
+    copier.copy(
+        "tests/demo_skip_src", dst,
+        force=True, skip_if_exists=["b.txt", "meh/c.txt"]
+    )
+
+    assert (dst / "a.txt").read_text() == "OVERWRITTEN"
+    assert (dst / "b.txt").read_text() == "SKIPPED"
+    assert (dst / "meh" / "c.txt").read_text() == "SKIPPED"
+
+
+def test_skip_if_exists_from_config(dst):
+    copier.copy("tests/demo_skip_dst", dst)
+    copier.copy("tests/demo_skip_src", dst, force=True)
+
+    assert (dst / "a.txt").read_text() == "SKIPPED"
+    assert (dst / "b.txt").read_text() == "OVERWRITTEN"
+    assert (dst / "meh" / "c.txt").read_text() == "OVERWRITTEN"
+
+
 def test_config_exclude(dst):
     def fake_data(*_args, **_kw):
         return {"_exclude": ["*.txt"]}

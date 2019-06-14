@@ -1,0 +1,18 @@
+_exclude:
+  - "exclude1"
+  - "exclude2"
+
+_include:
+  - "include1"
+  - "include2"
+
+_skip_if_exists:
+  - "skip_if_exists1"
+  - "skip_if_exists2"
+
+_tasks:
+  - "touch 1"
+  - "touch 2"
+
+_extra_paths:
+  - "tests"

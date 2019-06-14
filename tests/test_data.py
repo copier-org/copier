@@ -13,6 +13,15 @@ from ..copier.user_data import (
 )
 
 
+def test_config_data_is_loaded_from_file():
+    config = load_config_data("tests/demo_data")
+    config["_exclude"] = ["exclude1", "exclude2"]
+    config["_include"] = ["include1", "include2"]
+    config["_skip_if_exists"] = ["skip_if_exists1", "skip_if_exists2"]
+    config["_tasks"] = ["touch 1", "touch 2"]
+    config["_extra_paths"] = ["test"]
+
+
 @pytest.mark.parametrize(
     "template", [
         "tests/demo_toml",
