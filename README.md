@@ -85,14 +85,14 @@ will result in this series of questions:
    number_of_eels? [1234] 42
 ```
 
-**NOTE:** All values are required. If you want some value to be optional, **do not** use `null` as the default value or copier will not allow you to continue without answering with a value. Use an empty string instead, so you can press ENTER to accept the "empty" default value.
+**NOTE:** All values are required. If you want some value to be optional, do not use an empty string as the default value or copier will not allow you to continue without answering with a value. Use `null` instead, so you can press ENTER to accept the "empty" default value.
 
 ```yaml
-# DO NOT do this
-optional_value: null
+# DO NOT do this for optionals
+optional_value: ""
 
 # DO THIS instead
-optional_value: ""
+optional_value: null
 
 ```
 
