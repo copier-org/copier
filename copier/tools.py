@@ -67,15 +67,18 @@ def prompt(question, default=no_value, default_show=None, validator=required, **
     """
     if default_show:
         question += " [{}] ".format(default_show)
-    elif default is not no_value:
+    elif default and default is not no_value:
         question += " [{}] ".format(default)
     else:
         question += " "
 
     while True:
         resp = input(question)
-        if not resp and default is not no_value:
-            resp = default
+        if not resp:
+            if default is None:
+                return None
+            if default is not no_value:
+                resp = default
 
         try:
             return validator(resp, **kwargs)

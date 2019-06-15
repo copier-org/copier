@@ -22,11 +22,23 @@ def test_prompt_no_response(stdin, capsys):
     name = "Inigo Montoya"
 
     stdin.append("\n" + name + "\n")
-    response = prompt(question)
+    response = prompt(question, default="")
 
     stdout, _ = capsys.readouterr()
     assert response == name
     assert stdout == (question + " ") * 2
+
+
+def test_prompt_no_response_default_None(stdin, capsys):
+    """Prompts with no response should ask again"""
+    question = "What is your name?"
+
+    stdin.append("\n")
+    response = prompt(question, default=None)
+
+    stdout, _ = capsys.readouterr()
+    assert response is None
+    assert stdout == (question + " ")
 
 
 def test_prompt_default_no_input(stdin, capsys):
