@@ -1,3 +1,4 @@
+import os
 import re
 import tempfile
 import shutil
@@ -30,4 +31,6 @@ def clone(url):
     location = tempfile.mkdtemp()
     shutil.rmtree(location)  # Path must not exists
     subprocess.check_call(["git", "clone", url, location])
+    git_folder = os.path.join(location, ".git")
+    shutil.rmtree(git_folder)
     return location
