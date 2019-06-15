@@ -12,6 +12,6 @@ before_install:
   - pip install -U pip pytest
 
 install:
-  - python setup.py install
+  - pip install .
 
-script: pytest -x copier tests
+script: pytest -x .

@@ -28,8 +28,8 @@ Look through the GitHub issues for features. Anything tagged with
 
 ### Write Documentation
 
-Voodoo could always use more documentation, whether as part of the
-official Voodoo docs, or even on the web in blog posts, articles, and
+The project could always use more documentation, whether as part of the
+official project docs, or even on the web in blog posts, articles, and
 such.
 
 ### Submit Feedback
@@ -46,29 +46,22 @@ If you are proposing a feature:
 
 ## Get Started!
 
-Ready to contribute? Here's how to set up copier for local development.
+Ready to contribute? Here's how to set up the project for local development.
 
 1.  Fork the copier repo on GitHub.
 2.  Clone your fork locally:
 
 ```bash
-git clone git@github.com:your_name_here/copier.git
+git clone git@github.com:jpscaletti/copier.git
 ```
 
-3.  Install `poetry`. 
-
-	You might have notice this project does not have a `setup.py` file.
-	It uses a new-standard `pyproject.toml` config file and the tool
-	[Poetry](https://poetry.eustace.io/) to manage its dependencies
-	(read more about it in its [Poetry documentation](https://poetry.eustace.io/docs/cli/#install)).
-
-4.  Install your local copy into a virtualenv. 
+3.  Install your local copy into a virtualenv. 
 
 ```bash
 python -m virtualenv .venv
 source .venv/bin/activate
-poetry install
-poetry install --develop copier
+pip install -e .
+pip install .[testing]
 ```
 
 5.  Create a branch for local development:
@@ -82,12 +75,12 @@ Now you can make your changes locally.
 6.  When you're done making changes, check that your changes pass all tests
 
 ```bash
-pytest copier tests
-flake8 copier tests
+pytest -x .
+flake8 .
 ```
 
-To have multiple Python versions on the same machine for ruinning `tox`, I reccomend
-using [pyenv](https://github.com/pyenv/pyenv) (do not confuse it with `pipenv`).
+To have multiple Python versions on the same machine for running `tox`, I recommend
+using [pyenv](https://github.com/pyenv/pyenv) (*do not* confuse it with `pipenv`,).
 
 7.  Commit your changes and push your branch to GitHub:
 

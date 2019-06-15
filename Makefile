@@ -2,7 +2,7 @@ all: PHONY
 
 help:
 	@echo "clean - remove build/python artifacts"
-	@echo "test - run tests quickly"
+	@echo "test - run tests"
 	@echo "flake - check style with flake8"
 	@echo "coverage - generate an HTML report of the coverage"
 	@echo "install - install for development"
@@ -14,6 +14,7 @@ clean-build:
 	rm -rf dist/
 	rm -rf *.egg-info
 	rm -rf pip-wheel-metadata
+	rm *.egg-info
 
 clean-pyc:
 	find . -name '*.pyc' -exec rm -f {} +
@@ -23,14 +24,15 @@ clean-pyc:
 	find . -name '.pytest_cache' -exec rm -rf {} +
 
 test:
-	pytest -x copier tests
+	pytest -x .
 
 flake:
-	flake8 --config=setup.cfg copier tests
+	flake8 --config=setup.cfg .
 
 coverage:
-	pytest --cov-report html --cov copier copier tests
+	pytest --cov-report html --cov copier .
 
 install:
 	pip install -e .
-	pip install -r requirements-dev.txt
+	pip install .[docs]
+	pip install .[testing]
