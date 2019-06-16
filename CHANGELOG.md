@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 
-### UNRELEASED
+### Version 2.5 (2019-06)
 - Expanduser on all paths (so "~/foo/bar" is expanded to "<YOUR_HOME_FOLDER>/foo/bar").
 - Improve the output when running tasks.
 - Remove the destination folder if the copy process or one of the tasks fail.

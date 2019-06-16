@@ -15,7 +15,7 @@ data = {
     "title": "Copier",
     "name": "copier",
     "pypi_name": "copier",
-    "version": "2.4.2",
+    "version": "2.5.0",
     "author": "Juan-Pablo Scaletti",
     "author_email": "juanpablo@jpscaletti.com",
     "description": "A library for rendering projects templates",
