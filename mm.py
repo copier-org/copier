@@ -7,9 +7,6 @@ Read more about it at https://github.com/jpscaletti/mastermold/
 """
 from pathlib import Path
 
-import copier
-from ruamel.yaml import YAML
-
 
 data = {
     "title": "Copier",
@@ -19,9 +16,11 @@ data = {
     "author": "Juan-Pablo Scaletti",
     "author_email": "juanpablo@jpscaletti.com",
     "description": "A library for rendering projects templates",
+    "copyright": "2011",
     "repo_name": "jpscaletti/copier",
     "home_url": "",
-    "docs_url": "",
+    "project_urls": {
+    },
     "development_status": "5 - Production/Stable",
     "minimal_python": 3.5,
     "install_requires": [
@@ -30,10 +29,12 @@ data = {
         "toml ~= 0.10",
         "ruamel.yaml ~= 0.15",
     ],
-    "test_requires": [
+    "testing_requires": [
         "pytest",
-        "pytest-cov",
         "pytest-mock",
+    ],
+    "development_requires": [
+        "pytest-cov",
         "pytest-flake8",
         "flake8",
         "ipdb",
@@ -43,23 +44,36 @@ data = {
 
     "coverage_omit": [],
 
-    "copyright": "2011",
     "has_docs": False,
     "google_analytics": "UA-XXXXXXXX-X",
     "docs_nav": [],
 }
 
+exclude = [
+    "copier.yml",
+    "README.md",
+    ".git",
+    ".git/*",
+    ".venv",
+    ".venv/*",
 
-def save_current_nav():
-    yaml = YAML()
-    mkdocs_path = Path("docs") / "mkdocs.yml"
-    if not mkdocs_path.exists():
-        return
-    mkdocs = yaml.load(mkdocs_path)
-    data["docs_nav"] = mkdocs.get("nav")
+    "docs",
+    "docs/*",
+]
 
 
 def do_the_thing():
+    import copier
+    from ruamel.yaml import YAML
+
+    def save_current_nav():
+        yaml = YAML()
+        mkdocs_path = Path("docs") / "mkdocs.yml"
+        if not mkdocs_path.exists():
+            return
+        mkdocs = yaml.load(mkdocs_path)
+        data["docs_nav"] = mkdocs.get("nav")
+
     if data["has_docs"]:
         save_current_nav()
 
@@ -67,17 +81,7 @@ def do_the_thing():
         "gh:jpscaletti/mastermold.git",
         ".",
         data=data,
-        exclude=[
-            "copier.yml",
-            "README.md",
-            ".git",
-            ".git/*",
-            ".venv",
-            ".venv/*",
-
-            "docs",
-            "docs/*",
-        ],
+        exclude=exclude,
         force=True,
         cleanup_on_error=False
     )

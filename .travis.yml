@@ -9,9 +9,10 @@ matrix:
       sudo: true
 
 before_install:
-  - pip install -U pip pytest
+  - pip install -U pip
 
 install:
   - pip install .
+  - pip install .[testing]
 
 script: pytest -x .

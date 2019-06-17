@@ -30,8 +30,7 @@ covreport
 pip-wheel-metadata
 .tox
 
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
+# Documentation
+*/_build/*
+*/site/*
+*/.mypy_cache/*
