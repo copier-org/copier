@@ -24,16 +24,13 @@ clean-pyc:
 	find . -name '.pytest_cache' -exec rm -rf {} +
 
 test:
-	pytest -x .
+	pytest -x copier tests
 
 flake:
-	flake8 --config=setup.cfg .
+	flake8 --config=setup.cfg copier tests
 
 coverage:
-	pytest --cov-report html --cov copier .
+	pytest --cov-report html --cov copier copier tests
 
 install:
-	pip install -e .
-	pip install .[testing]
-	pip install .[development]
-	
+	pip install -e .[dev]

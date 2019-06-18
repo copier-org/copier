@@ -138,7 +138,7 @@ def copy_file(src, dst, symlinks=True):
 
 # The default env options for jinja2
 DEFAULT_ENV_OPTIONS = {
-    "autoescape": True,
+    "autoescape": False,
     "block_start_string": "[%",
     "block_end_string": "%]",
     "variable_start_string": "[[",
