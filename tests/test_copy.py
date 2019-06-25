@@ -104,7 +104,7 @@ def test_config_exclude(dst):
     copier.main.load_config_data = copier.main._load_config_data
 
 
-def test_config_exclude_overwrited(dst):
+def test_config_exclude_overridden(dst):
     def fake_data(*_args, **_kw):
         return {"_exclude": ["*.txt"]}
 
