@@ -5,27 +5,32 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
+from typing import Any, Dict, Sequence, Tuple, Optional, Union
 
 from . import vcs
-from .user_data import load_config_data, query_user_data
 from .tools import (
+    STYLE_DANGER,
+    STYLE_IGNORE,
+    STYLE_OK,
+    STYLE_WARNING,
     copy_file,
     get_jinja_renderer,
     get_name_filters,
     make_folder,
     printf,
     prompt_bool,
-    STYLE_OK,
-    STYLE_IGNORE,
-    STYLE_DANGER,
-    STYLE_WARNING,
 )
-
+from .user_data import load_config_data, query_user_data
 
 __all__ = ("copy", "copy_local")
 
+# Custom Types
+StrOrPath = Union[str, Path]
+OptSeqStrOrPath = Optional[Sequence[StrOrPath]]
+OptSeqStr = Optional[Sequence[str]]
+
 # Files of the template to exclude from the final project
-DEFAULT_EXCLUDE = (
+DEFAULT_EXCLUDE: Tuple[str, ...] = (
     "copier.yaml",
     "copier.yml",
     "copier.toml",
@@ -41,28 +46,27 @@ DEFAULT_EXCLUDE = (
     ".svn",
 )
 
-DEFAULT_INCLUDE = ()
-
-DEFAULT_DATA = {"now": datetime.datetime.utcnow}
+DEFAULT_INCLUDE: Tuple[str, ...] = ()
+DEFAULT_DATA: Dict[str, Any] = {"now": datetime.datetime.utcnow}
 
 
 def copy(
-    src_path,
-    dst_path,
-    data=None,
+    src_path: str,
+    dst_path: str,
+    data: Dict[str, Any] = None,
     *,
-    exclude=None,
-    include=None,
-    skip_if_exists=None,
-    tasks=None,
-    envops=None,
-    extra_paths=None,
-    pretend=False,
-    force=False,
-    skip=False,
-    quiet=False,
-    cleanup_on_error=True
-):
+    exclude: OptSeqStr = None,
+    include: OptSeqStr = None,
+    skip_if_exists: OptSeqStr = None,
+    tasks: OptSeqStr = None,
+    envops: Dict[str, Any] = None,
+    extra_paths: OptSeqStr = None,
+    pretend: bool = False,
+    force: bool = False,
+    skip: bool = False,
+    quiet: bool = False,
+    cleanup_on_error: bool = True
+) -> None:
     """
     Uses the template in src_path to generate a new project at dst_path.
 
@@ -162,7 +166,7 @@ def copy(
 RE_TMPL = re.compile(r"\.tmpl$", re.IGNORECASE)
 
 
-def resolve_source_path(path):
+def resolve_source_path(path: StrOrPath) -> Path:
     try:
         path = Path(path).expanduser().resolve()
     except FileNotFoundError:
@@ -177,7 +181,9 @@ def resolve_source_path(path):
     return path
 
 
-def resolve_paths(src_path, dst_path, extra_paths):
+def resolve_paths(
+    src_path: StrOrPath, dst_path: StrOrPath, extra_paths: OptSeqStrOrPath
+) -> Tuple[Path, Path, OptSeqStrOrPath]:
     src_path = resolve_source_path(src_path)
     dst_path = Path(dst_path).resolve()
     extra_paths = [str(resolve_source_path(p)) for p in extra_paths or []]
@@ -185,18 +191,18 @@ def resolve_paths(src_path, dst_path, extra_paths):
 
 
 def copy_local(
-    src_path,
-    dst_path,
-    data,
+    src_path: StrOrPath,
+    dst_path: StrOrPath,
+    data: Dict[str, Any],
     *,
-    extra_paths=None,
-    exclude=None,
-    include=None,
-    skip_if_exists=None,
-    tasks=None,
-    envops=None,
-    **flags
-):
+    extra_paths: OptSeqStrOrPath = None,
+    exclude: OptSeqStrOrPath = None,
+    include: OptSeqStrOrPath = None,
+    skip_if_exists: OptSeqStrOrPath = None,
+    tasks: OptSeqStr = None,
+    envops: Dict[str, Any] = None,
+    **flags: bool
+) -> None:
     src_path, dst_path, extra_paths = resolve_paths(src_path, dst_path, extra_paths)
     config_data = load_config_data(src_path, quiet=flags["quiet"])
     user_exclude = config_data.pop("_exclude", None)
@@ -230,16 +236,16 @@ def copy_local(
     if not flags["quiet"]:
         print("")  # padding space
 
-    for folder, _, files in os.walk(str(src_path)):
-        rel_folder = folder.replace(str(src_path), "", 1).lstrip(os.path.sep)
-        rel_folder = render.string(rel_folder)
-        rel_folder = rel_folder.replace("." + os.path.sep, ".", 1)
+    for _folder, _, files in os.walk(str(src_path)):
+        _rel_folder = _folder.replace(str(src_path), "", 1).lstrip(os.path.sep)
+        _rel_folder = render.string(_rel_folder)
+        _rel_folder = _rel_folder.replace("." + os.path.sep, ".", 1)
 
-        if must_filter(rel_folder):
+        if must_filter(_rel_folder):
             continue
 
-        folder = Path(folder)
-        rel_folder = Path(rel_folder)
+        folder: Path = Path(_folder)
+        rel_folder: Path = Path(_rel_folder)
 
         render_folder(dst_path, rel_folder, flags)
 
@@ -270,7 +276,7 @@ def get_source_paths(folder, rel_folder, files, render, must_filter):
     return source_paths
 
 
-def render_folder(dst_path, rel_folder, flags):
+def render_folder(dst_path: Path, rel_folder: Path, flags: Dict[str, bool]) -> None:
     final_path = dst_path / rel_folder
     display_path = str(rel_folder) + os.path.sep
 
@@ -290,7 +296,14 @@ def render_folder(dst_path, rel_folder, flags):
         printf("create", display_path, style=STYLE_OK)
 
 
-def render_file(dst_path, rel_path, source_path, render, must_skip, flags):
+def render_file(
+    dst_path: Path,
+    rel_path: Path,
+    source_path: Path,
+    render,
+    must_skip,
+    flags: Dict[str, bool],
+) -> None:
     """Process or copy a file of the skeleton.
     """
     if source_path.suffix == ".tmpl":
@@ -312,9 +325,7 @@ def render_file(dst_path, rel_path, source_path, render, must_skip, flags):
                 printf("skip", display_path, style=STYLE_WARNING)
             return
 
-        if overwrite_file(
-            display_path, source_path, final_path, content, flags
-        ):
+        if overwrite_file(display_path, source_path, final_path, content, flags):
             if not flags["quiet"]:
                 printf("force", display_path, style=STYLE_WARNING)
         else:
@@ -334,22 +345,28 @@ def render_file(dst_path, rel_path, source_path, render, must_skip, flags):
         final_path.write_text(content)
 
 
-def file_is_identical(source_path, final_path, content):
+def file_is_identical(source_path: Path, final_path: Path, content: str) -> bool:
     if content is None:
         return files_are_identical(source_path, final_path)
 
     return file_has_this_content(final_path, content)
 
 
-def files_are_identical(path1, path2):
+def files_are_identical(path1: Path, path2: Path) -> bool:
     return filecmp.cmp(str(path1), str(path2), shallow=False)
 
 
-def file_has_this_content(path, content):
+def file_has_this_content(path: Path, content: str) -> bool:
     return content == path.read_text()
 
 
-def overwrite_file(display_path, source_path, final_path, content, flags):
+def overwrite_file(
+    display_path: StrOrPath,
+    source_path: Path,
+    final_path: Path,
+    content: str,
+    flags: Dict[str, bool],
+) -> bool:
     if not flags["quiet"]:
         printf("conflict", display_path, style=STYLE_DANGER)
     if flags["force"]:
@@ -361,12 +378,11 @@ def overwrite_file(display_path, source_path, final_path, content, flags):
     return prompt_bool(msg, default=True)  # pragma:no cover
 
 
-def run_tasks(dst_path, render, tasks):
+def run_tasks(dst_path: StrOrPath, render, tasks) -> None:
     dst_path = str(dst_path)
     for i, task in enumerate(tasks):
         task = render.string(task)
         printf(
-            " > Running task {} of {}".format(i + 1, len(tasks)),
-            task, style=STYLE_OK,
+            " > Running task {} of {}".format(i + 1, len(tasks)), task, style=STYLE_OK
         )
         subprocess.run(task, shell=True, check=True, cwd=dst_path)
