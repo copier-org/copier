@@ -5,7 +5,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Any, Dict, Sequence, Tuple, Optional, Union
+from typing import Any, Dict, Sequence, Tuple, Optional, Union, Callable, List
 
 from . import vcs
 from .tools import (
@@ -28,6 +28,9 @@ __all__ = ("copy", "copy_local")
 StrOrPath = Union[str, Path]
 OptSeqStrOrPath = Optional[Sequence[StrOrPath]]
 OptSeqStr = Optional[Sequence[str]]
+AnyByStr = Dict[str, Any]
+IntOrStr = Union[int, str]
+CheckPathFunc = Callable[[StrOrPath], bool]
 
 # Files of the template to exclude from the final project
 DEFAULT_EXCLUDE: Tuple[str, ...] = (
@@ -59,7 +62,7 @@ def copy(
     include: OptSeqStr = None,
     skip_if_exists: OptSeqStr = None,
     tasks: OptSeqStr = None,
-    envops: Dict[str, Any] = None,
+    envops: AnyByStr = None,
     extra_paths: OptSeqStr = None,
     pretend: bool = False,
     force: bool = False,
@@ -193,19 +196,19 @@ def resolve_paths(
 def copy_local(
     src_path: StrOrPath,
     dst_path: StrOrPath,
-    data: Dict[str, Any],
+    data: AnyByStr,
     *,
     extra_paths: OptSeqStrOrPath = None,
     exclude: OptSeqStrOrPath = None,
     include: OptSeqStrOrPath = None,
     skip_if_exists: OptSeqStrOrPath = None,
     tasks: OptSeqStr = None,
-    envops: Dict[str, Any] = None,
+    envops: Optional[AnyByStr] = None,
     **flags: bool
 ) -> None:
     src_path, dst_path, extra_paths = resolve_paths(src_path, dst_path, extra_paths)
     config_data = load_config_data(src_path, quiet=flags["quiet"])
-    user_exclude = config_data.pop("_exclude", None)
+    user_exclude: List[str] = config_data.pop("_exclude", None)
     if exclude is None:
         exclude = user_exclude or DEFAULT_EXCLUDE
 
@@ -368,7 +371,7 @@ def overwrite_file(
     flags: Dict[str, bool],
 ) -> bool:
     if not flags["quiet"]:
-        printf("conflict", display_path, style=STYLE_DANGER)
+        printf("conflict", str(display_path), style=STYLE_DANGER)
     if flags["force"]:
         return True
     if flags["skip"]:
