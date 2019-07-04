@@ -5,15 +5,14 @@ import unicodedata
 from fnmatch import fnmatch
 from functools import reduce
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple, Union
-
+from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
+from mypy_extensions import Arg, KwArg
 import colorama  # type: ignore
-import jinja2
 from colorama import Fore, Style
+from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
 
-from .types import OptSeqStrOrPath, AnyByStr, CheckPathFunc
-
+from .types import AnyByStr, CheckPathFunc, OptSeqStrOrPath, StrOrPath, T
 
 _all__: Tuple[str, ...] = (
     "STYLE_OK",
@@ -64,13 +63,19 @@ def printf_block(
 no_value = object()
 
 
-def required(value: object) -> object:
+def required(value: Any, **kwargs: Any) -> Any:
     if not value:
         raise ValueError()
     return value
 
 
-def prompt(question, default=no_value, default_show=None, validator=required, **kwargs):
+def prompt(
+    question: str,
+    default: Optional[Any] = no_value,
+    default_show: Optional[Any] = None,
+    validator: Callable[[Arg(Any, "value"), KwArg(Any)], Any] = required,
+    **kwargs: AnyByStr
+) -> Optional[Any]:
     """
     Prompt for a value from the command line. A default value can be provided,
     which will be used if no text is entered by the user. The value can be
@@ -117,7 +122,7 @@ def prompt_bool(
 
     please_answer = ' Please answer "{}" or "{}"'.format(yes, no)
 
-    def validator(value):
+    def validator(value: Union[str, bool], **kwargs) -> Union[str, bool]:
         if value:
             value = str(value).lower()[0]
         if value == yes:
@@ -156,7 +161,7 @@ def copy_file(src: Path, dst: Path, symlinks: bool = True) -> None:
 
 
 # The default env options for jinja2
-DEFAULT_ENV_OPTIONS: Dict[str, Union[bool, str, jinja2.FileSystemLoader]] = {
+DEFAULT_ENV_OPTIONS: AnyByStr = {
     "autoescape": False,
     "block_start_string": "[%",
     "block_end_string": "%]",
@@ -166,19 +171,19 @@ DEFAULT_ENV_OPTIONS: Dict[str, Union[bool, str, jinja2.FileSystemLoader]] = {
 }
 
 
-class Renderer(object):
-    def __init__(self, env, src_path, data):
+class Renderer:
+    def __init__(self, env: SandboxedEnvironment, src_path: str, data: AnyByStr):
         self.env = env
         self.src_path = src_path
         self.data = data
 
-    def __call__(self, fullpath):
+    def __call__(self, fullpath: StrOrPath):
         relpath = str(fullpath).replace(self.src_path, "", 1).lstrip(os.path.sep)
         tmpl = self.env.get_template(relpath)
         return tmpl.render(**self.data)
 
-    def string(self, string):
-        tmpl = self.env.from_string(string)
+    def string(self, string: StrOrPath):
+        tmpl = self.env.from_string(str(string))
         return tmpl.render(**self.data)
 
 
@@ -196,7 +201,7 @@ def get_jinja_renderer(
     _envops.update(envops or {})
 
     paths = [_src_path] + [str(p) for p in extra_paths or []]
-    _envops.setdefault("loader", jinja2.FileSystemLoader(paths))
+    _envops.setdefault("loader", FileSystemLoader(paths))
 
     # We want to minimize the risk of hidden malware in the templates
     # so we use the SandboxedEnvironment instead of the regular one.
@@ -206,15 +211,15 @@ def get_jinja_renderer(
     return Renderer(env=env, src_path=_src_path, data=data)
 
 
-def normalize_str(text: Union[str, Path], form: str = "NFD") -> str:
+def normalize_str(text: StrOrPath, form: str = "NFD") -> str:
     """Normalize unicode text. Uses the NFD algorithm by default."""
     return unicodedata.normalize(form, str(text))
 
 
 def get_name_filters(
-    exclude: Sequence[Union[str, Path]],
-    include: Sequence[Union[str, Path]],
-    skip_if_exists: Sequence[Union[str, Path]],
+    exclude: Sequence[StrOrPath],
+    include: Sequence[StrOrPath],
+    skip_if_exists: Sequence[StrOrPath],
 ) -> Tuple[CheckPathFunc, CheckPathFunc]:
     """Returns a function that evaluates if aCheckPathFunc file or folder name must be
     filtered out, and another that evaluates if a file must be skipped.
@@ -229,24 +234,24 @@ def get_name_filters(
     include = [normalize_str(pattern) for pattern in include]
     skip_if_exists = [normalize_str(pattern) for pattern in skip_if_exists]
 
-    def fullmatch(path: Union[str, Path], pattern: Union[str, Path]) -> bool:
+    def fullmatch(path: StrOrPath, pattern: StrOrPath) -> bool:
         path = normalize_str(path)
         name = os.path.basename(path)
         return fnmatch(name, str(pattern)) or fnmatch(path, str(pattern))
 
-    def match(path: Union[str, Path], patterns: Sequence[Union[str, Path]]) -> bool:
+    def match(path: StrOrPath, patterns: Sequence[StrOrPath]) -> bool:
         return reduce(lambda r, pattern: r or fullmatch(path, pattern), patterns, False)
 
-    def must_be_filtered(path: Union[str, Path]) -> bool:
+    def must_be_filtered(path: StrOrPath) -> bool:
         return match(path, exclude)
 
-    def must_be_included(path: Union[str, Path]) -> bool:
+    def must_be_included(path: StrOrPath) -> bool:
         return match(path, include)
 
-    def must_skip(path: Union[str, Path]) -> bool:
+    def must_skip(path: StrOrPath) -> bool:
         return match(path, skip_if_exists)
 
-    def must_filter(path: Union[str, Path]) -> bool:
+    def must_filter(path: StrOrPath) -> bool:
         return must_be_filtered(path) and not must_be_included(path)
 
     return must_filter, must_skip

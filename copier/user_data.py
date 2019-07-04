@@ -30,7 +30,7 @@ def load_yaml_data(src_path, quiet=False):
         if not yaml_path.exists():
             return {}
 
-    from ruamel.yaml import YAML
+    from ruamel.yaml import YAML  # type: ignore
 
     yaml = YAML(typ="safe")
 

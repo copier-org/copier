@@ -5,9 +5,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Dict, Tuple, Optional, List
-
-from .types import StrOrPath, OptSeqStrOrPath, OptSeqStr, AnyByStr
+from typing import Dict, List, Optional, Tuple
 
 from . import vcs
 from .tools import (
@@ -15,6 +13,7 @@ from .tools import (
     STYLE_IGNORE,
     STYLE_OK,
     STYLE_WARNING,
+    Renderer,
     copy_file,
     get_jinja_renderer,
     get_name_filters,
@@ -22,6 +21,7 @@ from .tools import (
     printf,
     prompt_bool,
 )
+from .types import AnyByStr, Callable, OptSeqStr, OptSeqStrOrPath, StrOrPath
 from .user_data import load_config_data, query_user_data
 
 __all__ = ("copy", "copy_local")
@@ -207,28 +207,28 @@ def copy_local(
     if exclude is None:
         exclude = user_exclude or DEFAULT_EXCLUDE
 
-    user_include = config_data.pop("_include", None)
+    user_include: List[str] = config_data.pop("_include", None)
     if include is None:
         include = user_include or DEFAULT_INCLUDE
 
-    user_skip_if_exists = config_data.pop("_skip_if_exists", None)
+    user_skip_if_exists: List[str] = config_data.pop("_skip_if_exists", None)
     if skip_if_exists is None:
         skip_if_exists = user_skip_if_exists or []
 
-    user_tasks = config_data.pop("_tasks", None)
+    user_tasks: List[str] = config_data.pop("_tasks", None)
     if tasks is None:
         tasks = user_tasks or []
 
-    user_extra_paths = config_data.pop("_extra_paths", None)
+    user_extra_paths: List[str] = config_data.pop("_extra_paths", None)
     if not extra_paths:
         extra_paths = [str(resolve_source_path(p)) for p in user_extra_paths or []]
 
     user_data = config_data if flags["force"] else query_user_data(config_data)
     data.update(user_data)
     data.setdefault("folder_name", dst_path.name)
-    render = get_jinja_renderer(src_path, data, extra_paths, envops)
+    engine = get_jinja_renderer(src_path, data, extra_paths, envops)
 
-    skip_if_exists = [render.string(pattern) for pattern in skip_if_exists]
+    skip_if_exists = [engine.string(pattern) for pattern in skip_if_exists]
     must_filter, must_skip = get_name_filters(exclude, include, skip_if_exists)
 
     if not flags["quiet"]:
@@ -236,7 +236,7 @@ def copy_local(
 
     for _folder, _, files in os.walk(str(src_path)):
         _rel_folder = _folder.replace(str(src_path), "", 1).lstrip(os.path.sep)
-        _rel_folder = render.string(_rel_folder)
+        _rel_folder = engine.string(_rel_folder)
         _rel_folder = _rel_folder.replace("." + os.path.sep, ".", 1)
 
         if must_filter(_rel_folder):
@@ -247,16 +247,16 @@ def copy_local(
 
         render_folder(dst_path, rel_folder, flags)
 
-        source_paths = get_source_paths(folder, rel_folder, files, render, must_filter)
+        source_paths = get_source_paths(folder, rel_folder, files, engine, must_filter)
 
         for source_path, rel_path in source_paths:
-            render_file(dst_path, rel_path, source_path, render, must_skip, flags)
+            render_file(dst_path, rel_path, source_path, engine, must_skip, flags)
 
     if not flags["quiet"]:
         print("")  # padding space
 
     if tasks:
-        run_tasks(dst_path, render, tasks)
+        run_tasks(dst_path, engine, tasks)
         if not flags["quiet"]:
             print("")  # padding space
 
@@ -298,14 +298,14 @@ def render_file(
     dst_path: Path,
     rel_path: Path,
     source_path: Path,
-    render,
-    must_skip,
+    engine: Renderer,
+    must_skip: Callable[[Path], bool],
     flags: Dict[str, bool],
 ) -> None:
     """Process or copy a file of the skeleton.
     """
     if source_path.suffix == ".tmpl":
-        content = render(source_path)
+        content = engine(source_path)
     else:
         content = None
 
@@ -323,7 +323,7 @@ def render_file(
                 printf("skip", display_path, style=STYLE_WARNING)
             return
 
-        if overwrite_file(display_path, source_path, final_path, content, flags):
+        if overwrite_file(display_path, source_path, final_path, flags):
             if not flags["quiet"]:
                 printf("force", display_path, style=STYLE_WARNING)
         else:
@@ -343,7 +343,9 @@ def render_file(
         final_path.write_text(content)
 
 
-def file_is_identical(source_path: Path, final_path: Path, content: str) -> bool:
+def file_is_identical(
+    source_path: Path, final_path: Path, content: Optional[str]
+) -> bool:
     if content is None:
         return files_are_identical(source_path, final_path)
 
@@ -359,11 +361,7 @@ def file_has_this_content(path: Path, content: str) -> bool:
 
 
 def overwrite_file(
-    display_path: StrOrPath,
-    source_path: Path,
-    final_path: Path,
-    content: str,
-    flags: Dict[str, bool],
+    display_path: StrOrPath, source_path: Path, final_path: Path, flags: Dict[str, bool]
 ) -> bool:
     if not flags["quiet"]:
         printf("conflict", str(display_path), style=STYLE_DANGER)
