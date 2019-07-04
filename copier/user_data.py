@@ -1,14 +1,15 @@
 from pathlib import Path
+from typing import List
 
 from .tools import printf, printf_block, prompt, STYLE_WARNING
-
+from .types import AnyByStr, StrOrPath
 
 __all__ = ("load_config_data", "query_user_data")
 
 INDENT = "  "
 
 
-def load_toml_data(src_path, quiet=False):
+def load_toml_data(src_path: StrOrPath, quiet: bool = False) -> AnyByStr:
     toml_path = Path(src_path) / "copier.toml"
     if not toml_path.exists():
         return {}
@@ -17,13 +18,13 @@ def load_toml_data(src_path, quiet=False):
 
     toml_src = toml_path.read_text()
     try:
-        return toml.loads(toml_src)
+        return dict(toml.loads(toml_src))
     except Exception as e:
-        printf_block(e, "INVALID", msg=toml_path, quiet=quiet)
+        printf_block(e, "INVALID", msg=str(toml_path), quiet=quiet)
         return {}
 
 
-def load_yaml_data(src_path, quiet=False):
+def load_yaml_data(src_path: StrOrPath, quiet: bool = False) -> AnyByStr:
     yaml_path = Path(src_path) / "copier.yml"
     if not yaml_path.exists():
         yaml_path = Path(src_path) / "copier.yaml"
@@ -37,11 +38,13 @@ def load_yaml_data(src_path, quiet=False):
     try:
         return yaml.load(yaml_path)
     except Exception as e:
-        printf_block(e, "INVALID", msg=yaml_path, quiet=quiet)
+        printf_block(e, "INVALID", msg=str(yaml_path), quiet=quiet)
         return {}
 
 
-def load_json_data(src_path, quiet=False, _warning=True):
+def load_json_data(
+    src_path: StrOrPath, quiet: bool = False, _warning: bool = True
+) -> AnyByStr:
     json_path = Path(src_path) / "copier.json"
     if not json_path.exists():
         return load_old_json_data(src_path, quiet=quiet, _warning=_warning)
@@ -52,11 +55,13 @@ def load_json_data(src_path, quiet=False, _warning=True):
     try:
         return json.loads(json_src)
     except ValueError as e:
-        printf_block(e, "INVALID", msg=json_path, quiet=quiet)
+        printf_block(e, "INVALID", msg=str(json_path), quiet=quiet)
         return {}
 
 
-def load_old_json_data(src_path, quiet=False, _warning=True):
+def load_old_json_data(
+    src_path: StrOrPath, quiet: bool = False, _warning: bool = True
+) -> AnyByStr:
     # TODO: Remove on version 3.0
     json_path = Path(src_path) / "voodoo.json"
     if not json_path.exists():
@@ -78,11 +83,13 @@ def load_old_json_data(src_path, quiet=False, _warning=True):
     try:
         return json.loads(json_src)
     except ValueError as e:
-        printf_block(e, "INVALID", msg=json_path, quiet=quiet)
+        printf_block(e, "INVALID", msg=str(json_path), quiet=quiet)
         return {}
 
 
-def load_config_data(src_path, quiet=False, _warning=True):
+def load_config_data(
+    src_path: StrOrPath, quiet: bool = False, _warning: bool = True
+) -> AnyByStr:
     """Try to load the content from a `copier.yml`, a `copier.toml`, a `copier.json`,
     or the deprecated `voodoo.json`, in that order.
     """
@@ -95,7 +102,7 @@ def load_config_data(src_path, quiet=False, _warning=True):
     return data
 
 
-def query_user_data(default_user_data):  # pragma:no cover
+def query_user_data(default_user_data: AnyByStr) -> AnyByStr:  # pragma:no cover
     """Query to user about the data of the config file.
     """
     if not default_user_data:

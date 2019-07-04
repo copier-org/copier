@@ -72,7 +72,7 @@ parser.add_argument(
 )
 
 
-def run():  # pragma:no cover
+def run() -> None:  # pragma:no cover
     if len(sys.argv) == 1 or sys.argv[1] == "help":
         parser.print_help(sys.stderr)
         print()
