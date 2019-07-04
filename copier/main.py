@@ -5,7 +5,9 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Any, Dict, Sequence, Tuple, Optional, Union, Callable, List
+from typing import Dict, Tuple, Optional, List
+
+from .types import StrOrPath, OptSeqStrOrPath, OptSeqStr, AnyByStr
 
 from . import vcs
 from .tools import (
@@ -24,13 +26,6 @@ from .user_data import load_config_data, query_user_data
 
 __all__ = ("copy", "copy_local")
 
-# Custom Types
-StrOrPath = Union[str, Path]
-OptSeqStrOrPath = Optional[Sequence[StrOrPath]]
-OptSeqStr = Optional[Sequence[str]]
-AnyByStr = Dict[str, Any]
-IntOrStr = Union[int, str]
-CheckPathFunc = Callable[[StrOrPath], bool]
 
 # Files of the template to exclude from the final project
 DEFAULT_EXCLUDE: Tuple[str, ...] = (
@@ -50,13 +45,13 @@ DEFAULT_EXCLUDE: Tuple[str, ...] = (
 )
 
 DEFAULT_INCLUDE: Tuple[str, ...] = ()
-DEFAULT_DATA: Dict[str, Any] = {"now": datetime.datetime.utcnow}
+DEFAULT_DATA: AnyByStr = {"now": datetime.datetime.utcnow}
 
 
 def copy(
     src_path: str,
     dst_path: str,
-    data: Dict[str, Any] = None,
+    data: AnyByStr = None,
     *,
     exclude: OptSeqStr = None,
     include: OptSeqStr = None,

@@ -5,20 +5,14 @@ import unicodedata
 from fnmatch import fnmatch
 from functools import reduce
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union, Callable, Iterable
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import colorama  # type: ignore
 import jinja2
 from colorama import Fore, Style
 from jinja2.sandbox import SandboxedEnvironment
 
-# Custom Types
-StrOrPath = Union[str, Path]
-OptSeqStrOrPath = Optional[Sequence[StrOrPath]]
-OptSeqStr = Optional[Sequence[str]]
-AnyByStr = Dict[str, Any]
-IntOrStr = Union[int, str]
-CheckPathFunc = Callable[[StrOrPath], bool]
+from .types import OptSeqStrOrPath, AnyByStr, CheckPathFunc
 
 
 _all__: Tuple[str, ...] = (
