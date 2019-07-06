@@ -23,13 +23,14 @@ def test_config_data_is_loaded_from_file():
 
 
 @pytest.mark.parametrize(
-    "template", [
+    "template",
+    [
         "tests/demo_toml",
         "tests/demo_yaml",
         "tests/demo_yml",
         "tests/demo_json",
         "tests/demo_json_old",
-    ]
+    ],
 )
 def test_read_data(dst, template):
     copier.copy(template, dst, force=True)

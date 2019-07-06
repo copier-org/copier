@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import List
 
 from .tools import printf, printf_block, prompt, STYLE_WARNING
 from .types import AnyByStr, StrOrPath

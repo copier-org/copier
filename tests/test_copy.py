@@ -4,13 +4,7 @@ import pytest
 
 from .. import copier
 
-from .helpers import (
-    assert_file,
-    render,
-    PROJECT_TEMPLATE,
-    DATA,
-    filecmp,
-)
+from .helpers import assert_file, render, PROJECT_TEMPLATE, DATA, filecmp
 
 
 def test_project_not_found(dst):
@@ -68,10 +62,7 @@ def test_exclude_file(dst):
 def test_skip_if_exists(dst):
     copier.copy("tests/demo_skip_dst", dst)
     copier.copy(
-        "tests/demo_skip_src",
-        dst,
-        skip_if_exists=["b.txt", "meh/c.txt"],
-        force=True
+        "tests/demo_skip_src", dst, skip_if_exists=["b.txt", "meh/c.txt"], force=True
     )
 
     assert (dst / "a.txt").read_text() == "OVERWRITTEN"
@@ -86,7 +77,7 @@ def test_skip_if_exists_rendered_patterns(dst):
         dst,
         data={"name": "meh"},
         skip_if_exists=["[[ name ]]/c.txt"],
-        force=True
+        force=True,
     )
     assert (dst / "a.txt").read_text() == "OVERWRITTEN"
     assert (dst / "b.txt").read_text() == "OVERWRITTEN"

@@ -6,13 +6,13 @@ from fnmatch import fnmatch
 from functools import reduce
 from pathlib import Path
 from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
-from mypy_extensions import Arg, KwArg
+
 import colorama  # type: ignore
 from colorama import Fore, Style
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
 
-from .types import AnyByStr, CheckPathFunc, OptSeqStrOrPath, StrOrPath, T
+from .types import AnyByStr, CheckPathFunc, OptSeqStrOrPath, StrOrPath
 
 _all__: Tuple[str, ...] = (
     "STYLE_OK",
@@ -73,7 +73,7 @@ def prompt(
     question: str,
     default: Optional[Any] = no_value,
     default_show: Optional[Any] = None,
-    validator: Callable[[Arg(Any, "value"), KwArg(Any)], Any] = required,
+    validator: Callable = required,
     **kwargs: AnyByStr
 ) -> Optional[Any]:
     """
@@ -172,7 +172,9 @@ DEFAULT_ENV_OPTIONS: AnyByStr = {
 
 
 class Renderer:
-    def __init__(self, env: SandboxedEnvironment, src_path: str, data: AnyByStr):
+    def __init__(
+        self, env: SandboxedEnvironment, src_path: str, data: AnyByStr
+    ) -> None:
         self.env = env
         self.src_path = src_path
         self.data = data
@@ -201,7 +203,7 @@ def get_jinja_renderer(
     _envops.update(envops or {})
 
     paths = [_src_path] + [str(p) for p in extra_paths or []]
-    _envops.setdefault("loader", FileSystemLoader(paths))
+    _envops.setdefault("loader", FileSystemLoader(paths))  # type: ignore
 
     # We want to minimize the risk of hidden malware in the templates
     # so we use the SandboxedEnvironment instead of the regular one.
