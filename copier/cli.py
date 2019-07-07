@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import argparse
+import sys
 from hashlib import sha512
 from os import urandom
-import sys
 
 try:
     from .main import copy

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, Sequence, Optional, Union, TypeVar
+from typing import Any, Dict, Optional, Sequence, TypeVar, Union
 
 IntOrStr = Union[int, str]
 StrOrPath = Union[str, Path]

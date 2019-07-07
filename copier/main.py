@@ -5,23 +5,13 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Callable
+from typing import Callable, Dict, List, Optional, Tuple
 
 from . import vcs
-from .tools import (
-    STYLE_DANGER,
-    STYLE_IGNORE,
-    STYLE_OK,
-    STYLE_WARNING,
-    Renderer,
-    copy_file,
-    get_jinja_renderer,
-    get_name_filters,
-    make_folder,
-    printf,
-    prompt_bool,
-)
-from .types import AnyByStrDict, OptStrSeq, OptStrOrPathSeq, StrOrPath
+from .tools import (STYLE_DANGER, STYLE_IGNORE, STYLE_OK, STYLE_WARNING,
+                    Renderer, copy_file, get_jinja_renderer, get_name_filters,
+                    make_folder, printf, prompt_bool)
+from .types import AnyByStrDict, OptStrOrPathSeq, OptStrSeq, StrOrPath
 from .user_data import load_config_data, query_user_data
 
 __all__ = ("copy", "copy_local")
