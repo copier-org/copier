@@ -5,7 +5,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Callable
 
 from . import vcs
 from .tools import (
@@ -21,7 +21,7 @@ from .tools import (
     printf,
     prompt_bool,
 )
-from .types import AnyByStr, Callable, OptSeqStr, OptSeqStrOrPath, StrOrPath
+from .types import AnyByStrDict, OptStrSeq, OptStrOrPathSeq, StrOrPath
 from .user_data import load_config_data, query_user_data
 
 __all__ = ("copy", "copy_local")
@@ -45,20 +45,20 @@ DEFAULT_EXCLUDE: Tuple[str, ...] = (
 )
 
 DEFAULT_INCLUDE: Tuple[str, ...] = ()
-DEFAULT_DATA: AnyByStr = {"now": datetime.datetime.utcnow}
+DEFAULT_DATA: AnyByStrDict = {"now": datetime.datetime.utcnow}
 
 
 def copy(
     src_path: str,
     dst_path: str,
-    data: AnyByStr = None,
+    data: AnyByStrDict = None,
     *,
-    exclude: OptSeqStr = None,
-    include: OptSeqStr = None,
-    skip_if_exists: OptSeqStr = None,
-    tasks: OptSeqStr = None,
-    envops: AnyByStr = None,
-    extra_paths: OptSeqStr = None,
+    exclude: OptStrSeq = None,
+    include: OptStrSeq = None,
+    skip_if_exists: OptStrSeq = None,
+    tasks: OptStrSeq = None,
+    envops: AnyByStrDict = None,
+    extra_paths: OptStrSeq = None,
     pretend: bool = False,
     force: bool = False,
     skip: bool = False,
@@ -180,8 +180,8 @@ def resolve_source_path(path: StrOrPath) -> Path:
 
 
 def resolve_paths(
-    src_path: StrOrPath, dst_path: StrOrPath, extra_paths: OptSeqStrOrPath
-) -> Tuple[Path, Path, OptSeqStrOrPath]:
+    src_path: StrOrPath, dst_path: StrOrPath, extra_paths: OptStrOrPathSeq
+) -> Tuple[Path, Path, OptStrOrPathSeq]:
     src_path = resolve_source_path(src_path)
     dst_path = Path(dst_path).resolve()
     extra_paths = [str(resolve_source_path(p)) for p in extra_paths or []]
@@ -191,14 +191,14 @@ def resolve_paths(
 def copy_local(
     src_path: StrOrPath,
     dst_path: StrOrPath,
-    data: AnyByStr,
+    data: AnyByStrDict,
     *,
-    extra_paths: OptSeqStrOrPath = None,
-    exclude: OptSeqStrOrPath = None,
-    include: OptSeqStrOrPath = None,
-    skip_if_exists: OptSeqStrOrPath = None,
-    tasks: OptSeqStr = None,
-    envops: Optional[AnyByStr] = None,
+    extra_paths: OptStrOrPathSeq = None,
+    exclude: OptStrOrPathSeq = None,
+    include: OptStrOrPathSeq = None,
+    skip_if_exists: OptStrOrPathSeq = None,
+    tasks: OptStrSeq = None,
+    envops: Optional[AnyByStrDict] = None,
     **flags: bool
 ) -> None:
     src_path, dst_path, extra_paths = resolve_paths(src_path, dst_path, extra_paths)

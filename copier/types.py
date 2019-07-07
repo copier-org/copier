@@ -1,9 +1,14 @@
 from pathlib import Path
-from typing import Any, Dict, Sequence, Optional, Union, Callable
+from typing import Any, Dict, Sequence, Optional, Union, TypeVar
 
-StrOrPath = Union[str, Path]
-OptSeqStrOrPath = Optional[Sequence[StrOrPath]]
-OptSeqStr = Optional[Sequence[str]]
-AnyByStr = Dict[str, Any]
 IntOrStr = Union[int, str]
-CheckPathFunc = Callable[[StrOrPath], bool]
+StrOrPath = Union[str, Path]
+
+AnyByStrDict = Dict[str, Any]
+
+OptStrOrPathSeq = Optional[Sequence[StrOrPath]]
+OptStrSeq = Optional[Sequence[str]]
+
+
+
+T = TypeVar("T")

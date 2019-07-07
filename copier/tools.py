@@ -12,7 +12,8 @@ from colorama import Fore, Style
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
 
-from .types import AnyByStr, CheckPathFunc, OptSeqStrOrPath, StrOrPath
+from .types import AnyByStrDict, OptStrOrPathSeq, StrOrPath, T
+
 
 _all__: Tuple[str, ...] = (
     "STYLE_OK",
@@ -63,7 +64,8 @@ def printf_block(
 no_value = object()
 
 
-def required(value: Any, **kwargs: Any) -> Any:
+
+def required(value: T, **kwargs: Any) -> T:
     if not value:
         raise ValueError()
     return value
@@ -74,7 +76,7 @@ def prompt(
     default: Optional[Any] = no_value,
     default_show: Optional[Any] = None,
     validator: Callable = required,
-    **kwargs: AnyByStr
+    **kwargs: AnyByStrDict
 ) -> Optional[Any]:
     """
     Prompt for a value from the command line. A default value can be provided,
@@ -161,7 +163,7 @@ def copy_file(src: Path, dst: Path, symlinks: bool = True) -> None:
 
 
 # The default env options for jinja2
-DEFAULT_ENV_OPTIONS: AnyByStr = {
+DEFAULT_ENV_OPTIONS: AnyByStrDict = {
     "autoescape": False,
     "block_start_string": "[%",
     "block_end_string": "%]",
@@ -173,7 +175,7 @@ DEFAULT_ENV_OPTIONS: AnyByStr = {
 
 class Renderer:
     def __init__(
-        self, env: SandboxedEnvironment, src_path: str, data: AnyByStr
+        self, env: SandboxedEnvironment, src_path: str, data: AnyByStrDict
     ) -> None:
         self.env = env
         self.src_path = src_path
@@ -191,9 +193,9 @@ class Renderer:
 
 def get_jinja_renderer(
     src_path: Path,
-    data: AnyByStr,
-    extra_paths: OptSeqStrOrPath = None,
-    envops: Optional[AnyByStr] = None,
+    data: AnyByStrDict,
+    extra_paths: OptStrOrPathSeq = None,
+    envops: Optional[AnyByStrDict] = None,
 ) -> Renderer:
     """Returns a function that can render a Jinja template.
     """
@@ -222,7 +224,7 @@ def get_name_filters(
     exclude: Sequence[StrOrPath],
     include: Sequence[StrOrPath],
     skip_if_exists: Sequence[StrOrPath],
-) -> Tuple[CheckPathFunc, CheckPathFunc]:
+) -> Tuple[Callable[[StrOrPath], bool], Callable[[StrOrPath], bool]]:
     """Returns a function that evaluates if aCheckPathFunc file or folder name must be
     filtered out, and another that evaluates if a file must be skipped.
 

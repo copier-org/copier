@@ -1,14 +1,14 @@
 from pathlib import Path
 
 from .tools import printf, printf_block, prompt, STYLE_WARNING
-from .types import AnyByStr, StrOrPath
+from .types import AnyByStrDict, StrOrPath
 
 __all__ = ("load_config_data", "query_user_data")
 
 INDENT = "  "
 
 
-def load_toml_data(src_path: StrOrPath, quiet: bool = False) -> AnyByStr:
+def load_toml_data(src_path: StrOrPath, quiet: bool = False) -> AnyByStrDict:
     toml_path = Path(src_path) / "copier.toml"
     if not toml_path.exists():
         return {}
@@ -23,7 +23,7 @@ def load_toml_data(src_path: StrOrPath, quiet: bool = False) -> AnyByStr:
         return {}
 
 
-def load_yaml_data(src_path: StrOrPath, quiet: bool = False) -> AnyByStr:
+def load_yaml_data(src_path: StrOrPath, quiet: bool = False) -> AnyByStrDict:
     yaml_path = Path(src_path) / "copier.yml"
     if not yaml_path.exists():
         yaml_path = Path(src_path) / "copier.yaml"
@@ -43,7 +43,7 @@ def load_yaml_data(src_path: StrOrPath, quiet: bool = False) -> AnyByStr:
 
 def load_json_data(
     src_path: StrOrPath, quiet: bool = False, _warning: bool = True
-) -> AnyByStr:
+) -> AnyByStrDict:
     json_path = Path(src_path) / "copier.json"
     if not json_path.exists():
         return load_old_json_data(src_path, quiet=quiet, _warning=_warning)
@@ -60,7 +60,7 @@ def load_json_data(
 
 def load_old_json_data(
     src_path: StrOrPath, quiet: bool = False, _warning: bool = True
-) -> AnyByStr:
+) -> AnyByStrDict:
     # TODO: Remove on version 3.0
     json_path = Path(src_path) / "voodoo.json"
     if not json_path.exists():
@@ -88,7 +88,7 @@ def load_old_json_data(
 
 def load_config_data(
     src_path: StrOrPath, quiet: bool = False, _warning: bool = True
-) -> AnyByStr:
+) -> AnyByStrDict:
     """Try to load the content from a `copier.yml`, a `copier.toml`, a `copier.json`,
     or the deprecated `voodoo.json`, in that order.
     """
@@ -101,7 +101,7 @@ def load_config_data(
     return data
 
 
-def query_user_data(default_user_data: AnyByStr) -> AnyByStr:  # pragma:no cover
+def query_user_data(default_user_data: AnyByStrDict) -> AnyByStrDict:  # pragma:no cover
     """Query to user about the data of the config file.
     """
     if not default_user_data:
