@@ -13,7 +13,7 @@ def load_toml_data(src_path: StrOrPath, quiet: bool = False) -> AnyByStr:
     if not toml_path.exists():
         return {}
 
-    import toml
+    import toml  # type: ignore
 
     toml_src = toml_path.read_text()
     try:
