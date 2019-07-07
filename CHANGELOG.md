@@ -11,10 +11,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Add a `cleanup_on_error` flag to optionally disable the cleanup feature.
 - Add the `skip_if_exists` option to skip files, without asking, if they already exists in the destination folder.
 
+
 ### Version 2.4.2 (2019-06)
 - Fix MAJOR bug that was preventing the `_exclude`, `_include` and `_tasks` keys from
 `copier.yml` (or alternatives) to be used at all. It also interpreted `_tasks` as
-a user-provided variable.
+  a user-provided variable.
 
 
 ### Version 2.4 (2019-06)
