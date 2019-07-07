@@ -9,6 +9,4 @@ AnyByStrDict = Dict[str, Any]
 OptStrOrPathSeq = Optional[Sequence[StrOrPath]]
 OptStrSeq = Optional[Sequence[str]]
 
-
-
 T = TypeVar("T")

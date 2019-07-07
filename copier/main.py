@@ -234,21 +234,22 @@ def copy_local(
     if not flags["quiet"]:
         print("")  # padding space
 
-    for _folder, _, files in os.walk(str(src_path)):
-        _rel_folder = _folder.replace(str(src_path), "", 1).lstrip(os.path.sep)
-        _rel_folder = engine.string(_rel_folder)
-        _rel_folder = _rel_folder.replace("." + os.path.sep, ".", 1)
+    folder: StrOrPath
+    rel_folder: StrOrPath
+    for folder, _, files in os.walk(str(src_path)):
+        rel_folder = str(folder).replace(str(src_path), "", 1).lstrip(os.path.sep)
+        rel_folder = engine.string(rel_folder)
+        rel_folder = str(rel_folder).replace("." + os.path.sep, ".", 1)
 
-        if must_filter(_rel_folder):
+        if must_filter(rel_folder):
             continue
 
-        folder: Path = Path(_folder)
-        rel_folder: Path = Path(_rel_folder)
+        folder = Path(folder)
+        rel_folder = Path(rel_folder)
 
         render_folder(dst_path, rel_folder, flags)
 
         source_paths = get_source_paths(folder, rel_folder, files, engine, must_filter)
-
         for source_path, rel_path in source_paths:
             render_file(dst_path, rel_path, source_path, engine, must_skip, flags)
 
