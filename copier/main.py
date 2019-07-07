@@ -262,11 +262,17 @@ def copy_local(
             print("")  # padding space
 
 
-def get_source_paths(folder, rel_folder, files, render, must_filter):
+def get_source_paths(
+    folder: Path,
+    rel_folder: Path,
+    files: List[str],
+    engine: Renderer,
+    must_filter: Callable[[StrOrPath], bool],
+) -> List[Tuple[Path, Path]]:
     source_paths = []
     for src_name in files:
-        dst_name = re.sub(RE_TMPL, "", src_name)
-        dst_name = render.string(dst_name)
+        dst_name = re.sub(RE_TMPL, "", str(src_name))
+        dst_name = engine.string(dst_name)
         rel_path = rel_folder / dst_name
 
         if must_filter(rel_path):
@@ -305,6 +311,7 @@ def render_file(
 ) -> None:
     """Process or copy a file of the skeleton.
     """
+    content: Optional[str]
     if source_path.suffix == ".tmpl":
         content = engine(source_path)
     else:
@@ -363,7 +370,7 @@ def file_has_this_content(path: Path, content: str) -> bool:
 
 def overwrite_file(
     display_path: StrOrPath, source_path: Path, final_path: Path, flags: Dict[str, bool]
-) -> bool:
+) -> Optional[bool]:
     if not flags["quiet"]:
         printf("conflict", str(display_path), style=STYLE_DANGER)
     if flags["force"]:
@@ -375,10 +382,10 @@ def overwrite_file(
     return prompt_bool(msg, default=True)  # pragma:no cover
 
 
-def run_tasks(dst_path: StrOrPath, render, tasks) -> None:
+def run_tasks(dst_path: StrOrPath, engine: Renderer, tasks) -> None:
     dst_path = str(dst_path)
     for i, task in enumerate(tasks):
-        task = render.string(task)
+        task = engine.string(task)
         printf(
             " > Running task {} of {}".format(i + 1, len(tasks)), task, style=STYLE_OK
         )

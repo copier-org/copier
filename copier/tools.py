@@ -64,7 +64,6 @@ def printf_block(
 no_value = object()
 
 
-
 def required(value: T, **kwargs: Any) -> T:
     if not value:
         raise ValueError()
@@ -115,7 +114,7 @@ def prompt_bool(
     no: str = "n",
     yes_choices: Optional[List[str]] = None,
     no_choices: Optional[List[str]] = None,
-):
+) -> Optional[bool]:
     # Backwards compatibility. Remove for version 3.0
     if yes_choices:
         yes = yes_choices[0]
@@ -181,12 +180,12 @@ class Renderer:
         self.src_path = src_path
         self.data = data
 
-    def __call__(self, fullpath: StrOrPath):
+    def __call__(self, fullpath: StrOrPath) -> str:
         relpath = str(fullpath).replace(self.src_path, "", 1).lstrip(os.path.sep)
         tmpl = self.env.get_template(relpath)
         return tmpl.render(**self.data)
 
-    def string(self, string: StrOrPath):
+    def string(self, string: StrOrPath) -> str:
         tmpl = self.env.from_string(str(string))
         return tmpl.render(**self.data)
 
