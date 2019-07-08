@@ -33,7 +33,7 @@ STYLE_DANGER: List[int] = [Fore.RED, Style.BRIGHT]
 
 
 def printf(
-    action: str, msg: str = "", style: List[int] = None, indent: int = 10
+    action: str, msg: str = "", style: Optional[List[int]] = None, indent: int = 10
 ) -> Optional[str]:
     action = action.rjust(indent, " ")
     if not style:
@@ -45,7 +45,7 @@ def printf(
 
 
 def printf_block(
-    e,
+    e: Exception,
     action: str,
     msg: str = "",
     style: List[int] = STYLE_WARNING,
@@ -60,7 +60,7 @@ def printf_block(
         print("-" * 42)
 
 
-no_value = object()
+no_value: object = object()
 
 
 def required(value: T, **kwargs: Any) -> T:
