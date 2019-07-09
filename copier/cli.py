@@ -78,11 +78,6 @@ def run() -> None:  # pragma:no cover
         print()
         sys.exit(1)
 
-    if sys.argv[1] == "version":
-        sys.stdout.write(__version__)
-        print()
-        sys.exit(1)
-
     args = parser.parse_args()
     kwargs = vars(args)
     data = {"make_secret": lambda: sha512(urandom(48)).hexdigest()}
