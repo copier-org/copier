@@ -4,6 +4,8 @@ import os
 import re
 import shutil
 import subprocess
+from hashlib import sha512
+from os import urandom
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
@@ -45,7 +47,10 @@ DEFAULT_EXCLUDE: Tuple[str, ...] = (
 )
 
 DEFAULT_INCLUDE: Tuple[str, ...] = ()
-DEFAULT_DATA: AnyByStrDict = {"now": datetime.datetime.utcnow}
+DEFAULT_DATA: AnyByStrDict = {
+    "now": datetime.datetime.utcnow,
+    "make_secret": lambda: sha512(urandom(48)).hexdigest(),
+}
 
 
 def copy(

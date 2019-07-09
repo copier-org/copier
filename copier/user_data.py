@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from .tools import STYLE_WARNING, HLINE, INDENT, printf, printf_block, prompt
+from .tools import HLINE, INDENT, STYLE_WARNING, printf, printf_block, prompt
 from .types import AnyByStrDict, StrOrPath
 
 __all__ = ("load_config_data", "query_user_data")
