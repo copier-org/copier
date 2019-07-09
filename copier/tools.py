@@ -31,6 +31,9 @@ STYLE_WARNING: List[int] = [Fore.YELLOW, Style.BRIGHT]
 STYLE_IGNORE: List[int] = [Fore.CYAN]
 STYLE_DANGER: List[int] = [Fore.RED, Style.BRIGHT]
 
+INDENT = " " * 2
+HLINE = "-" * 42
+
 
 def printf(
     action: str, msg: str = "", style: Optional[List[int]] = None, indent: int = 10
@@ -39,7 +42,7 @@ def printf(
     if not style:
         return action + msg
 
-    out = style + [action, Fore.RESET, Style.RESET_ALL, "  ", msg]  # type: ignore
+    out = style + [action, Fore.RESET, Style.RESET_ALL, INDENT, msg]  # type: ignore
     print(*out, sep="")
     return None  # HACK: Satisfy MyPy
 
@@ -55,9 +58,9 @@ def printf_block(
     if not quiet:
         print("")
         printf(action, msg=msg, style=style, indent=indent)
-        print("-" * 42)
+        print(HLINE)
         print(e)
-        print("-" * 42)
+        print(HLINE)
 
 
 no_value: object = object()
@@ -74,7 +77,7 @@ def prompt(
     default: Optional[Any] = no_value,
     default_show: Optional[Any] = None,
     validator: Callable = required,
-    **kwargs: AnyByStrDict
+    **kwargs: AnyByStrDict,
 ) -> Optional[Any]:
     """
     Prompt for a value from the command line. A default value can be provided,
@@ -120,7 +123,7 @@ def prompt_bool(
     if no_choices:
         no = no_choices[0]
 
-    please_answer = f" Please answer \"{yes}\" or \"{no}\""
+    please_answer = f' Please answer "{yes}" or "{no}"'
 
     def validator(value: Union[str, bool], **kwargs) -> Union[str, bool]:
         if value:
@@ -134,13 +137,13 @@ def prompt_bool(
 
     if default is None:
         default = no_value
-        default_show = yes + "/" + no
+        default_show = f"{yes}/{no}"
     elif default:
         default = yes
-        default_show = yes.upper() + "/" + no
+        default_show = f"{yes.upper()}/{no}"
     else:
         default = no
-        default_show = yes + "/" + no.upper()
+        default_show = f"{yes}/{no.upper()}"
 
     return prompt(
         question, default=default, default_show=default_show, validator=validator

@@ -1,11 +1,9 @@
 from pathlib import Path
 
-from .tools import STYLE_WARNING, printf, printf_block, prompt
+from .tools import STYLE_WARNING, HLINE, INDENT, printf, printf_block, prompt
 from .types import AnyByStrDict, StrOrPath
 
 __all__ = ("load_config_data", "query_user_data")
-
-INDENT = "  "
 
 
 def load_toml_data(src_path: StrOrPath, quiet: bool = False) -> AnyByStrDict:
@@ -112,5 +110,5 @@ def query_user_data(default_user_data: AnyByStrDict) -> AnyByStrDict:  # pragma:
         default = default_user_data[key]
         user_data[key] = prompt(INDENT + f" {key}?", default)
 
-    print("\n" + INDENT + "-" * 42)
+    print(f"\n {INDENT} {HLINE}")
     return user_data
