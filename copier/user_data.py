@@ -110,7 +110,7 @@ def query_user_data(default_user_data: AnyByStrDict) -> AnyByStrDict:  # pragma:
     user_data = {}
     for key in default_user_data:
         default = default_user_data[key]
-        user_data[key] = prompt(INDENT + " {0}?".format(key), default)
+        user_data[key] = prompt(INDENT + f" {key}?", default)
 
     print("\n" + INDENT + "-" * 42)
     return user_data

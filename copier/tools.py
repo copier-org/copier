@@ -85,9 +85,9 @@ def prompt(
     printed and the user asked to supply another value.
     """
     if default_show:
-        question += " [{}] ".format(default_show)
+        question += f" [{default_show}] "
     elif default and default is not no_value:
-        question += " [{}] ".format(default)
+        question += f" [{default}] "
     else:
         question += " "
 
@@ -120,7 +120,7 @@ def prompt_bool(
     if no_choices:
         no = no_choices[0]
 
-    please_answer = ' Please answer "{}" or "{}"'.format(yes, no)
+    please_answer = f" Please answer \"{yes}\" or \"{no}\""
 
     def validator(value: Union[str, bool], **kwargs) -> Union[str, bool]:
         if value:

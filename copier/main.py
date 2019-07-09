@@ -369,7 +369,7 @@ def overwrite_file(
     if flags["skip"]:
         return False
 
-    msg = " Overwrite {}?".format(final_path)  # pragma:no cover
+    msg = f" Overwrite {final_path}?"  # pragma:no cover
     return prompt_bool(msg, default=True)  # pragma:no cover
 
 
@@ -378,6 +378,6 @@ def run_tasks(dst_path: StrOrPath, engine: Renderer, tasks) -> None:
     for i, task in enumerate(tasks):
         task = engine.string(task)
         printf(
-            " > Running task {} of {}".format(i + 1, len(tasks)), task, style=STYLE_OK
+            f" > Running task {i + 1} of {len(tasks)}", task, style=STYLE_OK
         )
         subprocess.run(task, shell=True, check=True, cwd=dst_path)
