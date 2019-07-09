@@ -117,7 +117,7 @@ def prompt_bool(
     yes_choices: Optional[List[str]] = None,
     no_choices: Optional[List[str]] = None,
 ) -> Optional[bool]:
-    # Backwards compatibility. Remove for version 3.0
+    # TODO: Backwards compatibility. Remove for version 3.0
     if yes_choices:
         yes = yes_choices[0]
     if no_choices:
@@ -176,14 +176,14 @@ DEFAULT_ENV_OPTIONS: AnyByStrDict = {
 
 class Renderer:
     def __init__(
-        self, env: SandboxedEnvironment, src_path: str, data: AnyByStrDict
+        self, env: SandboxedEnvironment, src_path: Path, data: AnyByStrDict
     ) -> None:
         self.env = env
         self.src_path = src_path
         self.data = data
 
     def __call__(self, fullpath: StrOrPath) -> str:
-        relpath = str(fullpath).replace(self.src_path, "", 1).lstrip(os.path.sep)
+        relpath = str(fullpath).replace(str(self.src_path), "", 1).lstrip(os.path.sep)
         tmpl = self.env.get_template(relpath)
         return tmpl.render(**self.data)
 
@@ -201,11 +201,10 @@ def get_jinja_renderer(
     """Returns a function that can render a Jinja template.
     """
     # Jinja <= 2.10 does not work with `pathlib.Path`s
-    _src_path: str = str(src_path)
     _envops = DEFAULT_ENV_OPTIONS.copy()
     _envops.update(envops or {})
 
-    paths = [_src_path] + [str(p) for p in extra_paths or []]
+    paths = [src_path] + [Path(p) for p in extra_paths or []]
     _envops.setdefault("loader", FileSystemLoader(paths))  # type: ignore
 
     # We want to minimize the risk of hidden malware in the templates
@@ -213,7 +212,7 @@ def get_jinja_renderer(
     # Of couse we still have the post-copy tasks to worry about, but at least
     # they are more visible to the final user.
     env = SandboxedEnvironment(**_envops)
-    return Renderer(env=env, src_path=_src_path, data=data)
+    return Renderer(env=env, src_path=src_path, data=data)
 
 
 def normalize_str(text: StrOrPath, form: str = "NFD") -> str:
