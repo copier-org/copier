@@ -35,7 +35,6 @@ DEFAULT_EXCLUDE: Tuple[str, ...] = (
     "copier.yml",
     "copier.toml",
     "copier.json",
-    "voodoo.json",
     "~*",
     "*.py[co]",
     "__pycache__",

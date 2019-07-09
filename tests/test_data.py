@@ -8,7 +8,6 @@ from ..copier.user_data import (
     load_yaml_data,
     load_toml_data,
     load_json_data,
-    load_old_json_data,
     load_config_data,
 )
 
@@ -24,13 +23,7 @@ def test_config_data_is_loaded_from_file():
 
 @pytest.mark.parametrize(
     "template",
-    [
-        "tests/demo_toml",
-        "tests/demo_yaml",
-        "tests/demo_yml",
-        "tests/demo_json",
-        "tests/demo_json_old",
-    ],
+    ["tests/demo_toml", "tests/demo_yaml", "tests/demo_yml", "tests/demo_json"],
 )
 def test_read_data(dst, template):
     copier.copy(template, dst, force=True)
@@ -59,11 +52,6 @@ def test_invalid_toml(capsys):
     out, err = capsys.readouterr()
     assert re.search(r"INVALID.*tests/demo_invalid/copier\.json", out)
 
-    # TODO: Remove on version 3.0
-    assert {} == load_old_json_data("tests/demo_invalid", _warning=False)
-    out, err = capsys.readouterr()
-    assert re.search(r"INVALID.*tests/demo_invalid/voodoo\.json", out)
-
     assert {} == load_config_data("tests/demo_invalid", _warning=False)
     assert re.search(r"INVALID", out)
 
@@ -72,14 +60,3 @@ def test_invalid_quiet(capsys):
     assert {} == load_config_data("tests/demo_invalid", quiet=True)
     out, err = capsys.readouterr()
     assert out == ""
-
-    assert {} == load_old_json_data("tests/demo_invalid", quiet=True)
-    out, err = capsys.readouterr()
-    assert out == ""
-
-
-def test_deprecated_msg(capsys):
-    # TODO: Remove on version 3.0
-    load_old_json_data("tests/demo_json_old")
-    out, err = capsys.readouterr()
-    assert re.search(r"`voodoo\.json` is deprecated", out)

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from .tools import HLINE, INDENT, STYLE_WARNING, printf, printf_block, prompt
+from .tools import HLINE, INDENT, printf_block, prompt
 from .types import AnyByStrDict, StrOrPath
 
 __all__ = ("load_config_data", "query_user_data")
@@ -44,35 +44,7 @@ def load_json_data(
 ) -> AnyByStrDict:
     json_path = Path(src_path) / "copier.json"
     if not json_path.exists():
-        return load_old_json_data(src_path, quiet=quiet, _warning=_warning)
-
-    import json
-
-    json_src = json_path.read_text()
-    try:
-        return json.loads(json_src)
-    except ValueError as e:
-        printf_block(e, "INVALID", msg=str(json_path), quiet=quiet)
         return {}
-
-
-def load_old_json_data(
-    src_path: StrOrPath, quiet: bool = False, _warning: bool = True
-) -> AnyByStrDict:
-    # TODO: Remove on version 3.0
-    json_path = Path(src_path) / "voodoo.json"
-    if not json_path.exists():
-        return {}
-
-    if _warning and not quiet:
-        print("")
-        printf(
-            "WARNING",
-            msg="`voodoo.json` is deprecated. "
-            + "Replace it with a `copier.yaml`, `copier.toml`, or `copier.json`.",
-            style=STYLE_WARNING,
-            indent=10,
-        )
 
     import json
 
