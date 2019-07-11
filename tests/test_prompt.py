@@ -79,7 +79,6 @@ def test_prompt_error_message(stdin, capsys):
     stdin.append("yes\n")
     response = prompt(question, validator=validator)
     out, _ = capsys.readouterr()
-    print(out)
     assert response is True
     assert out == f"{question} {error}\n{question} "
 

@@ -14,5 +14,4 @@ def test_render(dst):
     sourcepath = PROJECT_TEMPLATE / "pyproject.toml.tmpl"
     result = render(sourcepath)
     expected = Path("./tests/pyproject.toml.ref").read_text()
-    print(result)
     assert result == expected
