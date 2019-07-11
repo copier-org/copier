@@ -1,6 +1,5 @@
 from os.path import exists, join
 
-import pytest
 import shutil
 
 from ..copier import vcs
@@ -46,4 +45,4 @@ def test_clone():
     tmp = vcs.clone("https://github.com/jpscaletti/siht.git")
     assert tmp
     assert exists(join(tmp, "setup.py"))
-    shutil.rmtree(str(tmp))
+    shutil.rmtree(tmp)

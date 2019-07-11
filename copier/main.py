@@ -157,12 +157,11 @@ def copy(
     except Exception:
         if cleanup_on_error:
             print("Something went wrong. Removing destination folder.")
-            # Python3.5 shutil methods doesn't wok with `pathlib.Path`
-            shutil.rmtree(str(dst_path), ignore_errors=True)
+            shutil.rmtree(dst_path, ignore_errors=True)
         raise
     finally:
         if repo:
-            shutil.rmtree(str(src_path))
+            shutil.rmtree(src_path)
 
 
 RE_TMPL = re.compile(r"\.tmpl$", re.IGNORECASE)
