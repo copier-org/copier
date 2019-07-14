@@ -1,3 +1,4 @@
+from copy import deepcopy
 import datetime
 import filecmp
 import os
@@ -25,6 +26,7 @@ from .tools import (
 )
 from .types import AnyByStrDict, CheckPathFunc, OptStrOrPathSeq, OptStrSeq, StrOrPath
 from .user_data import load_config_data, query_user_data
+from .conf import make_config
 
 __all__ = ("copy", "copy_local")
 
@@ -135,25 +137,11 @@ def copy(
     _data = DEFAULT_DATA.copy()
     _data.update(data or {})
 
-    if extra_paths is None:
-        extra_paths = []
+    _vars = deepcopy(vars())  # TODO: move to conf?
+    conf = make_config(**_vars)
 
     try:
-        copy_local(
-            src_path,
-            dst_path,
-            data=_data,
-            extra_paths=extra_paths,
-            exclude=exclude,
-            include=include,
-            skip_if_exists=skip_if_exists,
-            tasks=tasks,
-            envops=envops,
-            pretend=pretend,
-            force=force,
-            skip=skip,
-            quiet=quiet,
-        )
+        copy_local(**conf.dict())
     except Exception:
         if cleanup_on_error:
             print("Something went wrong. Removing destination folder.")
@@ -192,9 +180,10 @@ def resolve_paths(
 
 
 def copy_local(
-    src_path: StrOrPath,
-    dst_path: StrOrPath,
+    src_path: Path,
+    dst_path: Path,
     data: AnyByStrDict,
+    flags: Dict[str, bool],
     *,
     extra_paths: OptStrOrPathSeq = None,
     exclude: OptStrOrPathSeq = None,
@@ -202,17 +191,17 @@ def copy_local(
     skip_if_exists: OptStrOrPathSeq = None,
     tasks: OptStrSeq = None,
     envops: Optional[AnyByStrDict] = None,
-    **flags: bool,
 ) -> None:
     src_path, dst_path, extra_paths = resolve_paths(src_path, dst_path, extra_paths)
     config_data = load_config_data(src_path, quiet=flags["quiet"])
-    user_exclude: List[str] = config_data.pop("_exclude", None)
-    if exclude is None:
-        exclude = user_exclude or DEFAULT_EXCLUDE
 
-    user_include: List[str] = config_data.pop("_include", None)
-    if include is None:
-        include = user_include or DEFAULT_INCLUDE
+    # user_exclude: List[str] = config_data.pop("_exclude", None)
+    # if exclude is None:
+    #     exclude = user_exclude or DEFAULT_EXCLUDE
+
+    # user_include: List[str] = config_data.pop("_include", None)
+    # if include is None:
+    #     include = user_include or DEFAULT_INCLUDE
 
     user_skip_if_exists: List[str] = config_data.pop("_skip_if_exists", None)
     if skip_if_exists is None:

@@ -5,6 +5,7 @@ import unicodedata
 from fnmatch import fnmatch
 from functools import reduce
 from pathlib import Path
+
 from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
 
 import colorama  # type: ignore
