@@ -208,16 +208,16 @@ def copy_local(
     #     include = user_include or DEFAULT_INCLUDE
 
     user_skip_if_exists: List[str] = config_data.pop("_skip_if_exists", None)
-    if skip_if_exists is None:
-        skip_if_exists = user_skip_if_exists or []
+    # if skip_if_exists is None:
+    #     skip_if_exists = user_skip_if_exists or []
 
     user_tasks: List[str] = config_data.pop("_tasks", None)
-    if tasks is None:
-        tasks = user_tasks or []
+    # if tasks is None:
+    #     tasks = user_tasks or []
 
     user_extra_paths: List[str] = config_data.pop("_extra_paths", None)
-    if not extra_paths:
-        extra_paths = [str(resolve_source_path(p)) for p in user_extra_paths or []]
+    # if not extra_paths:
+    #     extra_paths = [str(resolve_source_path(p)) for p in user_extra_paths or []]
 
     user_data = config_data if flags["force"] else query_user_data(config_data)
     data.update(user_data)
