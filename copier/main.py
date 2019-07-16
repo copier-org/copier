@@ -196,35 +196,11 @@ def copy_local(
     tasks: OptStrSeq,
     envops: Optional[AnyByStrDict],
 ) -> None:
-    src_path, dst_path, extra_paths = resolve_paths(src_path, dst_path, extra_paths)
-    config_data = load_config_data(src_path, quiet=flags["quiet"])
 
-    # user_exclude: List[str] = config_data.pop("_exclude", None)
-    # if exclude is None:
-    #     exclude = user_exclude or DEFAULT_EXCLUDE
-
-    # user_include: List[str] = config_data.pop("_include", None)
-    # if include is None:
-    #     include = user_include or DEFAULT_INCLUDE
-
-    user_skip_if_exists: List[str] = config_data.pop("_skip_if_exists", None)
-    # if skip_if_exists is None:
-    #     skip_if_exists = user_skip_if_exists or []
-
-    user_tasks: List[str] = config_data.pop("_tasks", None)
-    # if tasks is None:
-    #     tasks = user_tasks or []
-
-    user_extra_paths: List[str] = config_data.pop("_extra_paths", None)
-    # if not extra_paths:
-    #     extra_paths = [str(resolve_source_path(p)) for p in user_extra_paths or []]
-
-    user_data = config_data if flags["force"] else query_user_data(config_data)
-    data.update(user_data)
-    data.setdefault("folder_name", dst_path.name)
     engine = get_jinja_renderer(src_path, data, extra_paths, envops)
 
     skip_if_exists = [engine.string(pattern) for pattern in skip_if_exists]
+    Path("_skip_if_exists.log").write_text(str(skip_if_exists))
     must_filter, must_skip = get_name_filters(exclude, include, skip_if_exists)
 
     if not flags["quiet"]:

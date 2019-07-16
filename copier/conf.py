@@ -6,7 +6,7 @@ from os import urandom
 from pydantic import BaseModel, validator
 
 from .types import AnyByStrDict, CheckPathFunc, OptStrOrPathSeq, OptStrSeq, StrOrPath
-from .user_data import load_config_data
+from .user_data import load_config_data, query_user_data
 
 # Default list of files in the template to exclude from the rendered project
 DEFAULT_EXCLUDE = (
@@ -91,12 +91,12 @@ class ConfigData(BaseModel):
     # def resolve_multiple_paths(cls, v):
     #     return [resolve_path(p) for p in v]
 
-    # @validator("src_path", "extra_paths", pre=True)
-    # def ensure_dir_exist(cls, v):
-    #     # if isinstance(v, (list, set, tuple)):
-    #     #     [check_existing_dir(p) for p in v or []]
-    #     # check_existing_dir(v)
-    #     return v
+    @validator("src_path", "extra_paths", pre=True)
+    def ensure_dir_exist(cls, v):
+        if isinstance(v, (list, set, tuple)):
+            [check_existing_dir(p) for p in v or []]
+        check_existing_dir(v)
+        return v
 
     # HACK
     @validator("dst_path", pre=True)
@@ -108,7 +108,7 @@ class ConfigData(BaseModel):
     # configuration
     class Config:
         allow_mutation = False
-        anystr_strip_whitespace = True
+        # anystr_strip_whitespace = True
 
 
 def make_config(
@@ -145,6 +145,8 @@ def make_config(
     _locals["flags"] = _default_flags
 
     config_data = load_config_data(src_path, quiet=True)
+    query_data = {k: v for k, v in config_data.items() if not k.startswith("_")}
+
     config_data["exclude"] = config_data.pop("_exclude", None)
     config_data["include"] = config_data.pop("_include", None)
     config_data["tasks"] = config_data.pop("_tasks", None)
@@ -155,15 +157,27 @@ def make_config(
     ]
 
     config_data["skip_if_exists"] = skip_if_exists or [
-        resolve_path(p) for p in config_data.pop("_skip_if_exists", [])
+        p for p in config_data.pop("_skip_if_exists", [])
     ]
-    # config_data["skip_if_exists"] = [resolve_path(p) for p in [skip_if_exists]]
+
     config_data = {k: v for k, v in config_data.items() if v is not None}
+
+    user_data = query_data if force else query_user_data(query_data)
+
+    x = DEFAULT_DATA.copy()
+    user_data.setdefault("folder_name", Path(dst_path).name)
+    x.update(user_data)
+    if data:
+        x.update(data)
+
+    config_data["data"] = x
 
     # config_data = {k[1:]: v for k, v in config_data.items() if k.startswith("_")}
     _locals.update(config_data)
 
     Path("_locals.log").write_text(str(_locals))
+    Path("_conf.log").write_text(str(ConfigData(**_locals)))
+
     return ConfigData(**_locals)
     # try:
     #     return ConfigData(**_locals)
