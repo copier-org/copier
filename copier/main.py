@@ -26,7 +26,7 @@ from .tools import (
 )
 from .types import AnyByStrDict, CheckPathFunc, OptStrOrPathSeq, OptStrSeq, StrOrPath
 from .user_data import load_config_data, query_user_data
-from .conf import make_config
+from .conf import make_config, Flags
 
 __all__ = ("copy", "copy_local")
 
@@ -138,10 +138,10 @@ def copy(
     _data.update(data or {})
 
     _vars = deepcopy(vars())  # TODO: move to conf?
-    conf = make_config(**_vars)
+    conf, flags = make_config(**_vars)
 
     try:
-        copy_local(**conf.dict())
+        copy_local(flags=flags, **conf.dict())
     except Exception:
         if cleanup_on_error:
             print("Something went wrong. Removing destination folder.")
@@ -183,12 +183,7 @@ def copy_local(
     src_path: Path,
     dst_path: Path,
     data: AnyByStrDict,
-    flags: Dict[str, bool],
-    pretend: bool,
-    force: bool,
-    skip: bool,
-    quiet: bool,
-    cleanup_on_error: bool,
+    flags: Flags,
     extra_paths: OptStrOrPathSeq,
     exclude: OptStrOrPathSeq,
     include: OptStrOrPathSeq,
@@ -200,10 +195,10 @@ def copy_local(
     engine = get_jinja_renderer(src_path, data, extra_paths, envops)
 
     skip_if_exists = [engine.string(pattern) for pattern in skip_if_exists]
-    Path("_skip_if_exists.log").write_text(str(skip_if_exists))
+
     must_filter, must_skip = get_name_filters(exclude, include, skip_if_exists)
 
-    if not flags["quiet"]:
+    if not flags.quiet:
         print("")  # padding space
 
     folder: StrOrPath
@@ -225,12 +220,12 @@ def copy_local(
         for source_path, rel_path in source_paths:
             render_file(dst_path, rel_path, source_path, engine, must_skip, flags)
 
-    if not flags["quiet"]:
+    if not flags.quiet:
         print("")  # padding space
 
     if tasks:
         run_tasks(dst_path, engine, tasks)
-        if not flags["quiet"]:
+        if not flags.quiet:
             print("")  # padding space
 
 
@@ -253,23 +248,23 @@ def get_source_paths(
     return source_paths
 
 
-def render_folder(dst_path: Path, rel_folder: Path, flags: Dict[str, bool]) -> None:
+def render_folder(dst_path: Path, rel_folder: Path, flags: Flags) -> None:
     final_path = dst_path / rel_folder
     display_path = str(rel_folder) + os.path.sep
 
     if str(rel_folder) == ".":
-        if not flags["pretend"]:
+        if not flags.pretend:
             make_folder(final_path)
         return
 
     if final_path.exists():
-        if not flags["quiet"]:
+        if not flags.quiet:
             printf("identical", display_path, style=STYLE_IGNORE)
         return
 
-    if not flags["pretend"]:
+    if not flags.pretend:
         make_folder(final_path)
-    if not flags["quiet"]:
+    if not flags.quiet:
         printf("create", display_path, style=STYLE_OK)
 
 
@@ -279,7 +274,7 @@ def render_file(
     source_path: Path,
     engine: Renderer,
     must_skip: CheckPathFunc,
-    flags: Dict[str, bool],
+    flags: Flags,
 ) -> None:
     """Process or copy a file of the skeleton.
     """
@@ -294,27 +289,27 @@ def render_file(
 
     if final_path.exists():
         if file_is_identical(source_path, final_path, content):
-            if not flags["quiet"]:
+            if not flags.quiet:
                 printf("identical", display_path, style=STYLE_IGNORE)
             return
 
         if must_skip(rel_path):
-            if not flags["quiet"]:
+            if not flags.quiet:
                 printf("skip", display_path, style=STYLE_WARNING)
             return
 
         if overwrite_file(display_path, source_path, final_path, flags):
-            if not flags["quiet"]:
+            if not flags.quiet:
                 printf("force", display_path, style=STYLE_WARNING)
         else:
-            if not flags["quiet"]:
+            if not flags.quiet:
                 printf("skip", display_path, style=STYLE_WARNING)
             return
     else:
-        if not flags["quiet"]:
+        if not flags.quiet:
             printf("create", display_path, style=STYLE_OK)
 
-    if flags["pretend"]:
+    if flags.pretend:
         return
 
     if content is None:
@@ -340,13 +335,13 @@ def file_has_this_content(path: Path, content: str) -> bool:
 
 
 def overwrite_file(
-    display_path: StrOrPath, source_path: Path, final_path: Path, flags: Dict[str, bool]
+    display_path: StrOrPath, source_path: Path, final_path: Path, flags: Flags
 ) -> Optional[bool]:
-    if not flags["quiet"]:
+    if not flags.quiet:
         printf("conflict", str(display_path), style=STYLE_DANGER)
-    if flags["force"]:
+    if flags.force:
         return True
-    if flags["skip"]:
+    if flags.skip:
         return False
 
     msg = f" Overwrite {final_path}?"  # pragma:no cover

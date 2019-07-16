@@ -31,7 +31,6 @@ DEFAULT_DATA = {
     "make_secret": lambda: sha512(urandom(48)).hexdigest(),
 }
 
-DEFAULT_FLAGS = {"pretend": False, "quiet": False, "force": False, "skip": False}
 
 # TODO: Does raising ValueError still makes sense?
 def check_existing_dir(path) -> None:
@@ -42,14 +41,8 @@ def check_existing_dir(path) -> None:
         raise ValueError("The project template must be a folder")
 
 
-# TODO: Does raising ValueError still makes sense?
-# TODO: Rename to resolve_path
 def resolve_path(path) -> Path:
     return Path(path).expanduser().resolve()
-    # try:
-    #     return Path(path).expanduser().resolve()
-    # except FileNotFoundError:  # TODO: Is this ever raised?
-    #     raise
 
 
 class Flags(BaseModel):
@@ -74,13 +67,6 @@ class ConfigData(BaseModel):
     skip_if_exists: OptStrOrPathSeq = None
     tasks: OptStrSeq = None
     envops: Optional[AnyByStrDict] = None
-    flags: Dict = DEFAULT_FLAGS
-    # new flags
-    pretend: bool = False
-    quiet: bool = False
-    force: bool = False
-    skip: bool = False
-    cleanup_on_error: bool = True
 
     # sanitizers
     @validator("src_path", "dst_path", pre=True)
@@ -133,16 +119,13 @@ def make_config(
     _locals = locals().copy()
     _locals = {k: v for k, v in _locals.items() if v is not None}
 
-    _local_flags = {
-        "pretend": pretend,
-        "quiet": quiet,
-        "force": force,
-        "skip": skip,
-        "cleanup_on_error": cleanup_on_error,
-    }
-    _default_flags = DEFAULT_FLAGS.copy()
-    _default_flags.update(_local_flags)
-    _locals["flags"] = _default_flags
+    flags = Flags(
+        pretend=pretend,
+        quiet=quiet,
+        force=force,
+        skip=skip,
+        cleanup_on_error=cleanup_on_error,
+    )
 
     config_data = load_config_data(src_path, quiet=True)
     query_data = {k: v for k, v in config_data.items() if not k.startswith("_")}
@@ -175,12 +158,4 @@ def make_config(
     # config_data = {k[1:]: v for k, v in config_data.items() if k.startswith("_")}
     _locals.update(config_data)
 
-    Path("_locals.log").write_text(str(_locals))
-    Path("_conf.log").write_text(str(ConfigData(**_locals)))
-
-    return ConfigData(**_locals)
-    # try:
-    #     return ConfigData(**_locals)
-    # except Exception as e:
-    #     Path("exception.log").write_text(str(e))
-    #     Path("_locals.log").write_text(str(_locals))
+    return ConfigData(**_locals), flags
