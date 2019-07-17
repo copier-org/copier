@@ -129,14 +129,6 @@ def make_config(
     _locals = locals().copy()
     _locals = {k: v for k, v in _locals.items() if v is not None}
 
-    flags = Flags(
-        pretend=pretend,
-        quiet=quiet,
-        force=force,
-        skip=skip,
-        cleanup_on_error=cleanup_on_error,
-    )
-
     file_data = load_config_data(src_path, quiet=True)
     config_data, query_data = filter_config(file_data)
 
@@ -150,14 +142,18 @@ def make_config(
 
     config_data = {k: v for k, v in config_data.items() if v is not None}
 
-    user_data = query_data if force else query_user_data(query_data)
+    if not force:
+        query_data = query_user_data(query_data)
 
-    x = DEFAULT_DATA.copy()
-    x.update(user_data)
-    if data:
-        x.update(data)
+    config_data["data"] = {**DEFAULT_DATA.copy(), **query_data, **(data or {})}
 
-    config_data["data"] = x
+    flags = Flags(
+        pretend=pretend,
+        quiet=quiet,
+        force=force,
+        skip=skip,
+        cleanup_on_error=cleanup_on_error,
+    )
 
     _locals.update(config_data)
     return ConfigData(**_locals), flags
