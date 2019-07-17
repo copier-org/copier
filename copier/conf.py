@@ -82,12 +82,12 @@ class ConfigData(BaseModel):
         check_existing_dir(v)
         return v
 
-    # HACK
-    @validator("dst_path", pre=True)
-    def make_folder_name(cls, v):
-        cls.folder_name = v.name  # TODO: Add folder_name to data?
-        # cls.data["folder_name"] = v.name
-        return v
+    # def __post_init__(self):
+    #     print(self.birth)
+    #     # > {'year': 1995, 'month': 3, 'day': 2}
+
+    def __post_init_post_parse__(self):
+        self.data["folder_name"] = self.src_path.name
 
     # configuration
     class Config:
@@ -153,7 +153,6 @@ def make_config(
     user_data = query_data if force else query_user_data(query_data)
 
     x = DEFAULT_DATA.copy()
-    user_data.setdefault("folder_name", Path(dst_path).name)
     x.update(user_data)
     if data:
         x.update(data)
