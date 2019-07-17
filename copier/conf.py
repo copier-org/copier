@@ -95,6 +95,18 @@ class ConfigData(BaseModel):
         anystr_strip_whitespace = True
 
 
+def filter_config(data: AnyByStrDict) -> Tuple[AnyByStrDict, AnyByStrDict]:
+    """Separates config and query data."""
+    conf_data = {}
+    query_data = {}
+    for k, v in data.items():
+        if k.startswith("_"):
+            conf_data[k[1:]] = v
+        else:
+            query_data[k] = v
+    return conf_data, query_data
+
+
 def make_config(
     src_path: str,
     dst_path: str,
@@ -125,20 +137,15 @@ def make_config(
         cleanup_on_error=cleanup_on_error,
     )
 
-    config_data = load_config_data(src_path, quiet=True)
-    query_data = {k: v for k, v in config_data.items() if not k.startswith("_")}
+    file_data = load_config_data(src_path, quiet=True)
+    config_data, query_data = filter_config(file_data)
 
-    config_data["exclude"] = config_data.pop("_exclude", None)
-    config_data["include"] = config_data.pop("_include", None)
-    config_data["tasks"] = config_data.pop("_tasks", None)
-
-    config_data["extra_paths"] = config_data.pop("_extra_paths", None) or extra_paths
     config_data["extra_paths"] = [
-        resolve_path(p) for p in config_data["extra_paths"] or []
+        resolve_path(p)
+        for p in config_data.get("extra_paths", None) or extra_paths or []
     ]
-
     config_data["skip_if_exists"] = skip_if_exists or [
-        p for p in config_data.pop("_skip_if_exists", [])
+        p for p in config_data.get("_skip_if_exists", [])
     ]
 
     config_data = {k: v for k, v in config_data.items() if v is not None}
@@ -153,7 +160,5 @@ def make_config(
 
     config_data["data"] = x
 
-    # config_data = {k[1:]: v for k, v in config_data.items() if k.startswith("_")}
     _locals.update(config_data)
-
     return ConfigData(**_locals), flags
