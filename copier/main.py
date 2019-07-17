@@ -155,41 +155,17 @@ def copy(
 RE_TMPL = re.compile(r"\.tmpl$", re.IGNORECASE)
 
 
-def resolve_source_path(path: StrOrPath) -> Path:
-    try:
-        path = Path(path).expanduser().resolve()
-    except FileNotFoundError:
-        raise ValueError("Project template not found")
-
-    if not path.exists():
-        raise ValueError("Project template not found")
-
-    if not path.is_dir():
-        raise ValueError("The project template must be a folder")
-
-    return path
-
-
-def resolve_paths(
-    src_path: StrOrPath, dst_path: StrOrPath, extra_paths: OptStrOrPathSeq
-) -> Tuple[Path, Path, OptStrOrPathSeq]:
-    src_path = resolve_source_path(src_path)
-    dst_path = Path(dst_path).resolve()
-    extra_paths = [str(resolve_source_path(p)) for p in extra_paths or []]
-    return src_path, dst_path, extra_paths
-
-
 def copy_local(
     src_path: Path,
     dst_path: Path,
     data: AnyByStrDict,
-    flags: Flags,
     extra_paths: OptStrOrPathSeq,
     exclude: OptStrOrPathSeq,
     include: OptStrOrPathSeq,
     skip_if_exists: OptStrOrPathSeq,
     tasks: OptStrSeq,
     envops: Optional[AnyByStrDict],
+    flags: Flags,
 ) -> None:
 
     engine = get_jinja_renderer(src_path, data, extra_paths, envops)
