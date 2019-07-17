@@ -35,6 +35,8 @@ STYLE_DANGER: List[int] = [Fore.RED, Style.BRIGHT]
 INDENT = " " * 2
 HLINE = "-" * 42
 
+NO_VALUE: object = object()
+
 
 def printf(
     action: str, msg: str = "", style: Optional[List[int]] = None, indent: int = 10
@@ -64,9 +66,6 @@ def printf_block(
         print(HLINE)
 
 
-no_value: object = object()
-
-
 def required(value: T, **kwargs: Any) -> T:
     if not value:
         raise ValueError()
@@ -75,7 +74,7 @@ def required(value: T, **kwargs: Any) -> T:
 
 def prompt(
     question: str,
-    default: Optional[Any] = no_value,
+    default: Optional[Any] = NO_VALUE,
     default_show: Optional[Any] = None,
     validator: Callable = required,
     **kwargs: AnyByStrDict,
@@ -90,7 +89,7 @@ def prompt(
     """
     if default_show:
         question += f" [{default_show}] "
-    elif default and default is not no_value:
+    elif default and default is not NO_VALUE:
         question += f" [{default}] "
     else:
         question += " "
@@ -100,7 +99,7 @@ def prompt(
         if not resp:
             if default is None:
                 return None
-            if default is not no_value:
+            if default is not NO_VALUE:
                 resp = default
 
         try:
@@ -137,7 +136,7 @@ def prompt_bool(
             raise ValueError(please_answer)
 
     if default is None:
-        default = no_value
+        default = NO_VALUE
         default_show = f"{yes}/{no}"
     elif default:
         default = yes
@@ -161,7 +160,7 @@ def make_folder(folder: Path) -> None:
 
 
 def copy_file(src: Path, dst: Path, symlinks: bool = True) -> None:
-    shutil.copy2(str(src), str(dst), follow_symlinks=symlinks)
+    shutil.copy2(src, dst, follow_symlinks=symlinks)
 
 
 # The default env options for jinja2

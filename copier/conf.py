@@ -9,7 +9,7 @@ from .types import AnyByStrDict, CheckPathFunc, OptStrOrPathSeq, OptStrSeq, StrO
 from .user_data import load_config_data, query_user_data
 
 # Default list of files in the template to exclude from the rendered project
-DEFAULT_EXCLUDE = (
+DEFAULT_EXCLUDE: Tuple[str, ...] = (
     "copier.yaml",
     "copier.yml",
     "copier.toml",
@@ -24,9 +24,7 @@ DEFAULT_EXCLUDE = (
     ".svn",
 )
 
-DEFAULT_INCLUDE = ()
-
-DEFAULT_DATA = {
+DEFAULT_DATA: AnyByStrDict = {
     "now": datetime.datetime.utcnow,
     "make_secret": lambda: sha512(urandom(48)).hexdigest(),
 }
@@ -63,7 +61,7 @@ class ConfigData(BaseModel):
     data: AnyByStrDict = DEFAULT_DATA
     extra_paths: Sequence[Path] = []
     exclude: OptStrOrPathSeq = DEFAULT_EXCLUDE
-    include: OptStrOrPathSeq = DEFAULT_INCLUDE
+    include: OptStrOrPathSeq = ()
     skip_if_exists: OptStrOrPathSeq = None
     tasks: OptStrSeq = None
     envops: Optional[AnyByStrDict] = None
@@ -94,7 +92,7 @@ class ConfigData(BaseModel):
     # configuration
     class Config:
         allow_mutation = False
-        # anystr_strip_whitespace = True
+        anystr_strip_whitespace = True
 
 
 def make_config(

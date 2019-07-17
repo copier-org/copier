@@ -1,12 +1,11 @@
 from copy import deepcopy
-import datetime
+
 import filecmp
 import os
 import re
 import shutil
 import subprocess
-from hashlib import sha512
-from os import urandom
+
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
@@ -25,33 +24,11 @@ from .tools import (
     prompt_bool,
 )
 from .types import AnyByStrDict, CheckPathFunc, OptStrOrPathSeq, OptStrSeq, StrOrPath
-from .user_data import load_config_data, query_user_data
 from .conf import make_config, Flags
 
 __all__ = ("copy", "copy_local")
 
-
-# Files of the template to exclude from the final project
-DEFAULT_EXCLUDE: Tuple[str, ...] = (
-    "copier.yaml",
-    "copier.yml",
-    "copier.toml",
-    "copier.json",
-    "~*",
-    "*.py[co]",
-    "__pycache__",
-    "__pycache__/*",
-    ".git",
-    ".git/*",
-    ".DS_Store",
-    ".svn",
-)
-
-DEFAULT_INCLUDE: Tuple[str, ...] = ()
-DEFAULT_DATA: AnyByStrDict = {
-    "now": datetime.datetime.utcnow,
-    "make_secret": lambda: sha512(urandom(48)).hexdigest(),
-}
+RE_TMPL = re.compile(r"\.tmpl$", re.IGNORECASE)
 
 
 def copy(
@@ -134,11 +111,7 @@ def copy(
     if repo:
         src_path = vcs.clone(repo)
 
-    _data = DEFAULT_DATA.copy()
-    _data.update(data or {})
-
-    _vars = deepcopy(vars())  # TODO: move to conf?
-    conf, flags = make_config(**_vars)
+    conf, flags = make_config(**locals())
 
     try:
         copy_local(flags=flags, **conf.dict())
@@ -150,9 +123,6 @@ def copy(
     finally:
         if repo:
             shutil.rmtree(src_path)
-
-
-RE_TMPL = re.compile(r"\.tmpl$", re.IGNORECASE)
 
 
 def copy_local(
@@ -171,7 +141,6 @@ def copy_local(
     engine = get_jinja_renderer(src_path, data, extra_paths, envops)
 
     skip_if_exists = [engine.string(pattern) for pattern in skip_if_exists]
-
     must_filter, must_skip = get_name_filters(exclude, include, skip_if_exists)
 
     if not flags.quiet:
@@ -179,7 +148,7 @@ def copy_local(
 
     folder: StrOrPath
     rel_folder: StrOrPath
-    for folder, _, files in os.walk(str(src_path)):
+    for folder, _, files in os.walk(src_path):
         rel_folder = str(folder).replace(str(src_path), "", 1).lstrip(os.path.sep)
         rel_folder = engine.string(rel_folder)
         rel_folder = str(rel_folder).replace("." + os.path.sep, ".", 1)
@@ -226,9 +195,9 @@ def get_source_paths(
 
 def render_folder(dst_path: Path, rel_folder: Path, flags: Flags) -> None:
     final_path = dst_path / rel_folder
-    display_path = str(rel_folder) + os.path.sep
+    display_path = f"{rel_folder}{os.path.sep}"
 
-    if str(rel_folder) == ".":
+    if rel_folder == Path("."):
         if not flags.pretend:
             make_folder(final_path)
         return
@@ -303,7 +272,7 @@ def file_is_identical(
 
 
 def files_are_identical(path1: Path, path2: Path) -> bool:
-    return filecmp.cmp(str(path1), str(path2), shallow=False)
+    return filecmp.cmp(path1, path2, shallow=False)
 
 
 def file_has_this_content(path: Path, content: str) -> bool:
@@ -325,7 +294,6 @@ def overwrite_file(
 
 
 def run_tasks(dst_path: StrOrPath, engine: Renderer, tasks) -> None:
-    dst_path = str(dst_path)
     for i, task in enumerate(tasks):
         task = engine.string(task)
         printf(f" > Running task {i + 1} of {len(tasks)}", task, style=STYLE_OK)
