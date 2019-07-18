@@ -62,7 +62,7 @@ class ConfigData(BaseModel):
     extra_paths: Sequence[Path] = []
     exclude: OptStrOrPathSeq = DEFAULT_EXCLUDE
     include: OptStrOrPathSeq = ()
-    skip_if_exists: OptStrOrPathSeq = None
+    skip_if_exists: OptStrOrPathSeq = []
     tasks: OptStrSeq = None
     envops: Optional[AnyByStrDict] = None
 
@@ -114,7 +114,7 @@ def make_config(
     quiet: bool = False,
     cleanup_on_error: bool = True,
     **kwargs
-) -> ConfigData:
+) -> Tuple[ConfigData, Flags]:
     # https://stackoverflow.com/questions/10724495/getting-all-arguments-and-values-passed-to-a-function
     _locals = locals().copy()
     _locals = {k: v for k, v in _locals.items() if v is not None}
@@ -122,29 +122,11 @@ def make_config(
     file_data = load_config_data(src_path, quiet=True)
     config_data, query_data = filter_config(file_data)
 
-    config_data["extra_paths"] = (
-        config_data.get("extra_paths", None) or extra_paths or []
-    )
-    config_data["skip_if_exists"] = skip_if_exists or [
-        p for p in config_data.get("_skip_if_exists", [])
-    ]
-
-    config_data = {k: v for k, v in config_data.items() if v is not None}
-
     if not force:
         query_data = query_user_data(query_data)
 
     config_data["data"] = {**DEFAULT_DATA.copy(), **query_data, **(data or {})}
 
-    flags = Flags(
-        pretend=pretend,
-        quiet=quiet,
-        force=force,
-        skip=skip,
-        cleanup_on_error=cleanup_on_error,
-    )
+    _locals = {**config_data, **_locals}
 
-    # flags = Flags(**_locals)  # TODO: Try this out.
-    _locals.update(config_data)
-    Path("_locals.log").write_text(str(_locals))
-    return ConfigData(**_locals), flags
+    return ConfigData(**_locals), Flags(**_locals)
