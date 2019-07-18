@@ -67,24 +67,14 @@ class ConfigData(BaseModel):
     envops: Optional[AnyByStrDict] = None
 
     # sanitizers
-    @validator("src_path", "dst_path", pre=True)
+    @validator("src_path", "dst_path", "extra_paths", pre=True)
     def resolve_single_path(cls, v):
         return resolve_path(v)
 
-    # @validator("extra_paths", pre=True)
-    # def resolve_multiple_paths(cls, v):
-    #     return [resolve_path(p) for p in v]
-
     @validator("src_path", "extra_paths", pre=True)
     def ensure_dir_exist(cls, v):
-        if isinstance(v, (list, set, tuple)):
-            [check_existing_dir(p) for p in v or []]
         check_existing_dir(v)
         return v
-
-    # def __post_init__(self):
-    #     print(self.birth)
-    #     # > {'year': 1995, 'month': 3, 'day': 2}
 
     def __post_init_post_parse__(self):
         self.data["folder_name"] = self.src_path.name
@@ -132,10 +122,9 @@ def make_config(
     file_data = load_config_data(src_path, quiet=True)
     config_data, query_data = filter_config(file_data)
 
-    config_data["extra_paths"] = [
-        resolve_path(p)
-        for p in config_data.get("extra_paths", None) or extra_paths or []
-    ]
+    config_data["extra_paths"] = (
+        config_data.get("extra_paths", None) or extra_paths or []
+    )
     config_data["skip_if_exists"] = skip_if_exists or [
         p for p in config_data.get("_skip_if_exists", [])
     ]
@@ -155,5 +144,7 @@ def make_config(
         cleanup_on_error=cleanup_on_error,
     )
 
+    # flags = Flags(**_locals)  # TODO: Try this out.
     _locals.update(config_data)
+    Path("_locals.log").write_text(str(_locals))
     return ConfigData(**_locals), flags
