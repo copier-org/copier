@@ -13,7 +13,15 @@ from colorama import Fore, Style
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
 
-from .types import AnyByStrDict, CheckPathFunc, OptStrOrPathSeq, StrOrPath, T
+from .types import (
+    AnyByStrDict,
+    CheckPathFunc,
+    OptStrOrPathSeq,
+    StrOrPath,
+    IntSeq,
+    StrSeq,
+    T,
+)
 
 _all__: Tuple[str, ...] = (
     "STYLE_OK",
@@ -27,10 +35,10 @@ _all__: Tuple[str, ...] = (
 
 colorama.init()
 
-STYLE_OK: List[int] = [Fore.GREEN, Style.BRIGHT]
-STYLE_WARNING: List[int] = [Fore.YELLOW, Style.BRIGHT]
-STYLE_IGNORE: List[int] = [Fore.CYAN]
-STYLE_DANGER: List[int] = [Fore.RED, Style.BRIGHT]
+STYLE_OK: IntSeq = [Fore.GREEN, Style.BRIGHT]
+STYLE_WARNING: IntSeq = [Fore.YELLOW, Style.BRIGHT]
+STYLE_IGNORE: IntSeq = [Fore.CYAN]
+STYLE_DANGER: IntSeq = [Fore.RED, Style.BRIGHT]
 
 INDENT = " " * 2
 HLINE = "-" * 42
@@ -39,7 +47,7 @@ NO_VALUE: object = object()
 
 
 def printf(
-    action: str, msg: str = "", style: Optional[List[int]] = None, indent: int = 10
+    action: str, msg: str = "", style: Optional[IntSeq] = None, indent: int = 10
 ) -> Optional[str]:
     action = action.rjust(indent, " ")
     if not style:
@@ -54,7 +62,7 @@ def printf_block(
     e: Exception,
     action: str,
     msg: str = "",
-    style: List[int] = STYLE_WARNING,
+    style: IntSeq = STYLE_WARNING,
     indent: int = 0,
     quiet: bool = False,
 ) -> None:
@@ -114,8 +122,8 @@ def prompt_bool(
     default: Optional[Union[bool, str, object]] = False,
     yes: str = "y",
     no: str = "n",
-    yes_choices: Optional[List[str]] = None,
-    no_choices: Optional[List[str]] = None,
+    yes_choices: Optional[StrSeq] = None,
+    no_choices: Optional[StrSeq] = None,
 ) -> Optional[bool]:
     # TODO: Backwards compatibility. Remove for version 3.0
     if yes_choices:

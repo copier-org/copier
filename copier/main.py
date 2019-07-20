@@ -50,11 +50,11 @@ def copy(
     tasks: OptStrSeq = None,
     envops: AnyByStrDict = None,
     extra_paths: OptStrSeq = None,
-    pretend: bool = False,
-    force: bool = False,
-    skip: bool = False,
-    quiet: bool = False,
-    cleanup_on_error: bool = True,
+    pretend: Optional[bool] = False,
+    force: Optional[bool] = False,
+    skip: Optional[bool] = False,
+    quiet: Optional[bool] = False,
+    cleanup_on_error: Optional[bool] = True,
 ) -> None:
     """
     Uses the template in src_path to generate a new project at dst_path.

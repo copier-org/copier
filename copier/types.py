@@ -5,6 +5,7 @@ StrOrPath = Union[str, Path]
 
 AnyByStrDict = Dict[str, Any]
 
+IntSeq = Sequence[int]
 StrSeq = Sequence[str]
 StrOrPathSeq = Sequence[StrOrPath]
 PathSeq = Sequence[Path]

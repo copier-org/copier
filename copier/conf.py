@@ -69,18 +69,18 @@ class ConfigData(BaseModel):
 
     # sanitizers
     @validator("src_path", "dst_path", "extra_paths", pre=True)
-    def resolve_single_path(cls, v):
+    def resolve_single_path(cls, v: Path) -> Path:
         return Path(v).expanduser().resolve()
 
     @validator("src_path", "extra_paths", pre=True)
-    def ensure_dir_exist(cls, v):
+    def ensure_dir_exist(cls, v: Path) -> Path:
         if not v.exists():
             raise ValueError("Project template not found")
         if not v.is_dir():
             raise ValueError("The project template must be a folder")
         return v
 
-    def __post_init_post_parse__(self):
+    def __post_init_post_parse__(self) -> None:
         self.data["folder_name"] = self.src_path.name
 
     # configuration
@@ -112,16 +112,14 @@ def make_config(
     tasks: OptStrSeq = None,
     envops: AnyByStrDict = None,
     extra_paths: OptStrSeq = None,
-    pretend: bool = False,
-    force: bool = False,
-    skip: bool = False,
-    quiet: bool = False,
-    cleanup_on_error: bool = True,
+    pretend: Optional[bool] = False,
+    force: Optional[bool] = False,
+    skip: Optional[bool] = False,
+    quiet: Optional[bool] = False,
+    cleanup_on_error: Optional[bool] = True,
     **kwargs
 ) -> Tuple[ConfigData, Flags]:
-    # https://stackoverflow.com/questions/10724495/getting-all-arguments-and-values-passed-to-a-function
-    _locals = locals().copy()
-    _locals = {k: v for k, v in _locals.items() if v is not None}
+    _locals = {k: v for k, v in locals().items() if v is not None}
 
     file_data = load_config_data(src_path, quiet=True)
     config_data, query_data = filter_config(file_data)
