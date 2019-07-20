@@ -88,11 +88,11 @@ def test_config_exclude(dst):
     def fake_data(*_args, **_kwargs):
         return {"_exclude": ["*.txt"]}
 
-    copier.conf._load_config_data = copier.conf.load_config_data
-    copier.conf.load_config_data = fake_data
+    copier.config.factory._load_config_data = copier.config.factory.load_config_data
+    copier.config.factory.load_config_data = fake_data
     copier.copy(PROJECT_TEMPLATE, dst, data=DATA, quiet=True)
     assert not (dst / "aaaa.txt").exists()
-    copier.conf.load_config_data = copier.conf._load_config_data
+    copier.config.factory.load_config_data = copier.config.factory._load_config_data
 
 
 def test_config_exclude_overridden(dst):
@@ -110,11 +110,11 @@ def test_config_include(dst):
     def fake_data(*_args, **_kwargs):
         return {"_include": [".svn"]}
 
-    copier.conf._load_config_data = copier.conf.load_config_data
-    copier.conf.load_config_data = fake_data
+    copier.config.factory._load_config_data = copier.config.factory.load_config_data
+    copier.config.factory.load_config_data = fake_data
     copier.copy(PROJECT_TEMPLATE, dst, data=DATA, quiet=True)
     assert (dst / ".svn").exists()
-    copier.conf.load_config_data = copier.conf._load_config_data
+    copier.config.factory.load_config_data = copier.config.factory._load_config_data
 
 
 def test_skip_option(dst):

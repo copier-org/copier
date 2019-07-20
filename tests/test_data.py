@@ -4,7 +4,7 @@ import re
 import pytest
 
 from .. import copier
-from ..copier.user_data import (
+from ..copier.config.user_data import (
     load_yaml_data,
     load_toml_data,
     load_json_data,

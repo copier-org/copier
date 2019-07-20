@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from ..copier import tools
-from ..copier.conf import EnvOps
+from ..copier.config.factory import EnvOps
 
 from .helpers import PROJECT_TEMPLATE, DATA
 

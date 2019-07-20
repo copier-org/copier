@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from .tools import HLINE, INDENT, printf_block, prompt
-from .types import AnyByStrDict, StrOrPath
+from ..tools import HLINE, INDENT, printf_block, prompt
+from ..types import AnyByStrDict, StrOrPath
 
 __all__ = ("load_config_data", "query_user_data")
 

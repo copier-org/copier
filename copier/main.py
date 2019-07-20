@@ -32,7 +32,8 @@ from .types import (
     PathSeq,
     StrSeq,
 )
-from .conf import make_config, Flags
+from .config import make_config
+from .config.objects import Flags
 
 __all__ = ("copy", "copy_local")
 
