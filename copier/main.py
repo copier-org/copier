@@ -1,5 +1,3 @@
-from copy import deepcopy
-
 import filecmp
 import os
 import re
@@ -7,9 +5,11 @@ import shutil
 import subprocess
 
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 
 from . import vcs
+from .config import make_config
+from .config.objects import Flags
 from .tools import (
     STYLE_DANGER,
     STYLE_IGNORE,
@@ -26,14 +26,12 @@ from .tools import (
 from .types import (
     AnyByStrDict,
     CheckPathFunc,
-    StrOrPathSeq,
     OptStrSeq,
-    StrOrPath,
     PathSeq,
+    StrOrPath,
+    StrOrPathSeq,
     StrSeq,
 )
-from .config import make_config
-from .config.objects import Flags
 
 __all__ = ("copy", "copy_local")
 

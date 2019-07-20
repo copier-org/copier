@@ -1,21 +1,7 @@
-import datetime
-from typing import Callable, Dict, List, Optional, Sequence, Tuple
-from pathlib import Path
-from hashlib import sha512
-from os import urandom
-from pydantic import BaseModel, validator
+from typing import Optional, Tuple
 
 from .objects import ConfigData, DEFAULT_DATA, Flags, EnvOps
-from ..types import (
-    AnyByStrDict,
-    CheckPathFunc,
-    OptStrOrPathSeq,
-    StrSeq,
-    OptStrSeq,
-    StrOrPath,
-    StrOrPathSeq,
-    PathSeq,
-)
+from ..types import AnyByStrDict, OptStrSeq
 from .user_data import load_config_data, query_user_data
 
 __all__ = "make_config"

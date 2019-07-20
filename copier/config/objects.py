@@ -1,20 +1,11 @@
 import datetime
-from typing import Callable, Dict, List, Optional, Sequence, Tuple
+from typing import Tuple
 from pathlib import Path
 from hashlib import sha512
 from os import urandom
 from pydantic import BaseModel, validator
 
-from ..types import (
-    AnyByStrDict,
-    CheckPathFunc,
-    OptStrOrPathSeq,
-    StrSeq,
-    OptStrSeq,
-    StrOrPath,
-    StrOrPathSeq,
-    PathSeq,
-)
+from ..types import AnyByStrDict, StrSeq, StrOrPathSeq, PathSeq
 
 
 # Default list of files in the template to exclude from the rendered project

@@ -5,10 +5,9 @@ import unicodedata
 from fnmatch import fnmatch
 from functools import reduce
 from pathlib import Path
+from typing import Any, Callable, Optional, Sequence, Tuple, Union
 
-from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
-
-import colorama  # type: ignore
+import colorama
 from colorama import Fore, Style
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
@@ -16,9 +15,9 @@ from jinja2.sandbox import SandboxedEnvironment
 from .types import (
     AnyByStrDict,
     CheckPathFunc,
+    IntSeq,
     OptStrOrPathSeq,
     StrOrPath,
-    IntSeq,
     StrSeq,
     T,
 )
