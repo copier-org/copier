@@ -5,7 +5,16 @@ from hashlib import sha512
 from os import urandom
 from pydantic import BaseModel, validator
 
-from .types import AnyByStrDict, CheckPathFunc, OptStrOrPathSeq, OptStrSeq, StrOrPath
+from .types import (
+    AnyByStrDict,
+    CheckPathFunc,
+    OptStrOrPathSeq,
+    StrSeq,
+    OptStrSeq,
+    StrOrPath,
+    StrOrPathSeq,
+    PathSeq,
+)
 from .user_data import load_config_data, query_user_data
 
 # Default list of files in the template to exclude from the rendered project
@@ -59,11 +68,11 @@ class ConfigData(BaseModel):
     src_path: Path
     dst_path: Path
     data: AnyByStrDict = DEFAULT_DATA
-    extra_paths: Sequence[Path] = []
-    exclude: OptStrOrPathSeq = DEFAULT_EXCLUDE
-    include: OptStrOrPathSeq = ()
-    skip_if_exists: OptStrOrPathSeq = []
-    tasks: OptStrSeq = None
+    extra_paths: PathSeq = []
+    exclude: StrOrPathSeq = DEFAULT_EXCLUDE
+    include: StrOrPathSeq = []
+    skip_if_exists: StrOrPathSeq = []
+    tasks: StrSeq = []
     envops: Optional[AnyByStrDict] = None
 
     # sanitizers

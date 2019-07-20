@@ -5,8 +5,11 @@ StrOrPath = Union[str, Path]
 
 AnyByStrDict = Dict[str, Any]
 
-OptStrOrPathSeq = Optional[Sequence[StrOrPath]]
-OptStrSeq = Optional[Sequence[str]]
+StrSeq = Sequence[str]
+StrOrPathSeq = Sequence[StrOrPath]
+PathSeq = Sequence[Path]
+OptStrOrPathSeq = Optional[StrOrPathSeq]
+OptStrSeq = Optional[StrSeq]
 
 CheckPathFunc = Callable[[StrOrPath], bool]
 

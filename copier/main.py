@@ -23,7 +23,15 @@ from .tools import (
     printf,
     prompt_bool,
 )
-from .types import AnyByStrDict, CheckPathFunc, OptStrOrPathSeq, OptStrSeq, StrOrPath
+from .types import (
+    AnyByStrDict,
+    CheckPathFunc,
+    StrOrPathSeq,
+    OptStrSeq,
+    StrOrPath,
+    PathSeq,
+    StrSeq,
+)
 from .conf import make_config, Flags
 
 __all__ = ("copy", "copy_local")
@@ -129,11 +137,11 @@ def copy_local(
     src_path: Path,
     dst_path: Path,
     data: AnyByStrDict,
-    extra_paths: OptStrOrPathSeq,
-    exclude: OptStrOrPathSeq,
-    include: OptStrOrPathSeq,
-    skip_if_exists: OptStrOrPathSeq,
-    tasks: OptStrSeq,
+    extra_paths: PathSeq,
+    exclude: StrOrPathSeq,
+    include: StrOrPathSeq,
+    skip_if_exists: StrOrPathSeq,
+    tasks: StrSeq,
     envops: Optional[AnyByStrDict],
     flags: Flags,
 ) -> None:
@@ -272,7 +280,7 @@ def file_is_identical(
 
 
 def files_are_identical(path1: Path, path2: Path) -> bool:
-    return filecmp.cmp(path1, path2, shallow=False)
+    return filecmp.cmp(str(path1), str(path2), shallow=False)
 
 
 def file_has_this_content(path: Path, content: str) -> bool:
