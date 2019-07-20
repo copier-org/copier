@@ -163,17 +163,6 @@ def copy_file(src: Path, dst: Path, symlinks: bool = True) -> None:
     shutil.copy2(src, dst, follow_symlinks=symlinks)
 
 
-# The default env options for jinja2
-DEFAULT_ENV_OPTIONS: AnyByStrDict = {
-    "autoescape": False,
-    "block_start_string": "[%",
-    "block_end_string": "%]",
-    "variable_start_string": "[[",
-    "variable_end_string": "]]",
-    "keep_trailing_newline": True,
-}
-
-
 class Renderer:
     def __init__(
         self, env: SandboxedEnvironment, src_path: Path, data: AnyByStrDict
@@ -200,18 +189,16 @@ def get_jinja_renderer(
 ) -> Renderer:
     """Returns a function that can render a Jinja template.
     """
-    # Jinja <= 2.10 does not work with `pathlib.Path`s
-    _envops = DEFAULT_ENV_OPTIONS.copy()
-    _envops.update(envops or {})
+    envops = envops or {}
 
     paths = [src_path] + [Path(p) for p in extra_paths or []]
-    _envops.setdefault("loader", FileSystemLoader(paths))  # type: ignore
+    envops.setdefault("loader", FileSystemLoader(paths))  # type: ignore
 
     # We want to minimize the risk of hidden malware in the templates
     # so we use the SandboxedEnvironment instead of the regular one.
     # Of couse we still have the post-copy tasks to worry about, but at least
     # they are more visible to the final user.
-    env = SandboxedEnvironment(**_envops)
+    env = SandboxedEnvironment(**envops)
     return Renderer(env=env, src_path=src_path, data=data)
 
 

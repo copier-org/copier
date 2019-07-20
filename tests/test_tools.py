@@ -1,12 +1,14 @@
 from pathlib import Path
 
 from ..copier import tools
+from ..copier.conf import EnvOps
 
 from .helpers import PROJECT_TEMPLATE, DATA
 
 
 def test_render(dst):
-    render = tools.get_jinja_renderer(PROJECT_TEMPLATE, DATA)
+    envops = EnvOps().dict()
+    render = tools.get_jinja_renderer(PROJECT_TEMPLATE, DATA, envops=envops)
 
     assert render.string("/hello/[[ what ]]/") == "/hello/world/"
     assert render.string("/hello/world/") == "/hello/world/"

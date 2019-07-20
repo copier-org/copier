@@ -39,19 +39,6 @@ DEFAULT_DATA: AnyByStrDict = {
 }
 
 
-# TODO: Does raising ValueError still makes sense?
-def check_existing_dir(path) -> None:
-    if not path.exists():
-        raise ValueError("Project template not found")
-
-    if not path.is_dir():
-        raise ValueError("The project template must be a folder")
-
-
-def resolve_path(path) -> Path:
-    return Path(path).expanduser().resolve()
-
-
 class Flags(BaseModel):
     pretend: bool = False
     quiet: bool = False
@@ -59,9 +46,14 @@ class Flags(BaseModel):
     skip: bool = False
     cleanup_on_error: bool = True
 
-    # configuration
-    class Config:
-        allow_mutation = False
+
+class EnvOps(BaseModel):
+    autoescape: bool = False
+    block_start_string: str = "[%"
+    block_end_string: str = "%]"
+    variable_start_string: str = "[["
+    variable_end_string: str = "]]"
+    keep_trailing_newline: bool = True
 
 
 class ConfigData(BaseModel):
@@ -73,16 +65,19 @@ class ConfigData(BaseModel):
     include: StrOrPathSeq = []
     skip_if_exists: StrOrPathSeq = []
     tasks: StrSeq = []
-    envops: Optional[AnyByStrDict] = None
+    envops: EnvOps
 
     # sanitizers
     @validator("src_path", "dst_path", "extra_paths", pre=True)
     def resolve_single_path(cls, v):
-        return resolve_path(v)
+        return Path(v).expanduser().resolve()
 
     @validator("src_path", "extra_paths", pre=True)
     def ensure_dir_exist(cls, v):
-        check_existing_dir(v)
+        if not v.exists():
+            raise ValueError("Project template not found")
+        if not v.is_dir():
+            raise ValueError("The project template must be a folder")
         return v
 
     def __post_init_post_parse__(self):
@@ -134,8 +129,9 @@ def make_config(
     if not force:
         query_data = query_user_data(query_data)
 
+    # merge config sources in order of precedence
     config_data["data"] = {**DEFAULT_DATA.copy(), **query_data, **(data or {})}
-
     _locals = {**config_data, **_locals}
+    _locals["envops"] = EnvOps(**_locals.get("envops", {}))
 
     return ConfigData(**_locals), Flags(**_locals)
