@@ -185,7 +185,7 @@ def copy_local(
 def get_source_paths(
     folder: Path,
     rel_folder: Path,
-    files: List[str],
+    files: StrSeq,
     engine: Renderer,
     must_filter: Callable[[StrOrPath], bool],
 ) -> List[Tuple[Path, Path]]:
@@ -301,7 +301,7 @@ def overwrite_file(
     return prompt_bool(msg, default=True)  # pragma:no cover
 
 
-def run_tasks(dst_path: StrOrPath, engine: Renderer, tasks) -> None:
+def run_tasks(dst_path: StrOrPath, engine: Renderer, tasks: StrSeq) -> None:
     for i, task in enumerate(tasks):
         task = engine.string(task)
         printf(f" > Running task {i + 1} of {len(tasks)}", task, style=STYLE_OK)
