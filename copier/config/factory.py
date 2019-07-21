@@ -1,7 +1,7 @@
 from typing import Tuple
 
 from .objects import ConfigData, DEFAULT_DATA, Flags, EnvOps
-from ..types import AnyByStrDict, OptStrSeq, OptBool
+from ..types import AnyByStrDict, OptAnyByStrDict, OptStrSeq, OptBool
 from .user_data import load_config_data, query_user_data
 
 __all__ = "make_config"
@@ -22,19 +22,19 @@ def filter_config(data: AnyByStrDict) -> Tuple[AnyByStrDict, AnyByStrDict]:
 def make_config(
     src_path: str,
     dst_path: str,
-    data: AnyByStrDict = None,
     *,
+    data: OptAnyByStrDict = None,
     exclude: OptStrSeq = None,
     include: OptStrSeq = None,
     skip_if_exists: OptStrSeq = None,
     tasks: OptStrSeq = None,
-    envops: AnyByStrDict = None,
+    envops: OptAnyByStrDict = None,
     extra_paths: OptStrSeq = None,
-    pretend: OptBool = False,
-    force: OptBool = False,
-    skip: OptBool = False,
-    quiet: OptBool = False,
-    cleanup_on_error: OptBool = True,
+    pretend: OptBool = None,
+    force: OptBool = None,
+    skip: OptBool = None,
+    quiet: OptBool = None,
+    cleanup_on_error: OptBool = None,
     **kwargs
 ) -> Tuple[ConfigData, Flags]:
     """Provides the configuration object, merged from the different sources.
