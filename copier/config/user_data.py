@@ -6,7 +6,9 @@ from ..types import AnyByStrDict, StrOrPath
 __all__ = ("load_config_data", "query_user_data")
 
 
-def load_toml_data(src_path: StrOrPath, quiet: bool = False) -> AnyByStrDict:
+def load_toml_data(
+    src_path: StrOrPath, quiet: bool = False, _warning: bool = True
+) -> AnyByStrDict:
     toml_path = Path(src_path) / "copier.toml"
     if not toml_path.exists():
         return {}
@@ -21,7 +23,9 @@ def load_toml_data(src_path: StrOrPath, quiet: bool = False) -> AnyByStrDict:
         return {}
 
 
-def load_yaml_data(src_path: StrOrPath, quiet: bool = False) -> AnyByStrDict:
+def load_yaml_data(
+    src_path: StrOrPath, quiet: bool = False, _warning: bool = True
+) -> AnyByStrDict:
     yaml_path = Path(src_path) / "copier.yml"
     if not yaml_path.exists():
         yaml_path = Path(src_path) / "copier.yaml"
@@ -62,13 +66,14 @@ def load_config_data(
     """Try to load the content from a `copier.yml`, a `copier.toml`, a `copier.json`,
     or the deprecated `voodoo.json`, in that order.
     """
-    data = load_yaml_data(src_path, quiet=quiet)
-    if not data:
-        data = load_toml_data(src_path, quiet=quiet)
-    if not data:
+    loaders = (load_yaml_data, load_toml_data, load_json_data)
+    for l in loaders:
         # The `_warning` argument is for easier testing
-        data = load_json_data(src_path, quiet=quiet, _warning=_warning)
-    return data
+        data = l(src_path, quiet=quiet, _warning=_warning)
+        if data:
+            return data
+    else:
+        return {}
 
 
 def query_user_data(default_user_data: AnyByStrDict) -> AnyByStrDict:  # pragma:no cover

@@ -9,6 +9,8 @@ IntSeq = Sequence[int]
 StrSeq = Sequence[str]
 StrOrPathSeq = Sequence[StrOrPath]
 PathSeq = Sequence[Path]
+
+OptBool = Optional[bool]
 OptStrOrPathSeq = Optional[StrOrPathSeq]
 OptStrSeq = Optional[StrSeq]
 

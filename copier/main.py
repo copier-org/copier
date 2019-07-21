@@ -3,35 +3,17 @@ import os
 import re
 import shutil
 import subprocess
-
 from pathlib import Path
 from typing import Callable, List, Optional, Tuple
 
 from . import vcs
 from .config import make_config
 from .config.objects import Flags
-from .tools import (
-    STYLE_DANGER,
-    STYLE_IGNORE,
-    STYLE_OK,
-    STYLE_WARNING,
-    Renderer,
-    copy_file,
-    get_jinja_renderer,
-    get_name_filters,
-    make_folder,
-    printf,
-    prompt_bool,
-)
-from .types import (
-    AnyByStrDict,
-    CheckPathFunc,
-    OptStrSeq,
-    PathSeq,
-    StrOrPath,
-    StrOrPathSeq,
-    StrSeq,
-)
+from .tools import (STYLE_DANGER, STYLE_IGNORE, STYLE_OK, STYLE_WARNING,
+                    Renderer, copy_file, get_jinja_renderer, get_name_filters,
+                    make_folder, printf, prompt_bool)
+from .types import (AnyByStrDict, CheckPathFunc, OptBool, OptStrSeq, PathSeq,
+                    StrOrPath, StrOrPathSeq, StrSeq)
 
 __all__ = ("copy", "copy_local")
 
@@ -49,11 +31,11 @@ def copy(
     tasks: OptStrSeq = None,
     envops: AnyByStrDict = None,
     extra_paths: OptStrSeq = None,
-    pretend: Optional[bool] = False,
-    force: Optional[bool] = False,
-    skip: Optional[bool] = False,
-    quiet: Optional[bool] = False,
-    cleanup_on_error: Optional[bool] = True,
+    pretend: OptBool = False,
+    force: OptBool = False,
+    skip: OptBool = False,
+    quiet: OptBool = False,
+    cleanup_on_error: OptBool = True,
 ) -> None:
     """
     Uses the template in src_path to generate a new project at dst_path.
@@ -288,7 +270,7 @@ def file_has_this_content(path: Path, content: str) -> bool:
 
 def overwrite_file(
     display_path: StrOrPath, source_path: Path, final_path: Path, flags: Flags
-) -> Optional[bool]:
+) -> OptBool:
     if not flags.quiet:
         printf("conflict", str(display_path), style=STYLE_DANGER)
     if flags.force:

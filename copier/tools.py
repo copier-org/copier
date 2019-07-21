@@ -12,15 +12,8 @@ from colorama import Fore, Style
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
 
-from .types import (
-    AnyByStrDict,
-    CheckPathFunc,
-    IntSeq,
-    OptStrOrPathSeq,
-    StrOrPath,
-    StrSeq,
-    T,
-)
+from .types import (AnyByStrDict, CheckPathFunc, IntSeq, OptStrOrPathSeq,
+                    StrOrPath, StrOrPathSeq, StrSeq, T)
 
 _all__: Tuple[str, ...] = (
     "STYLE_OK",
@@ -215,9 +208,7 @@ def normalize_str(text: StrOrPath, form: str = "NFD") -> str:
 
 
 def get_name_filters(
-    exclude: Sequence[StrOrPath],
-    include: Sequence[StrOrPath],
-    skip_if_exists: Sequence[StrOrPath],
+    exclude: StrOrPathSeq, include: StrOrPathSeq, skip_if_exists: StrOrPathSeq
 ) -> Tuple[CheckPathFunc, CheckPathFunc]:
     """Returns a function that evaluates if aCheckPathFunc file or folder name must be
     filtered out, and another that evaluates if a file must be skipped.

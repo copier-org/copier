@@ -1,7 +1,7 @@
-from typing import Optional, Tuple
+from typing import Tuple
 
 from .objects import ConfigData, DEFAULT_DATA, Flags, EnvOps
-from ..types import AnyByStrDict, OptStrSeq
+from ..types import AnyByStrDict, OptStrSeq, OptBool
 from .user_data import load_config_data, query_user_data
 
 __all__ = "make_config"
@@ -30,14 +30,18 @@ def make_config(
     tasks: OptStrSeq = None,
     envops: AnyByStrDict = None,
     extra_paths: OptStrSeq = None,
-    pretend: Optional[bool] = False,
-    force: Optional[bool] = False,
-    skip: Optional[bool] = False,
-    quiet: Optional[bool] = False,
-    cleanup_on_error: Optional[bool] = True,
+    pretend: OptBool = False,
+    force: OptBool = False,
+    skip: OptBool = False,
+    quiet: OptBool = False,
+    cleanup_on_error: OptBool = True,
     **kwargs
 ) -> Tuple[ConfigData, Flags]:
-    _locals = {k: v for k, v in locals().items() if v is not None}
+    """Provides the configuration object, merged from the different sources.
+    The order of prcedence for the merger of configuration object is:
+    function_args > user_data > defaults.
+    """
+    args = {k: v for k, v in locals().items() if v is not None}
 
     file_data = load_config_data(src_path, quiet=True)
     config_data, query_data = filter_config(file_data)
@@ -45,9 +49,9 @@ def make_config(
     if not force:
         query_data = query_user_data(query_data)
 
-    # merge config sources in order of precedence
+    # merge config sources in the order of precedence
     config_data["data"] = {**DEFAULT_DATA.copy(), **query_data, **(data or {})}
-    _locals = {**config_data, **_locals}
-    _locals["envops"] = EnvOps(**_locals.get("envops", {}))
+    args = {**config_data, **args}
+    args["envops"] = EnvOps(**args.get("envops", {}))
 
-    return ConfigData(**_locals), Flags(**_locals)
+    return ConfigData(**args), Flags(**args)
