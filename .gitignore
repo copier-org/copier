@@ -33,5 +33,6 @@ pip-wheel-metadata
 # Documentation
 */_build/*
 */site/*
-*/.mypy_cache/*
+.mypy_cache/*
 .cache
+*.log
