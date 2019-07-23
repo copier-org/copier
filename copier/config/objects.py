@@ -3,7 +3,7 @@ from typing import Tuple
 from pathlib import Path
 from hashlib import sha512
 from os import urandom
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, validator, StrictBool, Extra
 
 from ..types import AnyByStrDict, StrSeq, StrOrPathSeq, PathSeq
 
@@ -31,20 +31,27 @@ DEFAULT_DATA: AnyByStrDict = {
 
 
 class Flags(BaseModel):
-    pretend: bool = False
-    quiet: bool = False
-    force: bool = False
-    skip: bool = False
-    cleanup_on_error: bool = True
+    pretend: StrictBool = False  # type: ignore
+    quiet: StrictBool = False  # type: ignore
+    force: StrictBool = False  # type: ignore
+    skip: StrictBool = False  # type: ignore
+    cleanup_on_error: StrictBool = True  # type: ignore
+
+    class Config:
+        allow_mutation = False
 
 
 class EnvOps(BaseModel):
-    autoescape: bool = False
+    autoescape: StrictBool = False  # type: ignore
     block_start_string: str = "[%"
     block_end_string: str = "%]"
     variable_start_string: str = "[["
     variable_end_string: str = "]]"
-    keep_trailing_newline: bool = True
+    keep_trailing_newline: StrictBool = True  # type: ignore
+
+    class Config:
+        allow_mutation = False
+        extra = Extra.allow
 
 
 class ConfigData(BaseModel):
@@ -64,15 +71,12 @@ class ConfigData(BaseModel):
         return Path(v).expanduser().resolve()
 
     @validator("src_path", "extra_paths", pre=True)
-    def check_dir_exists(cls, v: Path) -> Path:
+    def dir_must_exist(cls, v: Path) -> Path:
         if not v.exists():
             raise ValueError("Project template not found")
         if not v.is_dir():
             raise ValueError("The project template must be a folder")
         return v
-
-    def __post_init_post_parse__(self) -> None:
-        self.data["folder_name"] = self.src_path.name
 
     # configuration
     class Config:
