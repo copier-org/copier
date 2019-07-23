@@ -52,7 +52,7 @@ def make_config(
 
     # merge config sources in the order of precedence
     config_data["data"] = {**DEFAULT_DATA.copy(), **query_data, **(data or {})}
-    config_data["data"]["folder_name"] = Path(src_path).name  # HACK
+    config_data["data"]["folder_name"] = Path(dst_path).name  # HACK
 
     args = {**config_data, **args}
     args["envops"] = EnvOps(**args.get("envops", {}))

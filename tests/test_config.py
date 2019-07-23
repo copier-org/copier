@@ -2,6 +2,7 @@ from pathlib import Path
 from pydantic import ValidationError
 import pytest
 
+from ..copier.config.factory import make_config
 from ..copier.config.objects import (
     ConfigData,
     EnvOps,
@@ -9,6 +10,7 @@ from ..copier.config.objects import (
     DEFAULT_DATA,
     DEFAULT_EXCLUDE,
 )
+
 
 GOOD_FLAGS = {
     "pretend": True,
@@ -126,3 +128,21 @@ def test_config_data_good_data(dst):
     }
     conf = ConfigData(**good_config_data)
     assert conf.dict() == good_config_data
+
+
+def test_make_config_bad_data(dst):
+    with pytest.raises(ValidationError):
+        make_config("./i_do_not_exist", dst)
+
+
+def test_make_config_good_data(dst):
+    conf, flags = make_config("./tests/demo_data", dst)
+    assert conf is not None
+    assert flags is not None
+    assert "folder_name" in conf.data
+    assert conf.data["folder_name"] == dst.name
+    assert conf.exclude == ["exclude1", "exclude2"]
+    assert conf.include == ["include1", "include2"]
+    assert conf.skip_if_exists == ["skip_if_exists1", "skip_if_exists2"]
+    assert conf.tasks == ["touch 1", "touch 2"]
+    assert conf.extra_paths == [Path("tests").resolve()]
