@@ -135,6 +135,10 @@ def test_make_config_bad_data(dst):
         make_config("./i_do_not_exist", dst)
 
 
+def is_subdict(small, big):
+    return {**big, **small} == big
+
+
 def test_make_config_good_data(dst):
     conf, flags = make_config("./tests/demo_data", dst)
     assert conf is not None
@@ -146,3 +150,20 @@ def test_make_config_good_data(dst):
     assert conf.skip_if_exists == ["skip_if_exists1", "skip_if_exists2"]
     assert conf.tasks == ["touch 1", "touch 2"]
     assert conf.extra_paths == [Path("tests").resolve()]
+
+
+@pytest.mark.parametrize(
+    "test_input, expected",
+    [
+        # func_args > defaults
+        ({"src_path": ".", "include": ["aaa"]}, {"include": ["aaa"]}),
+        # user_data > defaults
+        ({"src_path": "tests/demo_data"}, {"include": ["include1", "include2"]}),
+        # func_args > user_data
+        ({"src_path": "tests/demo_data", "include": ["aaa"]}, {"include": ["aaa"]}),
+    ],
+)
+def test_make_config_precedence(dst, test_input, expected):
+    """Test if config sources are merged in the right order of precedence."""
+    conf, flags = make_config(dst_path=dst, **test_input)
+    assert is_subdict(expected, conf.dict())
