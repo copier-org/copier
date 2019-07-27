@@ -1,5 +1,5 @@
 import datetime
-from typing import Tuple
+from typing import Any, Tuple
 from pathlib import Path
 from hashlib import sha512
 from os import urandom
@@ -65,6 +65,10 @@ class ConfigData(BaseModel):
     tasks: StrSeq = []
     envops: EnvOps
 
+    def __init__(self, **data: Any):
+        super().__init__(**data)
+        self.data["folder_name"] = Path(self.dst_path).name
+
     # sanitizers
     @validator("src_path", "dst_path", "extra_paths", pre=True)
     def resolve_path(cls, v: Path) -> Path:
@@ -73,9 +77,9 @@ class ConfigData(BaseModel):
     @validator("src_path", "extra_paths", pre=True)
     def dir_must_exist(cls, v: Path) -> Path:
         if not v.exists():
-            raise ValueError("Project template not found")
+            raise ValueError("Project template not found.")
         if not v.is_dir():
-            raise ValueError("The project template must be a folder")
+            raise ValueError("Project template not a folder.")
         return v
 
     # configuration

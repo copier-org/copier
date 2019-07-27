@@ -39,7 +39,8 @@ def make_config(
     **kwargs
 ) -> Tuple[ConfigData, Flags]:
     """Provides the configuration object, merged from the different sources.
-    The order of prcedence for the merger of configuration object is:
+
+    The order of precedence for the merger of configuration object is:
     function_args > user_data > defaults.
     """
     args = {k: v for k, v in locals().items() if v is not None}
@@ -52,7 +53,6 @@ def make_config(
 
     # merge config sources in the order of precedence
     config_data["data"] = {**DEFAULT_DATA.copy(), **query_data, **(data or {})}
-    config_data["data"]["folder_name"] = Path(dst_path).name  # HACK
 
     args = {**config_data, **args}
     args["envops"] = EnvOps(**args.get("envops", {}))

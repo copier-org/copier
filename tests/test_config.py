@@ -6,10 +6,19 @@ from pydantic import ValidationError
 
 from .. import copier
 from ..copier.config.factory import make_config
-from ..copier.config.objects import (DEFAULT_DATA, DEFAULT_EXCLUDE, ConfigData,
-                                     EnvOps, Flags)
-from ..copier.config.user_data import (load_config_data, load_json_data,
-                                       load_toml_data, load_yaml_data)
+from ..copier.config.objects import (
+    DEFAULT_DATA,
+    DEFAULT_EXCLUDE,
+    ConfigData,
+    EnvOps,
+    Flags,
+)
+from ..copier.config.user_data import (
+    load_config_data,
+    load_json_data,
+    load_toml_data,
+    load_yaml_data,
+)
 
 GOOD_FLAGS = {
     "pretend": True,
@@ -156,7 +165,7 @@ def test_config_data_paths_existing(dst):
         for i, p in enumerate(("src_path", "extra_paths")):
             err = e.errors()[i]
             assert err["loc"][0] == p
-            assert err["msg"] == "Project template not found"
+            assert err["msg"] == "Project template not found."
     else:
         raise AssertionError()
 
@@ -174,6 +183,7 @@ def test_config_data_good_data(dst):
         "tasks": ["echo python rulez"],
         "envops": EnvOps(),
     }
+    good_config_data["data"]["folder_name"] = dst.name
     conf = ConfigData(**good_config_data)
     assert conf.dict() == good_config_data
 
@@ -212,6 +222,5 @@ def test_make_config_good_data(dst):
     ],
 )
 def test_make_config_precedence(dst, test_input, expected):
-    """Test if config sources are merged in the right order of precedence."""
     conf, flags = make_config(dst_path=dst, **test_input)
     assert is_subdict(expected, conf.dict())
