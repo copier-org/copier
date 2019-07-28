@@ -41,11 +41,11 @@ GOOD_ENV_OPS = {
 
 def test_config_data_is_loaded_from_file():
     config = load_config_data("tests/demo_data")
-    config["_exclude"] = ["exclude1", "exclude2"]
-    config["_include"] = ["include1", "include2"]
-    config["_skip_if_exists"] = ["skip_if_exists1", "skip_if_exists2"]
-    config["_tasks"] = ["touch 1", "touch 2"]
-    config["_extra_paths"] = ["test"]
+    assert config["_exclude"] == ["exclude1", "exclude2"]
+    assert config["_include"] == ["include1", "include2"]
+    assert config["_skip_if_exists"] == ["skip_if_exists1", "skip_if_exists2"]
+    assert config["_tasks"] == ["touch 1", "touch 2"]
+    assert config["_extra_paths"] == ["tests"]
 
 
 @pytest.mark.parametrize(
@@ -172,7 +172,7 @@ def test_config_data_paths_existing(dst):
 
 def test_config_data_good_data(dst):
     dst = Path(dst).expanduser().resolve()
-    good_config_data = {
+    expected = {
         "src_path": dst,
         "dst_path": dst,
         "data": DEFAULT_DATA,
@@ -183,9 +183,9 @@ def test_config_data_good_data(dst):
         "tasks": ["echo python rulez"],
         "envops": EnvOps(),
     }
-    good_config_data["data"]["folder_name"] = dst.name
-    conf = ConfigData(**good_config_data)
-    assert conf.dict() == good_config_data
+    expected["data"]["folder_name"] = dst.name
+    conf = ConfigData(**expected)
+    assert conf.dict() == expected
 
 
 def test_make_config_bad_data(dst):
