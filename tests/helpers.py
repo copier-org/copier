@@ -21,7 +21,7 @@ DATA = {
 
 def render(dst, **kwargs):
     kwargs.setdefault("quiet", True)
-    copier.copy(PROJECT_TEMPLATE, dst, data=DATA, **kwargs)
+    copier.copy(str(PROJECT_TEMPLATE), dst, data=DATA, **kwargs)
 
 
 def assert_file(dst, *path):

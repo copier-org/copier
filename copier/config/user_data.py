@@ -13,7 +13,7 @@ def load_toml_data(
     if not toml_path.exists():
         return {}
 
-    import toml  # type: ignore
+    import toml
 
     toml_src = toml_path.read_text()
     try:
@@ -32,12 +32,12 @@ def load_yaml_data(
         if not yaml_path.exists():
             return {}
 
-    from ruamel.yaml import YAML  # type: ignore
+    from ruamel.yaml import YAML
 
     yaml = YAML(typ="safe")
 
     try:
-        return yaml.load(yaml_path)
+        return dict(yaml.load(yaml_path))
     except Exception as e:
         printf_block(e, "INVALID", msg=str(yaml_path), quiet=quiet)
         return {}
@@ -54,7 +54,7 @@ def load_json_data(
 
     json_src = json_path.read_text()
     try:
-        return json.loads(json_src)
+        return dict(json.loads(json_src))
     except ValueError as e:
         printf_block(e, "INVALID", msg=str(json_path), quiet=quiet)
         return {}

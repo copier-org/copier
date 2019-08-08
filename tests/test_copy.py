@@ -90,7 +90,7 @@ def test_config_exclude(dst):
 
     copier.config.factory._load_config_data = copier.config.factory.load_config_data
     copier.config.factory.load_config_data = fake_data
-    copier.copy(PROJECT_TEMPLATE, dst, data=DATA, quiet=True)
+    copier.copy(str(PROJECT_TEMPLATE), dst, data=DATA, quiet=True)
     assert not (dst / "aaaa.txt").exists()
     copier.config.factory.load_config_data = copier.config.factory._load_config_data
 
@@ -101,7 +101,7 @@ def test_config_exclude_overridden(dst):
 
     # copier.user_data._load_config_data = copier.user_data.load_config_data
     # copier.user_data.load_config_data = fake_data
-    copier.copy(PROJECT_TEMPLATE, dst, data=DATA, quiet=True, exclude=[])
+    copier.copy(str(PROJECT_TEMPLATE), dst, data=DATA, quiet=True, exclude=[])
     assert (dst / "aaaa.txt").exists()
     # copier.user_data.load_config_data = copier.user_data._load_config_data
 
@@ -112,7 +112,7 @@ def test_config_include(dst):
 
     copier.config.factory._load_config_data = copier.config.factory.load_config_data
     copier.config.factory.load_config_data = fake_data
-    copier.copy(PROJECT_TEMPLATE, dst, data=DATA, quiet=True)
+    copier.copy(str(PROJECT_TEMPLATE), dst, data=DATA, quiet=True)
     assert (dst / ".svn").exists()
     copier.config.factory.load_config_data = copier.config.factory._load_config_data
 
