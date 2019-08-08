@@ -1,7 +1,8 @@
 from pathlib import Path
 
-from jinja2.exceptions import TemplateNotFound
 import pytest
+
+from jinja2.exceptions import TemplateNotFound
 
 from .. import copier
 

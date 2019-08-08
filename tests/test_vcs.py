@@ -1,6 +1,5 @@
-from os.path import exists, join
-
 import shutil
+from os.path import exists, join
 
 from ..copier import vcs
 

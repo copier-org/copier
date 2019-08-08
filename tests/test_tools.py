@@ -2,8 +2,7 @@ from pathlib import Path
 
 from ..copier import tools
 from ..copier.config.factory import EnvOps
-
-from .helpers import PROJECT_TEMPLATE, DATA
+from .helpers import DATA, PROJECT_TEMPLATE
 
 
 def test_render(dst):

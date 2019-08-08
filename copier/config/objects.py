@@ -1,12 +1,12 @@
 import datetime
-from typing import Any, Tuple
-from pathlib import Path
 from hashlib import sha512
 from os import urandom
-from pydantic import BaseModel, validator, StrictBool, Extra
+from pathlib import Path
+from typing import Any, Tuple
 
-from ..types import AnyByStrDict, StrSeq, StrOrPathSeq, PathSeq
+from pydantic import BaseModel, Extra, StrictBool, validator
 
+from ..types import AnyByStrDict, PathSeq, StrOrPathSeq, StrSeq
 
 # Default list of files in the template to exclude from the rendered project
 DEFAULT_EXCLUDE: Tuple[str, ...] = (

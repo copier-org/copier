@@ -1,10 +1,9 @@
-from hashlib import sha1
-from pathlib import Path
 import filecmp
 import os
+from hashlib import sha1
+from pathlib import Path
 
 from .. import copier
-
 
 PROJECT_TEMPLATE = Path(__file__).parent / "demo"
 

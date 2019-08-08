@@ -1,8 +1,7 @@
-from pathlib import Path
 from typing import Tuple
 
-from .objects import ConfigData, DEFAULT_DATA, Flags, EnvOps
-from ..types import AnyByStrDict, OptAnyByStrDict, OptStrSeq, OptBool
+from ..types import AnyByStrDict, OptAnyByStrDict, OptBool, OptStrSeq
+from .objects import DEFAULT_DATA, ConfigData, EnvOps, Flags
 from .user_data import load_config_data, query_user_data
 
 __all__ = "make_config"
