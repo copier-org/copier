@@ -6,10 +6,19 @@ from pydantic import ValidationError
 
 from .. import copier
 from ..copier.config.factory import make_config
-from ..copier.config.objects import (DEFAULT_DATA, DEFAULT_EXCLUDE, ConfigData,
-                                     EnvOps, Flags)
-from ..copier.config.user_data import (load_config_data, load_json_data,
-                                       load_toml_data, load_yaml_data)
+from ..copier.config.objects import (
+    DEFAULT_DATA,
+    DEFAULT_EXCLUDE,
+    ConfigData,
+    EnvOps,
+    Flags,
+)
+from ..copier.config.user_data import (
+    load_config_data,
+    load_json_data,
+    load_toml_data,
+    load_yaml_data,
+)
 
 GOOD_FLAGS = {
     "pretend": True,
@@ -174,8 +183,8 @@ def test_config_data_good_data(dst):
         "tasks": ["echo python rulez"],
         "envops": EnvOps(),
     }
-    expected["data"]["folder_name"] = dst.name
     conf = ConfigData(**expected)
+    expected["data"]["folder_name"] = dst.name
     assert conf.dict() == expected
 
 
