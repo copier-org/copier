@@ -125,7 +125,7 @@ def test_prompt_bool_no_default(stdin, capsys):
     stdin.append("\ny\n")
     prompt_bool(question, default=None)
     stdout, _ = capsys.readouterr()
-    assert '{} [y/n] '.format(question) in stdout
+    assert "{} [y/n] ".format(question) in stdout
     assert 'Please answer "y" or "n"' in stdout
 
 

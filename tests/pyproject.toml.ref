@@ -13,4 +13,4 @@ homepage = "https://github.com/jpscaletti/copier"
 
 # Requirements
 [tool.poetry.dependencies]
-python = "^3.5"
+python = "^3.6"

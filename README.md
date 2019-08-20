@@ -58,6 +58,8 @@ Use the `data` argument to pass whatever extra context you want to be available
 in the templates. The arguments can be any valid Python value, even a
 function.
 
+Since X.X.X, only Python 3.6 or later are supported. Please use the 2.5.1 version if your project runs
+on a previous Python version.
 
 ## The copier.yml file
 

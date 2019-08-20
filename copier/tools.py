@@ -1,17 +1,20 @@
-from fnmatch import fnmatch
-from functools import reduce
 import errno
 import os
 import shutil
 import unicodedata
+from fnmatch import fnmatch
+from functools import reduce
+from pathlib import Path
+from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
 
-import jinja2
-from jinja2.sandbox import SandboxedEnvironment
-import colorama
+import colorama  # type: ignore
 from colorama import Fore, Style
+from jinja2 import FileSystemLoader
+from jinja2.sandbox import SandboxedEnvironment
 
+from .types import AnyByStrDict, CheckPathFunc, OptStrOrPathSeq, StrOrPath, T
 
-_all__ = (
+_all__: Tuple[str, ...] = (
     "STYLE_OK",
     "STYLE_WARNING",
     "STYLE_IGNORE",
@@ -23,22 +26,32 @@ _all__ = (
 
 colorama.init()
 
-STYLE_OK = [Fore.GREEN, Style.BRIGHT]
-STYLE_WARNING = [Fore.YELLOW, Style.BRIGHT]
-STYLE_IGNORE = [Fore.CYAN]
-STYLE_DANGER = [Fore.RED, Style.BRIGHT]
+STYLE_OK: List[int] = [Fore.GREEN, Style.BRIGHT]
+STYLE_WARNING: List[int] = [Fore.YELLOW, Style.BRIGHT]
+STYLE_IGNORE: List[int] = [Fore.CYAN]
+STYLE_DANGER: List[int] = [Fore.RED, Style.BRIGHT]
 
 
-def printf(action, msg="", style=None, indent=10):
+def printf(
+    action: str, msg: str = "", style: Optional[List[int]] = None, indent: int = 10
+) -> Optional[str]:
     action = action.rjust(indent, " ")
     if not style:
         return action + msg
 
-    out = style + [action, Fore.RESET, Style.RESET_ALL, "  ", msg]
+    out = style + [action, Fore.RESET, Style.RESET_ALL, "  ", msg]  # type: ignore
     print(*out, sep="")
+    return None  # HACK: Satisfy MyPy
 
 
-def printf_block(e, action, msg="", style=STYLE_WARNING, indent=0, quiet=False):
+def printf_block(
+    e: Exception,
+    action: str,
+    msg: str = "",
+    style: List[int] = STYLE_WARNING,
+    indent: int = 0,
+    quiet: bool = False,
+) -> None:
     if not quiet:
         print("")
         printf(action, msg=msg, style=style, indent=indent)
@@ -47,16 +60,22 @@ def printf_block(e, action, msg="", style=STYLE_WARNING, indent=0, quiet=False):
         print("-" * 42)
 
 
-no_value = object()
+no_value: object = object()
 
 
-def required(value):
+def required(value: T, **kwargs: Any) -> T:
     if not value:
         raise ValueError()
     return value
 
 
-def prompt(question, default=no_value, default_show=None, validator=required, **kwargs):
+def prompt(
+    question: str,
+    default: Optional[Any] = no_value,
+    default_show: Optional[Any] = None,
+    validator: Callable = required,
+    **kwargs: AnyByStrDict
+) -> Optional[Any]:
     """
     Prompt for a value from the command line. A default value can be provided,
     which will be used if no text is entered by the user. The value can be
@@ -88,8 +107,13 @@ def prompt(question, default=no_value, default_show=None, validator=required, **
 
 
 def prompt_bool(
-    question, default=False, yes="y", no="n", yes_choices=None, no_choices=None
-):
+    question: str,
+    default: Optional[Union[bool, str, object]] = False,
+    yes: str = "y",
+    no: str = "n",
+    yes_choices: Optional[List[str]] = None,
+    no_choices: Optional[List[str]] = None,
+) -> Optional[bool]:
     # Backwards compatibility. Remove for version 3.0
     if yes_choices:
         yes = yes_choices[0]
@@ -98,7 +122,7 @@ def prompt_bool(
 
     please_answer = ' Please answer "{}" or "{}"'.format(yes, no)
 
-    def validator(value):
+    def validator(value: Union[str, bool], **kwargs) -> Union[str, bool]:
         if value:
             value = str(value).lower()[0]
         if value == yes:
@@ -123,7 +147,7 @@ def prompt_bool(
     )
 
 
-def make_folder(folder):
+def make_folder(folder: Path) -> None:
     if not folder.exists():
         try:
             os.makedirs(str(folder))
@@ -132,12 +156,12 @@ def make_folder(folder):
                 raise
 
 
-def copy_file(src, dst, symlinks=True):
+def copy_file(src: Path, dst: Path, symlinks: bool = True) -> None:
     shutil.copy2(str(src), str(dst), follow_symlinks=symlinks)
 
 
 # The default env options for jinja2
-DEFAULT_ENV_OPTIONS = {
+DEFAULT_ENV_OPTIONS: AnyByStrDict = {
     "autoescape": False,
     "block_start_string": "[%",
     "block_end_string": "%]",
@@ -147,49 +171,59 @@ DEFAULT_ENV_OPTIONS = {
 }
 
 
-class Renderer(object):
-    def __init__(self, env, src_path, data):
+class Renderer:
+    def __init__(
+        self, env: SandboxedEnvironment, src_path: str, data: AnyByStrDict
+    ) -> None:
         self.env = env
         self.src_path = src_path
         self.data = data
 
-    def __call__(self, fullpath):
+    def __call__(self, fullpath: StrOrPath) -> str:
         relpath = str(fullpath).replace(self.src_path, "", 1).lstrip(os.path.sep)
         tmpl = self.env.get_template(relpath)
         return tmpl.render(**self.data)
 
-    def string(self, string):
-        tmpl = self.env.from_string(string)
+    def string(self, string: StrOrPath) -> str:
+        tmpl = self.env.from_string(str(string))
         return tmpl.render(**self.data)
 
 
-def get_jinja_renderer(src_path, data, extra_paths=None, envops=None):
+def get_jinja_renderer(
+    src_path: Path,
+    data: AnyByStrDict,
+    extra_paths: OptStrOrPathSeq = None,
+    envops: Optional[AnyByStrDict] = None,
+) -> Renderer:
     """Returns a function that can render a Jinja template.
     """
     # Jinja <= 2.10 does not work with `pathlib.Path`s
-    src_path = str(src_path)
+    _src_path: str = str(src_path)
     _envops = DEFAULT_ENV_OPTIONS.copy()
     _envops.update(envops or {})
 
-    paths = src_path if extra_paths is None else [src_path, *extra_paths]
-    _envops.setdefault("loader", jinja2.FileSystemLoader(paths))
+    paths = [_src_path] + [str(p) for p in extra_paths or []]
+    _envops.setdefault("loader", FileSystemLoader(paths))  # type: ignore
 
     # We want to minimize the risk of hidden malware in the templates
     # so we use the SandboxedEnvironment instead of the regular one.
     # Of couse we still have the post-copy tasks to worry about, but at least
     # they are more visible to the final user.
     env = SandboxedEnvironment(**_envops)
+    return Renderer(env=env, src_path=_src_path, data=data)
 
-    return Renderer(env=env, src_path=src_path, data=data)
 
-
-def normalize_str(text, form="NFD"):
+def normalize_str(text: StrOrPath, form: str = "NFD") -> str:
     """Normalize unicode text. Uses the NFD algorithm by default."""
-    return unicodedata.normalize(form, text)
+    return unicodedata.normalize(form, str(text))
 
 
-def get_name_filters(exclude, include, skip_if_exists):
-    """Returns a function that evaluates if a file or folder name must be
+def get_name_filters(
+    exclude: Sequence[StrOrPath],
+    include: Sequence[StrOrPath],
+    skip_if_exists: Sequence[StrOrPath],
+) -> Tuple[CheckPathFunc, CheckPathFunc]:
+    """Returns a function that evaluates if aCheckPathFunc file or folder name must be
     filtered out, and another that evaluates if a file must be skipped.
 
     The compared paths are first converted to unicode and decomposed.
@@ -202,28 +236,24 @@ def get_name_filters(exclude, include, skip_if_exists):
     include = [normalize_str(pattern) for pattern in include]
     skip_if_exists = [normalize_str(pattern) for pattern in skip_if_exists]
 
-    def fullmatch(path, pattern):
-        path = normalize_str(str(path))
+    def fullmatch(path: StrOrPath, pattern: StrOrPath) -> bool:
+        path = normalize_str(path)
         name = os.path.basename(path)
-        return fnmatch(name, pattern) or fnmatch(path, pattern)
+        return fnmatch(name, str(pattern)) or fnmatch(path, str(pattern))
 
-    def match(path, patterns):
-        return reduce(
-            lambda r, pattern: r or fullmatch(path, pattern),
-            patterns,
-            False
-        )
+    def match(path: StrOrPath, patterns: Sequence[StrOrPath]) -> bool:
+        return reduce(lambda r, pattern: r or fullmatch(path, pattern), patterns, False)
 
-    def must_be_filtered(path):
+    def must_be_filtered(path: StrOrPath) -> bool:
         return match(path, exclude)
 
-    def must_be_included(path):
+    def must_be_included(path: StrOrPath) -> bool:
         return match(path, include)
 
-    def must_skip(path):
+    def must_skip(path: StrOrPath) -> bool:
         return match(path, skip_if_exists)
 
-    def must_filter(path):
+    def must_filter(path: StrOrPath) -> bool:
         return must_be_filtered(path) and not must_be_included(path)
 
     return must_filter, must_skip

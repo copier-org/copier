@@ -19,8 +19,7 @@ data = {
     "copyright": "2011",
     "repo_name": "jpscaletti/copier",
     "home_url": "",
-    "project_urls": {
-    },
+    "project_urls": {},
     "development_status": "5 - Production/Stable",
     "minimal_python": 3.5,
     "install_requires": [
@@ -29,21 +28,10 @@ data = {
         "toml ~= 0.10",
         "ruamel.yaml ~= 0.15",
     ],
-    "testing_requires": [
-        "pytest",
-        "pytest-mock",
-    ],
-    "development_requires": [
-        "pytest-cov",
-        "pytest-flake8",
-        "flake8",
-        "ipdb",
-        "tox",
-    ],
+    "testing_requires": ["pytest", "pytest-mock"],
+    "development_requires": ["pytest-cov", "pytest-flake8", "flake8", "ipdb", "tox"],
     "entry_points": "copier = copier.cli:run",
-
     "coverage_omit": [],
-
     "has_docs": False,
     "google_analytics": "UA-XXXXXXXX-X",
     "docs_nav": [],
@@ -56,7 +44,6 @@ exclude = [
     ".git/*",
     ".venv",
     ".venv/*",
-
     "docs",
     "docs/*",
 ]
@@ -84,7 +71,7 @@ def do_the_thing():
         data=data,
         exclude=exclude,
         force=True,
-        cleanup_on_error=False
+        cleanup_on_error=False,
     )
 
 

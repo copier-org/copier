@@ -1,9 +1,11 @@
 import os
 import re
-import tempfile
 import shutil
 import subprocess
+import tempfile
+from typing import Optional
 
+from .types import StrOrPath
 
 __all__ = ("get_repo", "clone")
 
@@ -14,7 +16,7 @@ RE_GITHUB = re.compile(r"^gh:/?")
 RE_GITLAB = re.compile(r"^gl:/?")
 
 
-def get_repo(url):
+def get_repo(url: StrOrPath) -> Optional[str]:
     url = str(url)  # In case we have got a `pathlib.Path`
     if not (url.endswith(GIT_POSTFIX) or url.startswith(GIT_PREFIX)):
         return None
@@ -27,7 +29,7 @@ def get_repo(url):
     return url
 
 
-def clone(url):
+def clone(url: str) -> str:
     location = tempfile.mkdtemp()
     shutil.rmtree(location)  # Path must not exists
     subprocess.check_call(["git", "clone", url, location])

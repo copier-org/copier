@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import argparse
+import sys
 from hashlib import sha512
 from os import urandom
-import sys
 
 try:
     from .main import copy
@@ -72,7 +72,7 @@ parser.add_argument(
 )
 
 
-def run():  # pragma:no cover
+def run() -> None:  # pragma:no cover
     if len(sys.argv) == 1 or sys.argv[1] == "help":
         parser.print_help(sys.stderr)
         print()

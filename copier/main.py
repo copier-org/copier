@@ -5,27 +5,21 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
+from typing import Callable, Dict, List, Optional, Tuple
 
 from . import vcs
+from .tools import (STYLE_DANGER, STYLE_IGNORE, STYLE_OK, STYLE_WARNING,
+                    Renderer, copy_file, get_jinja_renderer, get_name_filters,
+                    make_folder, printf, prompt_bool)
+from .types import (AnyByStrDict, CheckPathFunc, OptStrOrPathSeq, OptStrSeq,
+                    StrOrPath)
 from .user_data import load_config_data, query_user_data
-from .tools import (
-    copy_file,
-    get_jinja_renderer,
-    get_name_filters,
-    make_folder,
-    printf,
-    prompt_bool,
-    STYLE_OK,
-    STYLE_IGNORE,
-    STYLE_DANGER,
-    STYLE_WARNING,
-)
-
 
 __all__ = ("copy", "copy_local")
 
+
 # Files of the template to exclude from the final project
-DEFAULT_EXCLUDE = (
+DEFAULT_EXCLUDE: Tuple[str, ...] = (
     "copier.yaml",
     "copier.yml",
     "copier.toml",
@@ -41,28 +35,27 @@ DEFAULT_EXCLUDE = (
     ".svn",
 )
 
-DEFAULT_INCLUDE = ()
-
-DEFAULT_DATA = {"now": datetime.datetime.utcnow}
+DEFAULT_INCLUDE: Tuple[str, ...] = ()
+DEFAULT_DATA: AnyByStrDict = {"now": datetime.datetime.utcnow}
 
 
 def copy(
-    src_path,
-    dst_path,
-    data=None,
+    src_path: str,
+    dst_path: str,
+    data: AnyByStrDict = None,
     *,
-    exclude=None,
-    include=None,
-    skip_if_exists=None,
-    tasks=None,
-    envops=None,
-    extra_paths=None,
-    pretend=False,
-    force=False,
-    skip=False,
-    quiet=False,
-    cleanup_on_error=True
-):
+    exclude: OptStrSeq = None,
+    include: OptStrSeq = None,
+    skip_if_exists: OptStrSeq = None,
+    tasks: OptStrSeq = None,
+    envops: AnyByStrDict = None,
+    extra_paths: OptStrSeq = None,
+    pretend: bool = False,
+    force: bool = False,
+    skip: bool = False,
+    quiet: bool = False,
+    cleanup_on_error: bool = True
+) -> None:
     """
     Uses the template in src_path to generate a new project at dst_path.
 
@@ -162,7 +155,7 @@ def copy(
 RE_TMPL = re.compile(r"\.tmpl$", re.IGNORECASE)
 
 
-def resolve_source_path(path):
+def resolve_source_path(path: StrOrPath) -> Path:
     try:
         path = Path(path).expanduser().resolve()
     except FileNotFoundError:
@@ -177,7 +170,9 @@ def resolve_source_path(path):
     return path
 
 
-def resolve_paths(src_path, dst_path, extra_paths):
+def resolve_paths(
+    src_path: StrOrPath, dst_path: StrOrPath, extra_paths: OptStrOrPathSeq
+) -> Tuple[Path, Path, OptStrOrPathSeq]:
     src_path = resolve_source_path(src_path)
     dst_path = Path(dst_path).resolve()
     extra_paths = [str(resolve_source_path(p)) for p in extra_paths or []]
@@ -185,55 +180,57 @@ def resolve_paths(src_path, dst_path, extra_paths):
 
 
 def copy_local(
-    src_path,
-    dst_path,
-    data,
+    src_path: StrOrPath,
+    dst_path: StrOrPath,
+    data: AnyByStrDict,
     *,
-    extra_paths=None,
-    exclude=None,
-    include=None,
-    skip_if_exists=None,
-    tasks=None,
-    envops=None,
-    **flags
-):
+    extra_paths: OptStrOrPathSeq = None,
+    exclude: OptStrOrPathSeq = None,
+    include: OptStrOrPathSeq = None,
+    skip_if_exists: OptStrOrPathSeq = None,
+    tasks: OptStrSeq = None,
+    envops: Optional[AnyByStrDict] = None,
+    **flags: bool
+) -> None:
     src_path, dst_path, extra_paths = resolve_paths(src_path, dst_path, extra_paths)
     config_data = load_config_data(src_path, quiet=flags["quiet"])
-    user_exclude = config_data.pop("_exclude", None)
+    user_exclude: List[str] = config_data.pop("_exclude", None)
     if exclude is None:
         exclude = user_exclude or DEFAULT_EXCLUDE
 
-    user_include = config_data.pop("_include", None)
+    user_include: List[str] = config_data.pop("_include", None)
     if include is None:
         include = user_include or DEFAULT_INCLUDE
 
-    user_skip_if_exists = config_data.pop("_skip_if_exists", None)
+    user_skip_if_exists: List[str] = config_data.pop("_skip_if_exists", None)
     if skip_if_exists is None:
         skip_if_exists = user_skip_if_exists or []
 
-    user_tasks = config_data.pop("_tasks", None)
+    user_tasks: List[str] = config_data.pop("_tasks", None)
     if tasks is None:
         tasks = user_tasks or []
 
-    user_extra_paths = config_data.pop("_extra_paths", None)
+    user_extra_paths: List[str] = config_data.pop("_extra_paths", None)
     if not extra_paths:
         extra_paths = [str(resolve_source_path(p)) for p in user_extra_paths or []]
 
     user_data = config_data if flags["force"] else query_user_data(config_data)
     data.update(user_data)
     data.setdefault("folder_name", dst_path.name)
-    render = get_jinja_renderer(src_path, data, extra_paths, envops)
+    engine = get_jinja_renderer(src_path, data, extra_paths, envops)
 
-    skip_if_exists = [render.string(pattern) for pattern in skip_if_exists]
+    skip_if_exists = [engine.string(pattern) for pattern in skip_if_exists]
     must_filter, must_skip = get_name_filters(exclude, include, skip_if_exists)
 
     if not flags["quiet"]:
         print("")  # padding space
 
+    folder: StrOrPath
+    rel_folder: StrOrPath
     for folder, _, files in os.walk(str(src_path)):
-        rel_folder = folder.replace(str(src_path), "", 1).lstrip(os.path.sep)
-        rel_folder = render.string(rel_folder)
-        rel_folder = rel_folder.replace("." + os.path.sep, ".", 1)
+        rel_folder = str(folder).replace(str(src_path), "", 1).lstrip(os.path.sep)
+        rel_folder = engine.string(rel_folder)
+        rel_folder = str(rel_folder).replace("." + os.path.sep, ".", 1)
 
         if must_filter(rel_folder):
             continue
@@ -243,25 +240,30 @@ def copy_local(
 
         render_folder(dst_path, rel_folder, flags)
 
-        source_paths = get_source_paths(folder, rel_folder, files, render, must_filter)
-
+        source_paths = get_source_paths(folder, rel_folder, files, engine, must_filter)
         for source_path, rel_path in source_paths:
-            render_file(dst_path, rel_path, source_path, render, must_skip, flags)
+            render_file(dst_path, rel_path, source_path, engine, must_skip, flags)
 
     if not flags["quiet"]:
         print("")  # padding space
 
     if tasks:
-        run_tasks(dst_path, render, tasks)
+        run_tasks(dst_path, engine, tasks)
         if not flags["quiet"]:
             print("")  # padding space
 
 
-def get_source_paths(folder, rel_folder, files, render, must_filter):
+def get_source_paths(
+    folder: Path,
+    rel_folder: Path,
+    files: List[str],
+    engine: Renderer,
+    must_filter: Callable[[StrOrPath], bool],
+) -> List[Tuple[Path, Path]]:
     source_paths = []
     for src_name in files:
-        dst_name = re.sub(RE_TMPL, "", src_name)
-        dst_name = render.string(dst_name)
+        dst_name = re.sub(RE_TMPL, "", str(src_name))
+        dst_name = engine.string(dst_name)
         rel_path = rel_folder / dst_name
 
         if must_filter(rel_path):
@@ -270,7 +272,7 @@ def get_source_paths(folder, rel_folder, files, render, must_filter):
     return source_paths
 
 
-def render_folder(dst_path, rel_folder, flags):
+def render_folder(dst_path: Path, rel_folder: Path, flags: Dict[str, bool]) -> None:
     final_path = dst_path / rel_folder
     display_path = str(rel_folder) + os.path.sep
 
@@ -290,11 +292,19 @@ def render_folder(dst_path, rel_folder, flags):
         printf("create", display_path, style=STYLE_OK)
 
 
-def render_file(dst_path, rel_path, source_path, render, must_skip, flags):
+def render_file(
+    dst_path: Path,
+    rel_path: Path,
+    source_path: Path,
+    engine: Renderer,
+    must_skip: CheckPathFunc,
+    flags: Dict[str, bool],
+) -> None:
     """Process or copy a file of the skeleton.
     """
+    content: Optional[str]
     if source_path.suffix == ".tmpl":
-        content = render(source_path)
+        content = engine(source_path)
     else:
         content = None
 
@@ -312,9 +322,7 @@ def render_file(dst_path, rel_path, source_path, render, must_skip, flags):
                 printf("skip", display_path, style=STYLE_WARNING)
             return
 
-        if overwrite_file(
-            display_path, source_path, final_path, content, flags
-        ):
+        if overwrite_file(display_path, source_path, final_path, flags):
             if not flags["quiet"]:
                 printf("force", display_path, style=STYLE_WARNING)
         else:
@@ -334,24 +342,28 @@ def render_file(dst_path, rel_path, source_path, render, must_skip, flags):
         final_path.write_text(content)
 
 
-def file_is_identical(source_path, final_path, content):
+def file_is_identical(
+    source_path: Path, final_path: Path, content: Optional[str]
+) -> bool:
     if content is None:
         return files_are_identical(source_path, final_path)
 
     return file_has_this_content(final_path, content)
 
 
-def files_are_identical(path1, path2):
+def files_are_identical(path1: Path, path2: Path) -> bool:
     return filecmp.cmp(str(path1), str(path2), shallow=False)
 
 
-def file_has_this_content(path, content):
+def file_has_this_content(path: Path, content: str) -> bool:
     return content == path.read_text()
 
 
-def overwrite_file(display_path, source_path, final_path, content, flags):
+def overwrite_file(
+    display_path: StrOrPath, source_path: Path, final_path: Path, flags: Dict[str, bool]
+) -> Optional[bool]:
     if not flags["quiet"]:
-        printf("conflict", display_path, style=STYLE_DANGER)
+        printf("conflict", str(display_path), style=STYLE_DANGER)
     if flags["force"]:
         return True
     if flags["skip"]:
@@ -361,12 +373,11 @@ def overwrite_file(display_path, source_path, final_path, content, flags):
     return prompt_bool(msg, default=True)  # pragma:no cover
 
 
-def run_tasks(dst_path, render, tasks):
+def run_tasks(dst_path: StrOrPath, engine: Renderer, tasks) -> None:
     dst_path = str(dst_path)
     for i, task in enumerate(tasks):
-        task = render.string(task)
+        task = engine.string(task)
         printf(
-            " > Running task {} of {}".format(i + 1, len(tasks)),
-            task, style=STYLE_OK,
+            " > Running task {} of {}".format(i + 1, len(tasks)), task, style=STYLE_OK
         )
         subprocess.run(task, shell=True, check=True, cwd=dst_path)

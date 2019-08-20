@@ -2,7 +2,6 @@ language: python
 
 matrix:
   include:
-    - python: 3.5
     - python: 3.6
     - python: 3.7
       dist: xenial
@@ -15,4 +14,4 @@ install:
   - pip install .
   - pip install .[testing]
 
-script: pytest -x .
+script: pytest -x --mypy-ignore-missing-imports .
