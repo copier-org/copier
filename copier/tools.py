@@ -14,6 +14,7 @@ from jinja2.sandbox import SandboxedEnvironment
 
 from .types import AnyByStrDict, CheckPathFunc, OptStrOrPathSeq, StrOrPath, T
 
+
 _all__: Tuple[str, ...] = (
     "STYLE_OK",
     "STYLE_WARNING",
