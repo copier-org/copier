@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 import argparse
-import sys
-from hashlib import sha512
-from os import urandom
 
 try:
     from .main import copy
@@ -73,20 +70,9 @@ parser.add_argument(
 
 
 def run() -> None:  # pragma:no cover
-    if len(sys.argv) == 1 or sys.argv[1] == "help":
-        parser.print_help(sys.stderr)
-        print()
-        sys.exit(1)
-
-    if sys.argv[1] == "version":
-        sys.stdout.write(__version__)
-        print()
-        sys.exit(1)
-
     args = parser.parse_args()
     kwargs = vars(args)
-    data = {"make_secret": lambda: sha512(urandom(48)).hexdigest()}
-    copy(kwargs.pop("source"), kwargs.pop("dest"), data=data, **kwargs)
+    copy(kwargs.pop("source"), kwargs.pop("dest"), **kwargs)
 
 
 if __name__ == "__main__":

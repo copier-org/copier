@@ -26,7 +26,6 @@ def test_copy_with_extra_paths(dst):
 
     gen_file = dst / "child.txt"
     result = gen_file.read_text()
-    print(result)
     expected = Path(PARENT_DIR + "/parent.txt").read_text()
     assert result == expected
 
@@ -36,6 +35,5 @@ def test_copy_with_extra_paths_from_config(dst):
 
     gen_file = dst / "child.txt"
     result = gen_file.read_text()
-    print(result)
     expected = Path(PARENT_DIR + "/parent.txt").read_text()
     assert result == expected

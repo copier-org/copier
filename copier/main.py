@@ -4,15 +4,26 @@ import os
 import re
 import shutil
 import subprocess
+from hashlib import sha512
+from os import urandom
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
 from . import vcs
-from .tools import (STYLE_DANGER, STYLE_IGNORE, STYLE_OK, STYLE_WARNING,
-                    Renderer, copy_file, get_jinja_renderer, get_name_filters,
-                    make_folder, printf, prompt_bool)
-from .types import (AnyByStrDict, CheckPathFunc, OptStrOrPathSeq, OptStrSeq,
-                    StrOrPath)
+from .tools import (
+    STYLE_DANGER,
+    STYLE_IGNORE,
+    STYLE_OK,
+    STYLE_WARNING,
+    Renderer,
+    copy_file,
+    get_jinja_renderer,
+    get_name_filters,
+    make_folder,
+    printf,
+    prompt_bool,
+)
+from .types import AnyByStrDict, CheckPathFunc, OptStrOrPathSeq, OptStrSeq, StrOrPath
 from .user_data import load_config_data, query_user_data
 
 __all__ = ("copy", "copy_local")
@@ -24,7 +35,6 @@ DEFAULT_EXCLUDE: Tuple[str, ...] = (
     "copier.yml",
     "copier.toml",
     "copier.json",
-    "voodoo.json",
     "~*",
     "*.py[co]",
     "__pycache__",
@@ -36,7 +46,10 @@ DEFAULT_EXCLUDE: Tuple[str, ...] = (
 )
 
 DEFAULT_INCLUDE: Tuple[str, ...] = ()
-DEFAULT_DATA: AnyByStrDict = {"now": datetime.datetime.utcnow}
+DEFAULT_DATA: AnyByStrDict = {
+    "now": datetime.datetime.utcnow,
+    "make_secret": lambda: sha512(urandom(48)).hexdigest(),
+}
 
 
 def copy(
@@ -54,7 +67,7 @@ def copy(
     force: bool = False,
     skip: bool = False,
     quiet: bool = False,
-    cleanup_on_error: bool = True
+    cleanup_on_error: bool = True,
 ) -> None:
     """
     Uses the template in src_path to generate a new project at dst_path.
@@ -144,12 +157,11 @@ def copy(
     except Exception:
         if cleanup_on_error:
             print("Something went wrong. Removing destination folder.")
-            # Python3.5 shutil methods doesn't wok with `pathlib.Path`
-            shutil.rmtree(str(dst_path), ignore_errors=True)
+            shutil.rmtree(dst_path, ignore_errors=True)
         raise
     finally:
         if repo:
-            shutil.rmtree(str(src_path))
+            shutil.rmtree(src_path)
 
 
 RE_TMPL = re.compile(r"\.tmpl$", re.IGNORECASE)
@@ -190,7 +202,7 @@ def copy_local(
     skip_if_exists: OptStrOrPathSeq = None,
     tasks: OptStrSeq = None,
     envops: Optional[AnyByStrDict] = None,
-    **flags: bool
+    **flags: bool,
 ) -> None:
     src_path, dst_path, extra_paths = resolve_paths(src_path, dst_path, extra_paths)
     config_data = load_config_data(src_path, quiet=flags["quiet"])
@@ -347,7 +359,6 @@ def file_is_identical(
 ) -> bool:
     if content is None:
         return files_are_identical(source_path, final_path)
-
     return file_has_this_content(final_path, content)
 
 
@@ -369,7 +380,7 @@ def overwrite_file(
     if flags["skip"]:
         return False
 
-    msg = " Overwrite {}?".format(final_path)  # pragma:no cover
+    msg = f" Overwrite {final_path}?"  # pragma:no cover
     return prompt_bool(msg, default=True)  # pragma:no cover
 
 
@@ -377,7 +388,5 @@ def run_tasks(dst_path: StrOrPath, engine: Renderer, tasks) -> None:
     dst_path = str(dst_path)
     for i, task in enumerate(tasks):
         task = engine.string(task)
-        printf(
-            " > Running task {} of {}".format(i + 1, len(tasks)), task, style=STYLE_OK
-        )
+        printf(f" > Running task {i + 1} of {len(tasks)}", task, style=STYLE_OK)
         subprocess.run(task, shell=True, check=True, cwd=dst_path)
