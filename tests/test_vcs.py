@@ -1,9 +1,8 @@
 from os.path import exists, join
 
-import pytest
 import shutil
 
-from ..copier import vcs
+from copier import vcs
 
 
 def test_get_repo():

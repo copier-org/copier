@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from ..copier import tools
+from copier import tools
 
 from .helpers import PROJECT_TEMPLATE, DATA
 

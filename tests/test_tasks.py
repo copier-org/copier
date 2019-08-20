@@ -1,4 +1,4 @@
-from .. import copier
+import copier
 
 
 def test_execute_tasks(dst):

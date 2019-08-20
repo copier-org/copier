@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from .. import copier
+import copier
 
 from .helpers import (
     assert_file,

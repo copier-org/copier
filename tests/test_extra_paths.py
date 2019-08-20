@@ -3,7 +3,8 @@ from pathlib import Path
 from jinja2.exceptions import TemplateNotFound
 import pytest
 
-from .. import copier
+import copier
+
 
 CHILD_DIR = "./tests/demo_extra_paths/children"
 CHILD_DIR_CONFIG = "./tests/demo_extra_paths/children_config"

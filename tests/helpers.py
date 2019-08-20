@@ -3,7 +3,7 @@ from pathlib import Path
 import filecmp
 import os
 
-from .. import copier
+import copier
 
 
 PROJECT_TEMPLATE = Path(__file__).parent / "demo"
