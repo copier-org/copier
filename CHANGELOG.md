@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 
-### Version 3.x (2019-xx)
+### Version 3.0 (2019-xx)
 - Dropped support for Python 3.5.
 - Dropped support for deprecated `voodoo.json`.
 - Type annotated entire code base.
@@ -21,7 +21,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Version 2.4.2 (2019-06)
 - Fix MAJOR bug that was preventing the `_exclude`, `_include` and `_tasks` keys from
 `copier.yml` (or alternatives) to be used at all. It also interpreted `_tasks` as
-a user-provided variable.
+  a user-provided variable.
 
 
 ### Version 2.4 (2019-06)

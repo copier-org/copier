@@ -2,7 +2,7 @@ from subprocess import CalledProcessError
 
 import pytest
 
-from .. import copier
+import copier
 
 
 def test_cleanup(dst):

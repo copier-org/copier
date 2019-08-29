@@ -1,7 +1,7 @@
 import shutil
 from os.path import exists, join
 
-from ..copier import vcs
+from copier import vcs
 
 
 def test_get_repo():

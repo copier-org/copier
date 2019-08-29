@@ -4,21 +4,23 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from .. import copier
-from ..copier.config.factory import make_config
-from ..copier.config.objects import (
+
+import copier
+from copier.config.factory import make_config
+from copier.config.objects import (
     DEFAULT_DATA,
     DEFAULT_EXCLUDE,
     ConfigData,
     EnvOps,
     Flags,
 )
-from ..copier.config.user_data import (
+from copier.config.user_data import (
     load_config_data,
     load_json_data,
     load_toml_data,
     load_yaml_data,
 )
+
 
 GOOD_FLAGS = {
     "pretend": True,

@@ -9,11 +9,29 @@ from typing import Callable, List, Optional, Tuple
 from . import vcs
 from .config import make_config
 from .config.objects import Flags
-from .tools import (STYLE_DANGER, STYLE_IGNORE, STYLE_OK, STYLE_WARNING,
-                    Renderer, copy_file, get_jinja_renderer, get_name_filters,
-                    make_folder, printf, prompt_bool)
-from .types import (AnyByStrDict, CheckPathFunc, OptBool, OptStrSeq, PathSeq,
-                    StrOrPath, StrOrPathSeq, StrSeq)
+from .tools import (
+    STYLE_DANGER,
+    STYLE_IGNORE,
+    STYLE_OK,
+    STYLE_WARNING,
+    Renderer,
+    copy_file,
+    get_jinja_renderer,
+    get_name_filters,
+    make_folder,
+    printf,
+    prompt_bool,
+)
+from .types import (
+    AnyByStrDict,
+    CheckPathFunc,
+    OptBool,
+    OptStrSeq,
+    PathSeq,
+    StrOrPath,
+    StrOrPathSeq,
+    StrSeq,
+)
 
 __all__ = ("copy", "copy_local")
 
@@ -127,9 +145,9 @@ def copy_local(
     flags: Flags,
 ) -> None:
 
-    engine = get_jinja_renderer(src_path, data, extra_paths, envops)
+    render = get_jinja_renderer(src_path, data, extra_paths, envops)
 
-    skip_if_exists = [engine.string(pattern) for pattern in skip_if_exists]
+    skip_if_exists = [render.string(pattern) for pattern in skip_if_exists]
     must_filter, must_skip = get_name_filters(exclude, include, skip_if_exists)
 
     if not flags.quiet:
@@ -139,7 +157,7 @@ def copy_local(
     rel_folder: StrOrPath
     for folder, _, files in os.walk(src_path):
         rel_folder = str(folder).replace(str(src_path), "", 1).lstrip(os.path.sep)
-        rel_folder = engine.string(rel_folder)
+        rel_folder = render.string(rel_folder)
         rel_folder = str(rel_folder).replace("." + os.path.sep, ".", 1)
 
         if must_filter(rel_folder):
@@ -150,15 +168,15 @@ def copy_local(
 
         render_folder(dst_path, rel_folder, flags)
 
-        source_paths = get_source_paths(folder, rel_folder, files, engine, must_filter)
+        source_paths = get_source_paths(folder, rel_folder, files, render, must_filter)
         for source_path, rel_path in source_paths:
-            render_file(dst_path, rel_path, source_path, engine, must_skip, flags)
+            render_file(dst_path, rel_path, source_path, render, must_skip, flags)
 
     if not flags.quiet:
         print("")  # padding space
 
     if tasks:
-        run_tasks(dst_path, engine, tasks)
+        run_tasks(dst_path, render, tasks)
         if not flags.quiet:
             print("")  # padding space
 
@@ -167,13 +185,13 @@ def get_source_paths(
     folder: Path,
     rel_folder: Path,
     files: StrSeq,
-    engine: Renderer,
+    render: Renderer,
     must_filter: Callable[[StrOrPath], bool],
 ) -> List[Tuple[Path, Path]]:
     source_paths = []
     for src_name in files:
         dst_name = re.sub(RE_TMPL, "", str(src_name))
-        dst_name = engine.string(dst_name)
+        dst_name = render.string(dst_name)
         rel_path = rel_folder / dst_name
 
         if must_filter(rel_path):
@@ -206,7 +224,7 @@ def render_file(
     dst_path: Path,
     rel_path: Path,
     source_path: Path,
-    engine: Renderer,
+    render: Renderer,
     must_skip: CheckPathFunc,
     flags: Flags,
 ) -> None:
@@ -214,7 +232,7 @@ def render_file(
     """
     content: Optional[str]
     if source_path.suffix == ".tmpl":
-        content = engine(source_path)
+        content = render(source_path)
     else:
         content = None
 
@@ -282,8 +300,8 @@ def overwrite_file(
     return prompt_bool(msg, default=True)  # pragma:no cover
 
 
-def run_tasks(dst_path: StrOrPath, engine: Renderer, tasks: StrSeq) -> None:
+def run_tasks(dst_path: StrOrPath, render: Renderer, tasks: StrSeq) -> None:
     for i, task in enumerate(tasks):
-        task = engine.string(task)
+        task = render.string(task)
         printf(f" > Running task {i + 1} of {len(tasks)}", task, style=STYLE_OK)
         subprocess.run(task, shell=True, check=True, cwd=dst_path)

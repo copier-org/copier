@@ -12,8 +12,17 @@ from colorama import Fore, Style
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
 
-from .types import (AnyByStrDict, CheckPathFunc, IntSeq, OptStrOrPathSeq,
-                    StrOrPath, StrOrPathSeq, StrSeq, T)
+from .types import (
+    AnyByStrDict,
+    CheckPathFunc,
+    IntSeq,
+    OptStrOrPathSeq,
+    StrOrPath,
+    StrOrPathSeq,
+    StrSeq,
+    T,
+)
+
 
 _all__: Tuple[str, ...] = (
     "STYLE_OK",

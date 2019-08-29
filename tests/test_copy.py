@@ -2,8 +2,9 @@ from pathlib import Path
 
 import pytest
 
-from .. import copier
-from .helpers import DATA, PROJECT_TEMPLATE, assert_file, filecmp, render
+import copier
+
+from .helpers import assert_file, render, PROJECT_TEMPLATE, DATA, filecmp
 
 
 def test_project_not_found(dst):

@@ -19,16 +19,16 @@ A library for rendering projects templates.
 from copier import copy
 
 # Create a project from a local path
-copy('path/to/project/template', 'path/to/destination')
+copy("path/to/project/template", "path/to/destination")
 
 # Or from a git URL.
-copy('https://github.com/jpscaletti/copier.git', 'path/to/destination')
+copy("https://github.com/jpscaletti/copier.git", "path/to/destination")
 
 # You can also use "gh:" as a shortcut of "https://github.com/"
-copy('gh:jpscaletti/copier.git', 'path/to/destination')
+copy("gh:jpscaletti/copier.git", "path/to/destination")
 
 # Or "gl:" as a shortcut of "https://gitlab.com/"
-copy('gl:jpscaletti/copier.git', 'path/to/destination')
+copy("gl:jpscaletti/copier.git", "path/to/destination")
 ```
 
 - Or as a command-line tool:
@@ -58,8 +58,9 @@ Use the `data` argument to pass whatever extra context you want to be available
 in the templates. The arguments can be any valid Python value, even a
 function.
 
-Since X.X.X, only Python 3.6 or later are supported. Please use the 2.5.1 version if your project runs
+Since version 3.0, only Python 3.6 or later are supported. Please use the 2.5.1 version if your project runs
 on a previous Python version.
+
 
 ## The copier.yml file
 

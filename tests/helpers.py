@@ -3,7 +3,7 @@ import os
 from hashlib import sha1
 from pathlib import Path
 
-from .. import copier
+import copier
 
 PROJECT_TEMPLATE = Path(__file__).parent / "demo"
 
