@@ -24,6 +24,7 @@ from .types import (
 )
 
 
+
 _all__: Tuple[str, ...] = (
     "STYLE_OK",
     "STYLE_WARNING",
