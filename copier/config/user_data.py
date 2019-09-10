@@ -7,7 +7,7 @@ from ..types import AnyByStrDict, StrOrPath
 __all__ = ("load_config_data", "query_user_data")
 
 
-class InvalidConfigFile(ValueError):
+class InvalidConfigFileError(ValueError):
     def __init__(self, msg: str, quiet: bool):
         printf_block(self, "INVALID", msg=msg, quiet=quiet)
         super().__init__(msg)
@@ -26,7 +26,7 @@ def load_toml_data(
     try:
         return dict(toml.loads(toml_src))
     except toml.TomlDecodeError as e:
-        raise InvalidConfigFile(str(toml_path), quiet) from e
+        raise InvalidConfigFileError(str(toml_path), quiet) from e
 
 
 def load_yaml_data(
@@ -45,7 +45,7 @@ def load_yaml_data(
     try:
         return dict(yaml.load(yaml_path))
     except YAMLError as e:
-        raise InvalidConfigFile(str(yaml_path), quiet) from e
+        raise InvalidConfigFileError(str(yaml_path), quiet) from e
 
 
 def load_json_data(
@@ -61,7 +61,7 @@ def load_json_data(
     try:
         return dict(json.loads(json_src))
     except json.JSONDecodeError as e:
-        raise InvalidConfigFile(json_src, quiet) from e
+        raise InvalidConfigFileError(json_src, quiet) from e
 
 
 def load_config_data(

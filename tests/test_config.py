@@ -19,6 +19,7 @@ from copier.config.user_data import (
     load_json_data,
     load_toml_data,
     load_yaml_data,
+    InvalidConfigFileError
 )
 
 
@@ -64,7 +65,8 @@ def test_read_data(dst, template):
 
 
 def test_bad_toml(capsys):
-    assert {} == load_toml_data("tests/demo_badtoml")
+    with pytest.raises(InvalidConfigFileError):
+        load_toml_data("tests/demo_badtoml")
 
 
 def test_invalid_toml(capsys):
@@ -85,7 +87,8 @@ def test_invalid_toml(capsys):
 
 
 def test_invalid_quiet(capsys):
-    assert {} == load_config_data("tests/demo_invalid", quiet=True)
+    with pytest.raises(InvalidConfigFileError):
+        load_config_data("tests/demo_invalid", quiet=True)
     out, _ = capsys.readouterr()
     assert out == ""
 
