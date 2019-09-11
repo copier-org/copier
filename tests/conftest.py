@@ -1,11 +1,11 @@
+import shutil
 from os import SEEK_END
 from pathlib import Path
 from tempfile import mkdtemp
-import six
-import shutil
+from unittest import mock
 
 import pytest
-from unittest import mock
+import six
 
 
 @pytest.fixture()

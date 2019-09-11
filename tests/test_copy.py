@@ -85,36 +85,36 @@ def test_skip_if_exists_rendered_patterns(dst):
 
 
 def test_config_exclude(dst):
-    def fake_data(*_args, **_kw):
+    def fake_data(*_args, **_kwargs):
         return {"_exclude": ["*.txt"]}
 
-    copier.main._load_config_data = copier.main.load_config_data
-    copier.main.load_config_data = fake_data
-    copier.copy(PROJECT_TEMPLATE, dst, data=DATA, quiet=True)
+    copier.config.factory._load_config_data = copier.config.factory.load_config_data
+    copier.config.factory.load_config_data = fake_data
+    copier.copy(str(PROJECT_TEMPLATE), dst, data=DATA, quiet=True)
     assert not (dst / "aaaa.txt").exists()
-    copier.main.load_config_data = copier.main._load_config_data
+    copier.config.factory.load_config_data = copier.config.factory._load_config_data
 
 
 def test_config_exclude_overridden(dst):
-    def fake_data(*_args, **_kw):
+    def fake_data(*_args, **_kwargs):
         return {"_exclude": ["*.txt"]}
 
-    copier.main._load_config_data = copier.main.load_config_data
-    copier.main.load_config_data = fake_data
-    copier.copy(PROJECT_TEMPLATE, dst, data=DATA, quiet=True, exclude=[])
+    # copier.user_data._load_config_data = copier.user_data.load_config_data
+    # copier.user_data.load_config_data = fake_data
+    copier.copy(str(PROJECT_TEMPLATE), dst, data=DATA, quiet=True, exclude=[])
     assert (dst / "aaaa.txt").exists()
-    copier.main.load_config_data = copier.main._load_config_data
+    # copier.user_data.load_config_data = copier.user_data._load_config_data
 
 
 def test_config_include(dst):
-    def fake_data(*_args, **_kw):
+    def fake_data(*_args, **_kwargs):
         return {"_include": [".svn"]}
 
-    copier.main._load_config_data = copier.main.load_config_data
-    copier.main.load_config_data = fake_data
-    copier.copy(PROJECT_TEMPLATE, dst, data=DATA, quiet=True)
+    copier.config.factory._load_config_data = copier.config.factory.load_config_data
+    copier.config.factory.load_config_data = fake_data
+    copier.copy(str(PROJECT_TEMPLATE), dst, data=DATA, quiet=True)
     assert (dst / ".svn").exists()
-    copier.main.load_config_data = copier.main._load_config_data
+    copier.config.factory.load_config_data = copier.config.factory._load_config_data
 
 
 def test_skip_option(dst):

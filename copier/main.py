@@ -1,15 +1,14 @@
-import datetime
 import filecmp
 import os
 import re
 import shutil
 import subprocess
-from hashlib import sha512
-from os import urandom
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 
 from . import vcs
+from .config import make_config
+from .config.objects import Flags
 from .tools import (
     copy_file,
     get_jinja_renderer,
@@ -23,33 +22,20 @@ from .tools import (
     STYLE_OK,
     STYLE_WARNING,
 )
-from .types import AnyByStrDict, CheckPathFunc, OptStrOrPathSeq, OptStrSeq, StrOrPath
-from .user_data import load_config_data, query_user_data
+from .types import (
+    AnyByStrDict,
+    CheckPathFunc,
+    OptBool,
+    OptStrSeq,
+    PathSeq,
+    StrOrPath,
+    StrOrPathSeq,
+    StrSeq,
+)
 
 __all__ = ("copy", "copy_local")
 
-
-# Files of the template to exclude from the final project
-DEFAULT_EXCLUDE: Tuple[str, ...] = (
-    "copier.yaml",
-    "copier.yml",
-    "copier.toml",
-    "copier.json",
-    "~*",
-    "*.py[co]",
-    "__pycache__",
-    "__pycache__/*",
-    ".git",
-    ".git/*",
-    ".DS_Store",
-    ".svn",
-)
-
-DEFAULT_INCLUDE: Tuple[str, ...] = ()
-DEFAULT_DATA: AnyByStrDict = {
-    "now": datetime.datetime.utcnow,
-    "make_secret": lambda: sha512(urandom(48)).hexdigest(),
-}
+RE_TMPL = re.compile(r"\.tmpl$", re.IGNORECASE)
 
 
 def copy(
@@ -63,11 +49,11 @@ def copy(
     tasks: OptStrSeq = None,
     envops: AnyByStrDict = None,
     extra_paths: OptStrSeq = None,
-    pretend: bool = False,
-    force: bool = False,
-    skip: bool = False,
-    quiet: bool = False,
-    cleanup_on_error: bool = True,
+    pretend: OptBool = False,
+    force: OptBool = False,
+    skip: OptBool = False,
+    quiet: OptBool = False,
+    cleanup_on_error: OptBool = True,
 ) -> None:
     """
     Uses the template in src_path to generate a new project at dst_path.
@@ -132,28 +118,10 @@ def copy(
     if repo:
         src_path = vcs.clone(repo)
 
-    _data = DEFAULT_DATA.copy()
-    _data.update(data or {})
-
-    if extra_paths is None:
-        extra_paths = []
+    conf, flags = make_config(**locals())
 
     try:
-        copy_local(
-            src_path,
-            dst_path,
-            data=_data,
-            extra_paths=extra_paths,
-            exclude=exclude,
-            include=include,
-            skip_if_exists=skip_if_exists,
-            tasks=tasks,
-            envops=envops,
-            pretend=pretend,
-            force=force,
-            skip=skip,
-            quiet=quiet,
-        )
+        copy_local(flags=flags, **conf.dict())
     except Exception:
         if cleanup_on_error:
             print("Something went wrong. Removing destination folder.")
@@ -164,84 +132,32 @@ def copy(
             shutil.rmtree(src_path)
 
 
-RE_TMPL = re.compile(r"\.tmpl$", re.IGNORECASE)
-
-
-def resolve_source_path(path: StrOrPath) -> Path:
-    try:
-        path = Path(path).expanduser().resolve()
-    except FileNotFoundError:
-        raise ValueError("Project template not found")
-
-    if not path.exists():
-        raise ValueError("Project template not found")
-
-    if not path.is_dir():
-        raise ValueError("The project template must be a folder")
-
-    return path
-
-
-def resolve_paths(
-    src_path: StrOrPath, dst_path: StrOrPath, extra_paths: OptStrOrPathSeq
-) -> Tuple[Path, Path, OptStrOrPathSeq]:
-    src_path = resolve_source_path(src_path)
-    dst_path = Path(dst_path).resolve()
-    extra_paths = [str(resolve_source_path(p)) for p in extra_paths or []]
-    return src_path, dst_path, extra_paths
-
-
 def copy_local(
-    src_path: StrOrPath,
-    dst_path: StrOrPath,
+    src_path: Path,
+    dst_path: Path,
     data: AnyByStrDict,
-    *,
-    extra_paths: OptStrOrPathSeq = None,
-    exclude: OptStrOrPathSeq = None,
-    include: OptStrOrPathSeq = None,
-    skip_if_exists: OptStrOrPathSeq = None,
-    tasks: OptStrSeq = None,
-    envops: Optional[AnyByStrDict] = None,
-    **flags: bool,
+    extra_paths: PathSeq,
+    exclude: StrOrPathSeq,
+    include: StrOrPathSeq,
+    skip_if_exists: StrOrPathSeq,
+    tasks: StrSeq,
+    envops: Optional[AnyByStrDict],
+    flags: Flags,
 ) -> None:
-    src_path, dst_path, extra_paths = resolve_paths(src_path, dst_path, extra_paths)
-    config_data = load_config_data(src_path, quiet=flags["quiet"])
-    user_exclude: List[str] = config_data.pop("_exclude", None)
-    if exclude is None:
-        exclude = user_exclude or DEFAULT_EXCLUDE
 
-    user_include: List[str] = config_data.pop("_include", None)
-    if include is None:
-        include = user_include or DEFAULT_INCLUDE
+    render = get_jinja_renderer(src_path, data, extra_paths, envops)
 
-    user_skip_if_exists: List[str] = config_data.pop("_skip_if_exists", None)
-    if skip_if_exists is None:
-        skip_if_exists = user_skip_if_exists or []
-
-    user_tasks: List[str] = config_data.pop("_tasks", None)
-    if tasks is None:
-        tasks = user_tasks or []
-
-    user_extra_paths: List[str] = config_data.pop("_extra_paths", None)
-    if not extra_paths:
-        extra_paths = [str(resolve_source_path(p)) for p in user_extra_paths or []]
-
-    user_data = config_data if flags["force"] else query_user_data(config_data)
-    data.update(user_data)
-    data.setdefault("folder_name", dst_path.name)
-    engine = get_jinja_renderer(src_path, data, extra_paths, envops)
-
-    skip_if_exists = [engine.string(pattern) for pattern in skip_if_exists]
+    skip_if_exists = [render.string(pattern) for pattern in skip_if_exists]
     must_filter, must_skip = get_name_filters(exclude, include, skip_if_exists)
 
-    if not flags["quiet"]:
+    if not flags.quiet:
         print("")  # padding space
 
     folder: StrOrPath
     rel_folder: StrOrPath
-    for folder, _, files in os.walk(str(src_path)):
+    for folder, _, files in os.walk(src_path):
         rel_folder = str(folder).replace(str(src_path), "", 1).lstrip(os.path.sep)
-        rel_folder = engine.string(rel_folder)
+        rel_folder = render.string(rel_folder)
         rel_folder = str(rel_folder).replace("." + os.path.sep, ".", 1)
 
         if must_filter(rel_folder):
@@ -252,30 +168,30 @@ def copy_local(
 
         render_folder(dst_path, rel_folder, flags)
 
-        source_paths = get_source_paths(folder, rel_folder, files, engine, must_filter)
+        source_paths = get_source_paths(folder, rel_folder, files, render, must_filter)
         for source_path, rel_path in source_paths:
-            render_file(dst_path, rel_path, source_path, engine, must_skip, flags)
+            render_file(dst_path, rel_path, source_path, render, must_skip, flags)
 
-    if not flags["quiet"]:
+    if not flags.quiet:
         print("")  # padding space
 
     if tasks:
-        run_tasks(dst_path, engine, tasks)
-        if not flags["quiet"]:
+        run_tasks(dst_path, render, tasks)
+        if not flags.quiet:
             print("")  # padding space
 
 
 def get_source_paths(
     folder: Path,
     rel_folder: Path,
-    files: List[str],
-    engine: Renderer,
+    files: StrSeq,
+    render: Renderer,
     must_filter: Callable[[StrOrPath], bool],
 ) -> List[Tuple[Path, Path]]:
     source_paths = []
     for src_name in files:
         dst_name = re.sub(RE_TMPL, "", str(src_name))
-        dst_name = engine.string(dst_name)
+        dst_name = render.string(dst_name)
         rel_path = rel_folder / dst_name
 
         if must_filter(rel_path):
@@ -284,23 +200,23 @@ def get_source_paths(
     return source_paths
 
 
-def render_folder(dst_path: Path, rel_folder: Path, flags: Dict[str, bool]) -> None:
+def render_folder(dst_path: Path, rel_folder: Path, flags: Flags) -> None:
     final_path = dst_path / rel_folder
-    display_path = str(rel_folder) + os.path.sep
+    display_path = f"{rel_folder}{os.path.sep}"
 
-    if str(rel_folder) == ".":
-        if not flags["pretend"]:
+    if rel_folder == Path("."):
+        if not flags.pretend:
             make_folder(final_path)
         return
 
     if final_path.exists():
-        if not flags["quiet"]:
+        if not flags.quiet:
             printf("identical", display_path, style=STYLE_IGNORE)
         return
 
-    if not flags["pretend"]:
+    if not flags.pretend:
         make_folder(final_path)
-    if not flags["quiet"]:
+    if not flags.quiet:
         printf("create", display_path, style=STYLE_OK)
 
 
@@ -308,15 +224,15 @@ def render_file(
     dst_path: Path,
     rel_path: Path,
     source_path: Path,
-    engine: Renderer,
+    render: Renderer,
     must_skip: CheckPathFunc,
-    flags: Dict[str, bool],
+    flags: Flags,
 ) -> None:
     """Process or copy a file of the skeleton.
     """
     content: Optional[str]
     if source_path.suffix == ".tmpl":
-        content = engine(source_path)
+        content = render(source_path)
     else:
         content = None
 
@@ -325,27 +241,27 @@ def render_file(
 
     if final_path.exists():
         if file_is_identical(source_path, final_path, content):
-            if not flags["quiet"]:
+            if not flags.quiet:
                 printf("identical", display_path, style=STYLE_IGNORE)
             return
 
         if must_skip(rel_path):
-            if not flags["quiet"]:
+            if not flags.quiet:
                 printf("skip", display_path, style=STYLE_WARNING)
             return
 
         if overwrite_file(display_path, source_path, final_path, flags):
-            if not flags["quiet"]:
+            if not flags.quiet:
                 printf("force", display_path, style=STYLE_WARNING)
         else:
-            if not flags["quiet"]:
+            if not flags.quiet:
                 printf("skip", display_path, style=STYLE_WARNING)
             return
     else:
-        if not flags["quiet"]:
+        if not flags.quiet:
             printf("create", display_path, style=STYLE_OK)
 
-    if flags["pretend"]:
+    if flags.pretend:
         return
 
     if content is None:
@@ -371,22 +287,21 @@ def file_has_this_content(path: Path, content: str) -> bool:
 
 
 def overwrite_file(
-    display_path: StrOrPath, source_path: Path, final_path: Path, flags: Dict[str, bool]
-) -> Optional[bool]:
-    if not flags["quiet"]:
+    display_path: StrOrPath, source_path: Path, final_path: Path, flags: Flags
+) -> OptBool:
+    if not flags.quiet:
         printf("conflict", str(display_path), style=STYLE_DANGER)
-    if flags["force"]:
+    if flags.force:
         return True
-    if flags["skip"]:
+    if flags.skip:
         return False
 
     msg = f" Overwrite {final_path}?"  # pragma:no cover
     return prompt_bool(msg, default=True)  # pragma:no cover
 
 
-def run_tasks(dst_path: StrOrPath, engine: Renderer, tasks) -> None:
-    dst_path = str(dst_path)
+def run_tasks(dst_path: StrOrPath, render: Renderer, tasks: StrSeq) -> None:
     for i, task in enumerate(tasks):
-        task = engine.string(task)
+        task = render.string(task)
         printf(f" > Running task {i + 1} of {len(tasks)}", task, style=STYLE_OK)
         subprocess.run(task, shell=True, check=True, cwd=dst_path)

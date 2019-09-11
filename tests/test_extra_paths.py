@@ -1,10 +1,10 @@
 from pathlib import Path
 
-from jinja2.exceptions import TemplateNotFound
 import pytest
 
-import copier
+from jinja2.exceptions import TemplateNotFound
 
+import copier
 
 CHILD_DIR = "./tests/demo_extra_paths/children"
 CHILD_DIR_CONFIG = "./tests/demo_extra_paths/children_config"

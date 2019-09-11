@@ -1,10 +1,9 @@
-from hashlib import sha1
-from pathlib import Path
 import filecmp
 import os
+from hashlib import sha1
+from pathlib import Path
 
 import copier
-
 
 PROJECT_TEMPLATE = Path(__file__).parent / "demo"
 
@@ -21,7 +20,7 @@ DATA = {
 
 def render(dst, **kwargs):
     kwargs.setdefault("quiet", True)
-    copier.copy(PROJECT_TEMPLATE, dst, data=DATA, **kwargs)
+    copier.copy(str(PROJECT_TEMPLATE), dst, data=DATA, **kwargs)
 
 
 def assert_file(dst, *path):

@@ -1,18 +1,21 @@
 from pathlib import Path
 
-from .tools import HLINE, INDENT, printf_block, prompt
-from .types import AnyByStrDict, StrOrPath
+from ..tools import HLINE, INDENT, printf_block, prompt
+from ..types import AnyByStrDict, StrOrPath
+
 
 
 __all__ = ("load_config_data", "query_user_data")
 
 
-def load_toml_data(src_path: StrOrPath, quiet: bool = False) -> AnyByStrDict:
+def load_toml_data(
+    src_path: StrOrPath, quiet: bool = False, _warning: bool = True
+) -> AnyByStrDict:
     toml_path = Path(src_path) / "copier.toml"
     if not toml_path.exists():
         return {}
 
-    import toml  # type: ignore
+    import toml
 
     toml_src = toml_path.read_text()
     try:
@@ -22,19 +25,21 @@ def load_toml_data(src_path: StrOrPath, quiet: bool = False) -> AnyByStrDict:
         return {}
 
 
-def load_yaml_data(src_path: StrOrPath, quiet: bool = False) -> AnyByStrDict:
+def load_yaml_data(
+    src_path: StrOrPath, quiet: bool = False, _warning: bool = True
+) -> AnyByStrDict:
     yaml_path = Path(src_path) / "copier.yml"
     if not yaml_path.exists():
         yaml_path = Path(src_path) / "copier.yaml"
         if not yaml_path.exists():
             return {}
 
-    from ruamel.yaml import YAML  # type: ignore
+    from ruamel.yaml import YAML
 
     yaml = YAML(typ="safe")
 
     try:
-        return yaml.load(yaml_path)
+        return dict(yaml.load(yaml_path))
     except Exception as e:
         printf_block(e, "INVALID", msg=str(yaml_path), quiet=quiet)
         return {}
@@ -51,7 +56,7 @@ def load_json_data(
 
     json_src = json_path.read_text()
     try:
-        return json.loads(json_src)
+        return dict(json.loads(json_src))
     except ValueError as e:
         printf_block(e, "INVALID", msg=str(json_path), quiet=quiet)
         return {}
@@ -63,13 +68,14 @@ def load_config_data(
     """Try to load the content from a `copier.yml`, a `copier.toml`, a `copier.json`,
     or the deprecated `voodoo.json`, in that order.
     """
-    data = load_yaml_data(src_path, quiet=quiet)
-    if not data:
-        data = load_toml_data(src_path, quiet=quiet)
-    if not data:
+    loaders = (load_yaml_data, load_toml_data, load_json_data)
+    for l in loaders:
         # The `_warning` argument is for easier testing
-        data = load_json_data(src_path, quiet=quiet, _warning=_warning)
-    return data
+        data = l(src_path, quiet=quiet, _warning=_warning)
+        if data:
+            return data
+    else:
+        return {}
 
 
 def query_user_data(default_user_data: AnyByStrDict) -> AnyByStrDict:  # pragma:no cover

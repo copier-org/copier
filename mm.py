@@ -7,7 +7,6 @@ Read more about it at https://github.com/jpscaletti/mastermold/
 """
 from pathlib import Path
 
-
 data = {
     "title": "Copier",
     "name": "copier",

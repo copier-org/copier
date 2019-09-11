@@ -5,14 +5,24 @@ import unicodedata
 from fnmatch import fnmatch
 from functools import reduce
 from pathlib import Path
-from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Optional, Sequence, Tuple, Union
 
-import colorama  # type: ignore
+import colorama
 from colorama import Fore, Style
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
 
-from .types import AnyByStrDict, CheckPathFunc, OptStrOrPathSeq, StrOrPath, T
+from .types import (
+    AnyByStrDict,
+    CheckPathFunc,
+    IntSeq,
+    OptStrOrPathSeq,
+    StrOrPath,
+    StrOrPathSeq,
+    StrSeq,
+    T,
+)
+
 
 
 _all__: Tuple[str, ...] = (
@@ -27,17 +37,19 @@ _all__: Tuple[str, ...] = (
 
 colorama.init()
 
-STYLE_OK: List[int] = [Fore.GREEN, Style.BRIGHT]
-STYLE_WARNING: List[int] = [Fore.YELLOW, Style.BRIGHT]
-STYLE_IGNORE: List[int] = [Fore.CYAN]
-STYLE_DANGER: List[int] = [Fore.RED, Style.BRIGHT]
+STYLE_OK: IntSeq = [Fore.GREEN, Style.BRIGHT]
+STYLE_WARNING: IntSeq = [Fore.YELLOW, Style.BRIGHT]
+STYLE_IGNORE: IntSeq = [Fore.CYAN]
+STYLE_DANGER: IntSeq = [Fore.RED, Style.BRIGHT]
 
 INDENT = " " * 2
 HLINE = "-" * 42
 
+NO_VALUE: object = object()
+
 
 def printf(
-    action: str, msg: str = "", style: Optional[List[int]] = None, indent: int = 10
+    action: str, msg: str = "", style: Optional[IntSeq] = None, indent: int = 10
 ) -> Optional[str]:
     action = action.rjust(indent, " ")
     if not style:
@@ -52,7 +64,7 @@ def printf_block(
     e: Exception,
     action: str,
     msg: str = "",
-    style: List[int] = STYLE_WARNING,
+    style: IntSeq = STYLE_WARNING,
     indent: int = 0,
     quiet: bool = False,
 ) -> None:
@@ -64,9 +76,6 @@ def printf_block(
         print(HLINE)
 
 
-no_value: object = object()
-
-
 def required(value: T, **kwargs: Any) -> T:
     if not value:
         raise ValueError()
@@ -75,7 +84,7 @@ def required(value: T, **kwargs: Any) -> T:
 
 def prompt(
     question: str,
-    default: Optional[Any] = no_value,
+    default: Optional[Any] = NO_VALUE,
     default_show: Optional[Any] = None,
     validator: Callable = required,
     **kwargs: AnyByStrDict,
@@ -90,7 +99,7 @@ def prompt(
     """
     if default_show:
         question += f" [{default_show}] "
-    elif default and default is not no_value:
+    elif default and default is not NO_VALUE:
         question += f" [{default}] "
     else:
         question += " "
@@ -100,7 +109,7 @@ def prompt(
         if not resp:
             if default is None:
                 return None
-            if default is not no_value:
+            if default is not NO_VALUE:
                 resp = default
 
         try:
@@ -115,8 +124,8 @@ def prompt_bool(
     default: Optional[Union[bool, str, object]] = False,
     yes: str = "y",
     no: str = "n",
-    yes_choices: Optional[List[str]] = None,
-    no_choices: Optional[List[str]] = None,
+    yes_choices: Optional[StrSeq] = None,
+    no_choices: Optional[StrSeq] = None,
 ) -> Optional[bool]:
     # TODO: Backwards compatibility. Remove for version 3.0
     if yes_choices:
@@ -137,7 +146,7 @@ def prompt_bool(
             raise ValueError(please_answer)
 
     if default is None:
-        default = no_value
+        default = NO_VALUE
         default_show = f"{yes}/{no}"
     elif default:
         default = yes
@@ -161,18 +170,7 @@ def make_folder(folder: Path) -> None:
 
 
 def copy_file(src: Path, dst: Path, symlinks: bool = True) -> None:
-    shutil.copy2(str(src), str(dst), follow_symlinks=symlinks)
-
-
-# The default env options for jinja2
-DEFAULT_ENV_OPTIONS: AnyByStrDict = {
-    "autoescape": False,
-    "block_start_string": "[%",
-    "block_end_string": "%]",
-    "variable_start_string": "[[",
-    "variable_end_string": "]]",
-    "keep_trailing_newline": True,
-}
+    shutil.copy2(src, dst, follow_symlinks=symlinks)
 
 
 class Renderer:
@@ -201,18 +199,16 @@ def get_jinja_renderer(
 ) -> Renderer:
     """Returns a function that can render a Jinja template.
     """
-    # Jinja <= 2.10 does not work with `pathlib.Path`s
-    _envops = DEFAULT_ENV_OPTIONS.copy()
-    _envops.update(envops or {})
+    envops = envops or {}
 
     paths = [src_path] + [Path(p) for p in extra_paths or []]
-    _envops.setdefault("loader", FileSystemLoader(paths))  # type: ignore
+    envops.setdefault("loader", FileSystemLoader(paths))  # type: ignore
 
     # We want to minimize the risk of hidden malware in the templates
     # so we use the SandboxedEnvironment instead of the regular one.
     # Of couse we still have the post-copy tasks to worry about, but at least
     # they are more visible to the final user.
-    env = SandboxedEnvironment(**_envops)
+    env = SandboxedEnvironment(**envops)
     return Renderer(env=env, src_path=src_path, data=data)
 
 
@@ -222,9 +218,7 @@ def normalize_str(text: StrOrPath, form: str = "NFD") -> str:
 
 
 def get_name_filters(
-    exclude: Sequence[StrOrPath],
-    include: Sequence[StrOrPath],
-    skip_if_exists: Sequence[StrOrPath],
+    exclude: StrOrPathSeq, include: StrOrPathSeq, skip_if_exists: StrOrPathSeq
 ) -> Tuple[CheckPathFunc, CheckPathFunc]:
     """Returns a function that evaluates if aCheckPathFunc file or folder name must be
     filtered out, and another that evaluates if a file must be skipped.
