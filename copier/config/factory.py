@@ -4,7 +4,8 @@ from ..types import AnyByStrDict, OptAnyByStrDict, OptBool, OptStrSeq
 from .objects import DEFAULT_DATA, ConfigData, EnvOps, Flags
 from .user_data import load_config_data, query_user_data
 
-__all__ = "make_config"
+
+__all__ = ("make_config",)
 
 
 def filter_config(data: AnyByStrDict) -> Tuple[AnyByStrDict, AnyByStrDict]:
@@ -35,7 +36,7 @@ def make_config(
     skip: OptBool = None,
     quiet: OptBool = None,
     cleanup_on_error: OptBool = None,
-    **kwargs
+    **kwargs,
 ) -> Tuple[ConfigData, Flags]:
     """Provides the configuration object, merged from the different sources.
 
