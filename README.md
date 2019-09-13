@@ -1,3 +1,6 @@
+Think this library is awesome? Me too! Vote with a 👍 to include it in the awesome-python list: https://github.com/vinta/awesome-python/pull/1350
+----
+
 ![Copier](https://github.com/jpscaletti/copier/raw/master/copier-logotype.png)
 
 [![](https://travis-ci.org/jpscaletti/copier.svg?branch=master)](https://travis-ci.org/jpscaletti/copier/) [![](https://img.shields.io/pypi/v/copier.svg)](https://pypi.python.org/pypi/copier) [![](https://img.shields.io/pypi/pyversions/copier.svg)](https://pypi.python.org/pypi/copier)
