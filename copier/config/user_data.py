@@ -7,9 +7,9 @@ __all__ = ("load_config_data", "query_user_data")
 
 
 class InvalidConfigFileError(ValueError):
-    def __init__(self, msg: str, quiet: bool):
-        printf_block(self, "INVALID", msg=msg, quiet=quiet)
-        super().__init__(msg)
+    def __init__(self, conf_path: Path, quiet: bool):
+        printf_block(self, "INVALID CONFIG FILE", msg=str(conf_path), quiet=quiet)
+        super().__init__(conf_path)
 
 
 def load_toml_data(
@@ -21,7 +21,7 @@ def load_toml_data(
     try:
         return dict(toml.loads(toml_src))
     except toml.TomlDecodeError as e:
-        raise InvalidConfigFileError(str(conf_path), quiet) from e
+        raise InvalidConfigFileError(conf_path, quiet) from e
 
 
 def load_yaml_data(
@@ -34,7 +34,7 @@ def load_yaml_data(
     try:
         return dict(yaml.load(conf_path))
     except YAMLError as e:
-        raise InvalidConfigFileError(str(conf_path), quiet) from e
+        raise InvalidConfigFileError(conf_path, quiet) from e
 
 
 def load_json_data(
@@ -46,7 +46,7 @@ def load_json_data(
     try:
         return dict(json.loads(json_src))
     except json.JSONDecodeError as e:
-        raise InvalidConfigFileError(str(conf_path), quiet) from e
+        raise InvalidConfigFileError(conf_path, quiet) from e
 
 
 LOADER_BY_EXT = {
