@@ -99,11 +99,8 @@ def test_config_exclude_overridden(dst):
     def fake_data(*_args, **_kwargs):
         return {"_exclude": ["*.txt"]}
 
-    # copier.user_data._load_config_data = copier.user_data.load_config_data
-    # copier.user_data.load_config_data = fake_data
     copier.copy(str(PROJECT_TEMPLATE), dst, data=DATA, quiet=True, exclude=[])
     assert (dst / "aaaa.txt").exists()
-    # copier.user_data.load_config_data = copier.user_data._load_config_data
 
 
 def test_config_include(dst):
