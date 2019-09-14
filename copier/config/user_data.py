@@ -7,6 +7,12 @@ from ..types import AnyByStrDict, StrOrPath
 __all__ = ("load_config_data", "query_user_data")
 
 
+class InvalidConfigFileError(ValueError):
+    def __init__(self, msg: str, quiet: bool):
+        printf_block(self, "INVALID", msg=msg, quiet=quiet)
+        super().__init__(msg)
+
+
 def load_toml_data(
     src_path: StrOrPath, quiet: bool = False, _warning: bool = True
 ) -> AnyByStrDict:
@@ -19,9 +25,8 @@ def load_toml_data(
     toml_src = toml_path.read_text()
     try:
         return dict(toml.loads(toml_src))
-    except Exception as e:
-        printf_block(e, "INVALID", msg=str(toml_path), quiet=quiet)
-        return {}
+    except toml.TomlDecodeError as e:
+        raise InvalidConfigFileError(str(toml_path), quiet) from e
 
 
 def load_yaml_data(
@@ -33,15 +38,14 @@ def load_yaml_data(
         if not yaml_path.exists():
             return {}
 
-    from ruamel.yaml import YAML
+    from ruamel.yaml import YAML, YAMLError
 
     yaml = YAML(typ="safe")
 
     try:
         return dict(yaml.load(yaml_path))
-    except Exception as e:
-        printf_block(e, "INVALID", msg=str(yaml_path), quiet=quiet)
-        return {}
+    except YAMLError as e:
+        raise InvalidConfigFileError(str(yaml_path), quiet) from e
 
 
 def load_json_data(
@@ -56,9 +60,8 @@ def load_json_data(
     json_src = json_path.read_text()
     try:
         return dict(json.loads(json_src))
-    except ValueError as e:
-        printf_block(e, "INVALID", msg=str(json_path), quiet=quiet)
-        return {}
+    except json.JSONDecodeError as e:
+        raise InvalidConfigFileError(str(json_path), quiet) from e
 
 
 def load_config_data(

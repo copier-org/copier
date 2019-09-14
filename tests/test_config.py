@@ -19,6 +19,7 @@ from copier.config.user_data import (
     load_json_data,
     load_toml_data,
     load_yaml_data,
+    InvalidConfigFileError
 )
 
 
@@ -56,36 +57,43 @@ def test_config_data_is_loaded_from_file():
 )
 def test_read_data(dst, template):
     copier.copy(template, dst, force=True)
-
     gen_file = dst / "user_data.txt"
     result = gen_file.read_text()
     expected = Path("tests/user_data.ref.txt").read_text()
     assert result == expected
 
 
-def test_bad_toml(capsys):
-    assert {} == load_toml_data("tests/demo_badtoml")
-
-
-def test_invalid_toml(capsys):
-    assert {} == load_yaml_data("tests/demo_invalid")
+def test_invalid_yaml(capsys):
+    with pytest.raises(InvalidConfigFileError):
+        load_yaml_data("tests/demo_invalid")
     out, _ = capsys.readouterr()
     assert re.search(r"INVALID.*tests/demo_invalid/copier\.yml", out)
 
-    assert {} == load_toml_data("tests/demo_invalid")
+
+def test_invalid_toml(capsys):
+    with pytest.raises(InvalidConfigFileError):
+        load_toml_data("tests/demo_invalid")
     out, _ = capsys.readouterr()
     assert re.search(r"INVALID.*tests/demo_invalid/copier\.toml", out)
 
-    assert {} == load_json_data("tests/demo_invalid")
+
+def test_invalid_json(capsys):
+    with pytest.raises(InvalidConfigFileError):
+        load_json_data("tests/demo_invalid")
     out, _ = capsys.readouterr()
     assert re.search(r"INVALID.*tests/demo_invalid/copier\.json", out)
 
-    assert {} == load_config_data("tests/demo_invalid", _warning=False)
+
+def test_invalid_data(capsys):
+    with pytest.raises(InvalidConfigFileError):
+        load_config_data("tests/demo_invalid", _warning=False)
+    out, _ = capsys.readouterr()
     assert re.search(r"INVALID", out)
 
 
 def test_invalid_quiet(capsys):
-    assert {} == load_config_data("tests/demo_invalid", quiet=True)
+    with pytest.raises(InvalidConfigFileError):
+        load_config_data("tests/demo_invalid", quiet=True)
     out, _ = capsys.readouterr()
     assert out == ""
 
