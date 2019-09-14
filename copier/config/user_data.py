@@ -61,7 +61,7 @@ def load_json_data(
     try:
         return dict(json.loads(json_src))
     except json.JSONDecodeError as e:
-        raise InvalidConfigFileError(json_src, quiet) from e
+        raise InvalidConfigFileError(str(json_path), quiet) from e
 
 
 def load_config_data(
