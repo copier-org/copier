@@ -19,7 +19,7 @@ from copier.config.user_data import (
     load_json_data,
     load_toml_data,
     load_yaml_data,
-    InvalidConfigFileError
+    InvalidConfigFileError,
 )
 
 
