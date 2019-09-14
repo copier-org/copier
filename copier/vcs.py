@@ -7,7 +7,6 @@ from typing import Optional
 
 from .types import StrOrPath
 
-
 __all__ = ("get_repo", "clone")
 
 GIT_PREFIX = ("git@", "git://", "git+")

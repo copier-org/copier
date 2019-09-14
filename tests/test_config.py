@@ -4,7 +4,6 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-
 import copier
 from copier.config.factory import make_config
 from copier.config.objects import (
@@ -15,13 +14,12 @@ from copier.config.objects import (
     Flags,
 )
 from copier.config.user_data import (
+    InvalidConfigFileError,
     load_config_data,
     load_json_data,
     load_toml_data,
     load_yaml_data,
-    InvalidConfigFileError
 )
-
 
 GOOD_FLAGS = {
     "pretend": True,

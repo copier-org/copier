@@ -23,7 +23,6 @@ from .types import (
     T,
 )
 
-
 __all__ = (
     "STYLE_OK",
     "STYLE_WARNING",
