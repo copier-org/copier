@@ -8,7 +8,6 @@ from pydantic import BaseModel, Extra, StrictBool, validator
 
 from ..types import AnyByStrDict, PathSeq, StrOrPathSeq, StrSeq
 
-
 # Default list of files in the template to exclude from the rendered project
 DEFAULT_EXCLUDE: Tuple[str, ...] = (
     "copier.yaml",

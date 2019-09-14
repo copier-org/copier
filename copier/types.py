@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Sequence, TypeVar, Union
 
-
 # simple types
 StrOrPath = Union[str, Path]
 AnyByStrDict = Dict[str, Any]
