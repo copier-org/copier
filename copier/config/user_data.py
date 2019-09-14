@@ -66,8 +66,8 @@ def load_json_data(
 def load_config_data(
     src_path: StrOrPath, quiet: bool = False, _warning: bool = True
 ) -> AnyByStrDict:
-    """Try to load the content from a `copier.yml`, a `copier.toml`, a `copier.json`,
-    or the deprecated `voodoo.json`, in that order.
+    """Try to load the content from a `copier.yml`, a `copier.toml`,
+    or a `copier.json` in that order of precedence.
     """
     loaders = (load_yaml_data, load_toml_data, load_json_data)
     for l in loaders:
