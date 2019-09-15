@@ -1,4 +1,4 @@
-Think this library is awesome? Me too! Vote with a 👍 to include it in the awesome-python list: https://github.com/vinta/awesome-python/pull/1350
+Think this library is awesome? Vote with a 👍 to include it in the awesome-python list: https://github.com/vinta/awesome-python/pull/1350
 ----
 
 ![Copier](https://github.com/jpscaletti/copier/raw/master/copier-logotype.png)
