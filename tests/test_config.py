@@ -62,22 +62,25 @@ def test_read_data(dst, template):
 
 
 def test_invalid_yaml(capsys):
+    conf_path = Path("tests/demo_invalid/copier.yml")
     with pytest.raises(InvalidConfigFileError):
-        load_yaml_data("tests/demo_invalid")
+        load_yaml_data(conf_path)
     out, _ = capsys.readouterr()
     assert re.search(r"INVALID.*tests/demo_invalid/copier\.yml", out)
 
 
 def test_invalid_toml(capsys):
+    conf_path = Path("tests/demo_invalid/copier.toml")
     with pytest.raises(InvalidConfigFileError):
-        load_toml_data("tests/demo_invalid")
+        load_toml_data(conf_path)
     out, _ = capsys.readouterr()
     assert re.search(r"INVALID.*tests/demo_invalid/copier\.toml", out)
 
 
 def test_invalid_json(capsys):
+    conf_path = Path("tests/demo_invalid/copier.json")
     with pytest.raises(InvalidConfigFileError):
-        load_json_data("tests/demo_invalid")
+        load_json_data(conf_path)
     out, _ = capsys.readouterr()
     assert re.search(r"INVALID.*tests/demo_invalid/copier\.json", out)
 
