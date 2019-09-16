@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from ..tools import HLINE, INDENT, printf_block, prompt
-from ..types import AnyByStrDict, StrOrPath
+from ..types import AnyByStrDict, StrOrPath, PathSeq
 
 __all__ = ("load_config_data", "query_user_data",)
 
@@ -10,6 +10,12 @@ class InvalidConfigFileError(ValueError):
     def __init__(self, conf_path: Path, quiet: bool):
         printf_block(self, "INVALID CONFIG FILE", msg=str(conf_path), quiet=quiet)
         super().__init__(conf_path)
+
+
+class MultipleConfigFilesError(ValueError):
+    def __init__(self, conf_paths: PathSeq, quiet: bool):
+        printf_block(self, "MULTIPLE CONFIG FILES", msg=str(conf_paths), quiet=quiet)
+        super().__init__(str(conf_paths))
 
 
 def load_yaml_data(
@@ -25,21 +31,23 @@ def load_yaml_data(
         raise InvalidConfigFileError(conf_path, quiet) from e
 
 
-LOADER_BY_EXT = {"yaml": load_yaml_data, "yml": load_yaml_data}
-
-
 def load_config_data(
     src_path: StrOrPath, quiet: bool = False, _warning: bool = True
 ) -> AnyByStrDict:
     """Try to load the content from a `copier.yml` or a `copier.yaml` file.
     """
-    for ext, loader in LOADER_BY_EXT.items():
-        conf_path = Path(src_path).joinpath(f"copier.{ext}")
-        if conf_path.exists() and conf_path.is_file():
-            data = loader(conf_path, quiet=quiet, _warning=_warning)
-            if data:
-                return data
-    return {}
+    conf_paths = [
+        p for p in
+        Path(src_path).glob("copier.*")
+        if p.is_file() and p.suffix in (".yml", ".yaml",)
+    ]
+
+    if len(conf_paths) > 1:
+        raise MultipleConfigFilesError(conf_paths, quiet=quiet)
+    elif len(conf_paths) == 1:
+        return load_yaml_data(conf_paths[0], quiet=quiet, _warning=_warning)
+    else:
+        return {}
 
 
 def query_user_data(default_user_data: AnyByStrDict) -> AnyByStrDict:  # pragma:no cover
