@@ -15,6 +15,7 @@ from copier.config.objects import (
 )
 from copier.config.user_data import (
     InvalidConfigFileError,
+    MultipleConfigFilesError,
     load_config_data,
     load_yaml_data,
 )
@@ -74,6 +75,13 @@ def test_invalid_data(capsys):
 def test_invalid_quiet(capsys):
     with pytest.raises(InvalidConfigFileError):
         load_config_data("tests/demo_invalid", quiet=True)
+    out, _ = capsys.readouterr()
+    assert out == ""
+
+
+def test_multiple_config_file_error(capsys):
+    with pytest.raises(MultipleConfigFilesError):
+        load_config_data("tests/demo_multi_config", quiet=True)
     out, _ = capsys.readouterr()
     assert out == ""
 
@@ -214,3 +222,6 @@ def test_make_config_good_data(dst):
 def test_make_config_precedence(dst, test_input, expected):
     conf, flags = make_config(dst_path=dst, **test_input)
     assert is_subdict(expected, conf.dict())
+
+
+
