@@ -12,8 +12,6 @@ from ..types import AnyByStrDict, PathSeq, StrOrPathSeq, StrSeq
 DEFAULT_EXCLUDE: Tuple[str, ...] = (
     "copier.yaml",
     "copier.yml",
-    "copier.toml",
-    "copier.json",
     "~*",
     "*.py[co]",
     "__pycache__",

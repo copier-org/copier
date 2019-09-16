@@ -3,7 +3,6 @@ from pathlib import Path
 import pytest
 
 import copier
-
 from .helpers import DATA, PROJECT_TEMPLATE, assert_file, filecmp, render
 
 

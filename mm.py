@@ -24,7 +24,6 @@ data = {
     "install_requires": [
         "jinja2 ~= 2.10",
         "colorama ~= 0.4",
-        "toml ~= 0.10",
         "ruamel.yaml ~= 0.15",
     ],
     "testing_requires": ["pytest", "pytest-mock", "pytest-mypy"],

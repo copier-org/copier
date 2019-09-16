@@ -15,9 +15,8 @@ from copier.config.objects import (
 )
 from copier.config.user_data import (
     InvalidConfigFileError,
+    MultipleConfigFilesError,
     load_config_data,
-    load_json_data,
-    load_toml_data,
     load_yaml_data,
 )
 
@@ -49,10 +48,7 @@ def test_config_data_is_loaded_from_file():
     assert config["_extra_paths"] == ["tests"]
 
 
-@pytest.mark.parametrize(
-    "template",
-    ["tests/demo_toml", "tests/demo_yaml", "tests/demo_yml", "tests/demo_json"],
-)
+@pytest.mark.parametrize("template", ["tests/demo_yaml", "tests/demo_yml"])
 def test_read_data(dst, template):
     copier.copy(template, dst, force=True)
     gen_file = dst / "user_data.txt"
@@ -69,22 +65,6 @@ def test_invalid_yaml(capsys):
     assert re.search(r"INVALID.*tests/demo_invalid/copier\.yml", out)
 
 
-def test_invalid_toml(capsys):
-    conf_path = Path("tests/demo_invalid/copier.toml")
-    with pytest.raises(InvalidConfigFileError):
-        load_toml_data(conf_path)
-    out, _ = capsys.readouterr()
-    assert re.search(r"INVALID.*tests/demo_invalid/copier\.toml", out)
-
-
-def test_invalid_json(capsys):
-    conf_path = Path("tests/demo_invalid/copier.json")
-    with pytest.raises(InvalidConfigFileError):
-        load_json_data(conf_path)
-    out, _ = capsys.readouterr()
-    assert re.search(r"INVALID.*tests/demo_invalid/copier\.json", out)
-
-
 def test_invalid_data(capsys):
     with pytest.raises(InvalidConfigFileError):
         load_config_data("tests/demo_invalid", _warning=False)
@@ -95,6 +75,13 @@ def test_invalid_data(capsys):
 def test_invalid_quiet(capsys):
     with pytest.raises(InvalidConfigFileError):
         load_config_data("tests/demo_invalid", quiet=True)
+    out, _ = capsys.readouterr()
+    assert out == ""
+
+
+def test_multiple_config_file_error(capsys):
+    with pytest.raises(MultipleConfigFilesError):
+        load_config_data("tests/demo_multi_config", quiet=True)
     out, _ = capsys.readouterr()
     assert out == ""
 
@@ -235,3 +222,6 @@ def test_make_config_good_data(dst):
 def test_make_config_precedence(dst, test_input, expected):
     conf, flags = make_config(dst_path=dst, **test_input)
     assert is_subdict(expected, conf.dict())
+
+
+

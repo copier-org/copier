@@ -54,8 +54,7 @@ that variables are referenced with ``[[ name ]]`` instead of
 documentation](http://jinja.pocoo.org/docs>).
 
 If a **YAML** file named `copier.yml` is found in the root of the
-project (alternatively, a TOML file named `copier.toml`, or
-a JSON file named `copier.json`), the user will be prompted to fill in or confirm the default values.
+project (alternatively, a YAML file named `copier.yaml`), the user will be prompted to fill in or confirm the default values.
 
 Use the `data` argument to pass whatever extra context you want to be available
 in the templates. The arguments can be any valid Python value, even a
@@ -67,7 +66,7 @@ on a previous Python version.
 
 ## The copier.yml file
 
-If a `copier.yml`, `copier.toml`, or `copier.json` file is found in the root of the project,
+If a `copier.yml`, or `copier.yaml` file is found in the root of the project,
 it will be read and used for two purposes:
 
 ### Prompt the user for information
