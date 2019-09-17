@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 from ..tools import HLINE, INDENT, printf_block, prompt
 from ..types import AnyByStrDict, StrOrPath, PathSeq
@@ -39,7 +40,7 @@ def load_config_data(
     conf_paths = [
         p for p in
         Path(src_path).glob("copier.*")
-        if p.is_file() and p.suffix in (".yml", ".yaml",)
+        if p.is_file() and re.match(r"\.ya?ml", p.suffix, re.I)
     ]
 
     if len(conf_paths) > 1:
