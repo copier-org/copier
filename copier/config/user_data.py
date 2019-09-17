@@ -38,8 +38,7 @@ def load_config_data(
     """Try to load the content from a `copier.yml` or a `copier.yaml` file.
     """
     conf_paths = [
-        p for p in
-        Path(src_path).glob("copier.*")
+        p for p in Path(src_path).glob("copier.*")
         if p.is_file() and re.match(r"\.ya?ml", p.suffix, re.I)
     ]
 

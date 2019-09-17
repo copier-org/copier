@@ -222,6 +222,3 @@ def test_make_config_good_data(dst):
 def test_make_config_precedence(dst, test_input, expected):
     conf, flags = make_config(dst_path=dst, **test_input)
     assert is_subdict(expected, conf.dict())
-
-
-
