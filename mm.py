@@ -25,6 +25,7 @@ data = {
         "jinja2 ~= 2.10",
         "colorama ~= 0.4",
         "ruamel.yaml ~= 0.15",
+        "pydantic ~= 0.32"
     ],
     "testing_requires": ["pytest", "pytest-mock", "pytest-mypy"],
     "development_requires": [
