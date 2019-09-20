@@ -9,7 +9,7 @@ A library for rendering projects templates.
 
 * Works with **local** paths and **git URLs**.
 * Your project can include any file and `Copier` can dynamically replace values in any kind of text files.
-* It generates a beautiful output and take care of not overwrite existing files, unless instructed to do so.
+* It generates a beautiful output and takes care of not overwrite existing files unless instructed to do so.
 
 ![Sample output](https://github.com/jpscaletti/copier/raw/master/copier-output.png)
 
@@ -43,12 +43,12 @@ copier path/to/project/template path/to/destination
 
 ## How it works
 
-The content of the files inside the project template are copied to the destination
+The content of the files inside the project template is copied to the destination
 without changes, **unless are suffixed with the extension '.tmpl'.**
 In that case, the templating engine will be used to render them.
 
 A slightly customized Jinja2 templating is used. The main difference is
-that variables are referenced with ``[[ name ]]`` instead of
+those variables are referenced with ``[[ name ]]`` instead of
 ``{{ name }}`` and blocks are ``[% if name %]`` instead of
 ``{% if name %}``. To read more about templating see the [Jinja2
 documentation](http://jinja.pocoo.org/docs>).
@@ -72,7 +72,7 @@ it will be read and used for two purposes:
 ### Prompt the user for information
 
 For each key found, Copier will prompt the user to fill or confirm the values before
-they become avaliable to the project template. So a content like this:
+they become available to the project template. So content like this:
 
 ```yaml
 name_of_the_project: My awesome project
@@ -107,7 +107,7 @@ optional_value: null
 The keys `_exclude`, `_include`, `_skip_if_exists`, `_tasks`, and `_extra_paths` in the `copier.yml` file, will be treated as the default values for the `exclude`, `include`, `tasks`, and , `extra_paths` arguments to
 `copier.copy()`.
 
-Note that they become just *the defaults*, so any explicitely-passed argument will
+Note that they become just *the defaults*, so any explicitly-passed argument will
 overwrite them.
 
 ```yaml
@@ -173,13 +173,13 @@ Uses the template in *src_path* to generate a new project at *dst_path*.
 **Arguments**:
 
 - **src_path** (str):<br>
-    Absolute path to the project skeleton. May be a version control system URL.
+    Absolute path to the project skeleton. Can be a version control system URL.
 
 - **dst_path** (str):<br>
     Absolute path to where to render the skeleton.
 
 - **data** (dict):<br>
-    Data to be passed to the templates in addtion to the user data from
+    Data to be passed to the templates in addition to the user data from
     a `copier.yml`.
 
 - **exclude** (list):<br>
@@ -190,7 +190,7 @@ Uses the template in *src_path* to generate a new project at *dst_path*.
 
 - **include** (list):<br>
     A list of names or shell-style patterns matching files or folders that
-    must be included, even if its name are a match for the `exclude` list.
+    must be included, even if its name is a match for the `exclude` list.
     Eg: `['.gitignore']`. The default is an empty list.
 
 - **skip_if_exists** (list):<br>
@@ -200,14 +200,13 @@ Uses the template in *src_path* to generate a new project at *dst_path*.
     Optional lists of commands to run in order after finishing the copy.
     Like in the templates files, you can use variables on the commands that will
     be replaced by the real values before running the command.
-    If one of the commands fail, the rest of them will not run.
+    If one of the commands fails, the rest of them will not run.
 
 - **envops** (dict):<br>
     Extra options for the Jinja template environment.
 
 - **extra_paths** (list):<br>
-    Additional paths, from where to search for
-    templates. This is intended to be used with shared parent templates, files
+    Additional paths, from where to search for templates. This is intended to be used with shared parent templates, files
     with macros, etc. outside the copied project skeleton.
 
 - **pretend** (bool):<br>
