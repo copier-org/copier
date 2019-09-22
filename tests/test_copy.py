@@ -83,15 +83,14 @@ def test_skip_if_exists_rendered_patterns(dst):
     assert (dst / "meh" / "c.txt").read_text() == "SKIPPED"
 
 
-def test_config_exclude(dst):
+def test_config_exclude(dst, monkeypatch):
     def fake_data(*_args, **_kwargs):
         return {"_exclude": ["*.txt"]}
 
-    copier.config.factory._load_config_data = copier.config.factory.load_config_data
-    copier.config.factory.load_config_data = fake_data
+    monkeypatch.setattr(copier.config.factory, "load_config_data", fake_data)
+
     copier.copy(str(PROJECT_TEMPLATE), dst, data=DATA, quiet=True)
     assert not (dst / "aaaa.txt").exists()
-    copier.config.factory.load_config_data = copier.config.factory._load_config_data
 
 
 def test_config_exclude_overridden(dst):
@@ -102,15 +101,14 @@ def test_config_exclude_overridden(dst):
     assert (dst / "aaaa.txt").exists()
 
 
-def test_config_include(dst):
+def test_config_include(dst, monkeypatch):
     def fake_data(*_args, **_kwargs):
         return {"_include": [".svn"]}
 
-    copier.config.factory._load_config_data = copier.config.factory.load_config_data
-    copier.config.factory.load_config_data = fake_data
+    monkeypatch.setattr(copier.config.factory, "load_config_data", fake_data)
+
     copier.copy(str(PROJECT_TEMPLATE), dst, data=DATA, quiet=True)
     assert (dst / ".svn").exists()
-    copier.config.factory.load_config_data = copier.config.factory._load_config_data
 
 
 def test_skip_option(dst):
