@@ -136,10 +136,3 @@ def test_pretend_option(dst):
     assert not (dst / "doc").exists()
     assert not (dst / "config.py").exists()
     assert not (dst / "pyproject.toml").exists()
-
-
-def test_tasks(dst):
-    tasks = ["touch [[ myvar ]]/1.txt", "touch [[ myvar ]]/2.txt"]
-    render(dst, tasks=tasks)
-    assert (dst / DATA["myvar"] / "1.txt").exists()
-    assert (dst / DATA["myvar"] / "2.txt").exists()
