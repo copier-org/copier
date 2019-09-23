@@ -30,6 +30,7 @@ def make_config(
     tasks: OptStrSeq = None,
     envops: OptAnyByStrDict = None,
     extra_paths: OptStrSeq = None,
+    extends = None,
     pretend: OptBool = None,
     force: OptBool = None,
     skip: OptBool = None,

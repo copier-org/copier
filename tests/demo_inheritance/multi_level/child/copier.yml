@@ -1,1 +1,1 @@
-_extends: './tests/demo_inheritance/multi_level/parent'
+_extends: ./tests/demo_inheritance/multi_level/parent

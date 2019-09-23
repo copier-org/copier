@@ -45,5 +45,9 @@ def test_inheritance_tasks(dst):
     src_path = DEMO_FOLDER / "tasks" / "child"
     copier.copy(str(src_path), dst)
 
-    assert (Path(dst) / "touched_by_child.txt").exists()
-    assert (Path(dst) / "touched_by_parent.txt").exists()
+    touched_by_child_txt = Path(dst) / "touched_by_child.txt"
+    touched_by_parent_txt = Path(dst) / "touched_by_parent.txt"
+    assert touched_by_child_txt.exists()
+    assert touched_by_parent_txt.exists()
+    # assert parent tasks ran before child tasks
+    assert touched_by_parent_txt.stat().st_ctime < touched_by_child_txt.stat().st_ctime
