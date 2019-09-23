@@ -12,6 +12,8 @@ StrOrPathSeq = Sequence[StrOrPath]
 PathSeq = Sequence[Path]
 
 # optional types
+OptPath = Optional[Path]
+OptStrOrPath = Optional[StrOrPath]
 OptBool = Optional[bool]
 OptStrOrPathSeq = Optional[StrOrPathSeq]
 OptStrSeq = Optional[StrSeq]

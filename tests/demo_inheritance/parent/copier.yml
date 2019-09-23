@@ -1,0 +1,2 @@
+_tasks:
+  - touch 'touched_by_parent.txt'

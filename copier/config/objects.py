@@ -6,7 +6,7 @@ from typing import Any, Tuple
 
 from pydantic import BaseModel, Extra, StrictBool, validator
 
-from ..types import AnyByStrDict, PathSeq, StrOrPathSeq, StrSeq
+from ..types import AnyByStrDict, PathSeq, StrOrPathSeq, OptStrOrPath, StrSeq
 
 # Default list of files in the template to exclude from the rendered project
 DEFAULT_EXCLUDE: Tuple[str, ...] = (
@@ -57,6 +57,7 @@ class ConfigData(BaseModel):
     dst_path: Path
     data: AnyByStrDict = DEFAULT_DATA
     extra_paths: PathSeq = []
+    extends: OptStrOrPath = None
     exclude: StrOrPathSeq = DEFAULT_EXCLUDE
     include: StrOrPathSeq = []
     skip_if_exists: StrOrPathSeq = []
@@ -68,11 +69,11 @@ class ConfigData(BaseModel):
         self.data["folder_name"] = Path(self.dst_path).name
 
     # sanitizers
-    @validator("src_path", "dst_path", "extra_paths", pre=True)
+    @validator("src_path", "dst_path", "extra_paths", "extends", pre=True)
     def resolve_path(cls, v: Path) -> Path:
         return Path(v).expanduser().resolve()
 
-    @validator("src_path", "extra_paths", pre=True)
+    @validator("src_path", "extra_paths", "extends", pre=True)
     def dir_must_exist(cls, v: Path) -> Path:
         if not v.exists():
             raise ValueError("Project template not found.")

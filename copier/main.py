@@ -27,6 +27,7 @@ from .types import (
     CheckPathFunc,
     OptBool,
     OptStrSeq,
+    OptStrOrPath,
     PathSeq,
     StrOrPath,
     StrOrPathSeq,
@@ -49,6 +50,7 @@ def copy(
     tasks: OptStrSeq = None,
     envops: AnyByStrDict = None,
     extra_paths: OptStrSeq = None,
+    extends: OptStrOrPath = None,
     pretend: OptBool = False,
     force: OptBool = False,
     skip: OptBool = False,
@@ -98,6 +100,12 @@ def copy(
         templates. This is intended to be used with shared parent templates, files
         with macros, etc. outside the copied project skeleton.
 
+    - extends (str):
+        Optional. Parent template folder to inherit from. It will be rendered before
+        the child template to the same destination. If it contains an `copier.yml` it
+        will be processed as well. File conflicts between parent and child template can
+        be resolved either manually or by providing either`skip` or `force` options.
+
     - pretend (bool):
         Run but do not make any changes
 
@@ -119,6 +127,11 @@ def copy(
         src_path = vcs.clone(repo)
 
     conf, flags = make_config(**locals())
+
+    if conf.extends:
+        parent_conf = {**conf.dict(), **flags.dict()}
+        parent_conf["src_path"] = parent_conf.pop("extends")
+        copy(**parent_conf)
 
     try:
         copy_local(flags=flags, **conf.dict())
@@ -143,6 +156,7 @@ def copy_local(
     tasks: StrSeq,
     envops: Optional[AnyByStrDict],
     flags: Flags,
+    **kwargs,  # catching 'extends'
 ) -> None:
 
     render = get_jinja_renderer(src_path, data, extra_paths, envops)

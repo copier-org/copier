@@ -175,6 +175,7 @@ def test_config_data_good_data(dst):
         "dst_path": dst,
         "data": DEFAULT_DATA,
         "extra_paths": [dst],
+        "extends": None,
         "exclude": DEFAULT_EXCLUDE,
         "include": [],
         "skip_if_exists": ["skip_me"],
