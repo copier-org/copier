@@ -1,0 +1,4 @@
+_extends: './tests/demo_inheritance/tasks/parent'
+
+_tasks:
+  - touch "touched_by_child.txt"

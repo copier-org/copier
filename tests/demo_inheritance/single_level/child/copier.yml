@@ -1,0 +1,6 @@
+_extends: ./tests/demo_inheritance/single_level/parent
+
+_skip: True
+
+_tasks:
+  - touch "a.txt"

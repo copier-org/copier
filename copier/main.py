@@ -116,7 +116,7 @@ def copy(
         Skip files that already exist, without asking
 
     - quiet (bool):
-        Suppress the status output
+        Suppress the status outputm
 
     - cleanup_on_error (bool):
         Remove the destination folder if the copy process or one of the tasks fail.
@@ -131,6 +131,7 @@ def copy(
     if conf.extends:
         parent_conf = {**conf.dict(), **flags.dict()}
         parent_conf["src_path"] = parent_conf.pop("extends")
+        del parent_conf["tasks"]  # preventing multiple runs
         copy(**parent_conf)
 
     try:
