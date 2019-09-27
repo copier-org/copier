@@ -14,7 +14,6 @@ before_install:
   - pip install -U pip
 
 install:
-  - pip install .
   - pip install .[testing]
 
 script: pytest -x --mypy-ignore-missing-imports .
