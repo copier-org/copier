@@ -11,9 +11,13 @@ matrix:
     - python: 'nightly'
 
 before_install:
-  - pip install -U pip
+  - pip install -U pip coveralls
 
 install:
   - pip install .[testing]
 
-script: pytest -x --mypy-ignore-missing-imports .
+script:
+  - pytest --cov copier copier tests
+
+after_success:
+  - coveralls

@@ -31,9 +31,9 @@ data = {
         "pytest",
         "pytest-mock",
         "pytest-mypy"
+        "pytest-cov",
     ],
     "development_requires": [
-        "pytest-cov",
         "pytest-flake8",
         "flake8",
         "ipdb",
