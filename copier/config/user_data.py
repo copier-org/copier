@@ -50,7 +50,7 @@ def load_config_data(
         return {}
 
 
-def query_user_data(default_user_data: AnyByStrDict) -> AnyByStrDict:  # pragma:no cover
+def query_user_data(default_user_data: AnyByStrDict) -> AnyByStrDict:  # pragma: no cover
     """Query to user about the data of the config file.
     """
     if not default_user_data:

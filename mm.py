@@ -25,21 +25,22 @@ data = {
         "jinja2 ~= 2.10",
         "colorama ~= 0.4",
         "ruamel.yaml ~= 0.15",
+        "pydantic ~= 0.30",
     ],
-    "testing_requires": ["pytest", "pytest-mock", "pytest-mypy"],
+    "testing_requires": [
+        "pytest",
+        "pytest-mock",
+        "pytest-mypy"
+    ],
     "development_requires": [
         "pytest-cov",
         "pytest-flake8",
-        "pytest-mypy",
         "flake8",
         "ipdb",
         "tox",
     ],
     "entry_points": "copier = copier.cli:run",
     "coverage_omit": [],
-    "has_docs": False,
-    "google_analytics": "UA-XXXXXXXX-X",
-    "docs_nav": [],
 }
 
 exclude = [
@@ -56,18 +57,6 @@ exclude = [
 
 def do_the_thing():
     import copier
-    from ruamel.yaml import YAML
-
-    def save_current_nav():
-        yaml = YAML()
-        mkdocs_path = Path("docs") / "mkdocs.yml"
-        if not mkdocs_path.exists():
-            return
-        mkdocs = yaml.load(mkdocs_path)
-        data["docs_nav"] = mkdocs.get("nav")
-
-    if data["has_docs"]:
-        save_current_nav()
 
     copier.copy(
         # "gh:jpscaletti/mastermold.git",
@@ -75,7 +64,7 @@ def do_the_thing():
         ".",
         data=data,
         exclude=exclude,
-        force=True,
+        force=False,
         cleanup_on_error=False,
     )
 
