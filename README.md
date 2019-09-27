@@ -3,7 +3,7 @@ Think this library is awesome? Vote with a 👍 to include it in the awesome-pyt
 
 ![Copier](https://github.com/jpscaletti/copier/raw/master/copier-logotype.png)
 
-[![](https://travis-ci.org/jpscaletti/copier.svg?branch=master)](https://travis-ci.org/jpscaletti/copier/) [![](https://img.shields.io/pypi/v/copier.svg)](https://pypi.python.org/pypi/copier) [![](https://img.shields.io/pypi/pyversions/copier.svg)](https://pypi.python.org/pypi/copier)
+[![Coverage Status](https://coveralls.io/repos/github/jpscaletti/copier/badge.svg?branch=master)](https://coveralls.io/github/jpscaletti/copier?branch=master) [![Tests](https://travis-ci.org/jpscaletti/copier.svg?branch=master)](https://travis-ci.org/jpscaletti/copier/) [![](https://img.shields.io/pypi/pyversions/copier.svg)](https://pypi.python.org/pypi/copier)
 
 A library for rendering projects templates.
 
