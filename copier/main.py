@@ -198,20 +198,20 @@ def get_source_paths(
 
 
 def render_folder(dst_path: Path, rel_folder: Path, flags: Flags) -> None:
-    final_path = dst_path / rel_folder
+    dst_path = dst_path / rel_folder
     rel_path = f"{rel_folder}{os.path.sep}"
 
     if rel_folder == Path("."):
         if not flags.pretend:
-            make_folder(final_path)
+            make_folder(dst_path)
         return
 
-    if final_path.exists():
+    if dst_path.exists():
         printf("identical", rel_path, style=Style.IGNORE, quiet=flags.quiet)
         return
 
     if not flags.pretend:
-        make_folder(final_path)
+        make_folder(dst_path)
 
     printf("create", rel_path, style=Style.OK, quiet=flags.quiet)
 

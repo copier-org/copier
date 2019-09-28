@@ -167,8 +167,8 @@ def make_folder(folder: Path) -> None:
                 raise
 
 
-def copy_file(src: Path, dst: Path, symlinks: bool = True) -> None:
-    shutil.copy2(src, dst, follow_symlinks=symlinks)
+def copy_file(src_path: Path, dst_path: Path, follow_symlinks: bool = True) -> None:
+    shutil.copy2(src_path, dst_path, follow_symlinks=follow_symlinks)
 
 
 class Renderer:
