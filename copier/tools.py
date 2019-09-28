@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any, Callable, Optional, Sequence, Tuple, Union
 
 import colorama
-from colorama import Fore, Style
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
 from pydantic import StrictBool
@@ -20,15 +19,11 @@ from .types import (
     OptStrOrPathSeq,
     StrOrPath,
     StrOrPathSeq,
-    StrSeq,
     T,
 )
 
 __all__ = (
-    "STYLE_OK",
-    "STYLE_WARNING",
-    "STYLE_IGNORE",
-    "STYLE_DANGER",
+    "Style",
     "printf",
     "prompt",
     "prompt_bool",
@@ -36,10 +31,14 @@ __all__ = (
 
 colorama.init()
 
-STYLE_OK: IntSeq = [Fore.GREEN, Style.BRIGHT]
-STYLE_WARNING: IntSeq = [Fore.YELLOW, Style.BRIGHT]
-STYLE_IGNORE: IntSeq = [Fore.CYAN]
-STYLE_DANGER: IntSeq = [Fore.RED, Style.BRIGHT]
+
+class Style:
+    OK: IntSeq = [colorama.Fore.GREEN, colorama.Style.BRIGHT]
+    WARNING: IntSeq = [colorama.Fore.YELLOW, colorama.Style.BRIGHT]
+    IGNORE: IntSeq = [colorama.Fore.CYAN]
+    DANGER: IntSeq = [colorama.Fore.RED, colorama.Style.BRIGHT]
+    RESET: IntSeq = [colorama.Fore.RESET, colorama.Style.RESET_ALL]
+
 
 INDENT = " " * 2
 HLINE = "-" * 42
@@ -61,7 +60,7 @@ def printf(
     if not style:
         return action + _msg
 
-    out = style + [action, Fore.RESET, Style.RESET_ALL, INDENT, _msg]  # type: ignore
+    out = style + [action] + Style.RESET + [INDENT, _msg]  # type: ignore
     print(*out, sep="")
     return None  # HACK: Satisfy MyPy
 
@@ -70,7 +69,7 @@ def printf_block(
     e: Exception,
     action: str,
     msg: str = "",
-    style: IntSeq = STYLE_WARNING,
+    style: IntSeq = Style.WARNING,
     indent: int = 0,
     quiet: bool = False,
 ) -> None:
@@ -130,8 +129,6 @@ def prompt_bool(
     default: Optional[Union[bool, str, object]] = False,
     yes: str = "y",
     no: str = "n",
-    yes_choices: Optional[StrSeq] = None,
-    no_choices: Optional[StrSeq] = None,
 ) -> Optional[bool]:
     please_answer = f' Please answer "{yes}" or "{no}"'
 

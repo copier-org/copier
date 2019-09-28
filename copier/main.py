@@ -10,10 +10,7 @@ from . import vcs
 from .config import make_config
 from .config.objects import Flags
 from .tools import (
-    STYLE_DANGER,
-    STYLE_IGNORE,
-    STYLE_OK,
-    STYLE_WARNING,
+    Style,
     Renderer,
     copy_file,
     get_jinja_renderer,
@@ -210,13 +207,13 @@ def render_folder(dst_path: Path, rel_folder: Path, flags: Flags) -> None:
         return
 
     if final_path.exists():
-        printf("identical", rel_path, style=STYLE_IGNORE, quiet=flags.quiet)
+        printf("identical", rel_path, style=Style.IGNORE, quiet=flags.quiet)
         return
 
     if not flags.pretend:
         make_folder(final_path)
 
-    printf("create", rel_path, style=STYLE_OK, quiet=flags.quiet)
+    printf("create", rel_path, style=Style.OK, quiet=flags.quiet)
 
 
 def render_file(
@@ -236,15 +233,15 @@ def render_file(
     dst_path = dst_path / rel_path
 
     if not dst_path.exists():
-        printf("create", rel_path, style=STYLE_OK, quiet=flags.quiet)
+        printf("create", rel_path, style=Style.OK, quiet=flags.quiet)
     elif files_are_identical(src_path, dst_path, content):
-        printf("identical", rel_path, style=STYLE_IGNORE, quiet=flags.quiet)
+        printf("identical", rel_path, style=Style.IGNORE, quiet=flags.quiet)
         return
     elif must_skip(rel_path) or not overwrite_file(dst_path, rel_path, flags):
-        printf("skip", rel_path, style=STYLE_WARNING, quiet=flags.quiet)
+        printf("skip", rel_path, style=Style.WARNING, quiet=flags.quiet)
         return
     else:
-        printf("force", rel_path, style=STYLE_WARNING, quiet=flags.quiet)
+        printf("force", rel_path, style=Style.WARNING, quiet=flags.quiet)
 
     if flags.pretend:
         pass
@@ -261,7 +258,7 @@ def files_are_identical(src_path: Path, dst_path: Path, content: Optional[str]) 
 
 
 def overwrite_file(dst_path: Path, rel_path: Path, flags: Flags) -> OptBool:
-    printf("conflict", rel_path, style=STYLE_DANGER, quiet=flags.quiet)
+    printf("conflict", rel_path, style=Style.DANGER, quiet=flags.quiet)
     if flags.force:
         return True
     if flags.skip:
@@ -273,5 +270,5 @@ def run_tasks(dst_path: StrOrPath, render: Renderer, tasks: StrSeq) -> None:
     for i, task in enumerate(tasks):
         task = render.string(task)
         # TODO: should we respect the `quiet` flag here as well?
-        printf(f" > Running task {i + 1} of {len(tasks)}", task, style=STYLE_OK)
+        printf(f" > Running task {i + 1} of {len(tasks)}", task, style=Style.OK)
         subprocess.run(task, shell=True, check=True, cwd=dst_path)
