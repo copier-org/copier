@@ -237,7 +237,7 @@ def render_file(
 
     if not dst_path.exists():
         printf("create", rel_path, style=STYLE_OK, quiet=flags.quiet)
-    elif file_is_identical(src_path, dst_path, content):
+    elif files_are_identical(src_path, dst_path, content):
         printf("identical", rel_path, style=STYLE_IGNORE, quiet=flags.quiet)
         return
     elif must_skip(rel_path) or not overwrite_file(rel_path, src_path, dst_path, flags):
@@ -254,20 +254,10 @@ def render_file(
         dst_path.write_text(content)
 
 
-def file_is_identical(
-    source_path: Path, final_path: Path, content: Optional[str]
-) -> bool:
+def files_are_identical(src_path: Path, dst_path: Path, content: Optional[str]) -> bool:
     if content is None:
-        return files_are_identical(source_path, final_path)
-    return file_has_this_content(final_path, content)
-
-
-def files_are_identical(path1: Path, path2: Path) -> bool:
-    return filecmp.cmp(str(path1), str(path2), shallow=False)
-
-
-def file_has_this_content(path: Path, content: str) -> bool:
-    return content == path.read_text()
+        return filecmp.cmp(str(src_path), str(dst_path), shallow=False)
+    return dst_path.read_text() == content
 
 
 def overwrite_file(
@@ -286,6 +276,6 @@ def overwrite_file(
 def run_tasks(dst_path: StrOrPath, render: Renderer, tasks: StrSeq) -> None:
     for i, task in enumerate(tasks):
         task = render.string(task)
-        # TODO: should we repsect the `quiet` flag here as well?
+        # TODO: should we respect the `quiet` flag here as well?
         printf(f" > Running task {i + 1} of {len(tasks)}", task, style=STYLE_OK)
         subprocess.run(task, shell=True, check=True, cwd=dst_path)
