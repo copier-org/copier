@@ -18,7 +18,7 @@ def test_copy(dst):
     render(dst)
 
     generated = (dst / "pyproject.toml").read_text()
-    control = (Path(__file__).parent / "pyproject.toml.ref").read_text()
+    control = (Path(__file__).parent / "reference_files/pyproject.toml").read_text()
     assert generated == control
 
     assert_file(dst, "doc", "mañana.txt")
