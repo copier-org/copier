@@ -240,7 +240,7 @@ def render_file(
     elif files_are_identical(src_path, dst_path, content):
         printf("identical", rel_path, style=STYLE_IGNORE, quiet=flags.quiet)
         return
-    elif must_skip(rel_path) or not overwrite_file(rel_path, src_path, dst_path, flags):
+    elif must_skip(rel_path) or not overwrite_file(dst_path, rel_path, flags):
         printf("skip", rel_path, style=STYLE_WARNING, quiet=flags.quiet)
         return
     else:
@@ -260,17 +260,13 @@ def files_are_identical(src_path: Path, dst_path: Path, content: Optional[str]) 
     return dst_path.read_text() == content
 
 
-def overwrite_file(
-    rel_path: StrOrPath, source_path: Path, final_path: Path, flags: Flags
-) -> OptBool:
-    printf("conflict", str(rel_path), style=STYLE_DANGER, quiet=flags.quiet)
+def overwrite_file(dst_path: Path, rel_path: Path, flags: Flags) -> OptBool:
+    printf("conflict", rel_path, style=STYLE_DANGER, quiet=flags.quiet)
     if flags.force:
         return True
     if flags.skip:
         return False
-
-    msg = f" Overwrite {final_path}?"  # pragma: no cover
-    return prompt_bool(msg, default=True)  # pragma: no cover
+    return prompt_bool(f" Overwrite {dst_path}?", default=True)  # pragma: no cover
 
 
 def run_tasks(dst_path: StrOrPath, render: Renderer, tasks: StrSeq) -> None:

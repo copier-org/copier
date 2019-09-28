@@ -133,12 +133,6 @@ def prompt_bool(
     yes_choices: Optional[StrSeq] = None,
     no_choices: Optional[StrSeq] = None,
 ) -> Optional[bool]:
-    # TODO: Backwards compatibility. Remove for version 3.0
-    if yes_choices:
-        yes = yes_choices[0]
-    if no_choices:
-        no = no_choices[0]
-
     please_answer = f' Please answer "{yes}" or "{no}"'
 
     def validator(value: Union[str, bool], **kwargs) -> Union[str, bool]:
