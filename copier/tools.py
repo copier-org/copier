@@ -49,18 +49,19 @@ NO_VALUE: object = object()
 
 def printf(
     action: str,
-    msg: str = "",
+    msg: Any = "",
     style: Optional[IntSeq] = None,
     indent: int = 10,
     quiet: Union[bool, StrictBool] = False,
 ) -> Optional[str]:
     if quiet:
         return None  # HACK: Satisfy MyPy
+    _msg = str(msg)
     action = action.rjust(indent, " ")
     if not style:
-        return action + msg
+        return action + _msg
 
-    out = style + [action, Fore.RESET, Style.RESET_ALL, INDENT, msg]  # type: ignore
+    out = style + [action, Fore.RESET, Style.RESET_ALL, INDENT, _msg]  # type: ignore
     print(*out, sep="")
     return None  # HACK: Satisfy MyPy
 
