@@ -11,6 +11,7 @@ import colorama
 from colorama import Fore, Style
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
+from pydantic import StrictBool
 
 from .types import (
     AnyByStrDict,
@@ -47,8 +48,14 @@ NO_VALUE: object = object()
 
 
 def printf(
-    action: str, msg: str = "", style: Optional[IntSeq] = None, indent: int = 10
+    action: str,
+    msg: str = "",
+    style: Optional[IntSeq] = None,
+    indent: int = 10,
+    quiet: Union[bool, StrictBool] = False,
 ) -> Optional[str]:
+    if quiet:
+        return None  # HACK: Satisfy MyPy
     action = action.rjust(indent, " ")
     if not style:
         return action + msg

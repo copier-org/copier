@@ -210,14 +210,13 @@ def render_folder(dst_path: Path, rel_folder: Path, flags: Flags) -> None:
         return
 
     if final_path.exists():
-        if not flags.quiet:
-            printf("identical", display_path, style=STYLE_IGNORE)
+        printf("identical", display_path, style=STYLE_IGNORE, quiet=flags.quiet)
         return
 
     if not flags.pretend:
         make_folder(final_path)
-    if not flags.quiet:
-        printf("create", display_path, style=STYLE_OK)
+
+    printf("create", display_path, style=STYLE_OK, quiet=flags.quiet)
 
 
 def render_file(
@@ -241,25 +240,20 @@ def render_file(
 
     if final_path.exists():
         if file_is_identical(source_path, final_path, content):
-            if not flags.quiet:
-                printf("identical", display_path, style=STYLE_IGNORE)
+            printf("identical", display_path, style=STYLE_IGNORE, quiet=flags.quiet)
             return
 
         if must_skip(rel_path):
-            if not flags.quiet:
-                printf("skip", display_path, style=STYLE_WARNING)
+            printf("skip", display_path, style=STYLE_WARNING, quiet=flags.quiet)
             return
 
         if overwrite_file(display_path, source_path, final_path, flags):
-            if not flags.quiet:
-                printf("force", display_path, style=STYLE_WARNING)
+            printf("force", display_path, style=STYLE_WARNING, quiet=flags.quiet)
         else:
-            if not flags.quiet:
-                printf("skip", display_path, style=STYLE_WARNING)
+            printf("skip", display_path, style=STYLE_WARNING, quiet=flags.quiet)
             return
     else:
-        if not flags.quiet:
-            printf("create", display_path, style=STYLE_OK)
+        printf("create", display_path, style=STYLE_OK, quiet=flags.quiet)
 
     if flags.pretend:
         return
@@ -289,8 +283,7 @@ def file_has_this_content(path: Path, content: str) -> bool:
 def overwrite_file(
     display_path: StrOrPath, source_path: Path, final_path: Path, flags: Flags
 ) -> OptBool:
-    if not flags.quiet:
-        printf("conflict", str(display_path), style=STYLE_DANGER)
+    printf("conflict", str(display_path), style=STYLE_DANGER, quiet=flags.quiet)
     if flags.force:
         return True
     if flags.skip:
@@ -303,5 +296,6 @@ def overwrite_file(
 def run_tasks(dst_path: StrOrPath, render: Renderer, tasks: StrSeq) -> None:
     for i, task in enumerate(tasks):
         task = render.string(task)
+        # TODO: should we repsect the `quiet` flag here as well?
         printf(f" > Running task {i + 1} of {len(tasks)}", task, style=STYLE_OK)
         subprocess.run(task, shell=True, check=True, cwd=dst_path)
