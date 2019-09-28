@@ -17,6 +17,7 @@ from .types import (
     CheckPathFunc,
     IntSeq,
     OptStrOrPathSeq,
+    OptBool,
     StrOrPath,
     StrOrPathSeq,
     T,
@@ -126,10 +127,10 @@ def prompt(
 
 def prompt_bool(
     question: str,
-    default: Optional[Union[bool, str, object]] = False,
+    default: Optional[Any] = False,
     yes: str = "y",
     no: str = "n",
-) -> Optional[bool]:
+) -> OptBool:
     please_answer = f' Please answer "{yes}" or "{no}"'
 
     def validator(value: Union[str, bool], **kwargs) -> Union[str, bool]:
@@ -219,12 +220,6 @@ def get_name_filters(
 ) -> Tuple[CheckPathFunc, CheckPathFunc]:
     """Returns a function that evaluates if aCheckPathFunc file or folder name must be
     filtered out, and another that evaluates if a file must be skipped.
-
-    The compared paths are first converted to unicode and decomposed.
-    This is neccesary because the way PY2.* `os.walk` read unicode
-    paths in different filesystems. For instance, in OSX, it returns a
-    decomposed unicode string. In those systems, u'ñ' is read as `\u0303`
-    instead of `\xf1`.
     """
     exclude = [normalize_str(pattern) for pattern in exclude]
     include = [normalize_str(pattern) for pattern in include]
