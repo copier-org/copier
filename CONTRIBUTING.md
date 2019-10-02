@@ -60,8 +60,7 @@ git clone git@github.com:jpscaletti/copier.git
 ```bash
 python -m virtualenv .venv
 source .venv/bin/activate
-pip install -e .
-pip install .[testing]
+make install
 ```
 
 5.  Create a branch for local development:
