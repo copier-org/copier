@@ -296,8 +296,8 @@ def overwrite_file(
     if flags.skip:
         return False
 
-    msg = f" Overwrite {final_path}?"  # pragma:no cover
-    return prompt_bool(msg, default=True)  # pragma:no cover
+    msg = f" Overwrite {final_path}?"  # pragma: no cover
+    return prompt_bool(msg, default=True)  # pragma: no cover
 
 
 def run_tasks(dst_path: StrOrPath, render: Renderer, tasks: StrSeq) -> None:

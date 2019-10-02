@@ -88,9 +88,9 @@ def test_config_exclude(dst, monkeypatch):
         return {"_exclude": ["*.txt"]}
 
     monkeypatch.setattr(copier.config.factory, "load_config_data", fake_data)
-
     copier.copy(str(PROJECT_TEMPLATE), dst, data=DATA, quiet=True)
     assert not (dst / "aaaa.txt").exists()
+
 
 
 def test_config_exclude_overridden(dst):
@@ -106,9 +106,9 @@ def test_config_include(dst, monkeypatch):
         return {"_include": [".svn"]}
 
     monkeypatch.setattr(copier.config.factory, "load_config_data", fake_data)
-
     copier.copy(str(PROJECT_TEMPLATE), dst, data=DATA, quiet=True)
     assert (dst / ".svn").exists()
+
 
 
 def test_skip_option(dst):

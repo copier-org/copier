@@ -69,7 +69,7 @@ parser.add_argument(
 )
 
 
-def run() -> None:  # pragma:no cover
+def run() -> None:  # pragma: no cover
     args = parser.parse_args()
     kwargs = vars(args)
     copy(kwargs.pop("source"), kwargs.pop("dest"), **kwargs)
