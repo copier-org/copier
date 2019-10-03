@@ -95,6 +95,7 @@ def test_multiple_config_file_error(capsys):
         {"force": "not_a_bool"},
         {"skip": "not_a_bool"},
         {"cleanup_on_error": "not_a_bool"},
+        {"force": True, "skip": True},
     ),
 )
 def test_flags_bad_data(data):

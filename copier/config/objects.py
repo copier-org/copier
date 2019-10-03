@@ -35,6 +35,12 @@ class Flags(BaseModel):
     skip: StrictBool = False  # type: ignore
     cleanup_on_error: StrictBool = True  # type: ignore
 
+    @validator('skip', always=True)
+    def mutually_exclusive(cls, v, values):
+        if v and values["force"]:
+            raise ValueError(f"Flags `force` and `skip` are mutually exclusive.")
+        return v
+
     class Config:
         allow_mutation = False
 
