@@ -58,17 +58,16 @@ def printf(
     return None  # HACK: Satisfy MyPy
 
 
-def printf_block(
+def printf_exception(
     e: Exception,
     action: str,
     msg: str = "",
-    style: IntSeq = STYLE_WARNING,
     indent: int = 0,
     quiet: bool = False,
 ) -> None:
     if not quiet:
         print("")
-        printf(action, msg=msg, style=style, indent=indent)
+        printf(action, msg=msg, style=STYLE_DANGER, indent=indent)
         print(HLINE)
         print(e)
         print(HLINE)
