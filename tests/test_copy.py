@@ -18,7 +18,7 @@ def test_copy(dst):
     render(dst)
 
     generated = (dst / "pyproject.toml").read_text()
-    control = (Path(__file__).parent / "pyproject.toml.ref").read_text()
+    control = (Path(__file__).parent / "reference_files/pyproject.toml").read_text()
     assert generated == control
 
     assert_file(dst, "doc", "mañana.txt")
@@ -83,15 +83,14 @@ def test_skip_if_exists_rendered_patterns(dst):
     assert (dst / "meh" / "c.txt").read_text() == "SKIPPED"
 
 
-def test_config_exclude(dst):
+def test_config_exclude(dst, monkeypatch):
     def fake_data(*_args, **_kwargs):
         return {"_exclude": ["*.txt"]}
 
-    _load_config_data = copier.config.factory.load_config_data
-    copier.config.factory.load_config_data = fake_data
+    monkeypatch.setattr(copier.config.factory, "load_config_data", fake_data)
     copier.copy(str(PROJECT_TEMPLATE), dst, data=DATA, quiet=True)
     assert not (dst / "aaaa.txt").exists()
-    copier.config.factory.load_config_data = _load_config_data
+
 
 
 def test_config_exclude_overridden(dst):
@@ -102,15 +101,14 @@ def test_config_exclude_overridden(dst):
     assert (dst / "aaaa.txt").exists()
 
 
-def test_config_include(dst):
+def test_config_include(dst, monkeypatch):
     def fake_data(*_args, **_kwargs):
         return {"_include": [".svn"]}
 
-    _load_config_data = copier.config.factory.load_config_data
-    copier.config.factory.load_config_data = fake_data
+    monkeypatch.setattr(copier.config.factory, "load_config_data", fake_data)
     copier.copy(str(PROJECT_TEMPLATE), dst, data=DATA, quiet=True)
     assert (dst / ".svn").exists()
-    copier.config.factory.load_config_data = _load_config_data
+
 
 
 def test_skip_option(dst):
@@ -136,10 +134,3 @@ def test_pretend_option(dst):
     assert not (dst / "doc").exists()
     assert not (dst / "config.py").exists()
     assert not (dst / "pyproject.toml").exists()
-
-
-def test_tasks(dst):
-    tasks = ["touch [[ myvar ]]/1.txt", "touch [[ myvar ]]/2.txt"]
-    render(dst, tasks=tasks)
-    assert (dst / DATA["myvar"] / "1.txt").exists()
-    assert (dst / DATA["myvar"] / "2.txt").exists()

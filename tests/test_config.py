@@ -53,7 +53,7 @@ def test_read_data(dst, template):
     copier.copy(template, dst, force=True)
     gen_file = dst / "user_data.txt"
     result = gen_file.read_text()
-    expected = Path("tests/user_data.ref.txt").read_text()
+    expected = Path("tests/reference_files/user_data.txt").read_text()
     assert result == expected
 
 
@@ -95,6 +95,7 @@ def test_multiple_config_file_error(capsys):
         {"force": "not_a_bool"},
         {"skip": "not_a_bool"},
         {"cleanup_on_error": "not_a_bool"},
+        {"force": True, "skip": True},
     ),
 )
 def test_flags_bad_data(data):
@@ -222,6 +223,3 @@ def test_make_config_good_data(dst):
 def test_make_config_precedence(dst, test_input, expected):
     conf, flags = make_config(dst_path=dst, **test_input)
     assert is_subdict(expected, conf.dict())
-
-
-

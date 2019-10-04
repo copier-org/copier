@@ -35,6 +35,12 @@ class Flags(BaseModel):
     skip: StrictBool = False  # type: ignore
     cleanup_on_error: StrictBool = True  # type: ignore
 
+    @validator('skip', always=True)
+    def mutually_exclusive(cls, v, values):
+        if v and values["force"]:
+            raise ValueError(f"Flags `force` and `skip` are mutually exclusive.")
+        return v
+
     class Config:
         allow_mutation = False
 
@@ -68,11 +74,11 @@ class ConfigData(BaseModel):
         self.data["folder_name"] = Path(self.dst_path).name
 
     # sanitizers
-    @validator("src_path", "dst_path", "extra_paths", pre=True)
+    @validator("src_path", "dst_path", "extra_paths", pre=True, each_item=True)
     def resolve_path(cls, v: Path) -> Path:
         return Path(v).expanduser().resolve()
 
-    @validator("src_path", "extra_paths", pre=True)
+    @validator("src_path", "extra_paths", pre=True, each_item=True)
     def dir_must_exist(cls, v: Path) -> Path:
         if not v.exists():
             raise ValueError("Project template not found.")

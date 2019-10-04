@@ -1,21 +1,27 @@
 from pathlib import Path
 
-from ..tools import HLINE, INDENT, printf_block, prompt
+from ..tools import HLINE, INDENT, printf_exception, prompt
 from ..types import AnyByStrDict, StrOrPath, PathSeq
 
 __all__ = ("load_config_data", "query_user_data",)
 
 
-class InvalidConfigFileError(ValueError):
+class ConfigFileError(ValueError):
+    pass
+
+
+class InvalidConfigFileError(ConfigFileError):
     def __init__(self, conf_path: Path, quiet: bool):
-        printf_block(self, "INVALID CONFIG FILE", msg=str(conf_path), quiet=quiet)
-        super().__init__(conf_path)
+        msg = str(conf_path)
+        printf_exception(self, "INVALID CONFIG FILE", msg=msg, quiet=quiet)
+        super().__init__(msg)
 
 
-class MultipleConfigFilesError(ValueError):
+class MultipleConfigFilesError(ConfigFileError):
     def __init__(self, conf_paths: PathSeq, quiet: bool):
-        printf_block(self, "MULTIPLE CONFIG FILES", msg=str(conf_paths), quiet=quiet)
-        super().__init__(str(conf_paths))
+        msg = str(conf_paths)
+        printf_exception(self, "MULTIPLE CONFIG FILES", msg=msg, quiet=quiet)
+        super().__init__(msg)
 
 
 def load_yaml_data(
