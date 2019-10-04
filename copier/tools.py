@@ -75,7 +75,7 @@ def printf_exception(
 ) -> None:
     if not quiet:
         print("")
-        printf(action, msg=msg, style=STYLE_DANGER, indent=indent)
+        printf(action, msg=msg, style=Style.DANGER, indent=indent)
         print(HLINE)
         print(e)
         print(HLINE)
