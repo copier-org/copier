@@ -10,10 +10,7 @@ from . import vcs
 from .config import make_config
 from .config.objects import Flags
 from .tools import (
-    STYLE_DANGER,
-    STYLE_IGNORE,
-    STYLE_OK,
-    STYLE_WARNING,
+    Style,
     Renderer,
     copy_file,
     get_jinja_renderer,
@@ -201,107 +198,77 @@ def get_source_paths(
 
 
 def render_folder(dst_path: Path, rel_folder: Path, flags: Flags) -> None:
-    final_path = dst_path / rel_folder
-    display_path = f"{rel_folder}{os.path.sep}"
+    dst_path = dst_path / rel_folder
+    rel_path = f"{rel_folder}{os.path.sep}"
 
     if rel_folder == Path("."):
         if not flags.pretend:
-            make_folder(final_path)
+            make_folder(dst_path)
         return
 
-    if final_path.exists():
-        if not flags.quiet:
-            printf("identical", display_path, style=STYLE_IGNORE)
+    if dst_path.exists():
+        printf("identical", rel_path, style=Style.IGNORE, quiet=flags.quiet)
         return
 
     if not flags.pretend:
-        make_folder(final_path)
-    if not flags.quiet:
-        printf("create", display_path, style=STYLE_OK)
+        make_folder(dst_path)
+
+    printf("create", rel_path, style=Style.OK, quiet=flags.quiet)
 
 
 def render_file(
     dst_path: Path,
     rel_path: Path,
-    source_path: Path,
+    src_path: Path,
     render: Renderer,
     must_skip: CheckPathFunc,
     flags: Flags,
 ) -> None:
     """Process or copy a file of the skeleton.
     """
-    content: Optional[str]
-    if source_path.suffix == ".tmpl":
-        content = render(source_path)
+    content: Optional[str] = None
+    if src_path.suffix == ".tmpl":
+        content = render(src_path)
+
+    dst_path = dst_path / rel_path
+
+    if not dst_path.exists():
+        printf("create", rel_path, style=Style.OK, quiet=flags.quiet)
+    elif files_are_identical(src_path, dst_path, content):
+        printf("identical", rel_path, style=Style.IGNORE, quiet=flags.quiet)
+        return
+    elif must_skip(rel_path) or not overwrite_file(dst_path, rel_path, flags):
+        printf("skip", rel_path, style=Style.WARNING, quiet=flags.quiet)
+        return
     else:
-        content = None
-
-    display_path = str(rel_path)
-    final_path = dst_path / rel_path
-
-    if final_path.exists():
-        if file_is_identical(source_path, final_path, content):
-            if not flags.quiet:
-                printf("identical", display_path, style=STYLE_IGNORE)
-            return
-
-        if must_skip(rel_path):
-            if not flags.quiet:
-                printf("skip", display_path, style=STYLE_WARNING)
-            return
-
-        if overwrite_file(display_path, source_path, final_path, flags):
-            if not flags.quiet:
-                printf("force", display_path, style=STYLE_WARNING)
-        else:
-            if not flags.quiet:
-                printf("skip", display_path, style=STYLE_WARNING)
-            return
-    else:
-        if not flags.quiet:
-            printf("create", display_path, style=STYLE_OK)
+        printf("force", rel_path, style=Style.WARNING, quiet=flags.quiet)
 
     if flags.pretend:
-        return
-
-    if content is None:
-        copy_file(source_path, final_path)
+        pass
+    elif content is None:
+        copy_file(src_path, dst_path)
     else:
-        final_path.write_text(content)
+        dst_path.write_text(content)
 
 
-def file_is_identical(
-    source_path: Path, final_path: Path, content: Optional[str]
-) -> bool:
+def files_are_identical(src_path: Path, dst_path: Path, content: Optional[str]) -> bool:
     if content is None:
-        return files_are_identical(source_path, final_path)
-    return file_has_this_content(final_path, content)
+        return filecmp.cmp(str(src_path), str(dst_path), shallow=False)
+    return dst_path.read_text() == content
 
 
-def files_are_identical(path1: Path, path2: Path) -> bool:
-    return filecmp.cmp(str(path1), str(path2), shallow=False)
-
-
-def file_has_this_content(path: Path, content: str) -> bool:
-    return content == path.read_text()
-
-
-def overwrite_file(
-    display_path: StrOrPath, source_path: Path, final_path: Path, flags: Flags
-) -> OptBool:
-    if not flags.quiet:
-        printf("conflict", str(display_path), style=STYLE_DANGER)
+def overwrite_file(dst_path: Path, rel_path: Path, flags: Flags) -> OptBool:
+    printf("conflict", rel_path, style=Style.DANGER, quiet=flags.quiet)
     if flags.force:
         return True
     if flags.skip:
         return False
-
-    msg = f" Overwrite {final_path}?"  # pragma: no cover
-    return prompt_bool(msg, default=True)  # pragma: no cover
+    return prompt_bool(f" Overwrite {dst_path}?", default=True)  # pragma: no cover
 
 
 def run_tasks(dst_path: StrOrPath, render: Renderer, tasks: StrSeq) -> None:
     for i, task in enumerate(tasks):
         task = render.string(task)
-        printf(f" > Running task {i + 1} of {len(tasks)}", task, style=STYLE_OK)
+        # TODO: should we respect the `quiet` flag here as well?
+        printf(f" > Running task {i + 1} of {len(tasks)}", task, style=Style.OK)
         subprocess.run(task, shell=True, check=True, cwd=dst_path)

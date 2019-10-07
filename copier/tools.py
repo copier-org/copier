@@ -8,26 +8,23 @@ from pathlib import Path
 from typing import Any, Callable, Optional, Sequence, Tuple, Union
 
 import colorama
-from colorama import Fore, Style
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
+from pydantic import StrictBool
 
 from .types import (
     AnyByStrDict,
     CheckPathFunc,
     IntSeq,
     OptStrOrPathSeq,
+    OptBool,
     StrOrPath,
     StrOrPathSeq,
-    StrSeq,
     T,
 )
 
 __all__ = (
-    "STYLE_OK",
-    "STYLE_WARNING",
-    "STYLE_IGNORE",
-    "STYLE_DANGER",
+    "Style",
     "printf",
     "prompt",
     "prompt_bool",
@@ -35,10 +32,14 @@ __all__ = (
 
 colorama.init()
 
-STYLE_OK: IntSeq = [Fore.GREEN, Style.BRIGHT]
-STYLE_WARNING: IntSeq = [Fore.YELLOW, Style.BRIGHT]
-STYLE_IGNORE: IntSeq = [Fore.CYAN]
-STYLE_DANGER: IntSeq = [Fore.RED, Style.BRIGHT]
+
+class Style:
+    OK: IntSeq = [colorama.Fore.GREEN, colorama.Style.BRIGHT]
+    WARNING: IntSeq = [colorama.Fore.YELLOW, colorama.Style.BRIGHT]
+    IGNORE: IntSeq = [colorama.Fore.CYAN]
+    DANGER: IntSeq = [colorama.Fore.RED, colorama.Style.BRIGHT]
+    RESET: IntSeq = [colorama.Fore.RESET, colorama.Style.RESET_ALL]
+
 
 INDENT = " " * 2
 HLINE = "-" * 42
@@ -47,13 +48,20 @@ NO_VALUE: object = object()
 
 
 def printf(
-    action: str, msg: str = "", style: Optional[IntSeq] = None, indent: int = 10
+    action: str,
+    msg: Any = "",
+    style: Optional[IntSeq] = None,
+    indent: int = 10,
+    quiet: Union[bool, StrictBool] = False,
 ) -> Optional[str]:
+    if quiet:
+        return None  # HACK: Satisfy MyPy
+    _msg = str(msg)
     action = action.rjust(indent, " ")
     if not style:
-        return action + msg
+        return action + _msg
 
-    out = style + [action, Fore.RESET, Style.RESET_ALL, INDENT, msg]  # type: ignore
+    out = style + [action] + Style.RESET + [INDENT, _msg]  # type: ignore
     print(*out, sep="")
     return None  # HACK: Satisfy MyPy
 
@@ -67,7 +75,7 @@ def printf_exception(
 ) -> None:
     if not quiet:
         print("")
-        printf(action, msg=msg, style=STYLE_DANGER, indent=indent)
+        printf(action, msg=msg, style=Style.DANGER, indent=indent)
         print(HLINE)
         print(e)
         print(HLINE)
@@ -118,18 +126,10 @@ def prompt(
 
 def prompt_bool(
     question: str,
-    default: Optional[Union[bool, str, object]] = False,
+    default: Optional[Any] = False,
     yes: str = "y",
     no: str = "n",
-    yes_choices: Optional[StrSeq] = None,
-    no_choices: Optional[StrSeq] = None,
-) -> Optional[bool]:
-    # TODO: Backwards compatibility. Remove for version 3.0
-    if yes_choices:
-        yes = yes_choices[0]
-    if no_choices:
-        no = no_choices[0]
-
+) -> OptBool:
     please_answer = f' Please answer "{yes}" or "{no}"'
 
     def validator(value: Union[str, bool], **kwargs) -> Union[str, bool]:
@@ -166,8 +166,8 @@ def make_folder(folder: Path) -> None:
                 raise
 
 
-def copy_file(src: Path, dst: Path, symlinks: bool = True) -> None:
-    shutil.copy2(src, dst, follow_symlinks=symlinks)
+def copy_file(src_path: Path, dst_path: Path, follow_symlinks: bool = True) -> None:
+    shutil.copy2(src_path, dst_path, follow_symlinks=follow_symlinks)
 
 
 class Renderer:
@@ -219,12 +219,6 @@ def get_name_filters(
 ) -> Tuple[CheckPathFunc, CheckPathFunc]:
     """Returns a function that evaluates if aCheckPathFunc file or folder name must be
     filtered out, and another that evaluates if a file must be skipped.
-
-    The compared paths are first converted to unicode and decomposed.
-    This is neccesary because the way PY2.* `os.walk` read unicode
-    paths in different filesystems. For instance, in OSX, it returns a
-    decomposed unicode string. In those systems, u'ñ' is read as `\u0303`
-    instead of `\xf1`.
     """
     exclude = [normalize_str(pattern) for pattern in exclude]
     include = [normalize_str(pattern) for pattern in include]
