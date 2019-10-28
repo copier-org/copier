@@ -1,8 +1,8 @@
 ## Think this library is awesome? Vote with a 👍 to include it in the awesome-python list: https://github.com/vinta/awesome-python/pull/1350
 
-![Copier](https://github.com/jpscaletti/copier/raw/master/copier-logotype.png)
+![Copier](https://github.com/pykong/copier/raw/master/copier-logotype.png)
 
-[![Coverage Status](https://coveralls.io/repos/github/jpscaletti/copier/badge.svg?branch=master)](https://coveralls.io/github/jpscaletti/copier?branch=master) [![Tests](https://travis-ci.org/jpscaletti/copier.svg?branch=master)](https://travis-ci.org/jpscaletti/copier/) [![](https://img.shields.io/pypi/pyversions/copier.svg)](https://pypi.python.org/pypi/copier)
+[![Coverage Status](https://coveralls.io/repos/github/pykong/copier/badge.svg?branch=master)](https://coveralls.io/github/pykong/copier?branch=master) [![Tests](https://travis-ci.org/pykong/copier.svg?branch=master)](https://travis-ci.org/pykong/copier/) [![](https://img.shields.io/pypi/pyversions/copier.svg)](https://pypi.python.org/pypi/copier)
 
 A library for rendering projects templates.
 
@@ -10,7 +10,7 @@ A library for rendering projects templates.
 - Your project can include any file and `Copier` can dynamically replace values in any kind of text files.
 - It generates a beautiful output and takes care of not overwrite existing files unless instructed to do so.
 
-![Sample output](https://github.com/jpscaletti/copier/raw/master/copier-output.png)
+![Sample output](https://github.com/pykong/copier/raw/master/copier-output.png)
 
 ## How to use
 
@@ -23,13 +23,13 @@ from copier import copy
 copy("path/to/project/template", "path/to/destination")
 
 # Or from a git URL.
-copy("https://github.com/jpscaletti/copier.git", "path/to/destination")
+copy("https://github.com/pykong/copier.git", "path/to/destination")
 
 # You can also use "gh:" as a shortcut of "https://github.com/"
-copy("gh:jpscaletti/copier.git", "path/to/destination")
+copy("gh:pykong/copier.git", "path/to/destination")
 
 # Or "gl:" as a shortcut of "https://gitlab.com/"
-copy("gl:jpscaletti/copier.git", "path/to/destination")
+copy("gl:pykong/copier.git", "path/to/destination")
 ```
 
 - Or as a command-line tool:
