@@ -194,7 +194,7 @@ def get_source_paths(
         dst_name = render.string(dst_name)
         rel_path = rel_folder / dst_name
 
-        if must_filter(rel_path):
+        if rel_folder == rel_path or must_filter(rel_path):
             continue
         source_paths.append((folder / src_name, rel_path))
     return source_paths

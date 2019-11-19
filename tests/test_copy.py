@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import os
 import pytest
 
 import copier
@@ -34,6 +35,15 @@ def test_copy(dst):
     p1 = str(dst / "awesome.txt")
     p2 = str(PROJECT_TEMPLATE / "[[ myvar ]].txt")
     assert filecmp.cmp(p1, p2)
+
+    assert not os.path.exists(dst / "[% if not py3 %]py2_only.py[% endif %]")
+    assert not os.path.exists(dst / "[% if py3 %]py3_only.py[% endif %]")
+    assert not os.path.exists(dst / "py2_only.py")
+    assert os.path.exists(dst / "py3_only.py")
+    assert not os.path.exists(dst / "[% if not py3 %]py2_folder[% endif %]" / "thing.py")
+    assert not os.path.exists(dst / "[% if py3 %]py3_folder[% endif %]" / "thing.py")
+    assert not os.path.exists(dst / "py2_folder" / "thing.py")
+    assert os.path.exists(dst / "py3_folder" / "thing.py")
 
 
 def test_copy_repo(dst):
