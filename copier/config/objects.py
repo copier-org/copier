@@ -29,11 +29,11 @@ DEFAULT_DATA: AnyByStrDict = {
 
 
 class Flags(BaseModel):
-    pretend: StrictBool = False  # type: ignore
-    quiet: StrictBool = False  # type: ignore
-    force: StrictBool = False  # type: ignore
-    skip: StrictBool = False  # type: ignore
-    cleanup_on_error: StrictBool = True  # type: ignore
+    pretend: StrictBool = False
+    quiet: StrictBool = False
+    force: StrictBool = False
+    skip: StrictBool = False
+    cleanup_on_error: StrictBool = True
 
     @validator('skip', always=True)
     def mutually_exclusive(cls, v, values):
@@ -46,12 +46,12 @@ class Flags(BaseModel):
 
 
 class EnvOps(BaseModel):
-    autoescape: StrictBool = False  # type: ignore
+    autoescape: StrictBool = False
     block_start_string: str = "[%"
     block_end_string: str = "%]"
     variable_start_string: str = "[["
     variable_end_string: str = "]]"
-    keep_trailing_newline: StrictBool = True  # type: ignore
+    keep_trailing_newline: StrictBool = True
 
     class Config:
         allow_mutation = False

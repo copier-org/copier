@@ -186,7 +186,10 @@ def get_source_paths(
     must_filter: Callable[[StrOrPath], bool],
 ) -> List[Tuple[Path, Path]]:
     source_paths = []
+    files_set = set(files)
     for src_name in files:
+        if f"{src_name}.tmpl" in files_set:
+            continue
         dst_name = re.sub(RE_TMPL, "", str(src_name))
         dst_name = render.string(dst_name)
         rel_path = rel_folder / dst_name
