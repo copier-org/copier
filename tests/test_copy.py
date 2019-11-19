@@ -28,6 +28,9 @@ def test_copy(dst):
     p2 = str(PROJECT_TEMPLATE / "[[ myvar ]]" / "hello.txt")
     assert filecmp.cmp(p1, p2)
 
+    with open(dst / "README.txt") as readme:
+        assert readme.read() == "This is the README for Copier.\n"
+
     p1 = str(dst / "awesome.txt")
     p2 = str(PROJECT_TEMPLATE / "[[ myvar ]].txt")
     assert filecmp.cmp(p1, p2)
