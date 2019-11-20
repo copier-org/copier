@@ -36,6 +36,8 @@ GOOD_ENV_OPS = {
     "variable_end_string": ">>",
     "keep_trailing_newline": False,
     "i_am_not_a_member": None,
+    'comment_end_string': '#>',
+    'comment_start_string': '<#',
 }
 
 

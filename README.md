@@ -48,7 +48,7 @@ A slightly customized Jinja2 templating is used. The main difference is
 those variables are referenced with `[[ name ]]` instead of
 `{{ name }}` and blocks are `[% if name %]` instead of
 `{% if name %}`. To read more about templating see the [Jinja2
-documentation](http://jinja.pocoo.org/docs>).
+documentation](https://jinja.palletsprojects.com/).
 
 If a **YAML** file named `copier.yml` is found in the root of the
 project (alternatively, a YAML file named `copier.yaml`), the user will be
@@ -204,6 +204,36 @@ Uses the template in _src_path_ to generate a new project at _dst_path_.
 
 - **envops** (dict):<br>
   Extra options for the Jinja template environment.
+  See available options in
+  [Jinja's docs](https://jinja.palletsprojects.com/en/2.10.x/api/#jinja2.Environment).
+
+  Copier uses these defaults that are different from Jinja's:
+
+  ```yml
+  # copier.yml
+  _envops:
+    block_start_string: "[%"
+    block_end_string: "%]"
+    comment_start_string: "[#"
+    comment_end_string: "#]"
+    variable_start_string: "[["
+    variable_end_string: "]]"
+    keep_trailing_newline: true
+  ```
+
+  You can use default Jinja syntax with:
+
+  ```yml
+  # copier.yml
+  _envops:
+    block_start_string: "{%"
+    block_end_string: "%}"
+    comment_start_string: "{#"
+    comment_end_string: "#}"
+    variable_start_string: "{{"
+    variable_end_string: "}}"
+    keep_trailing_newline: false
+  ```
 
 - **extra_paths** (list):<br>
   Additional paths, from where to search for templates. This is intended to be
