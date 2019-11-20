@@ -36,3 +36,6 @@ pip-wheel-metadata
 .mypy_cache/*
 .cache
 *.log
+
+# Editors
+.vscode
