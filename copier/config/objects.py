@@ -40,7 +40,7 @@ class Flags(BaseModel):
     cleanup_on_error: StrictBool = True
 
     @validator("skip", always=True)
-    def mutually_exclusive(cls, v, values):
+    def mutually_exclusive(cls, v, values):  # noqa: B902
         if v and values["force"]:
             raise ValueError(f"Flags `force` and `skip` are mutually exclusive.")
         return v
@@ -82,11 +82,11 @@ class ConfigData(BaseModel):
 
     # sanitizers
     @validator("src_path", "dst_path", "extra_paths", pre=True, each_item=True)
-    def resolve_path(cls, v: Path) -> Path:
+    def resolve_path(cls, v: Path) -> Path:  # noqa: B902
         return Path(v).expanduser().resolve()
 
     @validator("src_path", "extra_paths", pre=True, each_item=True)
-    def dir_must_exist(cls, v: Path) -> Path:
+    def dir_must_exist(cls, v: Path) -> Path:  # noqa: B902
         if not v.exists():
             raise ValueError("Project template not found.")
         if not v.is_dir():

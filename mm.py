@@ -5,7 +5,6 @@ COPY THIS FILE TO YOUR PROJECT.
 This file generates all the necessary files for packaging for the project.
 Read more about it at https://github.com/jpscaletti/mastermold/
 """
-from pathlib import Path
 
 data = {
     "title": "Copier",

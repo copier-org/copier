@@ -1,4 +1,4 @@
-from typing import Any, Tuple
+from typing import Tuple
 
 from ..types import AnyByStrDict, OptAnyByStrDict, OptBool, OptStr, OptStrSeq
 from .objects import DEFAULT_DATA, ConfigData, EnvOps, Flags, NoSrcPathError

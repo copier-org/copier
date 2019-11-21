@@ -1,9 +1,5 @@
 from pathlib import Path
-from shlex import split
 
-import pytest
-
-import copier
 from copier.cli import CopierApp
 
 SIMPLE_DEMO_PATH = Path(__file__).parent / "demo_simple"

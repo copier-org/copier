@@ -20,11 +20,11 @@ from .types import (
     JSONSerializable,
     OptBool,
     OptStr,
+    OptStrOrPathSeq,
     StrOrPath,
     StrOrPathSeq,
     T,
 )
-from .version import __version__
 
 __all__ = ("Style", "printf", "prompt", "prompt_bool")
 
@@ -161,7 +161,7 @@ def copy_file(src_path: Path, dst_path: Path, follow_symlinks: bool = True) -> N
     shutil.copy2(src_path, dst_path, follow_symlinks=follow_symlinks)
 
 
-def to_nice_yaml(data: Any, **kwargs) -> Optional[str]:
+def to_nice_yaml(data: Any, **kwargs) -> str:
     """Dump a string to pretty YAML."""
     # Remove security-problematic kwargs
     kwargs.pop("stream", None)
@@ -169,7 +169,7 @@ def to_nice_yaml(data: Any, **kwargs) -> Optional[str]:
     result = round_trip_dump(data, **kwargs)
     if isinstance(result, str):
         result = result.rstrip()
-    return result
+    return result or ""
 
 
 class Renderer:
