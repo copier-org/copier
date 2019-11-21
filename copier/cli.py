@@ -1,18 +1,22 @@
 #!/usr/bin/env python
-from plumbum import cli, colors
 import sys
 
-from .types import OptStr, AnyByStrDict
+from plumbum import cli, colors
+
 from .main import copy
+from .types import AnyByStrDict, OptStr
 from .version import __version__
 
 
 class CopierApp(cli.Application):
     DESCRIPTION = "Create a new project from a template."
-    DESCRIPTION_MORE = colors.yellow | """
+    DESCRIPTION_MORE = (
+        colors.yellow
+        | """
     WARNING! Use only trusted project templates, as they might
     execute code with the same level of access as your user.
     """
+    )
     USAGE = """
     copier [SWITCHES] [copy] template_src destination_path
     copier [SWITCHES] [update] [destination_path]
@@ -22,43 +26,46 @@ class CopierApp(cli.Application):
     data: AnyByStrDict = {}
 
     extra_paths = cli.SwitchAttr(
-        ["-p", "--extra-paths"], str, list=True,
-        help="Additional directories to find parent templates in")
+        ["-p", "--extra-paths"],
+        str,
+        list=True,
+        help="Additional directories to find parent templates in",
+    )
     exclude = cli.SwitchAttr(
-        ["-x", "--exclude"], str, list=True,
+        ["-x", "--exclude"],
+        str,
+        list=True,
         help=(
             "A name or shell-style pattern matching files or folders "
             "that must not be copied"
         ),
     )
     include = cli.SwitchAttr(
-        ["-i", "--include"], str, list=True,
+        ["-i", "--include"],
+        str,
+        list=True,
         help=(
             "A name or shell-style pattern matching files or folders "
             "that must be included, even if their names are in the `exclude` list"
         ),
     )
 
-    pretend = cli.Flag(
-        ["-n", "--pretend"],
-        help="Run but do not make any changes",
-    )
+    pretend = cli.Flag(["-n", "--pretend"], help="Run but do not make any changes")
     force = cli.Flag(
-        ["-f", "--force"],
-        help="Overwrite files that already exist, without asking",
+        ["-f", "--force"], help="Overwrite files that already exist, without asking"
     )
     skip = cli.Flag(
-        ["-s", "--skip"],
-        help="Skip files that already exist, without asking",
+        ["-s", "--skip"], help="Skip files that already exist, without asking"
     )
-    quiet = cli.Flag(
-        ["-q", "--quiet"],
-        help="Suppress status output",
-    )
+    quiet = cli.Flag(["-q", "--quiet"], help="Suppress status output")
 
     @cli.switch(
-        ["-d", "--data"], str, "VARIABLE=VALUE", list=True,
-        help="Make VARIABLE available as VALUE when rendering the template")
+        ["-d", "--data"],
+        str,
+        "VARIABLE=VALUE",
+        list=True,
+        help="Make VARIABLE available as VALUE when rendering the template",
+    )
     def data_switch(self, values):
         self.data.update(value.split("=", 1) for value in values)
 
@@ -83,12 +90,14 @@ class CopierApp(cli.Application):
         if len(args) in {0, 1}:
             self.nested_command = (
                 self._subcommands["update"].subapplication,
-                ["copier update"] + list(args))
+                ["copier update"] + list(args),
+            )
         # If using 2 args, you want to copy
         elif len(args) == 2:
             self.nested_command = (
                 self._subcommands["copy"].subapplication,
-                ["copier copy"] + list(args))
+                ["copier copy"] + list(args),
+            )
         # If using more args, you're wrong
         else:
             self.help()

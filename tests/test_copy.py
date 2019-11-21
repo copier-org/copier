@@ -1,9 +1,10 @@
+import os
 from pathlib import Path
 
-import os
 import pytest
 
 import copier
+
 from .helpers import DATA, PROJECT_TEMPLATE, assert_file, filecmp, render
 
 
@@ -40,7 +41,9 @@ def test_copy(dst):
     assert not os.path.exists(dst / "[% if py3 %]py3_only.py[% endif %]")
     assert not os.path.exists(dst / "py2_only.py")
     assert os.path.exists(dst / "py3_only.py")
-    assert not os.path.exists(dst / "[% if not py3 %]py2_folder[% endif %]" / "thing.py")
+    assert not os.path.exists(
+        dst / "[% if not py3 %]py2_folder[% endif %]" / "thing.py"
+    )
     assert not os.path.exists(dst / "[% if py3 %]py3_folder[% endif %]" / "thing.py")
     assert not os.path.exists(dst / "py2_folder" / "thing.py")
     assert os.path.exists(dst / "py3_folder" / "thing.py")
@@ -108,7 +111,6 @@ def test_config_exclude(dst, monkeypatch):
     assert not (dst / "aaaa.txt").exists()
 
 
-
 def test_config_exclude_overridden(dst):
     def fake_data(*_args, **_kwargs):
         return {"_exclude": ["*.txt"]}
@@ -124,7 +126,6 @@ def test_config_include(dst, monkeypatch):
     monkeypatch.setattr(copier.config.factory, "load_config_data", fake_data)
     copier.copy(str(PROJECT_TEMPLATE), dst, data=DATA, quiet=True)
     assert (dst / ".svn").exists()
-
 
 
 def test_skip_option(dst):

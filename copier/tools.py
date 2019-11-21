@@ -18,7 +18,6 @@ from .types import (
     CheckPathFunc,
     IntSeq,
     JSONSerializable,
-    OptStrOrPathSeq,
     OptBool,
     OptStr,
     StrOrPath,
@@ -27,12 +26,7 @@ from .types import (
 )
 from .version import __version__
 
-__all__ = (
-    "Style",
-    "printf",
-    "prompt",
-    "prompt_bool",
-)
+__all__ = ("Style", "printf", "prompt", "prompt_bool")
 
 colorama.init()
 
@@ -71,11 +65,7 @@ def printf(
 
 
 def printf_exception(
-    e: Exception,
-    action: str,
-    msg: str = "",
-    indent: int = 0,
-    quiet: bool = False,
+    e: Exception, action: str, msg: str = "", indent: int = 0, quiet: bool = False
 ) -> None:
     if not quiet:
         print("")
@@ -129,10 +119,7 @@ def prompt(
 
 
 def prompt_bool(
-    question: str,
-    default: Optional[Any] = False,
-    yes: str = "y",
-    no: str = "n",
+    question: str, default: Optional[Any] = False, yes: str = "y", no: str = "n"
 ) -> OptBool:
     please_answer = f' Please answer "{yes}" or "{no}"'
 
@@ -187,7 +174,10 @@ def to_nice_yaml(data: Any, **kwargs) -> Optional[str]:
 
 class Renderer:
     def __init__(
-        self, env: SandboxedEnvironment, src_path: Path, data: AnyByStrDict,
+        self,
+        env: SandboxedEnvironment,
+        src_path: Path,
+        data: AnyByStrDict,
         original_src_path: OptStr,
     ) -> None:
         self.env = env
@@ -198,7 +188,8 @@ class Renderer:
             log["_src_path"] = original_src_path
         # Other data goes next
         log.update(
-            (k, v) for (k, v) in data.items()
+            (k, v)
+            for (k, v) in data.items()
             if isinstance(k, JSONSerializable) and isinstance(v, JSONSerializable)
         )
         self.data = dict(data, _log=log)
@@ -233,8 +224,9 @@ def get_jinja_renderer(
     # Of couse we still have the post-copy tasks to worry about, but at least
     # they are more visible to the final user.
     env = SandboxedEnvironment(**envops)
-    return Renderer(env=env, src_path=src_path, data=data,
-                    original_src_path=original_src_path)
+    return Renderer(
+        env=env, src_path=src_path, data=data, original_src_path=original_src_path
+    )
 
 
 def normalize_str(text: StrOrPath, form: str = "NFD") -> str:

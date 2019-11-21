@@ -27,18 +27,8 @@ data = {
         "ruamel.yaml ~= 0.15",
         "pydantic ~= 0.30",
     ],
-    "testing_requires": [
-        "pytest",
-        "pytest-mock",
-        "pytest-mypy"
-        "pytest-cov",
-    ],
-    "development_requires": [
-        "pytest-flake8",
-        "flake8",
-        "ipdb",
-        "tox",
-    ],
+    "testing_requires": ["pytest", "pytest-mock", "pytest-mypy" "pytest-cov"],
+    "development_requires": ["pytest-flake8", "flake8", "ipdb", "tox"],
     "entry_points": "copier = copier.cli:run",
     "coverage_omit": [],
 }

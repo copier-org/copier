@@ -10,8 +10,8 @@ from . import vcs
 from .config import make_config
 from .config.objects import Flags
 from .tools import (
-    Style,
     Renderer,
+    Style,
     copy_file,
     get_jinja_renderer,
     get_name_filters,

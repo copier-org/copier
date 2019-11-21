@@ -10,7 +10,7 @@ cache:
 
 matrix:
   allow_failures:
-    - python: 'nightly'
+    - python: "nightly"
 
 before_install:
   - pip install -U pip coveralls

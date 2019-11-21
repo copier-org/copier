@@ -52,14 +52,11 @@ def make_config(
             raise NoSrcPathError(
                 "No .copier-answers.yml file found, or it didn't include "
                 "original template information (_src_path). "
-                "Run `copier copy` instead.",
+                "Run `copier copy` instead."
             )
     file_data = load_config_data(src_path, quiet=True)
     config_data, query_data = filter_config(file_data)
-    query_data.update(filter(
-        lambda item: item[0] in query_data,
-        answers_data.items(),
-    ))
+    query_data.update(filter(lambda item: item[0] in query_data, answers_data.items()))
 
     if not force:
         query_data = query_user_data(query_data)

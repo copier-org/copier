@@ -1,11 +1,11 @@
-from pathlib import Path
-from os.path import isfile
 import re
+from os.path import isfile
+from pathlib import Path
 
 from ..tools import HLINE, INDENT, printf_exception, prompt
-from ..types import AnyByStrDict, StrOrPath, PathSeq
+from ..types import AnyByStrDict, PathSeq, StrOrPath
 
-__all__ = ("load_config_data", "query_user_data",)
+__all__ = ("load_config_data", "query_user_data")
 
 
 class ConfigFileError(ValueError):
@@ -56,7 +56,8 @@ def load_config_data(
     """Try to load the content from a `copier.yml` or a `copier.yaml` file.
     """
     conf_paths = [
-        p for p in Path(src_path).glob("copier.*")
+        p
+        for p in Path(src_path).glob("copier.*")
         if p.is_file() and re.match(r"\.ya?ml", p.suffix, re.I)
     ]
 
@@ -69,19 +70,21 @@ def load_config_data(
 
 
 def load_logfile_data(
-    dst_path: StrOrPath,
-    *,
-    quiet: bool = False,
-    _warning: bool = True
+    dst_path: StrOrPath, *, quiet: bool = False, _warning: bool = True
 ) -> AnyByStrDict:
     """Load answers data from a `$dst_path/.copier-answers.yml` file if it exists.
 
     `.yaml` suffix is also supported.
     """
-    answer_paths = list(filter(
-        isfile,
-        map(lambda suffix: Path(dst_path) / f".copier-answers.{suffix}", ("yml", "yaml")),
-    ))
+    answer_paths = list(
+        filter(
+            isfile,
+            map(
+                lambda suffix: Path(dst_path) / f".copier-answers.{suffix}",
+                ("yml", "yaml"),
+            ),
+        )
+    )
     answers_data: AnyByStrDict = {}
     if len(answer_paths) > 1:
         raise MultipleAnswerFilesError(answer_paths, quiet=quiet)
@@ -90,7 +93,9 @@ def load_logfile_data(
     return answers_data
 
 
-def query_user_data(default_user_data: AnyByStrDict) -> AnyByStrDict:  # pragma: no cover
+def query_user_data(
+    default_user_data: AnyByStrDict
+) -> AnyByStrDict:  # pragma: no cover
     """Query to user about the data of the config file.
     """
     if not default_user_data:

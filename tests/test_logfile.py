@@ -1,5 +1,6 @@
 import copier
 from copier.config.user_data import load_logfile_data
+
 from .helpers import PROJECT_TEMPLATE
 
 SRC = f"{PROJECT_TEMPLATE}_logfile"

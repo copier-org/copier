@@ -6,7 +6,7 @@ from typing import Any, Tuple
 
 from pydantic import BaseModel, Extra, StrictBool, validator
 
-from ..types import AnyByStrDict, PathSeq, StrOrPathSeq, StrSeq, OptStr
+from ..types import AnyByStrDict, OptStr, PathSeq, StrOrPathSeq, StrSeq
 
 # Default list of files in the template to exclude from the rendered project
 DEFAULT_EXCLUDE: Tuple[str, ...] = (
@@ -39,7 +39,7 @@ class Flags(BaseModel):
     skip: StrictBool = False
     cleanup_on_error: StrictBool = True
 
-    @validator('skip', always=True)
+    @validator("skip", always=True)
     def mutually_exclusive(cls, v, values):
         if v and values["force"]:
             raise ValueError(f"Flags `force` and `skip` are mutually exclusive.")
