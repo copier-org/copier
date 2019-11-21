@@ -32,6 +32,8 @@ repos:
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
+        # Some tests require no EOF or they will fail
+        exclude: \.noeof\.
       - id: debug-statements
       - id: flake8
         additional_dependencies:

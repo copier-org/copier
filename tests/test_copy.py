@@ -74,12 +74,15 @@ def test_exclude_file(dst):
 def test_skip_if_exists(dst):
     copier.copy("tests/demo_skip_dst", dst)
     copier.copy(
-        "tests/demo_skip_src", dst, skip_if_exists=["b.txt", "meh/c.txt"], force=True
+        "tests/demo_skip_src",
+        dst,
+        skip_if_exists=["b.noeof.txt", "meh/c.noeof.txt"],
+        force=True,
     )
 
-    assert (dst / "a.txt").read_text() == "OVERWRITTEN"
-    assert (dst / "b.txt").read_text() == "SKIPPED"
-    assert (dst / "meh" / "c.txt").read_text() == "SKIPPED"
+    assert (dst / "a.noeof.txt").read_text() == "OVERWRITTEN"
+    assert (dst / "b.noeof.txt").read_text() == "SKIPPED"
+    assert (dst / "meh" / "c.noeof.txt").read_text() == "SKIPPED"
 
 
 def test_skip_if_exists_rendered_patterns(dst):
@@ -88,12 +91,12 @@ def test_skip_if_exists_rendered_patterns(dst):
         "tests/demo_skip_src",
         dst,
         data={"name": "meh"},
-        skip_if_exists=["[[ name ]]/c.txt"],
+        skip_if_exists=["[[ name ]]/c.noeof.txt"],
         force=True,
     )
-    assert (dst / "a.txt").read_text() == "OVERWRITTEN"
-    assert (dst / "b.txt").read_text() == "OVERWRITTEN"
-    assert (dst / "meh" / "c.txt").read_text() == "SKIPPED"
+    assert (dst / "a.noeof.txt").read_text() == "OVERWRITTEN"
+    assert (dst / "b.noeof.txt").read_text() == "OVERWRITTEN"
+    assert (dst / "meh" / "c.noeof.txt").read_text() == "SKIPPED"
 
 
 def test_config_exclude(dst, monkeypatch):

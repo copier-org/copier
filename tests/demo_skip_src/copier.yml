@@ -1,2 +1,2 @@
 _skip_if_exists:
-  - "a.txt"
+  - "a.noeof.txt"
