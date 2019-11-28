@@ -1,4 +1,5 @@
 from pathlib import Path
+from os.path import isfile
 import re
 
 from ..tools import HLINE, INDENT, printf_exception, prompt
@@ -22,6 +23,17 @@ class MultipleConfigFilesError(ConfigFileError):
     def __init__(self, conf_paths: PathSeq, quiet: bool):
         msg = str(conf_paths)
         printf_exception(self, "MULTIPLE CONFIG FILES", msg=msg, quiet=quiet)
+        super().__init__(msg)
+
+
+class AnswerFileError(ValueError):
+    pass
+
+
+class MultipleAnswerFilesError(AnswerFileError):
+    def __init__(self, conf_paths: PathSeq, quiet: bool):
+        msg = str(conf_paths)
+        printf_exception(self, "MULTIPLE ANSWER FILES", msg=msg, quiet=quiet)
         super().__init__(msg)
 
 
@@ -54,6 +66,28 @@ def load_config_data(
         return load_yaml_data(conf_paths[0], quiet=quiet, _warning=_warning)
     else:
         return {}
+
+
+def load_logfile_data(
+    dst_path: StrOrPath,
+    *,
+    quiet: bool = False,
+    _warning: bool = True
+) -> AnyByStrDict:
+    """Load answers data from a `$dst_path/.copier-answers.yml` file if it exists.
+
+    `.yaml` suffix is also supported.
+    """
+    answer_paths = list(filter(
+        isfile,
+        map(lambda suffix: Path(dst_path) / f".copier-answers.{suffix}", ("yml", "yaml")),
+    ))
+    answers_data: AnyByStrDict = {}
+    if len(answer_paths) > 1:
+        raise MultipleAnswerFilesError(answer_paths, quiet=quiet)
+    elif len(answer_paths) == 1:
+        answers_data = load_yaml_data(answer_paths[0], quiet=quiet, _warning=_warning)
+    return answers_data
 
 
 def query_user_data(default_user_data: AnyByStrDict) -> AnyByStrDict:  # pragma: no cover

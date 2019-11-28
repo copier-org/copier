@@ -20,3 +20,4 @@ OptAnyByStrDict = Optional[AnyByStrDict]
 # miscellaneous
 CheckPathFunc = Callable[[StrOrPath], bool]
 T = TypeVar("T")
+JSONSerializable = (dict, list, str, int, float, bool, type(None))

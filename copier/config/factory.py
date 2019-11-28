@@ -1,8 +1,8 @@
-from typing import Tuple
+from typing import Any, Tuple
 
 from ..types import AnyByStrDict, OptAnyByStrDict, OptBool, OptStrSeq
 from .objects import DEFAULT_DATA, ConfigData, EnvOps, Flags
-from .user_data import load_config_data, query_user_data
+from .user_data import load_config_data, load_logfile_data, query_user_data
 
 __all__ = ("make_config",)
 
@@ -45,7 +45,12 @@ def make_config(
     args = {k: v for k, v in locals().items() if v is not None}
 
     file_data = load_config_data(src_path, quiet=True)
+    answers_data = load_logfile_data(dst_path, quiet=True)
     config_data, query_data = filter_config(file_data)
+    query_data.update(filter(
+        lambda item: item[0] in query_data,
+        answers_data.items(),
+    ))
 
     if not force:
         query_data = query_user_data(query_data)
