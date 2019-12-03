@@ -61,9 +61,9 @@ function.
 Since version 3.0, only Python 3.6 or later are supported. Please use the
 2.5.1 version if your project runs on a previous Python version.
 
-## The copier.yml file
+## The `copier.yml`ile
 
-If a `copier.yml`, or `copier.yaml` file is found in the root of the project,
+If a `copier.yml`, or `copier.yaml` file is found in the root of the template,
 it will be read and used for two purposes:
 
 ### Prompt the user for information
@@ -135,6 +135,50 @@ _extra_paths:
 
 **Warning:** Use only trusted project templates as these tasks run with the
 same level of access as your user.
+
+## The `.copier-answers.yml` file
+
+If the destination path exists and a `.copier-answers.yml` (or `.copier-answers.yaml`) file is
+present there, it will be used to load last user's answers to the questions
+made in [the `copier.yml` file](#the-copieryml-file).
+
+This makes projects easier to update because when the user is asked, the default
+answers will be the last ones he used.
+
+To make sure projects based on your templates can make use of this nice feature,
+add a file called `.copier-answers.yml.tmpl` in your template's root folder, with
+this content:
+
+```yml
+# Changes here will be overwritten by Copier
+[[ _log|to_nice_yaml ]]
+```
+
+The builtin `_log` variable includes all data needed to smooth future updates
+of this project. This includes (but is not limited to) all JSON-serializable
+values declared as user questions in [the `copier.yml` file](#the-copieryml-file).
+
+As you can see, you also have the power to customize what will be logged here.
+Keys that start with an underscore (`_`) are specific to Copier. Other keys
+should match questions in `copier.yml`.
+
+## Template helpers
+
+In addition to [all the features Jinja supports](https://jinja.palletsprojects.com/en/2.10.x/templates/),
+Copier includes:
+
+### Builtin variables/functions
+
+- `now()` to get current UTC time.
+- `make_secret()` to get a random string.
+
+### Builtin filters
+
+- `anything|to_nice_yaml` to print as pretty-formatted YAML.
+
+  Without arguments it defaults to:
+  `anything|to_nice_yaml(indent=2, width=80, allow_unicode=True)`,
+  but you can modify those.
 
 ---
 

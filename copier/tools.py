@@ -11,17 +11,20 @@ import colorama
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
 from pydantic import StrictBool
+from ruamel.yaml import round_trip_dump
 
 from .types import (
     AnyByStrDict,
     CheckPathFunc,
     IntSeq,
+    JSONSerializable,
     OptStrOrPathSeq,
     OptBool,
     StrOrPath,
     StrOrPathSeq,
     T,
 )
+from .version import __version__
 
 __all__ = (
     "Style",
@@ -170,13 +173,29 @@ def copy_file(src_path: Path, dst_path: Path, follow_symlinks: bool = True) -> N
     shutil.copy2(src_path, dst_path, follow_symlinks=follow_symlinks)
 
 
+def to_nice_yaml(data: Any, **kwargs) -> Optional[str]:
+    """Dump a string to pretty YAML."""
+    # Remove security-problematic kwargs
+    kwargs.pop("stream", None)
+    kwargs.pop("Dumper", None)
+    result = round_trip_dump(data, **kwargs)
+    if isinstance(result, str):
+        result = result.rstrip()
+    return result
+
+
 class Renderer:
     def __init__(
         self, env: SandboxedEnvironment, src_path: Path, data: AnyByStrDict
     ) -> None:
         self.env = env
         self.src_path = src_path
-        self.data = data
+        log = {
+            k: v for k, v in data.items()
+            if isinstance(k, JSONSerializable) and isinstance(v, JSONSerializable)
+        }
+        self.data = dict(data, _log=log)
+        self.env.filters["to_nice_yaml"] = to_nice_yaml
 
     def __call__(self, fullpath: StrOrPath) -> str:
         relpath = str(fullpath).replace(str(self.src_path), "", 1).lstrip(os.path.sep)
