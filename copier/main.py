@@ -23,6 +23,7 @@ from .types import (
     AnyByStrDict,
     CheckPathFunc,
     OptBool,
+    OptStr,
     OptStrSeq,
     PathSeq,
     StrOrPath,
@@ -36,8 +37,8 @@ RE_TMPL = re.compile(r"\.tmpl$", re.IGNORECASE)
 
 
 def copy(
-    src_path: str,
-    dst_path: str,
+    src_path: OptStr = None,
+    dst_path: StrOrPath = ".",
     data: AnyByStrDict = None,
     *,
     exclude: OptStrSeq = None,
@@ -58,7 +59,8 @@ def copy(
     Arguments:
 
     - src_path (str):
-        Absolute path to the project skeleton. May be a version control system URL
+        Absolute path to the project skeleton. May be a version control system URL.
+        If `None`, it will be taken from `dst_path/.copier-answers.yml` or fail.
 
     - dst_path (str):
         Absolute path to where to render the skeleton
@@ -111,9 +113,13 @@ def copy(
         Remove the destination folder if the copy process or one of the tasks fail.
 
     """
-    repo = vcs.get_repo(src_path)
-    if repo:
-        src_path = vcs.clone(repo)
+    original_src_path = src_path
+    if src_path:
+        repo = vcs.get_repo(src_path)
+        if repo:
+            src_path = vcs.clone(repo)
+    elif src_path and not Path(src_path).is_absolute():
+        original_src_path = None
 
     conf, flags = make_config(**locals())
 
@@ -125,7 +131,7 @@ def copy(
             shutil.rmtree(dst_path, ignore_errors=True)
         raise
     finally:
-        if repo:
+        if repo and src_path:
             shutil.rmtree(src_path)
 
 
@@ -139,10 +145,11 @@ def copy_local(
     skip_if_exists: StrOrPathSeq,
     tasks: StrSeq,
     envops: Optional[AnyByStrDict],
+    original_src_path: str,
     flags: Flags,
 ) -> None:
 
-    render = get_jinja_renderer(src_path, data, extra_paths, envops)
+    render = get_jinja_renderer(src_path, data, extra_paths, envops, original_src_path)
 
     skip_if_exists = [render.string(pattern) for pattern in skip_if_exists]
     must_filter, must_skip = get_name_filters(exclude, include, skip_if_exists)

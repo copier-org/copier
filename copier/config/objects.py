@@ -6,7 +6,7 @@ from typing import Any, Tuple
 
 from pydantic import BaseModel, Extra, StrictBool, validator
 
-from ..types import AnyByStrDict, PathSeq, StrOrPathSeq, StrSeq
+from ..types import AnyByStrDict, PathSeq, StrOrPathSeq, StrSeq, OptStr
 
 # Default list of files in the template to exclude from the rendered project
 DEFAULT_EXCLUDE: Tuple[str, ...] = (
@@ -26,6 +26,10 @@ DEFAULT_DATA: AnyByStrDict = {
     "now": datetime.datetime.utcnow,
     "make_secret": lambda: sha512(urandom(48)).hexdigest(),
 }
+
+
+class NoSrcPathError(Exception):
+    pass
 
 
 class Flags(BaseModel):
@@ -70,6 +74,7 @@ class ConfigData(BaseModel):
     skip_if_exists: StrOrPathSeq = []
     tasks: StrSeq = []
     envops: EnvOps
+    original_src_path: OptStr
 
     def __init__(self, **data: Any):
         super().__init__(**data)
