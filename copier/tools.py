@@ -20,6 +20,7 @@ from .types import (
     JSONSerializable,
     OptStrOrPathSeq,
     OptBool,
+    OptStr,
     StrOrPath,
     StrOrPathSeq,
     T,
@@ -186,14 +187,20 @@ def to_nice_yaml(data: Any, **kwargs) -> Optional[str]:
 
 class Renderer:
     def __init__(
-        self, env: SandboxedEnvironment, src_path: Path, data: AnyByStrDict
+        self, env: SandboxedEnvironment, src_path: Path, data: AnyByStrDict,
+        original_src_path: OptStr,
     ) -> None:
         self.env = env
         self.src_path = src_path
-        log = {
-            k: v for k, v in data.items()
+        log: AnyByStrDict = {}
+        # All internal values must appear first
+        if original_src_path is not None:
+            log["_src_path"] = original_src_path
+        # Other data goes next
+        log.update(
+            (k, v) for (k, v) in data.items()
             if isinstance(k, JSONSerializable) and isinstance(v, JSONSerializable)
-        }
+        )
         self.data = dict(data, _log=log)
         self.env.filters["to_nice_yaml"] = to_nice_yaml
 
@@ -212,6 +219,7 @@ def get_jinja_renderer(
     data: AnyByStrDict,
     extra_paths: OptStrOrPathSeq = None,
     envops: Optional[AnyByStrDict] = None,
+    original_src_path: OptStr = None,
 ) -> Renderer:
     """Returns a function that can render a Jinja template.
     """
@@ -225,7 +233,8 @@ def get_jinja_renderer(
     # Of couse we still have the post-copy tasks to worry about, but at least
     # they are more visible to the final user.
     env = SandboxedEnvironment(**envops)
-    return Renderer(env=env, src_path=src_path, data=data)
+    return Renderer(env=env, src_path=src_path, data=data,
+                    original_src_path=original_src_path)
 
 
 def normalize_str(text: StrOrPath, form: str = "NFD") -> str:

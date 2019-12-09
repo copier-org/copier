@@ -180,6 +180,7 @@ def test_config_data_good_data(dst):
         "extra_paths": [dst],
         "exclude": DEFAULT_EXCLUDE,
         "include": [],
+        "original_src_path": None,
         "skip_if_exists": ["skip_me"],
         "tasks": ["echo python rulez"],
         "envops": EnvOps(),
