@@ -1,9 +1,10 @@
+import os
 from pathlib import Path
 
-import os
 import pytest
 
 import copier
+
 from .helpers import DATA, PROJECT_TEMPLATE, assert_file, filecmp, render
 
 
@@ -40,7 +41,9 @@ def test_copy(dst):
     assert not os.path.exists(dst / "[% if py3 %]py3_only.py[% endif %]")
     assert not os.path.exists(dst / "py2_only.py")
     assert os.path.exists(dst / "py3_only.py")
-    assert not os.path.exists(dst / "[% if not py3 %]py2_folder[% endif %]" / "thing.py")
+    assert not os.path.exists(
+        dst / "[% if not py3 %]py2_folder[% endif %]" / "thing.py"
+    )
     assert not os.path.exists(dst / "[% if py3 %]py3_folder[% endif %]" / "thing.py")
     assert not os.path.exists(dst / "py2_folder" / "thing.py")
     assert os.path.exists(dst / "py3_folder" / "thing.py")
@@ -74,12 +77,15 @@ def test_exclude_file(dst):
 def test_skip_if_exists(dst):
     copier.copy("tests/demo_skip_dst", dst)
     copier.copy(
-        "tests/demo_skip_src", dst, skip_if_exists=["b.txt", "meh/c.txt"], force=True
+        "tests/demo_skip_src",
+        dst,
+        skip_if_exists=["b.noeof.txt", "meh/c.noeof.txt"],
+        force=True,
     )
 
-    assert (dst / "a.txt").read_text() == "OVERWRITTEN"
-    assert (dst / "b.txt").read_text() == "SKIPPED"
-    assert (dst / "meh" / "c.txt").read_text() == "SKIPPED"
+    assert (dst / "a.noeof.txt").read_text() == "OVERWRITTEN"
+    assert (dst / "b.noeof.txt").read_text() == "SKIPPED"
+    assert (dst / "meh" / "c.noeof.txt").read_text() == "SKIPPED"
 
 
 def test_skip_if_exists_rendered_patterns(dst):
@@ -88,12 +94,12 @@ def test_skip_if_exists_rendered_patterns(dst):
         "tests/demo_skip_src",
         dst,
         data={"name": "meh"},
-        skip_if_exists=["[[ name ]]/c.txt"],
+        skip_if_exists=["[[ name ]]/c.noeof.txt"],
         force=True,
     )
-    assert (dst / "a.txt").read_text() == "OVERWRITTEN"
-    assert (dst / "b.txt").read_text() == "OVERWRITTEN"
-    assert (dst / "meh" / "c.txt").read_text() == "SKIPPED"
+    assert (dst / "a.noeof.txt").read_text() == "OVERWRITTEN"
+    assert (dst / "b.noeof.txt").read_text() == "OVERWRITTEN"
+    assert (dst / "meh" / "c.noeof.txt").read_text() == "SKIPPED"
 
 
 def test_config_exclude(dst, monkeypatch):
@@ -103,7 +109,6 @@ def test_config_exclude(dst, monkeypatch):
     monkeypatch.setattr(copier.config.factory, "load_config_data", fake_data)
     copier.copy(str(PROJECT_TEMPLATE), dst, data=DATA, quiet=True)
     assert not (dst / "aaaa.txt").exists()
-
 
 
 def test_config_exclude_overridden(dst):
@@ -121,7 +126,6 @@ def test_config_include(dst, monkeypatch):
     monkeypatch.setattr(copier.config.factory, "load_config_data", fake_data)
     copier.copy(str(PROJECT_TEMPLATE), dst, data=DATA, quiet=True)
     assert (dst / ".svn").exists()
-
 
 
 def test_skip_option(dst):

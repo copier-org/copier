@@ -3,7 +3,7 @@ all: PHONY
 help:
 	@echo "clean - remove build/python artifacts"
 	@echo "test - run tests"
-	@echo "flake - check style with flake8"
+	@echo "lint - check (and auto-fix) style with pre-commit"
 	@echo "coverage - generate an HTML report of the coverage"
 	@echo "install - install for development"
 
@@ -26,11 +26,12 @@ clean-pyc:
 test:
 	pytest -x copier tests
 
-flake:
-	flake8 --config=setup.cfg copier tests
+lint:
+	pre-commit run --all-files
 
 coverage:
 	pytest --cov-report html --cov copier copier tests
 
 install:
 	pip install -e .[dev]
+	pre-commit install

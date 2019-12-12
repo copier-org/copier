@@ -1,0 +1,4 @@
+{
+  // Follow instructions in CONTRIBUTING.md to get this `.venv` folder
+  "python.pythonPath": "${workspaceRoot}/.venv/bin/python3"
+}

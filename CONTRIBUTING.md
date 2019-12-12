@@ -55,7 +55,7 @@ Ready to contribute? Here's how to set up the project for local development.
 git clone git@github.com:jpscaletti/copier.git
 ```
 
-3.  Install your local copy into a virtualenv. 
+3.  Install your local copy into a virtualenv.
 
 ```bash
 python -m virtualenv .venv
@@ -79,7 +79,7 @@ flake8 .
 ```
 
 To have multiple Python versions on the same machine for running `tox`, I recommend
-using [pyenv](https://github.com/pyenv/pyenv) (*do not* confuse it with `pipenv`,).
+using [pyenv](https://github.com/pyenv/pyenv) (_do not_ confuse it with `pipenv`,).
 
 7.  Commit your changes and push your branch to GitHub:
 
@@ -90,7 +90,6 @@ git push origin name-of-your-bugfix-or-feature
 ```
 
 8.  Submit a pull request through the GitHub website.
-
 
 ## Pull Request Guidelines
 

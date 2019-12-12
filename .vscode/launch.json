@@ -1,0 +1,14 @@
+{
+  // More info on this file: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: pytest",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/.venv/bin/pytest",
+      "args": ["--no-cov", "copier", "copier", "tests"],
+      "console": "integratedTerminal"
+    }
+  ]
+}

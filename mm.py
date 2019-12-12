@@ -5,7 +5,6 @@ COPY THIS FILE TO YOUR PROJECT.
 This file generates all the necessary files for packaging for the project.
 Read more about it at https://github.com/jpscaletti/mastermold/
 """
-from pathlib import Path
 
 data = {
     "title": "Copier",
@@ -27,18 +26,8 @@ data = {
         "ruamel.yaml ~= 0.15",
         "pydantic ~= 0.30",
     ],
-    "testing_requires": [
-        "pytest",
-        "pytest-mock",
-        "pytest-mypy"
-        "pytest-cov",
-    ],
-    "development_requires": [
-        "pytest-flake8",
-        "flake8",
-        "ipdb",
-        "tox",
-    ],
+    "testing_requires": ["pytest", "pytest-mock", "pytest-mypy" "pytest-cov"],
+    "development_requires": ["pytest-flake8", "flake8", "ipdb", "tox"],
     "entry_points": "copier = copier.cli:run",
     "coverage_omit": [],
 }
