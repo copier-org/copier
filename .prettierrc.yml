@@ -2,13 +2,3 @@
 bracketSpacing: false
 endOfLine: lf
 printWidth: 88
-tabWidth: 4
-
-# Language-specific
-overrides:
-  - files:
-      - "*.json"
-      - "*.yaml"
-      - "*.yml"
-    options:
-      tabWidth: 2

@@ -6,15 +6,15 @@
 
 A library for rendering projects templates.
 
--   Works with **local** paths and **git URLs**.
--   Your project can include any file and `Copier` can dynamically replace values in any kind of text files.
--   It generates a beautiful output and takes care of not overwrite existing files unless instructed to do so.
+- Works with **local** paths and **git URLs**.
+- Your project can include any file and `Copier` can dynamically replace values in any kind of text files.
+- It generates a beautiful output and takes care of not overwrite existing files unless instructed to do so.
 
 ![Sample output](https://github.com/pykong/copier/raw/master/copier-output.png)
 
 ## How to use
 
--   Use it in your Python code:
+- Use it in your Python code:
 
 ```python
 from copier import copy
@@ -32,7 +32,7 @@ copy("gh:pykong/copier.git", "path/to/destination")
 copy("gl:pykong/copier.git", "path/to/destination")
 ```
 
--   Or as a command-line tool:
+- Or as a command-line tool:
 
 ```bash
 copier path/to/project/template path/to/destination
@@ -110,14 +110,14 @@ overwrite them.
 ```yaml
 # Shell-style patterns files/folders that must not be copied.
 _exclude:
-    - "*.bar"
-    - ".git"
-    - ".git/*"
+  - "*.bar"
+  - ".git"
+  - ".git/*"
 
 # Shell-style patterns files/folders that *must be* copied, even if
 # they are in the exclude list
 _include:
-    - "foo.bar"
+  - "foo.bar"
 
 # Shell-style patterns files to skip, without asking, if they already exists
 # in the destination folder
@@ -125,12 +125,12 @@ _skip_if_exists:
 
 # Commands to be executed after the copy
 _tasks:
-    - "git init"
-    - "rm [[ name_of_the_project ]]/README.md"
+  - "git init"
+  - "rm [[ name_of_the_project ]]/README.md"
 
 # Additional paths, from where to search for templates
 _extra_paths:
-    - ~/Projects/templates
+  - ~/Projects/templates
 ```
 
 **Warning:** Use only trusted project templates as these tasks run with the
@@ -169,16 +169,16 @@ Copier includes:
 
 ### Builtin variables/functions
 
--   `now()` to get current UTC time.
--   `make_secret()` to get a random string.
+- `now()` to get current UTC time.
+- `make_secret()` to get a random string.
 
 ### Builtin filters
 
--   `anything|to_nice_yaml` to print as pretty-formatted YAML.
+- `anything|to_nice_yaml` to print as pretty-formatted YAML.
 
-    Without arguments it defaults to:
-    `anything|to_nice_yaml(indent=2, width=80, allow_unicode=True)`,
-    but you can modify those.
+  Without arguments it defaults to:
+  `anything|to_nice_yaml(indent=2, width=80, allow_unicode=True)`,
+  but you can modify those.
 
 ---
 
@@ -213,89 +213,89 @@ Uses the template in _src_path_ to generate a new project at _dst_path_.
 
 **Arguments**:
 
--   **src_path** (str):<br>
-    Absolute path to the project skeleton. Can be a version control system URL.
+- **src_path** (str):<br>
+  Absolute path to the project skeleton. Can be a version control system URL.
 
--   **dst_path** (str):<br>
-    Absolute path to where to render the skeleton.
+- **dst_path** (str):<br>
+  Absolute path to where to render the skeleton.
 
--   **data** (dict):<br>
-    Data to be passed to the templates in addition to the user data from
-    a `copier.yml`.
+- **data** (dict):<br>
+  Data to be passed to the templates in addition to the user data from
+  a `copier.yml`.
 
--   **exclude** (list):<br>
-    A list of names or shell-style patterns matching files or folders
-    that must not be copied.
+- **exclude** (list):<br>
+  A list of names or shell-style patterns matching files or folders
+  that must not be copied.
 
-    To exclude a folder you should use **two** entries, one for the folder and
-    the other for its content: `[".git", ".git/*"]`.
+  To exclude a folder you should use **two** entries, one for the folder and
+  the other for its content: `[".git", ".git/*"]`.
 
--   **include** (list):<br>
-    A list of names or shell-style patterns matching files or folders that
-    must be included, even if its name is a match for the `exclude` list.
-    Eg: `['.gitignore']`. The default is an empty list.
+- **include** (list):<br>
+  A list of names or shell-style patterns matching files or folders that
+  must be included, even if its name is a match for the `exclude` list.
+  Eg: `['.gitignore']`. The default is an empty list.
 
--   **skip_if_exists** (list):<br>
-    Skip any of these files, without asking, if another with the same name already
-    exists in the destination folder. (it only makes sense if you are copying to a
-    folder that already exists).
+- **skip_if_exists** (list):<br>
+  Skip any of these files, without asking, if another with the same name already
+  exists in the destination folder. (it only makes sense if you are copying to a
+  folder that already exists).
 
--   **tasks** (list):<br>
-    Optional lists of commands to run in order after finishing the copy. Like in
-    the templates files, you can use variables on the commands that will be
-    replaced by the real values before running the command. If one of the commands
-    fails, the rest of them will not run.
+- **tasks** (list):<br>
+  Optional lists of commands to run in order after finishing the copy. Like in
+  the templates files, you can use variables on the commands that will be
+  replaced by the real values before running the command. If one of the commands
+  fails, the rest of them will not run.
 
--   **envops** (dict):<br>
-    Extra options for the Jinja template environment.
-    See available options in
-    [Jinja's docs](https://jinja.palletsprojects.com/en/2.10.x/api/#jinja2.Environment).
+- **envops** (dict):<br>
+  Extra options for the Jinja template environment.
+  See available options in
+  [Jinja's docs](https://jinja.palletsprojects.com/en/2.10.x/api/#jinja2.Environment).
 
-    Copier uses these defaults that are different from Jinja's:
+  Copier uses these defaults that are different from Jinja's:
 
-    ```yml
-    # copier.yml
-    _envops:
-        block_start_string: "[%"
-        block_end_string: "%]"
-        comment_start_string: "[#"
-        comment_end_string: "#]"
-        variable_start_string: "[["
-        variable_end_string: "]]"
-        keep_trailing_newline: true
-    ```
+  ```yml
+  # copier.yml
+  _envops:
+    block_start_string: "[%"
+    block_end_string: "%]"
+    comment_start_string: "[#"
+    comment_end_string: "#]"
+    variable_start_string: "[["
+    variable_end_string: "]]"
+    keep_trailing_newline: true
+  ```
 
-    You can use default Jinja syntax with:
+  You can use default Jinja syntax with:
 
-    ```yml
-    # copier.yml
-    _envops:
-        block_start_string: "{%"
-        block_end_string: "%}"
-        comment_start_string: "{#"
-        comment_end_string: "#}"
-        variable_start_string: "{{"
-        variable_end_string: "}}"
-        keep_trailing_newline: false
-    ```
+  ```yml
+  # copier.yml
+  _envops:
+    block_start_string: "{%"
+    block_end_string: "%}"
+    comment_start_string: "{#"
+    comment_end_string: "#}"
+    variable_start_string: "{{"
+    variable_end_string: "}}"
+    keep_trailing_newline: false
+  ```
 
--   **extra_paths** (list):<br>
-    Additional paths, from where to search for templates. This is intended to be
-    used with shared parent templates, files with macros, etc. outside the copied
-    project skeleton.
+- **extra_paths** (list):<br>
+  Additional paths, from where to search for templates. This is intended to be
+  used with shared parent templates, files with macros, etc. outside the copied
+  project skeleton.
 
--   **pretend** (bool):<br>
-    Run but do not make any changes.
+- **pretend** (bool):<br>
+  Run but do not make any changes.
 
--   **force** (bool):<br>
-    Overwrite files that already exist, without asking.
+- **force** (bool):<br>
+  Overwrite files that already exist, without asking.
 
--   **skip** (bool):<br>
-    Skip files that already exist, without asking.
+- **skip** (bool):<br>
+  Skip files that already exist, without asking.
 
--   **quiet** (bool):<br>
-    Suppress the status output.
+- **quiet** (bool):<br>
+  Suppress the status output.
 
--   **cleanup_on_error** (bool):<br>
-    Remove the destination folder if the copy process or one of the tasks fail.
-    True by default.
+- **cleanup_on_error** (bool):<br>
+  Remove the destination folder if the copy process or one of the tasks fail.
+  True by default.

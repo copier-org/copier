@@ -1,3 +1,7 @@
 {
-  "recommendations": ["EditorConfig.editorconfig", "ms-python.python"]
+  "recommendations": [
+    "EditorConfig.editorconfig",
+    "ms-python.python",
+    "esbenp.prettier-vscode"
+  ]
 }
