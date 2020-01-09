@@ -5,7 +5,7 @@ import unicodedata
 from fnmatch import fnmatch
 from functools import reduce
 from pathlib import Path
-from typing import Any, Callable, Optional, Sequence, Tuple, Union
+from typing import Any, Optional, Sequence, Tuple, Union
 
 import colorama
 from jinja2 import FileSystemLoader
@@ -18,7 +18,6 @@ from .types import (
     CheckPathFunc,
     IntSeq,
     JSONSerializable,
-    OptBool,
     OptStr,
     OptStrOrPathSeq,
     StrOrPath,
@@ -26,7 +25,7 @@ from .types import (
     T,
 )
 
-__all__ = ("Style", "printf", "prompt", "prompt_bool")
+__all__ = ("Style", "printf")
 
 colorama.init()
 
@@ -79,73 +78,6 @@ def required(value: T, **kwargs: Any) -> T:
     if not value:
         raise ValueError()
     return value
-
-
-def prompt(
-    question: str,
-    default: Optional[Any] = NO_VALUE,
-    default_show: Optional[Any] = None,
-    validator: Callable = required,
-    **kwargs: AnyByStrDict,
-) -> Optional[Any]:
-    """
-    Prompt for a value from the command line. A default value can be provided,
-    which will be used if no text is entered by the user. The value can be
-    validated, and possibly changed by supplying a validator function. Any
-    extra keyword arguments to this function will be passed along to the
-    validator. If the validator raises a ValueError, the error message will be
-    printed and the user asked to supply another value.
-    """
-    if default_show:
-        question += f" [{default_show}] "
-    elif default and default is not NO_VALUE:
-        question += f" [{default}] "
-    else:
-        question += " "
-
-    while True:
-        resp = input(question)
-        if not resp:
-            if default is None:
-                return None
-            if default is not NO_VALUE:
-                resp = default
-
-        try:
-            return validator(resp, **kwargs)
-        except ValueError as e:
-            if str(e):
-                print(str(e))
-
-
-def prompt_bool(
-    question: str, default: Optional[Any] = False, yes: str = "y", no: str = "n"
-) -> OptBool:
-    please_answer = f' Please answer "{yes}" or "{no}"'
-
-    def validator(value: Union[str, bool], **kwargs) -> Union[str, bool]:
-        if value:
-            value = str(value).lower()[0]
-        if value == yes:
-            return True
-        elif value == no:
-            return False
-        else:
-            raise ValueError(please_answer)
-
-    if default is None:
-        default = NO_VALUE
-        default_show = f"{yes}/{no}"
-    elif default:
-        default = yes
-        default_show = f"{yes.upper()}/{no}"
-    else:
-        default = no
-        default_show = f"{yes}/{no.upper()}"
-
-    return prompt(
-        question, default=default, default_show=default_show, validator=validator
-    )
 
 
 def make_folder(folder: Path) -> None:

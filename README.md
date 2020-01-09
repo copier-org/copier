@@ -61,7 +61,7 @@ function.
 Since version 3.0, only Python 3.6 or later are supported. Please use the
 2.5.1 version if your project runs on a previous Python version.
 
-## The `copier.yml`ile
+## The `copier.yml` file
 
 If a `copier.yml`, or `copier.yaml` file is found in the root of the template,
 it will be read and used for two purposes:
@@ -79,23 +79,85 @@ your_email: ""
 
 will result in this series of questions:
 
-```bash
-name_of_the_project? [My awesome project]
-your_email? [] myemail@gmail.com
-number_of_eels? [1234] 42
-```
+<pre>
+  <b>name_of_the_project</b>? Format: yaml
+🎤 [My awesome project]:
+  <b>number_of_eels</b>? Format: yaml
+🎤 [1234]:
+  <b>your_email</b>? Format: yaml
+🎤 []:
+</pre>
 
-**NOTE:** All values are required. If you want some value to be optional, do not use
-an empty string as the default value or copier will not allow you to continue without
-answering with a value. Use `null` instead, so you can press ENTER to accept the
-"empty" default value.
+#### Advanced prompt formatting
+
+Apart from the simplified format, as seen above, Copier supports a more advanced
+format to ask users for data. To use it, the value must be a dict.
+
+Supported keys:
+
+- **type**: User input must match this type.
+  Options are: bool, float, int, json, str, yaml.
+- **help**: Additional text to help the user know what's this question for.
+- **default**: Leave empty to force the user answering. Provide a default to
+  save him from typing it if it's quite common. When using **choices**, the
+  default must be the choice _value_, not its _key_. If values are quite long,
+  you can use
+  [YAML anchors](https://confluence.atlassian.com/bitbucket/yaml-anchors-960154027.html).
 
 ```yaml
-# DO NOT do this for optionals
-bad_optional_value: ""
+love_copier:
+  type: bool # This makes Copier ask for y/n
+  help: Do you love Copier?
+  default: yes # Without default, you force the user to answer
 
-# DO THIS instead
-good_optional_value: null
+project_name:
+  type: str # Any value will be treated raw as a string
+  help: An awesome project needs an awesome name. Tell me yours.
+  default: paradox-specifier
+
+# I'll avoid default and help here, but you can use them too
+age:
+  type: int
+
+height:
+  type: float
+
+any_json:
+  help: Tell me anything, but format it as a one-line JSON string
+  type: json
+
+any_yaml:
+  help: Tell me anything, but format it as a one-line YAML string
+  type: yaml # This is the default type, also for short syntax questions
+
+your_favorite_book:
+  # User will type 1 or 2, but your template will get the value
+  choices:
+    - The Bible
+    - The Hitchhiker's Guide to the Galaxy
+
+project_license:
+  # User will type 1 or 2, and will see only the dict key, but you will
+  # get the dict value in your template
+  choices:
+    MIT: &mit_text |
+      Here I can write the full text of the MIT license.
+      This will be a long text, shortened here for example purposes.
+    Apache2: |
+      Full text of Apache2 license.
+  # When using choices, the default value is the value, **not** the key;
+  # that's why I'm using the YAML anchor declared above to avoid retyping the
+  # whole license
+  default: *mit_text
+
+close_to_work:
+  help: Do you live close to your work?
+  # This format works just like the dict one
+  choices:
+    - [at home, I work at home]
+    - [less than 10km, quite close]
+    - [more than 10km, not so close]
+    - [more than 100km, quite far away]
 ```
 
 ### Arguments defaults

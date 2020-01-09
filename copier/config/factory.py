@@ -8,15 +8,18 @@ __all__ = ("make_config",)
 
 
 def filter_config(data: AnyByStrDict) -> Tuple[AnyByStrDict, AnyByStrDict]:
-    """Separates config and query data."""
+    """Separates config and questions data."""
     conf_data = {}
-    query_data = {}
+    questions_data = {}
     for k, v in data.items():
         if k.startswith("_"):
             conf_data[k[1:]] = v
         else:
-            query_data[k] = v
-    return conf_data, query_data
+            # Transform simplified questions format into complex
+            if not isinstance(v, dict):
+                v = {"default": v}
+            questions_data[k] = v
+    return conf_data, questions_data
 
 
 def make_config(
@@ -43,29 +46,27 @@ def make_config(
     The order of precedence for the merger of configuration object is:
     function_args > user_data > defaults.
     """
-    answers_data = load_logfile_data(dst_path, quiet=True)
+    # Merge answer sources in the order of precedence
+    answers_data = DEFAULT_DATA.copy()
+    answers_data.update(load_logfile_data(dst_path, quiet=True))
+    answers_data.update(data or {})
+    # Detect original source if running in update mode
     if src_path is None:
         try:
             src_path = answers_data["_src_path"]
-            original_src_path = original_src_path or src_path
         except KeyError:
             raise NoSrcPathError(
                 "No .copier-answers.yml file found, or it didn't include "
                 "original template information (_src_path). "
                 "Run `copier copy` instead."
             )
+        original_src_path = original_src_path or src_path
+    # Obtain config and query data, asking the user if needed
     file_data = load_config_data(src_path, quiet=True)
-    config_data, query_data = filter_config(file_data)
-    query_data.update(filter(lambda item: item[0] in query_data, answers_data.items()))
-
-    if not force:
-        query_data = query_user_data(query_data)
-
-    # merge config sources in the order of precedence
-    config_data["data"] = {**DEFAULT_DATA.copy(), **query_data, **(data or {})}
-
+    config_data, questions_data = filter_config(file_data)
+    config_data["data"] = query_user_data(questions_data, answers_data, not force)
     args = {k: v for k, v in locals().items() if v is not None}
     args = {**config_data, **args}
     args["envops"] = EnvOps(**args.get("envops", {}))
-
+    args["data"].update(config_data["data"])
     return ConfigData(**args), Flags(**args)
