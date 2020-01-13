@@ -8,7 +8,8 @@
       "request": "launch",
       "program": "${workspaceFolder}/.venv/bin/pytest",
       "args": ["--no-cov", "copier", "copier", "tests"],
-      "console": "integratedTerminal"
+      "console": "integratedTerminal",
+      "subProcess": true
     }
   ]
 }

@@ -2,12 +2,6 @@ dist: bionic
 language: python
 python:
 
-cache:
-  directories:
-    - $HOME/.cache/pip
-    # Add cache for pre-commit on repo that uses it (mandatory for >= 13)
-    - $HOME/.cache/pre-commit
-
 matrix:
   allow_failures:
     - python: "nightly"
@@ -17,6 +11,7 @@ before_install:
 
 install:
   - pip install .[testing]
+  - pre-commit install-hooks
 
 script:
   - pre-commit run --all-files

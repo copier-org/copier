@@ -6,6 +6,8 @@ import subprocess
 from pathlib import Path
 from typing import Callable, List, Optional, Tuple
 
+from plumbum.cli.terminal import ask
+
 from . import vcs
 from .config import make_config
 from .config.objects import Flags
@@ -17,7 +19,6 @@ from .tools import (
     get_name_filters,
     make_folder,
     printf,
-    prompt_bool,
 )
 from .types import (
     AnyByStrDict,
@@ -267,13 +268,13 @@ def files_are_identical(src_path: Path, dst_path: Path, content: Optional[str]) 
     return dst_path.read_text() == content
 
 
-def overwrite_file(dst_path: Path, rel_path: Path, flags: Flags) -> OptBool:
+def overwrite_file(dst_path: Path, rel_path: Path, flags: Flags) -> bool:
     printf("conflict", rel_path, style=Style.DANGER, quiet=flags.quiet)
     if flags.force:
         return True
     if flags.skip:
         return False
-    return prompt_bool(f" Overwrite {dst_path}?", default=True)  # pragma: no cover
+    return bool(ask(f" Overwrite {dst_path}?", default=True))
 
 
 def run_tasks(dst_path: StrOrPath, render: Renderer, tasks: StrSeq) -> None:

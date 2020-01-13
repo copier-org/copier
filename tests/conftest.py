@@ -6,6 +6,10 @@ from unittest import mock
 
 import pytest
 import six
+from plumbum import local
+
+# Workaround to let plumbum.local and plumbum.cmd run in virtualenv
+local.env.path.insert(0, local.cwd / ".venv" / "bin")
 
 
 @pytest.fixture()
