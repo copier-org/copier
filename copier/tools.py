@@ -114,17 +114,17 @@ class Renderer:
     ) -> None:
         self.env = env
         self.src_path = src_path
-        log: AnyByStrDict = {}
+        answers: AnyByStrDict = {}
         # All internal values must appear first
         if original_src_path is not None:
-            log["_src_path"] = original_src_path
+            answers["_src_path"] = original_src_path
         # Other data goes next
-        log.update(
+        answers.update(
             (k, v)
             for (k, v) in data.items()
             if isinstance(k, JSONSerializable) and isinstance(v, JSONSerializable)
         )
-        self.data = dict(data, _log=log)
+        self.data = dict(data, _copier_answers=answers)
         self.env.filters["to_nice_yaml"] = to_nice_yaml
 
     def __call__(self, fullpath: StrOrPath) -> str:

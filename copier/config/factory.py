@@ -2,7 +2,7 @@ from typing import Tuple
 
 from ..types import AnyByStrDict, OptAnyByStrDict, OptBool, OptStr, OptStrSeq
 from .objects import DEFAULT_DATA, ConfigData, EnvOps, Flags, NoSrcPathError
-from .user_data import load_config_data, load_logfile_data, query_user_data
+from .user_data import load_answersfile_data, load_config_data, query_user_data
 
 __all__ = ("make_config",)
 
@@ -48,7 +48,7 @@ def make_config(
     """
     # Merge answer sources in the order of precedence
     answers_data = DEFAULT_DATA.copy()
-    answers_data.update(load_logfile_data(dst_path, quiet=True))
+    answers_data.update(load_answersfile_data(dst_path, quiet=True))
     answers_data.update(data or {})
     # Detect original source if running in update mode
     if src_path is None:

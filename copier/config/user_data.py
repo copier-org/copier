@@ -91,7 +91,7 @@ def load_config_data(
         return {}
 
 
-def load_logfile_data(
+def load_answersfile_data(
     dst_path: StrOrPath, *, quiet: bool = False, _warning: bool = True
 ) -> AnyByStrDict:
     """Load answers data from a `$dst_path/.copier-answers.yml` file if it exists.
