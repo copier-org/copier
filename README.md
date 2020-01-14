@@ -213,10 +213,10 @@ this content:
 
 ```yml
 # Changes here will be overwritten by Copier
-[[_log|to_nice_yaml]]
+[[_copier_answers|to_nice_yaml]]
 ```
 
-The builtin `_log` variable includes all data needed to smooth future updates
+The builtin `_copier_answers` variable includes all data needed to smooth future updates
 of this project. This includes (but is not limited to) all JSON-serializable
 values declared as user questions in [the `copier.yml` file](#the-copieryml-file).
 
