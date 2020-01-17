@@ -1,26 +1,43 @@
 #!/usr/bin/env python
 import sys
+from textwrap import dedent
 
 from plumbum import cli, colors
 
+from .config.objects import UserMessageError
 from .main import copy
 from .types import AnyByStrDict, OptStr
 from .version import __version__
 
 
+def handle_exceptions(method):
+    def _wrapper(*args, **kwargs):
+        try:
+            try:
+                return method(*args, **kwargs)
+            except KeyboardInterrupt:
+                raise UserMessageError("Execution stopped by user")
+        except UserMessageError as error:
+            print(colors.red | "\n".join(error.args), file=sys.stderr)
+            return 1
+
+    return _wrapper
+
+
 class CopierApp(cli.Application):
     DESCRIPTION = "Create a new project from a template."
-    DESCRIPTION_MORE = (
-        colors.yellow
-        | """
-    WARNING! Use only trusted project templates, as they might
-    execute code with the same level of access as your user.
-    """
+    DESCRIPTION_MORE = colors.yellow | dedent(
+        """
+        WARNING! Use only trusted project templates, as they might
+        execute code with the same level of access as your user.
+        """
     )
-    USAGE = """
-    copier [SWITCHES] [copy] template_src destination_path
-    copier [SWITCHES] [update] [destination_path]
-    """
+    USAGE = dedent(
+        """
+        copier [SWITCHES] [copy] template_src destination_path
+        copier [SWITCHES] [update] [destination_path]
+        """
+    )
     VERSION = __version__
     CALL_MAIN_IF_NESTED_COMMAND = False
     data: AnyByStrDict = {}
@@ -84,6 +101,7 @@ class CopierApp(cli.Application):
             src_path=src_path,
         )
 
+    @handle_exceptions
     def main(self, *args) -> int:
         """Copier shortcuts."""
         # If using 0 or 1 args, you want to update
@@ -110,6 +128,7 @@ class CopierApp(cli.Application):
 class CopierCopySubApp(cli.Application):
     DESCRIPTION = "Copy form a template source to a destination"
 
+    @handle_exceptions
     def main(self, template_src: str, destination_path: str) -> int:
         self.parent._copy(template_src, destination_path)
         return 0
@@ -124,6 +143,7 @@ class CopierUpdateSubApp(cli.Application):
     (it must be a key called `_src_path`).
     """
 
+    @handle_exceptions
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
         self.parent._copy(dst_path=destination_path)
         return 0
