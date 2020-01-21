@@ -28,7 +28,13 @@ DEFAULT_DATA: AnyByStrDict = {
 }
 
 
-class NoSrcPathError(Exception):
+class UserMessageError(Exception):
+    """Exit the program giving a message to the user."""
+
+    pass
+
+
+class NoSrcPathError(UserMessageError):
     pass
 
 
