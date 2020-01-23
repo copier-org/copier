@@ -111,18 +111,23 @@ class Renderer:
         src_path: Path,
         data: AnyByStrDict,
         original_src_path: OptStr,
+        commit: OptStr,
     ) -> None:
         self.env = env
         self.src_path = src_path
         answers: AnyByStrDict = {}
         # All internal values must appear first
+        if commit:
+            answers["_commit"] = commit
         if original_src_path is not None:
             answers["_src_path"] = original_src_path
         # Other data goes next
         answers.update(
             (k, v)
             for (k, v) in data.items()
-            if isinstance(k, JSONSerializable) and isinstance(v, JSONSerializable)
+            if not k.startswith("_")
+            and isinstance(k, JSONSerializable)
+            and isinstance(v, JSONSerializable)
         )
         self.data = dict(data, _copier_answers=answers)
         self.env.filters["to_nice_yaml"] = to_nice_yaml
@@ -143,21 +148,25 @@ def get_jinja_renderer(
     extra_paths: OptStrOrPathSeq = None,
     envops: Optional[AnyByStrDict] = None,
     original_src_path: OptStr = None,
+    commit: OptStr = None,
 ) -> Renderer:
     """Returns a function that can render a Jinja template.
     """
     envops = envops or {}
 
-    paths = [src_path] + [Path(p) for p in extra_paths or []]
-    envops.setdefault("loader", FileSystemLoader(paths))  # type: ignore
+    paths = [str(src_path)] + list(map(str, extra_paths or []))
 
     # We want to minimize the risk of hidden malware in the templates
     # so we use the SandboxedEnvironment instead of the regular one.
     # Of couse we still have the post-copy tasks to worry about, but at least
     # they are more visible to the final user.
-    env = SandboxedEnvironment(**envops)
+    env = SandboxedEnvironment(loader=FileSystemLoader(paths), **envops)
     return Renderer(
-        env=env, src_path=src_path, data=data, original_src_path=original_src_path
+        env=env,
+        src_path=src_path,
+        data=data,
+        original_src_path=original_src_path,
+        commit=commit,
     )
 
 

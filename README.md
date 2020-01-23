@@ -224,6 +224,25 @@ As you can see, you also have the power to customize what will be logged here.
 Keys that start with an underscore (`_`) are specific to Copier. Other keys
 should match questions in `copier.yml`.
 
+### Updating a project
+
+The best way to update a project from its template is when all of these conditions are true:
+
+1. The template includes a valid `.copier-answers.yml` file.
+1. The template is versioned with git.
+1. The destination folder is versioned with git.
+
+If that's your case, then just enter the destination folder, make sure
+`git status` shows it clean, and run:
+
+```bash
+copier update
+```
+
+Copier will do its best to respect the answers you provided when copied for the last
+copy, and the git diff that has evolved since the last copy. If there are conflicts,
+you will probably find diff files around.
+
 ## Template helpers
 
 In addition to [all the features Jinja supports](https://jinja.palletsprojects.com/en/2.10.x/templates/),

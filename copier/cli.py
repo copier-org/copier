@@ -66,6 +66,9 @@ class CopierApp(cli.Application):
             "that must be included, even if their names are in the `exclude` list"
         ),
     )
+    vcs_ref = cli.SwitchAttr(
+        ["-r", "--vcs-ref"], str, help="Git reference to checkout in `template_src`"
+    )
 
     pretend = cli.Flag(["-n", "--pretend"], help="Run but do not make any changes")
     force = cli.Flag(
@@ -86,7 +89,7 @@ class CopierApp(cli.Application):
     def data_switch(self, values):
         self.data.update(value.split("=", 1) for value in values)
 
-    def _copy(self, src_path: OptStr = None, dst_path: str = ".") -> None:
+    def _copy(self, src_path: OptStr = None, dst_path: str = ".", **kwargs) -> None:
         """Run Copier's internal API using CLI switches."""
         return copy(
             data=self.data,
@@ -99,13 +102,21 @@ class CopierApp(cli.Application):
             quiet=self.quiet,
             skip=self.skip,
             src_path=src_path,
+            vcs_ref=self.vcs_ref,
+            **kwargs,
         )
 
     @handle_exceptions
-    def main(self, *args) -> int:
+    def main(self, *args: str) -> int:
         """Copier shortcuts."""
+        # Redirect to subcommand if supplied
+        if args and args[0] in self._subcommands:
+            self.nested_command = (
+                self._subcommands[args[0]].subapplication,
+                ["copier %s" % args[0]] + list(args[1:]),
+            )
         # If using 0 or 1 args, you want to update
-        if len(args) in {0, 1}:
+        elif len(args) in {0, 1}:
             self.nested_command = (
                 self._subcommands["update"].subapplication,
                 ["copier update"] + list(args),
@@ -119,8 +130,7 @@ class CopierApp(cli.Application):
         # If using more args, you're wrong
         else:
             self.help()
-            print(colors.red | "Unsupported arguments", file=sys.stderr)
-            return 1
+            raise UserMessageError("Unsupported arguments")
         return 0
 
 
@@ -141,11 +151,19 @@ class CopierUpdateSubApp(cli.Application):
     The copy must have a file called `.copier-answers.yml` which contains info
     from the last Copier execution, including the source template
     (it must be a key called `_src_path`).
+
+    If that file contains also `_commit` and `destination_path` is a git
+    repository, this command will do its best to respect the diff that you have
+    generated since the last `copier` execution. To disable that, use `--no-diff`.
     """
+
+    only_diff = cli.Flag(
+        ["-D", "--no-diff"], default=True, help="Disable smart diff detection."
+    )
 
     @handle_exceptions
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
-        self.parent._copy(dst_path=destination_path)
+        self.parent._copy(dst_path=destination_path, only_diff=self.only_diff)
         return 0
 
 

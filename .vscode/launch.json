@@ -10,6 +10,16 @@
       "args": ["--no-cov", "copier", "copier", "tests"],
       "console": "integratedTerminal",
       "subProcess": true
+    },
+    {
+      "name": "Python: pytest verbose",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/.venv/bin/pytest",
+      "args": ["--no-cov", "-vv", "copier", "copier", "tests"],
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "subProcess": true
     }
   ]
 }
