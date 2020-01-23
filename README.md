@@ -41,7 +41,7 @@ copier path/to/project/template path/to/destination
 ## How it works
 
 The content of the files inside the project template is copied to the destination
-without changes, **unless are suffixed with the extension '.tmpl'.**
+without changes, **unless they end with `.tmpl`** (or your chosen `templates_suffix`).
 In that case, the templating engine will be used to render them.
 
 A slightly customized Jinja2 templating is used. The main difference is
@@ -170,6 +170,9 @@ Note that they become just _the defaults_, so any explicitly-passed argument wil
 overwrite them.
 
 ```yaml
+# Suffix that intstructs which files are to be processed by Jinja as templates
+_templates_suffix: .tmpl
+
 # Shell-style patterns files/folders that must not be copied.
 _exclude:
   - "*.bar"
@@ -208,8 +211,8 @@ This makes projects easier to update because when the user is asked, the default
 answers will be the last ones he used.
 
 To make sure projects based on your templates can make use of this nice feature,
-add a file called `.copier-answers.yml.tmpl` in your template's root folder, with
-this content:
+add a file called `.copier-answers.yml.tmpl` (or your chosen `templates_suffix`)
+in your template's root folder, with this content:
 
 ```yml
 # Changes here will be overwritten by Copier

@@ -27,6 +27,8 @@ DEFAULT_DATA: AnyByStrDict = {
     "make_secret": lambda: sha512(urandom(48)).hexdigest(),
 }
 
+DEFAULT_TEMPLATES_SUFFIX = ".tmpl"
+
 
 class UserMessageError(Exception):
     """Exit the program giving a message to the user."""
@@ -80,6 +82,7 @@ class ConfigData(BaseModel):
     skip_if_exists: StrOrPathSeq = []
     tasks: StrSeq = []
     envops: EnvOps
+    templates_suffix: str = DEFAULT_TEMPLATES_SUFFIX
     original_src_path: OptStr
 
     def __init__(self, **data: Any):

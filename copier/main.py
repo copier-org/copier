@@ -1,6 +1,5 @@
 import filecmp
 import os
-import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -33,8 +32,6 @@ from .types import (
 )
 
 __all__ = ("copy", "copy_local")
-
-RE_TMPL = re.compile(r"\.tmpl$", re.IGNORECASE)
 
 
 def copy(
@@ -146,6 +143,7 @@ def copy_local(
     skip_if_exists: StrOrPathSeq,
     tasks: StrSeq,
     envops: Optional[AnyByStrDict],
+    templates_suffix: str,
     original_src_path: str,
     flags: Flags,
 ) -> None:
@@ -173,9 +171,19 @@ def copy_local(
 
         render_folder(dst_path, rel_folder, flags)
 
-        source_paths = get_source_paths(folder, rel_folder, files, render, must_filter)
+        source_paths = get_source_paths(
+            folder, rel_folder, files, render, must_filter, templates_suffix
+        )
         for source_path, rel_path in source_paths:
-            render_file(dst_path, rel_path, source_path, render, must_skip, flags)
+            render_file(
+                dst_path,
+                rel_path,
+                source_path,
+                render,
+                must_skip,
+                templates_suffix,
+                flags,
+            )
 
     if not flags.quiet:
         print("")  # padding space
@@ -192,13 +200,19 @@ def get_source_paths(
     files: StrSeq,
     render: Renderer,
     must_filter: Callable[[StrOrPath], bool],
+    templates_suffix: str,
 ) -> List[Tuple[Path, Path]]:
     source_paths = []
     files_set = set(files)
     for src_name in files:
-        if f"{src_name}.tmpl" in files_set:
+        src_name = str(src_name)
+        if f"{src_name}{templates_suffix}" in files_set:
             continue
-        dst_name = re.sub(RE_TMPL, "", str(src_name))
+        dst_name = (
+            src_name[: -len(templates_suffix)]
+            if src_name.endswith(templates_suffix)
+            else src_name
+        )
         dst_name = render.string(dst_name)
         rel_path = rel_folder / dst_name
 
@@ -233,12 +247,13 @@ def render_file(
     src_path: Path,
     render: Renderer,
     must_skip: CheckPathFunc,
+    templates_suffix: str,
     flags: Flags,
 ) -> None:
     """Process or copy a file of the skeleton.
     """
     content: Optional[str] = None
-    if src_path.suffix == ".tmpl":
+    if str(src_path).endswith(templates_suffix):
         content = render(src_path)
 
     dst_path = dst_path / rel_path

@@ -1,7 +1,8 @@
 {
   "recommendations": [
     "EditorConfig.editorconfig",
+    "esbenp.prettier-vscode",
     "ms-python.python",
-    "esbenp.prettier-vscode"
+    "samuelcolvin.jinjahtml"
   ]
 }
