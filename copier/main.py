@@ -2,14 +2,17 @@ import filecmp
 import os
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 from typing import Callable, List, Optional, Tuple
 
+from plumbum import local
 from plumbum.cli.terminal import ask
+from plumbum.cmd import git
 
 from . import vcs
 from .config import make_config
-from .config.objects import Flags
+from .config.objects import Flags, UserMessageError
 from .tools import (
     Renderer,
     Style,
@@ -50,6 +53,8 @@ def copy(
     skip: OptBool = False,
     quiet: OptBool = False,
     cleanup_on_error: OptBool = True,
+    vcs_ref: str = "HEAD",
+    only_diff: OptBool = True,
 ) -> None:
     """
     Uses the template in src_path to generate a new project at dst_path.
@@ -110,27 +115,33 @@ def copy(
     - cleanup_on_error (bool):
         Remove the destination folder if the copy process or one of the tasks fail.
 
+    - vcs_ref (str):
+        VCS reference to checkout in the template.
+
+    - only_diff (bool):
+        Try to update only the template diff.
     """
-    original_src_path = src_path
-    if src_path:
-        repo = vcs.get_repo(src_path)
-        if repo:
-            src_path = vcs.clone(repo)
-    elif src_path and not Path(src_path).is_absolute():
-        original_src_path = None
-
     conf, flags = make_config(**locals())
-
+    is_update = src_path != conf.src_path and vcs.is_git_repo_root(conf.src_path)
+    do_diff_update = (
+        only_diff
+        and is_update
+        and conf.old_commit
+        and vcs.is_git_repo_root(Path(dst_path))
+    )
     try:
-        copy_local(flags=flags, **conf.dict())
+        if do_diff_update:
+            update_diff(flags=flags, vcs_ref=vcs_ref, **conf.dict())
+        else:
+            copy_local(flags=flags, **conf.dict())
     except Exception:
-        if cleanup_on_error:
+        if cleanup_on_error and not do_diff_update:
             print("Something went wrong. Removing destination folder.")
             shutil.rmtree(dst_path, ignore_errors=True)
         raise
     finally:
-        if repo and src_path:
-            shutil.rmtree(src_path)
+        if is_update:
+            shutil.rmtree(conf.src_path)
 
 
 def copy_local(
@@ -145,10 +156,14 @@ def copy_local(
     envops: Optional[AnyByStrDict],
     templates_suffix: str,
     original_src_path: str,
+    commit: OptStr,
+    old_commit: OptStr,
     flags: Flags,
 ) -> None:
 
-    render = get_jinja_renderer(src_path, data, extra_paths, envops, original_src_path)
+    render = get_jinja_renderer(
+        src_path, data, extra_paths, envops, original_src_path, commit
+    )
 
     skip_if_exists = [render.string(pattern) for pattern in skip_if_exists]
     must_filter, must_skip = get_name_filters(exclude, include, skip_if_exists)
@@ -192,6 +207,78 @@ def copy_local(
         run_tasks(dst_path, render, tasks)
         if not flags.quiet:
             print("")  # padding space
+
+
+def update_diff(
+    src_path: Path,
+    dst_path: Path,
+    data: AnyByStrDict,
+    extra_paths: PathSeq,
+    exclude: StrOrPathSeq,
+    include: StrOrPathSeq,
+    skip_if_exists: StrOrPathSeq,
+    tasks: StrSeq,
+    envops: Optional[AnyByStrDict],
+    original_src_path: str,
+    old_commit: str,
+    commit: str,
+    vcs_ref: str,
+    flags: Flags,
+):
+    # Ensure local repo is clean
+    if vcs.is_git_repo_root(dst_path):
+        with local.cwd(dst_path):
+            if git("status", "--porcelain"):
+                raise UserMessageError(
+                    "Destination repository is dirty; cannot continue. "
+                    "Please commit or stash your local changes and retry."
+                )
+    # Checkout src_path into old commit
+    old_src_path = vcs.clone(str(src_path), old_commit)
+    # Copy old template into a temporary destination
+    with tempfile.TemporaryDirectory() as dst_temp:
+        copy_local(
+            Path(old_src_path),
+            Path(dst_temp),
+            data,
+            extra_paths,
+            exclude,
+            include,
+            skip_if_exists,
+            tasks,
+            envops,
+            original_src_path,
+            old_commit,
+            old_commit,
+            flags.copy(update={"force": True, "skip": False, "quiet": True}, deep=True),
+        )
+        # Extract diff between temporary destination and real destination
+        with local.cwd(dst_temp):
+            git("init", retcode=None)
+            git("add", ".")
+            git("commit", "-m", "foo", "--author", "Copier <copier@copier>")
+            git("remote", "add", "real_dst", dst_path)
+            git("fetch", "real_dst", "HEAD")
+            diff = git("diff", "--unified=0", "HEAD...FETCH_HEAD")
+    # Do a normal update in final destination
+    copy_local(
+        src_path,
+        dst_path,
+        data,
+        extra_paths,
+        exclude,
+        include,
+        skip_if_exists,
+        tasks,
+        envops,
+        original_src_path,
+        commit,
+        old_commit,
+        flags,
+    )
+    # Try to apply cached diff into final destination
+    with local.cwd(dst_path):
+        (git["apply", "--reject"] << diff)(retcode=None)
 
 
 def get_source_paths(

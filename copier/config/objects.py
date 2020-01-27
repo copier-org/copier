@@ -84,10 +84,12 @@ class ConfigData(BaseModel):
     envops: EnvOps
     templates_suffix: str = DEFAULT_TEMPLATES_SUFFIX
     original_src_path: OptStr
+    commit: OptStr
+    old_commit: OptStr
 
     def __init__(self, **data: Any):
         super().__init__(**data)
-        self.data["folder_name"] = Path(self.dst_path).name
+        self.data["_folder_name"] = Path(self.dst_path).name
 
     # sanitizers
     @validator("src_path", "dst_path", "extra_paths", pre=True, each_item=True)

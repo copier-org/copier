@@ -1,5 +1,9 @@
 from typing import Tuple
 
+from plumbum import local
+from plumbum.cmd import git
+
+from .. import vcs
 from ..types import AnyByStrDict, OptAnyByStrDict, OptBool, OptStr, OptStrSeq
 from .objects import DEFAULT_DATA, ConfigData, EnvOps, Flags, NoSrcPathError
 from .user_data import load_answersfile_data, load_config_data, query_user_data
@@ -38,7 +42,7 @@ def make_config(
     skip: OptBool = None,
     quiet: OptBool = None,
     cleanup_on_error: OptBool = None,
-    original_src_path: str = None,
+    vcs_ref: str = "HEAD",
     **kwargs,
 ) -> Tuple[ConfigData, Flags]:
     """Provides the configuration object, merged from the different sources.
@@ -50,6 +54,9 @@ def make_config(
     answers_data = DEFAULT_DATA.copy()
     answers_data.update(load_answersfile_data(dst_path, quiet=True))
     answers_data.update(data or {})
+    _metadata = dict()
+    if "_commit" in answers_data:
+        _metadata["old_commit"] = answers_data["_commit"]
     # Detect original source if running in update mode
     if src_path is None:
         try:
@@ -60,12 +67,20 @@ def make_config(
                 "original template information (_src_path). "
                 "Run `copier copy` instead."
             )
-        original_src_path = original_src_path or src_path
+    _metadata["original_src_path"] = src_path
+    if src_path:
+        repo = vcs.get_repo(src_path)
+        if repo:
+            src_path = vcs.clone(repo, vcs_ref)
+            with local.cwd(src_path):
+                _metadata["commit"] = git("rev-parse", "HEAD").strip()
     # Obtain config and query data, asking the user if needed
     file_data = load_config_data(src_path, quiet=True)
     config_data, questions_data = filter_config(file_data)
+    config_data.update(_metadata)
+    del _metadata
     config_data["data"] = query_user_data(questions_data, answers_data, not force)
-    args = {k: v for k, v in locals().items() if v is not None}
+    args = {k: v for k, v in locals().items() if v is not None and v != []}
     args = {**config_data, **args}
     args["envops"] = EnvOps(**args.get("envops", {}))
     args["data"].update(config_data["data"])

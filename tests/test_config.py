@@ -175,6 +175,8 @@ def test_config_data_good_data(dst):
     dst = Path(dst).expanduser().resolve()
     expected = {
         "src_path": dst,
+        "commit": None,
+        "old_commit": None,
         "dst_path": dst,
         "data": DEFAULT_DATA,
         "extra_paths": [dst],
@@ -187,7 +189,7 @@ def test_config_data_good_data(dst):
         "envops": EnvOps(),
     }
     conf = ConfigData(**expected)
-    expected["data"]["folder_name"] = dst.name
+    expected["data"]["_folder_name"] = dst.name
     assert conf.dict() == expected
 
 
@@ -204,8 +206,8 @@ def test_make_config_good_data(dst):
     conf, flags = make_config("./tests/demo_data", dst)
     assert conf is not None
     assert flags is not None
-    assert "folder_name" in conf.data
-    assert conf.data["folder_name"] == dst.name
+    assert "_folder_name" in conf.data
+    assert conf.data["_folder_name"] == dst.name
     assert conf.exclude == ["exclude1", "exclude2"]
     assert conf.include == ["include1", "include2"]
     assert conf.skip_if_exists == ["skip_if_exists1", "skip_if_exists2"]
