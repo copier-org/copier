@@ -183,6 +183,7 @@ def test_config_data_good_data(dst):
         "original_src_path": None,
         "skip_if_exists": ["skip_me"],
         "tasks": ["echo python rulez"],
+        "templates_suffix": ".tmpl",
         "envops": EnvOps(),
     }
     conf = ConfigData(**expected)

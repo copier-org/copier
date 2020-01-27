@@ -1,3 +1,4 @@
+_templates_suffix: .jinja
 _envops:
   variable_start_string: "{{"
   variable_end_string: "}}"
