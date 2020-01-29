@@ -4,9 +4,9 @@ from os.path import isfile
 from pathlib import Path
 from typing import Any
 
-import yaml
 from plumbum.cli.terminal import ask, choose, prompt
 from plumbum.colors import bold, info, italics
+from ruamel import yaml
 
 from ..tools import INDENT, printf_exception
 from ..types import AnyByStrDict, PathSeq, StrOrPath
