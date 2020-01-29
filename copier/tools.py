@@ -124,7 +124,7 @@ class Renderer:
         # Other data goes next
         answers.update(
             (k, v)
-            for (k, v) in data.items()
+            for (k, v) in sorted(data.items())
             if not k.startswith("_")
             and isinstance(k, JSONSerializable)
             and isinstance(v, JSONSerializable)
