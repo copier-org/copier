@@ -28,8 +28,8 @@ def test_updatediff(dst: Path):
             # Changes here will be overwritten by Copier
             _commit: {COMMIT_1}
             _src_path: {REPO_BUNDLE_PATH}
-            project_name: to become a pirate
             author_name: Guybrush
+            project_name: to become a pirate
         """
     )
     assert readme.read_text() == dedent(
@@ -69,8 +69,8 @@ def test_updatediff(dst: Path):
             # Changes here will be overwritten by Copier
             _commit: {COMMIT_2}
             _src_path: {REPO_BUNDLE_PATH}
-            project_name: to become a pirate
             author_name: Guybrush
+            project_name: to become a pirate
         """
     )
     assert readme.read_text() == dedent(
