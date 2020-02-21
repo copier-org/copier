@@ -13,7 +13,15 @@ from plumbum.cmd import git
 from . import vcs
 from .config import make_config
 from .config.objects import ConfigData, UserMessageError
-from .tools import Renderer, Style, copy_file, get_name_filters, make_folder, printf
+from .tools import (
+    Renderer,
+    Style,
+    copy_file,
+    get_migration_tasks,
+    get_name_filters,
+    make_folder,
+    printf,
+)
 from .types import (
     AnyByStrDict,
     CheckPathFunc,
@@ -43,7 +51,7 @@ def copy(
     skip: OptBool = False,
     quiet: OptBool = False,
     cleanup_on_error: OptBool = True,
-    vcs_ref: str = "HEAD",
+    vcs_ref: OptStr = None,
     only_diff: OptBool = True,
 ) -> None:
     """
@@ -167,10 +175,9 @@ def copy_local(conf: ConfigData) -> None:
     if not conf.quiet:
         print("")  # padding space
 
-    if conf.tasks:
-        run_tasks(conf, render)
-        if not conf.quiet:
-            print("")  # padding space
+    run_tasks(conf, render, conf.tasks)
+    if not conf.quiet:
+        print("")  # padding space
 
 
 def update_diff(conf: ConfigData):
@@ -207,11 +214,16 @@ def update_diff(conf: ConfigData):
             git("remote", "add", "real_dst", conf.dst_path)
             git("fetch", "real_dst", "HEAD")
             diff = git("diff", "--unified=0", "HEAD...FETCH_HEAD")
+    # Run pre-migration tasks
+    renderer = Renderer(conf)
+    run_tasks(conf, renderer, get_migration_tasks(conf, "before"))
     # Do a normal update in final destination
     copy_local(conf)
     # Try to apply cached diff into final destination
     with local.cwd(conf.dst_path):
         (git["apply", "--reject"] << diff)(retcode=None)
+    # Run post-migration tasks
+    run_tasks(conf, renderer, get_migration_tasks(conf, "after"))
 
 
 def get_source_paths(
@@ -310,9 +322,9 @@ def overwrite_file(conf: ConfigData, dst_path: Path, rel_path: Path) -> bool:
     return bool(ask(f" Overwrite {dst_path}?", default=True))
 
 
-def run_tasks(conf: ConfigData, render: Renderer) -> None:
-    for i, task in enumerate(conf.tasks):
+def run_tasks(conf: ConfigData, render: Renderer, tasks: StrSeq) -> None:
+    for i, task in enumerate(tasks):
         task = render.string(task)
         # TODO: should we respect the `quiet` flag here as well?
-        printf(f" > Running task {i + 1} of {len(conf.tasks)}", task, style=Style.OK)
+        printf(f" > Running task {i + 1} of {len(tasks)}", task, style=Style.OK)
         subprocess.run(task, shell=True, check=True, cwd=conf.dst_path)

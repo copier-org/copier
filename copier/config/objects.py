@@ -2,7 +2,7 @@ import datetime
 from hashlib import sha512
 from os import urandom
 from pathlib import Path
-from typing import Any, Tuple
+from typing import Any, Sequence, Tuple
 
 from pydantic import BaseModel, Extra, StrictBool, validator
 
@@ -55,15 +55,21 @@ class EnvOps(BaseModel):
         extra = Extra.allow
 
 
+class Migrations(BaseModel):
+    version: str
+    before: StrSeq = ()
+    after: StrSeq = ()
+
+
 class ConfigData(BaseModel):
     src_path: Path
     dst_path: Path
     data: AnyByStrDict = {}
-    extra_paths: PathSeq = []
+    extra_paths: PathSeq = ()
     exclude: StrOrPathSeq = DEFAULT_EXCLUDE
-    include: StrOrPathSeq = []
-    skip_if_exists: StrOrPathSeq = []
-    tasks: StrSeq = []
+    include: StrOrPathSeq = ()
+    skip_if_exists: StrOrPathSeq = ()
+    tasks: StrSeq = ()
     envops: EnvOps = EnvOps()
     templates_suffix: str = DEFAULT_TEMPLATES_SUFFIX
     original_src_path: OptStr
@@ -76,6 +82,7 @@ class ConfigData(BaseModel):
     quiet: StrictBool = False
     skip: StrictBool = False
     vcs_ref: OptStr
+    migrations: Sequence[Migrations] = ()
 
     def __init__(self, **data: Any):
         super().__init__(**data)

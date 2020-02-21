@@ -50,7 +50,7 @@ def test_copy(dst):
 
 
 def test_copy_repo(dst):
-    copier.copy("gh:jpscaletti/siht.git", dst, quiet=True)
+    copier.copy("gh:jpscaletti/siht.git", dst, vcs_ref="HEAD", quiet=True)
     assert (dst / "setup.py").exists()
 
 

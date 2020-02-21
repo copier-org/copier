@@ -42,7 +42,7 @@ def make_config(
     skip: OptBool = None,
     quiet: OptBool = None,
     cleanup_on_error: OptBool = None,
-    vcs_ref: str = "HEAD",
+    vcs_ref: OptStr = None,
     **kwargs,
 ) -> ConfigData:
     """Provides the configuration object, merged from the different sources.
@@ -71,9 +71,10 @@ def make_config(
     if src_path:
         repo = vcs.get_repo(src_path)
         if repo:
-            src_path = vcs.clone(repo, vcs_ref)
+            src_path = vcs.clone(repo, vcs_ref or "HEAD")
+            vcs_ref = vcs_ref or vcs.checkout_latest_tag(src_path)
             with local.cwd(src_path):
-                _metadata["commit"] = git("rev-parse", "HEAD").strip()
+                _metadata["commit"] = git("describe", "--tags", "--always").strip()
     # Obtain config and query data, asking the user if needed
     file_data = load_config_data(src_path, quiet=True)
     config_data, questions_data = filter_config(file_data)

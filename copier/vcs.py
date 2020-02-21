@@ -3,10 +3,11 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from plumbum import TF, local
+from packaging import version
+from plumbum import TF, colors, local
 from plumbum.cmd import git
 
-from .types import OptStr
+from .types import OptStr, StrOrPath
 
 __all__ = ("get_repo", "clone")
 
@@ -50,6 +51,21 @@ def get_repo(url: str) -> OptStr:
     url = re.sub(RE_GITHUB, "https://github.com/", url)
     url = re.sub(RE_GITLAB, "https://gitlab.com/", url)
     return url
+
+
+def checkout_latest_tag(local_repo: StrOrPath) -> str:
+    """Checkout latest git tag and check it out, sorted by PEP 440."""
+    with local.cwd(local_repo):
+        all_tags = git("tag").split()
+        sorted_tags = sorted(all_tags, key=version.parse, reverse=True)
+        try:
+            latest_tag = str(sorted_tags[0])
+        except IndexError:
+            print(colors.warn | "No git tags found in template; using HEAD as ref")
+            latest_tag = "HEAD"
+        git("checkout", "--force", latest_tag)
+        git("submodule", "update", "--checkout", "--init", "--recursive", "--force")
+        return latest_tag
 
 
 def clone(url: str, ref: str = "HEAD") -> str:
