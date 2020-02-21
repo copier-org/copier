@@ -6,27 +6,13 @@ from pydantic import ValidationError
 
 import copier
 from copier.config.factory import make_config
-from copier.config.objects import (
-    DEFAULT_DATA,
-    DEFAULT_EXCLUDE,
-    ConfigData,
-    EnvOps,
-    Flags,
-)
+from copier.config.objects import DEFAULT_DATA, DEFAULT_EXCLUDE, ConfigData, EnvOps
 from copier.config.user_data import (
     InvalidConfigFileError,
     MultipleConfigFilesError,
     load_config_data,
     load_yaml_data,
 )
-
-GOOD_FLAGS = {
-    "pretend": True,
-    "quiet": False,
-    "force": True,
-    "skip": False,
-    "cleanup_on_error": True,
-}
 
 GOOD_ENV_OPS = {
     "autoescape": True,
@@ -88,7 +74,7 @@ def test_multiple_config_file_error(capsys):
     assert out == ""
 
 
-# Flags
+# ConfigData
 @pytest.mark.parametrize(
     "data",
     (
@@ -102,19 +88,14 @@ def test_multiple_config_file_error(capsys):
 )
 def test_flags_bad_data(data):
     with pytest.raises(ValidationError):
-        Flags(**data)
-
-
-def test_flags_good_data():
-    flags = Flags(**GOOD_FLAGS)
-    assert flags.dict() == GOOD_FLAGS
+        ConfigData(**data)
 
 
 def test_flags_extra_ignored():
     key = "i_am_not_a_member"
-    flag_data = {key: "and_i_do_not_belong_here"}
-    flags = Flags(**flag_data)
-    assert key not in flags.dict()
+    conf_data = {"src_path": "..", "dst_path": ".", key: "and_i_do_not_belong_here"}
+    confs = ConfigData(**conf_data)
+    assert key not in confs.dict()
 
 
 # EnvOps
@@ -186,7 +167,14 @@ def test_config_data_good_data(dst):
         "skip_if_exists": ["skip_me"],
         "tasks": ["echo python rulez"],
         "templates_suffix": ".tmpl",
-        "envops": EnvOps(),
+        "cleanup_on_error": True,
+        "envops": EnvOps().dict(),
+        "force": False,
+        "only_diff": True,
+        "pretend": False,
+        "quiet": False,
+        "skip": False,
+        "vcs_ref": None,
     }
     conf = ConfigData(**expected)
     expected["data"]["_folder_name"] = dst.name
@@ -203,9 +191,8 @@ def is_subdict(small, big):
 
 
 def test_make_config_good_data(dst):
-    conf, flags = make_config("./tests/demo_data", dst)
+    conf = make_config("./tests/demo_data", dst)
     assert conf is not None
-    assert flags is not None
     assert "_folder_name" in conf.data
     assert conf.data["_folder_name"] == dst.name
     assert conf.exclude == ["exclude1", "exclude2"]
@@ -227,5 +214,5 @@ def test_make_config_good_data(dst):
     ],
 )
 def test_make_config_precedence(dst, test_input, expected):
-    conf, flags = make_config(dst_path=dst, **test_input)
+    conf = make_config(dst_path=dst, **test_input)
     assert is_subdict(expected, conf.dict())
