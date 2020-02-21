@@ -13,17 +13,8 @@ from jinja2.sandbox import SandboxedEnvironment
 from pydantic import StrictBool
 from ruamel.yaml import round_trip_dump
 
-from .types import (
-    AnyByStrDict,
-    CheckPathFunc,
-    IntSeq,
-    JSONSerializable,
-    OptStr,
-    OptStrOrPathSeq,
-    StrOrPath,
-    StrOrPathSeq,
-    T,
-)
+from .config.objects import ConfigData, EnvOps
+from .types import AnyByStrDict, CheckPathFunc, IntSeq, JSONSerializable, StrOrPath, T
 
 __all__ = ("Style", "printf")
 
@@ -105,35 +96,36 @@ def to_nice_yaml(data: Any, **kwargs) -> str:
 
 
 class Renderer:
-    def __init__(
-        self,
-        env: SandboxedEnvironment,
-        src_path: Path,
-        data: AnyByStrDict,
-        original_src_path: OptStr,
-        commit: OptStr,
-    ) -> None:
-        self.env = env
-        self.src_path = src_path
+    def __init__(self, conf: ConfigData) -> None:
+        envops: EnvOps = conf.envops
+        paths = [str(conf.src_path)] + list(map(str, conf.extra_paths or []))
+        # We want to minimize the risk of hidden malware in the templates
+        # so we use the SandboxedEnvironment instead of the regular one.
+        # Of couse we still have the post-copy tasks to worry about, but at least
+        # they are more visible to the final user.
+        self.env = SandboxedEnvironment(loader=FileSystemLoader(paths), **envops.dict())
+        self.conf = conf
         answers: AnyByStrDict = {}
         # All internal values must appear first
-        if commit:
-            answers["_commit"] = commit
-        if original_src_path is not None:
-            answers["_src_path"] = original_src_path
+        if conf.commit:
+            answers["_commit"] = conf.commit
+        if conf.original_src_path is not None:
+            answers["_src_path"] = conf.original_src_path
         # Other data goes next
         answers.update(
             (k, v)
-            for (k, v) in sorted(data.items())
+            for (k, v) in sorted(conf.data.items())
             if not k.startswith("_")
             and isinstance(k, JSONSerializable)
             and isinstance(v, JSONSerializable)
         )
-        self.data = dict(data, _copier_answers=answers)
+        self.data = dict(conf.data, _copier_answers=answers)
         self.env.filters["to_nice_yaml"] = to_nice_yaml
 
     def __call__(self, fullpath: StrOrPath) -> str:
-        relpath = str(fullpath).replace(str(self.src_path), "", 1).lstrip(os.path.sep)
+        relpath = (
+            str(fullpath).replace(str(self.conf.src_path), "", 1).lstrip(os.path.sep)
+        )
         tmpl = self.env.get_template(relpath)
         return tmpl.render(**self.data)
 
@@ -142,48 +134,23 @@ class Renderer:
         return tmpl.render(**self.data)
 
 
-def get_jinja_renderer(
-    src_path: Path,
-    data: AnyByStrDict,
-    extra_paths: OptStrOrPathSeq = None,
-    envops: Optional[AnyByStrDict] = None,
-    original_src_path: OptStr = None,
-    commit: OptStr = None,
-) -> Renderer:
-    """Returns a function that can render a Jinja template.
-    """
-    envops = envops or {}
-
-    paths = [str(src_path)] + list(map(str, extra_paths or []))
-
-    # We want to minimize the risk of hidden malware in the templates
-    # so we use the SandboxedEnvironment instead of the regular one.
-    # Of couse we still have the post-copy tasks to worry about, but at least
-    # they are more visible to the final user.
-    env = SandboxedEnvironment(loader=FileSystemLoader(paths), **envops)
-    return Renderer(
-        env=env,
-        src_path=src_path,
-        data=data,
-        original_src_path=original_src_path,
-        commit=commit,
-    )
-
-
 def normalize_str(text: StrOrPath, form: str = "NFD") -> str:
     """Normalize unicode text. Uses the NFD algorithm by default."""
     return unicodedata.normalize(form, str(text))
 
 
 def get_name_filters(
-    exclude: StrOrPathSeq, include: StrOrPathSeq, skip_if_exists: StrOrPathSeq
+    conf: ConfigData, renderer: Renderer
 ) -> Tuple[CheckPathFunc, CheckPathFunc]:
     """Returns a function that evaluates if aCheckPathFunc file or folder name must be
     filtered out, and another that evaluates if a file must be skipped.
     """
-    exclude = [normalize_str(pattern) for pattern in exclude]
-    include = [normalize_str(pattern) for pattern in include]
-    skip_if_exists = [normalize_str(pattern) for pattern in skip_if_exists]
+    exclude = [normalize_str(pattern) for pattern in conf.exclude]
+    include = [normalize_str(pattern) for pattern in conf.include]
+    skip_if_exists = [
+        normalize_str(pattern)
+        for pattern in (renderer.string(pattern) for pattern in conf.skip_if_exists)
+    ]
 
     def fullmatch(path: StrOrPath, pattern: StrOrPath) -> bool:
         path = normalize_str(path)

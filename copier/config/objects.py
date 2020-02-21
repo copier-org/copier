@@ -40,23 +40,6 @@ class NoSrcPathError(UserMessageError):
     pass
 
 
-class Flags(BaseModel):
-    pretend: StrictBool = False
-    quiet: StrictBool = False
-    force: StrictBool = False
-    skip: StrictBool = False
-    cleanup_on_error: StrictBool = True
-
-    @validator("skip", always=True)
-    def mutually_exclusive(cls, v, values):  # noqa: B902
-        if v and values["force"]:
-            raise ValueError(f"Flags `force` and `skip` are mutually exclusive.")
-        return v
-
-    class Config:
-        allow_mutation = False
-
-
 class EnvOps(BaseModel):
     autoescape: StrictBool = False
     block_start_string: str = "[%"
@@ -75,21 +58,34 @@ class EnvOps(BaseModel):
 class ConfigData(BaseModel):
     src_path: Path
     dst_path: Path
-    data: AnyByStrDict = DEFAULT_DATA
+    data: AnyByStrDict = {}
     extra_paths: PathSeq = []
     exclude: StrOrPathSeq = DEFAULT_EXCLUDE
     include: StrOrPathSeq = []
     skip_if_exists: StrOrPathSeq = []
     tasks: StrSeq = []
-    envops: EnvOps
+    envops: EnvOps = EnvOps()
     templates_suffix: str = DEFAULT_TEMPLATES_SUFFIX
     original_src_path: OptStr
     commit: OptStr
     old_commit: OptStr
+    cleanup_on_error: StrictBool = True
+    force: StrictBool = False
+    only_diff: StrictBool = True
+    pretend: StrictBool = False
+    quiet: StrictBool = False
+    skip: StrictBool = False
+    vcs_ref: OptStr
 
     def __init__(self, **data: Any):
         super().__init__(**data)
-        self.data["_folder_name"] = Path(self.dst_path).name
+        self.data.update(dict(DEFAULT_DATA, _folder_name=self.dst_path.name))
+
+    @validator("skip", always=True)
+    def mutually_exclusive_flags(cls, v, values):  # noqa: B902
+        if v and values["force"]:
+            raise ValueError(f"Flags `force` and `skip` are mutually exclusive.")
+        return v
 
     # sanitizers
     @validator("src_path", "dst_path", "extra_paths", pre=True, each_item=True)

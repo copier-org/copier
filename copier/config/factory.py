@@ -5,7 +5,7 @@ from plumbum.cmd import git
 
 from .. import vcs
 from ..types import AnyByStrDict, OptAnyByStrDict, OptBool, OptStr, OptStrSeq
-from .objects import DEFAULT_DATA, ConfigData, EnvOps, Flags, NoSrcPathError
+from .objects import DEFAULT_DATA, ConfigData, EnvOps, NoSrcPathError
 from .user_data import load_answersfile_data, load_config_data, query_user_data
 
 __all__ = ("make_config",)
@@ -44,7 +44,7 @@ def make_config(
     cleanup_on_error: OptBool = None,
     vcs_ref: str = "HEAD",
     **kwargs,
-) -> Tuple[ConfigData, Flags]:
+) -> ConfigData:
     """Provides the configuration object, merged from the different sources.
 
     The order of precedence for the merger of configuration object is:
@@ -84,4 +84,4 @@ def make_config(
     args = {**config_data, **args}
     args["envops"] = EnvOps(**args.get("envops", {}))
     args["data"].update(config_data["data"])
-    return ConfigData(**args), Flags(**args)
+    return ConfigData(**args)
