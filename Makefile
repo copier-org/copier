@@ -33,5 +33,6 @@ coverage:
 	pytest --cov-report html --cov copier copier tests
 
 install:
-	pip install -e .[dev]
+	python3 -m venv .venv
+	.venv/bin/pip install -e .[dev]
 	pre-commit install
