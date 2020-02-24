@@ -175,6 +175,7 @@ def test_config_data_good_data(dst):
         "quiet": False,
         "skip": False,
         "vcs_ref": None,
+        "migrations": (),
     }
     conf = ConfigData(**expected)
     expected["data"]["_folder_name"] = dst.name
@@ -214,5 +215,5 @@ def test_make_config_good_data(dst):
     ],
 )
 def test_make_config_precedence(dst, test_input, expected):
-    conf = make_config(dst_path=dst, **test_input)
+    conf = make_config(dst_path=dst, vcs_ref="HEAD", **test_input)
     assert is_subdict(expected, conf.dict())

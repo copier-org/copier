@@ -193,6 +193,18 @@ _tasks:
   - "git init"
   - "rm [[ name_of_the_project ]]/README.md"
 
+# Migrations are like tasks, but they are executed:
+# - Evaluated using PEP 440
+# - In the same order as declared here
+# - Only when new version >= declared version > old version
+# - Only when updating
+_migrations:
+  - version: v1.0.0
+    before:
+      - rm ./old-folder
+    after:
+      - pre-commit install
+
 # Additional paths, from where to search for templates
 _extra_paths:
   - ~/Projects/templates
@@ -232,7 +244,7 @@ should match questions in `copier.yml`.
 The best way to update a project from its template is when all of these conditions are true:
 
 1. The template includes a valid `.copier-answers.yml` file.
-1. The template is versioned with git.
+1. The template is versioned with git (with tags).
 1. The destination folder is versioned with git.
 
 If that's your case, then just enter the destination folder, make sure
@@ -241,6 +253,8 @@ If that's your case, then just enter the destination folder, make sure
 ```bash
 copier update
 ```
+
+This will read all available git tags, will compare them using [PEP 440](https://www.python.org/dev/peps/pep-0440/), and will checkout the latest one before updating. To update to the latest commit, add `--vcs-ref=HEAD`. You can use any other git ref you want.
 
 Copier will do its best to respect the answers you provided when copied for the last
 copy, and the git diff that has evolved since the last copy. If there are conflicts,

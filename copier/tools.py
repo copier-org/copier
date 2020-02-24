@@ -10,11 +10,20 @@ from typing import Any, Optional, Sequence, Tuple, Union
 import colorama
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
+from packaging import version
 from pydantic import StrictBool
 from ruamel.yaml import round_trip_dump
 
 from .config.objects import ConfigData, EnvOps
-from .types import AnyByStrDict, CheckPathFunc, IntSeq, JSONSerializable, StrOrPath, T
+from .types import (
+    AnyByStrDict,
+    CheckPathFunc,
+    IntSeq,
+    JSONSerializable,
+    StrOrPath,
+    StrSeq,
+    T,
+)
 
 __all__ = ("Style", "printf")
 
@@ -173,3 +182,19 @@ def get_name_filters(
         return must_be_filtered(path) and not must_be_included(path)
 
     return must_filter, must_skip
+
+
+def get_migration_tasks(conf: ConfigData, stage: str) -> StrSeq:
+    """Get migration objects that match current version spec.
+
+    Versions are compared using PEP 440.
+    """
+    result: StrSeq = []
+    if not conf.old_commit or not conf.commit:
+        return result
+    vfrom = version.parse(conf.old_commit)
+    vto = version.parse(conf.commit)
+    for migration in conf.migrations:
+        if vto >= version.parse(migration.version) > vfrom:
+            result += migration.dict().get(stage, [])
+    return result
