@@ -153,12 +153,14 @@ def copy_local(conf: ConfigData) -> None:
 
     folder: StrOrPath
     rel_folder: StrOrPath
-    for folder, _, files in os.walk(conf.src_path):
+    for folder, sub_dirs, files in os.walk(conf.src_path):
         rel_folder = str(folder).replace(str(conf.src_path), "", 1).lstrip(os.path.sep)
         rel_folder = render.string(rel_folder)
         rel_folder = str(rel_folder).replace("." + os.path.sep, ".", 1)
 
         if must_filter(rel_folder):
+            # Folder is excluded, so stop walking it
+            sub_dirs[:] = []
             continue
 
         folder = Path(folder)
