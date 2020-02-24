@@ -73,7 +73,7 @@ class CopierApp(cli.Application):
             "Git reference to checkout in `template_src`. "
             "If you do not specify it, it will try to checkout the latest git tag, "
             "as sorted using the PEP 440 algorithm. If you want to checkout always "
-            "the latest version, use `--vcs-ref=HEAD`.",
+            "the latest version, use `--vcs-ref=HEAD`."
         ),
     )
     pretend = cli.Flag(["-n", "--pretend"], help="Run but do not make any changes")
