@@ -36,6 +36,7 @@ repos:
         exclude: \.noeof\.
       - id: debug-statements
       - id: flake8
+        args: ["--config", "pyproject.toml"]
         additional_dependencies:
           - flake8-bugbear==19.8.0
       - id: fix-encoding-pragma
