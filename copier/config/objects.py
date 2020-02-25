@@ -15,9 +15,7 @@ DEFAULT_EXCLUDE: Tuple[str, ...] = (
     "~*",
     "*.py[co]",
     "__pycache__",
-    "__pycache__/*",
     ".git",
-    ".git/*",
     ".DS_Store",
     ".svn",
 )

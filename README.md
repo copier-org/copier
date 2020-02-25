@@ -177,7 +177,6 @@ _templates_suffix: .tmpl
 _exclude:
   - "*.bar"
   - ".git"
-  - ".git/*"
 
 # Shell-style patterns files/folders that *must be* copied, even if
 # they are in the exclude list
@@ -324,9 +323,6 @@ Uses the template in _src_path_ to generate a new project at _dst_path_.
 - **exclude** (list):<br>
   A list of names or shell-style patterns matching files or folders
   that must not be copied.
-
-  To exclude a folder you should use **two** entries, one for the folder and
-  the other for its content: `[".git", ".git/*"]`.
 
 - **include** (list):<br>
   A list of names or shell-style patterns matching files or folders that
