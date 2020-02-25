@@ -2,7 +2,10 @@
 
 ![Copier](https://github.com/pykong/copier/raw/master/img/copier-logotype.png)
 
-[![Coverage Status](https://coveralls.io/repos/github/pykong/copier/badge.svg?branch=master)](https://coveralls.io/github/pykong/copier?branch=master) [![Tests](https://travis-ci.org/pykong/copier.svg?branch=master)](https://travis-ci.org/pykong/copier/) [![](https://img.shields.io/pypi/pyversions/copier.svg)](https://pypi.python.org/pypi/copier)
+[![Coverage Status](https://coveralls.io/repos/github/pykong/copier/badge.svg?branch=master)](https://coveralls.io/github/pykong/copier?branch=master)
+![](https://github.com/pykong/copier/workflows/CI/badge.svg)
+![](https://img.shields.io/pypi/pyversions/copier)
+![](https://img.shields.io/pypi/v/copier)
 
 A library for rendering projects templates.
 
