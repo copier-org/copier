@@ -25,6 +25,7 @@ python = "^3.6"
 "ruamel.yaml" = "==0.*,>=0.15.0"
 colorama = "==0.*,>=0.4.0"
 jinja2 = "==2.*,>=2.10.0"
+pathspec = "^0.7.0"
 plumbum = "==1.*,>=1.6.0"
 pydantic = ">=1.0b1"
 

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Optional, Sequence, Tuple, Union
 
 import colorama
+import pathspec
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
 from packaging import version
@@ -151,11 +152,11 @@ def normalize_str(text: StrOrPath, form: str = "NFD") -> str:
 def get_name_filters(
     conf: ConfigData, renderer: Renderer
 ) -> Tuple[CheckPathFunc, CheckPathFunc]:
-    """Returns a function that evaluates if aCheckPathFunc file or folder name must be
+    """Returns a function that evaluates if a CheckPathFunc file or folder name must be
     filtered out, and another that evaluates if a file must be skipped.
     """
     exclude = [normalize_str(pattern) for pattern in conf.exclude]
-    include = [normalize_str(pattern) for pattern in conf.include]
+    spec = pathspec.PathSpec.from_lines(pathspec.patterns.GitWildMatchPattern, exclude)
     skip_if_exists = [
         normalize_str(pattern)
         for pattern in (renderer.string(pattern) for pattern in conf.skip_if_exists)
@@ -170,16 +171,13 @@ def get_name_filters(
         return reduce(lambda r, pattern: r or fullmatch(path, pattern), patterns, False)
 
     def must_be_filtered(path: StrOrPath) -> bool:
-        return match(path, exclude)
-
-    def must_be_included(path: StrOrPath) -> bool:
-        return match(path, include)
+        return spec.match_file(str(path))
 
     def must_skip(path: StrOrPath) -> bool:
         return match(path, skip_if_exists)
 
     def must_filter(path: StrOrPath) -> bool:
-        return must_be_filtered(path) and not must_be_included(path)
+        return must_be_filtered(path)
 
     return must_filter, must_skip
 
