@@ -60,12 +60,12 @@ def test_default_exclude(dst):
 
 
 def test_include_file(dst):
-    render(dst, include=[".svn"])
+    render(dst, exclude=["!.svn"])
     assert_file(dst, ".svn")
 
 
 def test_include_pattern(dst):
-    render(dst, include=[".*"])
+    render(dst, exclude=["!.*"])
     assert (dst / ".svn").exists()
 
 
@@ -123,7 +123,7 @@ def test_config_exclude_overridden(dst):
 
 def test_config_include(dst, monkeypatch):
     def fake_data(*_args, **_kwargs):
-        return {"_include": [".svn"]}
+        return {"_exclude": ["!.svn"]}
 
     monkeypatch.setattr(copier.config.factory, "load_config_data", fake_data)
     copier.copy(str(PROJECT_TEMPLATE), dst, data=DATA, quiet=True)
