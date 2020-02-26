@@ -2,10 +2,8 @@ import errno
 import os
 import shutil
 import unicodedata
-from fnmatch import fnmatch
-from functools import reduce
 from pathlib import Path
-from typing import Any, Optional, Sequence, Tuple, Union
+from typing import Any, Optional, Union
 
 import colorama
 import pathspec
@@ -154,8 +152,10 @@ def create_path_filter(patterns: StrOrPathSeq) -> CheckPathFunc:
     """Returns a function that matches a path against given patterns."""
     patterns = [normalize_str(p) for p in patterns]
     spec = pathspec.PathSpec.from_lines("gitwildmatch", patterns)
+
     def match(path: StrOrPath) -> bool:
         return spec.match_file(str(path))
+
     return match
 
 

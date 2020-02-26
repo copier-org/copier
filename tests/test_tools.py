@@ -36,6 +36,7 @@ TEST_PATTERNS = (
 )
 path_filter = tools.create_path_filter(TEST_PATTERNS)
 
+
 @pytest.mark.parametrize(
     "pattern,should_match",
     (
@@ -50,7 +51,7 @@ path_filter = tools.create_path_filter(TEST_PATTERNS)
         ("mañana.txt", True),
         ("mañana.txt", False),
         ("manana.txt", False),
-    )
+    ),
 )
 def test_create_path_filter(pattern, should_match):
     assert path_filter(pattern) == should_match

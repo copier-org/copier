@@ -257,8 +257,6 @@ Copier will do its best to respect the answers you provided when copied for the 
 copy, and the git diff that has evolved since the last copy. If there are conflicts,
 you will probably find diff files around.
 
-
-
 ## Patterns syntax
 
 Copier supports matching names against patterns in a gitignore style fashion. This works for the options `exclude` and `skip` . This means you can write patterns as you would for any `.gitignore` file. The full range of the gitignore syntax ist supported via [pathspec]([https://github.com/cpburnz/python-path-specification](https://github.com/cpburnz/python-path-specification).
@@ -269,10 +267,10 @@ Putting the following settings in your `copier.yaml` file would exclude all file
 
 ```yaml
 _exclude:
- # match all text files...
- - "*.txt"
- # .. but not this one:
- - "!a.txt"
+  # match all text files...
+  - "*.txt"
+  # .. but not this one:
+  - "!a.txt"
 ```
 
 ## Template helpers
