@@ -55,52 +55,10 @@ line_length = 88
 multi_line_output = 3
 use_parentheses = true
 
-[tool.tox]
-legacy_tox_ini = """
-[tox]
-skipsdist = True
-envlist = py36,py37,py38
-
-[testenv]
-skip_install = true
-commands =
-    pip install -U pip
-    pip install .[testing]
-    pytest -x copier tests
-
-[coverage:run]
-branch = True
-
-[coverage:report]
-exclude_lines =
-    pragma: no cover
-    def __repr__
-    raise NotImplementedError
-    if __name__ == .__main__.:
-    if 0:
-
-[coverage:html]
-directory = covreport
-"""
-
 [flake8]
 max-complexity = 10
 max-line-length = 88
 ignore = ",W503,E203,D100,D101,D102,D103,D104,D105,D107,"
-
-
-# [tool.pytest]
-# addopts = "--mypy --doctest-modules"
-
-[mypy]
-check_untyped_defs = true
-# disallow_subclassing_any = true
-ignore_missing_imports = true
-warn_return_any = true
-warn_unreachable = true
-warn_unused_configs = true
-warn_unused_ignores = true
-warn_redundant_casts = true
 
 [build-system]
 requires = ["setuptools>=34.4", "wheel"]
