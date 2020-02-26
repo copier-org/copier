@@ -21,6 +21,7 @@ jobs:
           poetry install --no-root
       - name: Run pre-commit
         run: |
+          poetry run pre-commit autoupdate
           poetry run pre-commit run --hook-stage push
       - name: Run mypy
         run: |
