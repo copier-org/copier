@@ -162,7 +162,7 @@ close_to_work:
 
 ### Arguments defaults
 
-The keys `_exclude`, `_include`, `_skip_if_exists`, `_tasks`, and `_extra_paths`
+The keys `_exclude`, `_skip_if_exists`, `_tasks`, and `_extra_paths`
 in the `copier.yml` file, will be treated as the default values for the `exclude`,
 `include`, `tasks`, and , `extra_paths` arguments to `copier.copy()`.
 
@@ -291,7 +291,6 @@ copier.copy(
     data=DEFAULT_DATA,
     *,
     exclude=DEFAULT_FILTER,
-    include=DEFAULT_INCLUDE,
     skip_if_exists=[],
     tasks=[],
 

@@ -41,7 +41,6 @@ def copy(
     data: AnyByStrDict = None,
     *,
     exclude: OptStrSeq = None,
-    include: OptStrSeq = None,
     skip_if_exists: OptStrSeq = None,
     tasks: OptStrSeq = None,
     envops: AnyByStrDict = None,
@@ -73,11 +72,6 @@ def copy(
     - exclude (list):
         A list of names or shell-style patterns matching files or folders
         that must not be copied.
-
-    - include (list):
-        A list of names or shell-style patterns matching files or folders that
-        must be included, even if its name are in the `exclude` list.
-        Eg: `['.gitignore']`. The default is an empty list.
 
     - skip_if_exists (list):
         Skip any of these files if another with the same name already exists in the

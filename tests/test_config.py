@@ -30,7 +30,6 @@ GOOD_ENV_OPS = {
 def test_config_data_is_loaded_from_file():
     config = load_config_data("tests/demo_data")
     assert config["_exclude"] == ["exclude1", "exclude2"]
-    assert config["_include"] == ["include1", "include2"]
     assert config["_skip_if_exists"] == ["skip_if_exists1", "skip_if_exists2"]
     assert config["_tasks"] == ["touch 1", "touch 2"]
     assert config["_extra_paths"] == ["tests"]
@@ -162,7 +161,6 @@ def test_config_data_good_data(dst):
         "data": DEFAULT_DATA,
         "extra_paths": [dst],
         "exclude": DEFAULT_EXCLUDE,
-        "include": [],
         "original_src_path": None,
         "skip_if_exists": ["skip_me"],
         "tasks": ["echo python rulez"],
@@ -197,7 +195,6 @@ def test_make_config_good_data(dst):
     assert "_folder_name" in conf.data
     assert conf.data["_folder_name"] == dst.name
     assert conf.exclude == ["exclude1", "exclude2"]
-    assert conf.include == ["include1", "include2"]
     assert conf.skip_if_exists == ["skip_if_exists1", "skip_if_exists2"]
     assert conf.tasks == ["touch 1", "touch 2"]
     assert conf.extra_paths == [Path("tests").resolve()]
@@ -207,11 +204,9 @@ def test_make_config_good_data(dst):
     "test_input, expected",
     [
         # func_args > defaults
-        ({"src_path": ".", "include": ["aaa"]}, {"include": ["aaa"]}),
-        # user_data > defaults
-        ({"src_path": "tests/demo_data"}, {"include": ["include1", "include2"]}),
+        ({"src_path": ".", "exclude": ["aaa"]}, {"exclude": ["aaa"]}),
         # func_args > user_data
-        ({"src_path": "tests/demo_data", "include": ["aaa"]}, {"include": ["aaa"]}),
+        ({"src_path": "tests/demo_data", "exclude": ["aaa"]}, {"exclude": ["aaa"]}),
     ],
 )
 def test_make_config_precedence(dst, test_input, expected):
