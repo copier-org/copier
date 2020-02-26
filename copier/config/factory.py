@@ -53,7 +53,7 @@ def make_config(
     answers_data = DEFAULT_DATA.copy()
     answers_data.update(load_answersfile_data(dst_path, quiet=True))
     answers_data.update(data or {})
-    _metadata = dict()
+    _metadata = {}
     if "_commit" in answers_data:
         _metadata["old_commit"] = answers_data["_commit"]
     # Detect original source if running in update mode
