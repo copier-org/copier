@@ -73,6 +73,7 @@ def test_exclude_file(dst):
     render(dst, exclude=["mañana.txt"])
     assert not (dst / "doc" / "mañana.txt").exists()
     assert (dst / "doc" / "mañana.txt").exists()
+    assert (dst / "doc" / "manana.txt").exists()
 
 
 def test_skip_if_exists(dst):
