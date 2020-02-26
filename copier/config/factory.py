@@ -32,7 +32,6 @@ def make_config(
     *,
     data: OptAnyByStrDict = None,
     exclude: OptStrSeq = None,
-    include: OptStrSeq = None,
     skip_if_exists: OptStrSeq = None,
     tasks: OptStrSeq = None,
     envops: OptAnyByStrDict = None,

@@ -1,0 +1,3 @@
+_exclude:
+  - "*.txt"
+  - "!copy_me.txt"

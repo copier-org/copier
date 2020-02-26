@@ -2,12 +2,11 @@ import errno
 import os
 import shutil
 import unicodedata
-from fnmatch import fnmatch
-from functools import reduce
 from pathlib import Path
-from typing import Any, Optional, Sequence, Tuple, Union
+from typing import Any, Optional, Union
 
 import colorama
+import pathspec
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
 from packaging import version
@@ -21,6 +20,7 @@ from .types import (
     IntSeq,
     JSONSerializable,
     StrOrPath,
+    StrOrPathSeq,
     StrSeq,
     T,
 )
@@ -148,40 +148,15 @@ def normalize_str(text: StrOrPath, form: str = "NFD") -> str:
     return unicodedata.normalize(form, str(text))
 
 
-def get_name_filters(
-    conf: ConfigData, renderer: Renderer
-) -> Tuple[CheckPathFunc, CheckPathFunc]:
-    """Returns a function that evaluates if aCheckPathFunc file or folder name must be
-    filtered out, and another that evaluates if a file must be skipped.
-    """
-    exclude = [normalize_str(pattern) for pattern in conf.exclude]
-    include = [normalize_str(pattern) for pattern in conf.include]
-    skip_if_exists = [
-        normalize_str(pattern)
-        for pattern in (renderer.string(pattern) for pattern in conf.skip_if_exists)
-    ]
+def create_path_filter(patterns: StrOrPathSeq) -> CheckPathFunc:
+    """Returns a function that matches a path against given patterns."""
+    patterns = [normalize_str(p) for p in patterns]
+    spec = pathspec.PathSpec.from_lines("gitwildmatch", patterns)
 
-    def fullmatch(path: StrOrPath, pattern: StrOrPath) -> bool:
-        path = normalize_str(path)
-        name = os.path.basename(path)
-        return fnmatch(name, str(pattern)) or fnmatch(path, str(pattern))
+    def match(path: StrOrPath) -> bool:
+        return spec.match_file(str(path))
 
-    def match(path: StrOrPath, patterns: Sequence[StrOrPath]) -> bool:
-        return reduce(lambda r, pattern: r or fullmatch(path, pattern), patterns, False)
-
-    def must_be_filtered(path: StrOrPath) -> bool:
-        return match(path, exclude)
-
-    def must_be_included(path: StrOrPath) -> bool:
-        return match(path, include)
-
-    def must_skip(path: StrOrPath) -> bool:
-        return match(path, skip_if_exists)
-
-    def must_filter(path: StrOrPath) -> bool:
-        return must_be_filtered(path) and not must_be_included(path)
-
-    return must_filter, must_skip
+    return match
 
 
 def get_migration_tasks(conf: ConfigData, stage: str) -> StrSeq:

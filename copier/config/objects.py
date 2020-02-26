@@ -65,7 +65,6 @@ class ConfigData(BaseModel):
     data: AnyByStrDict = {}
     extra_paths: PathSeq = ()
     exclude: StrOrPathSeq = DEFAULT_EXCLUDE
-    include: StrOrPathSeq = ()
     skip_if_exists: StrOrPathSeq = ()
     tasks: StrSeq = ()
     envops: EnvOps = EnvOps()
