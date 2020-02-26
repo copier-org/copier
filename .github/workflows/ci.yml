@@ -22,4 +22,10 @@ jobs:
       - name: Run pre-commit
         run: |
           poetry run pre-commit run --hook-stage push
+      - name: Run mypy
+        run: |
+          poetry run mypy --ignore-missing-imports .
+      - name: Run pytest
+        run: |
+          poetry run pytest .
 
