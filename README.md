@@ -164,7 +164,7 @@ close_to_work:
 
 The keys `_exclude`, `_skip_if_exists`, `_tasks`, and `_extra_paths`
 in the `copier.yml` file, will be treated as the default values for the `exclude`,
-`include`, `tasks`, and , `extra_paths` arguments to `copier.copy()`.
+`tasks`, and , `extra_paths` arguments to `copier.copy()`.
 
 Note that they become just _the defaults_, so any explicitly-passed argument will
 overwrite them.
@@ -173,17 +173,12 @@ overwrite them.
 # Suffix that intstructs which files are to be processed by Jinja as templates
 _templates_suffix: .tmpl
 
-# Shell-style patterns files/folders that must not be copied.
+# gitignore-style patterns files/folders that must not be copied.
 _exclude:
   - "*.bar"
   - ".git"
 
-# Shell-style patterns files/folders that *must be* copied, even if
-# they are in the exclude list
-_include:
-  - "foo.bar"
-
-# Shell-style patterns files to skip, without asking, if they already exists
+# gitignore-style patterns files to skip, without asking, if they already exists
 # in the destination folder
 _skip_if_exists:
 
@@ -243,8 +238,8 @@ should match questions in `copier.yml`.
 The best way to update a project from its template is when all of these conditions are true:
 
 1. The template includes a valid `.copier-answers.yml` file.
-1. The template is versioned with git (with tags).
-1. The destination folder is versioned with git.
+2. The template is versioned with git (with tags).
+3. The destination folder is versioned with git.
 
 If that's your case, then just enter the destination folder, make sure
 `git status` shows it clean, and run:
@@ -258,6 +253,24 @@ This will read all available git tags, will compare them using [PEP 440](https:/
 Copier will do its best to respect the answers you provided when copied for the last
 copy, and the git diff that has evolved since the last copy. If there are conflicts,
 you will probably find diff files around.
+
+
+
+## Patterns syntax
+
+Copier supports matching names against patterns in a gitignore style fashion. This works for the options `exclude` and `skip` . This means you can write patterns as you would for any `.gitignore` file. The full range of the gitignore syntax ist supported via [pathspec]([https://github.com/cpburnz/python-path-specification](https://github.com/cpburnz/python-path-specification).
+
+### Examples for pattern matching
+
+Putting the following settings in your `copier.yaml` file would exclude all files ending with "txt" from being copied to the destination folder, except the file `a.txt`.
+
+```yaml
+_exclude:
+ # match all text files...
+ - "*.txt"
+ # .. but not this one:
+ - "!a.txt"
+```
 
 ## Template helpers
 
@@ -320,18 +333,11 @@ Uses the template in _src_path_ to generate a new project at _dst_path_.
   a `copier.yml`.
 
 - **exclude** (list):<br>
-  A list of names or shell-style patterns matching files or folders
+  A list of names or gitignore-style patterns matching files or folders
   that must not be copied.
 
-- **include** (list):<br>
-  A list of names or shell-style patterns matching files or folders that
-  must be included, even if its name is a match for the `exclude` list.
-  Eg: `['.gitignore']`. The default is an empty list.
-
 - **skip_if_exists** (list):<br>
-  Skip any of these files, without asking, if another with the same name already
-  exists in the destination folder. (it only makes sense if you are copying to a
-  folder that already exists).
+  A list of names or gitignore-style patterns matching files or folders, that are skipped if another with the same name already exists in the destination folder. (It only makes sense if you are copying to a folder that already exists).
 
 - **tasks** (list):<br>
   Optional lists of commands to run in order after finishing the copy. Like in
