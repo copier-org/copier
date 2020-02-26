@@ -18,7 +18,7 @@ version = "0.1.0"
 [[package]]
 category = "dev"
 description = "Atomic file writes."
-marker = "python_version >= \"3.5\" and sys_platform == \"win32\" or sys_platform == \"win32\""
+marker = "sys_platform == \"win32\""
 name = "atomicwrites"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
@@ -49,6 +49,26 @@ version = "0.1.0"
 
 [[package]]
 category = "dev"
+description = "The uncompromising code formatter."
+name = "black"
+optional = false
+python-versions = ">=3.6"
+version = "19.10b0"
+
+[package.dependencies]
+appdirs = "*"
+attrs = ">=18.1.0"
+click = ">=6.5"
+pathspec = ">=0.6,<1"
+regex = "*"
+toml = ">=0.9.4"
+typed-ast = ">=1.4.0"
+
+[package.extras]
+d = ["aiohttp (>=3.3.2)", "aiohttp-cors"]
+
+[[package]]
+category = "dev"
 description = "Validate configuration and produce human readable error messages."
 name = "cfgv"
 optional = false
@@ -57,11 +77,11 @@ version = "3.0.0"
 
 [[package]]
 category = "dev"
-description = "Validate configuration and produce human readable error messages."
-name = "cfgv"
+description = "Composable command line interface toolkit"
+name = "click"
 optional = false
-python-versions = ">=3.6.1"
-version = "3.1.0"
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+version = "7.0"
 
 [[package]]
 category = "main"
@@ -140,6 +160,56 @@ pyflakes = ">=2.1.0,<2.2.0"
 
 [[package]]
 category = "dev"
+description = "A flake8 extension that checks for blind except: statements"
+name = "flake8-blind-except"
+optional = false
+python-versions = "*"
+version = "0.1.1"
+
+[package.dependencies]
+setuptools = "*"
+
+[[package]]
+category = "dev"
+description = "A plugin for flake8 finding likely bugs and design problems in your program. Contains warnings that don't belong in pyflakes and pycodestyle."
+name = "flake8-bugbear"
+optional = false
+python-versions = ">=3.6"
+version = "20.1.4"
+
+[package.dependencies]
+attrs = ">=19.2.0"
+flake8 = ">=3.0.0"
+
+[[package]]
+category = "dev"
+description = "A flake8 plugin to help you write better list/set/dict comprehensions."
+name = "flake8-comprehensions"
+optional = false
+python-versions = ">=3.5"
+version = "3.2.2"
+
+[package.dependencies]
+flake8 = ">=3.0,<3.2.0 || >3.2.0,<4"
+
+[package.dependencies.importlib-metadata]
+python = "<3.8"
+version = "*"
+
+[[package]]
+category = "dev"
+description = "ipdb/pdb statement checker plugin for flake8"
+name = "flake8-debugger"
+optional = false
+python-versions = "*"
+version = "3.2.1"
+
+[package.dependencies]
+flake8 = ">=1.5"
+pycodestyle = "*"
+
+[[package]]
+category = "dev"
 description = "File identification library for Python"
 name = "identify"
 optional = false
@@ -152,7 +222,7 @@ license = ["editdistance"]
 [[package]]
 category = "dev"
 description = "Read metadata from Python packages"
-marker = "python_version >= \"3.5\" and python_version < \"3.8\" or python_version < \"3.8\""
+marker = "python_version < \"3.8\""
 name = "importlib-metadata"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
@@ -288,7 +358,6 @@ version = "8.2.0"
 [[package]]
 category = "dev"
 description = "Optional static typing for Python"
-marker = "python_version >= \"3.5\" and python_version < \"3.8\" or python_version >= \"3.8\""
 name = "mypy"
 optional = false
 python-versions = ">=3.5"
@@ -305,7 +374,6 @@ dmypy = ["psutil (>=4.0)"]
 [[package]]
 category = "dev"
 description = "Experimental type system extensions for programs checked with the mypy typechecker."
-marker = "python_version >= \"3.8\" or python_version >= \"3.5\" and python_version < \"3.8\" and (python_version >= \"3.5\" and python_version < \"3.8\" or python_version >= \"3.8\")"
 name = "mypy-extensions"
 optional = false
 python-versions = "*"
@@ -543,55 +611,6 @@ testing = ["fields", "hunter", "process-tests (2.0.2)", "six", "virtualenv"]
 
 [[package]]
 category = "dev"
-description = "pytest plugin to check FLAKE8 requirements"
-name = "pytest-flake8"
-optional = false
-python-versions = "*"
-version = "1.0.4"
-
-[package.dependencies]
-flake8 = ">=3.5"
-pytest = ">=3.5"
-
-[[package]]
-category = "dev"
-description = "Thin-wrapper around the mock package for easier use with py.test"
-name = "pytest-mock"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "2.0.0"
-
-[package.dependencies]
-pytest = ">=2.7"
-
-[package.extras]
-dev = ["pre-commit", "tox"]
-
-[[package]]
-category = "dev"
-description = "Mypy static type checker plugin for Pytest"
-name = "pytest-mypy"
-optional = false
-python-versions = "~=3.4"
-version = "0.5.0"
-
-[package.dependencies]
-filelock = ">=3.0"
-
-[[package.dependencies.mypy]]
-python = ">=3.5,<3.8"
-version = ">=0.500"
-
-[[package.dependencies.mypy]]
-python = ">=3.8"
-version = ">=0.700"
-
-[package.dependencies.pytest]
-python = ">=3.5"
-version = ">=3.5"
-
-[[package]]
-category = "dev"
 description = "YAML parser and emitter for Python"
 name = "pyyaml"
 optional = false
@@ -650,32 +669,6 @@ version = "0.10.0"
 
 [[package]]
 category = "dev"
-description = "tox is a generic virtualenv management and test command line tool"
-name = "tox"
-optional = false
-python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
-version = "3.14.5"
-
-[package.dependencies]
-colorama = ">=0.4.1"
-filelock = ">=3.0.0,<4"
-packaging = ">=14"
-pluggy = ">=0.12.0,<1"
-py = ">=1.4.17,<2"
-six = ">=1.14.0,<2"
-toml = ">=0.9.4"
-virtualenv = ">=16.0.0"
-
-[package.dependencies.importlib-metadata]
-python = "<3.8"
-version = ">=0.12,<2"
-
-[package.extras]
-docs = ["sphinx (>=2.0.0,<3)", "towncrier (>=18.5.0)", "pygments-github-lexers (>=0.0.5)", "sphinxcontrib-autoprogram (>=0.1.5)"]
-testing = ["freezegun (>=0.3.11,<1)", "pathlib2 (>=2.3.3,<3)", "pytest (>=4.0.0,<6)", "pytest-cov (>=2.5.1,<3)", "pytest-mock (>=1.10.0,<2)", "pytest-xdist (>=1.22.2,<2)", "pytest-randomly (>=1.0.0,<4)", "flaky (>=3.4.0,<4)", "psutil (>=5.6.1,<6)"]
-
-[[package]]
-category = "dev"
 description = "Traitlets Python config system"
 marker = "python_version >= \"3.4\""
 name = "traitlets"
@@ -694,7 +687,6 @@ test = ["pytest", "mock"]
 [[package]]
 category = "dev"
 description = "a fork of Python 2 and 3 ast modules with type comment support"
-marker = "python_version >= \"3.8\" or python_version >= \"3.5\" and python_version < \"3.8\" and (python_version >= \"3.5\" and python_version < \"3.8\" or python_version >= \"3.8\")"
 name = "typed-ast"
 optional = false
 python-versions = "*"
@@ -703,7 +695,6 @@ version = "1.4.1"
 [[package]]
 category = "dev"
 description = "Backported and Experimental Type Hints for Python 3.5+"
-marker = "python_version >= \"3.8\" or python_version >= \"3.5\" and python_version < \"3.8\" and (python_version >= \"3.5\" and python_version < \"3.8\" or python_version >= \"3.8\")"
 name = "typing-extensions"
 optional = false
 python-versions = "*"
@@ -715,7 +706,7 @@ description = "Virtual Python Environment builder"
 name = "virtualenv"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,>=2.7"
-version = "20.0.5"
+version = "20.0.7"
 
 [package.dependencies]
 appdirs = ">=1.4.3,<2"
@@ -746,7 +737,7 @@ version = "0.1.8"
 [[package]]
 category = "dev"
 description = "Backport of pathlib-compatible object wrapper for zip files"
-marker = "python_version >= \"3.5\" and python_version < \"3.8\" or python_version < \"3.8\" or python_version >= \"3.5\" and python_version < \"3.8\" and (python_version >= \"3.5\" and python_version < \"3.8\" or python_version < \"3.8\")"
+marker = "python_version < \"3.8\""
 name = "zipp"
 optional = false
 python-versions = ">=3.6"
@@ -756,11 +747,8 @@ version = "3.0.0"
 docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
-[extras]
-testing = []
-
 [metadata]
-content-hash = "87b3de88e5f5ec9f201a723cf274664ac4db2509424372d7819beef0950e8c29"
+content-hash = "3ffab9905591f4aa21b522a55a5884bb11312cf8287b057c8d665ed9879b8179"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -784,11 +772,17 @@ backcall = [
     {file = "backcall-0.1.0.tar.gz", hash = "sha256:38ecd85be2c1e78f77fd91700c76e14667dc21e2713b63876c0eb901196e01e4"},
     {file = "backcall-0.1.0.zip", hash = "sha256:bbbf4b1e5cd2bdb08f915895b51081c041bac22394fdfcfdfbe9f14b77c08bf2"},
 ]
+black = [
+    {file = "black-19.10b0-py36-none-any.whl", hash = "sha256:1b30e59be925fafc1ee4565e5e08abef6b03fe455102883820fe5ee2e4734e0b"},
+    {file = "black-19.10b0.tar.gz", hash = "sha256:c2edb73a08e9e0e6f65a0e6af18b059b8b1cdd5bef997d7a0b181df93dc81539"},
+]
 cfgv = [
     {file = "cfgv-3.0.0-py2.py3-none-any.whl", hash = "sha256:f22b426ed59cd2ab2b54ff96608d846c33dfb8766a67f0b4a6ce130ce244414f"},
     {file = "cfgv-3.0.0.tar.gz", hash = "sha256:04b093b14ddf9fd4d17c53ebfd55582d27b76ed30050193c14e560770c5360eb"},
-    {file = "cfgv-3.1.0-py2.py3-none-any.whl", hash = "sha256:1ccf53320421aeeb915275a196e23b3b8ae87dea8ac6698b1638001d4a486d53"},
-    {file = "cfgv-3.1.0.tar.gz", hash = "sha256:c8e8f552ffcc6194f4e18dd4f68d9aef0c0d58ae7e7be8c82bee3c5e9edfa513"},
+]
+click = [
+    {file = "Click-7.0-py2.py3-none-any.whl", hash = "sha256:2335065e6395b9e67ca716de5f7526736bfa6ceead690adf616d925bdc622b13"},
+    {file = "Click-7.0.tar.gz", hash = "sha256:5b94b49521f6456670fdb30cd82a4eca9412788a93fa6dd6df72c94d5a8ff2d7"},
 ]
 colorama = [
     {file = "colorama-0.4.3-py2.py3-none-any.whl", hash = "sha256:7d73d2a99753107a36ac6b455ee49046802e59d9d076ef8e47b61499fa29afff"},
@@ -849,6 +843,21 @@ filelock = [
 flake8 = [
     {file = "flake8-3.7.9-py2.py3-none-any.whl", hash = "sha256:49356e766643ad15072a789a20915d3c91dc89fd313ccd71802303fd67e4deca"},
     {file = "flake8-3.7.9.tar.gz", hash = "sha256:45681a117ecc81e870cbf1262835ae4af5e7a8b08e40b944a8a6e6b895914cfb"},
+]
+flake8-blind-except = [
+    {file = "flake8-blind-except-0.1.1.tar.gz", hash = "sha256:aca3356633825544cec51997260fe31a8f24a1a2795ce8e81696b9916745e599"},
+    {file = "flake8_blind_except-0.1.1-py2.7.egg", hash = "sha256:0d7d1adb4cabf2268d6eebb815a7a5014bcb7e8419f7a74339c46d0b8847b858"},
+]
+flake8-bugbear = [
+    {file = "flake8-bugbear-20.1.4.tar.gz", hash = "sha256:bd02e4b009fb153fe6072c31c52aeab5b133d508095befb2ffcf3b41c4823162"},
+    {file = "flake8_bugbear-20.1.4-py36.py37.py38-none-any.whl", hash = "sha256:a3ddc03ec28ba2296fc6f89444d1c946a6b76460f859795b35b77d4920a51b63"},
+]
+flake8-comprehensions = [
+    {file = "flake8-comprehensions-3.2.2.tar.gz", hash = "sha256:e7db586bb6eb95afdfd87ed244c90e57ae1352db8ef0ad3012fca0200421e5df"},
+    {file = "flake8_comprehensions-3.2.2-py3-none-any.whl", hash = "sha256:d08323aa801aef33477cd33f2f5ce3acb1aafd26803ab0d171d85d514c1273a2"},
+]
+flake8-debugger = [
+    {file = "flake8-debugger-3.2.1.tar.gz", hash = "sha256:712d7c1ff69ddf3f0130e94cc88c2519e720760bce45e8c330bfdcb61ab4090d"},
 ]
 identify = [
     {file = "identify-1.4.11-py2.py3-none-any.whl", hash = "sha256:1222b648251bdcb8deb240b294f450fbf704c7984e08baa92507e4ea10b436d5"},
@@ -1026,18 +1035,6 @@ pytest-cov = [
     {file = "pytest-cov-2.8.1.tar.gz", hash = "sha256:cc6742d8bac45070217169f5f72ceee1e0e55b0221f54bcf24845972d3a47f2b"},
     {file = "pytest_cov-2.8.1-py2.py3-none-any.whl", hash = "sha256:cdbdef4f870408ebdbfeb44e63e07eb18bb4619fae852f6e760645fa36172626"},
 ]
-pytest-flake8 = [
-    {file = "pytest-flake8-1.0.4.tar.gz", hash = "sha256:4d225c13e787471502ff94409dcf6f7927049b2ec251c63b764a4b17447b60c0"},
-    {file = "pytest_flake8-1.0.4-py2.py3-none-any.whl", hash = "sha256:d7e2b6b274a255b7ae35e9224c85294b471a83b76ecb6bd53c337ae977a499af"},
-]
-pytest-mock = [
-    {file = "pytest-mock-2.0.0.tar.gz", hash = "sha256:b35eb281e93aafed138db25c8772b95d3756108b601947f89af503f8c629413f"},
-    {file = "pytest_mock-2.0.0-py2.py3-none-any.whl", hash = "sha256:cb67402d87d5f53c579263d37971a164743dc33c159dfb4fb4a86f37c5552307"},
-]
-pytest-mypy = [
-    {file = "pytest-mypy-0.5.0.tar.gz", hash = "sha256:14c746bd0db5e36618f2fda0ba61ddeb5dc52129ab3923a70f592f934c8887db"},
-    {file = "pytest_mypy-0.5.0-py3-none-any.whl", hash = "sha256:6d47b786e460c5101423fec8462e17ac1b6e9c497b1052e790b2e4850a8b3796"},
-]
 pyyaml = [
     {file = "PyYAML-5.3-cp27-cp27m-win32.whl", hash = "sha256:940532b111b1952befd7db542c370887a8611660d2b9becff75d39355303d82d"},
     {file = "PyYAML-5.3-cp27-cp27m-win_amd64.whl", hash = "sha256:059b2ee3194d718896c0ad077dd8c043e5e909d9180f387ce42012662a4946d6"},
@@ -1108,10 +1105,6 @@ toml = [
     {file = "toml-0.10.0-py2.py3-none-any.whl", hash = "sha256:235682dd292d5899d361a811df37e04a8828a5b1da3115886b73cf81ebc9100e"},
     {file = "toml-0.10.0.tar.gz", hash = "sha256:229f81c57791a41d65e399fc06bf0848bab550a9dfd5ed66df18ce5f05e73d5c"},
 ]
-tox = [
-    {file = "tox-3.14.5-py2.py3-none-any.whl", hash = "sha256:0cbe98369081fa16bd6f1163d3d0b2a62afa29d402ccfad2bd09fb2668be0956"},
-    {file = "tox-3.14.5.tar.gz", hash = "sha256:676f1e3e7de245ad870f956436b84ea226210587d1f72c8dfb8cd5ac7b6f0e70"},
-]
 traitlets = [
     {file = "traitlets-4.3.3-py2.py3-none-any.whl", hash = "sha256:70b4c6a1d9019d7b4f6846832288f86998aa3b9207c6821f3578a6a6a467fe44"},
     {file = "traitlets-4.3.3.tar.gz", hash = "sha256:d023ee369ddd2763310e4c3eae1ff649689440d4ae59d7485eb4cfbbe3e359f7"},
@@ -1145,8 +1138,8 @@ typing-extensions = [
     {file = "typing_extensions-3.7.4.1.tar.gz", hash = "sha256:091ecc894d5e908ac75209f10d5b4f118fbdb2eb1ede6a63544054bb1edb41f2"},
 ]
 virtualenv = [
-    {file = "virtualenv-20.0.5-py2.py3-none-any.whl", hash = "sha256:5dd42a9f56307542bddc446cfd10ef6576f11910366a07609fe8d0d88fa8fb7e"},
-    {file = "virtualenv-20.0.5.tar.gz", hash = "sha256:531b142e300d405bb9faedad4adbeb82b4098b918e35209af2adef3129274aae"},
+    {file = "virtualenv-20.0.7-py2.py3-none-any.whl", hash = "sha256:30ea90b21dabd11da5f509710ad3be2ae47d40ccbc717dfdd2efe4367c10f598"},
+    {file = "virtualenv-20.0.7.tar.gz", hash = "sha256:4a36a96d785428278edd389d9c36d763c5755844beb7509279194647b1ef47f1"},
 ]
 wcwidth = [
     {file = "wcwidth-0.1.8-py2.py3-none-any.whl", hash = "sha256:8fd29383f539be45b20bd4df0dc29c20ba48654a41e661925e612311e9f3c603"},

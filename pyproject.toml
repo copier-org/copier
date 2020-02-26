@@ -31,28 +31,37 @@ pydantic = ">=1.0b1"
 regex = "^2020.2.20"
 
 [tool.poetry.dev-dependencies]
-flake8 = "*"
+black = {version = "^19.10b0", allow-prereleases = true}
+flake8 = "^3.7"
+flake8-blind-except = "*"
+flake8-bugbear = "*"
+flake8-comprehensions = "*"
+flake8-debugger = "*"
 ipdb = "*"
+mypy = "*"
 packaging = "*"
 pre-commit = "*"
-pytest = "*"
+pytest = "^5.3"
 pytest-cov = "*"
-pytest-flake8 = "*"
-pytest-mock = "*"
-pytest-mypy = "*"
-tox = "*"
-
-[tool.poetry.extras]
-testing = ["pre-commit", "pytest", "pytest-cov", "pytest-mock", "pytest-mypy"]
 
 [tool.isort]
-# See https://github.com/psf/black
 combine_as_imports = true
 force_grid_wrap = 0
 include_trailing_comma = true
-known_third_party = ["colorama", "jinja2", "packaging", "pathspec", "pkg_resources", "plumbum", "pydantic", "pytest", "ruamel", "six"]
+known_third_party = [
+    "colorama",
+    "jinja2",
+    "packaging",
+    "pathspec",
+    "pkg_resources",
+    "plumbum",
+    "pydantic",
+    "pytest",
+    "ruamel",
+    "six"
+]
 line_length = 88
-multi_line_output = 3
+multi_line_output = 3  # black interop
 use_parentheses = true
 
 [flake8]
