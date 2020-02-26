@@ -1,13 +1,105 @@
-[build-system]
-requires = ["setuptools>=34.4", "wheel"]
-build-backend = "setuptools.build_meta"
+[tool]
+[tool.poetry]
+name = "copier"
+version = "3.0"
+description = "A library for rendering projects templates."
+license = "MIT"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8"
+]
+authors = ["Ben Felder <ben@felder.io>"]
+repository = "https://github.com/pykong/copier"
+readme = "README.md"
+
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/pykong/copier/issues"
+
+[tool.poetry.dependencies]
+python = "^3.6"
+"ruamel.yaml" = "==0.*,>=0.15.0"
+colorama = "==0.*,>=0.4.0"
+jinja2 = "==2.*,>=2.10.0"
+plumbum = "==1.*,>=1.6.0"
+pydantic = ">=1.0b1"
+
+[tool.poetry.dev-dependencies]
+flake8 = "*"
+ipdb = "*"
+packaging = "*"
+pre-commit = "*"
+pytest = "*"
+pytest-cov = "*"
+pytest-flake8 = "*"
+pytest-mock = "*"
+pytest-mypy = "*"
+tox = "*"
+
+[tool.poetry.extras]
+testing = ["pre-commit", "pytest", "pytest-cov", "pytest-mock", "pytest-mypy"]
 
 [tool.isort]
 # See https://github.com/psf/black
 combine_as_imports = true
 force_grid_wrap = 0
 include_trailing_comma = true
-known_third_party = ["colorama", "jinja2", "packaging", "pkg_resources", "plumbum", "pydantic", "pytest", "ruamel", "setuptools", "six"]
+known_third_party = ["colorama", "jinja2", "packaging", "pkg_resources", "plumbum", "pydantic", "pytest", "ruamel", "six"]
 line_length = 88
 multi_line_output = 3
 use_parentheses = true
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+skipsdist = True
+envlist = py36,py37,py38
+
+[testenv]
+skip_install = true
+commands =
+    pip install -U pip
+    pip install .[testing]
+    pytest -x copier tests
+
+[coverage:run]
+branch = True
+
+[coverage:report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if 0:
+
+[coverage:html]
+directory = covreport
+"""
+
+[flake8]
+max-complexity = 10
+max-line-length = 88
+ignore = ",W503,E203,D100,D101,D102,D103,D104,D105,D107,"
+
+
+# [tool.pytest]
+# addopts = "--mypy --doctest-modules"
+
+[mypy]
+check_untyped_defs = true
+# disallow_subclassing_any = true
+ignore_missing_imports = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_configs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+
+[build-system]
+requires = ["setuptools>=34.4", "wheel"]
+build-backend = "setuptools.build_meta"
