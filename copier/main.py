@@ -17,8 +17,8 @@ from .tools import (
     Renderer,
     Style,
     copy_file,
+    create_path_filter,
     get_migration_tasks,
-    get_name_filters,
     make_folder,
     printf,
 )
@@ -41,7 +41,6 @@ def copy(
     data: AnyByStrDict = None,
     *,
     exclude: OptStrSeq = None,
-    include: OptStrSeq = None,
     skip_if_exists: OptStrSeq = None,
     tasks: OptStrSeq = None,
     envops: AnyByStrDict = None,
@@ -73,11 +72,6 @@ def copy(
     - exclude (list):
         A list of names or shell-style patterns matching files or folders
         that must not be copied.
-
-    - include (list):
-        A list of names or shell-style patterns matching files or folders that
-        must be included, even if its name are in the `exclude` list.
-        Eg: `['.gitignore']`. The default is an empty list.
 
     - skip_if_exists (list):
         Skip any of these files if another with the same name already exists in the
@@ -145,8 +139,12 @@ def copy(
 
 
 def copy_local(conf: ConfigData) -> None:
+
+    must_filter = create_path_filter(conf.exclude)
+
     render = Renderer(conf)
-    must_filter, must_skip = get_name_filters(conf, render)
+    skip_patterns = [render.string(pattern) for pattern in conf.skip_if_exists]
+    must_skip = create_path_filter(skip_patterns)
 
     if not conf.quiet:
         print("")  # padding space

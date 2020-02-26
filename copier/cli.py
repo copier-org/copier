@@ -57,15 +57,6 @@ class CopierApp(cli.Application):
             "that must not be copied"
         ),
     )
-    include = cli.SwitchAttr(
-        ["-i", "--include"],
-        str,
-        list=True,
-        help=(
-            "A name or shell-style pattern matching files or folders "
-            "that must be included, even if their names are in the `exclude` list"
-        ),
-    )
     vcs_ref = cli.SwitchAttr(
         ["-r", "--vcs-ref"],
         str,
@@ -103,7 +94,6 @@ class CopierApp(cli.Application):
             exclude=self.exclude,
             extra_paths=self.extra_paths,
             force=self.force,
-            include=self.include,
             pretend=self.pretend,
             quiet=self.quiet,
             skip=self.skip,
