@@ -12,7 +12,7 @@ def test_exclude_recursive(tmp_path):
 
 
 def test_exclude_recursive_negate(tmp_path):
-    """Copy is done properly when exclude is negated for copy_me.txt."""
+    """Copy is done properly when copy_me.txt is the sole file copied."""
     src = f"{PROJECT_TEMPLATE}_exclude_negate"
     copy(src, tmp_path)
     assert (tmp_path / "copy_me.txt").exists()
