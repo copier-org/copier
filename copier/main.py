@@ -17,8 +17,8 @@ from .tools import (
     Renderer,
     Style,
     copy_file,
+    create_path_filter,
     get_migration_tasks,
-    get_name_filters,
     make_folder,
     printf,
 )
@@ -139,8 +139,12 @@ def copy(
 
 
 def copy_local(conf: ConfigData) -> None:
+
+    must_filter = create_path_filter(conf.exclude)
+
     render = Renderer(conf)
-    must_filter, must_skip = get_name_filters(conf, render)
+    skip_patterns = [render.string(pattern) for pattern in conf.skip_if_exists]
+    must_skip = create_path_filter(skip_patterns)
 
     if not conf.quiet:
         print("")  # padding space
