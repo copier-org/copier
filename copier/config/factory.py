@@ -46,7 +46,7 @@ def make_config(
 ) -> ConfigData:
     """Provides the configuration object, merged from the different sources.
 
-    The order of precedence for the merger of configuration object is:
+    The order of precedence for the merger of configuration objects is:
     function_args > user_data > defaults.
     """
     # Merge answer sources in the order of precedence
