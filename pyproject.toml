@@ -14,6 +14,7 @@ classifiers = [
     "Programming Language :: Python :: 3.8"
 ]
 authors = ["Ben Felder <ben@felder.io>"]
+homepage = "https://github.com/pykong/copier"
 repository = "https://github.com/pykong/copier"
 readme = "README.md"
 
