@@ -210,7 +210,11 @@ def update_diff(conf: ConfigData):
         with local.cwd(dst_temp):
             git("init", retcode=None)
             git("add", ".")
-            git("commit", "-m", "foo", "--author", "Copier <copier@copier>")
+            git("config", "user.name", "Copier")
+            git("config", "user.email", "copier@copier")
+            git("commit", "-m", "foo")
+            git("config", "--unset", "user.name")
+            git("config", "--unset", "user.email")
             git("remote", "add", "real_dst", conf.dst_path)
             git("fetch", "real_dst", "HEAD")
             diff = git("diff", "--unified=0", "HEAD...FETCH_HEAD")

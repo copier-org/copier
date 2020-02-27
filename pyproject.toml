@@ -17,6 +17,9 @@ authors = ["Ben Felder <ben@felder.io>"]
 repository = "https://github.com/pykong/copier"
 readme = "README.md"
 
+[tool.poetry.scripts]
+copier = "copier.cli:CopierApp.run"
+
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/pykong/copier/issues"
 

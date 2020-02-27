@@ -15,7 +15,7 @@ def test_updatediff(dst: Path):
     target = dst / "target"
     readme = target / "README.txt"
     answers = target / ".copier-answers.yml"
-    commit = git["commit", "--all", "--author", "Copier Test <test@copier>"]
+    commit = git["commit", "--all"]
     # Run copier 1st time, with specific tag
     CopierApp.invoke(
         "copy", str(REPO_BUNDLE_PATH), str(target), force=True, vcs_ref="v0.0.1"
@@ -42,6 +42,10 @@ def test_updatediff(dst: Path):
     # Init destination as a new independent git repo
     with local.cwd(target):
         git("init")
+        # Configure git in case you're running in CI
+        git("config", "user.name", "Copier Test")
+        git("config", "user.email", "test@copier")
+        # Commit changes
         git("add", ".")
         commit("-m", "hello world")
         # Emulate the user modifying the README by hand
