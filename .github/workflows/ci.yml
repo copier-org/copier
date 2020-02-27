@@ -32,3 +32,20 @@ jobs:
       - name: Run pytest
         run: |
           poetry run pytest --color=yes .
+
+  publish:
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8]
+
+    steps:
+      - name: Build dist
+        run: |
+          poetry build
+      - name: Publish distribution 📦 to Test PyPI
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          password: ${{ secrets.test_pypi_token_copier }}
+        repository_url: https://test.pypi.org/legacy/
