@@ -2,7 +2,7 @@
 
 ![Copier](https://github.com/pykong/copier/raw/master/img/copier-logotype.png)
 
-[![Coverage Status](https://coveralls.io/repos/github/pykong/copier/badge.svg?branch=master)](https://coveralls.io/github/pykong/copier?branch=master)
+[![codecov](https://codecov.io/gh/pykong/copier/branch/master/graph/badge.svg)](https://codecov.io/gh/pykong/copier)
 ![](https://github.com/pykong/copier/workflows/CI/badge.svg)
 ![](https://img.shields.io/pypi/pyversions/copier)
 ![](https://img.shields.io/pypi/v/copier)
