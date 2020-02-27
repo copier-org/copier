@@ -26,13 +26,14 @@ copier = "copier.cli:CopierApp.run"
 
 [tool.poetry.dependencies]
 python = "^3.6"
-"ruamel.yaml" = "==0.*,>=0.15.0"
 colorama = "==0.*,>=0.4.0"
 jinja2 = "==2.*,>=2.10.0"
 pathspec = "^0.7.0"
 plumbum = "==1.*,>=1.6.0"
 pydantic = ">=1.0b1"
 regex = "^2020.2.20"
+pyyaml = "^5.3"
+pyyaml-include = "^1.2"
 
 [tool.poetry.dev-dependencies]
 black = {version = "^19.10b0", allow-prereleases = true}
@@ -52,7 +53,7 @@ pytest-cov = "*"
 combine_as_imports = true
 force_grid_wrap = 0
 include_trailing_comma = true
-known_third_party = ["colorama", "jinja2", "packaging", "pathspec", "pkg_resources", "plumbum", "pydantic", "pytest", "ruamel", "six"]
+known_third_party = ["colorama", "jinja2", "packaging", "pathspec", "pkg_resources", "plumbum", "pydantic", "pytest", "six", "yaml", "yamlinclude"]
 line_length = 88
 multi_line_output = 3  # black interop
 use_parentheses = true

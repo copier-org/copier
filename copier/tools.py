@@ -11,7 +11,7 @@ from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
 from packaging import version
 from pydantic import StrictBool
-from ruamel.yaml import round_trip_dump
+from yaml import dump
 
 from .config.objects import ConfigData, EnvOps
 from .types import (
@@ -98,7 +98,7 @@ def to_nice_yaml(data: Any, **kwargs) -> str:
     # Remove security-problematic kwargs
     kwargs.pop("stream", None)
     kwargs.pop("Dumper", None)
-    result = round_trip_dump(data, **kwargs)
+    result = dump(data, **kwargs)
     if isinstance(result, str):
         result = result.rstrip()
     return result or ""
