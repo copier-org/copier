@@ -58,7 +58,7 @@ def load_yaml_data(
 
     YamlIncludeConstructor.add_to_loader_class(
         loader_class=yaml.FullLoader,
-        base_dir='.'
+        base_dir=conf_path.parent
     )
 
     try:
