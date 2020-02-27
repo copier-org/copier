@@ -8,11 +8,15 @@ from plumbum.cli.terminal import ask, choose, prompt
 from plumbum.colors import bold, info, italics
 # from ruamel import yaml
 import yaml
+from yamlinclude import YamlIncludeConstructor
 
 from ..tools import INDENT, printf_exception
 from ..types import AnyByStrDict, PathSeq, StrOrPath
 
 __all__ = ("load_config_data", "query_user_data")
+
+
+
 
 
 class ConfigFileError(ValueError):
@@ -51,6 +55,12 @@ class InvalidTypeError(TypeError):
 def load_yaml_data(
     conf_path: Path, quiet: bool = False, _warning: bool = True
 ) -> AnyByStrDict:
+
+    YamlIncludeConstructor.add_to_loader_class(
+        loader_class=yaml.FullLoader,
+        base_dir='.'
+    )
+
     try:
         with open(conf_path) as f:
             return yaml.load(f, Loader=yaml.FullLoader)
