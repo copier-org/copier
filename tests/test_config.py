@@ -212,3 +212,8 @@ def test_make_config_good_data(dst):
 def test_make_config_precedence(dst, test_input, expected):
     conf = make_config(dst_path=dst, vcs_ref="HEAD", **test_input)
     assert is_subdict(expected, conf.dict())
+
+
+def test_config_data_transclusion():
+    config = load_config_data("tests/demo_config_transclude/demo")
+    assert config["_exclude"] == ["exclude1", "exclude2"]
