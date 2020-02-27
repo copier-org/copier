@@ -1,8 +1,10 @@
+# from: https://github.com/codecov/codecov-action#example-workflowyml-with-codecov-action
+
 name: Coverage
 
 on:
-  release:
-    types: [created]
+  push:
+    branches: [master]
 
 jobs:
   upload-coverage:
