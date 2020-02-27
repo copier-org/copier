@@ -4,19 +4,16 @@ from os.path import isfile
 from pathlib import Path
 from typing import Any
 
-from plumbum.cli.terminal import ask, choose, prompt
-from plumbum.colors import bold, info, italics
 # from ruamel import yaml
 import yaml
+from plumbum.cli.terminal import ask, choose, prompt
+from plumbum.colors import bold, info, italics
 from yamlinclude import YamlIncludeConstructor
 
 from ..tools import INDENT, printf_exception
 from ..types import AnyByStrDict, PathSeq, StrOrPath
 
 __all__ = ("load_config_data", "query_user_data")
-
-
-
 
 
 class ConfigFileError(ValueError):
@@ -57,8 +54,7 @@ def load_yaml_data(
 ) -> AnyByStrDict:
 
     YamlIncludeConstructor.add_to_loader_class(
-        loader_class=yaml.FullLoader,
-        base_dir=conf_path.parent
+        loader_class=yaml.FullLoader, base_dir=conf_path.parent
     )
 
     try:

@@ -210,7 +210,7 @@ _extra_paths:
 
 ### Include other yaml files
 
-To reuse configurations across templates you can reference other yaml files. You just need to state the `!include`  together with the absolute or relative path to the file to be included. Multiple files can be included per `copier.yml`. For more detailed instructions, see [pyyaml-include](https://github.com/tanbro/pyyaml-include#usage).
+To reuse configurations across templates you can reference other yaml files. You just need to state the `!include` together with the absolute or relative path to the file to be included. Multiple files can be included per `copier.yml`. For more detailed instructions, see [pyyaml-include](https://github.com/tanbro/pyyaml-include#usage).
 
 ```yaml
 # other_place/include_me.yml
@@ -219,8 +219,6 @@ common_setting: "1"
 # copier.yml
 !include other_place/include_me.yml
 ```
-
-
 
 **Warning:** Use only trusted project templates as these tasks run with the
 same level of access as your user.
