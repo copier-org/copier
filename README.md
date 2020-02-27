@@ -400,3 +400,9 @@ Uses the template in _src_path_ to generate a new project at _dst_path_.
 - **cleanup_on_error** (bool):<br>
   Remove the destination folder if the copy process or one of the tasks fail.
   True by default.
+
+## Credits
+
+Special thanks go to [jpscaletti](<[https://github.com/jpscaletti](https://github.com/jpscaletti)>) for originally creating `copier`. This project would not be a thing without him.
+
+Big thanks also go to [Yajo](<[https://github.com/Yajo](https://github.com/Yajo)>) for his relentless zest for improving `copier` even further.
