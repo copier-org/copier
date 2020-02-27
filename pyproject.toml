@@ -62,5 +62,5 @@ max-line-length = 88
 ignore = ",W503,E203,D100,D101,D102,D103,D104,D105,D107,"
 
 [build-system]
-requires = ["setuptools>=34.4", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry>=1.0.3"]
+build-backend = "poetry.masonry.api"
