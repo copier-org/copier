@@ -1,8 +1,8 @@
 [tool]
 [tool.poetry]
 name = "copier"
-version = "3.0"
-description = "A library for rendering projects templates."
+version = "3.0.0-alpha3"
+description = "Library and command-line utility for rendering projects templates."
 license = "MIT"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
