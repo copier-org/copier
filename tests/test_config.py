@@ -52,18 +52,24 @@ def test_invalid_yaml(capsys):
     assert re.search(r"INVALID.*tests/demo_invalid/copier\.yml", out)
 
 
-def test_invalid_data(capsys):
+@pytest.mark.parametrize(
+    "conf_path,flags,check_out",
+    (
+        ("tests/demo_invalid", {"_warning": False}, lambda x: "INVALID" in x),
+        ("tests/demo_invalid", {"quiet": True}, lambda x: x == ""),
+    ),
+)
+def test_invalid_config_data(conf_path, flags, check_out, capsys):
     with pytest.raises(InvalidConfigFileError):
-        load_config_data("tests/demo_invalid", _warning=False)
-    out, _ = capsys.readouterr()
-    assert re.search(r"INVALID", out)
+        load_config_data(conf_path, **flags)
+    if check_out:
+        out, _ = capsys.readouterr()
+        assert check_out(out)
 
 
-def test_invalid_quiet(capsys):
-    with pytest.raises(InvalidConfigFileError):
-        load_config_data("tests/demo_invalid", quiet=True)
-    out, _ = capsys.readouterr()
-    assert out == ""
+def test_config_data_empty():
+    data = load_config_data("tests/demo_config_empty")
+    assert data is None
 
 
 def test_multiple_config_file_error(capsys):
