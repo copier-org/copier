@@ -1,2 +1,1 @@
-#!include /home/ben/Projects/copier/tests/demo_config_transclude/include_me.yml
 !include ../include_me.yml
