@@ -6,7 +6,8 @@ from typing import Any
 
 from plumbum.cli.terminal import ask, choose, prompt
 from plumbum.colors import bold, info, italics
-from ruamel import yaml
+# from ruamel import yaml
+import yaml
 
 from ..tools import INDENT, printf_exception
 from ..types import AnyByStrDict, PathSeq, StrOrPath
@@ -50,13 +51,10 @@ class InvalidTypeError(TypeError):
 def load_yaml_data(
     conf_path: Path, quiet: bool = False, _warning: bool = True
 ) -> AnyByStrDict:
-    from ruamel.yaml import YAML, YAMLError
-
-    yaml = YAML(typ="safe")
-
     try:
-        return dict(yaml.load(conf_path))
-    except YAMLError as e:
+        with open(conf_path) as f:
+            return yaml.load(f, Loader=yaml.FullLoader)
+    except yaml.parser.ParserError as e:
         raise InvalidConfigFileError(conf_path, quiet) from e
 
 
