@@ -70,13 +70,12 @@ def copy(
         a `copier.json`.
 
     - exclude (list):
-        A list of names or shell-style patterns matching files or folders
-        that must not be copied.
+        A list of names or gitignore-style patterns matching files or folders that
+        must not be copied.
 
     - skip_if_exists (list):
-        Skip any of these files if another with the same name already exists in the
-        destination folder. (it only makes sense if you are copying to a folder that
-        already exists).
+        A list of names or gitignore-style patterns matching files or folders, that
+        are skipped if another with the same name already exists in the destination folder. (It only makes sense if you are copying to a folder that already exists).
 
     - tasks (list):
         Optional lists of commands to run in order after finishing the copy.
@@ -284,8 +283,7 @@ def render_file(
     render: Renderer,
     must_skip: CheckPathFunc,
 ) -> None:
-    """Process or copy a file of the skeleton.
-    """
+    """Process or copy a file of the skeleton."""
     content: Optional[str] = None
     if str(src_path).endswith(conf.templates_suffix):
         content = render(src_path)
