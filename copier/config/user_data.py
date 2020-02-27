@@ -118,7 +118,7 @@ def load_answersfile_data(
 def query_user_data(
     questions_data: AnyByStrDict, answers_data: AnyByStrDict, ask_user: bool
 ) -> AnyByStrDict:  # pragma: no cover
-    """Ask the user answers to questions asked in the config file."""
+    """Query the user for questions given in the config file."""
     type_maps = {
         "bool": bool,
         "float": float,

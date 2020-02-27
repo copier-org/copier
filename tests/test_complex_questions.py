@@ -10,7 +10,7 @@ SRC = f"{PROJECT_TEMPLATE}_complex_questions"
 
 
 def test_api(dst):
-    """Test copier processes fine advanced questions and answers through API."""
+    """Test copier correctly processes advanced questions and answers through API."""
     copy(
         SRC,
         dst,
@@ -42,7 +42,7 @@ def test_api(dst):
 
 
 def test_cli(dst):
-    """Test copier processes fine advanced questions and answers through CLI."""
+    """Test copier correctly processes advanced questions and answers through CLI."""
     (
         copier_cmd["copy", SRC, dst]
         << dedent(

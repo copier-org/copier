@@ -7,7 +7,7 @@ SRC = f"{PROJECT_TEMPLATE}_answersfile"
 
 
 def test_answersfile(dst):
-    """Test copier behaves properly when using a answersfile."""
+    """Test copier behaves properly when using an answersfile."""
     round_file = dst / "round.txt"
 
     # Check 1st round is properly executed and remembered
