@@ -66,6 +66,11 @@ def test_invalid_quiet(capsys):
     assert out == ""
 
 
+def test_invalid_yaml_empty():
+    with pytest.raises(InvalidConfigFileError):
+        load_config_data("tests/demo_config_empty")
+
+
 def test_multiple_config_file_error(capsys):
     with pytest.raises(MultipleConfigFilesError):
         load_config_data("tests/demo_multi_config", quiet=True)
