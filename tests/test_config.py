@@ -57,7 +57,6 @@ def test_invalid_yaml(capsys):
     (
         ("tests/demo_invalid", {"_warning": False}, lambda x: "INVALID" in x),
         ("tests/demo_invalid", {"quiet": True}, lambda x: x == ""),
-        ("tests/demo_config_empty", {}, None),
     ),
 )
 def test_invalid_config_data(conf_path, flags, check_out, capsys):
@@ -66,6 +65,11 @@ def test_invalid_config_data(conf_path, flags, check_out, capsys):
     if check_out:
         out, _ = capsys.readouterr()
         assert check_out(out)
+
+
+def test_config_data_empty():
+    data = load_config_data("tests/demo_config_empty")
+    assert data is None
 
 
 def test_multiple_config_file_error(capsys):
