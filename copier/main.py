@@ -66,30 +66,32 @@ def copy(
         Absolute path to where to render the skeleton
 
     - data (dict):
-        Optional. Data to be passed to the templates in addtion to the user data from
-        a `copier.json`.
+        Optional. Data to be passed to the templates in addtion to the user data
+        from a `copier.json`.
 
     - exclude (list):
         A list of names or gitignore-style patterns matching files or folders that
         must not be copied.
 
     - skip_if_exists (list):
-        A list of names or gitignore-style patterns matching files or folders, that
-        are skipped if another with the same name already exists in the destination folder. (It only makes sense if you are copying to a folder that already exists).
+        A list of names or gitignore-style patterns matching files or folders,
+         that are skipped if another with the same name already exists in the
+         destination folder. (It only makes sense if you are copying to a folder
+        that already exists).
 
     - tasks (list):
         Optional lists of commands to run in order after finishing the copy.
-        Like in the templates files, you can use variables on the commands that will
-        be replaced by the real values before running the command.
+        Like in the templates files, you can use variables on the commands that
+        will be replaced by the real values before running the command.
         If one of the commands fail, the rest of them will not run.
 
     - envops (dict):
         Extra options for the Jinja template environment.
 
     - extra_paths (list):
-        Optional. Additional paths, outside the `src_path`, from where to search for
-        templates. This is intended to be used with shared parent templates, files
-        with macros, etc. outside the copied project skeleton.
+        Optional. Additional paths, outside the `src_path`, from where to search
+        for templates. This is intended to be used with shared parent templates,
+        files with macros, etc. outside the copied project skeleton.
 
     - pretend (bool):
         Run but do not make any changes
