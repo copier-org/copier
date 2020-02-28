@@ -1,12 +1,37 @@
 default_language_version:
   python: python3
+
 repos:
-  - repo: https://github.com/psf/black
-    rev: 19.3b0
+  # checking our hooks themselves
+  - repo: meta
+    hooks:
+      - id: check-hooks-apply
+      - id: check-useless-excludes
+
+  # hooks running from local virtual environment
+  - repo: local
     hooks:
       - id: black
+        name: black
+        entry: black
+        language: system
+        types: [python]
+      - id: flake8
+        name: flake8
+        entry: flake8
+        language: system
+        types: [python]
+        args: ["--config", "pyproject.toml"]
+      - id: poetry_check
+        description: Check the integrity of pyproject.toml
+        name: poetry_check
+        entry: poetry check
+        language: system
+        pass_filenames: false
+
+  # isorting our imports
   - repo: https://github.com/asottile/seed-isort-config
-    rev: v1.9.3
+    rev: v2.1.0
     hooks:
       - id: seed-isort-config
   - repo: https://github.com/pre-commit/mirrors-isort
@@ -15,6 +40,8 @@ repos:
       - id: isort
         additional_dependencies:
           - isort[pyproject]
+
+  # prettier to format our many yaml files
   - repo: https://github.com/prettier/prettier
     rev: "1.19.1"
     hooks:
@@ -23,25 +50,24 @@ repos:
           (?x)
           # Those files have wrong syntax and would fail
           ^tests/demo_invalid/copier.yml|tests/demo_transclude_invalid(_multi)?/demo/copier.yml$
+
+  # miscellaneous hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.3.0
+    rev: v2.5.0
     hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
-        # Some tests require no EOF or they will fail
-        exclude: \.noeof\.
-      - id: debug-statements
-      - id: flake8
-        args: ["--config", "pyproject.toml"]
-        additional_dependencies:
-          - flake8-bugbear==19.8.0
-      - id: fix-encoding-pragma
-        args: ["--remove"]
+      - id: check-added-large-files
+      - id: check-ast
       - id: check-case-conflict
       - id: check-docstring-first
       - id: check-executables-have-shebangs
       - id: check-merge-conflict
-      - id: check-symlinks
       - id: check-toml
+      - id: debug-statements
+      - id: detect-private-key
+      - id: end-of-file-fixer
+        exclude: \.noeof\. # Some tests require no EOF
+      - id: fix-encoding-pragma
+        args: ["--remove"]
       - id: mixed-line-ending
         args: ["--fix=lf"]
+      - id: trailing-whitespace
