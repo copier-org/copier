@@ -3,17 +3,30 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
-### Version 3.0 (2020-03)
+### Version 3.0.0 (2020-03)
 
-- Dropped support for Python 3.5.
+This is a big release with many new features added and improved.
+The code base also received a lot of love and hardening.
+
+#### Features:
+
+- Minimal supported Python version is now 3.6.
 - Dropped support for deprecated `voodoo.json`.
-- Type annotated entire code base.
-- Increased test coverage.
 - Supporting self-templating.
 - Introduced gitignore-style patterns for `exclude` und `skip-if-exists`.
 - Dropped support for `include` option.
-- Ditched `ruamel.yaml` for `PyYaml`.
 - Added support for extending content of config files via content of other files via `pyaml-include`.
+
+#### Other:
+
+- Moved to `poetry` for package management.
+- Type annotated entire code base.
+- Increased test coverage.
+- Ditched `ruamel.yaml` for `PyYaml`.
+- Ditched Travis CI for GitHub Actions.
+- Added `pre-commit` for enforced linting.
+- Added `black` and `isort` for code formatting.
+- Added `pytest` for running tests.
 
 ### Version 2.5 (2019-06)
 
