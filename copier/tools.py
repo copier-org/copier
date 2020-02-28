@@ -11,7 +11,7 @@ from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
 from packaging import version
 from pydantic import StrictBool
-from yaml import dump
+from yaml import safe_dump
 
 from .config.objects import ConfigData, EnvOps
 from .types import (
@@ -98,7 +98,7 @@ def to_nice_yaml(data: Any, **kwargs) -> str:
     # Remove security-problematic kwargs
     kwargs.pop("stream", None)
     kwargs.pop("Dumper", None)
-    result = dump(data, **kwargs)
+    result = safe_dump(data, **kwargs)
     if isinstance(result, str):
         result = result.rstrip()
     return result or ""
@@ -123,7 +123,7 @@ class Renderer:
         # Other data goes next
         answers.update(
             (k, v)
-            for (k, v) in sorted(conf.data.items())
+            for (k, v) in conf.data.items()
             if not k.startswith("_")
             and isinstance(k, JSONSerializable)
             and isinstance(v, JSONSerializable)
