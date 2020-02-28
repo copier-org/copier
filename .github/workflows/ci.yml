@@ -20,11 +20,15 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install poetry
-          poetry install
+      - run: python -m pip install poetry
+      - name: generate cache key PY
+        run: echo "::set-env name=PY::$((python -VV; poetry -V) | sha256sum | cut -d' '
+          -f1)"
+      - uses: actions/cache@v1
+        with:
+          path: ~/.cache
+          key: ${{ env.PY }}|${{ hashFiles('pyproject.toml') }}|${{ hashFiles('poetry.lock') }}|${{ hashFiles('.pre-commit-config.yaml') }}
+      - run: poetry install
       - name: Run pre-commit
         run: |
           poetry run pre-commit run --all-files --color=always
@@ -44,11 +48,15 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: 3.8
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install poetry
-          poetry install
+      - run: python -m pip install poetry
+      - name: generate cache key PY
+        run: echo "::set-env name=PY::$((python -VV; poetry -V) | sha256sum | cut -d' '
+          -f1)"
+      - uses: actions/cache@v1
+        with:
+          path: ~/.cache
+          key: ${{ env.PY }}|${{ hashFiles('pyproject.toml') }}|${{ hashFiles('poetry.lock') }}|${{ hashFiles('.pre-commit-config.yaml') }}
+      - run: poetry install
       - name: Build dist
         run: |
           poetry build
