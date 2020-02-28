@@ -15,15 +15,18 @@ def test_answersfile(dst):
     assert round_file.read_text() == "It's the 1st round.\n"
     log = load_answersfile_data(dst)
     assert log["round"] == "1st"
+    assert log["str_question_without_default"] is None
 
     # Check 2nd round is properly executed and remembered
     copier.copy(SRC, dst, {"round": "2nd"}, force=True)
     assert round_file.read_text() == "It's the 2nd round.\n"
     log = load_answersfile_data(dst)
     assert log["round"] == "2nd"
+    assert log["str_question_without_default"] is None
 
     # Check repeating 2nd is properly executed and remembered
     copier.copy(SRC, dst, force=True)
     assert round_file.read_text() == "It's the 2nd round.\n"
     log = load_answersfile_data(dst)
     assert log["round"] == "2nd"
+    assert log["str_question_without_default"] is None

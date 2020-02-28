@@ -130,7 +130,7 @@ def query_user_data(
         "str": str,
         "yaml": parse_yaml_string,
     }
-    result = {}
+    result: AnyByStrDict = {}
     for question, details in questions_data.items():
         # Get default answer
         default = answers_data.get(question, details.get("default"))
@@ -141,6 +141,10 @@ def query_user_data(
         except KeyError:
             raise InvalidTypeError()
         if not ask_user:
+            # Skip casting None into "None"
+            if type_name == "str" and default is None:
+                result[question] = default
+                continue
             # Parse correctly bools as 1, true, yes...
             if type_name == "bool" and isinstance(default, str):
                 default = parse_yaml_string(default)
