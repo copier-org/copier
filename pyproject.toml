@@ -2,7 +2,7 @@
 [tool.poetry]
 name = "copier"
 version = "3.0.0-alpha3"
-description = "Library and command-line utility for rendering projects templates."
+description = "A library for rendering project templates."
 license = "MIT"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
