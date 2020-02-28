@@ -4,6 +4,7 @@
 
 [![codecov](https://codecov.io/gh/pykong/copier/branch/master/graph/badge.svg)](https://codecov.io/gh/pykong/copier)
 ![](https://github.com/pykong/copier/workflows/CI/badge.svg)
+[![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
 ![](https://img.shields.io/pypi/pyversions/copier)
 ![](https://img.shields.io/pypi/v/copier)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
