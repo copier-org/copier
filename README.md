@@ -4,14 +4,15 @@
 
 [![codecov](https://codecov.io/gh/pykong/copier/branch/master/graph/badge.svg)](https://codecov.io/gh/pykong/copier)
 ![](https://github.com/pykong/copier/workflows/CI/badge.svg)
+[![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
 ![](https://img.shields.io/pypi/pyversions/copier)
 ![](https://img.shields.io/pypi/v/copier)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-A library for rendering projects templates.
+A library for rendering project templates.
 
 - Works with **local** paths and **git URLs**.
-- Your project can include any file and `Copier` can dynamically replace values in any kind of text files.
+- Your project can include any file and `Copier` can dynamically replace values in any kind of text file.
 - It generates a beautiful output and takes care of not overwrite existing files unless instructed to do so.
 
 ![Sample output](https://github.com/pykong/copier/raw/master/img/copier-output.png)
@@ -67,7 +68,7 @@ Since version 3.0, only Python 3.6 or later are supported. Please use the
 
 ## The `copier.yml` file
 
-If a `copier.yml`, or `copier.yaml` file is found in the root of the template,
+If a `copier.yml`, or `copier.yaml` is found in the root of the template,
 it will be read and used for two purposes:
 
 ### Prompt the user for information
@@ -102,7 +103,7 @@ Supported keys:
 - **type**: User input must match this type.
   Options are: bool, float, int, json, str, yaml.
 - **help**: Additional text to help the user know what's this question for.
-- **default**: Leave empty to force the user answering. Provide a default to
+- **default**: Leave empty to force the user to answer. Provide a default to
   save him from typing it if it's quite common. When using **choices**, the
   default must be the choice _value_, not its _key_. If values are quite long,
   you can use
@@ -112,7 +113,7 @@ Supported keys:
 love_copier:
   type: bool # This makes Copier ask for y/n
   help: Do you love Copier?
-  default: yes # Without default, you force the user to answer
+  default: yes # Without a default, you force the user to answer
 
 project_name:
   type: str # Any value will be treated raw as a string
@@ -141,7 +142,7 @@ your_favorite_book:
     - The Hitchhiker's Guide to the Galaxy
 
 project_license:
-  # User will type 1 or 2, and will see only the dict key, but you will
+  # User will type 1 or 2 and will see only the dict key, but you will
   # get the dict value in your template
   choices:
     MIT: &mit_text |
@@ -174,7 +175,7 @@ Note that they become just _the defaults_, so any explicitly-passed argument wil
 overwrite them.
 
 ```yaml
-# Suffix that intstructs which files are to be processed by Jinja as templates
+# Suffix that instructs which files are to be processed by Jinja as templates
 _templates_suffix: .tmpl
 
 # gitignore-style patterns files/folders that must not be copied.
@@ -226,7 +227,7 @@ same level of access as your user.
 ## The `.copier-answers.yml` file
 
 If the destination path exists and a `.copier-answers.yml` (or `.copier-answers.yaml`) file is
-present there, it will be used to load last user's answers to the questions
+present there, it will be used to load the last user's answers to the questions
 made in [the `copier.yml` file](#the-copieryml-file).
 
 This makes projects easier to update because when the user is asked, the default
@@ -264,7 +265,7 @@ If that's your case, then just enter the destination folder, make sure
 copier update
 ```
 
-This will read all available git tags, will compare them using [PEP 440](https://www.python.org/dev/peps/pep-0440/), and will checkout the latest one before updating. To update to the latest commit, add `--vcs-ref=HEAD`. You can use any other git ref you want.
+This will read all available git tags, will compare them using [PEP 440](https://www.python.org/dev/peps/pep-0440/), and will check out the latest one before updating. To update to the latest commit, add `--vcs-ref=HEAD`. You can use any other git ref you want.
 
 Copier will do its best to respect the answers you provided when copied for the last
 copy, and the git diff that has evolved since the last copy. If there are conflicts,
@@ -337,7 +338,8 @@ Uses the template in _src_path_ to generate a new project at _dst_path_.
 **Arguments**:
 
 - **src_path** (str):<br>
-  Absolute path to the project skeleton. Can be a version control system URL.
+  Absolute path to the project skeleton, which can also be a version control
+  system URL.
 
 - **dst_path** (str):<br>
   Absolute path to where to render the skeleton.
@@ -410,11 +412,11 @@ Uses the template in _src_path_ to generate a new project at _dst_path_.
   Suppress the status output.
 
 - **cleanup_on_error** (bool):<br>
-  Remove the destination folder if the copy process or one of the tasks fail.
+  Remove the destination folder if the copy process or one of the tasks fails.
   True by default.
 
 ## Credits
 
-Special thanks go to [jpscaletti](<[https://github.com/jpscaletti](https://github.com/jpscaletti)>) for originally creating `copier`. This project would not be a thing without him.
+Special thanks go to [jpscaletti](<[https://github.com/jpscaletti](https://github.com/jpscaletti)>) for originally creating `Copier`. This project would not be a thing without him.
 
-Big thanks also go to [Yajo](<[https://github.com/Yajo](https://github.com/Yajo)>) for his relentless zest for improving `copier` even further.
+Big thanks also go to [Yajo](<[https://github.com/Yajo](https://github.com/Yajo)>) for his relentless zest for improving `Copier` even further.
