@@ -81,3 +81,38 @@ def test_cli(dst):
             optional_value: null
         """
     )
+
+
+def test_api_str_data(dst):
+    """Test copier when all data comes as a string.
+
+    This happens i.e. when using the --data CLI argument.
+    """
+    copy(
+        SRC,
+        dst,
+        data={
+            "love_me": "false",
+            "your_name": "LeChuck",
+            "your_age": "220",
+            "your_height": "1.9",
+            "more_json_info": '["bad", "guy"]',
+            "anything_else": "{'hates': 'all'}",
+        },
+        force=True,
+    )
+    results_file = dst / "results.txt"
+    assert results_file.read_text() == dedent(
+        r"""
+            love_me: false
+            your_name: "LeChuck"
+            your_age: 220
+            your_height: 1.9
+            more_json_info: ["bad", "guy"]
+            anything_else: {"hates": "all"}
+            choose_list: "first"
+            choose_tuple: "second"
+            choose_dict: "third"
+            optional_value: null
+        """
+    )

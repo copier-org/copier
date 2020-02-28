@@ -59,7 +59,7 @@ multi_line_output = 3  # black interop
 use_parentheses = true
 
 [flake8]
-max-complexity = 10
+max-complexity = 20
 max-line-length = 88
 ignore = ",W503,E203,D100,D101,D102,D103,D104,D105,D107,"
 
