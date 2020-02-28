@@ -19,10 +19,15 @@ repos:
     rev: "1.19.1"
     hooks:
       - id: prettier
+        # exclude: |
+        #   (?x)
+        #   # This file has wrong syntax and would fail
+        #   ^tests/demo_invalid/copier.yml$
+        #   ^tests/demo_config_transclude_multi/demo/copier.yml$
         exclude: |
           (?x)
           # This file has wrong syntax and would fail
-          ^tests/demo_invalid/copier.yml$
+          ^tests/demo_invalid/copier.yml|tests/demo_config_transclude_multi/demo/copier.yml$
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.3.0
     hooks:
