@@ -29,7 +29,7 @@ class CopierApp(cli.Application):
     DESCRIPTION_MORE = colors.yellow | dedent(
         """
         WARNING! Use only trusted project templates, as they might
-        execute code with the same level of access as your user.
+        execute code with the same level of access as your user.\n
         """
     )
     USAGE = dedent(
