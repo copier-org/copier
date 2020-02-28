@@ -1,1 +1,5 @@
 round: 1st
+
+# A str question without a default should default to None
+str_question_without_default:
+  type: str
