@@ -223,3 +223,9 @@ def test_make_config_precedence(dst, test_input, expected):
 def test_config_data_transclusion():
     config = load_config_data("tests/demo_config_transclude/demo")
     assert config["_exclude"] == ["exclude1", "exclude2"]
+
+
+def test_config_data_multi_transclusion():
+    """Test for key collision between two transcluded files."""
+    with pytest.raises(InvalidConfigFileError):
+        load_config_data("tests/demo_config_transclude_multi/demo")
