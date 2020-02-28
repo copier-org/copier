@@ -39,3 +39,5 @@ pip-wheel-metadata
 
 # Editors
 .vscode
+*.sublime-workspace
+*.sublime-project
