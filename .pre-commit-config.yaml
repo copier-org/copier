@@ -22,6 +22,12 @@ repos:
         language: system
         types: [python]
         args: ["--config", "pyproject.toml"]
+      - id: poetry_check
+        description: Check the integrity of pyproject.toml
+        name: poetry_check
+        entry: poetry check
+        language: system
+        pass_filenames: false
 
   # isorting our imports
   - repo: https://github.com/asottile/seed-isort-config
