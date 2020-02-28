@@ -26,7 +26,7 @@ repos:
         #   ^tests/demo_config_transclude_multi/demo/copier.yml$
         exclude: |
           (?x)
-          # This file has wrong syntax and would fail
+          # Those files have wrong syntax and would fail
           ^tests/demo_invalid/copier.yml|tests/demo_config_transclude_multi/demo/copier.yml$
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.3.0
