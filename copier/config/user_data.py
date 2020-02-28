@@ -2,9 +2,8 @@ import json
 import re
 from os.path import isfile
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Dict
 
-# from ruamel import yaml
 import yaml
 from plumbum.cli.terminal import ask, choose, prompt
 from plumbum.colors import bold, info, italics
@@ -121,9 +120,9 @@ def load_answersfile_data(
 
 def query_user_data(
     questions_data: AnyByStrDict, answers_data: AnyByStrDict, ask_user: bool
-) -> AnyByStrDict:  # pragma: no cover
+) -> AnyByStrDict:
     """Query the user for questions given in the config file."""
-    type_maps = {
+    type_maps: Dict[str, Callable] = {
         "bool": bool,
         "float": float,
         "int": int,
@@ -135,15 +134,22 @@ def query_user_data(
     for question, details in questions_data.items():
         # Get default answer
         default = answers_data.get(question, details.get("default"))
-        if not ask_user:
-            result[question] = default
-            continue
         # Get question type; by default let YAML decide it
         type_name = details.get("type", "yaml")
         try:
             type_fn = type_maps[type_name]
         except KeyError:
             raise InvalidTypeError()
+        if not ask_user:
+            # Parse correctly bools as 1, true, yes...
+            if type_name == "bool" and isinstance(default, str):
+                default = parse_yaml_string(default)
+            try:
+                result[question] = type_fn(default)
+            except (TypeError, AttributeError):
+                # JSON or YAML failed because it wasn't a string; no need to convert
+                result[question] = default
+            continue
         # Generate message to ask the user
         message = f"{INDENT}{bold | question}? Format: {type_name}\n🎤 "
         if details.get("help"):
