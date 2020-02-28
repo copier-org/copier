@@ -49,6 +49,10 @@ pre-commit = "*"
 pytest = "^5.3"
 pytest-cov = "*"
 
+[tool.black]
+line-length = 88
+target-version = ['py36']
+
 [tool.isort]
 combine_as_imports = true
 force_grid_wrap = 0
