@@ -21,8 +21,8 @@ repos:
       - id: prettier
         exclude: |
           (?x)
-          # This file has wrong syntax and would fail
-          ^tests/demo_invalid/copier.yml$
+          # Those files have wrong syntax and would fail
+          ^tests/demo_invalid/copier.yml|tests/demo_transclude_invalid(_multi)?/demo/copier.yml$
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.3.0
     hooks:

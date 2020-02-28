@@ -57,6 +57,10 @@ def test_invalid_yaml(capsys):
     (
         ("tests/demo_invalid", {"_warning": False}, lambda x: "INVALID" in x),
         ("tests/demo_invalid", {"quiet": True}, lambda x: x == ""),
+        # test key collision between including and included file
+        ("tests/demo_transclude_invalid/demo", {}, None),
+        # test key collision between two included files
+        ("tests/demo_transclude_invalid_multi/demo", {}, None),
     ),
 )
 def test_invalid_config_data(conf_path, flags, check_out, capsys):
@@ -221,5 +225,5 @@ def test_make_config_precedence(dst, test_input, expected):
 
 
 def test_config_data_transclusion():
-    config = load_config_data("tests/demo_config_transclude/demo")
+    config = load_config_data("tests/demo_transclude/demo")
     assert config["_exclude"] == ["exclude1", "exclude2"]
