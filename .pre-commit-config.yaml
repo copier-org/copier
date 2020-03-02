@@ -13,12 +13,12 @@ repos:
     hooks:
       - id: black
         name: black
-        entry: black
+        entry: poetry run black
         language: system
         types: [python]
       - id: flake8
         name: flake8
-        entry: flake8
+        entry: poetry run flake8
         language: system
         types: [python]
         args: ["--config", "pyproject.toml"]
