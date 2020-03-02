@@ -13,16 +13,20 @@ __all__ = ("make_config",)
 
 def filter_config(data: AnyByStrDict) -> Tuple[AnyByStrDict, AnyByStrDict]:
     """Separates config and questions data."""
-    conf_data = {}
+    conf_data: AnyByStrDict = {"secret_questions": set()}
     questions_data = {}
     for k, v in data.items():
-        if k.startswith("_"):
+        if k == "_secret_questions":
+            conf_data["secret_questions"].update(v)
+        elif k.startswith("_"):
             conf_data[k[1:]] = v
         else:
             # Transform simplified questions format into complex
             if not isinstance(v, dict):
                 v = {"default": v}
             questions_data[k] = v
+            if v.get("secret"):
+                conf_data["secret_questions"].add(k)
     return conf_data, questions_data
 
 

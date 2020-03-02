@@ -120,6 +120,11 @@ project_name:
   help: An awesome project needs an awesome name. Tell me yours.
   default: paradox-specifier
 
+rocket_launch_password:
+  type: str
+  secret: true # This value will not be logged into .copier-answers.yml
+  default: my top secret password
+
 # I'll avoid default and help here, but you can use them too
 age:
   type: int
