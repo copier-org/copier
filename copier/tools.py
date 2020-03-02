@@ -125,6 +125,7 @@ class Renderer:
             (k, v)
             for (k, v) in conf.data.items()
             if not k.startswith("_")
+            and k not in conf.secret_questions
             and isinstance(k, JSONSerializable)
             and isinstance(v, JSONSerializable)
         )

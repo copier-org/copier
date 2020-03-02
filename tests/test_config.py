@@ -184,6 +184,7 @@ def test_config_data_good_data(dst):
         "skip": False,
         "vcs_ref": None,
         "migrations": (),
+        "secret_questions": (),
     }
     conf = ConfigData(**expected)
     expected["data"]["_folder_name"] = dst.name

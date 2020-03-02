@@ -80,6 +80,7 @@ class ConfigData(BaseModel):
     skip: StrictBool = False
     vcs_ref: OptStr
     migrations: Sequence[Migrations] = ()
+    secret_questions: StrSeq = ()
 
     def __init__(self, **data: Any):
         super().__init__(**data)
