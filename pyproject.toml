@@ -1,7 +1,7 @@
 [tool]
 [tool.poetry]
 name = "copier"
-version = "3.0.0-alpha5"
+version = "3.0.0-alpha6"
 description = "A library for rendering project templates."
 license = "MIT"
 classifiers = [
@@ -36,6 +36,7 @@ pyyaml = "^5.3"
 pyyaml-include = "^1.2"
 # packaging is needed when installing from PyPI
 packaging = "^20.1"
+pytest-xdist = "^1.31.0"
 
 [tool.poetry.dev-dependencies]
 black = {version = "^19.10b0", allow-prereleases = true}
