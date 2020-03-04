@@ -190,22 +190,15 @@ def update_diff(conf: ConfigData):
                     "Destination repository is dirty; cannot continue. "
                     "Please commit or stash your local changes and retry."
                 )
-    # Checkout src_path into old commit
-    old_commit_src_path = vcs.clone(str(conf.src_path), str(conf.old_commit))
     # Copy old template into a temporary destination
     with tempfile.TemporaryDirectory() as dst_temp:
-        copy_local(
-            conf.copy(
-                update={
-                    "force": True,
-                    "skip": False,
-                    "quiet": True,
-                    "src_path": old_commit_src_path,
-                    "dst_path": dst_temp,
-                    "commit": conf.old_commit,
-                },
-                deep=True,
-            )
+        copy(
+            dst_path=dst_temp,
+            force=True,
+            quiet=True,
+            skip=False,
+            src_path=conf.original_src_path,
+            vcs_ref=conf.old_commit,
         )
         # Extract diff between temporary destination and real destination
         with local.cwd(dst_temp):
