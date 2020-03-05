@@ -25,7 +25,7 @@ The code base also received a lot of love and hardening.
 - Ditched `ruamel.yaml` for `PyYaml`.
 - Ditched Travis CI for GitHub Actions.
 - Added `pre-commit` for enforced linting.
-- Added `black` and `isort` for code formatting.
+- Added `prettier`, `black` and `isort` for code formatting.
 - Added `pytest` for running tests.
 
 ### Version 2.5 (2019-06)
