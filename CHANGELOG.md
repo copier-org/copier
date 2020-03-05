@@ -32,6 +32,7 @@ The code base also received a lot of love and hardening.
 - Added `pre-commit` for enforced linting.
 - Added `prettier`, `black` and `isort` for code formatting.
 - Added `pytest` for running tests.
+- Use `plumbum` as CLI and subprocess engine.
 
 ### Version 2.5 (2019-06)
 
