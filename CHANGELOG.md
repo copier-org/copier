@@ -12,7 +12,6 @@ The code base also received a lot of love and hardening.
 
 - Minimal supported Python version is now 3.6.
 - Dropped support for deprecated `voodoo.json`.
-- Supporting self-templating.
 - Introduced gitignore-style patterns for `exclude` und `skip-if-exists`.
 - Dropped support for `include` option.
 - Added support for extending content of config files via content of other files via `pyaml-include`.
