@@ -15,6 +15,12 @@ The code base also received a lot of love and hardening.
 - Introduced gitignore-style patterns for `exclude` und `skip-if-exists`.
 - Dropped support for `include` option.
 - Added support for extending content of config files via content of other files via `pyaml-include`.
+- Customizable template extension.
+- Ability to remember last answers.
+- Template upgrades support, (based on the previous point) with migration tasks specification.
+- Extended questions format, supporting help, format, choices and secrets.
+- More beautiful prompts.
+- New CLI experience.
 
 #### Other:
 
