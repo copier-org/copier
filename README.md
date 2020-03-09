@@ -87,8 +87,10 @@ will result in this series of questions:
 <pre>
   <b>name_of_the_project</b>? Format: yaml
 🎤 [My awesome project]:
+
   <b>number_of_eels</b>? Format: yaml
 🎤 [1234]:
+
   <b>your_email</b>? Format: yaml
 🎤 []:
 </pre>
