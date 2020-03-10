@@ -155,7 +155,7 @@ def query_user_data(
                 result[question] = default
             continue
         # Generate message to ask the user
-        message = f"{INDENT}{bold | question}? Format: {type_name}\n🎤 "
+        message = f"\n{INDENT}{bold | question}? Format: {type_name}\n🎤 "
         if details.get("help"):
             message = f"{info & italics | details['help']}\n{message}"
         # Use the right method to ask
