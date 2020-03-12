@@ -195,21 +195,34 @@ _exclude:
 _skip_if_exists:
 
 # Commands to be executed after the copy
+# They have the $STAGE=task environment variable
 _tasks:
+  # Strings get executed under system's default shell
   - "git init"
-  - "rm [[ name_of_the_project ]]/README.md"
+  - "rm [[ name_of_the_project / 'README.md' ]]"
+  # Arrays are executed without shell, saving you the work of escaping arguments
+  - [invoke, "--search-root=[[ _copier_conf.src_path ]]", after-copy]
+  # You are able to output the full conf to JSON, to be parsed by your script,
+  # but you cannot use the normal `|tojson` filter; instead, use `.json()`
+  - [invoke, end-process, "--full-conf=[[ _copier_conf.json() ]]"]
 
 # Migrations are like tasks, but they are executed:
 # - Evaluated using PEP 440
 # - In the same order as declared here
 # - Only when new version >= declared version > old version
 # - Only when updating
+# - After being rendered with the same renderer as the rest of the template
+# - With the same supported syntaxes as `_tasks`, above
+# - With $VERSION_FROM, $VERSION_TO and $VERSION_CURRENT, $STAGE (before/after)
+#   environment variables
 _migrations:
   - version: v1.0.0
     before:
       - rm ./old-folder
     after:
-      - pre-commit install
+      # [[ _copier_conf.src_path ]] points to the path where the template was
+      # cloned, so it can be helpful to run migration scripts stored there.
+      - invoke -r [[ _copier_conf.src_path ]] -c migrations migrate $VERSION_CURRENT
 
 # Additional paths, from where to search for templates
 _extra_paths:
@@ -303,6 +316,14 @@ Copier includes:
 
 - `now()` to get current UTC time.
 - `make_secret()` to get a random string.
+- `_copier_answers` includes the current answers dict, but slightly modified to make it suitable to [autoupdate your project safely](#the-copier-answers-yml-file):
+  - It doesn't contain secret answers.
+  - It doesn't contain any data that is not easy to render to JSON or YAML.
+- `_copier_conf` includes the current copier `ConfigData` object, also slightly modified:
+  - It only contains JSON-serializable data.
+  - But you have to serialize it with `[[ _copier_conf.json() ]]` instead of `[[ _copier_conf|tojson ]]`.
+  - ⚠️ It contains secret answers inside its `.data` key.
+  - Modifying it doesn't alter the current rendering configuration.
 
 ### Builtin filters
 

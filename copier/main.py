@@ -2,11 +2,12 @@ import filecmp
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
-from plumbum import local
+from plumbum import colors, local
 from plumbum.cli.terminal import ask
 from plumbum.cmd import git
 
@@ -176,7 +177,9 @@ def copy_local(conf: ConfigData) -> None:
     if not conf.quiet:
         print("")  # padding space
 
-    run_tasks(conf, render, conf.tasks)
+    run_tasks(
+        conf, render, [{"task": t, "extra_env": {"STAGE": "task"}} for t in conf.tasks]
+    )
     if not conf.quiet:
         print("")  # padding space
 
@@ -319,9 +322,18 @@ def overwrite_file(conf: ConfigData, dst_path: Path, rel_path: Path) -> bool:
     return bool(ask(f" Overwrite {dst_path}?", default=True))
 
 
-def run_tasks(conf: ConfigData, render: Renderer, tasks: StrSeq) -> None:
+def run_tasks(conf: ConfigData, render: Renderer, tasks: Sequence[Dict]) -> None:
     for i, task in enumerate(tasks):
-        task = render.string(task)
-        # TODO: should we respect the `quiet` flag here as well?
-        printf(f" > Running task {i + 1} of {len(tasks)}", task, style=Style.OK)
-        subprocess.run(task, shell=True, check=True, cwd=conf.dst_path)
+        task_cmd = task["task"]
+        use_shell = isinstance(task_cmd, str)
+        if use_shell:
+            task_cmd = render.string(task_cmd)
+        else:
+            task_cmd = [render.string(part) for part in task_cmd]
+        if not conf.quiet:
+            print(
+                colors.info | f" > Running task {i + 1} of {len(tasks)}: {task_cmd}",
+                file=sys.stderr,
+            )
+        with local.cwd(conf.dst_path), local.env(**task.get("extra_env", {})):
+            subprocess.run(task_cmd, shell=use_shell, check=True, env=local.env)
