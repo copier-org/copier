@@ -3,7 +3,7 @@ import os
 import shutil
 import unicodedata
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import colorama
 import pathspec
@@ -21,7 +21,6 @@ from .types import (
     JSONSerializable,
     StrOrPath,
     StrOrPathSeq,
-    StrSeq,
     T,
 )
 
@@ -129,7 +128,11 @@ class Renderer:
             and isinstance(k, JSONSerializable)
             and isinstance(v, JSONSerializable)
         )
-        self.data = dict(conf.data, _copier_answers=answers)
+        self.data = dict(
+            conf.data,
+            _copier_answers=answers,
+            _copier_conf=conf.copy(deep=True, exclude={"data": {"now", "make_secret"}}),
+        )
         self.env.filters["to_nice_yaml"] = to_nice_yaml
 
     def __call__(self, fullpath: StrOrPath) -> str:
@@ -160,17 +163,26 @@ def create_path_filter(patterns: StrOrPathSeq) -> CheckPathFunc:
     return match
 
 
-def get_migration_tasks(conf: ConfigData, stage: str) -> StrSeq:
+def get_migration_tasks(conf: ConfigData, stage: str) -> List[Dict]:
     """Get migration objects that match current version spec.
 
     Versions are compared using PEP 440.
     """
-    result: StrSeq = []
+    result: List[Dict] = []
     if not conf.old_commit or not conf.commit:
         return result
     vfrom = version.parse(conf.old_commit)
     vto = version.parse(conf.commit)
+    extra_env = {
+        "STAGE": stage,
+        "VERSION_FROM": conf.old_commit,
+        "VERSION_TO": conf.commit,
+    }
     for migration in conf.migrations:
         if vto >= version.parse(migration.version) > vfrom:
-            result += migration.dict().get(stage, [])
+            extra_env = dict(extra_env, VERSION_CURRENT=str(migration.version))
+            result += [
+                {"task": task, "extra_env": extra_env}
+                for task in migration.dict().get(stage, [])
+            ]
     return result

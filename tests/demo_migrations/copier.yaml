@@ -1,0 +1,24 @@
+_exclude:
+  - tasks.sh
+  - migrations.py
+  - .git
+
+_tasks:
+  - "[[ _copier_conf.src_path / 'tasks.sh' ]] 1"
+  - ["[[ _copier_conf.src_path / 'tasks.sh' ]]", 2]
+
+_migrations:
+  # This migration is never executed because it's the 1st version copied, and
+  # migrations are only executed when updating
+  - version: v1.0.0
+    before:
+      - &mig
+        - "[[ _copier_conf.src_path / 'migrations.py' ]]"
+        - "[[ _copier_conf.json() ]]"
+    after:
+      - *mig
+  - version: v2
+    before: [*mig]
+    after:
+      - *mig
+      - "rm delete-in-migration-$VERSION_CURRENT.txt"
