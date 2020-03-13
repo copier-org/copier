@@ -26,7 +26,11 @@ jobs:
       - uses: actions/cache@v1
         with:
           path: ~/.cache
-          key: ${{ env.PY }}|${{ hashFiles('pyproject.toml') }}|${{ hashFiles('poetry.lock') }}|${{ hashFiles('.pre-commit-config.yaml') }}
+          key: cache-${{ env.PY }}|${{ hashFiles('pyproject.toml') }}|${{ hashFiles('poetry.lock') }}|${{ hashFiles('.pre-commit-config.yaml') }}
+      - uses: actions/cache@v1
+        with:
+          path: ~/.local
+          key: local-${{ env.PY }}|${{ hashFiles('pyproject.toml') }}|${{ hashFiles('poetry.lock') }}|${{ hashFiles('.pre-commit-config.yaml') }}
       - run: python -m pip install poetry
       - run: poetry install
       - name: Run pre-commit
