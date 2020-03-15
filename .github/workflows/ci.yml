@@ -21,7 +21,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: generate cache key PY
-        run: echo "::set-env name=PY::$((python -VV; poetry -V) | sha256sum | cut -d' '
+        run: echo "::set-env name=PY::$((python -VV; pip freeze) | sha256sum | cut -d' '
           -f1)"
       - uses: actions/cache@v1
         with:
@@ -31,7 +31,7 @@ jobs:
         with:
           path: ~/.local
           key: local-${{ env.PY }}|${{ hashFiles('pyproject.toml') }}|${{ hashFiles('poetry.lock') }}|${{ hashFiles('.pre-commit-config.yaml') }}
-      - run: python -m pip install poetry
+      - run: python -m pip install poetry poetry-dynamic-versioning
       - run: poetry install
       - name: Run pre-commit
         run: |
@@ -52,9 +52,9 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: 3.8
-      - run: python -m pip install poetry
+      - run: python -m pip install poetry poetry-dynamic-versioning
       - name: generate cache key PY
-        run: echo "::set-env name=PY::$((python -VV; poetry -V) | sha256sum | cut -d' '
+        run: echo "::set-env name=PY::$((python -VV; pip freeze) | sha256sum | cut -d' '
           -f1)"
       - uses: actions/cache@v1
         with:

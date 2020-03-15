@@ -15,9 +15,9 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: 3.8
-      - run: python -m pip install poetry
+      - run: python -m pip install poetry poetry-dynamic-versioning
       - name: generate cache key PY
-        run: echo "::set-env name=PY::$((python -VV; poetry -V) | sha256sum | cut -d' '
+        run: echo "::set-env name=PY::$((python -VV; pip freeze) | sha256sum | cut -d' '
           -f1)"
       - uses: actions/cache@v1
         with:

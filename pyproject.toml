@@ -1,7 +1,7 @@
 [tool]
 [tool.poetry]
 name = "copier"
-version = "3.0.0-alpha6"
+version = "0.0.0"
 description = "A library for rendering project templates."
 license = "MIT"
 classifiers = [
@@ -51,6 +51,11 @@ packaging = "*"
 pre-commit = "*"
 pytest = "^5.3"
 pytest-cov = "*"
+
+[tool.poetry-dynamic-versioning]
+enable = true
+style = "semver"
+vcs = "git"
 
 [tool.black]
 line-length = 88
