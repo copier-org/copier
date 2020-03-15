@@ -1,7 +1,7 @@
 [tool]
 [tool.poetry]
 name = "copier"
-version = "3.0.0-alpha6"
+version = "0.0.0"
 description = "A library for rendering project templates."
 license = "MIT"
 classifiers = [
@@ -52,15 +52,21 @@ pre-commit = "*"
 pytest = "^5.3"
 pytest-cov = "*"
 
+[tool.poetry-dynamic-versioning]
+enable = true
+style = "semver"
+vcs = "git"
+
 [tool.black]
 line-length = 88
 target-version = ['py36']
 
 [tool.isort]
 combine_as_imports = true
+default_section = "THIRDPARTY"
 force_grid_wrap = 0
 include_trailing_comma = true
-known_third_party = ["colorama", "jinja2", "packaging", "pathspec", "pkg_resources", "plumbum", "py", "pydantic", "pytest", "six", "yaml", "yamlinclude"]
+known_first_party = ["copier"]
 line_length = 88
 multi_line_output = 3  # black interop
 use_parentheses = true
