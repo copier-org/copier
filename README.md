@@ -182,6 +182,10 @@ Note that they become just _the defaults_, so any explicitly-passed argument wil
 overwrite them.
 
 ```yaml
+# File where answers will be recorded. Defaults to `.copier-answers.yml`.
+# Remember to add that file to your template if you want to support updates.
+_answers_file: .my-custom-answers.yml
+
 # Suffix that instructs which files are to be processed by Jinja as templates
 _templates_suffix: .tmpl
 
@@ -244,9 +248,9 @@ common_setting: "1"
 **Warning:** Use only trusted project templates as these tasks run with the
 same level of access as your user.
 
-## The `.copier-answers.yml` file
+## The answers file
 
-If the destination path exists and a `.copier-answers.yml` (or `.copier-answers.yaml`) file is
+If the destination path exists and a `.copier-answers.yml` file is
 present there, it will be used to load the last user's answers to the questions
 made in [the `copier.yml` file](#the-copieryml-file).
 
@@ -254,13 +258,15 @@ This makes projects easier to update because when the user is asked, the default
 answers will be the last ones he used.
 
 To make sure projects based on your templates can make use of this nice feature,
-add a file called `.copier-answers.yml.tmpl` (or your chosen `templates_suffix`)
+**add a file called `[[ _copier_conf.answers_file ]].tmpl`** (or your chosen `templates_suffix`)
 in your template's root folder, with this content:
 
 ```yml
 # Changes here will be overwritten by Copier
 [[_copier_answers|to_nice_yaml]]
 ```
+
+If this file is called different than `[[ _copier_conf.answers_file ]].tmpl` your users will not be able to choose a custom answers file name, and thus they will not be able to integrate several updatable templates into one destination directory.
 
 The builtin `_copier_answers` variable includes all data needed to smooth future updates
 of this project. This includes (but is not limited to) all JSON-serializable
@@ -269,6 +275,13 @@ values declared as user questions in [the `copier.yml` file](#the-copieryml-file
 As you can see, you also have the power to customize what will be logged here.
 Keys that start with an underscore (`_`) are specific to Copier. Other keys
 should match questions in `copier.yml`.
+
+If you plan to integrate several templates into one single downstream project, you can use a different path for this file:
+
+```yaml
+# In your `copier.yml`:
+_answers_file: .my-custom-answers.yml
+```
 
 ### Updating a project
 
@@ -316,7 +329,7 @@ Copier includes:
 
 - `now()` to get current UTC time.
 - `make_secret()` to get a random string.
-- `_copier_answers` includes the current answers dict, but slightly modified to make it suitable to [autoupdate your project safely](#the-copier-answers-yml-file):
+- `_copier_answers` includes the current answers dict, but slightly modified to make it suitable to [autoupdate your project safely](#the-answers-file):
   - It doesn't contain secret answers.
   - It doesn't contain any data that is not easy to render to JSON or YAML.
 - `_copier_conf` includes the current copier `ConfigData` object, also slightly modified:

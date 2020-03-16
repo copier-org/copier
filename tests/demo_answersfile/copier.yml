@@ -1,3 +1,5 @@
+_answers_file: .answers-file-changed-in-template.yml
+
 round: 1st
 
 # A str question without a default should default to None

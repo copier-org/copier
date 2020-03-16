@@ -34,6 +34,7 @@ def make_config(
     src_path: OptStr = None,
     dst_path: str = ".",
     *,
+    answers_file: OptStr = None,
     data: OptAnyByStrDict = None,
     exclude: OptStrSeq = None,
     skip_if_exists: OptStrSeq = None,
@@ -55,7 +56,7 @@ def make_config(
     """
     # Merge answer sources in the order of precedence
     answers_data = DEFAULT_DATA.copy()
-    answers_data.update(load_answersfile_data(dst_path, quiet=True))
+    answers_data.update(load_answersfile_data(dst_path, answers_file))
     answers_data.update(data or {})
     _metadata = {}
     if "_commit" in answers_data:
@@ -66,7 +67,7 @@ def make_config(
             src_path = answers_data["_src_path"]
         except KeyError:
             raise NoSrcPathError(
-                "No .copier-answers.yml file found, or it didn't include "
+                "No copier answers file found, or it didn't include "
                 "original template information (_src_path). "
                 "Run `copier copy` instead."
             )
