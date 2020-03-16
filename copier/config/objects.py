@@ -81,6 +81,7 @@ class ConfigData(BaseModel):
     vcs_ref: OptStr
     migrations: Sequence[Migrations] = ()
     secret_questions: StrSeq = ()
+    answers_file: OptStr = None
 
     def __init__(self, **data: Any):
         super().__init__(**data)

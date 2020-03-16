@@ -41,6 +41,7 @@ def copy(
     dst_path: StrOrPath = ".",
     data: AnyByStrDict = None,
     *,
+    answers_file: OptStr = None,
     exclude: OptStrSeq = None,
     skip_if_exists: OptStrSeq = None,
     tasks: OptStrSeq = None,
@@ -61,7 +62,7 @@ def copy(
 
     - src_path (str):
         Absolute path to the project skeleton. May be a version control system URL.
-        If `None`, it will be taken from `dst_path/.copier-answers.yml` or fail.
+        If `None`, it will be taken from `dst_path/answers_file` or fail.
 
     - dst_path (str):
         Absolute path to where to render the skeleton
@@ -69,6 +70,10 @@ def copy(
     - data (dict):
         Optional. Data to be passed to the templates in addtion to the user data
         from a `copier.json`.
+
+    - answers_file (str):
+        Path where to obtain the answers recorded from the last update. The path
+        must be relative to `dst_path`.
 
     - exclude (list):
         A list of names or gitignore-style patterns matching files or folders that

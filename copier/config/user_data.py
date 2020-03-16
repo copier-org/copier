@@ -1,6 +1,5 @@
 import json
 import re
-from os.path import isfile
 from pathlib import Path
 from typing import Any, Callable, Dict
 
@@ -10,7 +9,7 @@ from plumbum.colors import bold, info, italics
 from yamlinclude import YamlIncludeConstructor
 
 from ..tools import INDENT, printf_exception
-from ..types import AnyByStrDict, PathSeq, StrOrPath
+from ..types import AnyByStrDict, OptStrOrPath, PathSeq, StrOrPath
 
 __all__ = ("load_config_data", "query_user_data")
 
@@ -30,17 +29,6 @@ class MultipleConfigFilesError(ConfigFileError):
     def __init__(self, conf_paths: PathSeq, quiet: bool):
         msg = str(conf_paths)
         printf_exception(self, "MULTIPLE CONFIG FILES", msg=msg, quiet=quiet)
-        super().__init__(msg)
-
-
-class AnswerFileError(ValueError):
-    pass
-
-
-class MultipleAnswerFilesError(AnswerFileError):
-    def __init__(self, conf_paths: PathSeq, quiet: bool):
-        msg = str(conf_paths)
-        printf_exception(self, "MULTIPLE ANSWER FILES", msg=msg, quiet=quiet)
         super().__init__(msg)
 
 
@@ -95,27 +83,14 @@ def load_config_data(
 
 
 def load_answersfile_data(
-    dst_path: StrOrPath, *, quiet: bool = False, _warning: bool = True
+    dst_path: StrOrPath, answers_file: OptStrOrPath = None,
 ) -> AnyByStrDict:
-    """Load answers data from a `$dst_path/.copier-answers.yml` file if it exists.
-
-    `.yaml` suffix is also supported.
-    """
-    answer_paths = list(
-        filter(
-            isfile,
-            map(
-                lambda suffix: Path(dst_path) / f".copier-answers.{suffix}",
-                ("yml", "yaml"),
-            ),
-        )
-    )
-    answers_data: AnyByStrDict = {}
-    if len(answer_paths) > 1:
-        raise MultipleAnswerFilesError(answer_paths, quiet=quiet)
-    elif len(answer_paths) == 1:
-        answers_data = load_yaml_data(answer_paths[0], quiet=quiet, _warning=_warning)
-    return answers_data
+    """Load answers data from a `$dst_path/$answers_file` file if it exists."""
+    try:
+        with open(Path(dst_path) / (answers_file or ".copier-answers.yml")) as fd:
+            return yaml.safe_load(fd)
+    except FileNotFoundError:
+        return {}
 
 
 def query_user_data(

@@ -40,6 +40,14 @@ class CopierApp(cli.Application):
     CALL_MAIN_IF_NESTED_COMMAND = False
     data: AnyByStrDict = {}
 
+    answers_file = cli.Flag(
+        ["-a", "--answers-file"],
+        default=None,
+        help=(
+            "Update using this path (relative to `destination_path`) "
+            "to find the answers file"
+        ),
+    )
     extra_paths = cli.SwitchAttr(
         ["-p", "--extra-paths"],
         str,
@@ -89,6 +97,7 @@ class CopierApp(cli.Application):
         return copy(
             data=self.data,
             dst_path=dst_path,
+            answers_file=self.answers_file,
             exclude=self.exclude,
             extra_paths=self.extra_paths,
             force=self.force,
@@ -142,7 +151,7 @@ class CopierCopySubApp(cli.Application):
 class CopierUpdateSubApp(cli.Application):
     DESCRIPTION = "Update a copy from its original template"
     DESCRIPTION_MORE = """
-    The copy must have a file called `.copier-answers.yml` which contains info
+    The copy must have a valid answers file which contains info
     from the last Copier execution, including the source template
     (it must be a key called `_src_path`).
 
@@ -157,7 +166,9 @@ class CopierUpdateSubApp(cli.Application):
 
     @handle_exceptions
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
-        self.parent._copy(dst_path=destination_path, only_diff=self.only_diff)
+        self.parent._copy(
+            dst_path=destination_path, only_diff=self.only_diff,
+        )
         return 0
 
 
