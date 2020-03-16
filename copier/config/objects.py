@@ -81,7 +81,7 @@ class ConfigData(BaseModel):
     vcs_ref: OptStr
     migrations: Sequence[Migrations] = ()
     secret_questions: StrSeq = ()
-    answers_file: OptStr = None
+    answers_file: Path = Path(".copier-answers.yml")
 
     def __init__(self, **data: Any):
         super().__init__(**data)

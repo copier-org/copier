@@ -17,7 +17,8 @@ The code base also received a lot of love and hardening.
 - Added support for extending content of config files via content of other files via `pyaml-include`.
 - Customizable template extension.
 - Ability to remember last answers.
-- Template upgrades support, (based on the previous point) with migration tasks specification.
+- Ability to choose where to remember them.
+- Template upgrades support, (based on the previous points) with migration tasks specification.
 - Extended questions format, supporting help, format, choices and secrets.
 - More beautiful prompts.
 - New CLI experience.
