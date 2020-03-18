@@ -185,10 +185,10 @@ def test_config_data_good_data(dst):
         "vcs_ref": None,
         "migrations": (),
         "secret_questions": (),
-        "answers_file": ".copier-answers.yml",
     }
     conf = ConfigData(**expected)
     expected["data"]["_folder_name"] = dst.name
+    expected["answers_file"] = Path(".copier-answers.yml")
     assert conf.dict() == expected
 
 
