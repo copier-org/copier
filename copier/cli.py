@@ -4,6 +4,7 @@ from textwrap import dedent
 
 from plumbum import cli, colors
 
+from . import __version__
 from .config.objects import UserMessageError
 from .main import copy
 from .types import AnyByStrDict, OptStr
@@ -37,6 +38,7 @@ class CopierApp(cli.Application):
         copier [SWITCHES] [update] [destination_path]
         """
     )
+    VERSION = __version__
     CALL_MAIN_IF_NESTED_COMMAND = False
     data: AnyByStrDict = {}
 
