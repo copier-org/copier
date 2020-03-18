@@ -16,18 +16,21 @@ repos:
         entry: poetry run black
         language: system
         types: [python]
+        require_serial: true
       - id: flake8
         name: flake8
         entry: poetry run flake8
         language: system
         types: [python]
         args: ["--config", "pyproject.toml"]
+        require_serial: true
       - id: poetry_check
         description: Check the integrity of pyproject.toml
         name: poetry_check
         entry: poetry check
         language: system
         pass_filenames: false
+        require_serial: true
 
   # isorting our imports
   - repo: https://github.com/timothycrosley/isort
