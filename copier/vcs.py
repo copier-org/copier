@@ -13,9 +13,12 @@ __all__ = ("get_repo", "clone")
 
 GIT_PREFIX = ("git@", "git://", "git+")
 GIT_POSTFIX = (".git",)
-
-RE_GITHUB = re.compile(r"^gh:/?")
-RE_GITLAB = re.compile(r"^gl:/?")
+REPLACEMENTS = (
+    (re.compile(r"^gh:/?(.*\.git)$"), r"https://github.com/\1"),
+    (re.compile(r"^gh:/?(.*)$"), r"https://github.com/\1.git"),
+    (re.compile(r"^gl:/?(.*\.git)$"), r"https://gitlab.com/\1"),
+    (re.compile(r"^gl:/?(.*)$"), r"https://gitlab.com/\1.git"),
+)
 
 
 def is_git_repo_root(path: Path) -> bool:
@@ -36,6 +39,8 @@ def is_git_bundle(path: Path) -> bool:
 
 
 def get_repo(url: str) -> OptStr:
+    for pattern, replacement in REPLACEMENTS:
+        url = re.sub(pattern, replacement, url)
     url_path = Path(url)
     if not (
         url.endswith(GIT_POSTFIX)
@@ -47,9 +52,6 @@ def get_repo(url: str) -> OptStr:
 
     if url.startswith("git+"):
         url = url[4:]
-
-    url = re.sub(RE_GITHUB, "https://github.com/", url)
-    url = re.sub(RE_GITLAB, "https://gitlab.com/", url)
     return url
 
 
