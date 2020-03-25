@@ -42,7 +42,7 @@ class CopierApp(cli.Application):
     CALL_MAIN_IF_NESTED_COMMAND = False
     data: AnyByStrDict = {}
 
-    answers_file = cli.Flag(
+    answers_file = cli.SwitchAttr(
         ["-a", "--answers-file"],
         default=None,
         help=(
