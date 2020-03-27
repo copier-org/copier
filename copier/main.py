@@ -202,6 +202,7 @@ def update_diff(conf: ConfigData):
     with tempfile.TemporaryDirectory() as dst_temp:
         copy(
             dst_path=dst_temp,
+            data=conf.data.copy(),
             force=True,
             quiet=True,
             skip=False,
