@@ -11,7 +11,8 @@ from .helpers import PROJECT_TEMPLATE
 REPO_BUNDLE_PATH = Path(f"{PROJECT_TEMPLATE}_updatediff_repo.bundle").absolute()
 
 
-def test_updatediff(dst: Path):
+def test_updatediff(tmpdir):
+    dst = Path(tmpdir)
     target = dst / "target"
     readme = target / "README.txt"
     answers = target / ".copier-answers.yml"
@@ -92,24 +93,29 @@ def test_updatediff(dst: Path):
         assert not (target / "after-v0.0.2").is_file()
         assert not (target / "before-v1.0.0").is_file()
         assert not (target / "after-v1.0.0").is_file()
-    # Check it's updated OK
-    assert answers.read_text() == dedent(
-        f"""
-            # Changes here will be overwritten by Copier
-            _commit: v0.0.2-1-g81c335d
-            _src_path: {REPO_BUNDLE_PATH}
-            author_name: Guybrush
-            project_name: to become a pirate
-        """
-    )
-    assert readme.read_text() == dedent(
-        """
-        Let me introduce myself.
+        # Check it's updated OK
+        assert answers.read_text() == dedent(
+            f"""
+                # Changes here will be overwritten by Copier
+                _commit: v0.0.2-1-g81c335d
+                _src_path: {REPO_BUNDLE_PATH}
+                author_name: Guybrush
+                project_name: to become a pirate
+            """
+        )
+        assert readme.read_text() == dedent(
+            """
+            Let me introduce myself.
 
-        My name is Guybrush.
+            My name is Guybrush.
 
-        My project is to become a pirate.
+            My project is to become a pirate.
 
-        Thanks for your grog.
-        """
-    )
+            Thanks for your grog.
+            """
+        )
+        commit("-m", "Update template to v0.0.2-1-g81c335d")
+        assert not git("status", "--porcelain")
+        # No more updates exist, so updating again should change nothing
+        CopierApp.invoke(force=True, vcs_ref="HEAD")
+        assert not git("status", "--porcelain")
