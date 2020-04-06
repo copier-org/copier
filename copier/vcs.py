@@ -32,7 +32,7 @@ def is_git_repo_root(path: Path) -> bool:
 
 def is_git_bundle(path: Path) -> bool:
     """Indicate if a path is a valid git bundle."""
-    with tempfile.TemporaryDirectory() as dirname:
+    with tempfile.TemporaryDirectory(prefix=f"{__name__}.is_git_bundle.") as dirname:
         with local.cwd(dirname):
             git("init")
             return bool(git["bundle", "verify", path] & TF)
@@ -71,7 +71,7 @@ def checkout_latest_tag(local_repo: StrOrPath) -> str:
 
 
 def clone(url: str, ref: str = "HEAD") -> str:
-    location = tempfile.mkdtemp()
+    location = tempfile.mkdtemp(prefix=f"{__name__}.clone.")
     shutil.rmtree(location)  # Path must not exist
     git("clone", "--no-checkout", url, location)
     with local.cwd(location):
