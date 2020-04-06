@@ -4,6 +4,7 @@ from textwrap import dedent
 from plumbum import local
 from plumbum.cmd import git
 
+from copier import copy
 from copier.cli import CopierApp
 
 from .helpers import PROJECT_TEMPLATE
@@ -119,3 +120,20 @@ def test_updatediff(tmpdir):
         # No more updates exist, so updating again should change nothing
         CopierApp.invoke(force=True, vcs_ref="HEAD")
         assert not git("status", "--porcelain")
+        # If I change an option, it updates properly
+        copy(
+            data={"author_name": "Largo LaGrande", "project_name": "to steal a lot"},
+            force=True,
+            vcs_ref="HEAD",
+        )
+        assert readme.read_text() == dedent(
+            """
+            Let me introduce myself.
+
+            My name is Largo LaGrande.
+
+            My project is to steal a lot.
+
+            Thanks for your grog.
+            """
+        )

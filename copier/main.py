@@ -14,6 +14,7 @@ from plumbum.cmd import git
 from . import vcs
 from .config import make_config
 from .config.objects import ConfigData, UserMessageError
+from .config.user_data import load_answersfile_data
 from .tools import (
     Renderer,
     Style,
@@ -198,11 +199,12 @@ def update_diff(conf: ConfigData):
                     "Destination repository is dirty; cannot continue. "
                     "Please commit or stash your local changes and retry."
                 )
+    last_answers = load_answersfile_data(conf.dst_path, conf.answers_file)
     # Copy old template into a temporary destination
     with tempfile.TemporaryDirectory(prefix=f"{__name__}.update_diff.") as dst_temp:
         copy(
             dst_path=dst_temp,
-            data=conf.data.copy(),
+            data=last_answers,
             force=True,
             quiet=True,
             skip=False,
