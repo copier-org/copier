@@ -17,7 +17,7 @@ def dst(request):
     """Return a real temporary folder path which is unique to each test
     function invocation. This folder is deleted after the test has finished.
     """
-    dst = mkdtemp()
+    dst = mkdtemp(prefix=f"{__name__}.dst.")
     request.addfinalizer(lambda: shutil.rmtree(dst, ignore_errors=True))
     return Path(dst)
 

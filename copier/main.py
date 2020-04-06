@@ -199,7 +199,7 @@ def update_diff(conf: ConfigData):
                     "Please commit or stash your local changes and retry."
                 )
     # Copy old template into a temporary destination
-    with tempfile.TemporaryDirectory() as dst_temp:
+    with tempfile.TemporaryDirectory(prefix=f"{__name__}.update_diff.") as dst_temp:
         copy(
             dst_path=dst_temp,
             data=conf.data.copy(),
