@@ -1,9 +1,12 @@
 import filecmp
 import os
+import textwrap
 from hashlib import sha1
 from pathlib import Path
+from typing import Dict
 
 import copier
+from copier.types import StrOrPath
 
 PROJECT_TEMPLATE = Path(__file__).parent / "demo"
 
@@ -27,3 +30,14 @@ def assert_file(dst, *path):
     p1 = os.path.join(str(dst), *path)
     p2 = os.path.join(str(PROJECT_TEMPLATE), *path)
     assert filecmp.cmp(p1, p2)
+
+
+def build_file_tree(spec: Dict[StrOrPath, str], dedent: bool = True):
+    """Builds a file tree based on the received spec."""
+    for path, contents in spec.items():
+        path = Path(path)
+        if dedent:
+            contents = textwrap.dedent(contents)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("w") as fd:
+            fd.write(contents)
