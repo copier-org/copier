@@ -23,6 +23,8 @@ jobs:
         with:
           path: ~/.cache
           key: ${{ env.PY }}|${{ hashFiles('pyproject.toml') }}|${{ hashFiles('poetry.lock') }}|${{ hashFiles('.pre-commit-config.yaml') }}
+      - run: git config --global user.name copier-ci
+      - run: git config --global user.email copier@copier
       - run: poetry install
       - name: Generate coverage report
         run: |
