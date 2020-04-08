@@ -12,8 +12,10 @@
 A library for rendering project templates.
 
 - Works with **local** paths and **git URLs**.
-- Your project can include any file and `Copier` can dynamically replace values in any kind of text file.
-- It generates a beautiful output and takes care of not overwrite existing files unless instructed to do so.
+- Your project can include any file and `Copier` can dynamically replace values in any
+  kind of text file.
+- It generates a beautiful output and takes care of not overwrite existing files unless
+  instructed to do so.
 
 ![Sample output](https://github.com/pykong/copier/raw/master/img/copier-output.png)
 
@@ -49,27 +51,25 @@ The content of the files inside the project template is copied to the destinatio
 without changes, **unless they end with `.tmpl`** (or your chosen `templates_suffix`).
 In that case, the templating engine will be used to render them.
 
-A slightly customized Jinja2 templating is used. The main difference is
-those variables are referenced with `[[ name ]]` instead of
-`{{ name }}` and blocks are `[% if name %]` instead of
-`{% if name %}`. To read more about templating see the [Jinja2
-documentation](https://jinja.palletsprojects.com/).
+A slightly customized Jinja2 templating is used. The main difference is those variables
+are referenced with `[[ name ]]` instead of `{{ name }}` and blocks are `[% if name %]`
+instead of `{% if name %}`. To read more about templating see the
+[Jinja2 documentation](https://jinja.palletsprojects.com/).
 
-If a **YAML** file named `copier.yml` is found in the root of the
-project (alternatively, a YAML file named `copier.yaml`), the user will be
-prompted to fill in or confirm the default values.
+If a **YAML** file named `copier.yml` is found in the root of the project
+(alternatively, a YAML file named `copier.yaml`), the user will be prompted to fill in
+or confirm the default values.
 
-Use the `data` argument to pass whatever extra context you want to be available
-in the templates. The arguments can be any valid Python value, even a
-function.
+Use the `data` argument to pass whatever extra context you want to be available in the
+templates. The arguments can be any valid Python value, even a function.
 
-Since version 3.0, only Python 3.6 or later are supported. Please use the
-2.5.1 version if your project runs on a previous Python version.
+Since version 3.0, only Python 3.6 or later are supported. Please use the 2.5.1 version
+if your project runs on a previous Python version.
 
 ## The `copier.yml` file
 
-If a `copier.yml`, or `copier.yaml` is found in the root of the template,
-it will be read and used for two purposes:
+If a `copier.yml`, or `copier.yaml` is found in the root of the template, it will be
+read and used for two purposes:
 
 ### Prompt the user for information
 
@@ -97,18 +97,17 @@ will result in this series of questions:
 
 #### Advanced prompt formatting
 
-Apart from the simplified format, as seen above, Copier supports a more advanced
-format to ask users for data. To use it, the value must be a dict.
+Apart from the simplified format, as seen above, Copier supports a more advanced format
+to ask users for data. To use it, the value must be a dict.
 
 Supported keys:
 
-- **type**: User input must match this type.
-  Options are: bool, float, int, json, str, yaml.
+- **type**: User input must match this type. Options are: bool, float, int, json, str,
+  yaml.
 - **help**: Additional text to help the user know what's this question for.
-- **default**: Leave empty to force the user to answer. Provide a default to
-  save him from typing it if it's quite common. When using **choices**, the
-  default must be the choice _value_, not its _key_. If values are quite long,
-  you can use
+- **default**: Leave empty to force the user to answer. Provide a default to save him
+  from typing it if it's quite common. When using **choices**, the default must be the
+  choice _value_, not its _key_. If values are quite long, you can use
   [YAML anchors](https://confluence.atlassian.com/bitbucket/yaml-anchors-960154027.html).
 
 ```yaml
@@ -174,9 +173,9 @@ close_to_work:
 
 ### Arguments defaults
 
-The keys `_exclude`, `_skip_if_exists`, `_tasks`, and `_extra_paths`
-in the `copier.yml` file, will be treated as the default values for the `exclude`,
-`tasks`, and , `extra_paths` arguments to `copier.copy()`.
+The keys `_exclude`, `_skip_if_exists`, `_tasks`, and `_extra_paths` in the `copier.yml`
+file, will be treated as the default values for the `exclude`, `tasks`, and ,
+`extra_paths` arguments to `copier.copy()`.
 
 Note that they become just _the defaults_, so any explicitly-passed argument will
 overwrite them.
@@ -235,7 +234,10 @@ _extra_paths:
 
 ### Include other yaml files
 
-To reuse configurations across templates you can reference other yaml files. You just need to state the `!include` together with the absolute or relative path to the file to be included. Multiple files can be included per `copier.yml`. For more detailed instructions, see [pyyaml-include](https://github.com/tanbro/pyyaml-include#usage).
+To reuse configurations across templates you can reference other yaml files. You just
+need to state the `!include` together with the absolute or relative path to the file to
+be included. Multiple files can be included per `copier.yml`. For more detailed
+instructions, see [pyyaml-include](https://github.com/tanbro/pyyaml-include#usage).
 
 ```yaml
 # other_place/include_me.yml
@@ -245,20 +247,20 @@ common_setting: "1"
 !include other_place/include_me.yml
 ```
 
-**Warning:** Use only trusted project templates as these tasks run with the
-same level of access as your user.
+**Warning:** Use only trusted project templates as these tasks run with the same level
+of access as your user.
 
 ## The answers file
 
-If the destination path exists and a `.copier-answers.yml` file is
-present there, it will be used to load the last user's answers to the questions
-made in [the `copier.yml` file](#the-copieryml-file).
+If the destination path exists and a `.copier-answers.yml` file is present there, it
+will be used to load the last user's answers to the questions made in
+[the `copier.yml` file](#the-copieryml-file).
 
-This makes projects easier to update because when the user is asked, the default
-answers will be the last ones he used.
+This makes projects easier to update because when the user is asked, the default answers
+will be the last ones he used.
 
-To make sure projects based on your templates can make use of this nice feature,
-**add a file called `[[ _copier_conf.answers_file ]].tmpl`** (or your chosen `templates_suffix`)
+To make sure projects based on your templates can make use of this nice feature, **add a
+file called `[[ _copier_conf.answers_file ]].tmpl`** (or your chosen `templates_suffix`)
 in your template's root folder, with this content:
 
 ```yml
@@ -266,17 +268,20 @@ in your template's root folder, with this content:
 [[_copier_answers|to_nice_yaml]]
 ```
 
-If this file is called different than `[[ _copier_conf.answers_file ]].tmpl` your users will not be able to choose a custom answers file name, and thus they will not be able to integrate several updatable templates into one destination directory.
+If this file is called different than `[[ _copier_conf.answers_file ]].tmpl` your users
+will not be able to choose a custom answers file name, and thus they will not be able to
+integrate several updatable templates into one destination directory.
 
 The builtin `_copier_answers` variable includes all data needed to smooth future updates
-of this project. This includes (but is not limited to) all JSON-serializable
-values declared as user questions in [the `copier.yml` file](#the-copieryml-file).
+of this project. This includes (but is not limited to) all JSON-serializable values
+declared as user questions in [the `copier.yml` file](#the-copieryml-file).
 
-As you can see, you also have the power to customize what will be logged here.
-Keys that start with an underscore (`_`) are specific to Copier. Other keys
-should match questions in `copier.yml`.
+As you can see, you also have the power to customize what will be logged here. Keys that
+start with an underscore (`_`) are specific to Copier. Other keys should match questions
+in `copier.yml`.
 
-If you plan to integrate several templates into one single downstream project, you can use a different path for this file:
+If you plan to integrate several templates into one single downstream project, you can
+use a different path for this file:
 
 ```yaml
 # In your `copier.yml`:
@@ -285,32 +290,60 @@ _answers_file: .my-custom-answers.yml
 
 ### Updating a project
 
-The best way to update a project from its template is when all of these conditions are true:
+The best way to update a project from its template is when all of these conditions are
+true:
 
 1. The template includes a valid `.copier-answers.yml` file.
 2. The template is versioned with git (with tags).
 3. The destination folder is versioned with git.
 
-If that's your case, then just enter the destination folder, make sure
-`git status` shows it clean, and run:
+If that's your case, then just enter the destination folder, make sure `git status`
+shows it clean, and run:
 
 ```bash
 copier update
 ```
 
-This will read all available git tags, will compare them using [PEP 440](https://www.python.org/dev/peps/pep-0440/), and will check out the latest one before updating. To update to the latest commit, add `--vcs-ref=HEAD`. You can use any other git ref you want.
+This will read all available git tags, will compare them using
+[PEP 440](https://www.python.org/dev/peps/pep-0440/), and will check out the latest one
+before updating. To update to the latest commit, add `--vcs-ref=HEAD`. You can use any
+other git ref you want.
 
-Copier will do its best to respect the answers you provided when copied for the last
-copy, and the git diff that has evolved since the last copy. If there are conflicts,
-you will probably find diff files around.
+When updating, Copier will do its best to respect your project evolution by using the
+answers you provided when copied last time. However, sometimes it's impossible for
+Copier to know what to do with a diff code hunk. In those cases, you will find `*.rej`
+files that contain the unresolved diffs. _You should review those manually_ before
+committing.
+
+You probably don't want `*.rej` files in your git history, but if you add them to
+`.gitignore`, some important changes could pass unnoticed to you. That's why the
+recommended way to deal with them is to _not_ add them to add a
+[pre-commit](https://pre-commit.com/) (or equivalent) hook that forbids them, just like
+this:
+
+```yaml
+# .pre-commit-config.yaml
+repos:
+  - repo: local
+    hooks:
+      - id: forbidden-files
+        name: forbidden files
+        entry: found copier update rejection files; review them and remove them
+        language: fail
+        files: "\\.rej$"
+```
 
 ## Patterns syntax
 
-Copier supports matching names against patterns in a gitignore style fashion. This works for the options `exclude` and `skip` . This means you can write patterns as you would for any `.gitignore` file. The full range of the gitignore syntax ist supported via [pathspec]([https://github.com/cpburnz/python-path-specification](https://github.com/cpburnz/python-path-specification).
+Copier supports matching names against patterns in a gitignore style fashion. This works
+for the options `exclude` and `skip` . This means you can write patterns as you would
+for any `.gitignore` file. The full range of the gitignore syntax ist supported via
+[pathspec]([https://github.com/cpburnz/python-path-specification](https://github.com/cpburnz/python-path-specification).
 
 ### Examples for pattern matching
 
-Putting the following settings in your `copier.yaml` file would exclude all files ending with "txt" from being copied to the destination folder, except the file `a.txt`.
+Putting the following settings in your `copier.yaml` file would exclude all files ending
+with "txt" from being copied to the destination folder, except the file `a.txt`.
 
 ```yaml
 _exclude:
@@ -322,19 +355,23 @@ _exclude:
 
 ## Template helpers
 
-In addition to [all the features Jinja supports](https://jinja.palletsprojects.com/en/2.10.x/templates/),
+In addition to
+[all the features Jinja supports](https://jinja.palletsprojects.com/en/2.10.x/templates/),
 Copier includes:
 
 ### Builtin variables/functions
 
 - `now()` to get current UTC time.
 - `make_secret()` to get a random string.
-- `_copier_answers` includes the current answers dict, but slightly modified to make it suitable to [autoupdate your project safely](#the-answers-file):
+- `_copier_answers` includes the current answers dict, but slightly modified to make it
+  suitable to [autoupdate your project safely](#the-answers-file):
   - It doesn't contain secret answers.
   - It doesn't contain any data that is not easy to render to JSON or YAML.
-- `_copier_conf` includes the current copier `ConfigData` object, also slightly modified:
+- `_copier_conf` includes the current copier `ConfigData` object, also slightly
+  modified:
   - It only contains JSON-serializable data.
-  - But you have to serialize it with `[[ _copier_conf.json() ]]` instead of `[[ _copier_conf|tojson ]]`.
+  - But you have to serialize it with `[[ _copier_conf.json() ]]` instead of
+    `[[ _copier_conf|tojson ]]`.
   - ⚠️ It contains secret answers inside its `.data` key.
   - Modifying it doesn't alter the current rendering configuration.
 
@@ -343,8 +380,8 @@ Copier includes:
 - `anything|to_nice_yaml` to print as pretty-formatted YAML.
 
   Without arguments it defaults to:
-  `anything|to_nice_yaml(indent=2, width=80, allow_unicode=True)`,
-  but you can modify those.
+  `anything|to_nice_yaml(indent=2, width=80, allow_unicode=True)`, but you can modify
+  those.
 
 ---
 
@@ -378,33 +415,29 @@ Uses the template in _src_path_ to generate a new project at _dst_path_.
 
 **Arguments**:
 
-- **src_path** (str):<br>
-  Absolute path to the project skeleton, which can also be a version control
-  system URL.
+- **src_path** (str):<br> Absolute path to the project skeleton, which can also be a
+  version control system URL.
 
-- **dst_path** (str):<br>
-  Absolute path to where to render the skeleton.
+- **dst_path** (str):<br> Absolute path to where to render the skeleton.
 
-- **data** (dict):<br>
-  Data to be passed to the templates in addition to the user data from
-  a `copier.yml`.
+- **data** (dict):<br> Data to be passed to the templates in addition to the user data
+  from a `copier.yml`.
 
-- **exclude** (list):<br>
-  A list of names or gitignore-style patterns matching files or folders
-  that must not be copied.
+- **exclude** (list):<br> A list of names or gitignore-style patterns matching files or
+  folders that must not be copied.
 
-- **skip_if_exists** (list):<br>
-  A list of names or gitignore-style patterns matching files or folders, that are skipped if another with the same name already exists in the destination folder. (It only makes sense if you are copying to a folder that already exists).
+- **skip_if_exists** (list):<br> A list of names or gitignore-style patterns matching
+  files or folders, that are skipped if another with the same name already exists in the
+  destination folder. (It only makes sense if you are copying to a folder that already
+  exists).
 
-- **tasks** (list):<br>
-  Optional lists of commands to run in order after finishing the copy. Like in
-  the templates files, you can use variables on the commands that will be
-  replaced by the real values before running the command. If one of the commands
-  fails, the rest of them will not run.
+- **tasks** (list):<br> Optional lists of commands to run in order after finishing the
+  copy. Like in the templates files, you can use variables on the commands that will be
+  replaced by the real values before running the command. If one of the commands fails,
+  the rest of them will not run.
 
-- **envops** (dict):<br>
-  Extra options for the Jinja template environment.
-  See available options in
+- **envops** (dict):<br> Extra options for the Jinja template environment. See available
+  options in
   [Jinja's docs](https://jinja.palletsprojects.com/en/2.10.x/api/#jinja2.Environment).
 
   Copier uses these defaults that are different from Jinja's:
@@ -435,29 +468,26 @@ Uses the template in _src_path_ to generate a new project at _dst_path_.
     keep_trailing_newline: false
   ```
 
-- **extra_paths** (list):<br>
-  Additional paths, from where to search for templates. This is intended to be
-  used with shared parent templates, files with macros, etc. outside the copied
-  project skeleton.
+- **extra_paths** (list):<br> Additional paths, from where to search for templates. This
+  is intended to be used with shared parent templates, files with macros, etc. outside
+  the copied project skeleton.
 
-- **pretend** (bool):<br>
-  Run but do not make any changes.
+- **pretend** (bool):<br> Run but do not make any changes.
 
-- **force** (bool):<br>
-  Overwrite files that already exist, without asking.
+- **force** (bool):<br> Overwrite files that already exist, without asking.
 
-- **skip** (bool):<br>
-  Skip files that already exist, without asking.
+- **skip** (bool):<br> Skip files that already exist, without asking.
 
-- **quiet** (bool):<br>
-  Suppress the status output.
+- **quiet** (bool):<br> Suppress the status output.
 
-- **cleanup_on_error** (bool):<br>
-  Remove the destination folder if the copy process or one of the tasks fails.
-  True by default.
+- **cleanup_on_error** (bool):<br> Remove the destination folder if the copy process or
+  one of the tasks fails. True by default.
 
 ## Credits
 
-Special thanks go to [jpscaletti](<[https://github.com/jpscaletti](https://github.com/jpscaletti)>) for originally creating `Copier`. This project would not be a thing without him.
+Special thanks go to
+[jpscaletti](<[https://github.com/jpscaletti](https://github.com/jpscaletti)>) for
+originally creating `Copier`. This project would not be a thing without him.
 
-Big thanks also go to [Yajo](<[https://github.com/Yajo](https://github.com/Yajo)>) for his relentless zest for improving `Copier` even further.
+Big thanks also go to [Yajo](<[https://github.com/Yajo](https://github.com/Yajo)>) for
+his relentless zest for improving `Copier` even further.
