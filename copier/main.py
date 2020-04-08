@@ -217,12 +217,16 @@ def update_diff(conf: ConfigData):
             git("add", ".")
             git("config", "user.name", "Copier")
             git("config", "user.email", "copier@copier")
-            git("commit", "-m", "foo")
+            # 1st commit could fail if any pre-commit hook reformats code
+            git("commit", "--allow-empty", "-am", "dumb commit 1", retcode=None)
+            git("commit", "--allow-empty", "-am", "dumb commit 2")
             git("config", "--unset", "user.name")
             git("config", "--unset", "user.email")
             git("remote", "add", "real_dst", conf.dst_path)
             git("fetch", "real_dst", "HEAD")
-            diff = git("diff", "--unified=0", "HEAD...FETCH_HEAD")
+            diff = git(
+                "diff", "--unified=1", "--inter-hunk-context=-1", "HEAD...FETCH_HEAD"
+            )
     # Run pre-migration tasks
     renderer = Renderer(conf)
     run_tasks(conf, renderer, get_migration_tasks(conf, "before"))
@@ -230,7 +234,10 @@ def update_diff(conf: ConfigData):
     copy_local(conf)
     # Try to apply cached diff into final destination
     with local.cwd(conf.dst_path):
-        (git["apply", "--reject"] << diff)(retcode=None)
+        apply_cmd = git["apply", "--reject", "--exclude", conf.answers_file]
+        for skip_pattern in conf.skip_if_exists:
+            apply_cmd = apply_cmd["--exclude", skip_pattern]
+        (apply_cmd << diff)(retcode=None)
     # Run post-migration tasks
     run_tasks(conf, renderer, get_migration_tasks(conf, "after"))
 
