@@ -166,6 +166,9 @@ project_license:
   # that's why I'm using the YAML anchor declared above to avoid retyping the
   # whole license
   default: *mit_text
+  # You can still define the type, to make sure answers that come from --data
+  # CLI argument match the type that your template expects
+  type: str
 
 close_to_work:
   help: Do you live close to your work?

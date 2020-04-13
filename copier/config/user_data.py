@@ -93,6 +93,21 @@ def load_answersfile_data(
         return {}
 
 
+def cast_answer_type(answer: Any, type_fn: Callable) -> Any:
+    """Cast answer to expected type."""
+    # Skip casting None into "None"
+    if type_fn is str and answer is None:
+        return answer
+    # Parse correctly bools as 1, true, yes...
+    if type_fn is bool and isinstance(answer, str):
+        return parse_yaml_string(answer)
+    try:
+        return type_fn(answer)
+    except (TypeError, AttributeError):
+        # JSON or YAML failed because it wasn't a string; no need to convert
+        return answer
+
+
 def query_user_data(
     questions_data: AnyByStrDict, answers_data: AnyByStrDict, ask_user: bool
 ) -> AnyByStrDict:
@@ -108,36 +123,24 @@ def query_user_data(
     result: AnyByStrDict = {}
     for question, details in questions_data.items():
         # Get default answer
-        default = answers_data.get(question, details.get("default"))
+        answer = default = answers_data.get(question, details.get("default"))
         # Get question type; by default let YAML decide it
         type_name = details.get("type", "yaml")
         try:
             type_fn = type_maps[type_name]
         except KeyError:
             raise InvalidTypeError()
-        if not ask_user:
-            # Skip casting None into "None"
-            if type_name == "str" and default is None:
-                result[question] = default
-                continue
-            # Parse correctly bools as 1, true, yes...
-            if type_name == "bool" and isinstance(default, str):
-                default = parse_yaml_string(default)
-            try:
-                result[question] = type_fn(default)
-            except (TypeError, AttributeError):
-                # JSON or YAML failed because it wasn't a string; no need to convert
-                result[question] = default
-            continue
-        # Generate message to ask the user
-        message = f"\n{INDENT}{bold | question}? Format: {type_name}\n🎤 "
-        if details.get("help"):
-            message = f"{info & italics | details['help']}\n{message}"
-        # Use the right method to ask
-        if type_fn == bool:
-            result[question] = ask(message, default)
-        elif details.get("choices"):
-            result[question] = choose(message, details["choices"], default)
-        else:
-            result[question] = prompt(message, type_fn, default)
+        if ask_user:
+            # Generate message to ask the user
+            message = f"\n{INDENT}{bold | question}? Format: {type_name}\n🎤 "
+            if details.get("help"):
+                message = f"{info & italics | details['help']}\n{message}"
+            # Use the right method to ask
+            if type_fn is bool:
+                answer = ask(message, default)
+            elif details.get("choices"):
+                answer = choose(message, details["choices"], default)
+            else:
+                answer = prompt(message, type_fn, default)
+        result[question] = cast_answer_type(answer, type_fn)
     return result
