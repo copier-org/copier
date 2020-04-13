@@ -19,6 +19,12 @@ A library for rendering project templates.
 
 ![Sample output](https://github.com/pykong/copier/raw/master/img/copier-output.png)
 
+## How to install
+
+1. Install Git 2.24 or newer.
+1. To use as a CLI app: `pipx install copier`
+1. To use as a library: `pip install copier`
+
 ## How to use
 
 - Use it in your Python code:
