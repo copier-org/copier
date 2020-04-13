@@ -37,6 +37,14 @@ choose_dict:
     one: first
     two: second
     three: third
+choose_number:
+  help: This must be a number
+  default: null
+  type: float
+  choices:
+    - -1.1
+    - 0
+    - 1
 
 # Simplified format is still supported
 minutes_under_water: 10
