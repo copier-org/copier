@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
-from plumbum import colors, local
+from plumbum import ProcessExecutionError, colors, local
 from plumbum.cli.terminal import ask
 from plumbum.cmd import git
 
@@ -224,9 +224,15 @@ def update_diff(conf: ConfigData):
             git("config", "--unset", "user.email")
             git("remote", "add", "real_dst", conf.dst_path)
             git("fetch", "real_dst", "HEAD")
-            diff = git(
-                "diff", "--unified=1", "--inter-hunk-context=-1", "HEAD...FETCH_HEAD"
-            )
+            diff_cmd = git["diff", "--unified=1", "HEAD...FETCH_HEAD"]
+            try:
+                diff = diff_cmd("--inter-hunk-context=-1")
+            except ProcessExecutionError:
+                print(
+                    colors.warn
+                    | "Make sure Git >= 2.24 is installed to improve updates."
+                )
+                diff = diff_cmd("--inter-hunk-context=0")
     # Run pre-migration tasks
     renderer = Renderer(conf)
     run_tasks(conf, renderer, get_migration_tasks(conf, "before"))
