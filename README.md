@@ -347,7 +347,7 @@ repos:
 Copier supports matching names against patterns in a gitignore style fashion. This works
 for the options `exclude` and `skip` . This means you can write patterns as you would
 for any `.gitignore` file. The full range of the gitignore syntax ist supported via
-[pathspec]([https://github.com/cpburnz/python-path-specification](https://github.com/cpburnz/python-path-specification).
+[pathspec](https://github.com/cpburnz/python-path-specification).
 
 ### Examples for pattern matching
 
