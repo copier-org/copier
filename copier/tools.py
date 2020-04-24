@@ -17,8 +17,10 @@ from .config.objects import ConfigData, EnvOps
 from .types import (
     AnyByStrDict,
     CheckPathFunc,
+    Filters,
     IntSeq,
     JSONSerializable,
+    LoaderPaths,
     StrOrPath,
     StrOrPathSeq,
     T,
@@ -103,15 +105,30 @@ def to_nice_yaml(data: Any, **kwargs) -> str:
     return result or ""
 
 
+def get_jinja_env(
+    envops: EnvOps,
+    filters: Optional[Filters] = None,
+    paths: Optional[LoaderPaths] = None,
+    **kwargs: Any,
+) -> SandboxedEnvironment:
+    """Return a pre-configured Jinja environment."""
+    loader = FileSystemLoader(paths) if paths else None
+    # We want to minimize the risk of hidden malware in the templates
+    # so we use the SandboxedEnvironment instead of the regular one.
+    # Of couse we still have the post-copy tasks to worry about, but at least
+    # they are more visible to the final user.
+    env = SandboxedEnvironment(loader=loader, **envops.dict(), **kwargs)
+    default_filters = {"to_nice_yaml": to_nice_yaml}
+    default_filters.update(filters or {})
+    env.filters.update(default_filters)
+    return env
+
+
 class Renderer:
     def __init__(self, conf: ConfigData) -> None:
         envops: EnvOps = conf.envops
         paths = [str(conf.src_path)] + list(map(str, conf.extra_paths or []))
-        # We want to minimize the risk of hidden malware in the templates
-        # so we use the SandboxedEnvironment instead of the regular one.
-        # Of couse we still have the post-copy tasks to worry about, but at least
-        # they are more visible to the final user.
-        self.env = SandboxedEnvironment(loader=FileSystemLoader(paths), **envops.dict())
+        self.env = get_jinja_env(envops=envops, paths=paths)
         self.conf = conf
         answers: AnyByStrDict = {}
         # All internal values must appear first
@@ -133,7 +150,6 @@ class Renderer:
             _copier_answers=answers,
             _copier_conf=conf.copy(deep=True, exclude={"data": {"now", "make_secret"}}),
         )
-        self.env.filters["to_nice_yaml"] = to_nice_yaml
 
     def __call__(self, fullpath: StrOrPath) -> str:
         relpath = (

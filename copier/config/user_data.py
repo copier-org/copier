@@ -1,15 +1,19 @@
 import json
 import re
+from functools import partial
 from pathlib import Path
 from typing import Any, Callable, Dict
 
 import yaml
+from jinja2 import UndefinedError
+from jinja2.sandbox import SandboxedEnvironment
 from plumbum.cli.terminal import ask, choose, prompt
 from plumbum.colors import bold, info, italics
 from yamlinclude import YamlIncludeConstructor
 
-from ..tools import INDENT, printf_exception
-from ..types import AnyByStrDict, OptStrOrPath, PathSeq, StrOrPath
+from ..tools import INDENT, get_jinja_env, printf_exception
+from ..types import AnyByStrDict, Choices, OptStrOrPath, PathSeq, StrOrPath
+from .objects import DEFAULT_DATA, EnvOps, UserMessageError
 
 __all__ = ("load_config_data", "query_user_data")
 
@@ -108,8 +112,43 @@ def cast_answer_type(answer: Any, type_fn: Callable) -> Any:
         return answer
 
 
+def render_value(value: Any, env: SandboxedEnvironment, context: AnyByStrDict) -> str:
+    """Render a single templated value using Jinja.
+
+    If the value cannot be used as a template, it will be returned as is.
+    """
+    try:
+        template = env.from_string(value)
+    except TypeError:
+        # value was not a string
+        return value
+    try:
+        return template.render(**context)
+    except UndefinedError as error:
+        raise UserMessageError(str(error)) from error
+
+
+def render_choices(
+    choices: Choices, env: SandboxedEnvironment, context: AnyByStrDict
+) -> Choices:
+    """Render a list or dictionary of templated choices using Jinja."""
+    render = partial(render_value, env=env, context=context)
+    if isinstance(choices, dict):
+        choices = {render(k): render(v) for k, v in choices.items()}
+    elif isinstance(choices, list):
+        for i, choice in enumerate(choices):
+            if isinstance(choice, (tuple, list)) and len(choice) == 2:
+                choices[i] = (render(choice[0]), render(choice[1]))
+            else:
+                choices[i] = render(choice)
+    return choices
+
+
 def query_user_data(
-    questions_data: AnyByStrDict, answers_data: AnyByStrDict, ask_user: bool
+    questions_data: AnyByStrDict,
+    answers_data: AnyByStrDict,
+    ask_user: bool,
+    envops: EnvOps,
 ) -> AnyByStrDict:
     """Query the user for questions given in the config file."""
     type_maps: Dict[str, Callable] = {
@@ -120,12 +159,19 @@ def query_user_data(
         "str": str,
         "yaml": parse_yaml_string,
     }
-    result: AnyByStrDict = {}
+    env = get_jinja_env(envops=envops)
+    result = DEFAULT_DATA.copy()
+
+    _render_value = partial(render_value, env=env, context=result)
+    _render_choices = partial(render_choices, env=env, context=result)
+
     for question, details in questions_data.items():
         # Get default answer
-        answer = default = answers_data.get(question, details.get("default"))
+        answer = default = answers_data.get(
+            question, _render_value(details.get("default"))
+        )
         # Get question type; by default let YAML decide it
-        type_name = details.get("type", "yaml")
+        type_name = _render_value(details.get("type", "yaml"))
         try:
             type_fn = type_maps[type_name]
         except KeyError:
@@ -134,13 +180,19 @@ def query_user_data(
             # Generate message to ask the user
             message = f"\n{INDENT}{bold | question}? Format: {type_name}\n🎤 "
             if details.get("help"):
-                message = f"{info & italics | details['help']}\n{message}"
+                message = (
+                    f"{info & italics | _render_value(details['help'])}\n{message}"
+                )
             # Use the right method to ask
             if type_fn is bool:
                 answer = ask(message, default)
             elif details.get("choices"):
-                answer = choose(message, details["choices"], default)
+                choices = _render_choices(details["choices"])
+                answer = choose(message, choices, default)
             else:
                 answer = prompt(message, type_fn, default)
         result[question] = cast_answer_type(answer, type_fn)
+
+    for key in DEFAULT_DATA:
+        del result[key]
     return result

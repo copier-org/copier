@@ -180,6 +180,57 @@ close_to_work:
     - [more than 100km, quite far away]
 ```
 
+#### Prompt templating
+
+Values of prompted keys can use Jinja templates.
+
+Keep in mind that the configuration is loaded as **YAML**, so the contents must be
+**valid YAML** and respect **Copier's structure**. That is why we explicitly wrap some
+strings in double-quotes in the following examples.
+
+Answers provided through interactive prompting will not be rendered with Jinja, so you
+cannot use Jinja templating in your answers.
+
+```yaml
+# default
+username:
+  type: str
+
+organization:
+  type: str
+
+email:
+  type: str
+  default: "[[ username ]]@[[ organization ]].com"
+
+# help
+copyright_holder:
+  type: str
+  help: The person or entity within [[ organization ]] that holds copyrights.
+
+# type
+target:
+  type: str
+  choices:
+    - humans
+    - machines
+
+user_config:
+  type: "[% if target == 'humans' %]yaml[% else %]json[% endif %]"
+
+# choices
+title:
+  type: str
+  help: Your title within [[ organization ]]
+
+contact:
+  choices:
+    Copyright holder: "[[ copyright_holder ]]"
+    CEO: Alice Bob
+    CTO: Carl Dave
+    "[[ title ]]": "[[ username ]]"
+```
+
 ### Arguments defaults
 
 The keys `_exclude`, `_skip_if_exists`, `_tasks`, and `_extra_paths` in the `copier.yml`
