@@ -55,6 +55,7 @@ def copy(
     cleanup_on_error: OptBool = True,
     vcs_ref: OptStr = None,
     only_diff: OptBool = True,
+    subdirectory: OptStr = None,
 ) -> None:
     """
     Uses the template in src_path to generate a new project at dst_path.
@@ -120,6 +121,9 @@ def copy(
 
     - only_diff (bool):
         Try to update only the template diff.
+
+    - subdirectory (str):
+        Specify a subdirectory to use when generating the project.
     """
     conf = make_config(**locals())
     is_update = conf.original_src_path != conf.src_path and vcs.is_git_repo_root(
@@ -159,8 +163,13 @@ def copy_local(conf: ConfigData) -> None:
 
     folder: StrOrPath
     rel_folder: StrOrPath
-    for folder, sub_dirs, files in os.walk(conf.src_path):
-        rel_folder = str(folder).replace(str(conf.src_path), "", 1).lstrip(os.path.sep)
+
+    src_path = conf.src_path
+    if conf.subdirectory is not None:
+        src_path /= conf.subdirectory
+
+    for folder, sub_dirs, files in os.walk(src_path):
+        rel_folder = str(folder).replace(str(src_path), "", 1).lstrip(os.path.sep)
         rel_folder = render.string(rel_folder)
         rel_folder = str(rel_folder).replace("." + os.path.sep, ".", 1)
 

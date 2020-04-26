@@ -153,3 +153,11 @@ def test_pretend_option(dst):
     assert not (dst / "doc").exists()
     assert not (dst / "config.py").exists()
     assert not (dst / "pyproject.toml").exists()
+
+
+def test_subdirectory(tmp_path: Path):
+    render(tmp_path, subdirectory="doc")
+    assert not (tmp_path / "doc").exists()
+    assert not (tmp_path / "config.py").exists()
+    assert (tmp_path / "images").exists()
+    assert (tmp_path / "manana.txt").exists()
