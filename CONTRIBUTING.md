@@ -3,9 +3,26 @@
 Contributions are welcome, and they are greatly appreciated! Every little bit helps, and
 credit will always be given.
 
-You can contribute in many ways:
+<details>
+<!-- prettier-ignore-start -->
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<summary>Table of contents</summary>
 
-### Report Bugs
+- [Report Bugs](#report-bugs)
+- [Fix Bugs](#fix-bugs)
+- [Implement Features](#implement-features)
+- [Write Documentation](#write-documentation)
+- [Submit Feedback](#submit-feedback)
+- [Get Started!](#get-started)
+- [Pull Request Guidelines](#pull-request-guidelines)
+- [Tips](#tips)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<!-- prettier-ignore-end -->
+</details>
+
+## Report Bugs
 
 Report bugs at <https://github.com/jpscaletti/copier/issues>.
 
@@ -15,22 +32,22 @@ If you are reporting a bug, please include:
 - Any details about your local setup that might be helpful in troubleshooting.
 - Detailed steps to reproduce the bug.
 
-### Fix Bugs
+## Fix Bugs
 
 Look through the GitHub issues for bugs. Anything tagged with "bug" is open to whoever
 wants to implement it.
 
-### Implement Features
+## Implement Features
 
 Look through the GitHub issues for features. Anything tagged with "Feature request" is
 open to whoever wants to implement it.
 
-### Write Documentation
+## Write Documentation
 
 The project could always use more documentation, whether as part of the official project
 docs, or even on the web in blog posts, articles, and such.
 
-### Submit Feedback
+## Submit Feedback
 
 The best way to send feedback is to file an issue at
 <https://github.com/jpscaletti/copier/issues>.

@@ -19,13 +19,47 @@ A library for rendering project templates.
 
 ![Sample output](https://github.com/pykong/copier/raw/master/img/copier-output.png)
 
-## How to install
+<details>
+<!-- prettier-ignore-start -->
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<summary>Table of contents</summary>
+
+- [Installation](#installation)
+- [Quick usage](#quick-usage)
+- [Creating a template](#creating-a-template)
+  - [The `copier.yml` file](#the-copieryml-file)
+    - [Prompt the user for information](#prompt-the-user-for-information)
+      - [Advanced prompt formatting](#advanced-prompt-formatting)
+      - [Prompt templating](#prompt-templating)
+    - [Special options](#special-options)
+      - [Patterns syntax](#patterns-syntax)
+        - [Examples for pattern matching](#examples-for-pattern-matching)
+    - [Include other yaml files](#include-other-yaml-files)
+  - [The `.copier-answers.yml` file](#the-copier-answersyml-file)
+  - [Template helpers](#template-helpers)
+    - [Builtin variables/functions](#builtin-variablesfunctions)
+    - [Builtin filters](#builtin-filters)
+- [Generating a project](#generating-a-project)
+- [Updating a project](#updating-a-project)
+- [Browse or tag public templates](#browse-or-tag-public-templates)
+- [API](#api)
+  - [copier.copy()](#copiercopy)
+- [Comparison with other project generators](#comparison-with-other-project-generators)
+  - [Cookiecutter](#cookiecutter)
+- [Credits](#credits)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<!-- prettier-ignore-end -->
+</details>
+
+## Installation
 
 1. Install Git 2.24 or newer.
 1. To use as a CLI app: `pipx install copier`
 1. To use as a library: `pip install copier`
 
-## How to use
+## Quick usage
 
 - Use it in your Python code:
 
@@ -51,7 +85,9 @@ copy("gl:pykong/copier.git", "path/to/destination")
 copier path/to/project/template path/to/destination
 ```
 
-## How it works
+## Creating a template
+
+A template is a directory: usually the root folder of a git repository.
 
 The content of the files inside the project template is copied to the destination
 without changes, **unless they end with `.tmpl`** (or your chosen `templates_suffix`).
@@ -66,18 +102,18 @@ If a **YAML** file named `copier.yml` is found in the root of the project
 (alternatively, a YAML file named `copier.yaml`), the user will be prompted to fill in
 or confirm the default values.
 
-Use the `data` argument to pass whatever extra context you want to be available in the
-templates. The arguments can be any valid Python value, even a function.
-
 Since version 3.0, only Python 3.6 or later are supported. Please use the 2.5.1 version
 if your project runs on a previous Python version.
 
-## The `copier.yml` file
+### The `copier.yml` file
 
 If a `copier.yml`, or `copier.yaml` is found in the root of the template, it will be
 read and used for two purposes:
 
-### Prompt the user for information
+- prompting the user for information
+- configuring project generation (excluding files, setting arguments defaults, etc.)
+
+#### Prompt the user for information
 
 For each key found, Copier will prompt the user to fill or confirm the values before
 they become available to the project template. So content like this:
@@ -101,7 +137,7 @@ will result in this series of questions:
 🎤 []:
 </pre>
 
-#### Advanced prompt formatting
+##### Advanced prompt formatting
 
 Apart from the simplified format, as seen above, Copier supports a more advanced format
 to ask users for data. To use it, the value must be a dict.
@@ -180,7 +216,7 @@ close_to_work:
     - [more than 100km, quite far away]
 ```
 
-#### Prompt templating
+##### Prompt templating
 
 Values of prompted keys can use Jinja templates.
 
@@ -231,14 +267,10 @@ contact:
     "[[ title ]]": "[[ username ]]"
 ```
 
-### Arguments defaults
+#### Special options
 
-The keys `_exclude`, `_skip_if_exists`, `_tasks`, and `_extra_paths` in the `copier.yml`
-file, will be treated as the default values for the `exclude`, `tasks`, and ,
-`extra_paths` arguments to `copier.copy()`.
-
-Note that they become just _the defaults_, so any explicitly-passed argument will
-overwrite them.
+Copier will also read special configuration options from the `copier.yml` file. They all
+start with an underscore.
 
 ```yaml
 # File where answers will be recorded. Defaults to `.copier-answers.yml`.
@@ -249,16 +281,19 @@ _answers_file: .my-custom-answers.yml
 _templates_suffix: .tmpl
 
 # gitignore-style patterns files/folders that must not be copied.
+# Can be overridden with the `exclude` CLI/API option.
 _exclude:
   - "*.bar"
   - ".git"
 
 # gitignore-style patterns files to skip, without asking, if they already exists
 # in the destination folder
+# Can be overridden with the `skip_if_exist` API option.
 _skip_if_exists:
 
 # Commands to be executed after the copy
 # They have the $STAGE=task environment variable
+# Can be overridden with the `tasks` API option.
 _tasks:
   # Strings get executed under system's default shell
   - "git init"
@@ -288,11 +323,32 @@ _migrations:
       - invoke -r [[ _copier_conf.src_path ]] -c migrations migrate $VERSION_CURRENT
 
 # Additional paths, from where to search for templates
+# Can be overridden with the `extra_paths` API option.
 _extra_paths:
   - ~/Projects/templates
 ```
 
-### Include other yaml files
+##### Patterns syntax
+
+Copier supports matching names against patterns in a gitignore style fashion. This works
+for the options `exclude` and `skip`. This means you can write patterns as you would for
+any `.gitignore` file. The full range of the gitignore syntax ist supported via
+[pathspec]([https://github.com/cpburnz/python-path-specification](https://github.com/cpburnz/python-path-specification).
+
+###### Examples for pattern matching
+
+Putting the following settings in your `copier.yaml` file would exclude all files ending
+with "txt" from being copied to the destination folder, except the file `a.txt`.
+
+```yaml
+_exclude:
+  # match all text files...
+  - "*.txt"
+  # .. but not this one:
+  - "!a.txt"
+```
+
+#### Include other yaml files
 
 To reuse configurations across templates you can reference other yaml files. You just
 need to state the `!include` together with the absolute or relative path to the file to
@@ -307,10 +363,7 @@ common_setting: "1"
 !include other_place/include_me.yml
 ```
 
-**Warning:** Use only trusted project templates as these tasks run with the same level
-of access as your user.
-
-## The answers file
+### The `.copier-answers.yml` file
 
 If the destination path exists and a `.copier-answers.yml` file is present there, it
 will be used to load the last user's answers to the questions made in
@@ -348,7 +401,71 @@ use a different path for this file:
 _answers_file: .my-custom-answers.yml
 ```
 
-### Updating a project
+### Template helpers
+
+In addition to
+[all the features Jinja supports](https://jinja.palletsprojects.com/en/2.11.x/templates/),
+Copier includes:
+
+#### Builtin variables/functions
+
+- `now()` to get current UTC time.
+- `make_secret()` to get a random string.
+- `_copier_answers` includes the current answers dict, but slightly modified to make it
+  suitable to [autoupdate your project safely](#the-answers-file):
+  - It doesn't contain secret answers.
+  - It doesn't contain any data that is not easy to render to JSON or YAML.
+  - It contains special keys like `_commit` and `_src_path`, indicating how the last
+    template update was done.
+- `_copier_conf` includes the current copier `ConfigData` object, also slightly
+  modified:
+  - It only contains JSON-serializable data.
+  - But you have to serialize it with `[[ _copier_conf.json() ]]` instead of
+    `[[ _copier_conf|tojson ]]`.
+  - ⚠️ It contains secret answers inside its `.data` key.
+  - Modifying it doesn't alter the current rendering configuration.
+
+#### Builtin filters
+
+- `anything|to_nice_yaml` to print as pretty-formatted YAML.
+
+  Without arguments it defaults to:
+  `anything|to_nice_yaml(indent=2, width=80, allow_unicode=True)`, but you can modify
+  those.
+
+## Generating a project
+
+**Warning:** Generate projects only from trusted templates as their tasks run with the
+same level of access as your user.
+
+As seen in the quick usage section, you can generate a project from a template using the
+`copier` command-line tool:
+
+```bash
+copier path/to/project/template path/to/destination
+```
+
+Or within Python code:
+
+```python
+copier.copy("path/to/project/template", "path/to/destination")
+```
+
+The "template" parameter can be a local path, an URL, or a shortcut URL:
+
+- GitHub: `gh:namespace/project`
+- GitLab: `gl:namespace/project`
+
+Use the `--data` command-line argument or the `data` parameter of the `copier.copy()`
+function to pass whatever extra context you want to be available in the templates. The
+arguments can be any valid Python value, even a function.
+
+Use the `--vcs-ref` command-line argument to checkout a particular git ref before
+generating the project.
+
+All the available options are described with the `--help-all` option.
+
+## Updating a project
 
 The best way to update a project from its template is when all of these conditions are
 true:
@@ -393,56 +510,6 @@ repos:
         files: "\\.rej$"
 ```
 
-## Patterns syntax
-
-Copier supports matching names against patterns in a gitignore style fashion. This works
-for the options `exclude` and `skip` . This means you can write patterns as you would
-for any `.gitignore` file. The full range of the gitignore syntax ist supported via
-[pathspec](https://github.com/cpburnz/python-path-specification).
-
-### Examples for pattern matching
-
-Putting the following settings in your `copier.yaml` file would exclude all files ending
-with "txt" from being copied to the destination folder, except the file `a.txt`.
-
-```yaml
-_exclude:
-  # match all text files...
-  - "*.txt"
-  # .. but not this one:
-  - "!a.txt"
-```
-
-## Template helpers
-
-In addition to
-[all the features Jinja supports](https://jinja.palletsprojects.com/en/2.10.x/templates/),
-Copier includes:
-
-### Builtin variables/functions
-
-- `now()` to get current UTC time.
-- `make_secret()` to get a random string.
-- `_copier_answers` includes the current answers dict, but slightly modified to make it
-  suitable to [autoupdate your project safely](#the-answers-file):
-  - It doesn't contain secret answers.
-  - It doesn't contain any data that is not easy to render to JSON or YAML.
-- `_copier_conf` includes the current copier `ConfigData` object, also slightly
-  modified:
-  - It only contains JSON-serializable data.
-  - But you have to serialize it with `[[ _copier_conf.json() ]]` instead of
-    `[[ _copier_conf|tojson ]]`.
-  - ⚠️ It contains secret answers inside its `.data` key.
-  - Modifying it doesn't alter the current rendering configuration.
-
-### Builtin filters
-
-- `anything|to_nice_yaml` to print as pretty-formatted YAML.
-
-  Without arguments it defaults to:
-  `anything|to_nice_yaml(indent=2, width=80, allow_unicode=True)`, but you can modify
-  those.
-
 ## Browse or tag public templates
 
 You can browse public copier templates in GitHub using
@@ -451,11 +518,9 @@ inspiration!
 
 If you want your template to appear in that list, just add the topic to it! 🏷
 
----
-
 ## API
 
-#### copier.copy()
+### copier.copy()
 
 ```python
 copier.copy(
@@ -550,6 +615,28 @@ Uses the template in _src_path_ to generate a new project at _dst_path_.
 
 - **cleanup_on_error** (bool):<br> Remove the destination folder if the copy process or
   one of the tasks fails. True by default.
+
+## Comparison with other project generators
+
+### Cookiecutter
+
+Cookiecutter and Copier are quite similar in functionality, except that:
+
+- Cookiecutter uses a subdirectory to generate the project, while Copier uses the root
+  directory.
+- Cookiecutter uses default Jinja templating characters: `{{`, `{%`, etc., while Copier
+  uses `[[`, `[%`, etc., and can be configured to change those.
+- Cookiecutter puts context variables in a namespace: `{{ cookiecutter.name }}`, while
+  Copier sets them directly: `[[ name ]]`.
+- You configure your template in `copier.yml` instead of `cookiecutter.json`.
+- Prompts are enhanced in Copier:
+  - Type-casting and verifications
+  - YAML native types + `json` and `yaml`
+  - Descriptions (help message for prompts)
+  - Conditional prompts (_soon_)
+- Copier has very useful features that are missing in Cookiecutter (or require extra
+  software), like the ability to **update a generated project** when the original
+  template changes, and to run **migrations** when updating.
 
 ## Credits
 
