@@ -84,9 +84,12 @@ def make_config(
     config_data, questions_data = filter_config(file_data)
     config_data.update(_metadata)
     del _metadata
-    config_data["data"] = query_user_data(questions_data, answers_data, not force)
     args = {k: v for k, v in locals().items() if v is not None and v != []}
+    env_ops = EnvOps(**config_data.get("envops", {}))
+    config_data["data"] = query_user_data(
+        questions_data, answers_data, not force, env_ops
+    )
     args = {**config_data, **args}
-    args["envops"] = EnvOps(**args.get("envops", {}))
+    args["envops"] = env_ops
     args["data"].update(config_data["data"])
     return ConfigData(**args)

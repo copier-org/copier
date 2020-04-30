@@ -1,0 +1,17 @@
+_envops:
+  block_start_string: "<%"
+  block_end_string: "%>"
+  comment_start_string: "<#"
+  comment_end_string: "#>"
+  variable_start_string: "<<"
+  variable_end_string: ">>"
+
+powerlevel:
+  type: int
+  default: 9000
+
+sentence:
+  type: str
+  default:
+    "<% if powerlevel >= 9000 %>It's over 9000!<% else %>It's only << powerlevel >>...<%
+    endif %>"
