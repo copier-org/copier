@@ -11,7 +11,7 @@ from plumbum.cli.terminal import ask, choose, prompt
 from plumbum.colors import bold, info, italics
 from yamlinclude import YamlIncludeConstructor
 
-from ..tools import INDENT, get_jinja_env, printf_exception
+from ..tools import get_jinja_env, printf_exception
 from ..types import AnyByStrDict, Choices, OptStrOrPath, PathSeq, StrOrPath
 from .objects import DEFAULT_DATA, EnvOps, UserMessageError
 
@@ -178,10 +178,11 @@ def query_user_data(
             raise InvalidTypeError()
         if ask_user:
             # Generate message to ask the user
-            message = f"\n{INDENT}{bold | question}? Format: {type_name}\n🎤 "
+            emoji = "🕵️" if details.get("secret", False) else "🎤"
+            message = f"\n{bold | question}? Format: {type_name}\n{emoji} "
             if details.get("help"):
                 message = (
-                    f"{info & italics | _render_value(details['help'])}\n{message}"
+                    f"\n{info & italics | _render_value(details['help'])}{message}"
                 )
             # Use the right method to ask
             if type_fn is bool:
