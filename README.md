@@ -1,6 +1,6 @@
 ## Think this library is awesome? Vote with a 👍 to include it in the awesome-python list: https://github.com/vinta/awesome-python/pull/1350
 
-![Copier](https://github.com/pykong/copier/raw/master/img/copier-logotype.png)
+# ![Copier](https://github.com/pykong/copier/raw/master/img/copier-logotype.png)
 
 [![codecov](https://codecov.io/gh/pykong/copier/branch/master/graph/badge.svg)](https://codecov.io/gh/pykong/copier)
 ![](https://github.com/pykong/copier/workflows/CI/badge.svg)
@@ -442,6 +442,14 @@ Copier includes:
   Without arguments it defaults to:
   `anything|to_nice_yaml(indent=2, width=80, allow_unicode=True)`, but you can modify
   those.
+
+## Browse or tag public templates
+
+You can browse public copier templates in GitHub using
+[the `copier-template` topic](https://github.com/topics/copier-template). Use them as
+inspiration!
+
+If you want your template to appear in that list, just add the topic to it! 🏷
 
 ---
 
