@@ -41,3 +41,8 @@ pip-wheel-metadata
 .vscode
 *.sublime-workspace
 *.sublime-project
+.idea/
+
+# Tests artifacts
+.coverage*
+htmlcov/
