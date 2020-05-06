@@ -3,12 +3,33 @@
 All notable changes to this project will be documented in this file. This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+<details>
+<!-- prettier-ignore-start -->
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<summary>Table of contents</summary>
+
+- [Version 3.0.0 (2020-03)](#version-300-2020-03)
+  - [Features](#features)
+  - [Other](#other)
+- [Version 2.5 (2019-06)](#version-25-2019-06)
+- [Version 2.4.2 (2019-06)](#version-242-2019-06)
+- [Version 2.4 (2019-06)](#version-24-2019-06)
+- [Version 2.3 (2019-04)](#version-23-2019-04)
+- [Version 2.2 (2019-04)](#version-22-2019-04)
+- [Version 2.1 (2019-02)](#version-21-2019-02)
+- [Version 2.0 (2019-02)](#version-20-2019-02)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<!-- prettier-ignore-end -->
+</details>
+
 ### Version 3.0.0 (2020-03)
 
 This is a big release with many new features added and improved. The code base also
 received a lot of love and hardening.
 
-#### Features:
+#### Features
 
 - Minimal supported Python version is now 3.6.
 - Dropped support for deprecated `voodoo.json`.
@@ -25,7 +46,7 @@ received a lot of love and hardening.
 - More beautiful prompts.
 - New CLI experience.
 
-#### Other:
+#### Other
 
 - Moved to `poetry` for package management.
 - Type annotated entire code base.
