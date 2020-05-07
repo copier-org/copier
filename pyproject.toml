@@ -37,6 +37,7 @@ pyyaml = "^5.3"
 pyyaml-include = "^1.2"
 # packaging is needed when installing from PyPI
 packaging = "^20.1"
+semver = "^2.10.0"
 
 [tool.poetry.dev-dependencies]
 black = {version = "^19.10b0", allow-prereleases = true}
