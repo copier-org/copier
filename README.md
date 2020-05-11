@@ -291,8 +291,8 @@ _exclude:
 # Can be overridden with the `skip_if_exist` API option.
 _skip_if_exists:
 
-# Commands to be executed after the copy
-# They have the $STAGE=task environment variable
+# Commands to execute after generating or updating a project from your template.
+# They run ordered, and with the $STAGE=task variable in their environment.
 # Can be overridden with the `tasks` API option.
 _tasks:
   # Strings get executed under system's default shell
@@ -306,12 +306,13 @@ _tasks:
 
 # Migrations are like tasks, but they are executed:
 # - Evaluated using PEP 440
-# - In the same order as declared here
+# - In the same order as declared here (so you could even run a migration for a higher
+#   version before running a migration for a lower version if the higher one is declared
+#   before and the update passes through both)
 # - Only when new version >= declared version > old version
 # - Only when updating
-# - After being rendered with the same renderer as the rest of the template
-# - With the same supported syntaxes as `_tasks`, above
-# - With $VERSION_FROM, $VERSION_TO and $VERSION_CURRENT, $STAGE (before/after)
+# - After being rendered with Jinja, with the same context as the rest of the template
+# - With $VERSION_FROM, $VERSION_TO, $VERSION_CURRENT and $STAGE (before/after)
 #   environment variables
 _migrations:
   - version: v1.0.0
@@ -640,9 +641,11 @@ Cookiecutter and Copier are quite similar in functionality, except that:
 
 ## Credits
 
-Special thanks go to
-[jpscaletti](<[https://github.com/jpscaletti](https://github.com/jpscaletti)>) for
-originally creating `Copier`. This project would not be a thing without him.
+Special thanks go to [jpscaletti](https://github.com/jpscaletti) for originally creating
+`Copier`. This project would not be a thing without him.
 
-Big thanks also go to [Yajo](<[https://github.com/Yajo](https://github.com/Yajo)>) for
-his relentless zest for improving `Copier` even further.
+Big thanks also go to [Yajo](https://github.com/Yajo) for his relentless zest for
+improving `Copier` even further.
+
+Thanks a lot, [pawamoy](https://github.com/pawamoy) for polishing very important rough
+edges and improving the documentation and UX a lot.

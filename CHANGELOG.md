@@ -9,6 +9,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 <summary>Table of contents</summary>
 
+- [Version 3.1.0 (2020-05)](#version-310-2020-05)
 - [Version 3.0.0 (2020-03)](#version-300-2020-03)
   - [Features](#features)
   - [Other](#other)
@@ -23,6 +24,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 <!-- prettier-ignore-end -->
 </details>
+
+### Version 3.1.0 (2020-05)
+
+[All changes here](https://github.com/pykong/copier/milestone/7?closed=1). Summary:
+
+- Assert minimum copier version.
+- Prettier prompts.
+- Prompt self-templating.
+- Better README.
 
 ### Version 3.0.0 (2020-03)
 
