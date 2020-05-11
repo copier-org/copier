@@ -1,11 +1,12 @@
 from typing import Tuple
 
+import semver
 from plumbum import local
 from plumbum.cmd import git
 
 from .. import vcs
 from ..types import AnyByStrDict, OptAnyByStrDict, OptBool, OptStr, OptStrSeq
-from .objects import DEFAULT_DATA, ConfigData, EnvOps, NoSrcPathError
+from .objects import DEFAULT_DATA, ConfigData, EnvOps, NoSrcPathError, UserMessageError
 from .user_data import load_answersfile_data, load_config_data, query_user_data
 
 __all__ = ("make_config",)
@@ -28,6 +29,20 @@ def filter_config(data: AnyByStrDict) -> Tuple[AnyByStrDict, AnyByStrDict]:
             if v.get("secret"):
                 conf_data["secret_questions"].add(k)
     return conf_data, questions_data
+
+
+def verify_minimum_version(version: str) -> None:
+    """Raise an error if the current Copier version is less than the given version."""
+    # Importing __version__ at the top of the module creates a circular import
+    # ("cannot import name '__version__' from partially initialized module 'copier'"),
+    # so instead we do a lazy import here
+    from .. import __version__
+
+    if semver.compare(__version__, version) == -1:
+        raise UserMessageError(
+            f"This template requires Copier version >= {version}, "
+            f"while your version of Copier is {__version__}."
+        )
 
 
 def make_config(
@@ -58,6 +73,7 @@ def make_config(
     answers_data = DEFAULT_DATA.copy()
     answers_data.update(load_answersfile_data(dst_path, answers_file))
     answers_data.update(data or {})
+
     _metadata = {}
     if "_commit" in answers_data:
         _metadata["old_commit"] = answers_data["_commit"]
@@ -81,6 +97,12 @@ def make_config(
                 _metadata["commit"] = git("describe", "--tags", "--always").strip()
     # Obtain config and query data, asking the user if needed
     file_data = load_config_data(src_path, quiet=True)
+
+    try:
+        verify_minimum_version(file_data["_min_copier_version"])
+    except KeyError:
+        pass
+
     config_data, questions_data = filter_config(file_data)
     config_data.update(_metadata)
     del _metadata

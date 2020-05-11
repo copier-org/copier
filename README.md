@@ -273,6 +273,12 @@ Copier will also read special configuration options from the `copier.yml` file. 
 start with an underscore.
 
 ```yaml
+# Specify the minimum required version of Copier to generate a project from this template.
+# The version must be follow the semantic versioning syntax: https://semver.org/.
+# Upon generating or updating a project, if the installed version of Copier is less than the required one,
+# the generation will be aborted and an error will be shown to the user.
+_min_copier_version: "4.1.0"
+
 # File where answers will be recorded. Defaults to `.copier-answers.yml`.
 # Remember to add that file to your template if you want to support updates.
 _answers_file: .my-custom-answers.yml
