@@ -155,6 +155,7 @@ class Renderer:
         relpath = (
             str(fullpath).replace(str(self.conf.src_path), "", 1).lstrip(os.path.sep)
         )
+        relpath = relpath.replace("\\", "/")
         tmpl = self.env.get_template(relpath)
         return tmpl.render(**self.data)
 
