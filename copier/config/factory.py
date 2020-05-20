@@ -38,7 +38,7 @@ def verify_minimum_version(version: str) -> None:
     # so instead we do a lazy import here
     from .. import __version__
 
-    if semver.compare(__version__, version) == -1:
+    if semver.VersionInfo.parse(__version__).compare(version) == -1:
         raise UserMessageError(
             f"This template requires Copier version >= {version}, "
             f"while your version of Copier is {__version__}."
