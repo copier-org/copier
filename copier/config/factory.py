@@ -62,6 +62,7 @@ def make_config(
     quiet: OptBool = None,
     cleanup_on_error: OptBool = None,
     vcs_ref: OptStr = None,
+    subdirectory: OptStr = None,
     **kwargs,
 ) -> ConfigData:
     """Provides the configuration object, merged from the different sources.

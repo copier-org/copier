@@ -297,6 +297,11 @@ _exclude:
 # Can be overridden with the `skip_if_exist` API option.
 _skip_if_exists:
 
+# Subdirectory to use as the template root when generating a project.
+# If not specified, the root of the git repository is used.
+# Can be overridden with the `subdirectory` CLI/API option.
+_subdirectory: "project"
+
 # Commands to execute after generating or updating a project from your template.
 # They run ordered, and with the $STAGE=task variable in their environment.
 # Can be overridden with the `tasks` API option.
@@ -547,7 +552,8 @@ copier.copy(
     force=False,
     skip=False,
     quiet=False,
-    cleanup_on_error=True
+    cleanup_on_error=True,
+    subdirectory=None,
 )
 ```
 
@@ -623,14 +629,17 @@ Uses the template in _src_path_ to generate a new project at _dst_path_.
 - **cleanup_on_error** (bool):<br> Remove the destination folder if the copy process or
   one of the tasks fails. True by default.
 
+- **subdirectory** (str):<br> Path to a sub-folder to use as the root of the template
+  when generating the project. If not specified, the root of the git repository is used.
+
 ## Comparison with other project generators
 
 ### Cookiecutter
 
 Cookiecutter and Copier are quite similar in functionality, except that:
 
-- Cookiecutter uses a subdirectory to generate the project, while Copier uses the root
-  directory.
+- Cookiecutter uses a subdirectory to generate the project, while Copier can use either
+  the root directory (default) or a subdirectory.
 - Cookiecutter uses default Jinja templating characters: `{{`, `{%`, etc., while Copier
   uses `[[`, `[%`, etc., and can be configured to change those.
 - Cookiecutter puts context variables in a namespace: `{{ cookiecutter.name }}`, while

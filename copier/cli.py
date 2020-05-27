@@ -75,6 +75,15 @@ class CopierApp(cli.Application):
             "the latest version, use `--vcs-ref=HEAD`."
         ),
     )
+    subdirectory = cli.SwitchAttr(
+        ["-b", "--subdirectory"],
+        str,
+        help=(
+            "Subdirectory to use when generating the project. "
+            "If you do not specify it, the root of the template is used."
+        ),
+    )
+
     pretend = cli.Flag(["-n", "--pretend"], help="Run but do not make any changes")
     force = cli.Flag(
         ["-f", "--force"], help="Overwrite files that already exist, without asking"
@@ -108,6 +117,7 @@ class CopierApp(cli.Application):
             skip=self.skip,
             src_path=src_path,
             vcs_ref=self.vcs_ref,
+            subdirectory=self.subdirectory,
             **kwargs,
         )
 

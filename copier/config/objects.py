@@ -61,6 +61,7 @@ class Migrations(BaseModel):
 
 class ConfigData(BaseModel):
     src_path: Path
+    subdirectory: OptStr
     dst_path: Path
     data: AnyByStrDict = {}
     extra_paths: PathSeq = ()
