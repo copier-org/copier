@@ -274,7 +274,7 @@ start with an underscore.
 
 ```yaml
 # Specify the minimum required version of Copier to generate a project from this template.
-# The version must be follow the semantic versioning syntax: https://semver.org/.
+# The version must be follow the PEP 440 syntax.
 # Upon generating or updating a project, if the installed version of Copier is less than the required one,
 # the generation will be aborted and an error will be shown to the user.
 _min_copier_version: "4.1.0"

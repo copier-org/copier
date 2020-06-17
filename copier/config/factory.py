@@ -1,6 +1,6 @@
 from typing import Tuple
 
-import semver
+from packaging import version
 from plumbum import local
 from plumbum.cmd import git
 
@@ -31,16 +31,16 @@ def filter_config(data: AnyByStrDict) -> Tuple[AnyByStrDict, AnyByStrDict]:
     return conf_data, questions_data
 
 
-def verify_minimum_version(version: str) -> None:
+def verify_minimum_version(version_str: str) -> None:
     """Raise an error if the current Copier version is less than the given version."""
     # Importing __version__ at the top of the module creates a circular import
     # ("cannot import name '__version__' from partially initialized module 'copier'"),
     # so instead we do a lazy import here
     from .. import __version__
 
-    if semver.VersionInfo.parse(__version__).compare(version) == -1:
+    if version.parse(__version__) < version.parse(version_str):
         raise UserMessageError(
-            f"This template requires Copier version >= {version}, "
+            f"This template requires Copier version >= {version_str}, "
             f"while your version of Copier is {__version__}."
         )
 
