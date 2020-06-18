@@ -325,6 +325,7 @@ _tasks:
 # - After being rendered with Jinja, with the same context as the rest of the template
 # - With $VERSION_FROM, $VERSION_TO, $VERSION_CURRENT and $STAGE (before/after)
 #   environment variables
+# - The answers file is reloaded after running migrations in the "before" stage.
 _migrations:
   - version: v1.0.0
     before:
