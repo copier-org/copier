@@ -1,5 +1,6 @@
 import json
 import re
+from collections import ChainMap
 from functools import partial
 from pathlib import Path
 from typing import Any, Callable, Dict
@@ -146,7 +147,8 @@ def render_choices(
 
 def query_user_data(
     questions_data: AnyByStrDict,
-    answers_data: AnyByStrDict,
+    last_answers_data: AnyByStrDict,
+    forced_answers_data: AnyByStrDict,
     ask_user: bool,
     envops: EnvOps,
 ) -> AnyByStrDict:
@@ -160,23 +162,38 @@ def query_user_data(
         "yaml": parse_yaml_string,
     }
     env = get_jinja_env(envops=envops)
-    result = DEFAULT_DATA.copy()
-
-    _render_value = partial(render_value, env=env, context=result)
-    _render_choices = partial(render_choices, env=env, context=result)
+    result: AnyByStrDict = {}
+    defaults: AnyByStrDict = {}
+    _render_value = partial(
+        render_value,
+        env=env,
+        context=ChainMap(result, forced_answers_data, defaults, DEFAULT_DATA),
+    )
+    _render_choices = partial(
+        render_choices,
+        env=env,
+        context=ChainMap(result, forced_answers_data, defaults, DEFAULT_DATA),
+    )
 
     for question, details in questions_data.items():
-        # Get default answer
-        answer = default = answers_data.get(
-            question, _render_value(details.get("default"))
-        )
         # Get question type; by default let YAML decide it
         type_name = _render_value(details.get("type", "yaml"))
         try:
             type_fn = type_maps[type_name]
         except KeyError:
             raise InvalidTypeError()
-        if ask_user:
+        # Get default answer
+        ask_this = ask_user
+        default = cast_answer_type(_render_value(details.get("default")), type_fn)
+        defaults[question] = default
+        try:
+            # Use forced answer
+            answer = forced_answers_data[question]
+            ask_this = False
+        except KeyError:
+            # Get default answer
+            answer = last_answers_data.get(question, default)
+        if ask_this:
             # Generate message to ask the user
             emoji = "🕵️" if details.get("secret", False) else "🎤"
             message = f"\n{bold | question}? Format: {type_name}\n{emoji} "
@@ -192,8 +209,6 @@ def query_user_data(
                 answer = choose(message, choices, default)
             else:
                 answer = prompt(message, type_fn, default)
-        result[question] = cast_answer_type(answer, type_fn)
-
-    for key in DEFAULT_DATA:
-        del result[key]
+        if answer != details.get("default", default):
+            result[question] = cast_answer_type(answer, type_fn)
     return result

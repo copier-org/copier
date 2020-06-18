@@ -74,8 +74,7 @@ use_parentheses = true
 
 [flake8]
 max-complexity = 20
-max-line-length = 88
-ignore = ",W503,E203,D100,D101,D102,D103,D104,D105,D107,"
+ignore = ",W503,E203,E501,D100,D101,D102,D103,D104,D105,D107,"
 
 [build-system]
 requires = ["poetry>=1.0.3"]
