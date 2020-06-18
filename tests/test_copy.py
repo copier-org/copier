@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -69,11 +70,14 @@ def test_include_pattern(dst):
     assert (dst / ".svn").exists()
 
 
-def test_exclude_file(dst):
-    render(dst, exclude=["mañana.txt"])
-    assert not (dst / "doc" / "mañana.txt").exists()
-    assert (dst / "doc" / "mañana.txt").exists()
-    assert (dst / "doc" / "manana.txt").exists()
+def test_exclude_file(tmp_path):
+    print(f"Filesystem encoding is {sys.getfilesystemencoding()}")
+    # This file name is b"man\xcc\x83ana.txt".decode()
+    render(tmp_path, exclude=["mañana.txt"])
+    assert not (tmp_path / "doc" / "mañana.txt").exists()
+    # This file name is b"ma\xc3\xb1ana.txt".decode()
+    assert (tmp_path / "doc" / "mañana.txt").exists()
+    assert (tmp_path / "doc" / "manana.txt").exists()
 
 
 def test_skip_if_exists(dst):

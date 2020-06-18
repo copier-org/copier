@@ -32,7 +32,6 @@ jinja2 = "==2.*,>=2.10.0"
 pathspec = "^0.7.0"
 plumbum = "==1.*,>=1.6.0"
 pydantic = ">=1.0b1"
-regex = "^2020.2.20"
 pyyaml = "^5.3"
 pyyaml-include = "^1.2"
 # packaging is needed when installing from PyPI
