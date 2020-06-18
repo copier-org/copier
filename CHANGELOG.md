@@ -9,6 +9,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 <summary>Table of contents</summary>
 
+- [Version 4.0.0 (2020-06)](#version-400-2020-06)
+- [Version 3.2.0 (2020-06)](#version-320-2020-06)
 - [Version 3.1.0 (2020-05)](#version-310-2020-05)
 - [Version 3.0.0 (2020-03)](#version-300-2020-03)
   - [Features](#features)
@@ -24,6 +26,21 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 <!-- prettier-ignore-end -->
 </details>
+
+### Version 4.0.0 (2020-06)
+
+[All changes here](https://github.com/copier-org/copier/milestone/9?closed=1). Summary:
+
+- Remove semver to avoid having 2 different versioning systems. We stick to PEP 440 now.
+- Remember where an answer comes from.
+- Do not re-ask to the user if already answer via `--data`.
+- Support pre-migration scripts that modify the answers file.
+
+### Version 3.2.0 (2020-06)
+
+[All changes here](https://github.com/copier-org/copier/milestone/8?closed=1). Summary:
+
+- Templates can now use a subdirectory instead of always the template root.
 
 ### Version 3.1.0 (2020-05)
 
