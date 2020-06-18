@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -78,8 +79,11 @@ def test_include_pattern(tmp_path):
 
 
 def test_exclude_file(tmp_path):
+    print(f"Filesystem encoding is {sys.getfilesystemencoding()}")
+    # This file name is b"man\xcc\x83ana.txt".decode()
     render(tmp_path, exclude=["mañana.txt"])
     assert not (tmp_path / "doc" / "mañana.txt").exists()
+    # This file name is b"ma\xc3\xb1ana.txt".decode()
     assert (tmp_path / "doc" / "mañana.txt").exists()
     assert (tmp_path / "doc" / "manana.txt").exists()
 
