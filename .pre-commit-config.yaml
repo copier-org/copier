@@ -42,7 +42,7 @@ repos:
 
   # prettier to format our many yaml files
   - repo: https://github.com/prettier/prettier
-    rev: "1.19.1"
+    rev: 2.0.5
     hooks:
       - id: prettier
         exclude: |
@@ -52,7 +52,7 @@ repos:
 
   # miscellaneous hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.5.0
+    rev: v3.1.0
     hooks:
       - id: check-added-large-files
       - id: check-ast

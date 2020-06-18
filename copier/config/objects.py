@@ -101,7 +101,7 @@ class ConfigData(BaseModel):
     @validator("skip", always=True)
     def mutually_exclusive_flags(cls, v, values):  # noqa: B902
         if v and values["force"]:
-            raise ValueError(f"Flags `force` and `skip` are mutually exclusive.")
+            raise ValueError("Flags `force` and `skip` are mutually exclusive.")
         return v
 
     # sanitizers
