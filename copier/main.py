@@ -245,6 +245,14 @@ def update_diff(conf: ConfigData):
     # Run pre-migration tasks
     renderer = Renderer(conf)
     run_tasks(conf, renderer, get_migration_tasks(conf, "before"))
+    # Import possible answers migration
+    conf = conf.copy(
+        update={
+            "data_from_answers_file": load_answersfile_data(
+                conf.dst_path, conf.answers_file
+            )
+        }
+    )
     # Do a normal update in final destination
     copy_local(conf)
     # Try to apply cached diff into final destination
