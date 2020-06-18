@@ -6,7 +6,7 @@ from pydantic import ValidationError
 
 import copier
 from copier.config.factory import make_config
-from copier.config.objects import DEFAULT_DATA, DEFAULT_EXCLUDE, ConfigData, EnvOps
+from copier.config.objects import DEFAULT_EXCLUDE, ConfigData, EnvOps
 from copier.config.user_data import (
     InvalidConfigFileError,
     MultipleConfigFilesError,
@@ -168,7 +168,6 @@ def test_config_data_good_data(dst):
         "commit": None,
         "old_commit": None,
         "dst_path": dst,
-        "data": DEFAULT_DATA,
         "extra_paths": [dst],
         "exclude": DEFAULT_EXCLUDE,
         "original_src_path": None,
@@ -188,9 +187,11 @@ def test_config_data_good_data(dst):
         "subdirectory": None,
     }
     conf = ConfigData(**expected)
-    expected["data"]["_folder_name"] = dst.name
+    conf.data["_folder_name"] = dst.name
     expected["answers_file"] = Path(".copier-answers.yml")
-    assert conf.dict() == expected
+    conf_dict = conf.dict()
+    for key, value in expected.items():
+        assert conf_dict[key] == value
 
 
 def test_make_config_bad_data(dst):

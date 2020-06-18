@@ -43,14 +43,14 @@ def test_api(dst):
     )
 
 
-def test_cli(dst):
+def test_cli(tmp_path):
     """Test copier correctly processes advanced questions and answers through CLI."""
     (
-        copier_cmd["copy", SRC, dst]
+        copier_cmd["copy", SRC, tmp_path]
         << dedent(
             # These are the answers; those marked as "wrong" will fail and
             # make the prompt function ask again
-            """
+            """\
                 y
                 Guybrush Threpwood
                 wrong your_age
@@ -68,8 +68,8 @@ def test_cli(dst):
 
             """
         )
-    )()
-    results_file = dst / "results.txt"
+    )(timeout=5)
+    results_file = tmp_path / "results.txt"
     assert results_file.read_text() == dedent(
         r"""
             love_me: true
@@ -139,7 +139,7 @@ def test_cli_with_flag_data_and_type_casts(tmp_path: Path):
         << dedent(
             # These are the answers; those marked as "wrong" will fail and
             # make the prompt function ask again
-            """
+            """\
                 y
                 Guybrush Threpwood
                 wrong your_age
@@ -150,14 +150,9 @@ def test_cli_with_flag_data_and_type_casts(tmp_path: Path):
                 {"objective": "be a pirate"}
                 {wrong anything_else
                 ['Want some grog?', I'd love it]
-
-
-
-
-
             """
         )
-    )()
+    )(timeout=5)
     results_file = tmp_path / "results.txt"
     assert results_file.read_text() == dedent(
         r"""

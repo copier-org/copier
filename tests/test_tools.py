@@ -11,7 +11,9 @@ from .helpers import DATA, PROJECT_TEMPLATE
 def test_render(dst):
     envops = EnvOps().dict()
     render = tools.Renderer(
-        ConfigData(src_path=PROJECT_TEMPLATE, dst_path=dst, data=DATA, envops=envops)
+        ConfigData(
+            src_path=PROJECT_TEMPLATE, dst_path=dst, data_from_init=DATA, envops=envops
+        )
     )
 
     assert render.string("/hello/[[ what ]]/") == "/hello/world/"
