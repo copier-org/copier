@@ -891,7 +891,7 @@ all = ["toml"]
 toml = ["toml"]
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Alternative regular expression module, to replace re."
 name = "regex"
 optional = false
