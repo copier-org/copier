@@ -13,8 +13,8 @@ REPO_BUNDLE_PATH = Path(f"{PROJECT_TEMPLATE}_updatediff_repo.bundle").absolute()
 
 
 def test_updatediff(tmpdir):
-    dst = Path(tmpdir)
-    target = dst / "target"
+    tmp_path = Path(tmpdir)
+    target = tmp_path / "target"
     readme = target / "README.txt"
     answers = target / ".copier-answers.yml"
     commit = git["commit", "--all"]
@@ -142,7 +142,7 @@ def test_updatediff(tmpdir):
 def test_commit_hooks_respected(tmp_path: Path):
     """Commit hooks are taken into account when producing the update diff."""
     # Prepare source template v1
-    src, dst = tmp_path / "src", tmp_path / "dst"
+    src, tmp_path = tmp_path / "src", tmp_path / "tmp_path"
     src.mkdir()
     with local.cwd(src):
         build_file_tree(
@@ -184,8 +184,8 @@ def test_commit_hooks_respected(tmp_path: Path):
         git("commit", "-m", "commit 1")
         git("tag", "v1")
     # Copy source template
-    copy(src_path=str(src), dst_path=dst, force=True)
-    with local.cwd(dst):
+    copy(src_path=str(src), dst_path=tmp_path, force=True)
+    with local.cwd(tmp_path):
         life = Path("life.yml")
         git("add", ".")
         # 1st commit fails because pre-commit reformats life.yml
@@ -219,8 +219,8 @@ def test_commit_hooks_respected(tmp_path: Path):
         git("commit", "-m", "commit 2")
         git("tag", "v2")
     # Update subproject to v2
-    copy(dst_path=dst, force=True)
-    with local.cwd(dst):
+    copy(dst_path=tmp_path, force=True)
+    with local.cwd(tmp_path):
         git("commit", "-am", "copied v2")
         assert life.read_text() == dedent(
             """\

@@ -12,13 +12,13 @@ REPO_BUNDLE_PATH = Path(f"{PROJECT_TEMPLATE}_update_tasks.bundle").absolute()
 
 def test_update_tasks(tmpdir):
     """Test that updating a template runs tasks from the expected version."""
-    dst = tmpdir / "dst"
+    tmp_path = tmpdir / "tmp_path"
     # Copy the 1st version
     copy(
-        str(REPO_BUNDLE_PATH), dst, force=True, vcs_ref="v1",
+        str(REPO_BUNDLE_PATH), tmp_path, force=True, vcs_ref="v1",
     )
     # Init destination as a new independent git repo
-    with local.cwd(dst):
+    with local.cwd(tmp_path):
         git("init")
         # Configure git in case you're running in CI
         git("config", "user.name", "Copier Test")
@@ -27,4 +27,4 @@ def test_update_tasks(tmpdir):
         git("add", ".")
         git("commit", "-m", "hello world")
     # Update target to v2
-    copy(dst_path=str(dst), force=True)
+    copy(dst_path=str(tmp_path), force=True)

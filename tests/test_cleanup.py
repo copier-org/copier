@@ -5,13 +5,15 @@ import pytest
 import copier
 
 
-def test_cleanup(dst):
+def test_cleanup(tmp_path):
     with pytest.raises(CalledProcessError):
-        copier.copy("./tests/demo_cleanup", dst, quiet=True)
-    assert not (dst).exists()
+        copier.copy("./tests/demo_cleanup", tmp_path, quiet=True)
+    assert not (tmp_path).exists()
 
 
-def test_do_not_cleanup(dst):
+def test_do_not_cleanup(tmp_path):
     with pytest.raises(CalledProcessError):
-        copier.copy("./tests/demo_cleanup", dst, quiet=True, cleanup_on_error=False)
-    assert (dst).exists()
+        copier.copy(
+            "./tests/demo_cleanup", tmp_path, quiet=True, cleanup_on_error=False
+        )
+    assert (tmp_path).exists()

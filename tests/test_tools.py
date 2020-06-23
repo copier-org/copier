@@ -8,11 +8,14 @@ from copier.config.factory import ConfigData, EnvOps
 from .helpers import DATA, PROJECT_TEMPLATE
 
 
-def test_render(dst):
+def test_render(tmp_path):
     envops = EnvOps().dict()
     render = tools.Renderer(
         ConfigData(
-            src_path=PROJECT_TEMPLATE, dst_path=dst, data_from_init=DATA, envops=envops
+            src_path=PROJECT_TEMPLATE,
+            dst_path=tmp_path,
+            data_from_init=DATA,
+            envops=envops,
         )
     )
 

@@ -10,11 +10,11 @@ from .helpers import PROJECT_TEMPLATE
 SRC = f"{PROJECT_TEMPLATE}_complex_questions"
 
 
-def test_api(dst):
+def test_api(tmp_path):
     """Test copier correctly processes advanced questions and answers through API."""
     copy(
         SRC,
-        dst,
+        tmp_path,
         {
             "love_me": False,
             "your_name": "LeChuck",
@@ -25,7 +25,7 @@ def test_api(dst):
         },
         force=True,
     )
-    results_file = dst / "results.txt"
+    results_file = tmp_path / "results.txt"
     assert results_file.read_text() == dedent(
         """
             love_me: false
@@ -87,14 +87,14 @@ def test_cli(tmp_path):
     )
 
 
-def test_api_str_data(dst):
+def test_api_str_data(tmp_path):
     """Test copier when all data comes as a string.
 
     This happens i.e. when using the --data CLI argument.
     """
     copy(
         SRC,
-        dst,
+        tmp_path,
         data={
             "love_me": "false",
             "your_name": "LeChuck",
@@ -106,7 +106,7 @@ def test_api_str_data(dst):
         },
         force=True,
     )
-    results_file = dst / "results.txt"
+    results_file = tmp_path / "results.txt"
     assert results_file.read_text() == dedent(
         r"""
             love_me: false
