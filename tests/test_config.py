@@ -36,9 +36,9 @@ def test_config_data_is_loaded_from_file():
 
 
 @pytest.mark.parametrize("template", ["tests/demo_yaml", "tests/demo_yml"])
-def test_read_data(dst, template):
-    copier.copy(template, dst, force=True)
-    gen_file = dst / "user_data.txt"
+def test_read_data(tmp_path, template):
+    copier.copy(template, tmp_path, force=True)
+    gen_file = tmp_path / "user_data.txt"
     result = gen_file.read_text()
     expected = Path("tests/reference_files/user_data.txt").read_text()
     assert result == expected
@@ -143,12 +143,12 @@ def test_config_data_paths_required():
         raise AssertionError()
 
 
-def test_config_data_paths_existing(dst):
+def test_config_data_paths_existing(tmp_path):
     try:
         ConfigData(
             src_path="./i_do_not_exist",
             extra_paths=["./i_do_not_exist"],
-            dst_path=dst,
+            dst_path=tmp_path,
             envops=EnvOps(),
         )
     except ValidationError as e:
@@ -161,14 +161,14 @@ def test_config_data_paths_existing(dst):
         raise AssertionError()
 
 
-def test_config_data_good_data(dst):
-    dst = Path(dst).expanduser().resolve()
+def test_config_data_good_data(tmp_path):
+    tmp_path = Path(tmp_path).expanduser().resolve()
     expected = {
-        "src_path": dst,
+        "src_path": tmp_path,
         "commit": None,
         "old_commit": None,
-        "dst_path": dst,
-        "extra_paths": [dst],
+        "dst_path": tmp_path,
+        "extra_paths": [tmp_path],
         "exclude": DEFAULT_EXCLUDE,
         "original_src_path": None,
         "skip_if_exists": ["skip_me"],
@@ -187,27 +187,27 @@ def test_config_data_good_data(dst):
         "subdirectory": None,
     }
     conf = ConfigData(**expected)
-    conf.data["_folder_name"] = dst.name
+    conf.data["_folder_name"] = tmp_path.name
     expected["answers_file"] = Path(".copier-answers.yml")
     conf_dict = conf.dict()
     for key, value in expected.items():
         assert conf_dict[key] == value
 
 
-def test_make_config_bad_data(dst):
+def test_make_config_bad_data(tmp_path):
     with pytest.raises(ValidationError):
-        make_config("./i_do_not_exist", dst)
+        make_config("./i_do_not_exist", tmp_path)
 
 
 def is_subdict(small, big):
     return {**big, **small} == big
 
 
-def test_make_config_good_data(dst):
-    conf = make_config("./tests/demo_data", dst)
+def test_make_config_good_data(tmp_path):
+    conf = make_config("./tests/demo_data", tmp_path)
     assert conf is not None
     assert "_folder_name" in conf.data
-    assert conf.data["_folder_name"] == dst.name
+    assert conf.data["_folder_name"] == tmp_path.name
     assert conf.exclude == ["exclude1", "exclude2"]
     assert conf.skip_if_exists == ["skip_if_exists1", "skip_if_exists2"]
     assert conf.tasks == ["touch 1", "touch 2"]
@@ -223,8 +223,8 @@ def test_make_config_good_data(dst):
         ({"src_path": "tests/demo_data", "exclude": ["aaa"]}, {"exclude": ["aaa"]}),
     ],
 )
-def test_make_config_precedence(dst, test_input, expected):
-    conf = make_config(dst_path=dst, vcs_ref="HEAD", **test_input)
+def test_make_config_precedence(tmp_path, test_input, expected):
+    conf = make_config(dst_path=tmp_path, vcs_ref="HEAD", **test_input)
     assert is_subdict(expected, conf.dict())
 
 

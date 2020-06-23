@@ -134,12 +134,12 @@ def test_templated_prompt(
         assert output in captured.out
 
 
-def test_templated_prompt_custom_envops(dst):
-    conf = make_config("./tests/demo_templated_prompt", dst, force=True)
+def test_templated_prompt_custom_envops(tmp_path):
+    conf = make_config("./tests/demo_templated_prompt", tmp_path, force=True)
     assert conf.data["sentence"] == "It's over 9000!"
 
     conf = make_config(
-        "./tests/demo_templated_prompt", dst, data={"powerlevel": 1}, force=True
+        "./tests/demo_templated_prompt", tmp_path, data={"powerlevel": 1}, force=True
     )
     assert conf.data["sentence"] == "It's only 1..."
 

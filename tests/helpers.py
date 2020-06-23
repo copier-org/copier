@@ -21,13 +21,13 @@ DATA = {
 }
 
 
-def render(dst, **kwargs):
+def render(tmp_path, **kwargs):
     kwargs.setdefault("quiet", True)
-    copier.copy(str(PROJECT_TEMPLATE), dst, data=DATA, **kwargs)
+    copier.copy(str(PROJECT_TEMPLATE), tmp_path, data=DATA, **kwargs)
 
 
-def assert_file(dst, *path):
-    p1 = os.path.join(str(dst), *path)
+def assert_file(tmp_path, *path):
+    p1 = os.path.join(str(tmp_path), *path)
     p2 = os.path.join(str(PROJECT_TEMPLATE), *path)
     assert filecmp.cmp(p1, p2)
 

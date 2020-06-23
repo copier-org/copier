@@ -11,12 +11,12 @@ SRC = f"{PROJECT_TEMPLATE}_answersfile"
 
 
 @pytest.mark.parametrize("answers_file", [None, ".changed-by-user.yaml"])
-def test_answersfile(dst, answers_file):
+def test_answersfile(tmp_path, answers_file):
     """Test copier behaves properly when using an answersfile."""
-    round_file = dst / "round.txt"
+    round_file = tmp_path / "round.txt"
 
     # Check 1st round is properly executed and remembered
-    copier.copy(SRC, dst, answers_file=answers_file, force=True)
+    copier.copy(SRC, tmp_path, answers_file=answers_file, force=True)
     answers_file = answers_file or ".answers-file-changed-in-template.yml"
     assert (
         round_file.read_text()
@@ -28,14 +28,14 @@ def test_answersfile(dst, answers_file):
             """
         ).lstrip()
     )
-    log = load_answersfile_data(dst, answers_file)
+    log = load_answersfile_data(tmp_path, answers_file)
     assert log["round"] == "1st"
     assert log["str_question_without_default"] is None
     assert "password_1" not in log
     assert "password_2" not in log
 
     # Check 2nd round is properly executed and remembered
-    copier.copy(SRC, dst, {"round": "2nd"}, answers_file=answers_file, force=True)
+    copier.copy(SRC, tmp_path, {"round": "2nd"}, answers_file=answers_file, force=True)
     assert (
         round_file.read_text()
         == dedent(
@@ -46,14 +46,14 @@ def test_answersfile(dst, answers_file):
             """
         ).lstrip()
     )
-    log = load_answersfile_data(dst, answers_file)
+    log = load_answersfile_data(tmp_path, answers_file)
     assert log["round"] == "2nd"
     assert log["str_question_without_default"] is None
     assert "password_1" not in log
     assert "password_2" not in log
 
     # Check repeating 2nd is properly executed and remembered
-    copier.copy(SRC, dst, answers_file=answers_file, force=True)
+    copier.copy(SRC, tmp_path, answers_file=answers_file, force=True)
     assert (
         round_file.read_text()
         == dedent(
@@ -64,7 +64,7 @@ def test_answersfile(dst, answers_file):
             """
         ).lstrip()
     )
-    log = load_answersfile_data(dst, answers_file)
+    log = load_answersfile_data(tmp_path, answers_file)
     assert log["round"] == "2nd"
     assert log["str_question_without_default"] is None
     assert "password_1" not in log
