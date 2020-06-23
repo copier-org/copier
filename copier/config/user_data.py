@@ -203,12 +203,12 @@ def query_user_data(
                 )
             # Use the right method to ask
             if type_fn is bool:
-                answer = ask(message, default)
+                answer = ask(message, answer)
             elif details.get("choices"):
                 choices = _render_choices(details["choices"])
-                answer = choose(message, choices, default)
+                answer = choose(message, choices, answer)
             else:
-                answer = prompt(message, type_fn, default)
+                answer = prompt(message, type_fn, answer)
         if answer != details.get("default", default):
             result[question] = cast_answer_type(answer, type_fn)
     return result
