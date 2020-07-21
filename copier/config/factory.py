@@ -108,11 +108,16 @@ def make_config(
         k: v.get("default") for k, v in questions_data.items()
     }
     init_args["envops"] = EnvOps(**template_config_data.get("envops", {}))
+    data = kwargs.get("data") or {}
     init_args["data_from_init"] = ChainMap(
         query_user_data(
-            questions_data, {}, kwargs.get("data") or {}, False, init_args["envops"]
+            {k: v for k, v in questions_data.items() if k in data},
+            {},
+            data,
+            False,
+            init_args["envops"],
         ),
-        kwargs.get("data") or {},
+        data,
     )
     init_args["data_from_asking_user"] = query_user_data(
         questions_data,
