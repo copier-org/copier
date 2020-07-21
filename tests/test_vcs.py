@@ -42,7 +42,7 @@ def test_get_repo():
 
 
 def test_clone():
-    tmp = vcs.clone("https://github.com/jpscaletti/siht.git")
+    tmp = vcs.clone("https://github.com/copier-org/copier.git")
     assert tmp
-    assert exists(join(tmp, "setup.py"))
+    assert exists(join(tmp, "README.md"))
     shutil.rmtree(tmp)

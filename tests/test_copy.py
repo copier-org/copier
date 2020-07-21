@@ -52,8 +52,14 @@ def test_copy(tmp_path):
 
 
 def test_copy_repo(tmp_path):
-    copier.copy("gh:jpscaletti/siht.git", tmp_path, vcs_ref="HEAD", quiet=True)
-    assert (tmp_path / "setup.py").exists()
+    copier.copy(
+        "gh:copier-org/copier.git",
+        tmp_path,
+        vcs_ref="HEAD",
+        quiet=True,
+        exclude=["*", "!README.*"],
+    )
+    assert (tmp_path / "README.md").exists()
 
 
 def test_default_exclude(tmp_path):
