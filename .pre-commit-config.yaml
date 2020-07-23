@@ -70,14 +70,3 @@ repos:
       - id: mixed-line-ending
         args: ["--fix=lf"]
       - id: trailing-whitespace
-
-  # regenerate the README table of contents
-  - repo: https://github.com/thlorenz/doctoc
-    rev: v1.4.0
-    hooks:
-      - id: doctoc
-        args:
-          - --github
-          - --maxlevel=6
-          - --title=<summary>Table of contents</summary>
-        exclude: ^tests/

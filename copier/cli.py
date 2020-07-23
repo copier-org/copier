@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+"""
+Command line entrypoint.
+
+This module declares the Plumbum CLI application, its subcommand and options.
+"""
+
 import sys
 from textwrap import dedent
 
@@ -7,10 +13,12 @@ from plumbum import cli, colors
 from . import __version__
 from .config.objects import UserMessageError
 from .main import copy
-from .types import AnyByStrDict, OptStr
+from .types import AnyByStrDict, List, OptStr
 
 
 def handle_exceptions(method):
+    """Handle keyboard interruption while running a method."""
+
     def _wrapper(*args, **kwargs):
         try:
             try:
@@ -25,6 +33,21 @@ def handle_exceptions(method):
 
 
 class CopierApp(cli.Application):
+    """The Plumbum CLI application.
+
+    Attributes:
+        answers_file: The switch for the answers file option.
+        extra_paths: The switch for the extra paths option.
+        exclude: The switch for the exclude option.
+        vcs_ref: The switch for the VCS ref option.
+        subdirectory: The switch for the subdirectory option.
+        pretend: The flag for the pretend option.
+        force: The flag for the force option.
+        skip: The flag for the skip option.
+        quiet: The flag for the quiet option.
+        only_diff: The flag for the only diff option.
+    """
+
     DESCRIPTION = "Create a new project from a template."
     DESCRIPTION_MORE = colors.yellow | dedent(
         """
@@ -42,7 +65,7 @@ class CopierApp(cli.Application):
     CALL_MAIN_IF_NESTED_COMMAND = False
     data: AnyByStrDict = {}
 
-    answers_file = cli.SwitchAttr(
+    answers_file: cli.SwitchAttr = cli.SwitchAttr(
         ["-a", "--answers-file"],
         default=None,
         help=(
@@ -50,13 +73,13 @@ class CopierApp(cli.Application):
             "to find the answers file"
         ),
     )
-    extra_paths = cli.SwitchAttr(
+    extra_paths: cli.SwitchAttr = cli.SwitchAttr(
         ["-p", "--extra-paths"],
         str,
         list=True,
         help="Additional directories to find parent templates in",
     )
-    exclude = cli.SwitchAttr(
+    exclude: cli.SwitchAttr = cli.SwitchAttr(
         ["-x", "--exclude"],
         str,
         list=True,
@@ -65,7 +88,7 @@ class CopierApp(cli.Application):
             "that must not be copied"
         ),
     )
-    vcs_ref = cli.SwitchAttr(
+    vcs_ref: cli.SwitchAttr = cli.SwitchAttr(
         ["-r", "--vcs-ref"],
         str,
         help=(
@@ -75,7 +98,7 @@ class CopierApp(cli.Application):
             "the latest version, use `--vcs-ref=HEAD`."
         ),
     )
-    subdirectory = cli.SwitchAttr(
+    subdirectory: cli.SwitchAttr = cli.SwitchAttr(
         ["-b", "--subdirectory"],
         str,
         help=(
@@ -84,14 +107,16 @@ class CopierApp(cli.Application):
         ),
     )
 
-    pretend = cli.Flag(["-n", "--pretend"], help="Run but do not make any changes")
-    force = cli.Flag(
+    pretend: cli.Flag = cli.Flag(
+        ["-n", "--pretend"], help="Run but do not make any changes"
+    )
+    force: cli.Flag = cli.Flag(
         ["-f", "--force"], help="Overwrite files that already exist, without asking"
     )
-    skip = cli.Flag(
+    skip: cli.Flag = cli.Flag(
         ["-s", "--skip"], help="Skip files that already exist, without asking"
     )
-    quiet = cli.Flag(["-q", "--quiet"], help="Suppress status output")
+    quiet: cli.Flag = cli.Flag(["-q", "--quiet"], help="Suppress status output")
 
     @cli.switch(
         ["-d", "--data"],
@@ -100,11 +125,25 @@ class CopierApp(cli.Application):
         list=True,
         help="Make VARIABLE available as VALUE when rendering the template",
     )
-    def data_switch(self, values):
-        self.data.update(value.split("=", 1) for value in values)
+    def data_switch(self, values: List[str]) -> None:
+        """
+        Update data with provided values.
+
+        Arguments:
+            values: The list of values to apply.
+                Each value in the list is of the following form: `NAME=VALUE`.
+        """
+        self.data.update(value.split("=", 1) for value in values)  # type: ignore
 
     def _copy(self, src_path: OptStr = None, dst_path: str = ".", **kwargs) -> None:
-        """Run Copier's internal API using CLI switches."""
+        """
+        Run Copier's internal API using CLI switches.
+
+        Arguments:
+            src_path: The source path of the template to generate the project from.
+            dst_path: The path to generate the project to.
+            **kwargs: Arguments passed to [`copy`][copier.main.copy].
+        """
         return copy(
             data=self.data,
             dst_path=dst_path,
@@ -151,16 +190,26 @@ class CopierApp(cli.Application):
 
 @CopierApp.subcommand("copy")
 class CopierCopySubApp(cli.Application):
+    """The `copy` subcommand."""
+
     DESCRIPTION = "Copy form a template source to a destination"
 
     @handle_exceptions
     def main(self, template_src: str, destination_path: str) -> int:
+        """The code of the `copy` subcommand."""
         self.parent._copy(template_src, destination_path)
         return 0
 
 
 @CopierApp.subcommand("update")
 class CopierUpdateSubApp(cli.Application):
+    """
+    The `update` subcommand.
+
+    Attributes:
+        only_diff: The flag for the only diff option.
+    """
+
     DESCRIPTION = "Update a copy from its original template"
     DESCRIPTION_MORE = """
     The copy must have a valid answers file which contains info
@@ -172,12 +221,13 @@ class CopierUpdateSubApp(cli.Application):
     generated since the last `copier` execution. To disable that, use `--no-diff`.
     """
 
-    only_diff = cli.Flag(
+    only_diff: cli.Flag = cli.Flag(
         ["-D", "--no-diff"], default=True, help="Disable smart diff detection."
     )
 
     @handle_exceptions
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
+        """The code of the `update` subcommand."""
         self.parent._copy(
             dst_path=destination_path, only_diff=self.only_diff,
         )

@@ -3,29 +3,18 @@
 All notable changes to this project will be documented in this file. This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
-<details>
-<!-- prettier-ignore-start -->
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-<summary>Table of contents</summary>
+### Version 4.0.2 (2020-07-21)
 
-- [Version 4.0.0 (2020-06)](#version-400-2020-06)
-- [Version 3.2.0 (2020-06)](#version-320-2020-06)
-- [Version 3.1.0 (2020-05)](#version-310-2020-05)
-- [Version 3.0.0 (2020-03)](#version-300-2020-03)
-  - [Features](#features)
-  - [Other](#other)
-- [Version 2.5 (2019-06)](#version-25-2019-06)
-- [Version 2.4.2 (2019-06)](#version-242-2019-06)
-- [Version 2.4 (2019-06)](#version-24-2019-06)
-- [Version 2.3 (2019-04)](#version-23-2019-04)
-- [Version 2.2 (2019-04)](#version-22-2019-04)
-- [Version 2.1 (2019-02)](#version-21-2019-02)
-- [Version 2.0 (2019-02)](#version-20-2019-02)
+[All changes here](https://github.com/copier-org/copier/milestone/11?closed=1). Summary:
 
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-<!-- prettier-ignore-end -->
-</details>
+- Fix wrong templated default answers classification, which produced some questions being ignored.
+
+### Version 4.0.1 (2020-06-23)
+
+[All changes here](https://github.com/copier-org/copier/milestone/10?closed=1). Summary:
+
+- Fix wrong prompt regression when updating.
+- Remove redundant `dst` fixture in tests.
 
 ### Version 4.0.0 (2020-06)
 

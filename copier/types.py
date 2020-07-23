@@ -1,3 +1,5 @@
+"""All complex types and annotations are declared here."""
+
 from pathlib import Path
 from typing import (
     Any,

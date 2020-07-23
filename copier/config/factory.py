@@ -1,3 +1,5 @@
+"""Functions used to generate configuration data."""
+
 from collections import ChainMap
 from typing import Tuple
 

@@ -1,0 +1,47 @@
+site_name: copier
+site_description: Library and command-line utility for rendering projects templates.
+site_url: https://copier.readthedocs.io/
+repo_url: https://github.com/copier-org/copier
+repo_name: copier-org/copier
+
+nav:
+  - Overview: "index.md"
+  - Creating a template: "creating.md"
+  - Generating a project: "generating.md"
+  - Updating a project: "updating.md"
+  - API:
+      - Main usage: "api/index.md"
+      - Reference:
+          - config:
+              - factory.py: "api/reference/config/factory.md"
+              - objects.py: "api/reference/config/objects.md"
+              - user_data.py: "api/reference/config/user_data.md"
+          - cli.py: "api/reference/cli.md"
+          - main.py: "api/reference/main.md"
+          - tools.py: "api/reference/tools.md"
+          - types.py: "api/reference/types.md"
+          - vcs.py: "api/reference/vcs.md"
+  - Contributing: "contributing.md"
+  - Changelog: "changelog.md"
+
+theme:
+  name: "material"
+
+extra_css:
+  - css/mkdocstrings.css
+
+markdown_extensions:
+  - admonition
+  - codehilite:
+      guess_lang: false
+  - pymdownx.superfences
+  - pymdownx.emoji
+  - pymdownx.magiclink
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+  - mkdocstrings:
+      watch:
+        - copier
