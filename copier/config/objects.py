@@ -1,3 +1,5 @@
+"""Pydantic models, exceptions and default values."""
+
 import datetime
 from collections import ChainMap
 from copy import deepcopy
@@ -41,6 +43,8 @@ class NoSrcPathError(UserMessageError):
 
 
 class EnvOps(BaseModel):
+    """Jinja2 environment options."""
+
     autoescape: StrictBool = False
     block_start_string: str = "[%"
     block_end_string: str = "%]"
@@ -62,6 +66,8 @@ class Migrations(BaseModel):
 
 
 class ConfigData(BaseModel):
+    """A model holding configuration data."""
+
     src_path: Path
     subdirectory: OptStr
     dst_path: Path

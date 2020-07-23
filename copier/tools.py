@@ -1,3 +1,5 @@
+"""Some utility functions."""
+
 import errno
 import os
 import shutil
@@ -125,6 +127,8 @@ def get_jinja_env(
 
 
 class Renderer:
+    """The Jinja template renderer."""
+
     def __init__(self, conf: ConfigData) -> None:
         envops: EnvOps = conf.envops
         paths = [str(conf.src_path)] + list(map(str, conf.extra_paths or []))

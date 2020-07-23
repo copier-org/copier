@@ -1,3 +1,5 @@
+"""Utilities related to VCS."""
+
 import re
 import shutil
 import tempfile

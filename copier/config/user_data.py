@@ -1,3 +1,5 @@
+"""Functions used to load user data."""
+
 import json
 import re
 from collections import ChainMap

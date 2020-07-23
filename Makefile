@@ -23,6 +23,10 @@ clean-pyc:
 	find . -name '__pycache__' -exec rm -rf {} +
 	find . -name '.pytest_cache' -exec rm -rf {} +
 
+.PHONY: docs
+docs:
+	mkdocs serve
+
 test:
 	pytest -x copier tests
 

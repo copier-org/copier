@@ -3,25 +3,6 @@
 Contributions are welcome, and they are greatly appreciated! Every little bit helps, and
 credit will always be given.
 
-<details>
-<!-- prettier-ignore-start -->
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-<summary>Table of contents</summary>
-
-- [Report Bugs](#report-bugs)
-- [Fix Bugs](#fix-bugs)
-- [Implement Features](#implement-features)
-- [Write Documentation](#write-documentation)
-- [Submit Feedback](#submit-feedback)
-- [Get Started!](#get-started)
-- [Pull Request Guidelines](#pull-request-guidelines)
-- [Tips](#tips)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-<!-- prettier-ignore-end -->
-</details>
-
 ## Report Bugs
 
 Report bugs at <https://github.com/jpscaletti/copier/issues>.
