@@ -7,7 +7,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 [All changes here](https://github.com/copier-org/copier/milestone/11?closed=1). Summary:
 
-- Fix wrong templated default answers classification, which produced some questions being ignored.
+- Fix wrong templated default answers classification, which produced some questions
+  being ignored.
 
 ### Version 4.0.1 (2020-06-23)
 
