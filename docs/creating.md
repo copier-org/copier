@@ -289,6 +289,16 @@ common_setting: "1"
 !include other_place/include_me.yml
 ```
 
+**Warning**: You can't have in the same file a top `!include` tag and classic YAML
+syntax, see
+[this pyyaml-include issue](https://github.com/tanbro/pyyaml-include/issues/7).
+
+```yaml
+# Invalid file
+!include other_place/include_me.yml
+foo: "bar"
+```
+
 ## The `.copier-answers.yml` file
 
 If the destination path exists and a `.copier-answers.yml` file is present there, it
