@@ -1,6 +1,3 @@
-**Think this library is awesome? Vote with a 👍 to include it in the awesome-python
-list: https://github.com/DoronCohen/awesome-python/pull/1**
-
 # ![Copier](https://github.com/pykong/copier/raw/master/img/copier-logotype.png)
 
 [![codecov](https://codecov.io/gh/pykong/copier/branch/master/graph/badge.svg)](https://codecov.io/gh/pykong/copier)
@@ -9,6 +6,7 @@ list: https://github.com/DoronCohen/awesome-python/pull/1**
 ![](https://img.shields.io/pypi/pyversions/copier)
 ![](https://img.shields.io/pypi/v/copier)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Documentation Status](https://readthedocs.org/projects/copier/badge/?version=latest)](https://copier.readthedocs.io/en/latest/?badge=latest)
 
 A library for rendering project templates.
 
