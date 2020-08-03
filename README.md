@@ -1,6 +1,3 @@
-**Think this library is awesome? Vote with a 👍 to include it in the awesome-python
-list: https://github.com/DoronCohen/awesome-python/pull/1**
-
 # ![Copier](https://github.com/pykong/copier/raw/master/img/copier-logotype.png)
 
 [![codecov](https://codecov.io/gh/pykong/copier/branch/master/graph/badge.svg)](https://codecov.io/gh/pykong/copier)
