@@ -37,6 +37,12 @@ pyyaml = "^5.3.1"
 pyyaml-include = "^1.2"
 # packaging is needed when installing from PyPI
 packaging = "^20.4"
+mkdocs = {version = "^1.1.2", optional = true}
+mkdocstrings = {version = "^0.12.2", optional = true}
+mkdocs-material = {version = "^5.5.2", optional = true}
+
+[tool.poetry.extras]
+docs = ["mkdocs", "mkdocstrings", "mkdocs-material"]
 
 [tool.poetry.dev-dependencies]
 black = {version = "^19.10b0", allow-prereleases = true}
@@ -53,9 +59,6 @@ pytest = "*"
 pytest-cov = "*"
 pytest-xdist = "*"
 pytest-timeout = "^1.4.1"
-mkdocs = "^1.1.2"
-mkdocstrings = "^0.12.1"
-mkdocs-material = "^5.4.0"
 
 [tool.poetry-dynamic-versioning]
 enable = true
