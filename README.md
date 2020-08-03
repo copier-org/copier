@@ -1,7 +1,7 @@
-# ![Copier](https://github.com/pykong/copier/raw/master/img/copier-logotype.png)
+# ![Copier](https://github.com/copier-org/copier/raw/master/img/copier-logotype.png)
 
-[![codecov](https://codecov.io/gh/pykong/copier/branch/master/graph/badge.svg)](https://codecov.io/gh/pykong/copier)
-![](https://github.com/pykong/copier/workflows/CI/badge.svg)
+[![codecov](https://codecov.io/gh/copier-org/copier/branch/master/graph/badge.svg)](https://codecov.io/gh/copier-org/copier)
+![](https://github.com/copier-org/copier/workflows/CI/badge.svg)
 [![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
 ![](https://img.shields.io/pypi/pyversions/copier)
 ![](https://img.shields.io/pypi/v/copier)
@@ -16,7 +16,7 @@ A library for rendering project templates.
 - It generates a beautiful output and takes care of not overwrite existing files unless
   instructed to do so.
 
-![Sample output](https://github.com/pykong/copier/raw/master/img/copier-output.png)
+![Sample output](https://github.com/copier-org/copier/raw/master/img/copier-output.png)
 
 ## Installation
 
@@ -35,13 +35,13 @@ from copier import copy
 copy("path/to/project/template", "path/to/destination")
 
 # Or from a git URL.
-copy("https://github.com/pykong/copier.git", "path/to/destination")
+copy("https://github.com/copier-org/copier.git", "path/to/destination")
 
 # You can also use "gh:" as a shortcut of "https://github.com/"
-copy("gh:pykong/copier.git", "path/to/destination")
+copy("gh:copier-org/copier.git", "path/to/destination")
 
 # Or "gl:" as a shortcut of "https://gitlab.com/"
-copy("gl:pykong/copier.git", "path/to/destination")
+copy("gl:copier-org/copier.git", "path/to/destination")
 ```
 
 - Or as a command-line tool:
@@ -84,6 +84,9 @@ Cookiecutter and Copier are quite similar in functionality, except that:
 
 Special thanks go to [jpscaletti](https://github.com/jpscaletti) for originally creating
 `Copier`. This project would not be a thing without him.
+
+Many thanks to [pykong](https://github.com/pykong) who took over maintainership on the
+project, promoted it, and laid out the bases of what the project is today.
 
 Big thanks also go to [Yajo](https://github.com/Yajo) for his relentless zest for
 improving `Copier` even further.
