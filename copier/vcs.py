@@ -1,7 +1,6 @@
 """Utilities related to VCS."""
 
 import re
-import shutil
 import tempfile
 from pathlib import Path
 
@@ -27,8 +26,8 @@ def is_git_repo_root(path: Path) -> bool:
     """Indicate if a given path is a git repo root directory."""
     try:
         with local.cwd(path / ".git"):
-            return bool(git("rev-parse", "--is-inside-git-dir") == "true\n")
-    except (FileNotFoundError, NotADirectoryError):
+            return bool(git("rev-parse", "--is-inside-git-dir").strip() == "true")
+    except OSError:
         return False
 
 
@@ -74,7 +73,6 @@ def checkout_latest_tag(local_repo: StrOrPath) -> str:
 
 def clone(url: str, ref: str = "HEAD") -> str:
     location = tempfile.mkdtemp(prefix=f"{__name__}.clone.")
-    shutil.rmtree(location)  # Path must not exist
     git("clone", "--no-checkout", url, location)
     with local.cwd(location):
         git("checkout", ref)

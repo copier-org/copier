@@ -20,6 +20,7 @@ A library for rendering project templates.
 
 ## Installation
 
+1. Install Python 3.6.1 or newer (3.8 or newer if you're on Windows).
 1. Install Git 2.24 or newer.
 1. To use as a CLI app: `pipx install copier`
 1. To use as a library: `pip install copier`

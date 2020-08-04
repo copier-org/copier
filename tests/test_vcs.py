@@ -45,4 +45,4 @@ def test_clone():
     tmp = vcs.clone("https://github.com/copier-org/copier.git")
     assert tmp
     assert exists(join(tmp, "README.md"))
-    shutil.rmtree(tmp)
+    shutil.rmtree(tmp, ignore_errors=True)

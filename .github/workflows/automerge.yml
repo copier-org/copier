@@ -26,7 +26,7 @@ jobs:
           MERGE_LABELS: "automerge,!work in progress"
           MERGE_METHOD: "rebase"
           # Disable autorebasing PRs because they cannot retrigger checks
-          UPDATE_LABELS: ""
+          UPDATE_LABELS: "DISABLED"
           UPDATE_METHOD: "rebase"
           # Retry for 20m
           MERGE_RETRIES: 120

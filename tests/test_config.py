@@ -1,4 +1,3 @@
-import re
 from pathlib import Path
 
 import pytest
@@ -45,11 +44,12 @@ def test_read_data(tmp_path, template):
 
 
 def test_invalid_yaml(capsys):
-    conf_path = Path("tests/demo_invalid/copier.yml")
+    conf_path = Path("tests", "demo_invalid", "copier.yml")
     with pytest.raises(InvalidConfigFileError):
         load_yaml_data(conf_path)
     out, _ = capsys.readouterr()
-    assert re.search(r"INVALID.*tests/demo_invalid/copier\.yml", out)
+    assert "INVALID CONFIG FILE" in out
+    assert str(conf_path) in out
 
 
 @pytest.mark.parametrize(

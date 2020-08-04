@@ -8,7 +8,7 @@ def test_output(capsys, tmp_path):
     out, _ = capsys.readouterr()
     assert re.search(r"create[^\s]*  config\.py", out)
     assert re.search(r"create[^\s]*  pyproject\.toml", out)
-    assert re.search(r"create[^\s]*  doc/images/nslogo\.gif", out)
+    assert re.search(r"create[^\s]*  doc[/\\]images[/\\]nslogo\.gif", out)
 
 
 def test_output_pretend(capsys, tmp_path):
@@ -16,7 +16,7 @@ def test_output_pretend(capsys, tmp_path):
     out, _ = capsys.readouterr()
     assert re.search(r"create[^\s]*  config\.py", out)
     assert re.search(r"create[^\s]*  pyproject\.toml", out)
-    assert re.search(r"create[^\s]*  doc/images/nslogo\.gif", out)
+    assert re.search(r"create[^\s]*  doc[/\\]images[/\\]nslogo\.gif", out)
 
 
 def test_output_force(capsys, tmp_path):
@@ -27,7 +27,7 @@ def test_output_force(capsys, tmp_path):
     assert re.search(r"conflict[^\s]*  config\.py", out)
     assert re.search(r"force[^\s]*  config\.py", out)
     assert re.search(r"identical[^\s]*  pyproject\.toml", out)
-    assert re.search(r"identical[^\s]*  doc/images/nslogo\.gif", out)
+    assert re.search(r"identical[^\s]*  doc[/\\]images[/\\]nslogo\.gif", out)
 
 
 def test_output_skip(capsys, tmp_path):
@@ -38,7 +38,7 @@ def test_output_skip(capsys, tmp_path):
     assert re.search(r"conflict[^\s]*  config\.py", out)
     assert re.search(r"skip[^\s]*  config\.py", out)
     assert re.search(r"identical[^\s]*  pyproject\.toml", out)
-    assert re.search(r"identical[^\s]*  doc/images/nslogo\.gif", out)
+    assert re.search(r"identical[^\s]*  doc[/\\]images[/\\]nslogo\.gif", out)
 
 
 def test_output_quiet(capsys, tmp_path):

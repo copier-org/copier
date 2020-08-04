@@ -156,10 +156,8 @@ class Renderer:
         )
 
     def __call__(self, fullpath: StrOrPath) -> str:
-        relpath = (
-            str(fullpath).replace(str(self.conf.src_path), "", 1).lstrip(os.path.sep)
-        )
-        tmpl = self.env.get_template(relpath)
+        relpath = Path(fullpath).relative_to(self.conf.src_path).as_posix()
+        tmpl = self.env.get_template(str(relpath))
         return tmpl.render(**self.data)
 
     def string(self, string: StrOrPath) -> str:
