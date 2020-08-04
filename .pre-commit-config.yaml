@@ -34,7 +34,7 @@ repos:
 
   # isorting our imports
   - repo: https://github.com/timothycrosley/isort
-    rev: 4.3.21
+    rev: 5.2.2
     hooks:
       - id: isort
         additional_dependencies:
@@ -52,7 +52,7 @@ repos:
 
   # miscellaneous hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.1.0
+    rev: v3.2.0
     hooks:
       - id: check-added-large-files
       - id: check-ast

@@ -1,11 +1,11 @@
 _exclude:
-  - tasks.sh
+  - tasks.py
   - migrations.py
   - .git
 
 _tasks:
-  - "[[ _copier_conf.src_path / 'tasks.sh' ]] 1"
-  - ["[[ _copier_conf.src_path / 'tasks.sh' ]]", 2]
+  - "python [[ _copier_conf.src_path / 'tasks.py' ]] 1"
+  - [python, "[[ _copier_conf.src_path / 'tasks.py' ]]", 2]
 
 _migrations:
   # This migration is never executed because it's the 1st version copied, and
