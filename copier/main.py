@@ -243,7 +243,7 @@ def update_diff(conf: ConfigData) -> None:
             git("config", "--unset", "user.email")
             git("remote", "add", "real_dst", conf.dst_path)
             git("fetch", "real_dst", "HEAD")
-            diff_cmd = git["diff", "--unified=1", "HEAD...FETCH_HEAD"]
+            diff_cmd = git["diff-tree", "--unified=1", "HEAD...FETCH_HEAD"]
             try:
                 diff = diff_cmd("--inter-hunk-context=-1")
             except ProcessExecutionError:
