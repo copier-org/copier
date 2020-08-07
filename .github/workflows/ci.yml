@@ -9,6 +9,10 @@ on:
 env:
   LANG: "en_US.utf-8"
   LC_ALL: "en_US.utf-8"
+  PIP_CACHE_DIR: ${{ github.workspace }}/.cache/pip
+  POETRY_CACHE_DIR: ${{ github.workspace }}/.cache/pypoetry
+  POETRY_VIRTUALENVS_IN_PROJECT: "true"
+  PRE_COMMIT_HOME: ${{ github.workspace }}/.cache/pre-commit
   PYTHONIOENCODING: "UTF-8"
 
 jobs:
@@ -41,17 +45,13 @@ jobs:
         run:
           echo "::set-env name=PY::$((python -VV; pip freeze) | sha256sum | cut -d' '
           -f1)"
-      - uses: actions/cache@v1
+      - uses: actions/cache@v2.1.0
         with:
-          path: ~/.cache
+          path: |
+            .cache
+            .venv
           key:
-            cache-${{ env.PY }}|${{ hashFiles('pyproject.toml') }}|${{
-            hashFiles('poetry.lock') }}|${{ hashFiles('.pre-commit-config.yaml') }}
-      - uses: actions/cache@v1
-        with:
-          path: ~/.local
-          key:
-            local-${{ env.PY }}|${{ hashFiles('pyproject.toml') }}|${{
+            cache|${{ runner.os }}|${{ env.PY }}|${{ hashFiles('pyproject.toml') }}|${{
             hashFiles('poetry.lock') }}|${{ hashFiles('.pre-commit-config.yaml') }}
       - run: python -m pip install poetry poetry-dynamic-versioning
         shell: bash
@@ -61,7 +61,7 @@ jobs:
         shell: bash
         run: poetry run pre-commit run --all-files --color=always
         # FIXME Make pre-commit pass reliably on Windows, and remove this
-        continue-on-error: ${{ matrix.os == 'windows-latest' }}
+        continue-on-error: ${{ runner.os == 'Windows' }}
       - name: Run mypy
         shell: bash
         run: poetry run mypy --ignore-missing-imports .
@@ -84,11 +84,13 @@ jobs:
         run:
           echo "::set-env name=PY::$((python -VV; pip freeze) | sha256sum | cut -d' '
           -f1)"
-      - uses: actions/cache@v1
+      - uses: actions/cache@v2.1.0
         with:
-          path: ~/.cache
+          path: |
+            .cache
+            .venv
           key:
-            ${{ env.PY }}|${{ hashFiles('pyproject.toml') }}|${{
+            cache|${{ runner.os }}|${{ env.PY }}|${{ hashFiles('pyproject.toml') }}|${{
             hashFiles('poetry.lock') }}|${{ hashFiles('.pre-commit-config.yaml') }}
       - run: poetry install
       - name: Build dist
