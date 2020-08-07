@@ -20,11 +20,13 @@ jobs:
         run:
           echo "::set-env name=PY::$((python -VV; pip freeze) | sha256sum | cut -d' '
           -f1)"
-      - uses: actions/cache@v1
+      - uses: actions/cache@v2.1.0
         with:
-          path: ~/.cache
+          path: |
+            .cache
+            .venv
           key:
-            ${{ env.PY }}|${{ hashFiles('pyproject.toml') }}|${{
+            cache|${{ runner.os }}|${{ env.PY }}|${{ hashFiles('pyproject.toml') }}|${{
             hashFiles('poetry.lock') }}|${{ hashFiles('.pre-commit-config.yaml') }}
       - run: git config --global user.name copier-ci
       - run: git config --global user.email copier@copier
