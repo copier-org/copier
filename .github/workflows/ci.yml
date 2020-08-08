@@ -46,6 +46,8 @@ jobs:
           echo "::set-env name=PY::$((python -VV; pip freeze) | sha256sum | cut -d' '
           -f1)"
       - uses: actions/cache@v2.1.0
+        # HACK https://github.com/actions/cache/issues/315
+        if: ${{ runner.os != 'Windows' }}
         with:
           path: |
             .cache
