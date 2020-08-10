@@ -10,11 +10,11 @@
 
 A library for rendering project templates.
 
-- Works with **local** paths and **git URLs**.
-- Your project can include any file and `Copier` can dynamically replace values in any
-  kind of text file.
-- It generates a beautiful output and takes care of not overwrite existing files unless
-  instructed to do so.
+-   Works with **local** paths and **git URLs**.
+-   Your project can include any file and `Copier` can dynamically replace values in any
+    kind of text file.
+-   It generates a beautiful output and takes care of not overwrite existing files
+    unless instructed to do so.
 
 ![Sample output](https://github.com/copier-org/copier/raw/master/img/copier-output.png)
 
@@ -27,29 +27,29 @@ A library for rendering project templates.
 
 ## Quick usage
 
-- Use it in your Python code:
+-   Use it in your Python code:
 
-```python
-from copier import copy
+    ```python
+    from copier import copy
 
-# Create a project from a local path
-copy("path/to/project/template", "path/to/destination")
+    # Create a project from a local path
+    copy("path/to/project/template", "path/to/destination")
 
-# Or from a git URL.
-copy("https://github.com/copier-org/copier.git", "path/to/destination")
+    # Or from a git URL.
+    copy("https://github.com/copier-org/copier.git", "path/to/destination")
 
-# You can also use "gh:" as a shortcut of "https://github.com/"
-copy("gh:copier-org/copier.git", "path/to/destination")
+    # You can also use "gh:" as a shortcut of "https://github.com/"
+    copy("gh:copier-org/copier.git", "path/to/destination")
 
-# Or "gl:" as a shortcut of "https://gitlab.com/"
-copy("gl:copier-org/copier.git", "path/to/destination")
-```
+    # Or "gl:" as a shortcut of "https://gitlab.com/"
+    copy("gl:copier-org/copier.git", "path/to/destination")
+    ```
 
-- Or as a command-line tool:
+-   Or as a command-line tool:
 
-```bash
-copier path/to/project/template path/to/destination
-```
+    ```bash
+    copier path/to/project/template path/to/destination
+    ```
 
 ## Browse or tag public templates
 

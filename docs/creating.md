@@ -24,26 +24,26 @@ Copier includes:
 
 ### Builtin variables/functions
 
-- `now()` to get current UTC time.
-- `make_secret()` to get a random string.
-- `_copier_answers` includes the current answers dict, but slightly modified to make it
-  suitable to [autoupdate your project safely](configuring.md#the-answers-file):
-  - It doesn't contain secret answers.
-  - It doesn't contain any data that is not easy to render to JSON or YAML.
-  - It contains special keys like `_commit` and `_src_path`, indicating how the last
-    template update was done.
-- `_copier_conf` includes the current copier `ConfigData` object, also slightly
-  modified:
-  - It only contains JSON-serializable data.
-  - But you have to serialize it with `[[ _copier_conf.json() ]]` instead of
-    `[[ _copier_conf|tojson ]]`.
-  - ⚠️ It contains secret answers inside its `.data` key.
-  - Modifying it doesn't alter the current rendering configuration.
+-   `now()` to get current UTC time.
+-   `make_secret()` to get a random string.
+-   `_copier_answers` includes the current answers dict, but slightly modified to make
+    it suitable to [autoupdate your project safely](configuring.md#the-answers-file):
+    -   It doesn't contain secret answers.
+    -   It doesn't contain any data that is not easy to render to JSON or YAML.
+    -   It contains special keys like `_commit` and `_src_path`, indicating how the last
+        template update was done.
+-   `_copier_conf` includes the current copier `ConfigData` object, also slightly
+    modified:
+    -   It only contains JSON-serializable data.
+    -   But you have to serialize it with `[[ _copier_conf.json() ]]` instead of
+        `[[ _copier_conf|tojson ]]`.
+    -   ⚠️ It contains secret answers inside its `.data` key.
+    -   Modifying it doesn't alter the current rendering configuration.
 
 ### Builtin filters
 
-- `anything|to_nice_yaml` to print as pretty-formatted YAML.
+-   `anything|to_nice_yaml` to print as pretty-formatted YAML.
 
-  Without arguments it defaults to:
-  `anything|to_nice_yaml(indent=2, width=80, allow_unicode=True)`, but you can modify
-  those.
+    Without arguments it defaults to:
+    `anything|to_nice_yaml(indent=2, width=80, allow_unicode=True)`, but you can modify
+    those.

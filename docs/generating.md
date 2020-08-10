@@ -18,8 +18,8 @@ copier.copy("path/to/project/template", "path/to/destination")
 
 The "template" parameter can be a local path, an URL, or a shortcut URL:
 
-- GitHub: `gh:namespace/project`
-- GitLab: `gl:namespace/project`
+-   GitHub: `gh:namespace/project`
+-   GitLab: `gl:namespace/project`
 
 Use the `--data` command-line argument or the `data` parameter of the `copier.copy()`
 function to pass whatever extra context you want to be available in the templates. The

@@ -34,11 +34,11 @@ this:
 ```yaml
 # .pre-commit-config.yaml
 repos:
-  - repo: local
-    hooks:
-      - id: forbidden-files
-        name: forbidden files
-        entry: found copier update rejection files; review them and remove them
-        language: fail
-        files: "\\.rej$"
+    - repo: local
+      hooks:
+          - id: forbidden-files
+            name: forbidden files
+            entry: found copier update rejection files; review them and remove them
+            language: fail
+            files: "\\.rej$"
 ```
