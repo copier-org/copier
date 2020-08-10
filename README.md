@@ -59,28 +59,6 @@ inspiration!
 
 If you want your template to appear in that list, just add the topic to it! 🏷
 
-## Comparison with other project generators
-
-### Cookiecutter
-
-Cookiecutter and Copier are quite similar in functionality, except that:
-
-- Cookiecutter uses a subdirectory to generate the project, while Copier can use either
-  the root directory (default) or a subdirectory.
-- Cookiecutter uses default Jinja templating characters: `{{`, `{%`, etc., while Copier
-  uses `[[`, `[%`, etc., and can be configured to change those.
-- Cookiecutter puts context variables in a namespace: `{{ cookiecutter.name }}`, while
-  Copier sets them directly: `[[ name ]]`.
-- You configure your template in `copier.yml` instead of `cookiecutter.json`.
-- Prompts are enhanced in Copier:
-  - Type-casting and verifications
-  - YAML native types + `json` and `yaml`
-  - Descriptions (help message for prompts)
-  - Conditional prompts (_soon_)
-- Copier has very useful features that are missing in Cookiecutter (or require extra
-  software), like the ability to **update a generated project** when the original
-  template changes, and to run **migrations** when updating.
-
 ## Credits
 
 Special thanks go to [jpscaletti](https://github.com/jpscaletti) for originally creating

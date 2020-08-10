@@ -7,6 +7,7 @@ repo_name: copier-org/copier
 nav:
   - Overview: "index.md"
   - Creating a template: "creating.md"
+  - Configuring a template: "configuring.md"
   - Generating a project: "generating.md"
   - Updating a project: "updating.md"
   - API:
@@ -21,6 +22,7 @@ nav:
           - tools.py: "api/reference/tools.md"
           - types.py: "api/reference/types.md"
           - vcs.py: "api/reference/vcs.md"
+  - Comparisons: comparisons.md
   - Contributing: "contributing.md"
   - Changelog: "changelog.md"
 

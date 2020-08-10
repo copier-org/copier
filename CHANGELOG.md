@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file. This project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+### Version 4.1.0 (2020-08-10)
+
+[All changes here](https://github.com/copier-org/copier/milestone/12?closed=1). Summary:
+
+- Make copier work fine with Git 2.28.
+- We have [docs](https://copier.readthedocs.io/)!
+- Polish docs a little bit.
+- We now run tests on macOS and Windows!
+
 ### Version 4.0.2 (2020-07-21)
 
 [All changes here](https://github.com/copier-org/copier/milestone/11?closed=1). Summary:
