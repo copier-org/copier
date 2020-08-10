@@ -30,9 +30,9 @@ The `copier.yml` (or `copier.yaml`) file is found in the root of the template, a
 the main entrypoint for managing your template configuration. It will be read and used
 for two purposes:
 
-- [Prompting the user for information](#questions).
-- [Applying template settings](#available-settings) (excluding files, setting arguments
-  defaults, etc.).
+-   [Prompting the user for information](#questions).
+-   [Applying template settings](#available-settings) (excluding files, setting
+    arguments defaults, etc.).
 
 ### Questions
 
@@ -65,77 +65,77 @@ to ask users for data. To use it, the value must be a dict.
 
 Supported keys:
 
-- **type**: User input must match this type. Options are: `bool`, `float`, `int`,
-  `json`, `str`, `yaml` (default).
-- **help**: Additional text to help the user know what's this question for.
-- **choices**: To restrict possible values.
-- **default**: Leave empty to force the user to answer. Provide a default to save him
-  from typing it if it's quite common. When using **choices**, the default must be the
-  choice _value_, not its _key_. If values are quite long, you can use
-  [YAML anchors](https://confluence.atlassian.com/bitbucket/yaml-anchors-960154027.html).
+-   **type**: User input must match this type. Options are: `bool`, `float`, `int`,
+    `json`, `str`, `yaml` (default).
+-   **help**: Additional text to help the user know what's this question for.
+-   **choices**: To restrict possible values.
+-   **default**: Leave empty to force the user to answer. Provide a default to save him
+    from typing it if it's quite common. When using **choices**, the default must be the
+    choice _value_, not its _key_. If values are quite long, you can use
+    [YAML anchors](https://confluence.atlassian.com/bitbucket/yaml-anchors-960154027.html).
 
 ```yaml
 love_copier:
-  type: bool # This makes Copier ask for y/n
-  help: Do you love Copier?
-  default: yes # Without a default, you force the user to answer
+    type: bool # This makes Copier ask for y/n
+    help: Do you love Copier?
+    default: yes # Without a default, you force the user to answer
 
 project_name:
-  type: str # Any value will be treated raw as a string
-  help: An awesome project needs an awesome name. Tell me yours.
-  default: paradox-specifier
+    type: str # Any value will be treated raw as a string
+    help: An awesome project needs an awesome name. Tell me yours.
+    default: paradox-specifier
 
 rocket_launch_password:
-  type: str
-  secret: true # This value will not be logged into .copier-answers.yml
-  default: my top secret password
+    type: str
+    secret: true # This value will not be logged into .copier-answers.yml
+    default: my top secret password
 
 # I'll avoid default and help here, but you can use them too
 age:
-  type: int
+    type: int
 
 height:
-  type: float
+    type: float
 
 any_json:
-  help: Tell me anything, but format it as a one-line JSON string
-  type: json
+    help: Tell me anything, but format it as a one-line JSON string
+    type: json
 
 any_yaml:
-  help: Tell me anything, but format it as a one-line YAML string
-  type: yaml # This is the default type, also for short syntax questions
+    help: Tell me anything, but format it as a one-line YAML string
+    type: yaml # This is the default type, also for short syntax questions
 
 your_favorite_book:
-  # User will type 1 or 2, but your template will get the value
-  choices:
-    - The Bible
-    - The Hitchhiker's Guide to the Galaxy
+    # User will type 1 or 2, but your template will get the value
+    choices:
+        - The Bible
+        - The Hitchhiker's Guide to the Galaxy
 
 project_license:
-  # User will type 1 or 2 and will see only the dict key, but you will
-  # get the dict value in your template
-  choices:
-    MIT: &mit_text |
-      Here I can write the full text of the MIT license.
-      This will be a long text, shortened here for example purposes.
-    Apache2: |
-      Full text of Apache2 license.
-  # When using choices, the default value is the value, **not** the key;
-  # that's why I'm using the YAML anchor declared above to avoid retyping the
-  # whole license
-  default: *mit_text
-  # You can still define the type, to make sure answers that come from --data
-  # CLI argument match the type that your template expects
-  type: str
+    # User will type 1 or 2 and will see only the dict key, but you will
+    # get the dict value in your template
+    choices:
+        MIT: &mit_text |
+            Here I can write the full text of the MIT license.
+            This will be a long text, shortened here for example purposes.
+        Apache2: |
+            Full text of Apache2 license.
+    # When using choices, the default value is the value, **not** the key;
+    # that's why I'm using the YAML anchor declared above to avoid retyping the
+    # whole license
+    default: *mit_text
+    # You can still define the type, to make sure answers that come from --data
+    # CLI argument match the type that your template expects
+    type: str
 
 close_to_work:
-  help: Do you live close to your work?
-  # This format works just like the dict one
-  choices:
-    - [at home, I work at home]
-    - [less than 10km, quite close]
-    - [more than 10km, not so close]
-    - [more than 100km, quite far away]
+    help: Do you live close to your work?
+    # This format works just like the dict one
+    choices:
+        - [at home, I work at home]
+        - [less than 10km, quite close]
+        - [more than 10km, not so close]
+        - [more than 100km, quite far away]
 ```
 
 #### Prompt templating
@@ -152,42 +152,42 @@ cannot use Jinja templating in your answers.
 ```yaml
 # default
 username:
-  type: str
+    type: str
 
 organization:
-  type: str
+    type: str
 
 email:
-  type: str
-  # Notice that both `username` and `organization` have been already asked
-  default: "[[ username ]]@[[ organization ]].com"
+    type: str
+    # Notice that both `username` and `organization` have been already asked
+    default: "[[ username ]]@[[ organization ]].com"
 
 # help
 copyright_holder:
-  type: str
-  help: The person or entity within [[ organization ]] that holds copyrights.
+    type: str
+    help: The person or entity within [[ organization ]] that holds copyrights.
 
 # type
 target:
-  type: str
-  choices:
-    - humans
-    - machines
+    type: str
+    choices:
+        - humans
+        - machines
 
 user_config:
-  type: "[% if target == 'humans' %]yaml[% else %]json[% endif %]"
+    type: "[% if target == 'humans' %]yaml[% else %]json[% endif %]"
 
 # choices
 title:
-  type: str
-  help: Your title within [[ organization ]]
+    type: str
+    help: Your title within [[ organization ]]
 
 contact:
-  choices:
-    Copyright holder: "[[ copyright_holder ]]"
-    CEO: Alice Bob
-    CTO: Carl Dave
-    "[[ title ]]": "[[ username ]]"
+    choices:
+        Copyright holder: "[[ copyright_holder ]]"
+        CEO: Alice Bob
+        CTO: Carl Dave
+        "[[ title ]]": "[[ username ]]"
 ```
 
 ### Include other YAML files
@@ -227,9 +227,9 @@ Remember that **the key must be prefixed with an underscore if you use it in
 
 ### `answers_file`
 
-- Format: `str`
-- CLI flags: `-a`, `--answers-file`
-- Default value: `.copier-answers.yml`
+-   Format: `str`
+-   CLI flags: `-a`, `--answers-file`
+-   Default value: `.copier-answers.yml`
 
 File where answers will be recorded by default. Remember to add that file to your Git
 template if you want to support updates.
@@ -244,9 +244,9 @@ _answers_file: .my-custom-answers.yml
 
 ### `data`
 
-- Format: `dict|List[str=str]`
-- CLI flags: `-d`, `--data`
-- Default value: N/A
+-   Format: `dict|List[str=str]`
+-   CLI flags: `-d`, `--data`
+-   Default value: N/A
 
 Give answers to questions through CLI/API.
 
@@ -262,10 +262,10 @@ copier -fd 'user_name=Manuel Calavera' copy template destination
 
 ### `exclude`
 
-- Format: `List[str]`
-- CLI flags: `-x`, `--exclude`
-- Default value:
-  `["copier.yaml", "copier.yml", "~*", "*.py[co]", "__pycache__", ".git", ".DS_Store", ".svn"]`
+-   Format: `List[str]`
+-   CLI flags: `-x`, `--exclude`
+-   Default value:
+    `["copier.yaml", "copier.yml", "~*", "*.py[co]", "__pycache__", ".git", ".DS_Store", ".svn"]`
 
 [Patterns](#patterns-syntax) for files/folders that must not be copied.
 
@@ -275,8 +275,8 @@ Example `copier.yml`:
 
 ```yaml
 _exclude:
-  - "*.bar"
-  - ".git"
+    - "*.bar"
+    - ".git"
 ```
 
 Example CLI usage to copy only a single file from the template:
@@ -287,9 +287,9 @@ copier --exclude '*' --exclude '!file-i-want' copy template destination
 
 ### `extra_paths`
 
-- Format: `List[str]`
-- CLI flags: `-p`, `--extra-paths`
-- Default value: N/A
+-   Format: `List[str]`
+-   CLI flags: `-p`, `--extra-paths`
+-   Default value: N/A
 
 Additional paths from where to search for templates.
 
@@ -297,14 +297,14 @@ Example `copier.yml`:
 
 ```yaml
 _extra_paths:
-  - ~/Projects/templates
+    - ~/Projects/templates
 ```
 
 ### `force`
 
-- Format: `bool`
-- CLI flags: `-q`, `--force`
-- Default value: `False`
+-   Format: `bool`
+-   CLI flags: `-q`, `--force`
+-   Default value: `False`
 
 Overwrite files that already exist, without asking.
 
@@ -315,20 +315,20 @@ It makes no sense to define this in `copier.yml`.
 
 ### `migrations`
 
-- Format: `List[dict]`
-- CLI flags: N/A
-- Default value: N/A
+-   Format: `List[dict]`
+-   CLI flags: N/A
+-   Default value: N/A
 
 Migrations are like [tasks](#tasks), but each item in the list is a `dict` with these
 keys:
 
-- **version**: Indicates the version that the template update has to go through to
-  trigger this migration. It is evaluated using
-  [PEP 440](https://www.python.org/dev/peps/pep-0440/).
-- **before** (optional): Commands to execute before performing the update. The answers
-  file is reloaded after running migrations in this stage, to let you migrate answer
-  values.
-- **after** (optional): Commands to execute after performing the update.
+-   **version**: Indicates the version that the template update has to go through to
+    trigger this migration. It is evaluated using
+    [PEP 440](https://www.python.org/dev/peps/pep-0440/).
+-   **before** (optional): Commands to execute before performing the update. The answers
+    file is reloaded after running migrations in this stage, to let you migrate answer
+    values.
+-   **after** (optional): Commands to execute after performing the update.
 
 Migrations will run in the same order as declared here (so you could even run a
 migration for a higher version before running a migration for a lower version if the
@@ -347,20 +347,20 @@ Example `copier.yml`:
 
 ```yaml
 _migrations:
-  - version: v1.0.0
-    before:
-      - rm ./old-folder
-    after:
-      # [[ _copier_conf.src_path ]] points to the path where the template was
-      # cloned, so it can be helpful to run migration scripts stored there.
-      - invoke -r [[ _copier_conf.src_path ]] -c migrations migrate $VERSION_CURRENT
+    - version: v1.0.0
+      before:
+          - rm ./old-folder
+      after:
+          # [[ _copier_conf.src_path ]] points to the path where the template was
+          # cloned, so it can be helpful to run migration scripts stored there.
+          - invoke -r [[ _copier_conf.src_path ]] -c migrations migrate $VERSION_CURRENT
 ```
 
 ### `min_copier_version`
 
-- Format: `str`
-- CLI flags: N/A
-- Default value: N/A
+-   Format: `str`
+-   CLI flags: N/A
+-   Default value: N/A
 
 Specifies the minimum required version of Copier to generate a project from this
 template. The version must be follow the
@@ -376,9 +376,9 @@ _min_copier_version: "4.1.0"
 
 ### `pretend`
 
-- Format: `bool`
-- CLI flags: `-q`, `--pretend`
-- Default value: `False`
+-   Format: `bool`
+-   CLI flags: `-q`, `--pretend`
+-   Default value: `False`
 
 Run but do not make any changes.
 
@@ -386,9 +386,9 @@ It makes no sense to define this in `copier.yml`.
 
 ### `quiet`
 
-- Format: `bool`
-- CLI flags: `-q`, `--quiet`
-- Default value: `False`
+-   Format: `bool`
+-   CLI flags: `-q`, `--quiet`
+-   Default value: `False`
 
 Suppress status output.
 
@@ -396,9 +396,9 @@ It makes no sense to define this in `copier.yml`.
 
 ### `skip_if_exists`
 
-- Format: `List[str]`
-- CLI flags: `-s`, `--skip`
-- Default value: N/A
+-   Format: `List[str]`
+-   CLI flags: `-s`, `--skip`
+-   Default value: N/A
 
 [Patterns](#patterns-syntax) for files/folders that must be skipped if they already
 exist.
@@ -418,9 +418,9 @@ _skip_if_exists: .secret_password.yml
 
 ### `subdirectory`
 
-- Format: `str`
-- CLI flags: `-b`, `--subdirectory`
-- Default value: N/A
+-   Format: `str`
+-   CLI flags: `-b`, `--subdirectory`
+-   Default value: N/A
 
 Subdirectory to use as the template root when generating a project. If not specified,
 the root of the template is used.
@@ -439,9 +439,9 @@ copier --subdirectory template2 -b copy template destination
 
 ### `tasks`
 
-- Format: `List[str|List[str]]`
-- CLI flags: N/A
-- Default value: N/A
+-   Format: `List[str|List[str]]`
+-   CLI flags: N/A
+-   Default value: N/A
 
 Commands to execute after generating or updating a project from your template.
 
@@ -453,21 +453,21 @@ Example `copier.yml`:
 
 ```yaml
 _tasks:
-  # Strings get executed under system's default shell
-  - "git init"
-  - "rm [[ name_of_the_project ]]/README.md"
-  # Arrays are executed without shell, saving you the work of escaping arguments
-  - [invoke, "--search-root=[[ _copier_conf.src_path ]]", after-copy]
-  # You are able to output the full conf to JSON, to be parsed by your script,
-  # but you cannot use the normal `|tojson` filter; instead, use `.json()`
-  - [invoke, end-process, "--full-conf=[[ _copier_conf.json() ]]"]
+    # Strings get executed under system's default shell
+    - "git init"
+    - "rm [[ name_of_the_project ]]/README.md"
+    # Arrays are executed without shell, saving you the work of escaping arguments
+    - [invoke, "--search-root=[[ _copier_conf.src_path ]]", after-copy]
+    # You are able to output the full conf to JSON, to be parsed by your script,
+    # but you cannot use the normal `|tojson` filter; instead, use `.json()`
+    - [invoke, end-process, "--full-conf=[[ _copier_conf.json() ]]"]
 ```
 
 ### `templates_suffix`
 
-- Format: `str`
-- CLI flags: N/A
-- Default value: `.tmpl`
+-   Format: `str`
+-   CLI flags: N/A
+-   Default value: `.tmpl`
 
 Suffix that instructs which files are to be processed by Jinja as templates.
 
@@ -479,9 +479,9 @@ _templates_suffix: .jinja
 
 ### `vcs_ref`
 
-- Format: `str`
-- CLI flags: `-r`, `-vcs-ref`
-- Default value: N/A (use latest release)
+-   Format: `str`
+-   CLI flags: `-r`, `-vcs-ref`
+-   Default value: N/A (use latest release)
 
 When copying or updating from a git-versioned template, indicate which template version
 to copy.
@@ -510,10 +510,10 @@ files ending with `txt` from being copied to the destination folder, except the 
 
 ```yaml
 _exclude:
-  # match all text files...
-  - "*.txt"
-  # .. but not this one:
-  - "!a.txt"
+    # match all text files...
+    - "*.txt"
+    # .. but not this one:
+    - "!a.txt"
 ```
 
 ## The `.copier-answers.yml` file
