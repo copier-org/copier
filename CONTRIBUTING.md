@@ -5,7 +5,7 @@ credit will always be given.
 
 ## Report Bugs
 
-Report bugs at <https://github.com/jpscaletti/copier/issues>.
+Report bugs at <https://github.com/copier-org/copier/issues>.
 
 If you are reporting a bug, please include:
 
@@ -31,7 +31,7 @@ docs, or even on the web in blog posts, articles, and such.
 ## Submit Feedback
 
 The best way to send feedback is to file an issue at
-<https://github.com/jpscaletti/copier/issues>.
+<https://github.com/copier-org/copier/issues>.
 
 If you are proposing a feature:
 
@@ -48,7 +48,7 @@ Ready to contribute? Here's how to set up the project for local development.
 2.  Clone your fork locally:
 
 ```bash
-git clone git@github.com:jpscaletti/copier.git
+git clone git@github.com:copier-org/copier.git
 ```
 
 3.  Install your local copy into a virtualenv.
