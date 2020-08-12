@@ -6,6 +6,8 @@ on:
     branches: [master]
   release:
     types: [created]
+  workflow_dispatch: {}
+
 env:
   LANG: "en_US.utf-8"
   LC_ALL: "en_US.utf-8"
