@@ -59,7 +59,7 @@ version = "0.2.0"
 category = "main"
 description = "Screen-scraping library"
 name = "beautifulsoup4"
-optional = true
+optional = false
 python-versions = "*"
 version = "4.9.1"
 
@@ -244,7 +244,7 @@ pycodestyle = "*"
 category = "main"
 description = "Clean single-source support for Python 3 and 2"
 name = "future"
-optional = true
+optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 version = "0.18.2"
 
@@ -392,7 +392,7 @@ category = "main"
 description = "Lightweight pipelining: using Python functions as pipeline jobs."
 marker = "python_version > \"2.7\""
 name = "joblib"
-optional = true
+optional = false
 python-versions = ">=3.6"
 version = "0.16.0"
 
@@ -400,7 +400,7 @@ version = "0.16.0"
 category = "main"
 description = "Python LiveReload is an awesome tool for web developers"
 name = "livereload"
-optional = true
+optional = false
 python-versions = "*"
 version = "2.6.2"
 
@@ -415,7 +415,7 @@ version = "*"
 category = "main"
 description = "A Python implementation of Lunr.js"
 name = "lunr"
-optional = true
+optional = false
 python-versions = "*"
 version = "0.5.8"
 
@@ -435,7 +435,7 @@ languages = ["nltk (>=3.2.5,<3.5)", "nltk (>=3.2.5)"]
 category = "main"
 description = "Python implementation of Markdown."
 name = "markdown"
-optional = true
+optional = false
 python-versions = ">=3.5"
 version = "3.2.2"
 
@@ -467,7 +467,7 @@ version = "0.6.1"
 category = "main"
 description = "Project documentation with Markdown."
 name = "mkdocs"
-optional = true
+optional = false
 python-versions = ">=3.5"
 version = "1.1.2"
 
@@ -487,9 +487,9 @@ version = "0.5.8"
 category = "main"
 description = "A Material Design theme for MkDocs"
 name = "mkdocs-material"
-optional = true
+optional = false
 python-versions = "*"
-version = "5.5.2"
+version = "5.5.5"
 
 [package.dependencies]
 Pygments = ">=2.4"
@@ -502,7 +502,7 @@ pymdown-extensions = ">=7.0"
 category = "main"
 description = "Extension pack for Python Markdown."
 name = "mkdocs-material-extensions"
-optional = true
+optional = false
 python-versions = ">=3.5"
 version = "1.0"
 
@@ -513,7 +513,7 @@ mkdocs-material = ">=5.0.0"
 category = "main"
 description = "Automatic documentation from sources, for MkDocs."
 name = "mkdocstrings"
-optional = true
+optional = false
 python-versions = ">=3.6,<4.0"
 version = "0.12.2"
 
@@ -560,7 +560,7 @@ category = "main"
 description = "Natural Language Toolkit"
 marker = "python_version > \"2.7\""
 name = "nltk"
-optional = true
+optional = false
 python-versions = "*"
 version = "3.5"
 
@@ -762,7 +762,7 @@ version = "2.6.1"
 category = "main"
 description = "Extension pack for Python Markdown."
 name = "pymdown-extensions"
-optional = true
+optional = false
 python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*"
 version = "7.1"
 
@@ -863,7 +863,7 @@ testing = ["filelock"]
 category = "main"
 description = "Load Python objects documentation."
 name = "pytkdocs"
-optional = true
+optional = false
 python-versions = ">=3.6,<4.0"
 version = "0.7.0"
 
@@ -891,7 +891,7 @@ all = ["toml"]
 toml = ["toml"]
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Alternative regular expression module, to replace re."
 name = "regex"
 optional = false
@@ -910,7 +910,7 @@ version = "1.15.0"
 category = "main"
 description = "A modern CSS selector implementation for Beautiful Soup."
 name = "soupsieve"
-optional = true
+optional = false
 python-versions = "*"
 version = "1.9.6"
 
@@ -926,7 +926,7 @@ version = "0.10.1"
 category = "main"
 description = "Tornado is a Python web framework and asynchronous networking library, originally developed at FriendFeed."
 name = "tornado"
-optional = true
+optional = false
 python-versions = ">= 3.5"
 version = "6.0.4"
 
@@ -935,7 +935,7 @@ category = "main"
 description = "Fast, Extensible Progress Meter"
 marker = "python_version > \"2.7\""
 name = "tqdm"
-optional = true
+optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*"
 version = "4.48.1"
 
@@ -1027,7 +1027,7 @@ testing = ["jaraco.itertools", "func-timeout"]
 docs = ["mkdocs", "mkdocstrings", "mkdocs-material"]
 
 [metadata]
-content-hash = "fd11d6ca7f81e5d73c3a0d41bcbf4827db0ec7eca12f48372006ad060ff8d7a2"
+content-hash = "321a33f34540934e7ae3be15dd616764f62b40ee60a5509d065047071bd4c1ee"
 lock-version = "1.0"
 python-versions = "^3.6"
 
@@ -1249,8 +1249,8 @@ mkdocs = [
     {file = "mkdocs-1.1.2.tar.gz", hash = "sha256:f0b61e5402b99d7789efa032c7a74c90a20220a9c81749da06dbfbcbd52ffb39"},
 ]
 mkdocs-material = [
-    {file = "mkdocs-material-5.5.2.tar.gz", hash = "sha256:48fe20256fddf4a45a0db76d14c1e3b2e631d48e1868b2939b98c0dcdabbea6f"},
-    {file = "mkdocs_material-5.5.2-py2.py3-none-any.whl", hash = "sha256:362f4e04b381622f004ba146b533686766370cb19a98c917763a4cf5698dca7f"},
+    {file = "mkdocs-material-5.5.5.tar.gz", hash = "sha256:22fa5d626c55f8019f54633f76a244f920d5b5cd79f10b21db85e64ad4255a1d"},
+    {file = "mkdocs_material-5.5.5-py2.py3-none-any.whl", hash = "sha256:9f4dde07196726a06139c37af7851059d6b3cb4e3236a44c6ea11ad3ef41aa2b"},
 ]
 mkdocs-material-extensions = [
     {file = "mkdocs-material-extensions-1.0.tar.gz", hash = "sha256:17d7491e189af75700310b7ec33c6c48a22060b8b445001deca040cb60471cde"},
