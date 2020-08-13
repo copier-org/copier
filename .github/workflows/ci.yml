@@ -29,6 +29,12 @@ jobs:
             python-version: 3.8
     runs-on: ${{ matrix.os }}
     steps:
+      # HACK https://github.com/actions/cache/issues/315
+      - name: Enable msys binaries
+        if: ${{ runner.os == 'Windows' }}
+        run: |
+          echo "::add-path::C:\msys64\usr\bin"
+          rm C:\msys64\usr\bin\bash.exe
       - run: git config --global user.name copier-ci
         shell: bash
       - run: git config --global user.email copier@copier
@@ -46,8 +52,6 @@ jobs:
           echo "::set-env name=PY::$((python -VV; pip freeze) | sha256sum | cut -d' '
           -f1)"
       - uses: actions/cache@v2.1.0
-        # HACK https://github.com/actions/cache/issues/315
-        if: ${{ runner.os != 'Windows' }}
         with:
           path: |
             .cache
