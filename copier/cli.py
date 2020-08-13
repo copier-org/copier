@@ -1,12 +1,24 @@
 #!/usr/bin/env python
 """
-Command line entrypoint.
+Command line entrypoint. This module declares the Copier CLI applications.
 
-This module declares the Plumbum CLI application, its subcommand and options.
+Basically, there are 3 different commands you can run:
+
+-   [`copier`][copier.cli.CopierApp], the main app, which includes shortcuts
+    for the `copy` and `update` subapps.
+-   [`copier copy`][copier.cli.CopierApp], used to bootstrap a new project
+    from a template.
+-   [`copier update`][copier.cli.CopierUpdateSubApp] to update a preexisting
+    project to a newer version of its template.
+
+Below are the docs of each one of those.
 """
 
 import sys
+from functools import wraps
+from io import StringIO
 from textwrap import dedent
+from unittest.mock import patch
 
 from plumbum import cli, colors
 
@@ -19,6 +31,7 @@ from .types import AnyByStrDict, List, OptStr
 def handle_exceptions(method):
     """Handle keyboard interruption while running a method."""
 
+    @wraps(method)
     def _wrapper(*args, **kwargs):
         try:
             try:
@@ -33,32 +46,42 @@ def handle_exceptions(method):
 
 
 class CopierApp(cli.Application):
-    """The Plumbum CLI application.
+    """The Copier CLI application.
 
     Attributes:
-        answers_file: The switch for the answers file option.
-        extra_paths: The switch for the extra paths option.
-        exclude: The switch for the exclude option.
-        vcs_ref: The switch for the VCS ref option.
-        subdirectory: The switch for the subdirectory option.
-        pretend: The flag for the pretend option.
-        force: The flag for the force option.
-        skip: The flag for the skip option.
-        quiet: The flag for the quiet option.
-        only_diff: The flag for the only diff option.
+        answers_file: Set [answers_file][] option.
+        extra_paths: Set [extra_paths][] option.
+        exclude: Set [exclude][] option.
+        vcs_ref: Set [vcs_ref][] option.
+        subdirectory: Set [subdirectory][] option.
+        pretend: Set [pretend][] option.
+        force: Set [force][] option.
+        skip: Set [skip_if_exists][] option.
+        quiet: Set [quiet][] option.
     """
 
     DESCRIPTION = "Create a new project from a template."
-    DESCRIPTION_MORE = colors.yellow | dedent(
-        """
-        WARNING! Use only trusted project templates, as they might
-        execute code with the same level of access as your user.\n
-        """
+    DESCRIPTION_MORE = (
+        dedent(
+            """\
+            Docs in https://copier.readthedocs.io/
+
+            """
+        )
+        + (
+            colors.yellow
+            | dedent(
+                """\
+                WARNING! Use only trusted project templates, as they might
+                execute code with the same level of access as your user.\n
+                """
+            )
+        )
     )
     USAGE = dedent(
-        """
-        copier [SWITCHES] [copy] template_src destination_path
-        copier [SWITCHES] [update] [destination_path]
+        """\
+        copier [MAIN_SWITCHES] [copy] [SUB_SWITCHES] template_src destination_path
+        copier [MAIN_SWITCHES] [update] [SUB_SWITCHES] [destination_path]
         """
     )
     VERSION = __version__
@@ -126,8 +149,7 @@ class CopierApp(cli.Application):
         help="Make VARIABLE available as VALUE when rendering the template",
     )
     def data_switch(self, values: List[str]) -> None:
-        """
-        Update data with provided values.
+        """Update [data][] with provided values.
 
         Arguments:
             values: The list of values to apply.
@@ -162,7 +184,19 @@ class CopierApp(cli.Application):
 
     @handle_exceptions
     def main(self, *args: str) -> int:
-        """Copier shortcuts."""
+        """Copier CLI app shortcuts.
+
+        This method redirects abstract CLI calls
+        (those that don't specify `copy` or `update`)
+        to [CopierCopySubApp.main][copier.cli.CopierCopySubApp.main]
+        or [CopierUpdateSubApp.main][copier.cli.CopierUpdateSubApp.main]
+        automatically.
+
+        Examples:
+            - `copier from to` → `copier copy from to`
+            - `copier from` → `copier update from`
+            - `copier` → `copier update .`
+        """
         # Redirect to subcommand if supplied
         if args and args[0] in self._subcommands:
             self.nested_command = (
@@ -190,36 +224,53 @@ class CopierApp(cli.Application):
 
 @CopierApp.subcommand("copy")
 class CopierCopySubApp(cli.Application):
-    """The `copy` subcommand."""
+    """The `copier copy` subcommand.
 
-    DESCRIPTION = "Copy form a template source to a destination"
+    Use this subcommand to bootstrap a new subproject from a template.
+    """
+
+    DESCRIPTION = "Copy form a template source to a destination."
 
     @handle_exceptions
     def main(self, template_src: str, destination_path: str) -> int:
-        """The code of the `copy` subcommand."""
+        """Call [`copy`][copier.main.copy] in copy mode.
+
+        Params:
+            template_src:
+                Indicate where to get the template from.
+
+                This can be a git URL or a local path.
+
+            destination_path:
+                Where to generate the new subproject. It must not exist or be empty.
+        """
         self.parent._copy(template_src, destination_path)
         return 0
 
 
 @CopierApp.subcommand("update")
 class CopierUpdateSubApp(cli.Application):
-    """
-    The `update` subcommand.
+    """The `copier update` subcommand.
+
+    Use this subcommand to update an existing subrpoject from a template
+    that supports updates.
 
     Attributes:
-        only_diff: The flag for the only diff option.
+        only_diff: Set [only_diff][] option.
     """
 
     DESCRIPTION = "Update a copy from its original template"
-    DESCRIPTION_MORE = """
-    The copy must have a valid answers file which contains info
-    from the last Copier execution, including the source template
-    (it must be a key called `_src_path`).
+    DESCRIPTION_MORE = dedent(
+        """\
+        The copy must have a valid answers file which contains info
+        from the last Copier execution, including the source template
+        (it must be a key called `_src_path`).
 
-    If that file contains also `_commit` and `destination_path` is a git
-    repository, this command will do its best to respect the diff that you have
-    generated since the last `copier` execution. To disable that, use `--no-diff`.
-    """
+        If that file contains also `_commit` and `destination_path` is a git
+        repository, this command will do its best to respect the diff that you have
+        generated since the last `copier` execution. To disable that, use `--no-diff`.
+        """
+    )
 
     only_diff: cli.Flag = cli.Flag(
         ["-D", "--no-diff"], default=True, help="Disable smart diff detection."
@@ -227,12 +278,29 @@ class CopierUpdateSubApp(cli.Application):
 
     @handle_exceptions
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
-        """The code of the `update` subcommand."""
+        """Call [`copy`][copier.main.copy] in update mode.
+
+        Parameters:
+            destination_path:
+                Only the destination path is needed to update, because the
+                `src_path` comes from [the answers file][the-copier-answersyml-file].
+
+                The subproject must exist. If not specified, the currently
+                working directory is used.
+        """
         self.parent._copy(
             dst_path=destination_path, only_diff=self.only_diff,
         )
         return 0
 
+
+# Add --help-all results to docs
+if __doc__:
+    help_io = StringIO()
+    with patch("sys.stdout", help_io):
+        CopierApp.run(["copier", "--help-all"], exit=False)
+    help_io.seek(0)
+    __doc__ += f"\n\nCLI help generated from `copier --help-all`:\n\n```\n{help_io.read()}\n```"
 
 if __name__ == "__main__":
     CopierApp.run()

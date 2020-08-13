@@ -374,6 +374,22 @@ Example `copier.yml`:
 _min_copier_version: "4.1.0"
 ```
 
+### `only_diff`
+
+-   Format: `bool`
+-   CLI flags: `-D`, `--no-diff` (used to disable this setting; only available in
+    `copier update` subcommand)
+-   Default value: `True`
+
+When doing an update, by default Copier will do its best to understand how the template
+has evolved since the last time you updated it, and will try to apply only that diff to
+your subproject, respecting the subproject's own evolution as much as possible.
+
+Update with `only_diff=False` to avoid this behavior and let Copier override any changes
+in the subproject.
+
+It makes no sense to define this in `copier.yml`.
+
 ### `pretend`
 
 -   Format: `bool`
