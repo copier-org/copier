@@ -8,7 +8,7 @@ from packaging import version
 from plumbum import TF, colors, local
 from plumbum.cmd import git
 
-from .types import OptStr, StrOrPath
+from .types import OptBool, OptStr, StrOrPath
 
 __all__ = ("get_repo", "clone")
 
@@ -56,10 +56,21 @@ def get_repo(url: str) -> OptStr:
     return url
 
 
-def checkout_latest_tag(local_repo: StrOrPath) -> str:
-    """Checkout latest git tag and check it out, sorted by PEP 440."""
+def checkout_latest_tag(local_repo: StrOrPath, use_prereleases: OptBool = False) -> str:
+    """Checkout latest git tag and check it out, sorted by PEP 440.
+
+    Parameters:
+        local_repo:
+            A git repository in the local filesystem.
+        use_prereleases:
+            If `False`, skip prerelease git tags.
+    """
     with local.cwd(local_repo):
         all_tags = git("tag").split()
+        if not use_prereleases:
+            all_tags = filter(
+                lambda tag: not version.parse(tag).is_prerelease, all_tags
+            )
         sorted_tags = sorted(all_tags, key=version.parse, reverse=True)
         try:
             latest_tag = str(sorted_tags[0])
