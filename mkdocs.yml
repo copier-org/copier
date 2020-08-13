@@ -1,6 +1,8 @@
 site_name: copier
 site_description: Library and command-line utility for rendering projects templates.
-site_url: https://copier.readthedocs.io/
+# HACK https://github.com/pawamoy/mkdocstrings/issues/144
+# TODO Change to https://copier.readthedocs.io/ when fixed
+site_url: https://copier.readthedocs.io/en/latest/
 repo_url: https://github.com/copier-org/copier
 repo_name: copier-org/copier
 
