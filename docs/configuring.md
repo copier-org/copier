@@ -311,7 +311,9 @@ Overwrite files that already exist, without asking.
 Also don't ask questions to the user; just use default values
 [obtained from other sources](#configuration-sources).
 
-It makes no sense to define this in `copier.yml`.
+Info:
+
+    It makes no sense to define this in `copier.yml`.
 
 ### `migrations`
 
@@ -398,7 +400,9 @@ It makes no sense to define this in `copier.yml`.
 
 Run but do not make any changes.
 
-It makes no sense to define this in `copier.yml`.
+Info:
+
+    It makes no sense to define this in `copier.yml`.
 
 ### `quiet`
 
@@ -408,7 +412,9 @@ It makes no sense to define this in `copier.yml`.
 
 Suppress status output.
 
-It makes no sense to define this in `copier.yml`.
+Info:
+
+    It makes no sense to define this in `copier.yml`.
 
 ### `skip_if_exists`
 
@@ -493,6 +499,29 @@ Example `copier.yml`:
 _templates_suffix: .jinja
 ```
 
+### `use_prereleases`
+
+-   Format: `bool`
+-   CLI flags: `g`, `--prereleases`
+-   Default value: `False`
+
+Imagine that the template supports updates and contains these 2 git tags: `v1.0.0` and
+`v2.0.0a1`. Copier will copy by default `v1.0.0` unless you add `--prereleases`.
+
+<!-- prettier-ignore-start -->
+Also, if you run [`copier update`][copier.cli.CopierUpdateSubApp], Copier would ignore
+the `v2.0.0a1` tag unless this flag is enabled.
+<!-- prettier-ignore-end -->
+
+Warning:
+
+    This behavior is new from Copier 5.0.0. Before that release, prereleases were never
+    ignored.
+
+Info:
+
+    It makes no sense to define this in `copier.yml`.
+
 ### `vcs_ref`
 
 -   Format: `str`
@@ -508,7 +537,9 @@ This is stored automatically in the answers file, like this:
 _vcs_ref: v1.0.0
 ```
 
-It makes no sense to define this in `copier.yml`.
+Info:
+
+    It makes no sense to define this in `copier.yml`.
 
 By default, copier will copy from the last release found in template git tags, sorted as
 [PEP 440](https://www.python.org/dev/peps/pep-0440/).

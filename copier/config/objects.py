@@ -86,6 +86,7 @@ class ConfigData(BaseModel):
     pretend: StrictBool = False
     quiet: StrictBool = False
     skip: StrictBool = False
+    use_prereleases: StrictBool = False
     vcs_ref: OptStr
     migrations: Sequence[Migrations] = ()
     secret_questions: StrSeq = ()

@@ -134,3 +134,80 @@ def test_pre_migration_modifies_answers(tmp_path_factory):
         assert "best_song" not in answers
         assert answers["best_song_list"] == ["la vie en rose"]
         assert json.loads(Path("songs.json").read_text()) == ["la vie en rose"]
+
+
+def test_prereleases(tmp_path: Path):
+    """Test prereleases support for copying and updating."""
+    src, dst = tmp_path / "src", tmp_path / "dst"
+    src.mkdir()
+    with local.cwd(src):
+        # Build template in v1.0.0
+        build_file_tree(
+            {
+                "version.txt": "v1.0.0",
+                "[[ _copier_conf.answers_file ]].tmpl": "[[_copier_answers|to_nice_yaml]]",
+                "copier.yaml": """
+                    _migrations:
+                      - version: v1.9
+                        before:
+                          - [python, -c, "import pathlib; pathlib.Path('v1.9').touch()"]
+                      - version: v2.dev0
+                        before:
+                          - [python, -c, "import pathlib; pathlib.Path('v2.dev0').touch()"]
+                      - version: v2.dev2
+                        before:
+                          - [python, -c, "import pathlib; pathlib.Path('v2.dev2').touch()"]
+                      - version: v2.a1
+                        before:
+                          - [python, -c, "import pathlib; pathlib.Path('v2.a1').touch()"]
+                      - version: v2.a2
+                        before:
+                          - [python, -c, "import pathlib; pathlib.Path('v2.a2').touch()"]
+                """,
+            }
+        )
+        git("init")
+        git("add", ".")
+        git("commit", "-mv1")
+        git("tag", "v1.0.0")
+        # Evolve template to v2.0.0.dev1
+        build_file_tree({"version.txt": "v2.0.0.dev1"})
+        git("commit", "-amv2dev1")
+        git("tag", "v2.0.0.dev1")
+        # Evolve template to v2.0.0.alpha1
+        build_file_tree({"version.txt": "v2.0.0.alpha1"})
+        git("commit", "-amv2a1")
+        git("tag", "v2.0.0.alpha1")
+    # Copying with use_prereleases=False copies v1
+    copy(src_path=str(src), dst_path=dst, force=True)
+    answers = yaml.load((dst / ".copier-answers.yml").read_text())
+    assert answers["_commit"] == "v1.0.0"
+    assert (dst / "version.txt").read_text() == "v1.0.0"
+    assert not (dst / "v1.9").exists()
+    assert not (dst / "v2.dev0").exists()
+    assert not (dst / "v2.dev2").exists()
+    assert not (dst / "v2.a1").exists()
+    assert not (dst / "v2.a2").exists()
+    with local.cwd(dst):
+        # Commit subproject
+        git("init")
+        git("add", ".")
+        git("commit", "-mv1")
+        # Update it without prereleases; nothing changes
+        copy(force=True)
+        assert not git("status", "--porcelain")
+    assert not (dst / "v1.9").exists()
+    assert not (dst / "v2.dev0").exists()
+    assert not (dst / "v2.dev2").exists()
+    assert not (dst / "v2.a1").exists()
+    assert not (dst / "v2.a2").exists()
+    # Update it with prereleases
+    copy(dst_path=dst, force=True, use_prereleases=True)
+    answers = yaml.load((dst / ".copier-answers.yml").read_text())
+    assert answers["_commit"] == "v2.0.0.alpha1"
+    assert (dst / "version.txt").read_text() == "v2.0.0.alpha1"
+    assert (dst / "v1.9").exists()
+    assert (dst / "v2.dev0").exists()
+    assert (dst / "v2.dev2").exists()
+    assert (dst / "v2.a1").exists()
+    assert not (dst / "v2.a2").exists()

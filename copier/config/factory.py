@@ -65,6 +65,7 @@ def make_config(
     cleanup_on_error: OptBool = None,
     vcs_ref: OptStr = None,
     subdirectory: OptStr = None,
+    use_prereleases: OptBool = False,
     **kwargs,
 ) -> ConfigData:
     """Provides the configuration object, merged from the different sources.
@@ -93,7 +94,7 @@ def make_config(
         repo = vcs.get_repo(src_path)
         if repo:
             src_path = vcs.clone(repo, vcs_ref or "HEAD")
-            vcs_ref = vcs_ref or vcs.checkout_latest_tag(src_path)
+            vcs_ref = vcs_ref or vcs.checkout_latest_tag(src_path, use_prereleases)
             with local.cwd(src_path):
                 init_args["commit"] = git("describe", "--tags", "--always").strip()
         init_args["src_path"] = src_path

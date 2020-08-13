@@ -57,6 +57,7 @@ class CopierApp(cli.Application):
         pretend: Set [pretend][] option.
         force: Set [force][] option.
         skip: Set [skip_if_exists][] option.
+        prereleases: Set [use_prereleases][] option.
         quiet: Set [quiet][] option.
     """
 
@@ -140,6 +141,9 @@ class CopierApp(cli.Application):
         ["-s", "--skip"], help="Skip files that already exist, without asking"
     )
     quiet: cli.Flag = cli.Flag(["-q", "--quiet"], help="Suppress status output")
+    prereleases: cli.Flag = cli.Flag(
+        ["-g", "--prereleases"], help="Use prereleases to compare template VCS tags.",
+    )
 
     @cli.switch(
         ["-d", "--data"],
@@ -179,6 +183,7 @@ class CopierApp(cli.Application):
             src_path=src_path,
             vcs_ref=self.vcs_ref,
             subdirectory=self.subdirectory,
+            use_prereleases=self.prereleases,
             **kwargs,
         )
 

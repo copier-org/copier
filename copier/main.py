@@ -58,6 +58,7 @@ def copy(
     vcs_ref: OptStr = None,
     only_diff: OptBool = True,
     subdirectory: OptStr = None,
+    use_prereleases: OptBool = False,
 ) -> None:
     """
     Uses the template in `src_path` to generate a new project at `dst_path`.
@@ -125,6 +126,8 @@ def copy(
 
         subdirectory:
             Specify a subdirectory to use when generating the project.
+
+        use_prereleases: See [use_prereleases][].
     """
     conf = make_config(**locals())
     is_update = conf.original_src_path != conf.src_path and vcs.is_git_repo_root(
