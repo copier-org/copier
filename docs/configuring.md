@@ -311,7 +311,7 @@ Overwrite files that already exist, without asking.
 Also don't ask questions to the user; just use default values
 [obtained from other sources](#configuration-sources).
 
-Info:
+!!! info
 
     It makes no sense to define this in `copier.yml`.
 
@@ -400,7 +400,7 @@ It makes no sense to define this in `copier.yml`.
 
 Run but do not make any changes.
 
-Info:
+!!! info
 
     It makes no sense to define this in `copier.yml`.
 
@@ -412,7 +412,7 @@ Info:
 
 Suppress status output.
 
-Info:
+!!! info
 
     It makes no sense to define this in `copier.yml`.
 
@@ -513,12 +513,12 @@ Also, if you run [`copier update`][copier.cli.CopierUpdateSubApp], Copier would 
 the `v2.0.0a1` tag unless this flag is enabled.
 <!-- prettier-ignore-end -->
 
-Warning:
+!!! warning
 
-    This behavior is new from Copier 5.0.0. Before that release, prereleases were never
-    ignored.
+    This behavior is new from Copier 5.0.0. Before that release, prereleases were
+    never ignored.
 
-Info:
+!!! info
 
     It makes no sense to define this in `copier.yml`.
 
@@ -537,7 +537,7 @@ This is stored automatically in the answers file, like this:
 _vcs_ref: v1.0.0
 ```
 
-Info:
+!!! info
 
     It makes no sense to define this in `copier.yml`.
 
