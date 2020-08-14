@@ -10,6 +10,7 @@ from plumbum import local
 from plumbum.cmd import git
 
 from copier import copy
+from copier.config.objects import UserMessageError
 
 from .helpers import PROJECT_TEMPLATE, build_file_tree
 
@@ -211,3 +212,6 @@ def test_prereleases(tmp_path: Path):
     assert (dst / "v2.dev2").exists()
     assert (dst / "v2.a1").exists()
     assert not (dst / "v2.a2").exists()
+    # It should fail if downgrading
+    with pytest.raises(UserMessageError):
+        copy(dst_path=dst, force=True)

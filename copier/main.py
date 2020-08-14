@@ -9,6 +9,7 @@ import tempfile
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
+from packaging.version import InvalidVersion, Version
 from plumbum import ProcessExecutionError, colors, local
 from plumbum.cli.terminal import ask
 from plumbum.cmd import git
@@ -222,6 +223,22 @@ def update_diff(conf: ConfigData) -> None:
                     "Please commit or stash your local changes and retry."
                 )
     last_answers = load_answersfile_data(conf.dst_path, conf.answers_file)
+    downgrading = False
+    if conf.old_commit and conf.commit:
+        try:
+            downgrading = Version(conf.old_commit) > Version(conf.commit)
+        except InvalidVersion:
+            print(
+                colors.warn
+                | f"Either {conf.old_commit} or {conf.vcs_ref} is not a PEP 440 valid version.",
+                file=sys.stderr,
+            )
+        else:
+            if downgrading:
+                raise UserMessageError(
+                    f"Your are downgrading from {conf.old_commit} to {conf.commit}. "
+                    "Downgrades are not supported."
+                )
     # Copy old template into a temporary destination
     with tempfile.TemporaryDirectory(prefix=f"{__name__}.update_diff.") as dst_temp:
         copy(
