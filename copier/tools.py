@@ -3,9 +3,10 @@
 import errno
 import os
 import shutil
+import sys
 import unicodedata
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, TextIO, Union
 
 import colorama
 import pathspec
@@ -53,6 +54,7 @@ def printf(
     style: Optional[IntSeq] = None,
     indent: int = 10,
     quiet: Union[bool, StrictBool] = False,
+    file_: TextIO = sys.stdout,
 ) -> Optional[str]:
     if quiet:
         return None  # HACK: Satisfy MyPy
@@ -62,7 +64,7 @@ def printf(
         return action + _msg
 
     out = style + [action] + Style.RESET + [INDENT, _msg]  # type: ignore
-    print(*out, sep="")
+    print(*out, sep="", file=file_)
     return None  # HACK: Satisfy MyPy
 
 
@@ -70,11 +72,11 @@ def printf_exception(
     e: Exception, action: str, msg: str = "", indent: int = 0, quiet: bool = False
 ) -> None:
     if not quiet:
-        print("")
-        printf(action, msg=msg, style=Style.DANGER, indent=indent)
-        print(HLINE)
-        print(e)
-        print(HLINE)
+        print("", file=sys.stderr)
+        printf(action, msg=msg, style=Style.DANGER, indent=indent, file_=sys.stderr)
+        print(HLINE, file=sys.stderr)
+        print(e, file=sys.stderr)
+        print(HLINE, file=sys.stderr)
 
 
 def required(value: T, **kwargs: Any) -> T:

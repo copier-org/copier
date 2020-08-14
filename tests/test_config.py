@@ -47,13 +47,13 @@ def test_invalid_yaml(capsys):
     conf_path = Path("tests", "demo_invalid", "copier.yml")
     with pytest.raises(InvalidConfigFileError):
         load_yaml_data(conf_path)
-    out, _ = capsys.readouterr()
-    assert "INVALID CONFIG FILE" in out
-    assert str(conf_path) in out
+    _, err = capsys.readouterr()
+    assert "INVALID CONFIG FILE" in err
+    assert str(conf_path) in err
 
 
 @pytest.mark.parametrize(
-    "conf_path,flags,check_out",
+    "conf_path,flags,check_err",
     (
         ("tests/demo_invalid", {"_warning": False}, lambda x: "INVALID" in x),
         ("tests/demo_invalid", {"quiet": True}, lambda x: x == ""),
@@ -63,12 +63,12 @@ def test_invalid_yaml(capsys):
         ("tests/demo_transclude_invalid_multi/demo", {}, None),
     ),
 )
-def test_invalid_config_data(conf_path, flags, check_out, capsys):
+def test_invalid_config_data(conf_path, flags, check_err, capsys):
     with pytest.raises(InvalidConfigFileError):
         load_config_data(conf_path, **flags)
-    if check_out:
-        out, _ = capsys.readouterr()
-        assert check_out(out)
+    if check_err:
+        _, err = capsys.readouterr()
+        assert check_err(err)
 
 
 def test_config_data_empty():

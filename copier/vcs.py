@@ -1,6 +1,6 @@
 """Utilities related to VCS."""
-
 import re
+import sys
 import tempfile
 from pathlib import Path
 
@@ -75,7 +75,10 @@ def checkout_latest_tag(local_repo: StrOrPath, use_prereleases: OptBool = False)
         try:
             latest_tag = str(sorted_tags[0])
         except IndexError:
-            print(colors.warn | "No git tags found in template; using HEAD as ref")
+            print(
+                colors.warn | "No git tags found in template; using HEAD as ref",
+                file=sys.stderr,
+            )
             latest_tag = "HEAD"
         git("checkout", "--force", latest_tag)
         git("submodule", "update", "--checkout", "--init", "--recursive", "--force")
