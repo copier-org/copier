@@ -146,7 +146,10 @@ def copy(
             copy_local(conf=conf)
     except Exception:
         if conf.cleanup_on_error and not do_diff_update:
-            print("Something went wrong. Removing destination folder.")
+            print(
+                colors.warn | "Something went wrong. Removing destination folder.",
+                file=sys.stderr,
+            )
             shutil.rmtree(conf.dst_path, ignore_errors=True)
         raise
     finally:
@@ -252,7 +255,8 @@ def update_diff(conf: ConfigData) -> None:
             except ProcessExecutionError:
                 print(
                     colors.warn
-                    | "Make sure Git >= 2.24 is installed to improve updates."
+                    | "Make sure Git >= 2.24 is installed to improve updates.",
+                    file=sys.stderr,
                 )
                 diff = diff_cmd("--inter-hunk-context=0")
     # Run pre-migration tasks
@@ -337,13 +341,19 @@ def render_folder(rel_folder: Path, conf: ConfigData) -> None:
         return
 
     if dst_path.exists():
-        printf("identical", rel_path, style=Style.IGNORE, quiet=conf.quiet)
+        printf(
+            "identical",
+            rel_path,
+            style=Style.IGNORE,
+            quiet=conf.quiet,
+            file_=sys.stderr,
+        )
         return
 
     if not conf.pretend:
         make_folder(dst_path)
 
-    printf("create", rel_path, style=Style.OK, quiet=conf.quiet)
+    printf("create", rel_path, style=Style.OK, quiet=conf.quiet, file_=sys.stderr)
 
 
 def render_file(
@@ -369,15 +379,25 @@ def render_file(
     dst_path = conf.dst_path / rel_path
 
     if not dst_path.exists():
-        printf("create", rel_path, style=Style.OK, quiet=conf.quiet)
+        printf("create", rel_path, style=Style.OK, quiet=conf.quiet, file_=sys.stderr)
     elif files_are_identical(src_path, dst_path, content):
-        printf("identical", rel_path, style=Style.IGNORE, quiet=conf.quiet)
+        printf(
+            "identical",
+            rel_path,
+            style=Style.IGNORE,
+            quiet=conf.quiet,
+            file_=sys.stderr,
+        )
         return
     elif must_skip(rel_path) or not overwrite_file(conf, dst_path, rel_path):
-        printf("skip", rel_path, style=Style.WARNING, quiet=conf.quiet)
+        printf(
+            "skip", rel_path, style=Style.WARNING, quiet=conf.quiet, file_=sys.stderr
+        )
         return
     else:
-        printf("force", rel_path, style=Style.WARNING, quiet=conf.quiet)
+        printf(
+            "force", rel_path, style=Style.WARNING, quiet=conf.quiet, file_=sys.stderr
+        )
 
     if conf.pretend:
         pass
@@ -415,7 +435,7 @@ def overwrite_file(conf: ConfigData, dst_path: Path, rel_path: Path) -> bool:
         True if the overwrite was forced or the user answered yes,
         False if skipped by configuration or if the user answered no.
     """
-    printf("conflict", rel_path, style=Style.DANGER, quiet=conf.quiet)
+    printf("conflict", rel_path, style=Style.DANGER, quiet=conf.quiet, file_=sys.stderr)
     if conf.force:
         return True
     if conf.skip:
