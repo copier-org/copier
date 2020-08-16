@@ -1,4 +1,3 @@
-[tool]
 [tool.poetry]
 name = "copier"
 # This version is a placeholder autoupdated by poetry-dynamic-versioning
@@ -56,6 +55,7 @@ flake8-debugger = "*"
 ipdb = "*"
 mypy = "*"
 packaging = "*"
+poethepoet = "^0.7.0"
 pre-commit = "*"
 pytest = "*"
 pytest-cov = "*"
@@ -69,6 +69,24 @@ mkdocs-material = "^5.5.5"
 # HACK https://readthedocs.org/api/v2/build/11653917.txt
 # TODO Remove this dependency when mkdocstrings supports pymdown-extensions==8.0
 pymdown-extensions = "<8.0,>=6.3"
+
+[tool.poe.tasks]
+clean.script = "devtasks:clean"
+clean.help = "remove build/python artifacts"
+
+docs = "mkdocs serve"
+
+test.cmd = "pytest -n auto --color=yes"
+test.help = "run tests"
+
+lint.cmd = "pre-commit run --all-files"
+lint.help = "check (and auto-fix) style with pre-commit"
+
+types.cmd = "mypy --ignore-missing-imports ."
+types.help = "run the type (mypy) checker on the codebase"
+
+coverage.cmd = "pytest --cov-report html --cov copier copier tests"
+coverage.help = "generate an HTML report of the coverage"
 
 [tool.poetry-dynamic-versioning]
 enable = true

@@ -40,6 +40,14 @@ If you are proposing a feature:
 -   Remember that this is a volunteer-driven project, and that contributions are welcome
     :)
 
+## Dev environment setup
+
+We use some tools as part of our development workflow which you'll need to install into
+your host environment:
+
+-   [poetry](https://python-poetry.org/) for packaging and dependency management
+-   [poethepoet](https://github.com/nat-n/poethepoet) for running development tasks
+
 ## Get Started!
 
 Ready to contribute? Here's how to set up the project for local development.
@@ -51,12 +59,11 @@ Ready to contribute? Here's how to set up the project for local development.
 git clone git@github.com:copier-org/copier.git
 ```
 
-3.  Install your local copy into a virtualenv.
+3.  Use poetry to setup a virtualenv to develop in
 
 ```bash
-python -m virtualenv .venv
-source .venv/bin/activate
-make install
+poetry install # create's a virtualenv with all dependencies from pyproject.toml
+poetry shell   # creates a new shell with the virtualenv activated
 ```
 
 5.  Create a branch for local development:
@@ -70,8 +77,8 @@ Now you can make your changes locally.
 6.  When you're done making changes, check that your changes pass all tests
 
 ```bash
-pytest -x .
-flake8 .
+poe test
+poe lint
 ```
 
 To have multiple Python versions on the same machine for running `tox`, I recommend
@@ -92,10 +99,10 @@ git push origin name-of-your-bugfix-or-feature
 Before you submit a pull request, check that it meets these guidelines:
 
 1.  The pull request has code, it should include tests.
-2.  Run `tox` and make sure that the tests pass for all supported Python versions.
+2.  Check that all checks pass on GitHub CI
 
 ## Tips
 
 To run a subset of tests:
 
-    $  pytest tests/the-tests-file.py
+    $  poe test tests/the-tests-file.py
