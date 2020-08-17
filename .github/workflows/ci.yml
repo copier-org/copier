@@ -5,7 +5,7 @@ on:
   push:
     branches: [master]
   release:
-    types: [created]
+    types: [published]
   workflow_dispatch: {}
 
 env:
@@ -87,7 +87,6 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: 3.8
-      - run: python -m pip install poetry poetry-dynamic-versioning
       - name: generate cache key PY
         run:
           echo "::set-env name=PY::$((python -VV; pip freeze) | sha256sum | cut -d' '
@@ -100,6 +99,7 @@ jobs:
           key:
             cache|${{ runner.os }}|${{ env.PY }}|${{ hashFiles('pyproject.toml') }}|${{
             hashFiles('poetry.lock') }}|${{ hashFiles('.pre-commit-config.yaml') }}
+      - run: python -m pip install poetry poetry-dynamic-versioning
       - run: poetry install
       - name: Build dist
         run: |
