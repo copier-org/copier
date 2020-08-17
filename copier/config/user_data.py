@@ -2,6 +2,7 @@
 
 import json
 import re
+import sys
 from collections import ChainMap
 from functools import partial
 from pathlib import Path
@@ -11,12 +12,17 @@ import yaml
 from iteration_utilities import deepflatten
 from jinja2 import UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
-from plumbum.cli.terminal import ask, choose, prompt
-from plumbum.colors import bold, info, italics
+from plumbum.cli.terminal import ask, choose
+from plumbum.colors import bold, info, italics, reverse, warn
+from prompt_toolkit import prompt
+from prompt_toolkit.formatted_text import ANSI
+from prompt_toolkit.lexers import PygmentsLexer
+from prompt_toolkit.validation import Validator
+from pygments.lexers.data import JsonLexer, YamlLexer
 from yamlinclude import YamlIncludeConstructor
 
-from ..tools import get_jinja_env, printf_exception
-from ..types import AnyByStrDict, Choices, OptStrOrPath, PathSeq, StrOrPath
+from ..tools import force_str_end, get_jinja_env, printf_exception, to_nice_yaml
+from ..types import AnyByStrDict, Choices, OptStr, OptStrOrPath, PathSeq, StrOrPath
 from .objects import DEFAULT_DATA, EnvOps, UserMessageError
 
 __all__ = ("load_config_data", "query_user_data")
@@ -42,6 +48,78 @@ class MultipleConfigFilesError(ConfigFileError):
 
 class InvalidTypeError(TypeError):
     pass
+
+
+def ask_interactively(
+    question: str,
+    type_name: str,
+    type_fn: Callable,
+    secret: bool = False,
+    placeholder: OptStr = None,
+    default: Any = None,
+    choices: Any = None,
+    extra_help: OptStr = None,
+) -> Any:
+    """Ask one question interactively to the user."""
+    # Generate message to ask the user
+    message = ""
+    if extra_help:
+        message = force_str_end(f"\n{info & italics | extra_help}{message}")
+    emoji = "🕵️" if secret else "🎤"
+    message += f"{bold | question}? Format: {type_name}\n{emoji} "
+    lexer_map = {"json": JsonLexer, "yaml": YamlLexer}
+    lexer = lexer_map.get(type_name)
+    # HACK https://github.com/prompt-toolkit/python-prompt-toolkit/issues/1071
+    # FIXME When fixed, use prompt toolkit too for choices and bools
+    # Use the correct method to ask
+    if type_name == "bool":
+        return ask(message, default)
+    if choices:
+        return choose(message, choices, default)
+    # Hints for the multiline input user
+    multiline = lexer is not None
+    if multiline:
+        message += f"- Finish with {reverse | 'Esc, ↵'} or {reverse | 'Meta + ↵'}\n"
+    # Convert default to string
+    to_str_map: Dict[str, Callable[[Any], str]] = {
+        "json": lambda obj: json.dumps(obj, indent=2),
+        "yaml": to_nice_yaml,
+    }
+    to_str_fn = to_str_map.get(type_name, str)
+    # Allow placeholder YAML comments
+    default_str = to_str_fn(default)
+    if placeholder and type_name == "yaml":
+        prefixed_default_str = force_str_end(placeholder) + default_str
+        if yaml.safe_load(prefixed_default_str) == default:
+            default_str = prefixed_default_str
+        else:
+            print(warn | "Placeholder text alters value!", file=sys.stderr)
+    return prompt(
+        ANSI(message),
+        default=default_str,
+        is_password=secret,
+        lexer=lexer and PygmentsLexer(lexer),
+        mouse_support=True,
+        multiline=multiline,
+        validator=Validator.from_callable(abstract_validator(type_fn)),
+    )
+
+
+def abstract_validator(type_fn: Callable) -> Callable:
+    """Produce a validator for the given type.
+
+    Params:
+        type_fn: A callable that converts text into the expected type.
+    """
+
+    def _validator(text: str):
+        try:
+            type_fn(text)
+            return True
+        except Exception:
+            return False
+
+    return _validator
 
 
 def load_yaml_data(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
@@ -217,21 +295,19 @@ def query_user_data(
             # Get default answer
             answer = last_answers_data.get(question, default)
         if ask_this:
-            # Generate message to ask the user
-            emoji = "🕵️" if details.get("secret", False) else "🎤"
-            message = f"\n{bold | question}? Format: {type_name}\n{emoji} "
-            if details.get("help"):
-                message = (
-                    f"\n{info & italics | _render_value(details['help'])}{message}"
-                )
-            # Use the right method to ask
-            if type_fn is bool:
-                answer = ask(message, answer)
-            elif details.get("choices"):
-                choices = _render_choices(details["choices"])
-                answer = choose(message, choices, answer)
-            else:
-                answer = prompt(message, type_fn, answer)
+            extra_help = details.get("help")
+            if extra_help:
+                extra_help = _render_value(extra_help)
+            answer = ask_interactively(
+                question,
+                type_name,
+                type_fn,
+                details.get("secret", False),
+                _render_value(details.get("placeholder")),
+                answer,
+                _render_choices(details.get("choices")),
+                _render_value(details.get("help")),
+            )
         if answer != details.get("default", default):
             result[question] = cast_answer_type(answer, type_fn)
     return result

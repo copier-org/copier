@@ -172,6 +172,18 @@ def normalize_str(text: StrOrPath, form: str = "NFD") -> str:
     return unicodedata.normalize(form, str(text))
 
 
+def force_str_end(original_str: str, end: str = "\n") -> str:
+    """Make sure a `original_str` ends with `end`.
+
+    Params:
+        original_str: String that you want to ensure ending.
+        end: String that must exist at the end of `original_str`
+    """
+    if not original_str.endswith(end):
+        return original_str + end
+    return original_str
+
+
 def create_path_filter(patterns: StrOrPathSeq) -> CheckPathFunc:
     """Returns a function that matches a path against given patterns."""
     patterns = [normalize_str(p) for p in patterns]
