@@ -144,6 +144,7 @@ class CopierApp(cli.Application):
     prereleases: cli.Flag = cli.Flag(
         ["-g", "--prereleases"], help="Use prereleases to compare template VCS tags.",
     )
+    cleanup: cli.Flag = cli.Flag(["-c", "--cleanup"], help="On error, delete destination.")
 
     @cli.switch(
         ["-d", "--data"],
@@ -184,6 +185,7 @@ class CopierApp(cli.Application):
             vcs_ref=self.vcs_ref,
             subdirectory=self.subdirectory,
             use_prereleases=self.prereleases,
+            cleanup_on_error=self.cleanup,
             **kwargs,
         )
 
