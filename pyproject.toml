@@ -36,14 +36,11 @@ pyyaml = "^5.3.1"
 pyyaml-include = "^1.2"
 # packaging is needed when installing from PyPI
 packaging = "^20.4"
-mkdocstrings = {version = "^0.12.2", optional = true}
+mkdocstrings = {version = "^0.13.1", optional = true}
 mkdocs-material = {version = "^5.5.2", optional = true}
-# HACK https://readthedocs.org/api/v2/build/11653917.txt
-# TODO Remove this dependency when mkdocstrings supports pymdown-extensions==8.0
-pymdown-extensions = {version = "<8.0,>=6.3", optional = true}
 
 [tool.poetry.extras]
-docs = ["mkdocstrings", "mkdocs-material", "pymdown-extensions"]
+docs = ["mkdocstrings", "mkdocs-material"]
 
 [tool.poetry.dev-dependencies]
 black = {version = "^19.10b0", allow-prereleases = true}
@@ -64,11 +61,8 @@ pytest-timeout = "^1.4.1"
 
 # HACK https://github.com/python-poetry/poetry/issues/2555
 # TODO Remove from this section and install with poetry install -E docs when fixed
-mkdocstrings = "^0.12.2"
+mkdocstrings = "^0.13.1"
 mkdocs-material = "^5.5.5"
-# HACK https://readthedocs.org/api/v2/build/11653917.txt
-# TODO Remove this dependency when mkdocstrings supports pymdown-extensions==8.0
-pymdown-extensions = "<8.0,>=6.3"
 
 [tool.poe.tasks]
 clean.script = "devtasks:clean"
