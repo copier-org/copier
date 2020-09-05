@@ -6,7 +6,13 @@ on:
     branches: [master]
   release:
     types: [published]
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      pytest_addopts:
+        description:
+          Extra options for pytest; use -vv for full details; see
+          https://docs.pytest.org/en/latest/example/simple.html#how-to-change-command-line-options-defaults
+        required: false
 
 env:
   LANG: "en_US.utf-8"
@@ -15,6 +21,7 @@ env:
   POETRY_CACHE_DIR: ${{ github.workspace }}/.cache/pypoetry
   POETRY_VIRTUALENVS_IN_PROJECT: "true"
   PRE_COMMIT_HOME: ${{ github.workspace }}/.cache/pre-commit
+  PYTEST_ADDOPTS: ${{ github.event.inputs.pytest_addopts }}
   PYTHONIOENCODING: "UTF-8"
 
 jobs:
@@ -77,7 +84,7 @@ jobs:
         run: poe types
       - name: Run pytest
         shell: bash
-        run: poe test --verbose .
+        run: poe test -ra .
 
   publish:
     if: github.event_name == 'release'
