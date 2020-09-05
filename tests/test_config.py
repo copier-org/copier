@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+from plumbum import local
 from pydantic import ValidationError
 
 import copier
@@ -12,6 +13,8 @@ from copier.config.user_data import (
     load_config_data,
     load_yaml_data,
 )
+
+from .helpers import build_file_tree
 
 GOOD_ENV_OPS = {
     "autoescape": True,
@@ -71,9 +74,61 @@ def test_invalid_config_data(conf_path, flags, check_err, capsys):
         assert check_err(err)
 
 
+def test_valid_multi_section(tmp_path):
+    """Including multiple files works fine merged with multiple sections."""
+    with local.cwd(tmp_path):
+        build_file_tree(
+            {
+                "exclusions.yml": "_exclude: ['*.yml']",
+                "common_jinja.yml": """
+                    _envops:
+                        block_start_string: "[%"
+                        block_end_string: "%]"
+                        comment_start_string: "[#"
+                        comment_end_string: "#]"
+                        variable_start_string: "[["
+                        variable_end_string: "]]"
+                        keep_trailing_newline: true
+                    """,
+                "common_questions.yml": """
+                    your_age:
+                        type: int
+                    your_name:
+                        type: yaml
+                        help: your name from common questions
+                    """,
+                "copier.yml": """
+                    ---
+                    !include 'common_*.yml'
+                    ---
+                    !include exclusions.yml
+                    ---
+                    your_name:
+                        type: str
+                        help: your name from latest section
+                    """,
+            }
+        )
+    data = load_config_data(tmp_path)
+    assert data == {
+        "_exclude": ["*.yml"],
+        "_envops": {
+            "block_start_string": "[%",
+            "block_end_string": "%]",
+            "comment_start_string": "[#",
+            "comment_end_string": "#]",
+            "variable_start_string": "[[",
+            "variable_end_string": "]]",
+            "keep_trailing_newline": True,
+        },
+        "your_age": {"type": "int"},
+        "your_name": {"type": "str", "help": "your name from latest section"},
+    }
+
+
 def test_config_data_empty():
     data = load_config_data("tests/demo_config_empty")
-    assert data is None
+    assert data == {}
 
 
 def test_multiple_config_file_error(capsys):

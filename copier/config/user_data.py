@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict
 
 import yaml
+from iteration_utilities import deepflatten
 from jinja2 import UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
 from plumbum.cli.terminal import ask, choose, prompt
@@ -43,17 +44,37 @@ class InvalidTypeError(TypeError):
     pass
 
 
-def load_yaml_data(
-    conf_path: Path, quiet: bool = False, _warning: bool = True
-) -> AnyByStrDict:
+def load_yaml_data(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
+    """Load the `copier.yml` file.
 
+    This is like a simple YAML load, but applying all specific quirks needed
+    for [the `copier.yml` file][the-copieryml-file].
+
+    For example, it supports the `!include` tag with glob includes, and
+    merges multiple sections.
+
+    Params:
+        conf_path: The path to the `copier.yml` file.
+        quiet: Used to configure the exception.
+
+    Raises:
+        InvalidConfigFileError: When the file is formatted badly.
+    """
     YamlIncludeConstructor.add_to_loader_class(
         loader_class=yaml.FullLoader, base_dir=conf_path.parent
     )
 
     try:
         with open(conf_path) as f:
-            return yaml.load(f, Loader=yaml.FullLoader)
+            flattened_result = deepflatten(
+                yaml.load_all(f, Loader=yaml.FullLoader), depth=2, types=(list,),
+            )
+            # HACK https://bugs.python.org/issue32792#msg311822
+            # I'd use ChainMap, but it doesn't respect order in Python 3.6
+            result = {}
+            for part in flattened_result:
+                result.update(part)
+            return result
     except yaml.parser.ParserError as e:
         raise InvalidConfigFileError(conf_path, quiet) from e
 
@@ -84,7 +105,7 @@ def load_config_data(
     if len(conf_paths) > 1:
         raise MultipleConfigFilesError(conf_paths, quiet=quiet)
     elif len(conf_paths) == 1:
-        return load_yaml_data(conf_paths[0], quiet=quiet, _warning=_warning)
+        return load_yaml_data(conf_paths[0], quiet=quiet)
     else:
         return {}
 

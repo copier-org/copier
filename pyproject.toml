@@ -27,6 +27,7 @@ copier = "copier.cli:CopierApp.run"
 [tool.poetry.dependencies]
 python = "^3.6"
 colorama = "^0.4.3"
+iteration_utilities = "^0.10.1"
 jinja2 = "^2.11.2"
 pathspec = "^0.8.0"
 plumbum = "^1.6.9"

@@ -192,30 +192,42 @@ contact:
 
 ### Include other YAML files
 
-To reuse configurations across templates you can reference other yaml files. You just
-need to state the `!include` together with the absolute or relative path to the file to
-be included. Multiple files can be included per `copier.yml`. For more detailed
-instructions, see [pyyaml-include](https://github.com/tanbro/pyyaml-include#usage).
+The `copier.yml` file supports multiple documents. When found, they are merged (**not**
+deeply merged; just merged) and the latest one defined has priority.
 
-Example:
+It also supports using the `!include` tag to include other configurations from
+elsewhere.
 
-```yaml
-# other_place/include_me.yml
-common_setting: "1"
+These two features, combined, allow you to reuse common partial sections from your
+templates.
 
-# copier.yml
-!include other_place/include_me.yml
-```
+!!! hint
 
-**Warning**: You can't have in the same file a top `!include` tag and classic YAML
-syntax, see
-[this pyyaml-include issue](https://github.com/tanbro/pyyaml-include/issues/7).
+    You can use [git submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
+    to sanely include shared code into templates.
 
-```yaml
-# Invalid file
-!include other_place/include_me.yml
-foo: "bar"
-```
+!!! example
+
+    This would be a valid `copier.yml` file:
+
+    ```yaml
+    ---
+    # Copier will load all these files
+    !include shared-conf/common.*.yml
+
+    # These 3 lines split the several YAML documents
+    ---
+    # These two documents include common questions for these kind of projects
+    !include common-questions/web_app.yml
+    ---
+    !include common-questions/python-project.yml
+    ---
+
+    # Here you can specify any settings or questions specific for your template,
+    _skip_if_exists:
+        - .password.txt
+    custom_question: default answer
+    ```
 
 ## Available settings
 
