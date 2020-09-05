@@ -357,6 +357,19 @@ python-versions = "*"
 version = "0.2.0"
 
 [[package]]
+category = "main"
+description = "Utilities based on Pythons iterators and generators."
+name = "iteration-utilities"
+optional = false
+python-versions = ">=3.5"
+version = "0.10.1"
+
+[package.extras]
+all = ["pytest", "sphinx", "numpydoc"]
+doc = ["sphinx", "numpydoc"]
+test = ["pytest"]
+
+[[package]]
 category = "dev"
 description = "An autocompletion tool for Python that can be used for text editors."
 marker = "python_version >= \"3.4\""
@@ -1054,7 +1067,7 @@ testing = ["jaraco.itertools", "func-timeout"]
 docs = ["mkdocstrings", "mkdocs-material"]
 
 [metadata]
-content-hash = "3d117e7552dc65bf20d15074ee30e04a6292090af7fabc9bff0726d2060db1a1"
+content-hash = "b3b931a58efc19984768288946c6f174244664303d587528b4e88ba9d3ce6d3f"
 lock-version = "1.0"
 python-versions = "^3.6"
 
@@ -1208,6 +1221,30 @@ ipython = [
 ipython-genutils = [
     {file = "ipython_genutils-0.2.0-py2.py3-none-any.whl", hash = "sha256:72dd37233799e619666c9f639a9da83c34013a73e8bbc79a7a6348d93c61fab8"},
     {file = "ipython_genutils-0.2.0.tar.gz", hash = "sha256:eb2e116e75ecef9d4d228fdc66af54269afa26ab4463042e33785b887c628ba8"},
+]
+iteration-utilities = [
+    {file = "iteration_utilities-0.10.1-cp35-cp35m-manylinux1_i686.whl", hash = "sha256:958c2aa52795d1100d9caffc3ed6aeda0e23577e3bc5694b3c8b6177c85fa57d"},
+    {file = "iteration_utilities-0.10.1-cp35-cp35m-manylinux1_x86_64.whl", hash = "sha256:209e8a7b224445b66e8114392d7c8be7dc16a5d8d9cbdfca05592c460e037ad0"},
+    {file = "iteration_utilities-0.10.1-cp35-cp35m-manylinux2010_x86_64.whl", hash = "sha256:2fdd48be4cd26df65b7687761407e7d2cd7c9c4f50c9da2f6e0eda48d07a6523"},
+    {file = "iteration_utilities-0.10.1-cp36-cp36m-macosx_10_13_x86_64.whl", hash = "sha256:a64e08b510c7599b6819a56634aa2b1049207e4402d7ff99f9d4931fd6453e0e"},
+    {file = "iteration_utilities-0.10.1-cp36-cp36m-manylinux1_i686.whl", hash = "sha256:aa36a008900f3bedbb62407ffd4a5acd45f7332979a9be93a3d9f501e1fbbdb0"},
+    {file = "iteration_utilities-0.10.1-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:6795db5161de263d606940a1994ab599ad608f6c0ff3229591776bb6898c0b8e"},
+    {file = "iteration_utilities-0.10.1-cp36-cp36m-manylinux2010_x86_64.whl", hash = "sha256:37b0f69583560f6c874b7bb7eb20ccaa6ee1a30858bee4e2d252ca6e8da744e0"},
+    {file = "iteration_utilities-0.10.1-cp36-cp36m-win32.whl", hash = "sha256:0128d3a4de0fada287304c603eee5cb09a454be7c708eee2330232791422afff"},
+    {file = "iteration_utilities-0.10.1-cp36-cp36m-win_amd64.whl", hash = "sha256:a985a46a05ff93e16966afd115c89bea5ddd8628593ac11a5208ac46ba69a120"},
+    {file = "iteration_utilities-0.10.1-cp37-cp37m-macosx_10_13_x86_64.whl", hash = "sha256:fb3071c217f26f1cd3eb00f017522fb2366ce1cd8a9aa26b5786ea273faba61a"},
+    {file = "iteration_utilities-0.10.1-cp37-cp37m-manylinux1_i686.whl", hash = "sha256:ab514ba77e5bcde7f9950c481d4375b0a8936a96d242b3f05031bd9c4abf85cc"},
+    {file = "iteration_utilities-0.10.1-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:823573874438f947e003483e682d3d4e133098efbd073be03aa63f69113e957a"},
+    {file = "iteration_utilities-0.10.1-cp37-cp37m-manylinux2010_x86_64.whl", hash = "sha256:8bc6bb9ec4ac8a93dc0c6eb8eb6eab454b42dfa1f4caf9e90eb2774d6f5874c3"},
+    {file = "iteration_utilities-0.10.1-cp37-cp37m-win32.whl", hash = "sha256:20463e245382ba3ae245f106b6b5b2785461ad09d50bf7ba3e856493fea31feb"},
+    {file = "iteration_utilities-0.10.1-cp37-cp37m-win_amd64.whl", hash = "sha256:fbb7d325bf425f2a6090382b24ad3d596cbaf4cfcce826f409253116dc8f2c61"},
+    {file = "iteration_utilities-0.10.1-cp38-cp38-macosx_10_13_x86_64.whl", hash = "sha256:1ffd5c005ef6bc6f16477b97b2f45426b59a519bb4fee7439089b2c02941f8ca"},
+    {file = "iteration_utilities-0.10.1-cp38-cp38-manylinux1_i686.whl", hash = "sha256:2e4b879e8ef248741eac50095e09437014e6e96768dba15bceff9689a8931c72"},
+    {file = "iteration_utilities-0.10.1-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:952afb5a8d41211ffde7fe88178aaf76745a9024ada7d093ce4949d905e3321c"},
+    {file = "iteration_utilities-0.10.1-cp38-cp38-manylinux2010_x86_64.whl", hash = "sha256:e634c9d1f9f4c2276617e6c106ce7b3a36db83aa68d75a59a010a2fc242375f4"},
+    {file = "iteration_utilities-0.10.1-cp38-cp38-win32.whl", hash = "sha256:82bd428ae468b01230d5415f98373256067cf17ce7f754f031f1c7f43e322f52"},
+    {file = "iteration_utilities-0.10.1-cp38-cp38-win_amd64.whl", hash = "sha256:8233731c39d614b4939557fa409b57fe136c7570aa54d57bffe0271fe9682424"},
+    {file = "iteration_utilities-0.10.1.tar.gz", hash = "sha256:536e3e87c5c139c775f9d95bb771c4b366a1d58eb7a39436d4ac839b53742569"},
 ]
 jedi = [
     {file = "jedi-0.17.2-py2.py3-none-any.whl", hash = "sha256:98cc583fa0f2f8304968199b01b6b4b94f469a1f4a74c1560506ca2a211378b5"},
