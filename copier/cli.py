@@ -257,7 +257,7 @@ class CopierCopySubApp(cli.Application):
 class CopierUpdateSubApp(cli.Application):
     """The `copier update` subcommand.
 
-    Use this subcommand to update an existing subrpoject from a template
+    Use this subcommand to update an existing subproject from a template
     that supports updates.
 
     Attributes:
