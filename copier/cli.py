@@ -232,9 +232,18 @@ class CopierCopySubApp(cli.Application):
     """The `copier copy` subcommand.
 
     Use this subcommand to bootstrap a new subproject from a template.
+
+    Attributes:
+        cleanup_on_error: Set [cleanup_on_error][] option.
     """
 
     DESCRIPTION = "Copy form a template source to a destination."
+
+    cleanup_on_error: cli.Flag = cli.Flag(
+        ["-C", "--no-cleanup"],
+        default=True,
+        help="On error, do not delete destination if it was created by Copier.",
+    )
 
     @handle_exceptions
     def main(self, template_src: str, destination_path: str) -> int:
@@ -249,7 +258,9 @@ class CopierCopySubApp(cli.Application):
             destination_path:
                 Where to generate the new subproject. It must not exist or be empty.
         """
-        self.parent._copy(template_src, destination_path)
+        self.parent._copy(
+            template_src, destination_path, cleanup_on_error=self.cleanup_on_error
+        )
         return 0
 
 
