@@ -61,8 +61,9 @@ def copy(
     subdirectory: OptStr = None,
     use_prereleases: OptBool = False,
 ) -> None:
-    """
-    Uses the template in `src_path` to generate a new project at `dst_path`.
+    """Uses the template in `src_path` to generate a new project at `dst_path`.
+
+    This is usually the main entrypoint for API usage.
 
     Arguments:
         src_path:
