@@ -10,18 +10,16 @@ nav:
   - Configuring a template: "configuring.md"
   - Generating a project: "generating.md"
   - Updating a project: "updating.md"
-  - API:
-      - Main usage: "api/index.md"
-      - Reference:
-          - config:
-              - factory.py: "api/reference/config/factory.md"
-              - objects.py: "api/reference/config/objects.md"
-              - user_data.py: "api/reference/config/user_data.md"
-          - cli.py: "api/reference/cli.md"
-          - main.py: "api/reference/main.md"
-          - tools.py: "api/reference/tools.md"
-          - types.py: "api/reference/types.md"
-          - vcs.py: "api/reference/vcs.md"
+  - Reference:
+      - config:
+          - factory.py: "reference/config/factory.md"
+          - objects.py: "reference/config/objects.md"
+          - user_data.py: "reference/config/user_data.md"
+      - cli.py: "reference/cli.md"
+      - main.py: "reference/main.md"
+      - tools.py: "reference/tools.md"
+      - types.py: "reference/types.md"
+      - vcs.py: "reference/vcs.md"
   - Comparisons: comparisons.md
   - Contributing: "contributing.md"
   - Changelog: "changelog.md"
