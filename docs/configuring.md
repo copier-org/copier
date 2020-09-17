@@ -254,6 +254,24 @@ Example `copier.yml`:
 _answers_file: .my-custom-answers.yml
 ```
 
+### `cleanup_on_error`
+
+-   Format: `bool`
+-   CLI flags: `-C`, `--no-cleanup` (used to disable this setting; only available in
+    `copier copy` subcommand)
+-   Default value: `True`
+
+When Copier creates the destination path, if there's any failure when rendering the
+template (either in the rendering process or when running the [tasks](#tasks)), Copier
+will delete that folder.
+
+Copier will never delete the folder if it didn't create it. For this reason, when
+running `copier update`, this setting has no effect.
+
+!!! info
+
+    It makes no sense to define this in `copier.yml`.
+
 ### `data`
 
 -   Format: `dict|List[str=str]`

@@ -118,7 +118,8 @@ def copy(
             Suppress the status output.
 
         cleanup_on_error:
-            Remove the destination folder if the copy process or one of the tasks fail.
+            Remove the destination folder if Copier created it and the copy process
+            or one of the tasks fail.
 
         vcs_ref:
             VCS reference to checkout in the template.
@@ -132,6 +133,7 @@ def copy(
         use_prereleases: See [use_prereleases][].
     """
     conf = make_config(**locals())
+    dst_existed = conf.dst_path.exists()
     is_update = conf.original_src_path != conf.src_path and vcs.is_git_repo_root(
         conf.src_path
     )
@@ -139,7 +141,7 @@ def copy(
         conf.only_diff
         and is_update
         and conf.old_commit
-        and vcs.is_git_repo_root(Path(conf.dst_path))
+        and vcs.is_git_repo_root(conf.dst_path)
     )
     try:
         if do_diff_update:
@@ -147,7 +149,7 @@ def copy(
         else:
             copy_local(conf=conf)
     except Exception:
-        if conf.cleanup_on_error and not do_diff_update:
+        if conf.cleanup_on_error and not do_diff_update and not dst_existed:
             print(
                 colors.warn | "Something went wrong. Removing destination folder.",
                 file=sys.stderr,
