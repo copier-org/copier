@@ -139,6 +139,25 @@ def test_updatediff(tmpdir):
             Thanks for your grog.
             """
         )
+        commit("-m", "Subproject evolved")
+        # Reapply template ignoring subproject evolution
+        copy(
+            data={"author_name": "Largo LaGrande", "project_name": "to steal a lot"},
+            force=True,
+            vcs_ref="HEAD",
+            only_diff=False,
+        )
+        assert readme.read_text() == dedent(
+            """
+            Let me introduce myself.
+
+            My name is Largo LaGrande.
+
+            My project is to steal a lot.
+
+            Thanks for your attention.
+            """
+        )
 
 
 def test_commit_hooks_respected(tmp_path: Path):

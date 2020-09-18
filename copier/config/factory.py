@@ -70,6 +70,7 @@ def make_config(
     quiet: OptBool = None,
     cleanup_on_error: OptBool = None,
     vcs_ref: OptStr = None,
+    only_diff: OptBool = True,
     subdirectory: OptStr = None,
     use_prereleases: OptBool = False,
     **kwargs,

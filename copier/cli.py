@@ -231,7 +231,8 @@ class CopierApp(cli.Application):
 class CopierCopySubApp(cli.Application):
     """The `copier copy` subcommand.
 
-    Use this subcommand to bootstrap a new subproject from a template.
+    Use this subcommand to bootstrap a new subproject from a template, or to override
+    a preexisting subproject ignoring its history diff.
 
     Attributes:
         cleanup_on_error: Set [cleanup_on_error][] option.
@@ -259,7 +260,10 @@ class CopierCopySubApp(cli.Application):
                 Where to generate the new subproject. It must not exist or be empty.
         """
         self.parent._copy(
-            template_src, destination_path, cleanup_on_error=self.cleanup_on_error
+            template_src,
+            destination_path,
+            cleanup_on_error=self.cleanup_on_error,
+            only_diff=False,
         )
         return 0
 
@@ -270,9 +274,6 @@ class CopierUpdateSubApp(cli.Application):
 
     Use this subcommand to update an existing subproject from a template
     that supports updates.
-
-    Attributes:
-        only_diff: Set [only_diff][] option.
     """
 
     DESCRIPTION = "Update a copy from its original template"
@@ -284,12 +285,9 @@ class CopierUpdateSubApp(cli.Application):
 
         If that file contains also `_commit` and `destination_path` is a git
         repository, this command will do its best to respect the diff that you have
-        generated since the last `copier` execution. To disable that, use `--no-diff`.
+        generated since the last `copier` execution. To avoid that, use `copier copy`
+        instead.
         """
-    )
-
-    only_diff: cli.Flag = cli.Flag(
-        ["-D", "--no-diff"], default=True, help="Disable smart diff detection."
     )
 
     @handle_exceptions
@@ -305,7 +303,7 @@ class CopierUpdateSubApp(cli.Application):
                 working directory is used.
         """
         self.parent._copy(
-            dst_path=destination_path, only_diff=self.only_diff,
+            dst_path=destination_path, only_diff=True,
         )
         return 0
 
