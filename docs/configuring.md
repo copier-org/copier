@@ -423,8 +423,7 @@ _min_copier_version: "4.1.0"
 ### `only_diff`
 
 -   Format: `bool`
--   CLI flags: `-D`, `--no-diff` (used to disable this setting; only available in
-    `copier update` subcommand)
+-   CLI flags: Just use `copier copy` to disable it, or `copier update` to enable it.
 -   Default value: `True`
 
 When doing an update, by default Copier will do its best to understand how the template
