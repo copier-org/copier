@@ -9,7 +9,13 @@ from plumbum.cmd import git
 
 from .. import vcs
 from ..types import AnyByStrDict, OptAnyByStrDict, OptBool, OptStr, OptStrSeq
-from .objects import ConfigData, EnvOps, NoSrcPathError, UserMessageError
+from .objects import (
+    DEFAULT_EXCLUDE,
+    ConfigData,
+    EnvOps,
+    NoSrcPathError,
+    UserMessageError,
+)
 from .user_data import load_answersfile_data, load_config_data, query_user_data
 
 __all__ = ("make_config",)
@@ -73,6 +79,7 @@ def make_config(
     The order of precedence for the merger of configuration objects is:
     function_args > user_data > defaults.
     """
+    exclude = list(exclude or [])
     # These args are provided by API or CLI call
     init_args = {k: v for k, v in locals().items() if v is not None and v != []}
     # Store different answer sources
@@ -107,6 +114,9 @@ def make_config(
         pass
 
     template_config_data, questions_data = filter_config(file_data)
+    init_args["exclude"] = (
+        list(template_config_data.get("exclude", DEFAULT_EXCLUDE)) + exclude
+    )
     init_args["data_from_template_defaults"] = {
         k: v.get("default") for k, v in questions_data.items()
     }

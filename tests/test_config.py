@@ -273,9 +273,15 @@ def test_make_config_good_data(tmp_path):
     "test_input, expected",
     [
         # func_args > defaults
-        ({"src_path": ".", "exclude": ["aaa"]}, {"exclude": ["aaa"]}),
+        (
+            {"src_path": ".", "exclude": ["aaa"]},
+            {"exclude": list(DEFAULT_EXCLUDE) + ["aaa"]},
+        ),
         # func_args > user_data
-        ({"src_path": "tests/demo_data", "exclude": ["aaa"]}, {"exclude": ["aaa"]}),
+        (
+            {"src_path": "tests/demo_data", "exclude": ["aaa"]},
+            {"exclude": ["exclude1", "exclude2", "aaa"]},
+        ),
     ],
 )
 def test_make_config_precedence(tmp_path, test_input, expected):

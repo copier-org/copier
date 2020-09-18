@@ -309,11 +309,25 @@ _exclude:
     - ".git"
 ```
 
+!!! info
+
+    When you define this parameter in `copier.yml`, it will **replace** the default
+    value.
+
+    In the above example, for instance, `"copier.yml"` will **not** be excluded.
+
 Example CLI usage to copy only a single file from the template:
 
 ```sh
 copier --exclude '*' --exclude '!file-i-want' copy template destination
 ```
+
+!!! info
+
+    When you add this parameter from CLI or API, it will **not replace** the values
+    defined in `copier.yml` (or the defaults, if missing).
+
+    Instead, CLI/API definitions **will extend** those from `copier.yml`.
 
 ### `extra_paths`
 
