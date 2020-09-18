@@ -4,10 +4,19 @@ import sys
 from pathlib import Path
 
 import pytest
+from plumbum import local
+from plumbum.cmd import git
 
 import copier
 
-from .helpers import DATA, PROJECT_TEMPLATE, assert_file, filecmp, render
+from .helpers import (
+    DATA,
+    PROJECT_TEMPLATE,
+    assert_file,
+    build_file_tree,
+    filecmp,
+    render,
+)
 
 
 def test_project_not_found(tmp_path):
@@ -90,6 +99,42 @@ def test_exclude_file(tmp_path):
     # This file name is b"ma\xc3\xb1ana.txt".decode()
     assert (tmp_path / "doc" / "mañana.txt").exists()
     assert (tmp_path / "doc" / "manana.txt").exists()
+
+
+def test_exclude_extends(tmp_path: Path):
+    """Exclude argument extends the original exclusions instead of replacing them."""
+    src, dst = tmp_path / "src", tmp_path / "dst"
+    build_file_tree({src / "test.txt": "Test text", src / "test.json": '"test json"'})
+    # Convert to git repo
+    with local.cwd(src):
+        git("init")
+        git("add", ".")
+        git("commit", "-m", "hello world")
+    copier.copy(str(src), str(dst), exclude=["*.txt"])
+    assert (dst / "test.json").is_file()
+    assert not (dst / "test.txt").exists()
+    # .git exists in src, but not in dst because it is excluded by default
+    assert not (dst / ".git").exists()
+
+
+def test_exclude_replaces(tmp_path: Path):
+    """Exclude in copier.yml replaces default values."""
+    src, dst = tmp_path / "src", tmp_path / "dst"
+    build_file_tree(
+        {
+            src / "test.txt": "Test text",
+            src / "test.json": '"test json"',
+            src / "test.yaml": '"test yaml"',
+            src / "copier.yaml.tmpl": "purpose: template inception",
+            src / "copier.yml": "_exclude: ['*.json']",
+        }
+    )
+    copier.copy(str(src), str(dst), exclude=["*.txt"])
+    assert (dst / "test.yaml").is_file()
+    assert not (dst / "test.txt").exists()
+    assert not (dst / "test.json").exists()
+    assert (dst / "copier.yml").exists()
+    assert (dst / "copier.yaml").is_file()
 
 
 def test_skip_if_exists(tmp_path):
