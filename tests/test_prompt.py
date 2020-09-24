@@ -31,7 +31,7 @@ MARIO_TREE = {
 }
 
 
-# @pytest.mark.timeout(5)
+@pytest.mark.timeout(5)
 @pytest.mark.parametrize("name", [DEFAULT, None, "Luigi"])
 def test_copy_default_advertised(tmp_path_factory, fake_tty, name):
     """Test that the questions for the user are OK"""
