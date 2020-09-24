@@ -128,6 +128,7 @@ def make_config(
             {k: v for k, v in questions_data.items() if k in data},
             {},
             data,
+            init_args["data_from_template_defaults"],
             False,
             init_args["envops"],
         ),
@@ -137,6 +138,7 @@ def make_config(
         questions_data,
         init_args["data_from_answers_file"],
         init_args["data_from_init"],
+        init_args["data_from_template_defaults"],
         not force,
         init_args["envops"],
     )

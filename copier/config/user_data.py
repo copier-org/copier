@@ -235,6 +235,7 @@ class Question(BaseModel):
 
 
 class Questionary(BaseModel):
+    answers_default: AnyByStrDict = Field(default_factory=dict)
     answers_forced: AnyByStrDict = Field(default_factory=dict)
     answers_last: AnyByStrDict = Field(default_factory=dict)
     answers_user: AnyByStrDict = Field(default_factory=dict)
@@ -249,7 +250,12 @@ class Questionary(BaseModel):
         super().__init__(**kwargs)
 
     def get_best_answers(self) -> t_ChainMap[str, Any]:
-        return ChainMap(self.answers_user, self.answers_last, self.answers_forced)
+        return ChainMap(
+            self.answers_user,
+            self.answers_last,
+            self.answers_forced,
+            self.answers_default,
+        )
 
     def get_answers(self) -> AnyByStrDict:
         if self.ask_user:
@@ -378,6 +384,7 @@ def query_user_data(
     questions_data: AnyByStrDict,
     last_answers_data: AnyByStrDict,
     forced_answers_data: AnyByStrDict,
+    default_answers_data: AnyByStrDict,
     ask_user: bool,
     envops: EnvOps,
 ) -> AnyByStrDict:
@@ -385,6 +392,7 @@ def query_user_data(
     questionary = Questionary(
         answers_forced=forced_answers_data,
         answers_last=last_answers_data,
+        answers_default=default_answers_data,
         ask_user=ask_user,
         env=get_jinja_env(envops=envops),
     )
