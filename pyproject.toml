@@ -41,8 +41,8 @@ mkdocstrings = {version = "^0.13.1", optional = true}
 mkdocs-material = {version = "^5.5.2", optional = true}
 # HACK https://github.com/CITGuru/PyInquirer/pull/136
 # TODO Install from upstream when merged
-pyinquirer = {git = "https://github.com/Yajo/PyInquirer.git", rev = "46282964b4af5fc495084cb66bb1ea108050c859"}
 
+questionary = "^1.5.2"
 [tool.poetry.extras]
 docs = ["mkdocstrings", "mkdocs-material"]
 

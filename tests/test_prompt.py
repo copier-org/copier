@@ -1,4 +1,3 @@
-from io import StringIO
 from pathlib import Path
 
 import pytest
@@ -34,13 +33,13 @@ MARIO_TREE = {
 
 # @pytest.mark.timeout(5)
 @pytest.mark.parametrize("name", [DEFAULT, None, "Luigi"])
-def test_copy_default_advertised(tmp_path_factory, monkeypatch, capsys, name):
+def test_copy_default_advertised(tmp_path_factory, fake_tty, name):
     """Test that the questions for the user are OK"""
-    monkeypatch.setattr("sys.stdin", StringIO("\n" * 3))
     template, subproject = (
         tmp_path_factory.mktemp("template"),
         tmp_path_factory.mktemp("subproject"),
     )
+    questions_count = 4
     with local.cwd(template):
         build_file_tree(MARIO_TREE)
         git("init")
@@ -56,18 +55,15 @@ def test_copy_default_advertised(tmp_path_factory, monkeypatch, capsys, name):
             kwargs["data"] = {"your_name": name}
         else:
             name = "Mario"  # Default in the template
+        fake_tty.input.send_text("\n" * (questions_count - len(kwargs)))
         copy(str(template), ".", vcs_ref="v1", **kwargs)
         # Check what was captured
-        captured = capsys.readouterr()
-        assert "in_love? Format: bool\n🎤? [Y/n] " in captured.out
-        assert (
-            "Secret enemy name\nyour_enemy? Format: str\n🕵️ [Bowser]: " in captured.out
-        )
-        assert (
-            f"what_enemy_does? Format: str\n🎤 [Bowser hates {name}]: " in captured.out
-        )
+        captured = fake_tty.output.read()
+        assert "in_love? Format: bool\n🎤? [Y/n] " in captured
+        assert "Secret enemy name\nyour_enemy? Format: str\n🕵️ [Bowser]: " in captured
+        assert f"what_enemy_does? Format: str\n🎤 [Bowser hates {name}]: " in captured
         # We already sent the name through 'data', so it shouldn't be prompted
-        assert name == "Mario" or "your_name" not in captured.out
+        assert name == "Mario" or "your_name" not in captured
         assert "_commit: v1" in Path(".copier-answers.yml").read_text()
         # Update subproject
         git("init")
@@ -75,8 +71,8 @@ def test_copy_default_advertised(tmp_path_factory, monkeypatch, capsys, name):
         git("commit", "-m", "v1")
         copy(dst_path=".")
         # Check what was captured
-        captured = capsys.readouterr()
+        captured = fake_tty.output.read()
         assert (
             f"If you have a name, tell me now.\nyour_name? Format: str\n🎤 [{name}]: "
-            in captured.out
+            in captured
         )

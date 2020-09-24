@@ -5,26 +5,16 @@ import re
 from collections import ChainMap
 from contextlib import suppress
 from pathlib import Path
-from typing import (
-    Any,
-    Callable,
-    ChainMap as t_ChainMap,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Union,
-)
+from typing import Any, Callable, ChainMap as t_ChainMap, Dict, Iterable, List, Union
 
 import yaml
 from iteration_utilities import deepflatten
 from jinja2 import UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
 from prompt_toolkit.lexers import PygmentsLexer
-from prompt_toolkit.validation import Validator
 from pydantic import BaseModel, Field, validator
 from pygments.lexers.data import JsonLexer, YamlLexer
-from PyInquirer.prompt import prompt
+from questionary import prompt
 from yamlinclude import YamlIncludeConstructor
 
 from ..tools import cast_str_to_bool, force_str_end, get_jinja_env, printf_exception
@@ -60,7 +50,7 @@ class Question(BaseModel):
     choices: Union[Dict[Any, Any], List[Any]] = Field(default_factory=list)
     default: Any = None
     help_text: str = ""
-    multiline: Optional[bool] = None
+    multiline: bool = False
     placeholder: str = ""
     questionary: "Questionary"
     secret: bool = False
@@ -168,30 +158,31 @@ class Question(BaseModel):
             "mouse_support": True,
             "name": self.var_name,
             "qmark": "🕵️" if self.secret else "🎤",
-            "validator": Validator.from_callable(self.get_validator),
             "when": self.get_when,
         }
         multiline = self.multiline
-        pyinquirer_type = "input"
+        questionary_type = "input"
         if self.type_name == "bool":
-            pyinquirer_type = "confirm"
+            questionary_type = "confirm"
         if self.choices:
-            pyinquirer_type = "list"
+            questionary_type = "select"
             result["choices"] = self.get_choices()
-        if pyinquirer_type == "input":
+        if questionary_type == "input":
             if self.secret:
-                pyinquirer_type = "password"
+                questionary_type = "password"
             elif self.type_name == "yaml":
                 lexer = PygmentsLexer(YamlLexer)
             elif self.type_name == "json":
                 lexer = PygmentsLexer(JsonLexer)
-        placeholder = self.get_placeholder()
-        if placeholder:
-            result["placeholder"] = placeholder
-        multiline = multiline or (
-            multiline is None and self.type_name in {"yaml", "json"}
-        )
-        result.update({"type": pyinquirer_type, "lexer": lexer, "multiline": multiline})
+            if lexer:
+                result["lexer"] = lexer
+                multiline = True
+            result["multiline"] = multiline
+            placeholder = self.get_placeholder()
+            if placeholder:
+                result["placeholder"] = placeholder
+            result["validate"] = self.get_validator
+        result.update({"type": questionary_type})
         return result
 
     def get_cast_fn(self) -> Callable:
@@ -262,7 +253,6 @@ class Questionary(BaseModel):
             prompt(
                 (question.get_pyinquirer_structure() for question in self.questions),
                 answers=self.answers_user,
-                raise_keyboard_interrupt=True,
             )
         else:
             previous_answers = self.get_best_answers()

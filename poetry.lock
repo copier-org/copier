@@ -802,23 +802,6 @@ version = "2.7.1"
 
 [[package]]
 category = "main"
-description = "A Python module for collection of common interactive command line user interfaces, based on Inquirer.js"
-name = "PyInquirer"
-optional = false
-python-versions = ">=3.6.1"
-version = "1.0.3"
-
-[package.dependencies]
-Pygments = ">=2.2.0"
-prompt_toolkit = ">=3.0.0,<3.1.0"
-
-[package.source]
-reference = "46282964b4af5fc495084cb66bb1ea108050c859"
-type = "git"
-url = "https://github.com/Yajo/PyInquirer.git"
-
-[[package]]
-category = "main"
 description = "Extension pack for Python Markdown."
 name = "pymdown-extensions"
 optional = false
@@ -951,6 +934,20 @@ toml = ["toml"]
 
 [[package]]
 category = "main"
+description = "Python library to build pretty command line user prompts ⭐️"
+name = "questionary"
+optional = false
+python-versions = "*"
+version = "1.5.2"
+
+[package.dependencies]
+prompt-toolkit = ">=2.0,<4.0"
+
+[package.extras]
+test = ["pytest", "pytest-pycodestyle", "pytest-cov", "coveralls"]
+
+[[package]]
+category = "main"
 description = "Alternative regular expression module, to replace re."
 name = "regex"
 optional = false
@@ -1071,6 +1068,7 @@ testing = ["coverage (>=5)", "coverage-enable-subprocess (>=1)", "flaky (>=3)", 
 [[package]]
 category = "main"
 description = "Measures the displayed width of unicode strings in a terminal"
+marker = "python_version >= \"3.4\""
 name = "wcwidth"
 optional = false
 python-versions = "*"
@@ -1093,7 +1091,7 @@ testing = ["jaraco.itertools", "func-timeout"]
 docs = ["mkdocstrings", "mkdocs-material"]
 
 [metadata]
-content-hash = "d6a2cbdb772ae892d8d7f6ceed35e432d08fdfdfc23b6ebd9b575975596490f9"
+content-hash = "58a1bdab626e51925d65b5d5573206075ec7a217e2ff37c0c8f3e201f28f7976"
 lock-version = "1.0"
 python-versions = "^3.6.1"
 
@@ -1467,7 +1465,6 @@ pygments = [
     {file = "Pygments-2.7.1-py3-none-any.whl", hash = "sha256:307543fe65c0947b126e83dd5a61bd8acbd84abec11f43caebaf5534cbc17998"},
     {file = "Pygments-2.7.1.tar.gz", hash = "sha256:926c3f319eda178d1bd90851e4317e6d8cdb5e292a3386aac9bd75eca29cf9c7"},
 ]
-PyInquirer = []
 pymdown-extensions = [
     {file = "pymdown-extensions-8.0.tar.gz", hash = "sha256:440b0db9823b89f9917482ce3ab3d32ac18e60f2e186770ac37836830d5e7256"},
     {file = "pymdown_extensions-8.0-py2.py3-none-any.whl", hash = "sha256:c3b18b719adc3a441c4edbcf691157998dbd333384a8e2caf0690985a6e586f0"},
@@ -1516,6 +1513,10 @@ pyyaml = [
 pyyaml-include = [
     {file = "pyyaml-include-1.2.tar.gz", hash = "sha256:2343c4dad744d3ce907ec50683b29b4383c7c967f142275bdad8ed56d4de9d94"},
     {file = "pyyaml_include-1.2-py2.py3-none-any.whl", hash = "sha256:2d4e3843110cf515aaf1568b217b05061f8e9f57cd3b35e8e654c838717796cb"},
+]
+questionary = [
+    {file = "questionary-1.5.2-py3-none-any.whl", hash = "sha256:6998a1fe0639daec0da44e0a973f387e7c778bdc418d76ecfa45a7b3a0997049"},
+    {file = "questionary-1.5.2.tar.gz", hash = "sha256:f6e41e36b6c86fe0c3ff12a30c6c6a4e80129efba5ad0a115d71fd5df119c726"},
 ]
 regex = [
     {file = "regex-2020.7.14-cp27-cp27m-win32.whl", hash = "sha256:e46d13f38cfcbb79bfdb2964b0fe12561fe633caf964a77a5f8d4e45fe5d2ef7"},
