@@ -5,8 +5,8 @@ from datetime import datetime
 import pytest
 
 from copier.config.factory import filter_config, make_config
-from copier.config.objects import EnvOps, InvalidTypeError
-from copier.config.user_data import query_user_data
+from copier.config.objects import EnvOps
+from copier.config.user_data import InvalidTypeError, query_user_data
 from copier.types import AnyByStrDict
 
 answers_data: AnyByStrDict = {}

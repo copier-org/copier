@@ -27,26 +27,11 @@ from pygments.lexers.data import JsonLexer, YamlLexer
 from PyInquirer.prompt import prompt
 from yamlinclude import YamlIncludeConstructor
 
-from ..tools import (
-    cast_str_to_bool,
-    force_str_end,
-    get_jinja_env,
-    parse_yaml_string,
-    printf_exception,
-)
+from ..tools import cast_str_to_bool, force_str_end, get_jinja_env, printf_exception
 from ..types import AnyByStrDict, OptStrOrPath, PathSeq, StrOrPath
 from .objects import DEFAULT_DATA, EnvOps, UserMessageError
 
 __all__ = ("load_config_data", "query_user_data")
-
-CAST_STR_TO_NATIVE: Dict[str, Callable] = {
-    "bool": cast_str_to_bool,
-    "float": float,
-    "int": int,
-    "json": json.loads,
-    "str": str,
-    "yaml": parse_yaml_string,
-}
 
 
 class ConfigFileError(ValueError):
@@ -377,6 +362,16 @@ def cast_answer_type(answer: Any, type_fn: Callable) -> Any:
     except (TypeError, AttributeError):
         # JSON or YAML failed because it wasn't a string; no need to convert
         return answer
+
+
+CAST_STR_TO_NATIVE: Dict[str, Callable] = {
+    "bool": cast_str_to_bool,
+    "float": float,
+    "int": int,
+    "json": json.loads,
+    "str": str,
+    "yaml": parse_yaml_string,
+}
 
 
 def query_user_data(
