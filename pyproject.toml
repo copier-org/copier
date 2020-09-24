@@ -31,16 +31,17 @@ iteration_utilities = "^0.10.1"
 jinja2 = "^2.11.2"
 pathspec = "^0.8.0"
 plumbum = "^1.6.9"
-prompt_toolkit = "^3.0.6"
 pydantic = "^1.5.1"
 regex = "^2020.6.8"
-pygments = "^2.6.1"
 pyyaml = "^5.3.1"
 pyyaml-include = "^1.2"
 # packaging is needed when installing from PyPI
 packaging = "^20.4"
 mkdocstrings = {version = "^0.13.1", optional = true}
 mkdocs-material = {version = "^5.5.2", optional = true}
+# HACK https://github.com/CITGuru/PyInquirer/pull/136
+# TODO Install from upstream when merged
+pyinquirer = {git = "https://github.com/Yajo/PyInquirer.git", rev = "46282964b4af5fc495084cb66bb1ea108050c859"}
 
 [tool.poetry.extras]
 docs = ["mkdocstrings", "mkdocs-material"]
@@ -66,6 +67,7 @@ pytest-timeout = "^1.4.1"
 # TODO Remove from this section and install with poetry install -E docs when fixed
 mkdocstrings = "^0.13.1"
 mkdocs-material = "^5.5.5"
+autoflake = "^1.4"
 
 [tool.poe.tasks]
 clean.script = "devtasks:clean"
