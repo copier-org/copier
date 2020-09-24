@@ -28,7 +28,7 @@ from pydantic import BaseModel, Extra, Field, StrictBool, validator
 from pygments.lexers.data import JsonLexer, YamlLexer
 from PyInquirer.prompt import prompt
 
-from ..tools import cast_answer_type, force_str_end, parse_yaml_string
+from ..tools import cast_answer_type, cast_str_to_bool, force_str_end, parse_yaml_string
 from ..types import AnyByStrDict, OptStr, PathSeq, StrOrPathSeq, StrSeq
 
 # Default list of files in the template to exclude from the rendered project
@@ -50,8 +50,8 @@ DEFAULT_DATA: AnyByStrDict = {
 
 DEFAULT_TEMPLATES_SUFFIX = ".tmpl"
 
-TYPE_COPIER2PYTHON: Dict[str, Callable] = {
-    "bool": bool,
+CAST_STR_TO_NATIVE: Dict[str, Callable] = {
+    "bool": cast_str_to_bool,
     "float": float,
     "int": int,
     "json": json.loads,
@@ -65,6 +65,10 @@ class UserMessageError(Exception):
 
 
 class NoSrcPathError(UserMessageError):
+    pass
+
+
+class InvalidTypeError(TypeError):
     pass
 
 
@@ -218,9 +222,9 @@ class Question(BaseModel):
     def _check_type_name(cls, v, values):
         if v == "":
             default_type_name = type(values.get("default")).__name__
-            v = default_type_name if default_type_name in TYPE_COPIER2PYTHON else "yaml"
-        if v not in TYPE_COPIER2PYTHON:
-            raise ValueError("Invalid question type")
+            v = default_type_name if default_type_name in CAST_STR_TO_NATIVE else "yaml"
+        if v not in CAST_STR_TO_NATIVE:
+            raise InvalidTypeError("Invalid question type")
         return v
 
     def _iter_choices(self) -> Iterable[dict]:
@@ -241,21 +245,24 @@ class Question(BaseModel):
             name = str(name)
             yield {"name": name, "value": value}
 
-    def get_default(self, autocast: bool) -> Any:
+    def get_default(self, inquirer_cast: bool) -> Any:
+        cast_fn = self.get_cast_fn()
         try:
-            result = self.questionary.answers_forced.get(
-                self.var_name, self.questionary.answers_last[self.var_name]
-            )
+            result = self.questionary.answers_forced[self.var_name]
         except KeyError:
-            result = self.render_value(self.default)
-            result = cast_answer_type(result, self.get_type_fn())
-        if not autocast:
+            try:
+                result = self.questionary.answers_last[self.var_name]
+            except KeyError:
+                result = self.render_value(self.default)
+                result = cast_answer_type(result, cast_fn)
+        if not inquirer_cast or self.type_name == "bool":
+            if isinstance(result, str):
+                result = cast_fn(result)
             return result
-        if self.type_name == "bool":
-            return bool(result)
         if result is None:
             return ""
-        return str(result)
+        else:
+            return str(result)
 
     def get_choices(self) -> List[AnyByStrDict]:
         result = []
@@ -267,9 +274,9 @@ class Question(BaseModel):
         return result
 
     def get_filter(self, answer) -> Any:
-        if answer == self.get_default(autocast=True):
-            return self.get_default()
-        return cast_answer_type(answer, self.get_type_fn())
+        if answer == self.get_default(inquirer_cast=True):
+            return self.get_default(inquirer_cast=False)
+        return cast_answer_type(answer, self.get_cast_fn())
 
     def get_message(self) -> str:
         message = ""
@@ -285,7 +292,7 @@ class Question(BaseModel):
     def get_pyinquirer_structure(self):
         lexer = None
         result = {
-            "default": self.get_default(autocast=True),
+            "default": self.get_default(inquirer_cast=True),
             "filter": self.get_filter,
             "message": self.get_message(),
             "mouse_support": True,
@@ -317,13 +324,13 @@ class Question(BaseModel):
         result.update({"type": pyinquirer_type, "lexer": lexer, "multiline": multiline})
         return result
 
-    def get_type_fn(self) -> Callable:
-        return TYPE_COPIER2PYTHON.get(self.type_name, parse_yaml_string)
+    def get_cast_fn(self) -> Callable:
+        return CAST_STR_TO_NATIVE.get(self.type_name, parse_yaml_string)
 
     def get_validator(self, document) -> bool:
-        type_fn = self.get_type_fn()
+        cast_fn = self.get_cast_fn()
         try:
-            type_fn(document)
+            cast_fn(document)
             return True
         except Exception:
             return False
@@ -382,13 +389,16 @@ class Questionary(BaseModel):
                 raise_keyboard_interrupt=True,
             )
         else:
+            previous_answers = self.get_best_answers()
             # Avoid prompting to not requiring a TTy when --force
-            self.answers_user.update(
-                {
-                    question.var_name: question.get_default(autocast=False)
-                    for question in self.questions
-                }
-            )
+            for question in self.questions:
+                new_answer = question.get_default(inquirer_cast=False)
+                cast_fn = question.get_cast_fn()
+                casted_previous_answer = cast_answer_type(
+                    previous_answers.get(question.var_name), cast_fn
+                )
+                if new_answer != casted_previous_answer:
+                    self.answers_user[question.var_name] = new_answer
         return self.answers_user
 
 

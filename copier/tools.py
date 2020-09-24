@@ -115,6 +115,22 @@ def required(value: T, **kwargs: Any) -> T:
     return value
 
 
+def cast_str_to_bool(value: Any) -> bool:
+    """Parse a string to bool, YAML-like."""
+    try:
+        lower = value.lower()
+    except AttributeError:
+        return bool(value)
+    result = None
+    if lower in {"1", "y", "yes", "t", "true"}:
+        result = True
+    elif lower in {"", "0", "n", "no", "f", "false"}:
+        result = False
+    if result is None:
+        raise ValueError("Invalid bool value")
+    return result
+
+
 def make_folder(folder: Path) -> None:
     if not folder.exists():
         try:

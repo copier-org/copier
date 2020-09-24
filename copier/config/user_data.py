@@ -32,10 +32,6 @@ class MultipleConfigFilesError(ConfigFileError):
         super().__init__(msg)
 
 
-class InvalidTypeError(TypeError):
-    pass
-
-
 def load_yaml_data(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
     """Load the `copier.yml` file.
 
