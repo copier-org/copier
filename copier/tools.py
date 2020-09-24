@@ -6,17 +6,17 @@ import shutil
 import sys
 import unicodedata
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, TextIO, Union
+from typing import Any, Dict, List, Optional, TextIO, Union
 
 import colorama
 import pathspec
-import yaml
 from jinja2 import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
 from packaging import version
 from pydantic import StrictBool
 from yaml import safe_dump
 
+from .config.objects import ConfigData, EnvOps
 from .types import (
     AnyByStrDict,
     CheckPathFunc,
@@ -28,9 +28,6 @@ from .types import (
     StrOrPathSeq,
     T,
 )
-
-if TYPE_CHECKING:
-    from .config.objects import ConfigData, EnvOps
 
 __all__ = ("Style", "printf")
 
@@ -49,21 +46,6 @@ INDENT = " " * 2
 HLINE = "-" * 42
 
 NO_VALUE: object = object()
-
-
-def cast_answer_type(answer: Any, type_fn: Callable) -> Any:
-    """Cast answer to expected type."""
-    # Skip casting None into "None"
-    if type_fn is str and answer is None:
-        return answer
-    # Parse correctly bools as 1, true, yes...
-    if type_fn is bool and isinstance(answer, str):
-        return parse_yaml_string(answer)
-    try:
-        return type_fn(answer)
-    except (TypeError, AttributeError):
-        # JSON or YAML failed because it wasn't a string; no need to convert
-        return answer
 
 
 def printf(
@@ -95,18 +77,6 @@ def printf_exception(
         print(HLINE, file=sys.stderr)
         print(e, file=sys.stderr)
         print(HLINE, file=sys.stderr)
-
-
-def parse_yaml_string(string: str) -> Any:
-    """Parse a YAML string and raise a ValueError if parsing failed.
-
-    This method is needed because :meth:`prompt` requires a ``ValueError``
-    to repeat falied questions.
-    """
-    try:
-        return yaml.safe_load(string)
-    except yaml.error.YAMLError as error:
-        raise ValueError(str(error))
 
 
 def required(value: T, **kwargs: Any) -> T:
