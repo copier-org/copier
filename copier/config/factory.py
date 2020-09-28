@@ -47,6 +47,10 @@ def verify_minimum_version(version_str: str) -> None:
     # so instead we do a lazy import here
     from .. import __version__
 
+    # Disable check when running copier as editable installation
+    if __version__ == "0.0.0":
+        return
+
     if version.parse(__version__) < version.parse(version_str):
         raise UserMessageError(
             f"This template requires Copier version >= {version_str}, "

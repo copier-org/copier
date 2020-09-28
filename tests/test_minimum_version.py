@@ -8,7 +8,7 @@ from copier.config.objects import UserMessageError
 
 
 def test_version_less_than_required(monkeypatch):
-    monkeypatch.setattr("copier.__version__", "0.0.0")
+    monkeypatch.setattr("copier.__version__", "0.0.0a0")
     with pytest.raises(UserMessageError):
         make_config("./tests/demo_minimum_version")
 
@@ -36,7 +36,7 @@ def test_minimum_version_update(tmp_path, monkeypatch):
         git("add", ".")
         git("commit", "-m", "hello world")
 
-    monkeypatch.setattr("copier.__version__", "0.0.0")
+    monkeypatch.setattr("copier.__version__", "0.0.0.post0")
     with pytest.raises(UserMessageError):
         make_config("./tests/demo_minimum_version", tmp_path)
 
@@ -47,3 +47,9 @@ def test_minimum_version_update(tmp_path, monkeypatch):
     monkeypatch.setattr("copier.__version__", "99.99.99")
     # assert no error
     make_config("./tests/demo_minimum_version", tmp_path)
+
+
+def test_version_0_0_0_ignored(monkeypatch):
+    monkeypatch.setattr("copier.__version__", "0.0.0")
+    # assert no error
+    make_config("./tests/demo_minimum_version")

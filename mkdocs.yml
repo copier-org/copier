@@ -42,6 +42,10 @@ markdown_extensions:
 
 plugins:
   - search
+  - mermaid2:
+      arguments:
+        flowchart:
+          curve: basis
   - mkdocstrings:
       watch:
         - copier

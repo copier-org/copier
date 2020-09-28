@@ -42,3 +42,72 @@ repos:
             language: fail
             files: "\\.rej$"
 ```
+
+## How the update works
+
+To understand how the updating process works, take a look at this diagram:
+
+<!-- prettier-ignore-start -->
+<div class="mermaid">
+graph TD
+
+%% nodes ----------------------------------------------------------
+template_repo("template repository")
+template_current("/tmp/template<br>(current tag)")
+template_latest("/tmp/template<br>(latest tag)")
+
+project_regen("/tmp/project<br>(fresh, current version)")
+project_current("current project")
+project_half("half migrated<br>project")
+project_updated("updated project")
+project_applied("updated project<br>(diff applied)")
+project_full("fully updated<br>and migrated project")
+
+update["upate current<br>project in-place<br>(prompting)<br>+ run tasks again"]
+compare["compare to get diff"]
+apply["apply diff"]
+
+diff("diff")
+
+%% edges ----------------------------------------------------------
+        template_repo --> |git clone| template_current
+        template_repo --> |git clone| template_latest
+
+     template_current --> |generate and run tasks| project_regen
+      project_current --> compare
+      project_current --> |apply pre-migrations| project_half
+        project_regen --> compare
+         project_half --> update
+      template_latest --> update
+               update --> project_updated
+              compare --> diff
+                 diff --> apply
+      project_updated --> apply
+                apply --> project_applied
+      project_applied --> |apply post-migrations| project_full
+
+%% style ----------------------------------------------------------
+classDef grey fill:#e8e8e8;
+class compare,update,apply grey;
+</div>
+
+<!-- prettier-ignore-end -->
+
+As you can see here, `copier` does several things:
+
+-   it regenerates a fresh project from the current template version
+-   then it compares both version, to get the diff from "fresh project" to "current
+    project"
+-   now it applies pre-migrations to your project, and updates the current project with
+    the latest template changes (asking confirmation)
+-   finally, it re-applies the previously obtained diff, and then run the
+    post-migrations
+
+!!! important
+
+    The diff obtained by comparing the fresh, regenerated project to your
+    current project can cancel the modifications applied by the update from the latest
+    template version. During the process, `copier` will ask you confirmation to overwrite or
+    skip modifications, but in the end, it is possible that nothing has changed (except for
+    the version in `.copier-answers.yml` of course). This is not a bug: although it can be
+    quite surprising, this behavior is correct.

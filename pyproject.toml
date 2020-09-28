@@ -39,12 +39,11 @@ pyyaml-include = "^1.2"
 packaging = "^20.4"
 mkdocstrings = {version = "^0.13.1", optional = true}
 mkdocs-material = {version = "^5.5.2", optional = true}
-# HACK https://github.com/CITGuru/PyInquirer/pull/136
-# TODO Install from upstream when merged
+mkdocs-mermaid2-plugin = {version = "^0.5.0", optional = true}
 
 questionary = "^1.5.2"
 [tool.poetry.extras]
-docs = ["mkdocstrings", "mkdocs-material"]
+docs = ["mkdocstrings", "mkdocs-material", "mkdocs-mermaid2-plugin"]
 
 [tool.poetry.dev-dependencies]
 black = {version = "^19.10b0", allow-prereleases = true}
@@ -68,6 +67,7 @@ pytest-timeout = "^1.4.1"
 mkdocstrings = "^0.13.1"
 mkdocs-material = "^5.5.5"
 autoflake = "^1.4"
+mkdocs-mermaid2-plugin = "^0.5.0"
 
 [tool.poe.tasks]
 clean.script = "devtasks:clean"
