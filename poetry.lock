@@ -712,7 +712,6 @@ version = "0.8.0"
 [[package]]
 category = "dev"
 description = "Pexpect allows easy control of interactive console applications."
-marker = "python_version >= \"3.4\" and sys_platform != \"win32\""
 name = "pexpect"
 optional = false
 python-versions = "*"
@@ -804,7 +803,6 @@ wcwidth = "*"
 [[package]]
 category = "dev"
 description = "Run a subprocess in a pseudo terminal"
-marker = "python_version >= \"3.4\" and sys_platform != \"win32\""
 name = "ptyprocess"
 optional = false
 python-versions = "*"
@@ -1184,7 +1182,7 @@ testing = ["pytest (>=3.5,<3.7.3 || >3.7.3)", "pytest-checkdocs (>=1.2.3)", "pyt
 docs = ["mkdocstrings", "mkdocs-material", "mkdocs-mermaid2-plugin"]
 
 [metadata]
-content-hash = "fb5e09556ba449034db24c5e1dbe46a22f27aa23983c8ba791fd01f34f1e7bf5"
+content-hash = "4cd099e28fd208d64704a4cad3da4b00b69137e89a33ef2234ffe00be59e98cd"
 lock-version = "1.0"
 python-versions = "^3.6.1"
 
