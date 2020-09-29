@@ -1,3 +1,2 @@
-image: registry.gitlab.com/yajoman/ci-tools/fedora
 tasks:
   - init: poetry install
