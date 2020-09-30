@@ -1,2 +1,11 @@
+image:
+  file: .gitpod.dockerfile
 tasks:
-  - init: poetry install
+  - init: |
+      export PIP_USER=no
+      pre-commit install
+      pre-commit install-hooks
+      exit
+  - init: |
+      export PIP_USER=no
+      poetry install
