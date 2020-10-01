@@ -48,6 +48,10 @@ your host environment:
 -   [poetry](https://python-poetry.org/) for packaging and dependency management
 -   [poethepoet](https://github.com/nat-n/poethepoet) for running development tasks
 
+Or you can use
+[![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/copier-org/copier)
+to start hacking with one click!
+
 ## Get Started!
 
 Ready to contribute? Here's how to set up the project for local development.
