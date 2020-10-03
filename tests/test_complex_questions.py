@@ -2,7 +2,6 @@ from pathlib import Path
 from textwrap import dedent
 
 import pexpect
-from plumbum.cmd import copier as copier_cmd
 
 from copier import copy
 
@@ -39,18 +38,19 @@ def test_api(tmp_path):
             choose_tuple: "second"
             choose_dict: "third"
             choose_number: null
+            minutes_under_water: 10
             optional_value: null
         """
     )
 
 
-def test_cli(tmp_path):
+def test_cli_interactive(tmp_path):
     """Test copier correctly processes advanced questions and answers through CLI."""
     invalid = [
         "Invalid value",
         "please try again",
     ]
-    tui = pexpect.spawn(".venv/bin/copier", ["copy", SRC, str(tmp_path)], timeout=10,)
+    tui = pexpect.spawn("copier", ["copy", SRC, str(tmp_path)], timeout=3)
     tui.expect_exact(["I need to know it. Do you love me?", "love_me", "Format: bool"])
     tui.send("y")
     tui.expect_exact(["Please tell me your name.", "your_name", "Format: str"])
@@ -72,26 +72,24 @@ def test_cli(tmp_path):
     tui.sendline('{"objective":')
     tui.expect_exact(invalid + q)
     tui.sendline('"be a pirate"}')
-    tui.sendline(Keyboard.Esc + Keyboard.Enter)
-    q = ["anything_else", "Format: yaml"]
+    tui.send(Keyboard.Esc + Keyboard.Enter)
+    q = ["Wanna give me any more info?", "anything_else", "Format: yaml"]
     tui.expect_exact(q)
     tui.sendline("- Want some grog?")
     tui.expect_exact(invalid + q)
     tui.sendline("- I'd love it")
-    tui.sendline(Keyboard.Esc + Keyboard.Enter)
-    # Here I'm actually testing a buggy behavior
-    # HACK https://github.com/tmbo/questionary/pull/56
-    # TODO Change test when that issue is fixed and released
+    tui.send(Keyboard.Esc + Keyboard.Enter)
     tui.expect_exact(
         [
             "You see the value of the list items",
             "choose_list",
+            "Format: str",
             "first",
             "second",
             "third",
         ]
     )
-    tui.sendline(Keyboard.Enter)
+    tui.sendline()
     tui.expect_exact(
         [
             "You see the 1st tuple item, but I get the 2nd item as a result",
@@ -101,7 +99,7 @@ def test_cli(tmp_path):
             "three",
         ]
     )
-    tui.sendline(Keyboard.Enter)
+    tui.sendline()
     tui.expect_exact(
         [
             "You see the dict key, but I get the dict value",
@@ -111,16 +109,22 @@ def test_cli(tmp_path):
             "three",
         ]
     )
-    tui.sendline(Keyboard.Enter)
+    tui.sendline()
     tui.expect_exact(["This must be a number", "choose_number", "-1.1", "0", "1"])
-    tui.sendline(Keyboard.Enter)
-    tui.expect_exact(["minutes_under_water", "Format: int"])
+    tui.sendline()
+    tui.expect_exact(["minutes_under_water", "Format: int", "10"])
     tui.send(Keyboard.Backspace)
-    tui.sendline(Keyboard.Enter)
+    tui.sendline()
     tui.expect_exact(["optional_value", "Format: yaml"])
     tui.sendline(Keyboard.Alt + Keyboard.Enter)
     tui.expect_exact(pexpect.EOF)
     results_file = tmp_path / "results.txt"
+    # Here I'm actually testing a buggy behavior
+    # HACK https://github.com/tmbo/questionary/pull/56
+    # TODO Change test when that issue is fixed and released. It should be:
+    #      choose_list: "second"
+    #      choose_tuple: "third"
+    #      choose_tuple: "third"
     assert results_file.read_text() == dedent(
         r"""
             love_me: true
@@ -129,10 +133,11 @@ def test_cli(tmp_path):
             your_height: 1.56
             more_json_info: {"objective": "be a pirate"}
             anything_else: ["Want some grog?", "I\u0027d love it"]
-            choose_list: "second"
-            choose_tuple: "third"
+            choose_list: "first"
+            choose_tuple: "first"
             choose_dict: "first"
             choose_number: -1.1
+            minutes_under_water: 1
             optional_value: null
         """
     )
@@ -170,40 +175,65 @@ def test_api_str_data(tmp_path):
             choose_tuple: "second"
             choose_dict: "third"
             choose_number: 0.0
+            minutes_under_water: 10
             optional_value: null
         """
     )
 
 
-def test_cli_with_flag_data_and_type_casts(tmp_path: Path):
+def test_cli_interatively_with_flag_data_and_type_casts(tmp_path: Path):
     """Assert how choices work when copier is invoked with --data interactively."""
-    (
-        copier_cmd[
+    invalid = [
+        "Invalid value",
+        "please try again",
+    ]
+    tui = pexpect.spawn(
+        "copier",
+        [
             "--data=choose_list=second",
             "--data=choose_dict=first",
             "--data=choose_tuple=third",
             "--data=choose_number=1",
             "copy",
             SRC,
-            tmp_path,
-        ]
-        << dedent(
-            # These are the answers; those marked as "wrong" will fail and
-            # make the prompt function ask again
-            """\
-                y
-                Guybrush Threpwood
-                wrong your_age
-                22
-                wrong your_height
-                1.56
-                wrong more_json_info
-                {"objective": "be a pirate"}
-                {wrong anything_else
-                ['Want some grog?', I'd love it]
-            """
-        )
-    )(timeout=5)
+            str(tmp_path),
+        ],
+        timeout=3,
+    )
+
+    tui.expect_exact(["I need to know it. Do you love me?", "love_me", "Format: bool"])
+    tui.send("y")
+    tui.expect_exact(["Please tell me your name.", "your_name", "Format: str"])
+    tui.sendline("Guybrush Threpwood")
+    q = ["How old are you?", "your_age", "Format: int"]
+    tui.expect_exact(q)
+    tui.sendline("wrong your_age")
+    tui.expect_exact(invalid + q)
+    tui.send((Keyboard.Alt + Keyboard.Backspace) * 2)
+    tui.sendline("22")
+    q = ["What's your height?", "your_height", "Format: float"]
+    tui.expect_exact(q)
+    tui.sendline("wrong your_height")
+    tui.expect_exact(invalid + q)
+    tui.send((Keyboard.Alt + Keyboard.Backspace) * 2)
+    tui.sendline("1.56")
+    q = ["more_json_info", "Format: json"]
+    tui.expect_exact(q)
+    tui.sendline('{"objective":')
+    tui.expect_exact(invalid + q)
+    tui.sendline('"be a pirate"}')
+    tui.send(Keyboard.Esc + Keyboard.Enter)
+    q = ["Wanna give me any more info?", "anything_else", "Format: yaml"]
+    tui.expect_exact(q)
+    tui.sendline("- Want some grog?")
+    tui.expect_exact(invalid + q)
+    tui.sendline("- I'd love it")
+    tui.send(Keyboard.Esc + Keyboard.Enter)
+    tui.expect_exact(["minutes_under_water", "Format: int", "10"])
+    tui.sendline()
+    tui.expect_exact(["optional_value", "Format: yaml"])
+    tui.sendline(Keyboard.Alt + Keyboard.Enter)
+    tui.expect_exact(pexpect.EOF)
     results_file = tmp_path / "results.txt"
     assert results_file.read_text() == dedent(
         r"""
@@ -217,6 +247,7 @@ def test_cli_with_flag_data_and_type_casts(tmp_path: Path):
             choose_tuple: "third"
             choose_dict: "first"
             choose_number: 1.0
+            minutes_under_water: 10
             optional_value: null
         """
     )

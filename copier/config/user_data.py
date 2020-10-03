@@ -250,7 +250,7 @@ class Questionary(BaseModel):
 
     def get_answers(self) -> AnyByStrDict:
         if self.ask_user:
-            prompt(
+            self.answers_user = prompt(
                 (question.get_pyinquirer_structure() for question in self.questions),
                 answers=self.answers_user,
             )
