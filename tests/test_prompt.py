@@ -1,10 +1,9 @@
 from pathlib import Path
 
+import pexpect
 import pytest
 from plumbum import local
 from plumbum.cmd import git
-
-from copier import copy
 
 from .helpers import build_file_tree
 
@@ -31,15 +30,13 @@ MARIO_TREE = {
 }
 
 
-@pytest.mark.timeout(5)
 @pytest.mark.parametrize("name", [DEFAULT, None, "Luigi"])
-def test_copy_default_advertised(tmp_path_factory, fake_tty, name):
+def test_copy_default_advertised(tmp_path_factory, name):
     """Test that the questions for the user are OK"""
     template, subproject = (
         tmp_path_factory.mktemp("template"),
         tmp_path_factory.mktemp("subproject"),
     )
-    questions_count = 4
     with local.cwd(template):
         build_file_tree(MARIO_TREE)
         git("init")
@@ -50,29 +47,44 @@ def test_copy_default_advertised(tmp_path_factory, fake_tty, name):
         git("tag", "v2")
     with local.cwd(subproject):
         # Copy the v1 template
-        kwargs = {}
+        args = []
         if name is not DEFAULT:
-            kwargs["data"] = {"your_name": name}
+            args.append(f"--data=your_name={name}")
         else:
             name = "Mario"  # Default in the template
-        fake_tty.input.send_text("\n" * (questions_count - len(kwargs)))
-        copy(str(template), ".", vcs_ref="v1", **kwargs)
+        tui = pexpect.spawn(
+            "copier", [str(template), ".", "--vcs-ref=v1"] + args, timeout=3
+        )
         # Check what was captured
-        captured = fake_tty.output.read()
-        assert "in_love? Format: bool\n🎤? [Y/n] " in captured
-        assert "Secret enemy name\nyour_enemy? Format: str\n🕵️ [Bowser]: " in captured
-        assert f"what_enemy_does? Format: str\n🎤 [Bowser hates {name}]: " in captured
-        # We already sent the name through 'data', so it shouldn't be prompted
-        assert name == "Mario" or "your_name" not in captured
+        tui.expect_exact(["in_love?", "Format: bool", "(Y/n)"])
+        tui.sendline()
+        if args:
+            tui.expect_exact(
+                ["If you have a name, tell me now.", "your_name?", "Format: str"]
+            )
+            tui.sendline(name or "")
+        tui.expect_exact(["Secret enemy name", "your_enemy?", "Format: str", "Bowser"])
+        tui.sendline()
+        tui.expect_exact(["what_enemy_does?", "Format: str", f"Bowser hates {name}"])
+        tui.sendline()
+        tui.expect_exact(pexpect.EOF)
         assert "_commit: v1" in Path(".copier-answers.yml").read_text()
         # Update subproject
         git("init")
         git("add", ".")
         git("commit", "-m", "v1")
-        copy(dst_path=".")
+        tui = pexpect.spawn("copier", timeout=3)
         # Check what was captured
-        captured = fake_tty.output.read()
-        assert (
-            f"If you have a name, tell me now.\nyour_name? Format: str\n🎤 [{name}]: "
-            in captured
+        tui.expect_exact(["in_love?", "Format: bool", "(Y/n)"])
+        tui.sendline()
+        tui.expect_exact(
+            ["If you have a name, tell me now.", "your_name?", "Format: str", name]
         )
+        tui.sendline()
+        tui.expect_exact(["Secret enemy name", "your_enemy?", "Format: str", "Bowser"])
+        tui.sendline()
+        tui.expect_exact(["what_enemy_does?", "Format: str", f"Bowser hates {name}"])
+        tui.sendline()
+        tui.expect_exact(["Overwrite", ".copier-answers.yml", "[Y/n]"])
+        tui.sendline()
+        tui.expect_exact(pexpect.EOF)
