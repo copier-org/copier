@@ -12,7 +12,7 @@ from iteration_utilities import deepflatten
 from jinja2 import UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
 from prompt_toolkit.lexers import PygmentsLexer
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, ValidationError, validator
 from pygments.lexers.data import JsonLexer, YamlLexer
 from questionary import prompt
 from yamlinclude import YamlIncludeConstructor
@@ -40,10 +40,6 @@ class MultipleConfigFilesError(ConfigFileError):
         msg = str(conf_paths)
         printf_exception(self, "MULTIPLE CONFIG FILES", msg=msg, quiet=quiet)
         super().__init__(msg)
-
-
-class InvalidTypeError(TypeError):
-    pass
 
 
 class Question(BaseModel):
@@ -86,7 +82,7 @@ class Question(BaseModel):
             default_type_name = type(values.get("default")).__name__
             v = default_type_name if default_type_name in CAST_STR_TO_NATIVE else "yaml"
         if v not in CAST_STR_TO_NATIVE:
-            raise InvalidTypeError("Invalid question type")
+            raise ValidationError("Invalid question type")
         return v
 
     def _iter_choices(self) -> Iterable[dict]:
@@ -220,7 +216,9 @@ class Question(BaseModel):
             # value was not a string
             return value
         try:
-            return template.render(**self.questionary.get_best_answers())
+            return template.render(
+                **self.questionary.get_best_answers(), **DEFAULT_DATA
+            )
         except UndefinedError as error:
             raise UserMessageError(str(error)) from error
 

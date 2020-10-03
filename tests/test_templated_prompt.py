@@ -3,10 +3,11 @@ from collections import ChainMap
 from datetime import datetime
 
 import pytest
+from pydantic import ValidationError
 
 from copier.config.factory import filter_config, make_config
 from copier.config.objects import EnvOps
-from copier.config.user_data import InvalidTypeError, query_user_data
+from copier.config.user_data import query_user_data
 from copier.types import AnyByStrDict
 
 answers_data: AnyByStrDict = {}
@@ -122,7 +123,7 @@ def test_templated_prompt(
     questions_combined = filter_config({**main_question, **questions_data})[1]
     data = dict(
         ChainMap(
-            query_user_data(questions_combined, {}, {}, True, envops),
+            query_user_data(questions_combined, {}, {}, {}, True, envops),
             {k: v["default"] for k, v in questions_combined.items()},
         )
     )
@@ -146,7 +147,7 @@ def test_templated_prompt_custom_envops(tmp_path):
 
 def test_templated_prompt_builtins():
     data = query_user_data(
-        {"question": {"default": "[[ now() ]]"}}, answers_data, {}, False, envops
+        {"question": {"default": "[[ now() ]]"}}, answers_data, {}, {}, False, envops
     )
     assert isinstance(data["question"], datetime)
 
@@ -163,22 +164,37 @@ def test_templated_prompt_builtins():
 def test_templated_prompt_invalid():
     # assert no exception in non-strict mode
     query_user_data(
-        {"question": {"default": "[[ not_valid ]]"}}, {}, answers_data, False, envops
+        {"question": {"default": "[[ not_valid ]]"}},
+        {},
+        answers_data,
+        {},
+        False,
+        envops,
     )
 
     # assert no exception in non-strict mode
     query_user_data(
-        {"question": {"help": "[[ not_valid ]]"}}, {}, answers_data, False, envops
+        {"question": {"help": "[[ not_valid ]]"}}, {}, answers_data, {}, False, envops
     )
 
-    with pytest.raises(InvalidTypeError):
+    with pytest.raises(ValidationError):
         query_user_data(
-            {"question": {"type": "[[ not_valid ]]"}}, {}, answers_data, False, envops
+            {"question": {"type": "[[ not_valid ]]"}},
+            {},
+            answers_data,
+            {},
+            False,
+            envops,
         )
 
     # assert no exception in non-strict mode
     query_user_data(
-        {"question": {"choices": ["[[ not_valid ]]"]}}, {}, answers_data, False, envops
+        {"question": {"choices": ["[[ not_valid ]]"]}},
+        {},
+        answers_data,
+        {},
+        False,
+        envops,
     )
 
     # TODO: uncomment this later when EnvOps supports setting the undefined behavior
