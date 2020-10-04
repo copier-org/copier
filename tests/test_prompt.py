@@ -52,18 +52,20 @@ def test_copy_default_advertised(tmp_path_factory, name):
             args.append(f"--data=your_name={name}")
         else:
             name = "Mario"  # Default in the template
+        name = str(name)
         tui = pexpect.spawn(
-            "copier", [str(template), ".", "--vcs-ref=v1"] + args, timeout=3
+            "copier", [str(template), ".", "--vcs-ref=v1"] + args, timeout=5
         )
         # Check what was captured
         tui.expect_exact(["in_love?", "Format: bool", "(Y/n)"])
         tui.sendline()
-        if args:
+        tui.expect_exact(["Yes"])
+        if not args:
             tui.expect_exact(
-                ["If you have a name, tell me now.", "your_name?", "Format: str"]
+                ["If you have a name, tell me now.", "your_name?", "Format: str", name]
             )
-            tui.sendline(name or "")
-        tui.expect_exact(["Secret enemy name", "your_enemy?", "Format: str", "Bowser"])
+            tui.sendline()
+        tui.expect_exact(["Secret enemy name", "your_enemy?", "Format: str", "******"])
         tui.sendline()
         tui.expect_exact(["what_enemy_does?", "Format: str", f"Bowser hates {name}"])
         tui.sendline()
@@ -72,6 +74,7 @@ def test_copy_default_advertised(tmp_path_factory, name):
         # Update subproject
         git("init")
         git("add", ".")
+        assert "_commit: v1" in Path(".copier-answers.yml").read_text()
         git("commit", "-m", "v1")
         tui = pexpect.spawn("copier", timeout=3)
         # Check what was captured
@@ -88,3 +91,4 @@ def test_copy_default_advertised(tmp_path_factory, name):
         tui.expect_exact(["Overwrite", ".copier-answers.yml", "[Y/n]"])
         tui.sendline()
         tui.expect_exact(pexpect.EOF)
+        assert "_commit: v2" in Path(".copier-answers.yml").read_text()

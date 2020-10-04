@@ -1,5 +1,6 @@
 import filecmp
 import os
+import sys
 import textwrap
 from enum import Enum
 from hashlib import sha1
@@ -34,6 +35,18 @@ class Keyboard(str, Enum):
     # further explanations
     Alt = Esc
     Backspace = ControlH
+
+
+def is_venv() -> bool:
+    """Indicate if we are running inside a venv."""
+    return sys.base_prefix != sys.prefix
+
+
+def bin_prefix() -> str:
+    """Obtain prefix for binaries inside the venv, if any."""
+    if not is_venv():
+        return ""
+    return str(Path(sys.prefix, "bin"))
 
 
 def render(tmp_path, **kwargs):
