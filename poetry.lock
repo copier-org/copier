@@ -1001,11 +1001,15 @@ python-versions = "*"
 version = "1.5.2"
 
 [package.dependencies]
-prompt-toolkit = ">=2.0,<4.0"
+prompt_toolkit = ">=2.0,<4.0"
 
 [package.extras]
 test = ["pytest", "pytest-pycodestyle", "pytest-cov", "coveralls"]
 
+[package.source]
+reference = "5b8b6dec56a75970edd2bdee4dfaa5606e7c30c4"
+type = "git"
+url = "https://github.com/tmbo/questionary.git"
 [[package]]
 category = "main"
 description = "Alternative regular expression module, to replace re."
@@ -1182,7 +1186,7 @@ testing = ["pytest (>=3.5,<3.7.3 || >3.7.3)", "pytest-checkdocs (>=1.2.3)", "pyt
 docs = ["mkdocstrings", "mkdocs-material", "mkdocs-mermaid2-plugin"]
 
 [metadata]
-content-hash = "4cd099e28fd208d64704a4cad3da4b00b69137e89a33ef2234ffe00be59e98cd"
+content-hash = "f36f79780a439e561344894e79d9eb5127c4f95978a3502b69f08ea5379a7322"
 lock-version = "1.0"
 python-versions = "^3.6.1"
 
@@ -1624,10 +1628,7 @@ pyyaml-include = [
     {file = "pyyaml-include-1.2.tar.gz", hash = "sha256:2343c4dad744d3ce907ec50683b29b4383c7c967f142275bdad8ed56d4de9d94"},
     {file = "pyyaml_include-1.2-py2.py3-none-any.whl", hash = "sha256:2d4e3843110cf515aaf1568b217b05061f8e9f57cd3b35e8e654c838717796cb"},
 ]
-questionary = [
-    {file = "questionary-1.5.2-py3-none-any.whl", hash = "sha256:6998a1fe0639daec0da44e0a973f387e7c778bdc418d76ecfa45a7b3a0997049"},
-    {file = "questionary-1.5.2.tar.gz", hash = "sha256:f6e41e36b6c86fe0c3ff12a30c6c6a4e80129efba5ad0a115d71fd5df119c726"},
-]
+questionary = []
 regex = [
     {file = "regex-2020.9.27-cp27-cp27m-win32.whl", hash = "sha256:d23a18037313714fb3bb5a94434d3151ee4300bae631894b1ac08111abeaa4a3"},
     {file = "regex-2020.9.27-cp27-cp27m-win_amd64.whl", hash = "sha256:84e9407db1b2eb368b7ecc283121b5e592c9aaedbe8c78b1a2f1102eb2e21d19"},

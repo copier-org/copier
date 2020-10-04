@@ -1,16 +1,13 @@
-import io
-from collections import ChainMap
-from datetime import datetime
-
+import pexpect
 import pytest
-from pydantic import ValidationError
+import yaml
 
 from copier.config.factory import filter_config, make_config
 from copier.config.objects import EnvOps
-from copier.config.user_data import query_user_data
-from copier.types import AnyByStrDict
+from copier.config.user_data import InvalidTypeError, query_user_data
 
-answers_data: AnyByStrDict = {}
+from .helpers import build_file_tree
+
 envops = EnvOps()
 main_default = "copier"
 main_question = {"main": {"default": main_default}}
@@ -44,7 +41,7 @@ main_question = {"main": {"default": main_default}}
             main_default,
             ["THIS copier HELP IS TEMPLATED"],
         ),
-        (
+        pytest.param(
             {
                 "templated_choices_dict_1": {
                     "default": "[[ main ]]",
@@ -52,7 +49,8 @@ main_question = {"main": {"default": main_default}}
                 },
             },
             main_default,
-            ["(1) choice 1", "(2) copier", "Choice [1]"],
+            ["choice 1", "copier"],
+            marks=pytest.mark.xfail(reason="bug tmbo/questionary#57", strict=True),
         ),
         (
             {
@@ -94,7 +92,7 @@ main_question = {"main": {"default": main_default}}
             main_default,
             ["(1) name 1", "(2) copier", "Choice [1]"],
         ),
-        (
+        pytest.param(
             {
                 "templated_choices_tuple_list_2": {
                     "default": "value 2",
@@ -102,9 +100,10 @@ main_question = {"main": {"default": main_default}}
                 },
             },
             "value 2",
-            ["(1) name 1", "(2) copier", "Choice [2]"],
+            ["name 1", "copier"],
+            marks=pytest.mark.xfail(reason="bug tmbo/questionary#57", strict=True),
         ),
-        (
+        pytest.param(
             {
                 "templated_choices_mixed_list": {
                     "default": "value 2",
@@ -112,27 +111,36 @@ main_question = {"main": {"default": main_default}}
                 },
             },
             "value 2",
-            ["(1) copier", "(2) copier", "Choice [2]"],
+            ["copier", "copier"],
+            marks=pytest.mark.xfail(reason="bug tmbo/questionary#57", strict=True),
         ),
     ],
 )
 def test_templated_prompt(
-    questions_data, expected_value, expected_outputs, capsys, monkeypatch
+    questions_data, expected_value, expected_outputs, tmp_path_factory
 ):
-    monkeypatch.setattr("sys.stdin", io.StringIO("\n\n"))
-    questions_combined = filter_config({**main_question, **questions_data})[1]
-    data = dict(
-        ChainMap(
-            query_user_data(questions_combined, {}, {}, {}, True, envops),
-            {k: v["default"] for k, v in questions_combined.items()},
-        )
+    template, subproject = (
+        tmp_path_factory.mktemp("template"),
+        tmp_path_factory.mktemp("subproject"),
     )
-    captured = capsys.readouterr()
-    data.pop("main")
-    name, value = list(data.items())[0]
-    assert value == expected_value
-    for output in expected_outputs:
-        assert output in captured.out
+    questions_combined = filter_config({**main_question, **questions_data})[1]
+    # There's always only 1 question; get its name
+    question_name = questions_data.copy().popitem()[0]
+    build_file_tree(
+        {
+            template / "copier.yml": yaml.dump(questions_combined),
+            template
+            / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
+        }
+    )
+    tui = pexpect.spawn("copier", [str(template), str(subproject)], timeout=5)
+    tui.expect_exact(["main?", "Format: yaml", main_default])
+    tui.sendline()
+    tui.expect_exact([f"{question_name}?"] + expected_outputs)
+    tui.sendline()
+    tui.expect_exact(pexpect.EOF)
+    answers = yaml.load((subproject / ".copier-answers.yml").read_text())
+    assert answers[question_name] == expected_value
 
 
 def test_templated_prompt_custom_envops(tmp_path):
@@ -147,16 +155,11 @@ def test_templated_prompt_custom_envops(tmp_path):
 
 def test_templated_prompt_builtins():
     data = query_user_data(
-        {"question": {"default": "[[ now() ]]"}}, answers_data, {}, {}, False, envops
+        {"question": {"default": "[[ now() ]]"}}, {}, {}, {}, False, envops
     )
-    assert isinstance(data["question"], datetime)
 
     data = query_user_data(
-        {"question": {"default": "[[ make_secret() ]]"}},
-        answers_data,
-        {},
-        False,
-        envops,
+        {"question": {"default": "[[ make_secret() ]]"}}, {}, {}, {}, False, envops,
     )
     assert isinstance(data["question"], str) and len(data["question"]) == 128
 
@@ -164,42 +167,27 @@ def test_templated_prompt_builtins():
 def test_templated_prompt_invalid():
     # assert no exception in non-strict mode
     query_user_data(
-        {"question": {"default": "[[ not_valid ]]"}},
-        {},
-        answers_data,
-        {},
-        False,
-        envops,
+        {"question": {"default": "[[ not_valid ]]"}}, {}, {}, {}, False, envops,
     )
 
     # assert no exception in non-strict mode
     query_user_data(
-        {"question": {"help": "[[ not_valid ]]"}}, {}, answers_data, {}, False, envops
+        {"question": {"help": "[[ not_valid ]]"}}, {}, {}, {}, False, envops
     )
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(InvalidTypeError):
         query_user_data(
-            {"question": {"type": "[[ not_valid ]]"}},
-            {},
-            answers_data,
-            {},
-            False,
-            envops,
+            {"question": {"type": "[[ not_valid ]]"}}, {}, {}, {}, False, envops,
         )
 
     # assert no exception in non-strict mode
     query_user_data(
-        {"question": {"choices": ["[[ not_valid ]]"]}},
-        {},
-        answers_data,
-        {},
-        False,
-        envops,
+        {"question": {"choices": ["[[ not_valid ]]"]}}, {}, {}, {}, False, envops,
     )
 
     # TODO: uncomment this later when EnvOps supports setting the undefined behavior
     # envops.undefined = StrictUndefined
     # with pytest.raises(UserMessageError):
     #     query_user_data(
-    #         {"question": {"default": "[[ not_valid ]]"}}, answers_data, False, envops
+    #         {"question": {"default": "[[ not_valid ]]"}}, {}, False, envops
     #     )

@@ -12,7 +12,7 @@ from iteration_utilities import deepflatten
 from jinja2 import UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
 from prompt_toolkit.lexers import PygmentsLexer
-from pydantic import BaseModel, Field, ValidationError, validator
+from pydantic import BaseModel, Field, validator
 from pygments.lexers.data import JsonLexer, YamlLexer
 from questionary import prompt
 from yamlinclude import YamlIncludeConstructor
@@ -40,6 +40,10 @@ class MultipleConfigFilesError(ConfigFileError):
         msg = str(conf_paths)
         printf_exception(self, "MULTIPLE CONFIG FILES", msg=msg, quiet=quiet)
         super().__init__(msg)
+
+
+class InvalidTypeError(TypeError):
+    pass
 
 
 class Question(BaseModel):
@@ -81,8 +85,6 @@ class Question(BaseModel):
         if v == "":
             default_type_name = type(values.get("default")).__name__
             v = default_type_name if default_type_name in CAST_STR_TO_NATIVE else "yaml"
-        if v not in CAST_STR_TO_NATIVE:
-            raise ValidationError("Invalid question type")
         return v
 
     def _iter_choices(self) -> Iterable[dict]:
@@ -182,7 +184,10 @@ class Question(BaseModel):
         return result
 
     def get_cast_fn(self) -> Callable:
-        return CAST_STR_TO_NATIVE.get(self.type_name, parse_yaml_string)
+        type_name = self.render_value(self.type_name)
+        if type_name not in CAST_STR_TO_NATIVE:
+            raise InvalidTypeError("Invalid question type")
+        return CAST_STR_TO_NATIVE.get(type_name, parse_yaml_string)
 
     def get_validator(self, document) -> bool:
         cast_fn = self.get_cast_fn()
