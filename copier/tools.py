@@ -86,7 +86,12 @@ def required(value: T, **kwargs: Any) -> T:
 
 
 def cast_str_to_bool(value: Any) -> bool:
-    """Parse a string to bool, YAML-like."""
+    """Parse a string to bool, YAML-like.
+
+    Params:
+        value:
+            Anything to be casted to a bool. Usually a `str`.
+    """
     try:
         lower = value.lower()
     except AttributeError:
