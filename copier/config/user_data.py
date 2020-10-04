@@ -176,6 +176,8 @@ class Question(BaseModel):
                 result["lexer"] = lexer
                 multiline = True
             result["multiline"] = multiline
+            if multiline:
+                result["message"] += "\n> "
             placeholder = self.get_placeholder()
             if placeholder:
                 result["placeholder"] = placeholder
@@ -252,13 +254,13 @@ class Questionary(BaseModel):
         )
 
     def get_answers(self) -> AnyByStrDict:
+        previous_answers = self.get_best_answers()
         if self.ask_user:
             self.answers_user = prompt(
                 (question.get_pyinquirer_structure() for question in self.questions),
-                answers=self.answers_user,
+                answers=previous_answers,
             )
         else:
-            previous_answers = self.get_best_answers()
             # Avoid prompting to not requiring a TTy when --force
             for question in self.questions:
                 new_answer = question.get_default(for_inquirer=False)
