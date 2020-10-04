@@ -47,6 +47,55 @@ class InvalidTypeError(TypeError):
 
 
 class Question(BaseModel):
+    """One question asked to the user.
+
+    All attributes are init kwargs.
+
+    Attributes:
+        choices:
+            Selections available for the user if the question requires them.
+            Can be templated.
+
+        default:
+            Default value presented to the user to make it easier to respond.
+            Can be templated.
+
+        help_text:
+            Additional text printed to the user, explaining the purpose of
+            this question. Can be templated.
+
+        multiline:
+            Indicates if the question should allow multiline input. Defaults
+            to `True` for JSON and YAML questions, and to `False` otherwise.
+            Only meaningful for str-based questions. Can be templated.
+
+        placeholder:
+            Text that appears if there's nothing written in the input field,
+            but disappears as soon as the user writes anything. Can be templated.
+
+        questionary:
+            Reference to the [Questionary][] object where this [Question][] is
+            attached.
+
+        secret:
+            Indicates if the question should be removed from the answers file.
+            If the question type is str, it will hide user input on the screen
+            by displaying asterisks: `****`.
+
+        type_name:
+            The type of question. Affects the rendering, validation and filtering.
+            Can be templated.
+
+        var_name:
+            Question name in the answers dict.
+
+        when:
+            Condition that, if `False`, skips the question. Can be templated.
+            If it is a boolean, it is used directly. If it is a str, it is
+            converted to boolean using a parser similar to YAML, but only for
+            boolean values.
+    """
+
     choices: Union[Dict[Any, Any], List[Any]] = Field(default_factory=list)
     default: Any = None
     help_text: str = ""
@@ -88,6 +137,7 @@ class Question(BaseModel):
         return v
 
     def _iter_choices(self) -> Iterable[dict]:
+        """Iterates choices in a format that the questionary lib likes."""
         choices = self.choices
         if isinstance(self.choices, dict):
             choices = list(self.choices.items())
@@ -105,7 +155,14 @@ class Question(BaseModel):
             name = str(name)
             yield {"name": name, "value": value}
 
-    def get_default(self, for_inquirer: bool) -> Any:
+    def get_default(self, for_rendering: bool) -> Any:
+        """Get the default value for this question.
+
+        Parameters:
+            for_rendering:
+                Indicates if the result should be returned casted for normal
+                usage, or casted for rendering.
+        """
         cast_fn = self.get_cast_fn()
         try:
             result = self.questionary.answers_forced[self.var_name]
@@ -115,7 +172,7 @@ class Question(BaseModel):
             except KeyError:
                 result = self.render_value(self.default)
         result = cast_answer_type(result, cast_fn)
-        if not for_inquirer or self.type_name == "bool":
+        if not for_rendering or self.type_name == "bool":
             return result
         if result is None:
             return ""
@@ -123,6 +180,7 @@ class Question(BaseModel):
             return str(result)
 
     def get_choices(self) -> List[AnyByStrDict]:
+        """Obtain choices rendered and properly formatted."""
         result = []
         for choice in self._iter_choices():
             formatted_choice = {
@@ -131,12 +189,14 @@ class Question(BaseModel):
             result.append(formatted_choice)
         return result
 
-    def get_filter(self, answer) -> Any:
-        if answer == self.get_default(for_inquirer=True):
-            return self.get_default(for_inquirer=False)
+    def filter_answer(self, answer) -> Any:
+        """Cast the answer to the desired type."""
+        if answer == self.get_default(for_rendering=True):
+            return self.get_default(for_rendering=False)
         return cast_answer_type(answer, self.get_cast_fn())
 
     def get_message(self) -> str:
+        """Get the message that will be printed to the user."""
         message = ""
         if self.help_text:
             rendered_help = self.render_value(self.help_text)
@@ -145,13 +205,15 @@ class Question(BaseModel):
         return message
 
     def get_placeholder(self) -> str:
+        """Render and obtain the placeholder."""
         return self.render_value(self.placeholder)
 
-    def get_pyinquirer_structure(self):
+    def get_questionary_structure(self):
+        """Get the question in a format that the questionary lib understands."""
         lexer = None
         result = {
-            "default": self.get_default(for_inquirer=True),
-            "filter": self.get_filter,
+            "default": self.get_default(for_rendering=True),
+            "filter": self.filter_answer,
             "message": self.get_message(),
             "mouse_support": True,
             "name": self.var_name,
@@ -181,25 +243,28 @@ class Question(BaseModel):
             placeholder = self.get_placeholder()
             if placeholder:
                 result["placeholder"] = placeholder
-            result["validate"] = self.get_validator
+            result["validate"] = self.validate_answer
         result.update({"type": questionary_type})
         return result
 
     def get_cast_fn(self) -> Callable:
+        """Obtain function to cast user answer to desired type."""
         type_name = self.render_value(self.type_name)
         if type_name not in CAST_STR_TO_NATIVE:
             raise InvalidTypeError("Invalid question type")
         return CAST_STR_TO_NATIVE.get(type_name, parse_yaml_string)
 
-    def get_validator(self, document) -> bool:
+    def validate_answer(self, answer) -> bool:
+        """Validate user answer."""
         cast_fn = self.get_cast_fn()
         try:
-            cast_fn(document)
+            cast_fn(answer)
             return True
         except Exception:
             return False
 
-    def get_when(self, answers) -> bool:
+    def get_when(self) -> bool:
+        """Get skip condition for question."""
         if (
             # Skip on --force
             not self.questionary.ask_user
@@ -209,7 +274,7 @@ class Question(BaseModel):
             return False
         when = self.when
         when = self.render_value(when)
-        when = cast_answer_type(when, parse_yaml_string)
+        when = cast_answer_type(when, cast_str_to_bool)
         return bool(when)
 
     def render_value(self, value: Any) -> str:
@@ -231,6 +296,36 @@ class Question(BaseModel):
 
 
 class Questionary(BaseModel):
+    """An object holding all [Question][] items and user answers.
+
+    All attributes are also init kwargs.
+
+    Attributes:
+        answers_default:
+            Default answers as specified in the template.
+
+        answers_forced:
+            Answers forced by the user, either by an API call like
+            `data={'some_question': 'forced_answer'}` or by a CLI call like
+            `--data=some_question=forced_answer`.
+
+        answers_last:
+            Answers obtained from the `.copier-answers.yml` file.
+
+        answers_user:
+            Dict containing user answers for the current questionary. It should
+            be empty always.
+
+        ask_user:
+            Indicates if the questionary should be asked, or just forced.
+
+        env:
+            The Jinja environment for rendering.
+
+        questions:
+            A list containing all [Question][] objects for this [Questionary][].
+    """
+
     answers_default: AnyByStrDict = Field(default_factory=dict)
     answers_forced: AnyByStrDict = Field(default_factory=dict)
     answers_last: AnyByStrDict = Field(default_factory=dict)
@@ -246,6 +341,7 @@ class Questionary(BaseModel):
         super().__init__(**kwargs)
 
     def get_best_answers(self) -> t_ChainMap[str, Any]:
+        """Get dict-like object with the best answers for each question."""
         return ChainMap(
             self.answers_user,
             self.answers_last,
@@ -254,16 +350,21 @@ class Questionary(BaseModel):
         )
 
     def get_answers(self) -> AnyByStrDict:
+        """Obtain answers for all questions.
+
+        It produces a TUI for querying the user if `ask_user` is true. Otherwise,
+        it gets answers from other sources.
+        """
         previous_answers = self.get_best_answers()
         if self.ask_user:
             self.answers_user = prompt(
-                (question.get_pyinquirer_structure() for question in self.questions),
+                (question.get_questionary_structure() for question in self.questions),
                 answers=previous_answers,
             )
         else:
             # Avoid prompting to not requiring a TTy when --force
             for question in self.questions:
-                new_answer = question.get_default(for_inquirer=False)
+                new_answer = question.get_default(for_rendering=False)
                 previous_answer = previous_answers.get(question.var_name)
                 if new_answer != previous_answer:
                     self.answers_user[question.var_name] = new_answer
