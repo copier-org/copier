@@ -263,7 +263,7 @@ class Question(BaseModel):
         except Exception:
             return False
 
-    def get_when(self) -> bool:
+    def get_when(self, answers) -> bool:
         """Get skip condition for question."""
         if (
             # Skip on --force
