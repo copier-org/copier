@@ -78,7 +78,7 @@ clean.help = "remove build/python artifacts"
 
 docs = "mkdocs serve"
 
-test.cmd = "pytest --colors=yes"
+test.cmd = "pytest --color=yes"
 test.help = "run tests"
 
 lint.cmd = "pre-commit run --all-files"
