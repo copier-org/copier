@@ -142,3 +142,41 @@ def test_when(tmp_path_factory, question_2_when, asks):
         "question_1": True,
         "question_2": "something",
     }
+
+
+def test_placeholder(tmp_path_factory):
+    template, subproject = (
+        tmp_path_factory.mktemp("template"),
+        tmp_path_factory.mktemp("subproject"),
+    )
+    build_file_tree(
+        {
+            template
+            / "copier.yml": yaml.dump(
+                {
+                    "question_1": "answer 1",
+                    "question_2": {
+                        "type": "str",
+                        "help": "write a list of answers",
+                        "placeholder": "Write something like [[ question_1 ]], but better",
+                    },
+                }
+            ),
+            template
+            / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
+        }
+    )
+    tui = pexpect.spawn("copier", [str(template), str(subproject)], timeout=5)
+    tui.expect_exact(["question_1?", "Format: str", "answer 1"])
+    tui.sendline()
+    tui.expect_exact(
+        ["question_2?", "Format: yaml", "Write something like answer 1, but better"]
+    )
+    tui.send(Keyboard.Alt + Keyboard.Enter)
+    tui.expect_exact(pexpect.EOF)
+    answers = yaml.load((subproject / ".copier-answers.yml").read_text())
+    assert answers == {
+        "_src_path": str(template),
+        "question_1": "answer 1",
+        "question_2": None,
+    }
