@@ -2,7 +2,6 @@ from pathlib import Path
 from textwrap import dedent
 
 import pexpect
-import pytest
 
 from copier import copy
 
@@ -45,47 +44,7 @@ def test_api(tmp_path):
     )
 
 
-@pytest.mark.parametrize(
-    "expected_results",
-    (
-        # HACK https://github.com/tmbo/questionary/pull/56
-        # TODO When fixed, remove this test; it is a buggy behavior
-        r"""
-            love_me: true
-            your_name: "Guybrush Threpwood"
-            your_age: 22
-            your_height: 1.56
-            more_json_info: {"objective": "be a pirate"}
-            anything_else: ["Want some grog?", "I\u0027d love it"]
-            choose_list: "first"
-            choose_tuple: "first"
-            choose_dict: "first"
-            choose_number: -1.1
-            minutes_under_water: 1
-            optional_value: null
-        """,
-        # HACK https://github.com/tmbo/questionary/pull/56
-        # TODO When fixed, use only this test, without xfail
-        pytest.param(
-            r"""
-                love_me: true
-                your_name: "Guybrush Threpwood"
-                your_age: 22
-                your_height: 1.56
-                more_json_info: {"objective": "be a pirate"}
-                anything_else: ["Want some grog?", "I\u0027d love it"]
-                choose_list: "second"
-                choose_tuple: "third"
-                choose_dict: "third"
-                choose_number: -1.1
-                minutes_under_water: 1
-                optional_value: null
-            """,
-            marks=pytest.mark.xfail(reason="bug tmbo/questionary#57", strict=True),
-        ),
-    ),
-)
-def test_cli_interactive(tmp_path, expected_results):
+def test_cli_interactive(tmp_path):
     """Test copier correctly processes advanced questions and answers through CLI."""
     invalid = [
         "Invalid value",
@@ -160,7 +119,22 @@ def test_cli_interactive(tmp_path, expected_results):
     tui.sendline(Keyboard.Alt + Keyboard.Enter)
     tui.expect_exact(pexpect.EOF)
     results_file = tmp_path / "results.txt"
-    assert results_file.read_text() == dedent(expected_results)
+    assert results_file.read_text() == dedent(
+        r"""
+            love_me: true
+            your_name: "Guybrush Threpwood"
+            your_age: 22
+            your_height: 1.56
+            more_json_info: {"objective": "be a pirate"}
+            anything_else: ["Want some grog?", "I\u0027d love it"]
+            choose_list: "second"
+            choose_tuple: "third"
+            choose_dict: "third"
+            choose_number: -1.1
+            minutes_under_water: 1
+            optional_value: null
+        """
+    )
 
 
 def test_api_str_data(tmp_path):

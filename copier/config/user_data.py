@@ -15,6 +15,7 @@ from prompt_toolkit.lexers import PygmentsLexer
 from pydantic import BaseModel, Field, validator
 from pygments.lexers.data import JsonLexer, YamlLexer
 from questionary import prompt
+from questionary.prompts.common import Choice
 from yamlinclude import YamlIncludeConstructor
 
 from ..tools import cast_str_to_bool, force_str_end, get_jinja_env, printf_exception
@@ -136,7 +137,7 @@ class Question(BaseModel):
             v = default_type_name if default_type_name in CAST_STR_TO_NATIVE else "yaml"
         return v
 
-    def _iter_choices(self) -> Iterable[dict]:
+    def _iter_choices(self) -> Iterable[Choice]:
         """Iterates choices in a format that the questionary lib likes."""
         choices = self.choices
         if isinstance(self.choices, dict):
@@ -144,16 +145,19 @@ class Question(BaseModel):
         for choice in choices:
             # If a choice is a dict, it can be used raw
             if isinstance(choice, dict):
-                yield choice
-                continue
-            # However, a choice can also be a single value...
-            name = value = choice
+                name = choice["name"]
+                value = choice["value"]
             # ... or a value pair
-            if isinstance(choice, (tuple, list)):
+            elif isinstance(choice, (tuple, list)):
                 name, value = choice
+            # However, a choice can also be a single value...
+            else:
+                name = value = choice
             # The name must always be a str
             name = str(name)
-            yield {"name": name, "value": value}
+            # The value can be templated
+            value = self.render_value(value)
+            yield Choice(name, value)
 
     def get_default(self, for_rendering: bool) -> Any:
         """Get the default value for this question.
@@ -179,15 +183,9 @@ class Question(BaseModel):
         else:
             return str(result)
 
-    def get_choices(self) -> List[AnyByStrDict]:
+    def get_choices(self) -> List[Choice]:
         """Obtain choices rendered and properly formatted."""
-        result = []
-        for choice in self._iter_choices():
-            formatted_choice = {
-                key: self.render_value(value) for key, value in choice.items()
-            }
-            result.append(formatted_choice)
-        return result
+        return list(self._iter_choices())
 
     def filter_answer(self, answer) -> Any:
         """Cast the answer to the desired type."""
@@ -238,8 +236,6 @@ class Question(BaseModel):
                 result["lexer"] = lexer
                 multiline = True
             result["multiline"] = multiline
-            if multiline:
-                result["message"] += "\n> "
             placeholder = self.get_placeholder()
             if placeholder:
                 result["placeholder"] = placeholder
