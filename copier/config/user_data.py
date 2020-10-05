@@ -225,6 +225,13 @@ class Question(BaseModel):
         if self.choices:
             questionary_type = "select"
             result["choices"] = self.get_choices()
+            # The default value must be a choice object from the list
+            for choice in result["choices"]:
+                if result["default"] == choice.value:
+                    result["default"] = choice
+                    break
+            else:
+                result.pop("default")  # Default is not selectable
         if questionary_type == "input":
             if self.secret:
                 questionary_type = "password"

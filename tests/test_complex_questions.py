@@ -127,8 +127,8 @@ def test_cli_interactive(tmp_path):
             your_height: 1.56
             more_json_info: {"objective": "be a pirate"}
             anything_else: ["Want some grog?", "I\u0027d love it"]
-            choose_list: "second"
-            choose_tuple: "third"
+            choose_list: "first"
+            choose_tuple: "second"
             choose_dict: "third"
             choose_number: -1.1
             minutes_under_water: 1
