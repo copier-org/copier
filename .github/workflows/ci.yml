@@ -73,7 +73,7 @@ jobs:
         run: |
           python -m pip install poetry poetry-dynamic-versioning poethepoet
           poetry run python -m pip install pip -U
-          poetry --ansi install
+          poetry install --ansi
       - name: Run pre-commit
         shell: bash
         run: poe lint --color=always
