@@ -116,7 +116,7 @@ def test_cli_interactive(tmp_path):
     tui.send(Keyboard.Backspace)
     tui.sendline()
     tui.expect_exact(["optional_value", "Format: yaml"])
-    tui.sendline(Keyboard.Alt + Keyboard.Enter)
+    tui.sendline()
     tui.expect_exact(pexpect.EOF)
     results_file = tmp_path / "results.txt"
     assert results_file.read_text() == dedent(
@@ -226,7 +226,7 @@ def test_cli_interatively_with_flag_data_and_type_casts(tmp_path: Path):
     tui.expect_exact(["minutes_under_water", "Format: int", "10"])
     tui.sendline()
     tui.expect_exact(["optional_value", "Format: yaml"])
-    tui.sendline(Keyboard.Alt + Keyboard.Enter)
+    tui.sendline()
     tui.expect_exact(pexpect.EOF)
     results_file = tmp_path / "results.txt"
     assert results_file.read_text() == dedent(

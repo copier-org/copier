@@ -134,7 +134,7 @@ def test_when(tmp_path_factory, question_2_when, asks):
     tui.sendline()
     if asks:
         tui.expect_exact(["question_2?", "Format: yaml"])
-        tui.send(Keyboard.Alt + Keyboard.Enter)
+        tui.sendline()
     tui.expect_exact(pexpect.EOF)
     answers = yaml.load((subproject / ".copier-answers.yml").read_text())
     assert answers == {
@@ -172,7 +172,7 @@ def test_placeholder(tmp_path_factory):
     tui.expect_exact(
         ["question_2?", "Format: yaml", "Write something like answer 1, but better"]
     )
-    tui.send(Keyboard.Alt + Keyboard.Enter)
+    tui.sendline()
     tui.expect_exact(pexpect.EOF)
     answers = yaml.load((subproject / ".copier-answers.yml").read_text())
     assert answers == {
@@ -180,3 +180,66 @@ def test_placeholder(tmp_path_factory):
         "question_1": "answer 1",
         "question_2": None,
     }
+
+
+@pytest.mark.parametrize("type_", ("str", "yaml", "json"))
+def test_multiline(tmp_path_factory, type_):
+    template, subproject = (
+        tmp_path_factory.mktemp("template"),
+        tmp_path_factory.mktemp("subproject"),
+    )
+    build_file_tree(
+        {
+            template
+            / "copier.yml": yaml.dump(
+                {
+                    "question_1": "answer 1",
+                    "question_2": {"type": type_},
+                    "question_3": {"type": type_, "multiline": True},
+                    "question_4": {
+                        "type": type_,
+                        "multiline": "[[ question_1 == 'answer 1' ]]",
+                    },
+                    "question_5": {
+                        "type": type_,
+                        "multiline": "[[ question_1 != 'answer 1' ]]",
+                    },
+                }
+            ),
+            template
+            / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
+        }
+    )
+    tui = pexpect.spawn("copier", [str(template), str(subproject)], timeout=5)
+    tui.expect_exact(["question_1?", "Format: str", "answer 1"])
+    tui.sendline()
+    tui.expect_exact(["question_2?", f"Format: {type_}"])
+    tui.sendline('"answer 2"')
+    tui.expect_exact(["question_3?", f"Format: {type_}"])
+    tui.sendline('"answer 3"')
+    tui.send(Keyboard.Alt + Keyboard.Enter)
+    tui.expect_exact(["question_4?", f"Format: {type_}"])
+    tui.sendline('"answer 4"')
+    tui.send(Keyboard.Alt + Keyboard.Enter)
+    tui.expect_exact(["question_5?", f"Format: {type_}"])
+    tui.sendline('"answer 5"')
+    tui.expect_exact(pexpect.EOF)
+    answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
+    if type_ == "str":
+        assert answers == {
+            "_src_path": str(template),
+            "question_1": "answer 1",
+            "question_2": '"answer 2"',
+            "question_3": ('"answer 3"\n'),
+            "question_4": ('"answer 4"\n'),
+            "question_5": ('"answer 5"'),
+        }
+    else:
+        assert answers == {
+            "_src_path": str(template),
+            "question_1": "answer 1",
+            "question_2": ("answer 2"),
+            "question_3": ("answer 3"),
+            "question_4": ("answer 4"),
+            "question_5": ("answer 5"),
+        }

@@ -100,7 +100,7 @@ class Question(BaseModel):
     choices: Union[Dict[Any, Any], List[Any]] = Field(default_factory=list)
     default: Any = None
     help_text: str = ""
-    multiline: bool = False
+    multiline: Union[str, bool] = False
     placeholder: str = ""
     questionary: "Questionary"
     secret: bool = False
@@ -218,7 +218,6 @@ class Question(BaseModel):
             "qmark": "🕵️" if self.secret else "🎤",
             "when": self.get_when,
         }
-        multiline = self.multiline
         questionary_type = "input"
         if self.type_name == "bool":
             questionary_type = "confirm"
@@ -241,8 +240,7 @@ class Question(BaseModel):
                 lexer = PygmentsLexer(JsonLexer)
             if lexer:
                 result["lexer"] = lexer
-                multiline = True
-            result["multiline"] = multiline
+            result["multiline"] = self.get_multiline()
             placeholder = self.get_placeholder()
             if placeholder:
                 result["placeholder"] = placeholder
@@ -256,6 +254,12 @@ class Question(BaseModel):
         if type_name not in CAST_STR_TO_NATIVE:
             raise InvalidTypeError("Invalid question type")
         return CAST_STR_TO_NATIVE.get(type_name, parse_yaml_string)
+
+    def get_multiline(self) -> bool:
+        """Get the value for multiline."""
+        multiline = self.render_value(self.multiline)
+        multiline = cast_answer_type(multiline, cast_str_to_bool)
+        return multiline
 
     def validate_answer(self, answer) -> bool:
         """Validate user answer."""
@@ -364,6 +368,9 @@ class Questionary(BaseModel):
                 (question.get_questionary_structure() for question in self.questions),
                 answers=previous_answers,
             )
+            # HACK https://github.com/tmbo/questionary/issues/74
+            if not self.answers_user and self.questions:
+                raise KeyboardInterrupt
         else:
             # Avoid prompting to not requiring a TTy when --force
             for question in self.questions:
