@@ -41,7 +41,7 @@ main_question = {"main": {"default": main_default}}
             main_default,
             ["THIS copier HELP IS TEMPLATED"],
         ),
-        pytest.param(
+        (
             {
                 "templated_choices_dict_1": {
                     "default": "[[ main ]]",
@@ -50,7 +50,6 @@ main_question = {"main": {"default": main_default}}
             },
             main_default,
             ["choice 1", "copier"],
-            marks=pytest.mark.xfail(reason="bug tmbo/questionary#57", strict=True),
         ),
         (
             {
@@ -92,7 +91,7 @@ main_question = {"main": {"default": main_default}}
             main_default,
             ["(1) name 1", "(2) copier", "Choice [1]"],
         ),
-        pytest.param(
+        (
             {
                 "templated_choices_tuple_list_2": {
                     "default": "value 2",
@@ -101,9 +100,8 @@ main_question = {"main": {"default": main_default}}
             },
             "value 2",
             ["name 1", "copier"],
-            marks=pytest.mark.xfail(reason="bug tmbo/questionary#57", strict=True),
         ),
-        pytest.param(
+        (
             {
                 "templated_choices_mixed_list": {
                     "default": "value 2",
@@ -112,7 +110,6 @@ main_question = {"main": {"default": main_default}}
             },
             "value 2",
             ["copier", "copier"],
-            marks=pytest.mark.xfail(reason="bug tmbo/questionary#57", strict=True),
         ),
     ],
 )
