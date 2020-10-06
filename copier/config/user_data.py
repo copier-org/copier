@@ -259,7 +259,7 @@ class Question(BaseModel):
         """Get the value for multiline."""
         multiline = self.render_value(self.multiline)
         multiline = cast_answer_type(multiline, cast_str_to_bool)
-        return multiline
+        return bool(multiline)
 
     def validate_answer(self, answer) -> bool:
         """Validate user answer."""
