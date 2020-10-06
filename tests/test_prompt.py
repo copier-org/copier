@@ -106,6 +106,8 @@ def test_copy_default_advertised(tmp_path_factory, name):
         ("nO", False),
         ("Y", True),
         ("N", False),
+        ("on", True),
+        ("off", False),
         ("[[ question_1 ]]", True),
         ("[[ not question_1 ]]", False),
         ("[% if question_1 %]YES[% endif %]", True),

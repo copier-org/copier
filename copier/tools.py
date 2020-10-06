@@ -97,9 +97,9 @@ def cast_str_to_bool(value: Any) -> bool:
     except AttributeError:
         return bool(value)
     result = None
-    if lower in {"1", "y", "yes", "t", "true"}:
+    if lower in {"1", "y", "yes", "t", "true", "on"}:
         result = True
-    elif lower in {"", "0", "n", "no", "f", "false"}:
+    elif lower in {"", "0", "n", "no", "f", "false", "off"}:
         result = False
     if result is None:
         raise ValueError("Invalid bool value")
