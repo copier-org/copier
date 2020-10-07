@@ -1,0 +1,5 @@
+# This tests that environmnent variables
+# are exported into subprocesses
+_tasks:
+  - bash copy.sh
+  - bash update.sh

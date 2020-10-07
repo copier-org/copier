@@ -208,7 +208,18 @@ def copy_local(conf: ConfigData) -> None:
         print("")  # padding space
 
     run_tasks(
-        conf, render, [{"task": t, "extra_env": {"STAGE": "task"}} for t in conf.tasks]
+        conf,
+        render,
+        [
+            {
+                "task": t,
+                "extra_env": {
+                    "STAGE": "task",
+                    "OPERATION": os.environ.get("OPERATION", "copy"),
+                },
+            }
+            for t in conf.tasks
+        ],
     )
     if not conf.quiet:
         print("")  # padding space
@@ -290,6 +301,9 @@ def update_diff(conf: ConfigData) -> None:
             )
         }
     )
+    # At this point we'll run tasks in the current project:
+    # copy_local() needs to pass "update" as operation
+    os.environ["OPERATION"] = "update"
     # Do a normal update in final destination
     copy_local(conf)
     # Try to apply cached diff into final destination

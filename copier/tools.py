@@ -195,6 +195,7 @@ def get_migration_tasks(conf: ConfigData, stage: str) -> List[Dict]:
     vto = version.parse(conf.commit)
     extra_env = {
         "STAGE": stage,
+        "OPERATION": "update",
         "VERSION_FROM": conf.old_commit,
         "VERSION_TO": conf.commit,
     }

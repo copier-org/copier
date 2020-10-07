@@ -1,0 +1,5 @@
+# This tests that environment variables are available
+# in the commands themselves
+_tasks:
+  - mkdir hello
+  - cd hello && touch $STAGE
