@@ -50,7 +50,7 @@ def test_cli_interactive(tmp_path):
         "Invalid value",
         "please try again",
     ]
-    tui = pexpect.spawn("copier", ["copy", SRC, str(tmp_path)], timeout=3)
+    tui = pexpect.spawn("copier", ["copy", SRC, str(tmp_path)], timeout=5)
     tui.expect_exact(["I need to know it. Do you love me?", "love_me", "Format: bool"])
     tui.send("y")
     tui.expect_exact(["Please tell me your name.", "your_name", "Format: str"])
@@ -192,7 +192,7 @@ def test_cli_interatively_with_flag_data_and_type_casts(tmp_path: Path):
             SRC,
             str(tmp_path),
         ],
-        timeout=3,
+        timeout=5,
     )
 
     tui.expect_exact(["I need to know it. Do you love me?", "love_me", "Format: bool"])
