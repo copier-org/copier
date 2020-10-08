@@ -138,7 +138,7 @@ def test_when(tmp_path_factory, question_2_when, asks):
         tui.expect_exact(["question_2?", "Format: yaml"])
         tui.sendline()
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.load_safe((subproject / ".copier-answers.yml").read_text())
+    answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
     assert answers == {
         "_src_path": str(template),
         "question_1": True,
@@ -176,7 +176,7 @@ def test_placeholder(tmp_path_factory):
     )
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.load_safe((subproject / ".copier-answers.yml").read_text())
+    answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
     assert answers == {
         "_src_path": str(template),
         "question_1": "answer 1",

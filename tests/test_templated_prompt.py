@@ -136,7 +136,7 @@ def test_templated_prompt(
     tui.expect_exact([f"{question_name}?"] + expected_outputs)
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.load_safe((subproject / ".copier-answers.yml").read_text())
+    answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
     assert answers[question_name] == expected_value
 
 
