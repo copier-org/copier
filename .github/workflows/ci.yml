@@ -71,7 +71,7 @@ jobs:
       - name: Install dependencies
         shell: bash
         run: |
-          python -m pip install poetry poetry-dynamic-versioning poethepoet
+          python -m pip install poetry poethepoet
           poetry install -vvv
       - name: Run pre-commit
         shell: bash
