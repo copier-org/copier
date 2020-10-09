@@ -72,23 +72,29 @@ mkdocs-material = "^5.5.5"
 autoflake = "^1.4"
 mkdocs-mermaid2-plugin = "^0.5.0"
 
-[tool.poe.tasks]
-clean.script = "devtasks:clean"
-clean.help = "remove build/python artifacts"
+[tool.poe.tasks.clean]
+script = "devtasks:clean"
+help = "remove build/python artifacts"
 
-docs = "mkdocs serve"
+[tool.poe.tasks.coverage]
+cmd = "pytest --cov-report html --cov copier copier tests"
+help = "generate an HTML report of the coverage"
 
-test.cmd = "pytest --color=yes"
-test.help = "run tests"
+[tool.poe.tasks.docs]
+cmd = "mkdocs serve"
+help = "start local docs server"
 
-lint.cmd = "pre-commit run --all-files"
-lint.help = "check (and auto-fix) style with pre-commit"
+[tool.poe.tasks.lint]
+cmd = "pre-commit run --all-files"
+help = "check (and auto-fix) style with pre-commit"
 
-types.cmd = "mypy --ignore-missing-imports ."
-types.help = "run the type (mypy) checker on the codebase"
+[tool.poe.tasks.test]
+cmd = "pytest --color=yes"
+help = "run tests"
 
-coverage.cmd = "pytest --cov-report html --cov copier copier tests"
-coverage.help = "generate an HTML report of the coverage"
+[tool.poe.tasks.types]
+cmd = "mypy --ignore-missing-imports ."
+help = "run the type (mypy) checker on the codebase"
 
 [tool.poetry-dynamic-versioning]
 enable = true
