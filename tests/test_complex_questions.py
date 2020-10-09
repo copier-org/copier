@@ -2,6 +2,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import pexpect
+from pexpect.popen_spawn import PopenSpawn
 
 from copier import copy
 
@@ -50,7 +51,7 @@ def test_cli_interactive(tmp_path):
         "Invalid value",
         "please try again",
     ]
-    tui = pexpect.spawn("copier", ["copy", SRC, str(tmp_path)], timeout=5)
+    tui = PopenSpawn(["copier", "copy", SRC, str(tmp_path)], timeout=5)
     tui.expect_exact(["I need to know it. Do you love me?", "love_me", "Format: bool"])
     tui.send("y")
     tui.expect_exact(["Please tell me your name.", "your_name", "Format: str"])
@@ -181,9 +182,9 @@ def test_cli_interatively_with_flag_data_and_type_casts(tmp_path: Path):
         "Invalid value",
         "please try again",
     ]
-    tui = pexpect.spawn(
-        "copier",
+    tui = PopenSpawn(
         [
+            "copier",
             "--data=choose_list=second",
             "--data=choose_dict=first",
             "--data=choose_tuple=third",

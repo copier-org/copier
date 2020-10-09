@@ -3,6 +3,7 @@ from pathlib import Path
 import pexpect
 import pytest
 import yaml
+from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
 from plumbum.cmd import git
 
@@ -54,8 +55,8 @@ def test_copy_default_advertised(tmp_path_factory, name):
         else:
             name = "Mario"  # Default in the template
         name = str(name)
-        tui = pexpect.spawn(
-            "copier", [str(template), ".", "--vcs-ref=v1"] + args, timeout=5
+        tui = PopenSpawn(
+            ["copier", str(template), ".", "--vcs-ref=v1"] + args, timeout=5
         )
         # Check what was captured
         tui.expect_exact(["in_love?", "Format: bool", "(Y/n)"])
@@ -77,7 +78,7 @@ def test_copy_default_advertised(tmp_path_factory, name):
         git("add", ".")
         assert "_commit: v1" in Path(".copier-answers.yml").read_text()
         git("commit", "-m", "v1")
-        tui = pexpect.spawn("copier", timeout=5)
+        tui = PopenSpawn(["copier"], timeout=5)
         # Check what was captured
         tui.expect_exact(["in_love?", "Format: bool", "(Y/n)"])
         tui.sendline()
@@ -131,7 +132,7 @@ def test_when(tmp_path_factory, question_2_when, asks):
             / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
         }
     )
-    tui = pexpect.spawn("copier", [str(template), str(subproject)], timeout=5)
+    tui = PopenSpawn(["copier", str(template), str(subproject)], timeout=5)
     tui.expect_exact(["question_1?", "Format: bool", "(Y/n)"])
     tui.sendline()
     if asks:
@@ -168,7 +169,7 @@ def test_placeholder(tmp_path_factory):
             / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
         }
     )
-    tui = pexpect.spawn("copier", [str(template), str(subproject)], timeout=5)
+    tui = PopenSpawn(["copier", str(template), str(subproject)], timeout=5)
     tui.expect_exact(["question_1?", "Format: str", "answer 1"])
     tui.sendline()
     tui.expect_exact(
@@ -212,7 +213,7 @@ def test_multiline(tmp_path_factory, type_):
             / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
         }
     )
-    tui = pexpect.spawn("copier", [str(template), str(subproject)], timeout=5)
+    tui = PopenSpawn(["copier", str(template), str(subproject)], timeout=5)
     tui.expect_exact(["question_1?", "Format: str", "answer 1"])
     tui.sendline()
     tui.expect_exact(["question_2?", f"Format: {type_}"])
