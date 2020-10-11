@@ -42,7 +42,7 @@ jobs:
       - name: Enable msys binaries
         if: ${{ runner.os == 'Windows' }}
         run: |
-          echo "::add-path::C:\msys64\usr\bin"
+          echo "C:\msys64\usr\bin" >> $GITHUB_PATH
           rm C:\msys64\usr\bin\bash.exe
       - run: git config --global user.name copier-ci
         shell: bash
@@ -58,8 +58,8 @@ jobs:
       - name: generate cache key PY
         shell: bash
         run:
-          echo "::set-env name=PY::$((python -VV; pip freeze) | sha256sum | cut -d' '
-          -f1)"
+          echo "PY=$((python -VV; pip freeze) | sha256sum | cut -d' ' -f1)" >>
+          $GITHUB_ENV
       - uses: actions/cache@v2.1.0
         with:
           path: |
@@ -97,8 +97,8 @@ jobs:
           python-version: 3.8
       - name: generate cache key PY
         run:
-          echo "::set-env name=PY::$((python -VV; pip freeze) | sha256sum | cut -d' '
-          -f1)"
+          echo "PY=$((python -VV; pip freeze) | sha256sum | cut -d' ' -f1)" >>
+          $GITHUB_ENV
       - uses: actions/cache@v2.1.0
         with:
           path: |
