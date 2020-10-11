@@ -1,7 +1,6 @@
 import pexpect
 import pytest
 import yaml
-from pexpect.popen_spawn import PopenSpawn
 
 from copier.config.factory import filter_config, make_config
 from copier.config.objects import EnvOps
@@ -115,7 +114,7 @@ main_question = {"main": {"default": main_default}}
     ],
 )
 def test_templated_prompt(
-    questions_data, expected_value, expected_outputs, tmp_path_factory
+    questions_data, expected_value, expected_outputs, tmp_path_factory, spawn
 ):
     template, subproject = (
         tmp_path_factory.mktemp("template"),
@@ -131,7 +130,7 @@ def test_templated_prompt(
             / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
         }
     )
-    tui = PopenSpawn([COPIER_PATH, str(template), str(subproject)], timeout=10)
+    tui = spawn([COPIER_PATH, str(template), str(subproject)], timeout=10)
     tui.expect_exact(["main?", "Format: yaml", main_default])
     tui.sendline()
     tui.expect_exact([f"{question_name}?"] + expected_outputs)

@@ -2,7 +2,6 @@ from pathlib import Path
 from textwrap import dedent
 
 import pexpect
-from pexpect.popen_spawn import PopenSpawn
 
 from copier import copy
 
@@ -45,13 +44,13 @@ def test_api(tmp_path):
     )
 
 
-def test_cli_interactive(tmp_path):
+def test_cli_interactive(tmp_path, spawn):
     """Test copier correctly processes advanced questions and answers through CLI."""
     invalid = [
         "Invalid value",
         "please try again",
     ]
-    tui = PopenSpawn([COPIER_PATH, "copy", SRC, str(tmp_path)], timeout=10)
+    tui = spawn([COPIER_PATH, "copy", SRC, str(tmp_path)], timeout=10)
     tui.expect_exact(["I need to know it. Do you love me?", "love_me", "Format: bool"])
     tui.send("y")
     tui.expect_exact(["Please tell me your name.", "your_name", "Format: str"])
@@ -176,13 +175,13 @@ def test_api_str_data(tmp_path):
     )
 
 
-def test_cli_interatively_with_flag_data_and_type_casts(tmp_path: Path):
+def test_cli_interatively_with_flag_data_and_type_casts(tmp_path: Path, spawn):
     """Assert how choices work when copier is invoked with --data interactively."""
     invalid = [
         "Invalid value",
         "please try again",
     ]
-    tui = PopenSpawn(
+    tui = spawn(
         [
             COPIER_PATH,
             "--data=choose_list=second",

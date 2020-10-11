@@ -3,7 +3,6 @@ from pathlib import Path
 import pexpect
 import pytest
 import yaml
-from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
 from plumbum.cmd import git
 
@@ -33,7 +32,7 @@ MARIO_TREE = {
 
 
 @pytest.mark.parametrize("name", [DEFAULT, None, "Luigi"])
-def test_copy_default_advertised(tmp_path_factory, name):
+def test_copy_default_advertised(tmp_path_factory, spawn, name):
     """Test that the questions for the user are OK"""
     template, subproject = (
         tmp_path_factory.mktemp("template"),
@@ -55,7 +54,7 @@ def test_copy_default_advertised(tmp_path_factory, name):
         else:
             name = "Mario"  # Default in the template
         name = str(name)
-        tui = PopenSpawn(
+        tui = spawn(
             [COPIER_PATH, str(template), ".", "--vcs-ref=v1"] + args, timeout=10
         )
         # Check what was captured
@@ -78,7 +77,7 @@ def test_copy_default_advertised(tmp_path_factory, name):
         git("add", ".")
         assert "_commit: v1" in Path(".copier-answers.yml").read_text()
         git("commit", "-m", "v1")
-        tui = PopenSpawn([COPIER_PATH], timeout=10)
+        tui = spawn([COPIER_PATH], timeout=10)
         # Check what was captured
         tui.expect_exact(["in_love?", "Format: bool", "(Y/n)"])
         tui.sendline()
@@ -115,7 +114,7 @@ def test_copy_default_advertised(tmp_path_factory, name):
         ("[% if question_1 %]FALSE[% endif %]", False),
     ),
 )
-def test_when(tmp_path_factory, question_2_when, asks):
+def test_when(tmp_path_factory, question_2_when, spawn, asks):
     """Test that the 2nd question is skipped or not, properly."""
     template, subproject = (
         tmp_path_factory.mktemp("template"),
@@ -132,7 +131,7 @@ def test_when(tmp_path_factory, question_2_when, asks):
             / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
         }
     )
-    tui = PopenSpawn([COPIER_PATH, str(template), str(subproject)], timeout=10)
+    tui = spawn([COPIER_PATH, str(template), str(subproject)], timeout=10)
     tui.expect_exact(["question_1?", "Format: bool", "(Y/n)"])
     tui.sendline()
     if asks:
@@ -147,7 +146,7 @@ def test_when(tmp_path_factory, question_2_when, asks):
     }
 
 
-def test_placeholder(tmp_path_factory):
+def test_placeholder(tmp_path_factory, spawn):
     template, subproject = (
         tmp_path_factory.mktemp("template"),
         tmp_path_factory.mktemp("subproject"),
@@ -169,7 +168,7 @@ def test_placeholder(tmp_path_factory):
             / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
         }
     )
-    tui = PopenSpawn([COPIER_PATH, str(template), str(subproject)], timeout=10)
+    tui = spawn([COPIER_PATH, str(template), str(subproject)], timeout=10)
     tui.expect_exact(["question_1?", "Format: str", "answer 1"])
     tui.sendline()
     tui.expect_exact(
@@ -186,7 +185,7 @@ def test_placeholder(tmp_path_factory):
 
 
 @pytest.mark.parametrize("type_", ("str", "yaml", "json"))
-def test_multiline(tmp_path_factory, type_):
+def test_multiline(tmp_path_factory, spawn, type_):
     template, subproject = (
         tmp_path_factory.mktemp("template"),
         tmp_path_factory.mktemp("subproject"),
@@ -213,7 +212,7 @@ def test_multiline(tmp_path_factory, type_):
             / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
         }
     )
-    tui = PopenSpawn([COPIER_PATH, str(template), str(subproject)], timeout=10)
+    tui = spawn([COPIER_PATH, str(template), str(subproject)], timeout=10)
     tui.expect_exact(["question_1?", "Format: str", "answer 1"])
     tui.sendline()
     tui.expect_exact(["question_2?", f"Format: {type_}"])
