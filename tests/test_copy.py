@@ -89,8 +89,8 @@ def test_include_pattern(tmp_path):
 
 
 @pytest.mark.xfail(
-    platform.system() == "Darwin",
-    "Mac claims to use UTF-8 filesystem, but behaves differently.",
+    condition=platform.system() == "Darwin",
+    reason="Mac claims to use UTF-8 filesystem, but behaves differently.",
     strict=True,
 )
 def test_exclude_file(tmp_path):

@@ -23,7 +23,9 @@ SRC = Path(f"{PROJECT_TEMPLATE}_migrations").absolute()
 # of WSL bash, which happened to work fine in real world tests.
 # FIXME Some generous Windows power user please fix this test!
 @pytest.mark.xfail(
-    platform.system() == "Windows", "Windows ignores shebang?", strict=True
+    condition=platform.system() == "Windows",
+    reason="Windows ignores shebang?",
+    strict=True,
 )
 def test_migrations_and_tasks(tmp_path: Path):
     """Check migrations and tasks are run properly."""

@@ -164,7 +164,9 @@ def test_updatediff(tmpdir):
 # the diff. It seems like an older Git version were being used, while
 # that's not the case...
 # FIXME Some generous Windows power user please fix this test!
-@pytest.mark.xfail(platform.system() == "Windows", reason="Git broken on Windows?")
+@pytest.mark.xfail(
+    condition=platform.system() == "Windows", reason="Git broken on Windows?"
+)
 def test_commit_hooks_respected(tmp_path: Path):
     """Commit hooks are taken into account when producing the update diff."""
     # Prepare source template v1
