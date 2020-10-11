@@ -7,7 +7,7 @@ from copier.config.factory import filter_config, make_config
 from copier.config.objects import EnvOps
 from copier.config.user_data import InvalidTypeError, query_user_data
 
-from .helpers import build_file_tree
+from .helpers import COPIER_PATH, build_file_tree
 
 envops = EnvOps()
 main_default = "copier"
@@ -131,7 +131,7 @@ def test_templated_prompt(
             / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
         }
     )
-    tui = PopenSpawn(["copier", str(template), str(subproject)], timeout=10)
+    tui = PopenSpawn([COPIER_PATH, str(template), str(subproject)], timeout=10)
     tui.expect_exact(["main?", "Format: yaml", main_default])
     tui.sendline()
     tui.expect_exact([f"{question_name}?"] + expected_outputs)

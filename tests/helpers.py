@@ -7,6 +7,7 @@ from hashlib import sha1
 from pathlib import Path
 from typing import Dict
 
+from plumbum import local
 from prompt_toolkit.input.ansi_escape_sequences import REVERSE_ANSI_SEQUENCES
 from prompt_toolkit.keys import Keys
 
@@ -25,6 +26,17 @@ DATA = {
     "description": "A library for rendering projects templates",
 }
 
+COPIER_CMD = local.get(
+    # Allow debugging in VSCode
+    # HACK https://github.com/microsoft/vscode-python/issues/14222
+    str(Path(sys.executable).parent / "copier.cmd"),
+    str(Path(sys.executable).parent / "copier"),
+    # Poetry installs the executable as copier.cmd in Windows
+    "copier.cmd",
+    "copier",
+)
+COPIER_PATH = str(COPIER_CMD.executable)
+
 
 class Keyboard(str, Enum):
     ControlH = REVERSE_ANSI_SEQUENCES[Keys.ControlH]
@@ -35,18 +47,6 @@ class Keyboard(str, Enum):
     # further explanations
     Alt = Esc
     Backspace = ControlH
-
-
-def is_venv() -> bool:
-    """Indicate if we are running inside a venv."""
-    return sys.base_prefix != sys.prefix
-
-
-def bin_prefix() -> str:
-    """Obtain prefix for binaries inside the venv, if any."""
-    if not is_venv():
-        return ""
-    return str(Path(sys.prefix, "bin"))
 
 
 def render(tmp_path, **kwargs):
