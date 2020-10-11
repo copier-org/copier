@@ -16,6 +16,7 @@ from .helpers import PROJECT_TEMPLATE, build_file_tree
 
 SRC = Path(f"{PROJECT_TEMPLATE}_migrations").absolute()
 
+
 # This fails on windows CI because, when the test tries to execute
 # `migrations.py`, it doesn't understand that it should be interpreted
 # by python.exe. Or maybe it fails because CI is using Git bash instead
