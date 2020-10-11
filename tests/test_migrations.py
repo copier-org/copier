@@ -16,16 +16,16 @@ from .helpers import PROJECT_TEMPLATE, build_file_tree
 
 SRC = Path(f"{PROJECT_TEMPLATE}_migrations").absolute()
 
-
+# This fails on windows CI because, when the test tries to execute
+# `migrations.py`, it doesn't understand that it should be interpreted
+# by python.exe. Or maybe it fails because CI is using Git bash instead
+# of WSL bash, which happened to work fine in real world tests.
+# FIXME Some generous Windows power user please fix this test!
+@pytest.mark.xfail(
+    platform.system() == "Windows", "Windows ignores shebang?", strict=True
+)
 def test_migrations_and_tasks(tmp_path: Path):
     """Check migrations and tasks are run properly."""
-    if platform.system() == "Windows":
-        # This fails on windows CI because, when the test tries to execute
-        # `migrations.py`, it doesn't understand that it should be interpreted
-        # by python.exe. Or maybe it fails because CI is using Git bash instead
-        # of WSL bash, which happened to work fine in real world tests.
-        # FIXME Some generous Windows power user please fix this test!
-        pytest.skip("Skipping test that will fail on Windows")
     # Convert demo_migrations in a git repository with 2 versions
     git_src, dst = tmp_path / "src", tmp_path / "tmp_path"
     copytree(SRC, git_src)
