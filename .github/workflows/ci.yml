@@ -45,11 +45,8 @@ jobs:
           echo "C:\msys64\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           rm C:\msys64\usr\bin\bash.exe
       - run: git config --global user.name copier-ci
-        shell: bash
       - run: git config --global user.email copier@copier
-        shell: bash
       - run: git config --global core.autocrlf input
-        shell: bash
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
@@ -69,12 +66,10 @@ jobs:
             cache|${{ runner.os }}|${{ env.PY }}|${{ hashFiles('pyproject.toml') }}|${{
             hashFiles('poetry.lock') }}|${{ hashFiles('.pre-commit-config.yaml') }}
       - name: Install dependencies
-        shell: bash
         run: |
           python -m pip install poetry
           poetry install -vvv
       - name: Run pytest
-        shell: bash
         run: poetry run poe test -ra .
 
   publish:
