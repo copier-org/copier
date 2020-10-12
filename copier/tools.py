@@ -85,6 +85,27 @@ def required(value: T, **kwargs: Any) -> T:
     return value
 
 
+def cast_str_to_bool(value: Any) -> bool:
+    """Parse a string to bool, YAML-like.
+
+    Params:
+        value:
+            Anything to be casted to a bool. Usually a `str`.
+    """
+    try:
+        lower = value.lower()
+    except AttributeError:
+        return bool(value)
+    result = None
+    if lower in {"1", "y", "yes", "t", "true", "on"}:
+        result = True
+    elif lower in {"", "0", "n", "no", "f", "false", "off"}:
+        result = False
+    if result is None:
+        raise ValueError("Invalid bool value")
+    return result
+
+
 def make_folder(folder: Path) -> None:
     if not folder.exists():
         try:
@@ -110,7 +131,7 @@ def to_nice_yaml(data: Any, **kwargs) -> str:
 
 
 def get_jinja_env(
-    envops: EnvOps,
+    envops: "EnvOps",
     filters: Optional[Filters] = None,
     paths: Optional[LoaderPaths] = None,
     **kwargs: Any,
@@ -131,8 +152,8 @@ def get_jinja_env(
 class Renderer:
     """The Jinja template renderer."""
 
-    def __init__(self, conf: ConfigData) -> None:
-        envops: EnvOps = conf.envops
+    def __init__(self, conf: "ConfigData") -> None:
+        envops: "EnvOps" = conf.envops
         paths = [str(conf.src_path)] + list(map(str, conf.extra_paths or []))
         self.env = get_jinja_env(envops=envops, paths=paths)
         self.conf = conf
@@ -172,6 +193,18 @@ def normalize_str(text: StrOrPath, form: str = "NFD") -> str:
     return unicodedata.normalize(form, str(text))
 
 
+def force_str_end(original_str: str, end: str = "\n") -> str:
+    """Make sure a `original_str` ends with `end`.
+
+    Params:
+        original_str: String that you want to ensure ending.
+        end: String that must exist at the end of `original_str`
+    """
+    if not original_str.endswith(end):
+        return original_str + end
+    return original_str
+
+
 def create_path_filter(patterns: StrOrPathSeq) -> CheckPathFunc:
     """Returns a function that matches a path against given patterns."""
     patterns = [normalize_str(p) for p in patterns]
@@ -183,7 +216,7 @@ def create_path_filter(patterns: StrOrPathSeq) -> CheckPathFunc:
     return match
 
 
-def get_migration_tasks(conf: ConfigData, stage: str) -> List[Dict]:
+def get_migration_tasks(conf: "ConfigData", stage: str) -> List[Dict]:
     """Get migration objects that match current version spec.
 
     Versions are compared using PEP 440.

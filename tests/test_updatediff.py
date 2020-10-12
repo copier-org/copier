@@ -160,14 +160,15 @@ def test_updatediff(tmpdir):
         )
 
 
+# This fails on Windows because there's some problem while detecting
+# the diff. It seems like an older Git version were being used, while
+# that's not the case...
+# FIXME Some generous Windows power user please fix this test!
+@pytest.mark.xfail(
+    condition=platform.system() == "Windows", reason="Git broken on Windows?"
+)
 def test_commit_hooks_respected(tmp_path: Path):
     """Commit hooks are taken into account when producing the update diff."""
-    if platform.system() == "Windows":
-        # This fails on Windows because there's some problem while detecting
-        # the diff. It seems like an older Git version were being used, while
-        # that's not the case...
-        # FIXME Some generous Windows power user please fix this test!
-        pytest.skip("Skipping test that will fail on Windows")
     # Prepare source template v1
     src, tmp_path = tmp_path / "src", tmp_path / "tmp_path"
     src.mkdir()

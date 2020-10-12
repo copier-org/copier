@@ -88,11 +88,13 @@ def test_include_pattern(tmp_path):
     assert (tmp_path / ".svn").exists()
 
 
+@pytest.mark.xfail(
+    condition=platform.system() == "Darwin",
+    reason="Mac claims to use UTF-8 filesystem, but behaves differently.",
+    strict=True,
+)
 def test_exclude_file(tmp_path):
     print(f"Filesystem encoding is {sys.getfilesystemencoding()}")
-    if platform.system() == "Darwin":
-        # FIXME Some generous macOS owner please fix this important test!
-        pytest.skip("Skipping test that will fail on macOS")
     # This file name is b"man\xcc\x83ana.txt".decode()
     render(tmp_path, exclude=["mañana.txt"])
     assert not (tmp_path / "doc" / "mañana.txt").exists()

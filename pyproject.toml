@@ -25,14 +25,16 @@ copier = "copier.cli:CopierApp.run"
 "Bug Tracker" = "https://github.com/pykong/copier/issues"
 
 [tool.poetry.dependencies]
-python = "^3.6"
+# HACK https://github.com/tmbo/questionary/pull/71
+python = ">=3.6.1,<3.9"
 colorama = "^0.4.3"
 iteration_utilities = "^0.10.1"
 jinja2 = "^2.11.2"
 pathspec = "^0.8.0"
 plumbum = "^1.6.9"
 pydantic = "^1.5.1"
-regex = "^2020.6.8"
+# HACK https://github.com/tmbo/questionary/pull/70
+questionary = {git = "https://github.com/Yajo/questionary.git", rev = "text-custom-lexer"}
 pyyaml = "^5.3.1"
 pyyaml-include = "^1.2"
 # packaging is needed when installing from PyPI
@@ -51,39 +53,44 @@ flake8-blind-except = "*"
 flake8-bugbear = "*"
 flake8-comprehensions = "*"
 flake8-debugger = "*"
-ipdb = "*"
 mypy = "*"
-packaging = "*"
+pexpect = "^4.8.0"
 poethepoet = "^0.7.0"
 pre-commit = "*"
 pytest = "*"
 pytest-cov = "*"
 pytest-xdist = "*"
-pytest-timeout = "^1.4.1"
 
 # HACK https://github.com/python-poetry/poetry/issues/2555
 # TODO Remove from this section and install with poetry install -E docs when fixed
 mkdocstrings = "^0.13.1"
 mkdocs-material = "^5.5.5"
+autoflake = "^1.4"
 mkdocs-mermaid2-plugin = "^0.5.0"
 
-[tool.poe.tasks]
-clean.script = "devtasks:clean"
-clean.help = "remove build/python artifacts"
+[tool.poe.tasks.clean]
+script = "devtasks:clean"
+help = "remove build/python artifacts"
 
-docs = "mkdocs serve"
+[tool.poe.tasks.coverage]
+cmd = "pytest --cov-report html --cov copier copier tests"
+help = "generate an HTML report of the coverage"
 
-test.cmd = "pytest -n auto --color=yes"
-test.help = "run tests"
+[tool.poe.tasks.docs]
+cmd = "mkdocs serve"
+help = "start local docs server"
 
-lint.cmd = "pre-commit run --all-files"
-lint.help = "check (and auto-fix) style with pre-commit"
+[tool.poe.tasks.lint]
+cmd = "pre-commit run --all-files"
+help = "check (and auto-fix) style with pre-commit"
 
-types.cmd = "mypy --ignore-missing-imports ."
-types.help = "run the type (mypy) checker on the codebase"
+[tool.poe.tasks.test]
+cmd = "pytest --color=yes"
+help = "run tests"
 
-coverage.cmd = "pytest --cov-report html --cov copier copier tests"
-coverage.help = "generate an HTML report of the coverage"
+[tool.poe.tasks.types]
+cmd = "mypy --ignore-missing-imports ."
+help = "run the type (mypy) checker on the codebase"
 
 [tool.poetry-dynamic-versioning]
 enable = true
@@ -109,5 +116,5 @@ max-complexity = 20
 ignore = ",W503,E203,E501,D100,D101,D102,D103,D104,D105,D107,"
 
 [build-system]
-requires = ["poetry>=1.0.3"]
-build-backend = "poetry.masonry.api"
+requires = ["poetry_core>=1.0.0", "poetry-dynamic-versioning"]
+build-backend = "poetry.core.masonry.api"

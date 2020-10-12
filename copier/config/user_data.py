@@ -3,20 +3,23 @@
 import json
 import re
 from collections import ChainMap
-from functools import partial
+from contextlib import suppress
 from pathlib import Path
-from typing import Any, Callable, Dict
+from typing import Any, Callable, ChainMap as t_ChainMap, Dict, Iterable, List, Union
 
 import yaml
 from iteration_utilities import deepflatten
 from jinja2 import UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
-from plumbum.cli.terminal import ask, choose, prompt
-from plumbum.colors import bold, info, italics
+from prompt_toolkit.lexers import PygmentsLexer
+from pydantic import BaseModel, Field, validator
+from pygments.lexers.data import JsonLexer, YamlLexer
+from questionary import prompt
+from questionary.prompts.common import Choice
 from yamlinclude import YamlIncludeConstructor
 
-from ..tools import get_jinja_env, printf_exception
-from ..types import AnyByStrDict, Choices, OptStrOrPath, PathSeq, StrOrPath
+from ..tools import cast_str_to_bool, force_str_end, get_jinja_env, printf_exception
+from ..types import AnyByStrDict, OptStrOrPath, PathSeq, StrOrPath
 from .objects import DEFAULT_DATA, EnvOps, UserMessageError
 
 __all__ = ("load_config_data", "query_user_data")
@@ -42,6 +45,343 @@ class MultipleConfigFilesError(ConfigFileError):
 
 class InvalidTypeError(TypeError):
     pass
+
+
+class Question(BaseModel):
+    """One question asked to the user.
+
+    All attributes are init kwargs.
+
+    Attributes:
+        choices:
+            Selections available for the user if the question requires them.
+            Can be templated.
+
+        default:
+            Default value presented to the user to make it easier to respond.
+            Can be templated.
+
+        help_text:
+            Additional text printed to the user, explaining the purpose of
+            this question. Can be templated.
+
+        multiline:
+            Indicates if the question should allow multiline input. Defaults
+            to `True` for JSON and YAML questions, and to `False` otherwise.
+            Only meaningful for str-based questions. Can be templated.
+
+        placeholder:
+            Text that appears if there's nothing written in the input field,
+            but disappears as soon as the user writes anything. Can be templated.
+
+        questionary:
+            Reference to the [Questionary][] object where this [Question][] is
+            attached.
+
+        secret:
+            Indicates if the question should be removed from the answers file.
+            If the question type is str, it will hide user input on the screen
+            by displaying asterisks: `****`.
+
+        type_name:
+            The type of question. Affects the rendering, validation and filtering.
+            Can be templated.
+
+        var_name:
+            Question name in the answers dict.
+
+        when:
+            Condition that, if `False`, skips the question. Can be templated.
+            If it is a boolean, it is used directly. If it is a str, it is
+            converted to boolean using a parser similar to YAML, but only for
+            boolean values.
+    """
+
+    choices: Union[Dict[Any, Any], List[Any]] = Field(default_factory=list)
+    default: Any = None
+    help_text: str = ""
+    multiline: Union[str, bool] = False
+    placeholder: str = ""
+    questionary: "Questionary"
+    secret: bool = False
+    type_name: str = ""
+    var_name: str
+    when: Union[str, bool] = True
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    def __init__(self, **kwargs):
+        # Transform arguments that are named like python keywords
+        to_rename = (("help", "help_text"), ("type", "type_name"))
+        for from_, to in to_rename:
+            with suppress(KeyError):
+                kwargs.setdefault(to, kwargs.pop(from_))
+        # Infer type from default if missing
+        super().__init__(**kwargs)
+        self.questionary.questions.append(self)
+
+    def __repr__(self):
+        return f"Question({self.var_name})"
+
+    @validator("var_name")
+    def _check_var_name(cls, v):
+        if v in DEFAULT_DATA:
+            raise ValueError("Invalid question name")
+        return v
+
+    @validator("type_name", always=True)
+    def _check_type_name(cls, v, values):
+        if v == "":
+            default_type_name = type(values.get("default")).__name__
+            v = default_type_name if default_type_name in CAST_STR_TO_NATIVE else "yaml"
+        return v
+
+    def _iter_choices(self) -> Iterable[Choice]:
+        """Iterates choices in a format that the questionary lib likes."""
+        choices = self.choices
+        if isinstance(self.choices, dict):
+            choices = list(self.choices.items())
+        for choice in choices:
+            # If a choice is a dict, it can be used raw
+            if isinstance(choice, dict):
+                name = choice["name"]
+                value = choice["value"]
+            # ... or a value pair
+            elif isinstance(choice, (tuple, list)):
+                name, value = choice
+            # However, a choice can also be a single value...
+            else:
+                name = value = choice
+            # The name must always be a str
+            name = str(name)
+            # The value can be templated
+            value = self.render_value(value)
+            yield Choice(name, value)
+
+    def get_default(self, for_rendering: bool) -> Any:
+        """Get the default value for this question.
+
+        Parameters:
+            for_rendering:
+                Indicates if the result should be returned casted for normal
+                usage, or casted for rendering.
+        """
+        cast_fn = self.get_cast_fn()
+        try:
+            result = self.questionary.answers_forced[self.var_name]
+        except KeyError:
+            try:
+                result = self.questionary.answers_last[self.var_name]
+            except KeyError:
+                result = self.render_value(self.default)
+        result = cast_answer_type(result, cast_fn)
+        if not for_rendering or self.type_name == "bool":
+            return result
+        if result is None:
+            return ""
+        else:
+            return str(result)
+
+    def get_choices(self) -> List[Choice]:
+        """Obtain choices rendered and properly formatted."""
+        return list(self._iter_choices())
+
+    def filter_answer(self, answer) -> Any:
+        """Cast the answer to the desired type."""
+        if answer == self.get_default(for_rendering=True):
+            return self.get_default(for_rendering=False)
+        return cast_answer_type(answer, self.get_cast_fn())
+
+    def get_message(self) -> str:
+        """Get the message that will be printed to the user."""
+        message = ""
+        if self.help_text:
+            rendered_help = self.render_value(self.help_text)
+            message = force_str_end(rendered_help)
+        message += f"{self.var_name}? Format: {self.type_name}"
+        return message
+
+    def get_placeholder(self) -> str:
+        """Render and obtain the placeholder."""
+        return self.render_value(self.placeholder)
+
+    def get_questionary_structure(self):
+        """Get the question in a format that the questionary lib understands."""
+        lexer = None
+        result = {
+            "default": self.get_default(for_rendering=True),
+            "filter": self.filter_answer,
+            "message": self.get_message(),
+            "mouse_support": True,
+            "name": self.var_name,
+            "qmark": "🕵️" if self.secret else "🎤",
+            "when": self.get_when,
+        }
+        questionary_type = "input"
+        if self.type_name == "bool":
+            questionary_type = "confirm"
+        if self.choices:
+            questionary_type = "select"
+            result["choices"] = self.get_choices()
+            # The default value must be a choice object from the list
+            for choice in result["choices"]:
+                if result["default"] == choice.value:
+                    result["default"] = choice
+                    break
+            else:
+                result.pop("default")  # Default is not selectable
+        if questionary_type == "input":
+            if self.secret:
+                questionary_type = "password"
+            elif self.type_name == "yaml":
+                lexer = PygmentsLexer(YamlLexer)
+            elif self.type_name == "json":
+                lexer = PygmentsLexer(JsonLexer)
+            if lexer:
+                result["lexer"] = lexer
+            result["multiline"] = self.get_multiline()
+            placeholder = self.get_placeholder()
+            if placeholder:
+                result["placeholder"] = placeholder
+            result["validate"] = self.validate_answer
+        result.update({"type": questionary_type})
+        return result
+
+    def get_cast_fn(self) -> Callable:
+        """Obtain function to cast user answer to desired type."""
+        type_name = self.render_value(self.type_name)
+        if type_name not in CAST_STR_TO_NATIVE:
+            raise InvalidTypeError("Invalid question type")
+        return CAST_STR_TO_NATIVE.get(type_name, parse_yaml_string)
+
+    def get_multiline(self) -> bool:
+        """Get the value for multiline."""
+        multiline = self.render_value(self.multiline)
+        multiline = cast_answer_type(multiline, cast_str_to_bool)
+        return bool(multiline)
+
+    def validate_answer(self, answer) -> bool:
+        """Validate user answer."""
+        cast_fn = self.get_cast_fn()
+        try:
+            cast_fn(answer)
+            return True
+        except Exception:
+            return False
+
+    def get_when(self, answers) -> bool:
+        """Get skip condition for question."""
+        if (
+            # Skip on --force
+            not self.questionary.ask_user
+            # Skip on --data=this_question=some_answer
+            or self.var_name in self.questionary.answers_forced
+        ):
+            return False
+        when = self.when
+        when = self.render_value(when)
+        when = cast_answer_type(when, cast_str_to_bool)
+        return bool(when)
+
+    def render_value(self, value: Any) -> str:
+        """Render a single templated value using Jinja.
+
+        If the value cannot be used as a template, it will be returned as is.
+        """
+        try:
+            template = self.questionary.env.from_string(value)
+        except TypeError:
+            # value was not a string
+            return value
+        try:
+            return template.render(
+                **self.questionary.get_best_answers(), **DEFAULT_DATA
+            )
+        except UndefinedError as error:
+            raise UserMessageError(str(error)) from error
+
+
+class Questionary(BaseModel):
+    """An object holding all [Question][] items and user answers.
+
+    All attributes are also init kwargs.
+
+    Attributes:
+        answers_default:
+            Default answers as specified in the template.
+
+        answers_forced:
+            Answers forced by the user, either by an API call like
+            `data={'some_question': 'forced_answer'}` or by a CLI call like
+            `--data=some_question=forced_answer`.
+
+        answers_last:
+            Answers obtained from the `.copier-answers.yml` file.
+
+        answers_user:
+            Dict containing user answers for the current questionary. It should
+            be empty always.
+
+        ask_user:
+            Indicates if the questionary should be asked, or just forced.
+
+        env:
+            The Jinja environment for rendering.
+
+        questions:
+            A list containing all [Question][] objects for this [Questionary][].
+    """
+
+    answers_default: AnyByStrDict = Field(default_factory=dict)
+    answers_forced: AnyByStrDict = Field(default_factory=dict)
+    answers_last: AnyByStrDict = Field(default_factory=dict)
+    answers_user: AnyByStrDict = Field(default_factory=dict)
+    ask_user: bool = True
+    env: SandboxedEnvironment
+    questions: List[Question] = Field(default_factory=list)
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def get_best_answers(self) -> t_ChainMap[str, Any]:
+        """Get dict-like object with the best answers for each question."""
+        return ChainMap(
+            self.answers_user,
+            self.answers_last,
+            self.answers_forced,
+            self.answers_default,
+        )
+
+    def get_answers(self) -> AnyByStrDict:
+        """Obtain answers for all questions.
+
+        It produces a TUI for querying the user if `ask_user` is true. Otherwise,
+        it gets answers from other sources.
+        """
+        previous_answers = self.get_best_answers()
+        if self.ask_user:
+            self.answers_user = prompt(
+                (question.get_questionary_structure() for question in self.questions),
+                answers=previous_answers,
+            )
+            # HACK https://github.com/tmbo/questionary/issues/74
+            if not self.answers_user and self.questions:
+                raise KeyboardInterrupt
+        else:
+            # Avoid prompting to not requiring a TTy when --force
+            for question in self.questions:
+                new_answer = question.get_default(for_rendering=False)
+                previous_answer = previous_answers.get(question.var_name)
+                if new_answer != previous_answer:
+                    self.answers_user[question.var_name] = new_answer
+        return self.answers_user
+
+
+Question.update_forward_refs()
 
 
 def load_yaml_data(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
@@ -136,102 +476,32 @@ def cast_answer_type(answer: Any, type_fn: Callable) -> Any:
         return answer
 
 
-def render_value(value: Any, env: SandboxedEnvironment, context: AnyByStrDict) -> str:
-    """Render a single templated value using Jinja.
-
-    If the value cannot be used as a template, it will be returned as is.
-    """
-    try:
-        template = env.from_string(value)
-    except TypeError:
-        # value was not a string
-        return value
-    try:
-        return template.render(**context)
-    except UndefinedError as error:
-        raise UserMessageError(str(error)) from error
-
-
-def render_choices(
-    choices: Choices, env: SandboxedEnvironment, context: AnyByStrDict
-) -> Choices:
-    """Render a list or dictionary of templated choices using Jinja."""
-    render = partial(render_value, env=env, context=context)
-    if isinstance(choices, dict):
-        choices = {render(k): render(v) for k, v in choices.items()}
-    elif isinstance(choices, list):
-        for i, choice in enumerate(choices):
-            if isinstance(choice, (tuple, list)) and len(choice) == 2:
-                choices[i] = (render(choice[0]), render(choice[1]))
-            else:
-                choices[i] = render(choice)
-    return choices
+CAST_STR_TO_NATIVE: Dict[str, Callable] = {
+    "bool": cast_str_to_bool,
+    "float": float,
+    "int": int,
+    "json": json.loads,
+    "str": str,
+    "yaml": parse_yaml_string,
+}
 
 
 def query_user_data(
     questions_data: AnyByStrDict,
     last_answers_data: AnyByStrDict,
     forced_answers_data: AnyByStrDict,
+    default_answers_data: AnyByStrDict,
     ask_user: bool,
     envops: EnvOps,
 ) -> AnyByStrDict:
     """Query the user for questions given in the config file."""
-    type_maps: Dict[str, Callable] = {
-        "bool": bool,
-        "float": float,
-        "int": int,
-        "json": json.loads,
-        "str": str,
-        "yaml": parse_yaml_string,
-    }
-    env = get_jinja_env(envops=envops)
-    result: AnyByStrDict = {}
-    defaults: AnyByStrDict = {}
-    _render_value = partial(
-        render_value,
-        env=env,
-        context=ChainMap(result, forced_answers_data, defaults, DEFAULT_DATA),
+    questionary = Questionary(
+        answers_forced=forced_answers_data,
+        answers_last=last_answers_data,
+        answers_default=default_answers_data,
+        ask_user=ask_user,
+        env=get_jinja_env(envops=envops),
     )
-    _render_choices = partial(
-        render_choices,
-        env=env,
-        context=ChainMap(result, forced_answers_data, defaults, DEFAULT_DATA),
-    )
-
     for question, details in questions_data.items():
-        # Get question type; by default let YAML decide it
-        type_name = _render_value(details.get("type", "yaml"))
-        try:
-            type_fn = type_maps[type_name]
-        except KeyError:
-            raise InvalidTypeError()
-        # Get default answer
-        ask_this = ask_user
-        default = cast_answer_type(_render_value(details.get("default")), type_fn)
-        defaults[question] = default
-        try:
-            # Use forced answer
-            answer = forced_answers_data[question]
-            ask_this = False
-        except KeyError:
-            # Get default answer
-            answer = last_answers_data.get(question, default)
-        if ask_this:
-            # Generate message to ask the user
-            emoji = "🕵️" if details.get("secret", False) else "🎤"
-            message = f"\n{bold | question}? Format: {type_name}\n{emoji} "
-            if details.get("help"):
-                message = (
-                    f"\n{info & italics | _render_value(details['help'])}{message}"
-                )
-            # Use the right method to ask
-            if type_fn is bool:
-                answer = ask(message, answer)
-            elif details.get("choices"):
-                choices = _render_choices(details["choices"])
-                answer = choose(message, choices, answer)
-            else:
-                answer = prompt(message, type_fn, answer)
-        if answer != details.get("default", default):
-            result[question] = cast_answer_type(answer, type_fn)
-    return result
+        Question(var_name=question, questionary=questionary, **details)
+    return questionary.get_answers()

@@ -1,5 +1,4 @@
 """Pydantic models, exceptions and default values."""
-
 import datetime
 from collections import ChainMap
 from copy import deepcopy
@@ -8,7 +7,7 @@ from os import urandom
 from pathlib import Path
 from typing import Any, ChainMap as t_ChainMap, Sequence, Tuple, Union
 
-from pydantic import BaseModel, Extra, StrictBool, validator
+from pydantic import BaseModel, Extra, Field, StrictBool, validator
 
 from ..types import AnyByStrDict, OptStr, PathSeq, StrOrPathSeq, StrSeq
 
@@ -34,8 +33,6 @@ DEFAULT_TEMPLATES_SUFFIX = ".tmpl"
 
 class UserMessageError(Exception):
     """Exit the program giving a message to the user."""
-
-    pass
 
 
 class NoSrcPathError(UserMessageError):
@@ -91,10 +88,10 @@ class ConfigData(BaseModel):
     migrations: Sequence[Migrations] = ()
     secret_questions: StrSeq = ()
     answers_file: Path = Path(".copier-answers.yml")
-    data_from_init: AnyByStrDict = {}
-    data_from_asking_user: AnyByStrDict = {}
-    data_from_answers_file: AnyByStrDict = {}
-    data_from_template_defaults: AnyByStrDict = {}
+    data_from_init: AnyByStrDict = Field(default_factory=dict)
+    data_from_asking_user: AnyByStrDict = Field(default_factory=dict)
+    data_from_answers_file: AnyByStrDict = Field(default_factory=dict)
+    data_from_template_defaults: AnyByStrDict = Field(default_factory=dict)
 
     # Private
     _data_mutable: AnyByStrDict

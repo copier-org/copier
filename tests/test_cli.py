@@ -1,9 +1,10 @@
 from pathlib import Path
 
 import yaml
-from plumbum.cmd import copier as copier_cmd
 
 from copier.cli import CopierApp
+
+from .helpers import COPIER_CMD
 
 SIMPLE_DEMO_PATH = Path(__file__).parent / "demo_simple"
 
@@ -23,4 +24,4 @@ def test_good_cli_run(tmp_path):
 
 
 def test_help():
-    copier_cmd("--help-all")
+    COPIER_CMD("--help-all")

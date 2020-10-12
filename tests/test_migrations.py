@@ -17,15 +17,18 @@ from .helpers import PROJECT_TEMPLATE, build_file_tree
 SRC = Path(f"{PROJECT_TEMPLATE}_migrations").absolute()
 
 
+# This fails on windows CI because, when the test tries to execute
+# `migrations.py`, it doesn't understand that it should be interpreted
+# by python.exe. Or maybe it fails because CI is using Git bash instead
+# of WSL bash, which happened to work fine in real world tests.
+# FIXME Some generous Windows power user please fix this test!
+@pytest.mark.xfail(
+    condition=platform.system() == "Windows",
+    reason="Windows ignores shebang?",
+    strict=True,
+)
 def test_migrations_and_tasks(tmp_path: Path):
     """Check migrations and tasks are run properly."""
-    if platform.system() == "Windows":
-        # This fails on windows CI because, when the test tries to execute
-        # `migrations.py`, it doesn't understand that it should be interpreted
-        # by python.exe. Or maybe it fails because CI is using Git bash instead
-        # of WSL bash, which happened to work fine in real world tests.
-        # FIXME Some generous Windows power user please fix this test!
-        pytest.skip("Skipping test that will fail on Windows")
     # Convert demo_migrations in a git repository with 2 versions
     git_src, dst = tmp_path / "src", tmp_path / "tmp_path"
     copytree(SRC, git_src)
@@ -181,7 +184,7 @@ def test_prereleases(tmp_path: Path):
         git("tag", "v2.0.0.alpha1")
     # Copying with use_prereleases=False copies v1
     copy(src_path=str(src), dst_path=dst, force=True)
-    answers = yaml.load((dst / ".copier-answers.yml").read_text())
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers["_commit"] == "v1.0.0"
     assert (dst / "version.txt").read_text() == "v1.0.0"
     assert not (dst / "v1.9").exists()
@@ -204,7 +207,7 @@ def test_prereleases(tmp_path: Path):
     assert not (dst / "v2.a2").exists()
     # Update it with prereleases
     copy(dst_path=dst, force=True, use_prereleases=True)
-    answers = yaml.load((dst / ".copier-answers.yml").read_text())
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers["_commit"] == "v2.0.0.alpha1"
     assert (dst / "version.txt").read_text() == "v2.0.0.alpha1"
     assert (dst / "v1.9").exists()
