@@ -35,7 +35,6 @@ plumbum = "^1.6.9"
 pydantic = "^1.5.1"
 # HACK https://github.com/tmbo/questionary/pull/70
 questionary = {git = "https://github.com/Yajo/questionary.git", rev = "text-custom-lexer"}
-regex = "^2020.6.8"
 pyyaml = "^5.3.1"
 pyyaml-include = "^1.2"
 # packaging is needed when installing from PyPI
@@ -54,16 +53,13 @@ flake8-blind-except = "*"
 flake8-bugbear = "*"
 flake8-comprehensions = "*"
 flake8-debugger = "*"
-ipdb = "*"
 mypy = "*"
-packaging = "*"
 pexpect = "^4.8.0"
 poethepoet = "^0.7.0"
 pre-commit = "*"
 pytest = "*"
 pytest-cov = "*"
 pytest-xdist = "*"
-pytest-timeout = "^1.4.1"
 
 # HACK https://github.com/python-poetry/poetry/issues/2555
 # TODO Remove from this section and install with poetry install -E docs when fixed
