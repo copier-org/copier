@@ -71,16 +71,8 @@ jobs:
       - name: Install dependencies
         shell: bash
         run: |
-          python -m pip install poetry poethepoet
+          python -m pip install poetry
           poetry install -vvv
-      - name: Run pre-commit
-        shell: bash
-        run: poe lint --color=always
-        # FIXME Make pre-commit pass reliably on Windows, and remove this
-        continue-on-error: ${{ runner.os == 'Windows' }}
-      - name: Run mypy
-        shell: bash
-        run: poe types
       - name: Run pytest
         shell: bash
         run: poe test -ra .

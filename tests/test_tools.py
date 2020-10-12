@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+from poethepoet.app import PoeThePoet
 
 from copier import tools
 from copier.config.factory import ConfigData, EnvOps
@@ -60,3 +61,13 @@ path_filter = tools.create_path_filter(TEST_PATTERNS)
 )
 def test_create_path_filter(pattern, should_match):
     assert path_filter(pattern) == should_match
+
+
+def test_lint():
+    """Ensure source code formatting"""
+    PoeThePoet(Path("."))(["lint", "--show-diff-on-failure", "--color=always"])
+
+
+def test_types():
+    """Ensure source code static typing."""
+    PoeThePoet(Path("."))(["types"])
