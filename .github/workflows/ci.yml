@@ -75,7 +75,7 @@ jobs:
           poetry install -vvv
       - name: Run pytest
         shell: bash
-        run: poe test -ra .
+        run: poetry run poe test -ra .
 
   publish:
     if: github.event_name == 'release'
