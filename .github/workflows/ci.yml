@@ -42,7 +42,7 @@ jobs:
       - name: Enable msys binaries
         if: ${{ runner.os == 'Windows' }}
         run: |
-          echo "C:\msys64\usr\bin" >> $GITHUB_PATH
+          echo "C:\msys64\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           rm C:\msys64\usr\bin\bash.exe
       - run: git config --global user.name copier-ci
         shell: bash
