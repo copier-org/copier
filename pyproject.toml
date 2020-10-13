@@ -33,8 +33,7 @@ jinja2 = "^2.11.2"
 pathspec = "^0.8.0"
 plumbum = "^1.6.9"
 pydantic = "^1.5.1"
-# HACK https://github.com/tmbo/questionary/pull/70
-questionary = {git = "https://github.com/Yajo/questionary.git", rev = "text-custom-lexer"}
+questionary = "^1.6.0"
 pyyaml = "^5.3.1"
 pyyaml-include = "^1.2"
 # packaging is needed when installing from PyPI
