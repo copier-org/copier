@@ -15,7 +15,10 @@ def test_update_tasks(tmpdir):
     tmp_path = tmpdir / "tmp_path"
     # Copy the 1st version
     copy(
-        str(REPO_BUNDLE_PATH), tmp_path, force=True, vcs_ref="v1",
+        str(REPO_BUNDLE_PATH),
+        tmp_path,
+        force=True,
+        vcs_ref="v1",
     )
     # Init destination as a new independent git repo
     with local.cwd(tmp_path):

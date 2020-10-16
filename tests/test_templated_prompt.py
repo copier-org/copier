@@ -156,7 +156,12 @@ def test_templated_prompt_builtins():
     )
 
     data = query_user_data(
-        {"question": {"default": "[[ make_secret() ]]"}}, {}, {}, {}, False, envops,
+        {"question": {"default": "[[ make_secret() ]]"}},
+        {},
+        {},
+        {},
+        False,
+        envops,
     )
     assert isinstance(data["question"], str) and len(data["question"]) == 128
 
@@ -164,7 +169,12 @@ def test_templated_prompt_builtins():
 def test_templated_prompt_invalid():
     # assert no exception in non-strict mode
     query_user_data(
-        {"question": {"default": "[[ not_valid ]]"}}, {}, {}, {}, False, envops,
+        {"question": {"default": "[[ not_valid ]]"}},
+        {},
+        {},
+        {},
+        False,
+        envops,
     )
 
     # assert no exception in non-strict mode
@@ -174,12 +184,22 @@ def test_templated_prompt_invalid():
 
     with pytest.raises(InvalidTypeError):
         query_user_data(
-            {"question": {"type": "[[ not_valid ]]"}}, {}, {}, {}, False, envops,
+            {"question": {"type": "[[ not_valid ]]"}},
+            {},
+            {},
+            {},
+            False,
+            envops,
         )
 
     # assert no exception in non-strict mode
     query_user_data(
-        {"question": {"choices": ["[[ not_valid ]]"]}}, {}, {}, {}, False, envops,
+        {"question": {"choices": ["[[ not_valid ]]"]}},
+        {},
+        {},
+        {},
+        False,
+        envops,
     )
 
     # TODO: uncomment this later when EnvOps supports setting the undefined behavior

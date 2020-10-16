@@ -398,7 +398,9 @@ def load_yaml_data(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
     try:
         with open(conf_path) as f:
             flattened_result = deepflatten(
-                yaml.load_all(f, Loader=yaml.FullLoader), depth=2, types=(list,),
+                yaml.load_all(f, Loader=yaml.FullLoader),
+                depth=2,
+                types=(list,),
             )
             # HACK https://bugs.python.org/issue32792#msg311822
             # I'd use ChainMap, but it doesn't respect order in Python 3.6
@@ -425,8 +427,7 @@ def parse_yaml_string(string: str) -> Any:
 def load_config_data(
     src_path: StrOrPath, quiet: bool = False, _warning: bool = True
 ) -> AnyByStrDict:
-    """Try to load the content from a `copier.yml` or a `copier.yaml` file.
-    """
+    """Try to load the content from a `copier.yml` or a `copier.yaml` file."""
     conf_paths = [
         p
         for p in Path(src_path).glob("copier.*")
@@ -442,7 +443,8 @@ def load_config_data(
 
 
 def load_answersfile_data(
-    dst_path: StrOrPath, answers_file: OptStrOrPath = None,
+    dst_path: StrOrPath,
+    answers_file: OptStrOrPath = None,
 ) -> AnyByStrDict:
     """Load answers data from a `$dst_path/$answers_file` file if it exists."""
     try:
