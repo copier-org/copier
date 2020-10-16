@@ -1,4 +1,3 @@
-import inspect
 from pathlib import Path
 
 import pexpect
@@ -6,7 +5,6 @@ import pytest
 import yaml
 from plumbum import local
 from plumbum.cmd import git
-from questionary.prompts.text import text
 
 from .helpers import COPIER_PATH, Keyboard, build_file_tree
 
@@ -247,13 +245,3 @@ def test_multiline(tmp_path_factory, spawn, type_):
             "question_4": ("answer 4"),
             "question_5": ("answer 5"),
         }
-
-
-def questionary_supports_custom_lexer():
-    """Check that questionary doesn't support custom lexers.
-
-    If this test fails, it means that https://github.com/tmbo/questionary/pull/70
-    was merged and then you should revert https://github.com/copier-org/copier/pull/289
-    to enable lexer support.
-    """
-    assert "lexer" not in inspect.signature(text).parameters
