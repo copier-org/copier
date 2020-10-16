@@ -46,19 +46,18 @@ mkdocs-mermaid2-plugin = {version = "^0.5.0", optional = true}
 docs = ["mkdocstrings", "mkdocs-material", "mkdocs-mermaid2-plugin"]
 
 [tool.poetry.dev-dependencies]
-black = {version = "^19.10b0", allow-prereleases = true}
-flake8 = "*"
-flake8-blind-except = "*"
-flake8-bugbear = "*"
-flake8-comprehensions = "*"
-flake8-debugger = "*"
-mypy = "*"
+black = "^20.8b1"
+flake8 = "^3.8.4"
+flake8-bugbear = "^20.1.4"
+flake8-comprehensions = "^3.2.3"
+flake8-debugger = "^3.2.1"
+mypy = "^0.790"
 pexpect = "^4.8.0"
-poethepoet = "^0.7.0"
-pre-commit = "*"
-pytest = "*"
-pytest-cov = "*"
-pytest-xdist = "*"
+poethepoet = "^0.9.0"
+pre-commit = "^2.7.1"
+pytest = "^6.1.1"
+pytest-cov = "^2.10.1"
+pytest-xdist = "^2.1.0"
 
 # HACK https://github.com/python-poetry/poetry/issues/2555
 # TODO Remove from this section and install with poetry install -E docs when fixed
