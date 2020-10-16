@@ -31,7 +31,7 @@ jobs:
             hashFiles('poetry.lock') }}|${{ hashFiles('.pre-commit-config.yaml') }}
       - run: git config --global user.name copier-ci
       - run: git config --global user.email copier@copier
-      - run: poetry install
+      - run: poetry install -E docs
       - name: Generate coverage report
         run: |
           poetry run pytest --cov=./ --cov-report=xml

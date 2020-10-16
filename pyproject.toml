@@ -46,6 +46,7 @@ mkdocs-mermaid2-plugin = {version = "^0.5.0", optional = true}
 docs = ["mkdocstrings", "mkdocs-material", "mkdocs-mermaid2-plugin"]
 
 [tool.poetry.dev-dependencies]
+autoflake = "^1.4"
 black = "^20.8b1"
 flake8 = "^3.8.4"
 flake8-bugbear = "^20.1.4"
@@ -58,13 +59,6 @@ pre-commit = "^2.7.1"
 pytest = "^6.1.1"
 pytest-cov = "^2.10.1"
 pytest-xdist = "^2.1.0"
-
-# HACK https://github.com/python-poetry/poetry/issues/2555
-# TODO Remove from this section and install with poetry install -E docs when fixed
-mkdocstrings = "^0.13.1"
-mkdocs-material = "^5.5.5"
-autoflake = "^1.4"
-mkdocs-mermaid2-plugin = "^0.5.0"
 
 [tool.poe.tasks.clean]
 script = "devtasks:clean"

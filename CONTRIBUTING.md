@@ -66,7 +66,7 @@ git clone git@github.com:copier-org/copier.git
 3.  Use poetry to setup a virtualenv to develop in
 
 ```bash
-poetry install # create's a virtualenv with all dependencies from pyproject.toml
+poetry install -E docs # create's a virtualenv with all dependencies from pyproject.toml
 poetry shell   # creates a new shell with the virtualenv activated
 ```
 

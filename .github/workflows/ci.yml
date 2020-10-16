@@ -68,7 +68,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install poetry
-          poetry install -vvv
+          poetry install -E docs -vvv
       - name: Run pytest
         run: poetry run poe test -ra .
 
