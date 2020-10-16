@@ -204,7 +204,7 @@ class Question(BaseModel):
         """Render and obtain the placeholder."""
         return self.render_value(self.placeholder)
 
-    def get_questionary_structure(self):
+    def get_questionary_structure(self) -> AnyByStrDict:
         """Get the question in a format that the questionary lib understands."""
         result = {
             "default": self.get_default(for_rendering=True),
@@ -355,9 +355,11 @@ class Questionary(BaseModel):
         """
         previous_answers = self.get_best_answers()
         if self.ask_user:
+            # HACK https://github.com/tmbo/questionary/pull/79
+            # TODO Remove type: ignore comments when fixed
             self.answers_user = prompt(
-                (question.get_questionary_structure() for question in self.questions),
-                answers=previous_answers,
+                (question.get_questionary_structure() for question in self.questions),  # type: ignore
+                answers=previous_answers,  # type: ignore
             )
             # HACK https://github.com/tmbo/questionary/issues/74
             if not self.answers_user and self.questions:
