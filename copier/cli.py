@@ -142,7 +142,8 @@ class CopierApp(cli.Application):
     )
     quiet: cli.Flag = cli.Flag(["-q", "--quiet"], help="Suppress status output")
     prereleases: cli.Flag = cli.Flag(
-        ["-g", "--prereleases"], help="Use prereleases to compare template VCS tags.",
+        ["-g", "--prereleases"],
+        help="Use prereleases to compare template VCS tags.",
     )
 
     @cli.switch(
@@ -303,7 +304,8 @@ class CopierUpdateSubApp(cli.Application):
                 working directory is used.
         """
         self.parent._copy(
-            dst_path=destination_path, only_diff=True,
+            dst_path=destination_path,
+            only_diff=True,
         )
         return 0
 

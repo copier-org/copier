@@ -18,7 +18,10 @@ def test_do_not_cleanup(tmp_path):
     dst = tmp_path / "new_folder"
     with pytest.raises(CalledProcessError):
         copier.copy(
-            "./tests/demo_cleanup", dst, quiet=True, cleanup_on_error=False,
+            "./tests/demo_cleanup",
+            dst,
+            quiet=True,
+            cleanup_on_error=False,
         )
     assert (dst).exists()
 
