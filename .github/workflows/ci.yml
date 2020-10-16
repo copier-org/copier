@@ -32,10 +32,12 @@ jobs:
         os:
           - macos-latest
           - ubuntu-latest
-        python-version: [3.6, 3.7, 3.8]
-        include:
-          - os: windows-latest
-            python-version: 3.8
+          - windows-latest
+        python-version: [3.6, 3.7, 3.8, 3.9]
+        exclude:
+          # Windows is only supported on Python 3.8+
+          - {os: windows-latest, python-version: 3.6}
+          - {os: windows-latest, python-version: 3.7}
     runs-on: ${{ matrix.os }}
     steps:
       # HACK https://github.com/actions/cache/issues/315
@@ -71,6 +73,10 @@ jobs:
           poetry install -E docs -vvv
       - name: Run pytest
         run: poetry run poe test -ra .
+        # HACK https://github.com/samuelcolvin/pydantic/issues/1985
+        # HACK https://github.com/samuelcolvin/pydantic/issues/2009
+        # FIXME Remove when fixed upstream
+        continue-on-error: ${{ matrix.python-version == 3.9 }}
 
   publish:
     if: github.event_name == 'release'
