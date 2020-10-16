@@ -8,4 +8,4 @@ tasks:
       exit
   - init: |
       export PIP_USER=no
-      poetry install
+      poetry install -E docs
