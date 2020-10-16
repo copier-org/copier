@@ -40,7 +40,7 @@ repos:
 
   # isorting our imports
   - repo: https://github.com/timothycrosley/isort
-    rev: 5.2.2
+    rev: 5.6.4
     hooks:
       - id: isort
         additional_dependencies:
@@ -48,6 +48,7 @@ repos:
 
   # prettier to format our many yaml files
   - repo: https://github.com/prettier/prettier
+    # TODO Update when fixed https://github.com/prettier/prettier/issues/9430
     rev: 2.0.5
     hooks:
       - id: prettier
