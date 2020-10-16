@@ -11,7 +11,9 @@ import yaml
 from iteration_utilities import deepflatten
 from jinja2 import UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
+from prompt_toolkit.lexers import PygmentsLexer
 from pydantic import BaseModel, Field, validator
+from pygments.lexers.data import JsonLexer, YamlLexer
 from questionary import prompt
 from questionary.prompts.common import Choice
 from yamlinclude import YamlIncludeConstructor
@@ -206,6 +208,7 @@ class Question(BaseModel):
 
     def get_questionary_structure(self) -> AnyByStrDict:
         """Get the question in a format that the questionary lib understands."""
+        lexer = None
         result = {
             "default": self.get_default(for_rendering=True),
             "filter": self.filter_answer,
@@ -231,6 +234,12 @@ class Question(BaseModel):
         if questionary_type == "input":
             if self.secret:
                 questionary_type = "password"
+            elif self.type_name == "yaml":
+                lexer = PygmentsLexer(YamlLexer)
+            elif self.type_name == "json":
+                lexer = PygmentsLexer(JsonLexer)
+            if lexer:
+                result["lexer"] = lexer
             result["multiline"] = self.get_multiline()
             placeholder = self.get_placeholder()
             if placeholder:
