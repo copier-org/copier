@@ -812,17 +812,14 @@ toml = ["toml"]
 
 [[package]]
 name = "questionary"
-version = "1.6.0"
+version = "1.7.0"
 description = "Python library to build pretty command line user prompts ⭐️"
 category = "main"
 optional = false
-python-versions = "*"
+python-versions = ">=3.6,<3.10"
 
 [package.dependencies]
-prompt-toolkit = ">=2.0,<4.0"
-
-[package.extras]
-test = ["pytest", "pytest-pycodestyle", "pytest-cov", "coveralls"]
+prompt_toolkit = ">=2.0,<4.0"
 
 [[package]]
 name = "regex"
@@ -976,7 +973,7 @@ docs = ["mkdocstrings", "mkdocs-material", "mkdocs-mermaid2-plugin"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.6.1,<3.9"
-content-hash = "2c53a779cfe38da1104754030dec61857ef3c605e1ef8050ca3458b58653b228"
+content-hash = "66ea2fe28c02b964106468d3c25fa4a62a9570961ff5ba40ed3fd54fc113a446"
 
 [metadata.files]
 apipkg = [
@@ -1374,8 +1371,8 @@ pyyaml-include = [
     {file = "pyyaml_include-1.2-py2.py3-none-any.whl", hash = "sha256:2d4e3843110cf515aaf1568b217b05061f8e9f57cd3b35e8e654c838717796cb"},
 ]
 questionary = [
-    {file = "questionary-1.6.0-py3-none-any.whl", hash = "sha256:747d0979115a3f1bb9c943073b95d25724f9145e0a3cd6c42d820a401352e09e"},
-    {file = "questionary-1.6.0.tar.gz", hash = "sha256:ec7a6f31096959b3080c4e041ad916773613d182eacf600506725a2fc578e28c"},
+    {file = "questionary-1.7.0-py3-none-any.whl", hash = "sha256:bdbc9e9877f2b07cdf69893bb87fc798cb4992e262b6fcf702097994b82aaa3e"},
+    {file = "questionary-1.7.0.tar.gz", hash = "sha256:338f326d3d10204dc3a21a07cfa8243f32d8d8f3d9f3de244951066c0769f2ea"},
 ]
 regex = [
     {file = "regex-2020.10.11-cp27-cp27m-win32.whl", hash = "sha256:4f5c0fe46fb79a7adf766b365cae56cafbf352c27358fda811e4a1dc8216d0db"},
