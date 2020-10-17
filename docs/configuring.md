@@ -615,19 +615,20 @@ will be used to load the last user's answers to the questions made in
 This makes projects easier to update because when the user is asked, the default answers
 will be the last ones he used.
 
-To make sure projects based on your templates can make use of this nice feature, **add a
-file called `[[ _copier_conf.answers_file ]].tmpl`** (or
-[your chosen suffix](#templates_suffix)) in your template's root folder, with this
-content:
+The file **must be called exactly `[[ _copier_conf.answers_file ]].tmpl`** (or ended
+with [your chosen suffix](#templates_suffix)) in your template's root folder) to allow
+[applying multiple templates to the same
+subproject][applying-multiple-templates-to-the-same-subproject].
+
+The default name will be `.copier-answers.yml`, but
+[you can define a different default path for this file](#answers_file).
+
+The file must have this content:
 
 ```yaml
-# Changes here will be overwritten by Copier
+# Changes here will be overwritten by Copier; do not edit manually
 [[_copier_answers|to_nice_yaml]]
 ```
-
-**Warning**: If this file is not called exactly `[[ _copier_conf.answers_file ]].tmpl`
-your users will not be able to choose a custom answers file name, and thus they will not
-be able to integrate several updatable templates into one destination directory.
 
 The builtin `_copier_answers` variable includes all data needed to smooth future updates
 of this project. This includes (but is not limited to) all JSON-serializable values
@@ -637,5 +638,58 @@ As you can see, you also have the power to customize what will be logged here. K
 start with an underscore (`_`) are specific to Copier. Other keys should match questions
 in `copier.yml`.
 
-If you plan to integrate several templates into one single downstream project,
-[you can define a different default path for this file](#answers_file).
+### Applying multiple templates to the same subproject
+
+Imagine this scenario:
+
+1. You use one framework that has a public template to generate a project. It's
+   available at `https://github.com/example-framework/framework-template.git`.
+1. You have a generic template that you apply to all your projects to use the same
+   pre-commit configuration (formatters, linters, static type checkers...). You have
+   published that in `https://gitlab.com/my-stuff/pre-commit-template.git`.
+1. You have a private template that configures your subproject to run in your internal
+   CI. It's found in `git@gitlab.example.com:my-company/ci-template.git`.
+
+All 3 templates are completely independent:
+
+-   Anybody can generate a project for the specific framework, no matter if they want to
+    use pre-commit or not.
+-   You want to share the same pre-commit configurations, no matter if the subproject is
+    for one or another framework.
+-   You want to have a centralized CI configuration for all your company projects, no
+    matter their pre-commit configuration or the framework they rely on.
+
+Well, don't worry. Copier has you covered. You just need to use a different answers file
+for each one. All of them contain a `[[ _copier_conf.answers_file ]].tmpl` file [as
+specified above][the-copier-answersyml-file]. Then you apply all the templates to the
+same project:
+
+```bash
+mkdir my-project
+cd my-project
+git init
+# Apply framework template
+copier -a .copier-answers.main.yml copy https://github.com/example-framework/framework-template.git .
+git add .
+git commit -m 'Start project based on framework template'
+# Apply pre-commit template
+copier -a .copier-answers.pre-commit.yml copy https://gitlab.com/my-stuff/pre-commit-template.git .
+git add .
+pre-commit run -a  # Just in case 😉
+git commit -am 'Apply pre-commit template'
+# Apply internal CI template
+copier -a .copier-answers.ci.yml copy git@gitlab.example.com:my-company/ci-template.git .
+git add .
+git commit -m 'Apply internal CI template'
+```
+
+Done!
+
+After a while, when templates get new releases, updates are handled separately for each
+template:
+
+```bash
+copier -a .copier-answers.main.yml update
+copier -a .copier-answers.pre-commit.yml update
+copier -a .copier-answers.ci.yml update
+```
