@@ -3,7 +3,8 @@
 The best way to update a project from its template is when all of these conditions are
 true:
 
-1. The template includes a valid `.copier-answers.yml` file.
+1. The template includes [a valid `.copier-answers.yml`
+   file][the-copier-answersyml-file].
 2. The template is versioned with git (with tags).
 3. The destination folder is versioned with git.
 
