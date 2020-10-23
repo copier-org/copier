@@ -5,7 +5,7 @@ import re
 from collections import ChainMap
 from contextlib import suppress
 from pathlib import Path
-from typing import Any, Callable, ChainMap as t_ChainMap, Dict, Iterable, List, Union
+from typing import Any, Callable, ChainMap as t_ChainMap, Dict, List, Union
 
 import yaml
 from iteration_utilities import deepflatten
@@ -108,6 +108,11 @@ class Question(BaseModel):
     var_name: str
     when: Union[str, bool] = True
 
+    # Private
+    # HACK https://github.com/samuelcolvin/pydantic/issues/655
+    # TODO Convert to `_cached_choices` when fixed
+    cached_choices: List[Choice] = Field(default_factory=list)
+
     class Config:
         arbitrary_types_allowed = True
 
@@ -137,8 +142,10 @@ class Question(BaseModel):
             v = default_type_name if default_type_name in CAST_STR_TO_NATIVE else "yaml"
         return v
 
-    def _iter_choices(self) -> Iterable[Choice]:
+    def _generate_choices(self) -> None:
         """Iterates choices in a format that the questionary lib likes."""
+        if self.cached_choices:
+            return
         choices = self.choices
         if isinstance(self.choices, dict):
             choices = list(self.choices.items())
@@ -157,16 +164,10 @@ class Question(BaseModel):
             name = str(name)
             # The value can be templated
             value = self.render_value(value)
-            yield Choice(name, value)
+            self.cached_choices.append(Choice(name, value))
 
-    def get_default(self, for_rendering: bool) -> Any:
-        """Get the default value for this question.
-
-        Parameters:
-            for_rendering:
-                Indicates if the result should be returned casted for normal
-                usage, or casted for rendering.
-        """
+    def get_default(self) -> Any:
+        """Get the default value for this question, casted to its expected type."""
         cast_fn = self.get_cast_fn()
         try:
             result = self.questionary.answers_forced[self.var_name]
@@ -176,21 +177,42 @@ class Question(BaseModel):
             except KeyError:
                 result = self.render_value(self.default)
         result = cast_answer_type(result, cast_fn)
-        if not for_rendering or self.type_name == "bool":
-            return result
-        if result is None:
+        return result
+
+    def get_default_rendered(self) -> Union[bool, str, Choice, None]:
+        """Get default answer rendered for the questionary lib.
+
+        The questionary lib expects some specific data types, and returns
+        it when the user answers. Sometimes you need to compare the response
+        to the rendered one, or viceversa.
+
+        This helper allows such usages.
+        """
+        default = self.get_default()
+        # If there are choices, return the one that matches the expressed default
+        if self.choices:
+            for choice in self.get_choices():
+                if choice.value == default:
+                    return choice
+            return None
+        # Yes/No questions expect and return bools
+        if isinstance(default, bool) and self.type_name == "bool":
+            return default
+        # Emptiness is expressed as an empty str
+        if default is None:
             return ""
-        else:
-            return str(result)
+        # All other data has to be str
+        return str(default)
 
     def get_choices(self) -> List[Choice]:
         """Obtain choices rendered and properly formatted."""
-        return list(self._iter_choices())
+        self._generate_choices()
+        return self.cached_choices
 
     def filter_answer(self, answer) -> Any:
         """Cast the answer to the desired type."""
-        if answer == self.get_default(for_rendering=True):
-            return self.get_default(for_rendering=False)
+        if answer == self.get_default_rendered():
+            return self.get_default()
         return cast_answer_type(answer, self.get_cast_fn())
 
     def get_message(self) -> str:
@@ -210,7 +232,7 @@ class Question(BaseModel):
         """Get the question in a format that the questionary lib understands."""
         lexer = None
         result = {
-            "default": self.get_default(for_rendering=True),
+            "default": self.get_default_rendered(),
             "filter": self.filter_answer,
             "message": self.get_message(),
             "mouse_support": True,
@@ -224,13 +246,6 @@ class Question(BaseModel):
         if self.choices:
             questionary_type = "select"
             result["choices"] = self.get_choices()
-            # The default value must be a choice object from the list
-            for choice in result["choices"]:
-                if result["default"] == choice.value:
-                    result["default"] = choice
-                    break
-            else:
-                result.pop("default")  # Default is not selectable
         if questionary_type == "input":
             if self.secret:
                 questionary_type = "password"
@@ -376,7 +391,7 @@ class Questionary(BaseModel):
         else:
             # Avoid prompting to not requiring a TTy when --force
             for question in self.questions:
-                new_answer = question.get_default(for_rendering=False)
+                new_answer = question.get_default()
                 previous_answer = previous_answers.get(question.var_name)
                 if new_answer != previous_answer:
                     self.answers_user[question.var_name] = new_answer

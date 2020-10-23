@@ -43,6 +43,14 @@ class Keyboard(str, Enum):
     Enter = "\r"
     Esc = REVERSE_ANSI_SEQUENCES[Keys.Escape]
 
+    Home = REVERSE_ANSI_SEQUENCES[Keys.Home]
+    End = REVERSE_ANSI_SEQUENCES[Keys.End]
+
+    Up = REVERSE_ANSI_SEQUENCES[Keys.Up]
+    Down = REVERSE_ANSI_SEQUENCES[Keys.Down]
+    Right = REVERSE_ANSI_SEQUENCES[Keys.Right]
+    Left = REVERSE_ANSI_SEQUENCES[Keys.Left]
+
     # Equivalent keystrokes in terminals; see python-prompt-toolkit for
     # further explanations
     Alt = Esc
