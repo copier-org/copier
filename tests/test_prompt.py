@@ -245,3 +245,54 @@ def test_multiline(tmp_path_factory, spawn, type_):
             "question_4": ("answer 4"),
             "question_5": ("answer 5"),
         }
+
+
+@pytest.mark.parametrize(
+    "choices",
+    (
+        [1, 2, 3],
+        [["one", 1], ["two", 2], ["three", 3]],
+        {"one": 1, "two": 2, "three": 3},
+    ),
+)
+def test_update_choice(tmp_path_factory, spawn, choices):
+    """Choices are properly remembered and selected in TUI when updating."""
+    print(choices)
+    template, subproject = (
+        tmp_path_factory.mktemp("template"),
+        tmp_path_factory.mktemp("subproject"),
+    )
+    # Create template
+    build_file_tree(
+        {
+            template
+            / "copier.yml": f"""
+                pick_one:
+                    type: float
+                    default: 3
+                    choices: {choices}
+                """,
+            template
+            / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
+        }
+    )
+    # Copy
+    tui = spawn([COPIER_PATH, str(template), str(subproject)], timeout=10)
+    tui.expect_exact(["pick_one?"])
+    tui.sendline(Keyboard.Up)
+    tui.expect_exact(pexpect.EOF)
+    answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
+    assert answers["pick_one"] == 2.0
+    with local.cwd(subproject):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+    # Update
+    tui = spawn([COPIER_PATH, str(subproject)], timeout=10)
+    tui.expect_exact(["pick_one?"])
+    tui.sendline(Keyboard.Down)
+    tui.expect_exact(["Overwrite", ".copier-answers.yml", "[Y/n]"])
+    tui.sendline("y")
+    tui.expect_exact(pexpect.EOF)
+    answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
+    assert answers["pick_one"] == 3.0
