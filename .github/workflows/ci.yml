@@ -73,10 +73,6 @@ jobs:
           poetry install -E docs -vvv
       - name: Run pytest
         run: poetry run poe test --cov=./ --cov-report=xml -ra .
-        # HACK https://github.com/samuelcolvin/pydantic/issues/1985
-        # HACK https://github.com/samuelcolvin/pydantic/issues/2009
-        # FIXME Remove when fixed upstream
-        continue-on-error: ${{ matrix.python-version == 3.9 }}
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         env:
