@@ -347,7 +347,7 @@ _extra_paths:
 ### `force`
 
 -   Format: `bool`
--   CLI flags: `-q`, `--force`
+-   CLI flags: `-f`, `--force`
 -   Default value: `False`
 
 Overwrite files that already exist, without asking.
