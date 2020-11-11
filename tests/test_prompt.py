@@ -96,6 +96,29 @@ def test_copy_default_advertised(tmp_path_factory, spawn, name):
 
 
 @pytest.mark.parametrize(
+    "question_1",
+    # All these values evaluate to true
+    (
+        True,
+        1,
+        1.1,
+        -1,
+        -0.001,
+        "1",
+        "1.1",
+        "1st",
+        "-1",
+        "0.1",
+        "00001",
+        "000.0001",
+        "-0001",
+        "-000.001",
+        "+001",
+        "+000.001",
+        "hello! 🤗",
+    ),
+)
+@pytest.mark.parametrize(
     "question_2_when, asks",
     (
         (True, True),
@@ -114,14 +137,14 @@ def test_copy_default_advertised(tmp_path_factory, spawn, name):
         ("[% if question_1 %]FALSE[% endif %]", False),
     ),
 )
-def test_when(tmp_path_factory, question_2_when, spawn, asks):
+def test_when(tmp_path_factory, question_1, question_2_when, spawn, asks):
     """Test that the 2nd question is skipped or not, properly."""
     template, subproject = (
         tmp_path_factory.mktemp("template"),
         tmp_path_factory.mktemp("subproject"),
     )
     questions = {
-        "question_1": {"type": "bool", "default": True},
+        "question_1": question_1,
         "question_2": {"default": "something", "when": question_2_when},
     }
     build_file_tree(
@@ -132,7 +155,7 @@ def test_when(tmp_path_factory, question_2_when, spawn, asks):
         }
     )
     tui = spawn([COPIER_PATH, str(template), str(subproject)], timeout=10)
-    tui.expect_exact(["question_1?", "Format: bool", "(Y/n)"])
+    tui.expect_exact(["question_1?", f"Format: {type(question_1).__name__}", "(Y/n)"])
     tui.sendline()
     if asks:
         tui.expect_exact(["question_2?", "Format: yaml"])
@@ -141,7 +164,7 @@ def test_when(tmp_path_factory, question_2_when, spawn, asks):
     answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
     assert answers == {
         "_src_path": str(template),
-        "question_1": True,
+        "question_1": question_1,
         "question_2": "something",
     }
 
