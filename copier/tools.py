@@ -5,6 +5,7 @@ import os
 import shutil
 import sys
 import unicodedata
+from contextlib import suppress
 from pathlib import Path
 from typing import Any, Dict, List, Optional, TextIO, Union
 
@@ -86,24 +87,29 @@ def required(value: T, **kwargs: Any) -> T:
 
 
 def cast_str_to_bool(value: Any) -> bool:
-    """Parse a string to bool, YAML-like.
+    """Parse anything to bool.
 
     Params:
         value:
-            Anything to be casted to a bool. Usually a `str`.
+            Anything to be casted to a bool. Tries to be as smart as possible.
+
+            1.  Cast to number. Then: 0 = False; anything else = True.
+            1.  Find [YAML booleans](https://yaml.org/type/bool.html) in text
+                and use them.
+            1.  Cast to boolean using standard python `bool(value)`.
     """
-    try:
+    # Assume it's a number
+    with suppress(TypeError, ValueError):
+        return bool(float(value))
+    # Assume it's a string
+    with suppress(AttributeError):
         lower = value.lower()
-    except AttributeError:
-        return bool(value)
-    result = None
-    if lower in {"1", "y", "yes", "t", "true", "on"}:
-        result = True
-    elif lower in {"", "0", "n", "no", "f", "false", "off"}:
-        result = False
-    if result is None:
-        raise ValueError("Invalid bool value")
-    return result
+        if lower in {"y", "yes", "t", "true", "on"}:
+            return True
+        elif lower in {"n", "no", "f", "false", "off"}:
+            return False
+    # Assume nothing
+    return bool(value)
 
 
 def make_folder(folder: Path) -> None:
