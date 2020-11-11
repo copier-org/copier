@@ -167,11 +167,10 @@ def test_updatediff(tmpdir):
 @pytest.mark.xfail(
     condition=platform.system() == "Windows", reason="Git broken on Windows?"
 )
-def test_commit_hooks_respected(tmp_path: Path):
+def test_commit_hooks_respected(tmp_path_factory):
     """Commit hooks are taken into account when producing the update diff."""
     # Prepare source template v1
-    src, tmp_path = tmp_path / "src", tmp_path / "tmp_path"
-    src.mkdir()
+    src, dst1, dst2 = map(tmp_path_factory.mktemp, ("src", "dst1", "dst2"))
     with local.cwd(src):
         build_file_tree(
             {
@@ -212,8 +211,8 @@ def test_commit_hooks_respected(tmp_path: Path):
         git("commit", "-m", "commit 1")
         git("tag", "v1")
     # Copy source template
-    copy(src_path=str(src), dst_path=tmp_path, force=True)
-    with local.cwd(tmp_path):
+    copy(src_path=str(src), dst_path=dst1, force=True)
+    with local.cwd(dst1):
         life = Path("life.yml")
         git("add", ".")
         # 1st commit fails because pre-commit reformats life.yml
@@ -247,8 +246,8 @@ def test_commit_hooks_respected(tmp_path: Path):
         git("commit", "-m", "commit 2")
         git("tag", "v2")
     # Update subproject to v2
-    copy(dst_path=tmp_path, force=True)
-    with local.cwd(tmp_path):
+    copy(dst_path=dst1, force=True)
+    with local.cwd(dst1):
         git("commit", "-am", "copied v2")
         assert life.read_text() == dedent(
             """\
@@ -277,6 +276,10 @@ def test_commit_hooks_respected(tmp_path: Path):
             )
         )
         git("commit", "-am", "subproject is evolved")
+    # A new subproject appears, which is a shallow clone of the 1st one.
+    # Using file:// prefix to allow local shallow clones.
+    git("clone", "--depth=1", f"file://{dst1}", dst2)
+    with local.cwd(dst2):
         # Subproject re-updates just to change some values
         copy(data={"what": "study"}, force=True)
         git("commit", "-am", "re-updated to change values after evolving")
