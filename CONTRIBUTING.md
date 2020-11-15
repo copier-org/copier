@@ -40,6 +40,11 @@ If you are proposing a feature:
 -   Remember that this is a volunteer-driven project, and that contributions are welcome
     :)
 
+## Discuss
+
+Feel free to discuss with our community through
+[our discussions channel](https://github.com/copier-org/copier/discussions). Be polite!
+
 ## Dev environment setup
 
 We use some tools as part of our development workflow which you'll need to install into
