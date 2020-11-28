@@ -7,7 +7,7 @@ from os import urandom
 from pathlib import Path
 from typing import Any, ChainMap as t_ChainMap, Sequence, Tuple, Union
 
-from pydantic import BaseModel, Extra, Field, StrictBool, validator
+from pydantic import BaseModel, Extra, Field, PrivateAttr, StrictBool, validator
 
 from ..types import AnyByStrDict, OptStr, PathSeq, StrOrPathSeq, StrSeq
 
@@ -94,13 +94,11 @@ class ConfigData(BaseModel):
     data_from_template_defaults: AnyByStrDict = Field(default_factory=dict)
 
     # Private
-    _data_mutable: AnyByStrDict
+    _data_mutable: AnyByStrDict = PrivateAttr(default_factory=dict)
 
     def __init__(self, **kwargs: AnyByStrDict):
         super().__init__(**kwargs)
         self.data_from_template_defaults.setdefault("_folder_name", self.dst_path.name)
-        # HACK https://github.com/samuelcolvin/pydantic/issues/655#issuecomment-570310120
-        object.__setattr__(self, "_data_mutable", {})
 
     @validator("skip", always=True)
     def mutually_exclusive_flags(cls, v, values):  # noqa: B902

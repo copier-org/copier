@@ -12,7 +12,7 @@ from iteration_utilities import deepflatten
 from jinja2 import UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
 from prompt_toolkit.lexers import PygmentsLexer
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, PrivateAttr, validator
 from pygments.lexers.data import JsonLexer, YamlLexer
 from questionary import unsafe_prompt
 from questionary.prompts.common import Choice
@@ -109,9 +109,7 @@ class Question(BaseModel):
     when: Union[str, bool] = True
 
     # Private
-    # HACK https://github.com/samuelcolvin/pydantic/issues/655
-    # TODO Convert to `_cached_choices` when fixed
-    cached_choices: List[Choice] = Field(default_factory=list)
+    _cached_choices: List[Choice] = PrivateAttr(default_factory=list)
 
     class Config:
         arbitrary_types_allowed = True
@@ -144,7 +142,7 @@ class Question(BaseModel):
 
     def _generate_choices(self) -> None:
         """Iterates choices in a format that the questionary lib likes."""
-        if self.cached_choices:
+        if self._cached_choices:
             return
         choices = self.choices
         if isinstance(self.choices, dict):
@@ -164,7 +162,7 @@ class Question(BaseModel):
             name = str(name)
             # The value can be templated
             value = self.render_value(value)
-            self.cached_choices.append(Choice(name, value))
+            self._cached_choices.append(Choice(name, value))
 
     def get_default(self) -> Any:
         """Get the default value for this question, casted to its expected type."""
@@ -207,7 +205,7 @@ class Question(BaseModel):
     def get_choices(self) -> List[Choice]:
         """Obtain choices rendered and properly formatted."""
         self._generate_choices()
-        return self.cached_choices
+        return self._cached_choices
 
     def filter_answer(self, answer) -> Any:
         """Cast the answer to the desired type."""
