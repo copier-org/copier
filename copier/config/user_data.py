@@ -14,7 +14,7 @@ from jinja2.sandbox import SandboxedEnvironment
 from prompt_toolkit.lexers import PygmentsLexer
 from pydantic import BaseModel, Field, validator
 from pygments.lexers.data import JsonLexer, YamlLexer
-from questionary import prompt
+from questionary import unsafe_prompt
 from questionary.prompts.common import Choice
 from yamlinclude import YamlIncludeConstructor
 
@@ -231,7 +231,7 @@ class Question(BaseModel):
     def get_questionary_structure(self) -> AnyByStrDict:
         """Get the question in a format that the questionary lib understands."""
         lexer = None
-        result = {
+        result: AnyByStrDict = {
             "default": self.get_default_rendered(),
             "filter": self.filter_answer,
             "message": self.get_message(),
@@ -379,15 +379,10 @@ class Questionary(BaseModel):
         """
         previous_answers = self.get_best_answers()
         if self.ask_user:
-            # HACK https://github.com/tmbo/questionary/pull/79
-            # TODO Remove type: ignore comments when fixed
-            self.answers_user = prompt(
-                (question.get_questionary_structure() for question in self.questions),  # type: ignore
-                answers=previous_answers,  # type: ignore
+            self.answers_user = unsafe_prompt(
+                (question.get_questionary_structure() for question in self.questions),
+                answers=previous_answers,
             )
-            # HACK https://github.com/tmbo/questionary/issues/74
-            if not self.answers_user and self.questions:
-                raise KeyboardInterrupt
         else:
             # Avoid prompting to not requiring a TTy when --force
             for question in self.questions:

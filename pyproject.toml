@@ -33,7 +33,7 @@ pathspec = "^0.8.0"
 plumbum = "^1.6.9"
 pydantic = "^1.7.1"
 Pygments = "^2.7.1"
-questionary = "^1.7.0"
+questionary = "^1.8.1"
 pyyaml = "^5.3.1"
 pyyaml-include = "^1.2"
 # packaging is needed when installing from PyPI
