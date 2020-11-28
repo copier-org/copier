@@ -485,9 +485,6 @@ def cast_answer_type(answer: Any, type_fn: Callable) -> Any:
     # Skip casting None into "None"
     if type_fn is str and answer is None:
         return answer
-    # Parse correctly bools as 1, true, yes...
-    if type_fn is bool and isinstance(answer, str):
-        return parse_yaml_string(answer)
     try:
         return type_fn(answer)
     except (TypeError, AttributeError):
