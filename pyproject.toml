@@ -41,6 +41,7 @@ packaging = "^20.4"
 mkdocstrings = {version = "^0.13.1", optional = true}
 mkdocs-material = {version = "^5.5.2", optional = true}
 mkdocs-mermaid2-plugin = {version = "^0.5.0", optional = true}
+lazy = "^1.4"
 
 [tool.poetry.extras]
 docs = ["mkdocstrings", "mkdocs-material", "mkdocs-mermaid2-plugin"]
