@@ -346,6 +346,7 @@ class Questionary(BaseModel):
             A list containing all [Question][] objects for this [Questionary][].
     """
 
+    # TODO Use AnsersMap instead
     answers_default: AnyByStrDict = Field(default_factory=dict)
     answers_forced: AnyByStrDict = Field(default_factory=dict)
     answers_last: AnyByStrDict = Field(default_factory=dict)

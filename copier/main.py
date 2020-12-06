@@ -2,7 +2,6 @@
 
 import filecmp
 import os
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -14,8 +13,9 @@ from plumbum import ProcessExecutionError, colors, local
 from plumbum.cli.terminal import ask
 from plumbum.cmd import git
 
+from copier.models import Copier
+
 from . import vcs
-from .config import make_config
 from .config.objects import ConfigData, UserMessageError
 from .config.user_data import load_answersfile_data
 from .tools import (
@@ -27,15 +27,7 @@ from .tools import (
     make_folder,
     printf,
 )
-from .types import (
-    AnyByStrDict,
-    CheckPathFunc,
-    OptBool,
-    OptStr,
-    OptStrSeq,
-    StrOrPath,
-    StrSeq,
-)
+from .types import AnyByStrDict, CheckPathFunc, OptStr, StrOrPath, StrSeq
 
 __all__ = ("copy", "copy_local")
 
@@ -44,22 +36,7 @@ def copy(
     src_path: OptStr = None,
     dst_path: StrOrPath = ".",
     data: AnyByStrDict = None,
-    *,
-    answers_file: OptStr = None,
-    exclude: OptStrSeq = None,
-    skip_if_exists: OptStrSeq = None,
-    tasks: OptStrSeq = None,
-    envops: AnyByStrDict = None,
-    extra_paths: OptStrSeq = None,
-    pretend: OptBool = False,
-    force: OptBool = False,
-    skip: OptBool = False,
-    quiet: OptBool = False,
-    cleanup_on_error: OptBool = True,
-    vcs_ref: OptStr = None,
-    only_diff: OptBool = True,
-    subdirectory: OptStr = None,
-    use_prereleases: OptBool = False,
+    **kwargs,
 ) -> None:
     """Uses the template in `src_path` to generate a new project at `dst_path`.
 
@@ -132,33 +109,11 @@ def copy(
 
         use_prereleases: See [use_prereleases][].
     """
-    conf = make_config(**locals())
-    dst_existed = conf.dst_path.exists()
-    is_update = conf.original_src_path != conf.src_path and vcs.is_git_repo_root(
-        conf.src_path
+    conf = ConfigData(
+        src_path=src_path, dst_path=dst_path, data_from_init=data, **kwargs
     )
-    do_diff_update = (
-        conf.only_diff
-        and is_update
-        and conf.old_commit
-        and vcs.is_git_repo_root(conf.dst_path)
-    )
-    try:
-        if do_diff_update:
-            update_diff(conf=conf)
-        else:
-            copy_local(conf=conf)
-    except Exception:
-        if conf.cleanup_on_error and not do_diff_update and not dst_existed:
-            print(
-                colors.warn | "Something went wrong. Removing destination folder.",
-                file=sys.stderr,
-            )
-            shutil.rmtree(conf.dst_path, ignore_errors=True)
-        raise
-    finally:
-        if is_update:
-            shutil.rmtree(conf.src_path, ignore_errors=True)
+    copier = Copier(conf=conf)
+    copier.run_auto()
 
 
 def copy_local(conf: ConfigData) -> None:

@@ -85,10 +85,10 @@ def checkout_latest_tag(local_repo: StrOrPath, use_prereleases: OptBool = False)
         return latest_tag
 
 
-def clone(url: str, ref: str = "HEAD") -> str:
+def clone(url: str, ref: OptStr = None) -> str:
     location = tempfile.mkdtemp(prefix=f"{__name__}.clone.")
     git("clone", "--no-checkout", url, location)
     with local.cwd(location):
-        git("checkout", ref)
+        git("checkout", ref or "HEAD")
         git("submodule", "update", "--checkout", "--init", "--recursive", "--force")
     return location

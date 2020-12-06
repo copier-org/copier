@@ -41,7 +41,6 @@ packaging = "^20.4"
 mkdocstrings = {version = "^0.13.1", optional = true}
 mkdocs-material = {version = "^5.5.2", optional = true}
 mkdocs-mermaid2-plugin = {version = "^0.5.0", optional = true}
-lazy = "^1.4"
 
 [tool.poetry.extras]
 docs = ["mkdocstrings", "mkdocs-material", "mkdocs-mermaid2-plugin"]
@@ -103,10 +102,6 @@ known_first_party = ["copier"]
 line_length = 88
 multi_line_output = 3  # black interop
 use_parentheses = true
-
-[flake8]
-max-complexity = 20
-ignore = ",W503,E203,E501,D100,D101,D102,D103,D104,D105,D107,"
 
 [build-system]
 # TODO Switch back to poetry-core when it's possible again
