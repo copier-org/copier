@@ -62,6 +62,7 @@ class Migrations(BaseModel):
     after: Sequence[Union[str, StrSeq]] = ()
 
 
+# FIXME REMOVE
 class ConfigData(BaseModel):
     """A model holding configuration data."""
 

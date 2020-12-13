@@ -195,6 +195,7 @@ class Renderer:
         return tmpl.render(**self.data)
 
 
+# FIXME REMOVE
 def normalize_str(text: StrOrPath, form: str = "NFD") -> str:
     """Normalize unicode text. Uses the NFD algorithm by default."""
     return unicodedata.normalize(form, str(text))
@@ -212,6 +213,7 @@ def force_str_end(original_str: str, end: str = "\n") -> str:
     return original_str
 
 
+# FIXME REMOVE
 def create_path_filter(patterns: StrOrPathSeq) -> CheckPathFunc:
     """Returns a function that matches a path against given patterns."""
     patterns = [normalize_str(p) for p in patterns]

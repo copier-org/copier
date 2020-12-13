@@ -110,7 +110,7 @@ def copy(
         use_prereleases: See [use_prereleases][].
     """
     conf = ConfigData(
-        src_path=src_path, dst_path=dst_path, data_from_init=data, **kwargs
+        src_path=src_path, dst_path=dst_path, data_from_init=data or {}, **kwargs
     )
     copier = Copier(conf=conf)
     copier.run_auto()
