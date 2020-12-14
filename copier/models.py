@@ -1,13 +1,14 @@
 """Models representing execution context of Copier."""
 from contextlib import suppress
 from copy import deepcopy
-from functools import wraps
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Callable, ChainMap, ChainMap as t_ChainMap, Literal, Optional
 from unicodedata import normalize
 
 import pathspec
 import yaml
+from jinja2.loaders import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
 from plumbum.cmd import git
 from plumbum.machines import local
@@ -18,22 +19,10 @@ from pydantic.fields import Field, PrivateAttr
 from copier.config.factory import filter_config, verify_minimum_version
 from copier.config.objects import DEFAULT_DATA, DEFAULT_EXCLUDE, ConfigData
 from copier.config.user_data import Question, Questionary, load_config_data
-from copier.tools import get_jinja_env
-from copier.types import AnyByStrDict, OptStr, StrSeq
+from copier.tools import create_path_filter, to_nice_yaml
+from copier.types import AnyByStrDict, JSONSerializable, OptStr, StrOrPath, StrSeq
 
 from .vcs import clone, get_repo, is_git_repo_root
-
-
-def lazy(method):
-    @wraps(method)
-    def _wrapper(self, *args, **kwargs):
-        cache_key = f"_{method.__name__}"
-        while True:
-            with suppress(KeyError):
-                return self.__slots__[cache_key]
-            self.__slots__[cache_key] = method(*args, **kwargs)
-
-    return method
 
 
 class AnswersMap(BaseModel):
@@ -61,7 +50,7 @@ class AnswersMap(BaseModel):
         """Make sure all dicts are copied."""
         return deepcopy(v)
 
-    @lazy
+    @lru_cache
     def combined(self) -> t_ChainMap[str, Any]:
         """Answers combined from different sources, sorted by priority."""
         return ChainMap(
@@ -81,38 +70,38 @@ class Template(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-    @lazy
+    @lru_cache
     def _raw_config(self) -> AnyByStrDict:
         result = load_config_data(self.local_path())
         with suppress(KeyError):
             verify_minimum_version(result["_min_copier_version"])
         return result
 
-    @lazy
+    @lru_cache
     def default_answers(self) -> AnyByStrDict:
         return {
             key: value.get("default") for key, value in self.questions_data().items()
         }
 
-    @lazy
+    @lru_cache
     def config_data(self) -> AnyByStrDict:
         return filter_config(self._raw_config())[0]
 
-    @lazy
+    @lru_cache
     def questions_data(self) -> AnyByStrDict:
         return filter_config(self._raw_config())[1]
 
-    @lazy
+    @lru_cache
     def local_path(self) -> Path:
         if self.vcs() == "git" and not is_git_repo_root(self.url_expanded()):
             return Path(clone(self.url_expanded(), self.ref))
         return Path(self.url)
 
-    @lazy
+    @lru_cache
     def url_expanded(self) -> str:
         return get_repo(self.url) or self.url
 
-    @lazy
+    @lru_cache
     def vcs(self) -> Optional[Literal["git"]]:
         if get_repo(self.url):
             return "git"
@@ -131,14 +120,14 @@ class Subproject(BaseModel):
                 return bool(git("status", "--porcelain").strip())
         return False
 
-    @lazy
+    @lru_cache
     def _raw_answers(self) -> AnyByStrDict:
         try:
             return yaml.safe_load((self.local_path / self.answers_relpath).read_text())
         except OSError:
             return {}
 
-    @lazy
+    @lru_cache
     def last_answers(self) -> AnyByStrDict:
         return {
             key: value
@@ -146,14 +135,14 @@ class Subproject(BaseModel):
             if key in {"_src_path", "_commit"} or not key.startswith("_")
         }
 
-    @lazy
+    @lru_cache
     def template(self) -> Optional[Template]:
         last_url = self._raw_answers().get("_src_path")
         last_ref = self._raw_answers().get("_commit")
         if last_url:
             return Template(url=last_url, ref=last_ref)
 
-    @lazy
+    @lru_cache
     def vcs(self) -> Optional[Literal["git"]]:
         if is_git_repo_root(self.local_path):
             return "git"
@@ -166,13 +155,36 @@ class Copier(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
+    def _render_context(self) -> dict:
+        answers: AnyByStrDict = {}
+        conf = self.conf_patched()
+        # All internal values must appear first
+        if conf.commit:
+            answers["_commit"] = conf.commit
+        if conf.original_src_path is not None:
+            answers["_src_path"] = conf.original_src_path
+        # Other data goes next
+        answers.update(
+            (k, v)
+            for (k, v) in self.answers().combined().items()
+            if not k.startswith("_")
+            and k not in conf.secret_questions
+            and isinstance(k, JSONSerializable)
+            and isinstance(v, JSONSerializable)
+        )
+        return dict(
+            self.answers().combined(),
+            _copier_answers=answers,
+            _copier_conf=conf.copy(deep=True, exclude={"data": {"now", "make_secret"}}),
+        )
+
     def _path_matcher(self, patterns: StrSeq) -> Callable[[Path], bool]:
         # TODO Is normalization really needed?
         normalized_patterns = map(normalize, ("NFD",), patterns)
         spec = pathspec.PathSpec.from_lines("gitwildmatch", normalized_patterns)
         return spec.match_file
 
-    @lazy
+    @lru_cache
     def answers(self) -> AnswersMap:
         return AnswersMap(
             init=self.conf.data_from_init,
@@ -180,7 +192,7 @@ class Copier(BaseModel):
             default=self.template().default_answers(),
         )
 
-    @lazy
+    @lru_cache
     def conf_patched(self) -> ConfigData:
         return self.conf.copy(
             update={
@@ -189,16 +201,26 @@ class Copier(BaseModel):
             }
         )
 
-    @lazy
+    @lru_cache
     def all_exclusions(self) -> StrSeq:
         base = self.template().config_data().get("exclude", DEFAULT_EXCLUDE)
         return tuple(base) + tuple(self.exclude)
 
-    @lazy
+    @lru_cache
     def jinja_env(self) -> SandboxedEnvironment:
-        return get_jinja_env(self.conf.envops)
+        """Return a pre-configured Jinja environment."""
+        paths = [str(self.conf.src_path), *map(str, self.conf.extra_paths)]
+        loader = FileSystemLoader(paths)
+        # We want to minimize the risk of hidden malware in the templates
+        # so we use the SandboxedEnvironment instead of the regular one.
+        # Of course we still have the post-copy tasks to worry about, but at least
+        # they are more visible to the final user.
+        env = SandboxedEnvironment(loader=loader, **self.conf.envops.dict())
+        default_filters = {"to_nice_yaml": to_nice_yaml}
+        env.filters.update(default_filters)
+        return env
 
-    @lazy
+    @lru_cache
     def questionary(self) -> Questionary:
         result = Questionary(
             answers_default=self.answers().default,
@@ -213,13 +235,22 @@ class Copier(BaseModel):
             Question(var_name=question, questionary=result, **details)
         return result
 
-    @lazy
+    def render_file(self, fullpath: Path) -> str:
+        relpath = fullpath.relative_to(self.conf.src_path).as_posix()
+        tpl = self.jinja_env().get_template(str(relpath))
+        return tpl.render(**self._render_context())
+
+    def render_string(self, string: str) -> str:
+        tpl = self.jinja_env().from_string(string)
+        return tpl.render(**self._render_context())
+
+    @lru_cache
     def subproject(self) -> Subproject:
         return Subproject(
             local_path=self.conf.dst_path, answers_relpath=self.conf.answers_file
         )
 
-    @lazy
+    @lru_cache
     def template(self) -> Template:
         try:
             return Template(url=str(self.conf.src_path), ref=self.conf.vcs_ref)
@@ -235,9 +266,10 @@ class Copier(BaseModel):
     def run_copy(self) -> None:
         """Generate a subproject from zero, ignoring what was in the folder."""
         must_exclude = self._path_matcher(self.all_exclusions())
+        conf = self.conf_patched()
 
         render = Renderer(conf)
-        skip_patterns = [render.string(pattern) for pattern in conf.skip_if_exists]
+        skip_patterns = [self.render_string(pattern) for pattern in conf.skip_if_exists]
         must_skip = create_path_filter(skip_patterns)
 
         if not conf.quiet:
@@ -252,7 +284,7 @@ class Copier(BaseModel):
 
         for folder, sub_dirs, files in os.walk(src_path):
             rel_folder = str(folder).replace(str(src_path), "", 1).lstrip(os.path.sep)
-            rel_folder = render.string(rel_folder)
+            rel_folder = self.render_string(rel_folder)
             rel_folder = str(rel_folder).replace("." + os.path.sep, ".", 1)
 
             if must_exclude(rel_folder):
