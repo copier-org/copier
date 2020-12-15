@@ -1,6 +1,7 @@
 """Functions used to generate configuration data."""
 
 from collections import ChainMap
+import os.path
 from typing import Tuple
 
 from packaging import version
@@ -106,6 +107,8 @@ def make_config(
         repo = vcs.get_repo(src_path)
         if repo:
             src_path = vcs.clone(repo, vcs_ref or "HEAD")
+            if subdirectory:
+                src_path = os.path.join(src_path, subdirectory)
             vcs_ref = vcs_ref or vcs.checkout_latest_tag(src_path, use_prereleases)
             with local.cwd(src_path):
                 init_args["commit"] = git("describe", "--tags", "--always").strip()

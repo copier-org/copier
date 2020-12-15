@@ -180,8 +180,6 @@ def copy_local(conf: ConfigData) -> None:
     rel_folder: StrOrPath
 
     src_path = conf.src_path
-    if conf.subdirectory is not None:
-        src_path /= conf.subdirectory
 
     for folder, sub_dirs, files in os.walk(src_path):
         rel_folder = str(folder).replace(str(src_path), "", 1).lstrip(os.path.sep)
