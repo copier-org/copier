@@ -96,6 +96,7 @@ def make_config(
     if src_path is None:
         try:
             src_path = init_args["data_from_answers_file"]["_src_path"]
+            subdirectory = init_args["data_from_answers_file"].get("_subdirectory", None)
         except KeyError:
             raise NoSrcPathError(
                 "No copier answers file found, or it didn't include "
@@ -109,6 +110,7 @@ def make_config(
             src_path = vcs.clone(repo, vcs_ref or "HEAD")
             if subdirectory:
                 src_path = os.path.join(src_path, subdirectory)
+                init_args["subdirectory"] = subdirectory
             vcs_ref = vcs_ref or vcs.checkout_latest_tag(src_path, use_prereleases)
             with local.cwd(src_path):
                 init_args["commit"] = git("describe", "--tags", "--always").strip()
