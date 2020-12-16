@@ -59,6 +59,7 @@ def copy(
     vcs_ref: OptStr = None,
     only_diff: OptBool = True,
     subdirectory: OptStr = None,
+    repo_subdir: OptStr = None,
     use_prereleases: OptBool = False,
 ) -> None:
     """Uses the template in `src_path` to generate a new project at `dst_path`.
@@ -180,6 +181,8 @@ def copy_local(conf: ConfigData) -> None:
     rel_folder: StrOrPath
 
     src_path = conf.src_path
+    if conf.subdirectory is not None:
+        src_path /= conf.subdirectory
 
     for folder, sub_dirs, files in os.walk(src_path):
         rel_folder = str(folder).replace(str(src_path), "", 1).lstrip(os.path.sep)

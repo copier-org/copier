@@ -67,6 +67,7 @@ class ConfigData(BaseModel):
 
     src_path: Path
     subdirectory: OptStr
+    repo_subdir: OptStr
     dst_path: Path
     extra_paths: PathSeq = ()
     exclude: StrOrPathSeq = DEFAULT_EXCLUDE

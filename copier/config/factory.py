@@ -77,6 +77,7 @@ def make_config(
     vcs_ref: OptStr = None,
     only_diff: OptBool = True,
     subdirectory: OptStr = None,
+    repo_subdir: OptStr = None,
     use_prereleases: OptBool = False,
     **kwargs,
 ) -> ConfigData:
@@ -96,7 +97,7 @@ def make_config(
     if src_path is None:
         try:
             src_path = init_args["data_from_answers_file"]["_src_path"]
-            subdirectory = init_args["data_from_answers_file"].get("_subdirectory", None)
+            repo_subdir = init_args["data_from_answers_file"].get("_repo_subdir", None)
         except KeyError:
             raise NoSrcPathError(
                 "No copier answers file found, or it didn't include "
@@ -108,12 +109,14 @@ def make_config(
         repo = vcs.get_repo(src_path)
         if repo:
             src_path = vcs.clone(repo, vcs_ref or "HEAD")
-            if subdirectory:
-                src_path = os.path.join(src_path, subdirectory)
-                init_args["subdirectory"] = subdirectory
+            if repo_subdir:
+                src_path = os.path.join(src_path, repo_subdir)
+                init_args["repo_subdir"] = repo_subdir
             vcs_ref = vcs_ref or vcs.checkout_latest_tag(src_path, use_prereleases)
             with local.cwd(src_path):
                 init_args["commit"] = git("describe", "--tags", "--always").strip()
+        elif repo_subdir:
+            raise UserMessageError("Passed --repo-subdirectory option but source was not a VCS repo")
         init_args["src_path"] = src_path
     # Obtain config and query data, asking the user if needed
     file_data = load_config_data(src_path, quiet=True)

@@ -168,8 +168,8 @@ class Renderer:
         # All internal values must appear first
         if conf.commit:
             answers["_commit"] = conf.commit
-        if conf.subdirectory:
-            answers["_subdirectory"] = conf.subdirectory
+        if conf.repo_subdir:
+            answers["_repo_subdir"] = conf.repo_subdir
         if conf.original_src_path is not None:
             answers["_src_path"] = conf.original_src_path
         # Other data goes next

@@ -131,6 +131,17 @@ class CopierApp(cli.Application):
         ),
     )
 
+    repo_subdir: cli.SwitchAttr = cli.SwitchAttr(
+        ["-c", "--repo-subdir"],
+        str,
+        help=(
+            "If using a VCS repository as a source, indicates that the template"
+            " (i.e. the directory containing copier.yml) is found in the given"
+            " subdirectory. If not specified, the template is assumed to be at"
+            " the root of the repository."
+        )
+    )
+
     pretend: cli.Flag = cli.Flag(
         ["-n", "--pretend"], help="Run but do not make any changes"
     )
@@ -184,6 +195,7 @@ class CopierApp(cli.Application):
             src_path=src_path,
             vcs_ref=self.vcs_ref,
             subdirectory=self.subdirectory,
+            repo_subdir=self.repo_subdir,
             use_prereleases=self.prereleases,
             **kwargs,
         )
