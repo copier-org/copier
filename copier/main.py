@@ -13,7 +13,7 @@ from plumbum import ProcessExecutionError, colors, local
 from plumbum.cli.terminal import ask
 from plumbum.cmd import git
 
-from copier.models import Copier
+from copier.models import Worker
 
 from . import vcs
 from .config.objects import ConfigData, UserMessageError
@@ -112,7 +112,7 @@ def copy(
     conf = ConfigData(
         src_path=src_path, dst_path=dst_path, data_from_init=data or {}, **kwargs
     )
-    copier = Copier(conf=conf)
+    copier = Worker(conf=conf)
     copier.run_auto()
 
 

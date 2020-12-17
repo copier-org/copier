@@ -1,12 +1,24 @@
 """Models representing execution context of Copier."""
 from contextlib import suppress
 from copy import deepcopy
-from functools import lru_cache
+from functools import cached_property
 from pathlib import Path
-from typing import Any, Callable, ChainMap, ChainMap as t_ChainMap, Literal, Optional
+from typing import (
+    Any,
+    Callable,
+    ChainMap,
+    ChainMap as t_ChainMap,
+    Literal,
+    Mapping,
+    Optional,
+    Sequence,
+    Union,
+)
 from unicodedata import normalize
 
 import pathspec
+import pydantic
+from pydantic.types import StrictBool
 import yaml
 from jinja2.loaders import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
@@ -17,10 +29,25 @@ from pydantic.class_validators import validator
 from pydantic.fields import Field, PrivateAttr
 
 from copier.config.factory import filter_config, verify_minimum_version
-from copier.config.objects import DEFAULT_DATA, DEFAULT_EXCLUDE, ConfigData
+from copier.config.objects import (
+    DEFAULT_DATA,
+    DEFAULT_EXCLUDE,
+    ConfigData,
+    DEFAULT_TEMPLATES_SUFFIX,
+    EnvOps,
+    Migrations,
+)
 from copier.config.user_data import Question, Questionary, load_config_data
 from copier.tools import create_path_filter, to_nice_yaml
-from copier.types import AnyByStrDict, JSONSerializable, OptStr, StrOrPath, StrSeq
+from copier.types import (
+    AnyByStrDict,
+    JSONSerializable,
+    OptStr,
+    OptStrOrPath,
+    PathSeq,
+    StrOrPath,
+    StrSeq,
+)
 
 from .vcs import clone, get_repo, is_git_repo_root
 
@@ -35,7 +62,7 @@ class AnswersMap(BaseModel):
     _local: AnyByStrDict = PrivateAttr(default_factory=dict)
 
     class Config:
-        arbitrary_types_allowed = True
+        keep_untouched = (cached_property,)
 
     @validator(
         "init",
@@ -50,7 +77,7 @@ class AnswersMap(BaseModel):
         """Make sure all dicts are copied."""
         return deepcopy(v)
 
-    @lru_cache
+    @cached_property
     def combined(self) -> t_ChainMap[str, Any]:
         """Answers combined from different sources, sorted by priority."""
         return ChainMap(
@@ -62,46 +89,54 @@ class AnswersMap(BaseModel):
             DEFAULT_DATA,
         )
 
+    def old_commit(self) -> OptStr:
+        return self.last.get("_commit")
+
 
 class Template(BaseModel):
     url: str
     ref: OptStr
 
     class Config:
-        arbitrary_types_allowed = True
+        allow_mutation = False
+        keep_untouched = (cached_property,)
 
-    @lru_cache
+    @cached_property
     def _raw_config(self) -> AnyByStrDict:
-        result = load_config_data(self.local_path())
+        result = load_config_data(self.local_path)
         with suppress(KeyError):
             verify_minimum_version(result["_min_copier_version"])
         return result
 
-    @lru_cache
+    @cached_property
+    def commit(self) -> OptStr:
+        if self.vcs == "git":
+            with local.cwd(self.local_path):
+                return git("describe", "--tags", "--always").strip()
+
+    @cached_property
     def default_answers(self) -> AnyByStrDict:
-        return {
-            key: value.get("default") for key, value in self.questions_data().items()
-        }
+        return {key: value.get("default") for key, value in self.questions_data.items()}
 
-    @lru_cache
+    @cached_property
     def config_data(self) -> AnyByStrDict:
-        return filter_config(self._raw_config())[0]
+        return filter_config(self._raw_config)[0]
 
-    @lru_cache
+    @cached_property
     def questions_data(self) -> AnyByStrDict:
-        return filter_config(self._raw_config())[1]
+        return filter_config(self._raw_config)[1]
 
-    @lru_cache
+    @cached_property
     def local_path(self) -> Path:
-        if self.vcs() == "git" and not is_git_repo_root(self.url_expanded()):
-            return Path(clone(self.url_expanded(), self.ref))
+        if self.vcs == "git" and not is_git_repo_root(self.url_expanded):
+            return Path(clone(self.url_expanded, self.ref))
         return Path(self.url)
 
-    @lru_cache
+    @cached_property
     def url_expanded(self) -> str:
         return get_repo(self.url) or self.url
 
-    @lru_cache
+    @cached_property
     def vcs(self) -> Optional[Literal["git"]]:
         if get_repo(self.url):
             return "git"
@@ -112,68 +147,101 @@ class Subproject(BaseModel):
     answers_relpath: Path = Path(".copier-answers.yml")
 
     class Config:
-        arbitrary_types_allowed = True
+        keep_untouched = (cached_property,)
 
     def is_dirty(self) -> bool:
-        if self.vcs() == "git":
+        if self.vcs == "git":
             with local.cwd(self.local_path):
                 return bool(git("status", "--porcelain").strip())
         return False
 
-    @lru_cache
+    @cached_property
     def _raw_answers(self) -> AnyByStrDict:
         try:
             return yaml.safe_load((self.local_path / self.answers_relpath).read_text())
         except OSError:
             return {}
 
-    @lru_cache
+    @cached_property
     def last_answers(self) -> AnyByStrDict:
         return {
             key: value
-            for key, value in self._raw_answers()
+            for key, value in self._raw_answers.items()
             if key in {"_src_path", "_commit"} or not key.startswith("_")
         }
 
-    @lru_cache
+    @cached_property
     def template(self) -> Optional[Template]:
-        last_url = self._raw_answers().get("_src_path")
-        last_ref = self._raw_answers().get("_commit")
+        last_url = self._raw_answers.get("_src_path")
+        last_ref = self._raw_answers.get("_commit")
         if last_url:
             return Template(url=last_url, ref=last_ref)
 
-    @lru_cache
+    @cached_property
     def vcs(self) -> Optional[Literal["git"]]:
         if is_git_repo_root(self.local_path):
             return "git"
 
 
-class Copier(BaseModel):
-    conf: ConfigData  # TODO Remove
+class Worker(BaseModel):
+    answers_file: Path = Field(".copier-answers.yml")
+    cleanup_on_error: bool = True
+    dst_path: Path = Field(".")
+    envops: EnvOps = Field(default_factory=EnvOps)
     exclude: StrSeq = ()
+    extra_paths: PathSeq = ()
+    force: bool = False
+    pretend: bool = False
+    quiet: bool = False
+    skip_if_exists: StrSeq = ()
+    src_path: OptStr
+    subdirectory: OptStr
+    use_prereleases: bool = False
+    vcs_ref: OptStr
 
     class Config:
-        arbitrary_types_allowed = True
+        allow_mutation = False
+        keep_untouched = (cached_property,)
 
-    def _render_context(self) -> dict:
-        answers: AnyByStrDict = {}
-        conf = self.conf_patched()
+    def _answers_to_remember(self) -> Mapping:
+        """Get only answers that will be remembered in the copier answers file."""
         # All internal values must appear first
-        if conf.commit:
-            answers["_commit"] = conf.commit
-        if conf.original_src_path is not None:
-            answers["_src_path"] = conf.original_src_path
+        answers: AnyByStrDict = {}
+        commit = self.template.commit
+        src = self.src_path or self.answers.last.get("_src_path")
+        for key, value in (("_commit", commit), ("_src_path", src)):
+            if value is not None:
+                answers[key] = value
         # Other data goes next
         answers.update(
             (k, v)
-            for (k, v) in self.answers().combined().items()
+            for (k, v) in self.answers.combined.items()
+            if not k.startswith("_")
+            and k not in conf.secret_questions
+            and isinstance(k, JSONSerializable)
+            and isinstance(v, JSONSerializable)
+        )
+
+    def _render_context(self) -> dict:
+        # All internal values must appear first
+        answers: AnyByStrDict = {
+            "_commit": self.answers.last.get("_commit"),
+            "_src_path": self.src_path or self.answers.last.get("_src_path"),
+        }
+        for key in tuple(answers):
+            if answers[key] is None:
+                del answers[key]
+        # Other data goes next
+        answers.update(
+            (k, v)
+            for (k, v) in self.answers.combined.items()
             if not k.startswith("_")
             and k not in conf.secret_questions
             and isinstance(k, JSONSerializable)
             and isinstance(v, JSONSerializable)
         )
         return dict(
-            self.answers().combined(),
+            self.answers.combined,
             _copier_answers=answers,
             _copier_conf=conf.copy(deep=True, exclude={"data": {"now", "make_secret"}}),
         )
@@ -184,89 +252,80 @@ class Copier(BaseModel):
         spec = pathspec.PathSpec.from_lines("gitwildmatch", normalized_patterns)
         return spec.match_file
 
-    @lru_cache
+    @cached_property
     def answers(self) -> AnswersMap:
         return AnswersMap(
-            init=self.conf.data_from_init,
-            last=self.subproject().last_answers(),
-            default=self.template().default_answers(),
+            init=self.data_from_init,
+            last=self.subproject.last_answers,
+            default=self.template.default_answers,
         )
 
-    @lru_cache
-    def conf_patched(self) -> ConfigData:
-        return self.conf.copy(
-            update={
-                "commit": self.answers().last.get("_commit"),
-                "original_src_path": str(self.conf.src_path),
-            }
-        )
-
-    @lru_cache
+    @cached_property
     def all_exclusions(self) -> StrSeq:
-        base = self.template().config_data().get("exclude", DEFAULT_EXCLUDE)
+        base = self.template.config_data.get("exclude", DEFAULT_EXCLUDE)
         return tuple(base) + tuple(self.exclude)
 
-    @lru_cache
+    @cached_property
     def jinja_env(self) -> SandboxedEnvironment:
         """Return a pre-configured Jinja environment."""
-        paths = [str(self.conf.src_path), *map(str, self.conf.extra_paths)]
+        paths = [str(self.src_path), *map(str, self.extra_paths)]
         loader = FileSystemLoader(paths)
         # We want to minimize the risk of hidden malware in the templates
         # so we use the SandboxedEnvironment instead of the regular one.
         # Of course we still have the post-copy tasks to worry about, but at least
         # they are more visible to the final user.
-        env = SandboxedEnvironment(loader=loader, **self.conf.envops.dict())
+        env = SandboxedEnvironment(loader=loader, **self.envops.dict())
         default_filters = {"to_nice_yaml": to_nice_yaml}
         env.filters.update(default_filters)
         return env
 
-    @lru_cache
+    @cached_property
     def questionary(self) -> Questionary:
         result = Questionary(
-            answers_default=self.answers().default,
-            answers_forced=self.answers().init,
-            answers_last=self.answers().last,
-            answers_user=self.answers().user,
-            ask_user=not self.conf.force,
-            env=self.jinja_env(),
+            answers_default=self.answers.default,
+            answers_forced=self.answers.init,
+            answers_last=self.answers.last,
+            answers_user=self.answers.user,
+            ask_user=not self.force,
+            env=self.jinja_env,
         )
-        for question, details in self.template().questions_data().items():
+        for question, details in self.template.questions_data.items():
             # TODO Append explicitly?
             Question(var_name=question, questionary=result, **details)
         return result
 
     def render_file(self, fullpath: Path) -> str:
-        relpath = fullpath.relative_to(self.conf.src_path).as_posix()
-        tpl = self.jinja_env().get_template(str(relpath))
+        relpath = fullpath.relative_to(self.src_path).as_posix()
+        tpl = self.jinja_env.get_template(str(relpath))
         return tpl.render(**self._render_context())
 
     def render_string(self, string: str) -> str:
-        tpl = self.jinja_env().from_string(string)
+        tpl = self.jinja_env.from_string(string)
         return tpl.render(**self._render_context())
 
-    @lru_cache
+    @cached_property
     def subproject(self) -> Subproject:
-        return Subproject(
-            local_path=self.conf.dst_path, answers_relpath=self.conf.answers_file
-        )
+        return Subproject(local_path=self.dst_path, answers_relpath=self.answers_file)
 
-    @lru_cache
+    @cached_property
     def template(self) -> Template:
-        try:
-            return Template(url=str(self.conf.src_path), ref=self.conf.vcs_ref)
-        except TypeError:
-            return self.subproject().template()
+        if self.src_path:
+            return Template(url=str(self.src_path), ref=self.vcs_ref)
+        last_template = self.subproject.template
+        if last_template is None:
+            raise TypeError("Template not found")
+        return last_template
 
     # Main operations
     def run_auto(self) -> None:
-        if self.conf.src_path:
+        if self.src_path:
             return self.run_copy()
         return self.run_update()
 
     def run_copy(self) -> None:
         """Generate a subproject from zero, ignoring what was in the folder."""
         must_exclude = self._path_matcher(self.all_exclusions())
-        conf = self.conf_patched()
+        conf = self_patched()
 
         render = Renderer(conf)
         skip_patterns = [self.render_string(pattern) for pattern in conf.skip_if_exists]
@@ -317,4 +376,4 @@ class Copier(BaseModel):
     def run_update(self) -> None:
         from copier.main import update_diff
 
-        return update_diff(self.conf_patched())
+        return update_diff(self_patched())
