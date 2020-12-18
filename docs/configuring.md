@@ -626,9 +626,14 @@ The default name will be `.copier-answers.yml`, but
 The file must have this content:
 
 ```yaml
-# Changes here will be overwritten by Copier; do not edit manually
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
 [[_copier_answers|to_nice_yaml]]
 ```
+
+!!! info
+
+    Did you notice that `NEVER EDIT MANUALLY` part?
+    [It is important](updating.md#never-change-the-answers-file-manually).
 
 The builtin `_copier_answers` variable includes all data needed to smooth future updates
 of this project. This includes (but is not limited to) all JSON-serializable values
@@ -660,9 +665,9 @@ All 3 templates are completely independent:
     matter their pre-commit configuration or the framework they rely on.
 
 Well, don't worry. Copier has you covered. You just need to use a different answers file
-for each one. All of them contain a `[[ _copier_conf.answers_file ]].tmpl` file [as
-specified above][the-copier-answersyml-file]. Then you apply all the templates to the
-same project:
+for each one. All of them contain a `[[ _copier_conf.answers_file ]].tmpl` file
+[as specified above](#the-copier-answersyml-file). Then you apply all the templates to
+the same project:
 
 ```bash
 mkdir my-project
