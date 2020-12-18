@@ -3,8 +3,8 @@
 The best way to update a project from its template is when all of these conditions are
 true:
 
-1. The template includes [a valid `.copier-answers.yml`
-   file][the-copier-answersyml-file].
+1. The template includes
+   [a valid `.copier-answers.yml` file](configuring.md#the-copier-answersyml-file).
 2. The template is versioned with git (with tags).
 3. The destination folder is versioned with git.
 
@@ -42,6 +42,38 @@ repos:
             entry: found copier update rejection files; review them and remove them
             language: fail
             files: "\\.rej$"
+```
+
+## Never change the answers file manually
+
+!!! important
+
+    **Never** update `.copier-answers.yml` manually.
+
+    This will trick Copier, making it believe that those modified answers produced the
+    current subproject, while it was produced by a different answers set. This will
+    produce unpredictable behavior of the smart diff algorithm used for updates, which
+    may work under certain circumstances, but not always.
+
+    **This is an unsupported way to update**. Please do not open issues if you updated
+    this way.
+
+**The correct process to update a subproject** is:
+
+1. Run `copier update`.
+1. Answer to the questions. They'll default to your answers on your last update.
+
+If you want to just reuse all previous answers:
+
+```sh
+copier --force update
+```
+
+If you want to change just one question, and leave all others untouched, and don't want
+to go through the whole questionary again:
+
+```sh
+copier --force --data updated_question="my new answer" update
 ```
 
 ## How the update works
