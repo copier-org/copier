@@ -108,5 +108,7 @@ max-complexity = 20
 ignore = ",W503,E203,E501,D100,D101,D102,D103,D104,D105,D107,"
 
 [build-system]
-requires = ["poetry_core>=1.0.0", "poetry-dynamic-versioning"]
+# TODO Switch back to poetry-core when it's possible again
+# HACK https://github.com/mtkennerly/poetry-dynamic-versioning/issues/35
+requires = ["poetry>=1.1.0", "poetry-dynamic-versioning"]
 build-backend = "poetry.core.masonry.api"
