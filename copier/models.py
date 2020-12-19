@@ -1,7 +1,8 @@
 """Models representing execution context of Copier."""
+import os
 from contextlib import suppress
 from copy import deepcopy
-from functools import cached_property
+from functools import cached_property, lru_cache
 from pathlib import Path
 from typing import (
     Any,
@@ -11,14 +12,10 @@ from typing import (
     Literal,
     Mapping,
     Optional,
-    Sequence,
-    Union,
 )
 from unicodedata import normalize
 
 import pathspec
-import pydantic
-from pydantic.types import StrictBool
 import yaml
 from jinja2.loaders import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
@@ -29,21 +26,13 @@ from pydantic.class_validators import validator
 from pydantic.fields import Field, PrivateAttr
 
 from copier.config.factory import filter_config, verify_minimum_version
-from copier.config.objects import (
-    DEFAULT_DATA,
-    DEFAULT_EXCLUDE,
-    ConfigData,
-    DEFAULT_TEMPLATES_SUFFIX,
-    EnvOps,
-    Migrations,
-)
+from copier.config.objects import DEFAULT_DATA, DEFAULT_EXCLUDE, EnvOps
 from copier.config.user_data import Question, Questionary, load_config_data
 from copier.tools import create_path_filter, to_nice_yaml
 from copier.types import (
     AnyByStrDict,
     JSONSerializable,
     OptStr,
-    OptStrOrPath,
     PathSeq,
     StrOrPath,
     StrSeq,
@@ -186,6 +175,7 @@ class Subproject(BaseModel):
 class Worker(BaseModel):
     answers_file: Path = Field(".copier-answers.yml")
     cleanup_on_error: bool = True
+    data: AnyByStrDict = Field(default_factory=dict)
     dst_path: Path = Field(".")
     envops: EnvOps = Field(default_factory=EnvOps)
     exclude: StrSeq = ()
@@ -246,6 +236,7 @@ class Worker(BaseModel):
             _copier_conf=conf.copy(deep=True, exclude={"data": {"now", "make_secret"}}),
         )
 
+    @lru_cache
     def _path_matcher(self, patterns: StrSeq) -> Callable[[Path], bool]:
         # TODO Is normalization really needed?
         normalized_patterns = map(normalize, ("NFD",), patterns)
@@ -255,7 +246,7 @@ class Worker(BaseModel):
     @cached_property
     def answers(self) -> AnswersMap:
         return AnswersMap(
-            init=self.data_from_init,
+            init=self.data,
             last=self.subproject.last_answers,
             default=self.template.default_answers,
         )
@@ -294,10 +285,27 @@ class Worker(BaseModel):
             Question(var_name=question, questionary=result, **details)
         return result
 
-    def render_file(self, fullpath: Path) -> str:
+    def render_file(self, fullpath: Path, dst: Path) -> str:
+        # TODO Get from main.render_file()
         relpath = fullpath.relative_to(self.src_path).as_posix()
         tpl = self.jinja_env.get_template(str(relpath))
         return tpl.render(**self._render_context())
+
+    def render_folder(self, fullpath: Path) -> None:
+        """Recursively render a folder.
+
+        Args:
+            fullpath: Folder to be rendered. It must be a full path within the template.
+        """
+        rendered_parts = []
+        for part in fullpath.relative_to(self.template.local_path).parts:
+            # Skip folder if any part is rendered as an empty string
+            part = self.render_string(part)
+            if not part:
+                return
+            rendered_parts.append(part)
+        dst_path = Path(self.subproject.local_path, *rendered_parts)
+        # TODO
 
     def render_string(self, string: str) -> str:
         tpl = self.jinja_env.from_string(string)
@@ -324,22 +332,18 @@ class Worker(BaseModel):
 
     def run_copy(self) -> None:
         """Generate a subproject from zero, ignoring what was in the folder."""
-        must_exclude = self._path_matcher(self.all_exclusions())
-        conf = self_patched()
-
-        render = Renderer(conf)
-        skip_patterns = [self.render_string(pattern) for pattern in conf.skip_if_exists]
-        must_skip = create_path_filter(skip_patterns)
-
-        if not conf.quiet:
+        # TODO REFACTOR
+        must_exclude = self._path_matcher(self.all_exclusions)
+        must_skip = create_path_filter(self.skip_if_exists)
+        if not self.quiet:
             print("")  # padding space
 
         folder: StrOrPath
         rel_folder: StrOrPath
 
-        src_path = conf.src_path
-        if conf.subdirectory is not None:
-            src_path /= conf.subdirectory
+        src_path = self.template.local_path
+        if self.subdirectory is not None:
+            src_path /= self.subdirectory
 
         for folder, sub_dirs, files in os.walk(src_path):
             rel_folder = str(folder).replace(str(src_path), "", 1).lstrip(os.path.sep)
