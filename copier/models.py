@@ -1,5 +1,6 @@
 """Models representing execution context of Copier."""
-import os
+import subprocess
+import sys
 from contextlib import suppress
 from copy import deepcopy
 from functools import cached_property, lru_cache
@@ -12,6 +13,7 @@ from typing import (
     Literal,
     Mapping,
     Optional,
+    Sequence,
 )
 from unicodedata import normalize
 
@@ -19,6 +21,8 @@ import pathspec
 import yaml
 from jinja2.loaders import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
+from plumbum import colors
+from plumbum.cli.terminal import ask
 from plumbum.cmd import git
 from plumbum.machines import local
 from pydantic import BaseModel
@@ -26,17 +30,15 @@ from pydantic.class_validators import validator
 from pydantic.fields import Field, PrivateAttr
 
 from copier.config.factory import filter_config, verify_minimum_version
-from copier.config.objects import DEFAULT_DATA, DEFAULT_EXCLUDE, EnvOps
-from copier.config.user_data import Question, Questionary, load_config_data
-from copier.tools import create_path_filter, to_nice_yaml
-from copier.types import (
-    AnyByStrDict,
-    JSONSerializable,
-    OptStr,
-    PathSeq,
-    StrOrPath,
-    StrSeq,
+from copier.config.objects import (
+    DEFAULT_DATA,
+    DEFAULT_EXCLUDE,
+    DEFAULT_TEMPLATES_SUFFIX,
+    EnvOps,
 )
+from copier.config.user_data import Question, Questionary, load_config_data
+from copier.tools import Style, create_path_filter, printf, to_nice_yaml
+from copier.types import AnyByStrDict, JSONSerializable, OptStr, PathSeq, StrSeq
 
 from .vcs import clone, get_repo, is_git_repo_root
 
@@ -114,6 +116,14 @@ class Template(BaseModel):
     @cached_property
     def questions_data(self) -> AnyByStrDict:
         return filter_config(self._raw_config)[1]
+
+    @cached_property
+    def tasks(self) -> Sequence:
+        return self.config_data.get("tasks", [])
+
+    @cached_property
+    def templates_suffix(self) -> str:
+        return self.config_data.get("templates_suffix", DEFAULT_TEMPLATES_SUFFIX)
 
     @cached_property
     def local_path(self) -> Path:
@@ -212,6 +222,28 @@ class Worker(BaseModel):
             and isinstance(v, JSONSerializable)
         )
 
+    def _execute_tasks(self, tasks: Sequence[Mapping]) -> None:
+        """Run the given tasks.
+
+        Arguments:
+            tasks: The list of tasks to run.
+        """
+        for i, task in enumerate(tasks):
+            task_cmd = task["task"]
+            use_shell = isinstance(task_cmd, str)
+            if use_shell:
+                task_cmd = self.render_string(task_cmd)
+            else:
+                task_cmd = [self.render_string(part) for part in task_cmd]
+            if not self.quiet:
+                print(
+                    colors.info
+                    | f" > Running task {i + 1} of {len(tasks)}: {task_cmd}",
+                    file=sys.stderr,
+                )
+            with local.cwd(self.dst_path), local.env(**task.get("extra_env", {})):
+                subprocess.run(task_cmd, shell=use_shell, check=True, env=local.env)
+
     def _render_context(self) -> dict:
         # All internal values must appear first
         answers: AnyByStrDict = {
@@ -242,6 +274,65 @@ class Worker(BaseModel):
         normalized_patterns = map(normalize, ("NFD",), patterns)
         spec = pathspec.PathSpec.from_lines("gitwildmatch", normalized_patterns)
         return spec.match_file
+
+    def _solve_render_conflict(self, dst_relpath: Path):
+        assert not dst_relpath.is_absolute()
+        printf(
+            "conflict",
+            dst_relpath,
+            style=Style.DANGER,
+            quiet=self.quiet,
+            file_=sys.stderr,
+        )
+        if self.force:
+            return True
+        return bool(ask(f" Overwrite {dst_relpath}?", default=True))
+
+    def _render_allowed(
+        self, dst_relpath: Path, is_dir: bool = False, expected_contents: str = ""
+    ) -> bool:
+        assert not dst_relpath.is_absolute()
+        assert not expected_contents or not is_dir, "Dirs cannot have expected content"
+        must_exclude = self._path_matcher(self.all_exclusions)
+        if must_exclude(dst_relpath):
+            return False
+        dst_abspath = Path(self.subproject.local_path, dst_relpath)
+        must_skip = create_path_filter(self.skip_if_exists)
+        if must_skip(dst_relpath) and dst_abspath.exists():
+            return False
+        try:
+            previous_content = dst_abspath.read_text()
+        except FileNotFoundError:
+            printf(
+                "create",
+                dst_relpath,
+                style=Style.OK,
+                quiet=self.quiet,
+                file_=sys.stderr,
+            )
+            return True
+        except IsADirectoryError:
+            if is_dir:
+                printf(
+                    "identical",
+                    dst_relpath,
+                    style=Style.IGNORE,
+                    quiet=self.quiet,
+                    file_=sys.stderr,
+                )
+                return True
+            return self._solve_render_conflict(dst_relpath)
+        else:
+            if previous_content == expected_contents:
+                printf(
+                    "identical",
+                    dst_relpath,
+                    style=Style.IGNORE,
+                    quiet=self.quiet,
+                    file_=sys.stderr,
+                )
+                return True
+            return self._solve_render_conflict(dst_relpath)
 
     @cached_property
     def answers(self) -> AnswersMap:
@@ -285,27 +376,59 @@ class Worker(BaseModel):
             Question(var_name=question, questionary=result, **details)
         return result
 
-    def render_file(self, fullpath: Path, dst: Path) -> str:
+    def render_file(self, src_abspath: Path) -> None:
         # TODO Get from main.render_file()
-        relpath = fullpath.relative_to(self.src_path).as_posix()
-        tpl = self.jinja_env.get_template(str(relpath))
-        return tpl.render(**self._render_context())
+        assert src_abspath.is_absolute()
+        src_relpath = src_abspath.relative_to(self.template.local_path)
+        dst_relpath = self.render_path(src_relpath)
+        if dst_relpath is None:
+            return
+        if src_abspath.name.endswith(self.template.templates_suffix):
+            tpl = self.jinja_env.get_template(str(src_relpath))
+            new_content = tpl.render(**self._render_context())
+        else:
+            new_content = src_abspath.read_text()
+        if self._render_allowed(dst_relpath, expected_contents=new_content):
+            dst_abspath = Path(self.subproject.local_path, dst_relpath)
+            dst_abspath.write_text(new_content)
 
-    def render_folder(self, fullpath: Path) -> None:
+    def render_folder(self, src_abspath: Path) -> None:
         """Recursively render a folder.
 
         Args:
-            fullpath: Folder to be rendered. It must be a full path within the template.
+            src_path:
+                Folder to be rendered. It must be an absolute path within
+                the template.
         """
+        assert src_abspath.is_absolute()
+        src_relpath = src_abspath.relative_to(self.template.local_path)
+        dst_relpath = self.render_path(src_relpath)
+        if dst_relpath is None:
+            return
+        if not self._render_allowed(dst_relpath, is_dir=True):
+            return
+        dst_abspath = Path(self.subproject.local_path, dst_relpath)
+        if not self.pretend:
+            dst_abspath.mkdir(exist_ok=True)
+        for file in src_abspath.iterdir():
+            if file.is_dir():
+                self.render_folder(file)
+            else:
+                self.render_file(file)
+
+    def render_path(self, relpath: Path) -> Optional[Path]:
         rendered_parts = []
-        for part in fullpath.relative_to(self.template.local_path).parts:
+        for part in relpath.parts:
             # Skip folder if any part is rendered as an empty string
             part = self.render_string(part)
             if not part:
-                return
+                return None
             rendered_parts.append(part)
-        dst_path = Path(self.subproject.local_path, *rendered_parts)
-        # TODO
+        if rendered_parts[-1].endswith(self.template.templates_suffix):
+            rendered_parts[-1] = rendered_parts[-1][
+                : -len(self.template.templates_suffix)
+            ]
+        return Path(*rendered_parts)
 
     def render_string(self, string: str) -> str:
         tpl = self.jinja_env.from_string(string)
@@ -332,49 +455,21 @@ class Worker(BaseModel):
 
     def run_copy(self) -> None:
         """Generate a subproject from zero, ignoring what was in the folder."""
-        # TODO REFACTOR
-        must_exclude = self._path_matcher(self.all_exclusions)
-        must_skip = create_path_filter(self.skip_if_exists)
         if not self.quiet:
+            # TODO Unify printing tools
             print("")  # padding space
-
-        folder: StrOrPath
-        rel_folder: StrOrPath
-
-        src_path = self.template.local_path
+        src_abspath = self.template.local_path
         if self.subdirectory is not None:
-            src_path /= self.subdirectory
-
-        for folder, sub_dirs, files in os.walk(src_path):
-            rel_folder = str(folder).replace(str(src_path), "", 1).lstrip(os.path.sep)
-            rel_folder = self.render_string(rel_folder)
-            rel_folder = str(rel_folder).replace("." + os.path.sep, ".", 1)
-
-            if must_exclude(rel_folder):
-                # Folder is excluded, so stop walking it
-                sub_dirs[:] = []
-                continue
-
-            folder = Path(folder)
-            rel_folder = Path(rel_folder)
-
-            render_folder(rel_folder, conf)
-
-            source_paths = get_source_paths(
-                conf, folder, rel_folder, files, render, must_exclude
-            )
-            for source_path, rel_path in source_paths:
-                render_file(conf, rel_path, source_path, render, must_skip)
-
-        if not conf.quiet:
+            src_abspath /= self.subdirectory
+        self.render_folder(src_abspath)
+        if not self.quiet:
+            # TODO Unify printing tools
             print("")  # padding space
-
-        run_tasks(
-            conf,
-            render,
-            [{"task": t, "extra_env": {"STAGE": "task"}} for t in conf.tasks],
+        self._execute_tasks(
+            [{"task": t, "extra_env": {"STAGE": "task"}} for t in self.template.tasks],
         )
-        if not conf.quiet:
+        if not self.quiet:
+            # TODO Unify printing tools
             print("")  # padding space
 
     def run_update(self) -> None:
