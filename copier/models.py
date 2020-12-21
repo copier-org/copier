@@ -14,6 +14,7 @@ from typing import (
     Mapping,
     Optional,
     Sequence,
+    Set,
 )
 from unicodedata import normalize
 
@@ -118,6 +119,14 @@ class Template(BaseModel):
         return filter_config(self._raw_config)[1]
 
     @cached_property
+    def secret_questions(self) -> Set[str]:
+        result = set(self.config_data.get("secret_questions", {}))
+        for key, value in self.questions_data.items():
+            if value.get("secret"):
+                result.add(key)
+        return result
+
+    @cached_property
     def tasks(self) -> Sequence:
         return self.config_data.get("tasks", [])
 
@@ -208,7 +217,7 @@ class Worker(BaseModel):
         # All internal values must appear first
         answers: AnyByStrDict = {}
         commit = self.template.commit
-        src = self.src_path or self.answers.last.get("_src_path")
+        src = self.template.url
         for key, value in (("_commit", commit), ("_src_path", src)):
             if value is not None:
                 answers[key] = value
@@ -217,7 +226,7 @@ class Worker(BaseModel):
             (k, v)
             for (k, v) in self.answers.combined.items()
             if not k.startswith("_")
-            and k not in conf.secret_questions
+            and k not in self.template.secret_questions
             and isinstance(k, JSONSerializable)
             and isinstance(v, JSONSerializable)
         )
@@ -244,28 +253,13 @@ class Worker(BaseModel):
             with local.cwd(self.dst_path), local.env(**task.get("extra_env", {})):
                 subprocess.run(task_cmd, shell=use_shell, check=True, env=local.env)
 
-    def _render_context(self) -> dict:
-        # All internal values must appear first
-        answers: AnyByStrDict = {
-            "_commit": self.answers.last.get("_commit"),
-            "_src_path": self.src_path or self.answers.last.get("_src_path"),
-        }
-        for key in tuple(answers):
-            if answers[key] is None:
-                del answers[key]
-        # Other data goes next
-        answers.update(
-            (k, v)
-            for (k, v) in self.answers.combined.items()
-            if not k.startswith("_")
-            and k not in conf.secret_questions
-            and isinstance(k, JSONSerializable)
-            and isinstance(v, JSONSerializable)
-        )
+    def _render_context(self) -> Mapping:
+        answers = self._answers_to_remember()
         return dict(
-            self.answers.combined,
+            DEFAULT_DATA,
+            **answers,
             _copier_answers=answers,
-            _copier_conf=conf.copy(deep=True, exclude={"data": {"now", "make_secret"}}),
+            _copier_conf=self.copy(deep=True),
         )
 
     @lru_cache
@@ -472,7 +466,86 @@ class Worker(BaseModel):
             # TODO Unify printing tools
             print("")  # padding space
 
+    # TODO
     def run_update(self) -> None:
-        from copier.main import update_diff
-
-        return update_diff(self_patched())
+        """Update the subproject."""
+        # Ensure local repo is clean
+        if vcs.is_git_repo_root(conf.dst_path):
+            with local.cwd(conf.dst_path):
+                if git("status", "--porcelain"):
+                    raise UserMessageError(
+                        "Destination repository is dirty; cannot continue. "
+                        "Please commit or stash your local changes and retry."
+                    )
+        last_answers = load_answersfile_data(conf.dst_path, conf.answers_file)
+        downgrading = False
+        if conf.old_commit and conf.commit:
+            try:
+                downgrading = Version(conf.old_commit) > Version(conf.commit)
+            except InvalidVersion:
+                print(
+                    colors.warn
+                    | f"Either {conf.old_commit} or {conf.vcs_ref} is not a PEP 440 valid version.",
+                    file=sys.stderr,
+                )
+            else:
+                if downgrading:
+                    raise UserMessageError(
+                        f"Your are downgrading from {conf.old_commit} to {conf.commit}. "
+                        "Downgrades are not supported."
+                    )
+        # Copy old template into a temporary destination
+        with tempfile.TemporaryDirectory(prefix=f"{__name__}.update_diff.") as dst_temp:
+            copy(
+                dst_path=dst_temp,
+                data=last_answers,
+                force=True,
+                quiet=True,
+                skip=False,
+                src_path=conf.original_src_path,
+                vcs_ref=conf.old_commit,
+            )
+            # Extract diff between temporary destination and real destination
+            with local.cwd(dst_temp):
+                git("init", retcode=None)
+                git("add", ".")
+                git("config", "user.name", "Copier")
+                git("config", "user.email", "copier@copier")
+                # 1st commit could fail if any pre-commit hook reformats code
+                git("commit", "--allow-empty", "-am", "dumb commit 1", retcode=None)
+                git("commit", "--allow-empty", "-am", "dumb commit 2")
+                git("config", "--unset", "user.name")
+                git("config", "--unset", "user.email")
+                git("remote", "add", "real_dst", conf.dst_path)
+                git("fetch", "--depth=1", "real_dst", "HEAD")
+                diff_cmd = git["diff-tree", "--unified=1", "HEAD...FETCH_HEAD"]
+                try:
+                    diff = diff_cmd("--inter-hunk-context=-1")
+                except ProcessExecutionError:
+                    print(
+                        colors.warn
+                        | "Make sure Git >= 2.24 is installed to improve updates.",
+                        file=sys.stderr,
+                    )
+                    diff = diff_cmd("--inter-hunk-context=0")
+        # Run pre-migration tasks
+        renderer = Renderer(conf)
+        run_tasks(conf, renderer, get_migration_tasks(conf, "before"))
+        # Import possible answers migration
+        conf = conf.copy(
+            update={
+                "data_from_answers_file": load_answersfile_data(
+                    conf.dst_path, conf.answers_file
+                )
+            }
+        )
+        # Do a normal update in final destination
+        copy_local(conf)
+        # Try to apply cached diff into final destination
+        with local.cwd(conf.dst_path):
+            apply_cmd = git["apply", "--reject", "--exclude", conf.answers_file]
+            for skip_pattern in conf.skip_if_exists:
+                apply_cmd = apply_cmd["--exclude", skip_pattern]
+            (apply_cmd << diff)(retcode=None)
+        # Run post-migration tasks
+        run_tasks(conf, renderer, get_migration_tasks(conf, "after"))
