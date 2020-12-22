@@ -1,10 +1,10 @@
 """Models representing execution context of Copier."""
-from plumbum import ProcessExecutionError
 import subprocess
 import sys
+import tempfile
 from contextlib import suppress
 from copy import deepcopy
-from functools import cached_property, lru_cache
+from functools import cached_property
 from pathlib import Path
 from typing import (
     Any,
@@ -17,15 +17,15 @@ from typing import (
     Optional,
     Sequence,
     Set,
-    Type,
 )
 from unicodedata import normalize
-from packaging.version import InvalidVersion, Version, parse
+
 import pathspec
-import yaml, tempfile
+import yaml
 from jinja2.loaders import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
-from plumbum import colors
+from packaging.version import InvalidVersion, Version, parse
+from plumbum import ProcessExecutionError, colors
 from plumbum.cli.terminal import ask
 from plumbum.cmd import git
 from plumbum.machines import local
@@ -42,14 +42,15 @@ from copier.config.objects import (
     UserMessageError,
 )
 from copier.config.user_data import Question, Questionary, load_config_data
-from copier.tools import (
-    Style,
-    create_path_filter,
-    get_migration_tasks,
-    printf,
-    to_nice_yaml,
+from copier.tools import Style, printf, to_nice_yaml
+from copier.types import (
+    AbsolutePath,
+    AnyByStrDict,
+    JSONSerializable,
+    OptStr,
+    PathSeq,
+    StrSeq,
 )
-from copier.types import AnyByStrDict, JSONSerializable, OptStr, PathSeq, StrSeq
 
 from .vcs import clone, get_repo, is_git_repo_root
 
@@ -105,7 +106,7 @@ class Template(BaseModel):
 
     @cached_property
     def _raw_config(self) -> AnyByStrDict:
-        result = load_config_data(self.local_path)
+        result = load_config_data(self.local_abspath)
         with suppress(KeyError):
             verify_minimum_version(result["_min_copier_version"])
         return result
@@ -113,7 +114,7 @@ class Template(BaseModel):
     @cached_property
     def commit(self) -> OptStr:
         if self.vcs == "git":
-            with local.cwd(self.local_path):
+            with local.cwd(self.local_abspath):
                 return git("describe", "--tags", "--always").strip()
 
     @cached_property
@@ -124,7 +125,6 @@ class Template(BaseModel):
     def config_data(self) -> AnyByStrDict:
         return filter_config(self._raw_config)[0]
 
-    @lru_cache
     def migration_tasks(self, stage: str, from_: str, to: str) -> Sequence[Mapping]:
         """Get migration objects that match current version spec.
 
@@ -171,10 +171,10 @@ class Template(BaseModel):
         return self.config_data.get("templates_suffix", DEFAULT_TEMPLATES_SUFFIX)
 
     @cached_property
-    def local_path(self) -> Path:
+    def local_abspath(self) -> Path:
         if self.vcs == "git" and not is_git_repo_root(self.url_expanded):
-            return Path(clone(self.url_expanded, self.ref))
-        return Path(self.url)
+            return Path(clone(self.url_expanded, self.ref)).absolute()
+        return Path(self.url).absolute()
 
     @cached_property
     def url_expanded(self) -> str:
@@ -187,7 +187,7 @@ class Template(BaseModel):
 
 
 class Subproject(BaseModel):
-    local_path: Path
+    local_abspath: AbsolutePath
     answers_relpath: Path = Path(".copier-answers.yml")
 
     class Config:
@@ -195,14 +195,16 @@ class Subproject(BaseModel):
 
     def is_dirty(self) -> bool:
         if self.vcs == "git":
-            with local.cwd(self.local_path):
+            with local.cwd(self.local_abspath):
                 return bool(git("status", "--porcelain").strip())
         return False
 
     @property
     def _raw_answers(self) -> AnyByStrDict:
         try:
-            return yaml.safe_load((self.local_path / self.answers_relpath).read_text())
+            return yaml.safe_load(
+                (self.local_abspath / self.answers_relpath).read_text()
+            )
         except OSError:
             return {}
 
@@ -224,7 +226,7 @@ class Subproject(BaseModel):
 
     @cached_property
     def vcs(self) -> Optional[Literal["git"]]:
-        if is_git_repo_root(self.local_path):
+        if is_git_repo_root(self.local_abspath):
             return "git"
 
 
@@ -299,7 +301,6 @@ class Worker(BaseModel):
             _copier_conf=self.copy(deep=True),
         )
 
-    @lru_cache
     def _path_matcher(self, patterns: StrSeq) -> Callable[[Path], bool]:
         # TODO Is normalization really needed?
         normalized_patterns = map(normalize, ("NFD",), patterns)
@@ -324,12 +325,10 @@ class Worker(BaseModel):
     ) -> bool:
         assert not dst_relpath.is_absolute()
         assert not expected_contents or not is_dir, "Dirs cannot have expected content"
-        must_exclude = self._path_matcher(self.all_exclusions)
-        if must_exclude(dst_relpath):
+        if self.match_exclude(dst_relpath):
             return False
-        dst_abspath = Path(self.subproject.local_path, dst_relpath)
-        must_skip = create_path_filter(self.skip_if_exists)
-        if must_skip(dst_relpath) and dst_abspath.exists():
+        dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
+        if self.match_skip(dst_relpath) and dst_abspath.exists():
             return False
         try:
             previous_content = dst_abspath.read_text()
@@ -393,6 +392,14 @@ class Worker(BaseModel):
         return env
 
     @cached_property
+    def match_exclude(self) -> Callable[[Path], bool]:
+        return self._path_matcher(self.all_exclusions)
+
+    @cached_property
+    def match_skip(self) -> Callable[[Path], bool]:
+        return self._path_matcher(self.skip_if_exists)
+
+    @cached_property
     def questionary(self) -> Questionary:
         result = Questionary(
             answers_default=self.answers.default,
@@ -410,7 +417,7 @@ class Worker(BaseModel):
     def render_file(self, src_abspath: Path) -> None:
         # TODO Get from main.render_file()
         assert src_abspath.is_absolute()
-        src_relpath = src_abspath.relative_to(self.template.local_path)
+        src_relpath = src_abspath.relative_to(self.template.local_abspath)
         dst_relpath = self.render_path(src_relpath)
         if dst_relpath is None:
             return
@@ -420,7 +427,7 @@ class Worker(BaseModel):
         else:
             new_content = src_abspath.read_text()
         if self._render_allowed(dst_relpath, expected_contents=new_content):
-            dst_abspath = Path(self.subproject.local_path, dst_relpath)
+            dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
             dst_abspath.write_text(new_content)
 
     def render_folder(self, src_abspath: Path) -> None:
@@ -432,13 +439,13 @@ class Worker(BaseModel):
                 the template.
         """
         assert src_abspath.is_absolute()
-        src_relpath = src_abspath.relative_to(self.template.local_path)
+        src_relpath = src_abspath.relative_to(self.template.local_abspath)
         dst_relpath = self.render_path(src_relpath)
         if dst_relpath is None:
             return
         if not self._render_allowed(dst_relpath, is_dir=True):
             return
-        dst_abspath = Path(self.subproject.local_path, dst_relpath)
+        dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
         if not self.pretend:
             dst_abspath.mkdir(exist_ok=True)
         for file in src_abspath.iterdir():
@@ -489,7 +496,7 @@ class Worker(BaseModel):
         if not self.quiet:
             # TODO Unify printing tools
             print("")  # padding space
-        src_abspath = self.template.local_path
+        src_abspath = self.template.local_abspath
         if self.subdirectory is not None:
             src_abspath /= self.subdirectory
         self.render_folder(src_abspath)
@@ -554,6 +561,7 @@ class Worker(BaseModel):
                 },
                 deep=True,
             )
+            old_worker.run_copy()
             # Extract diff between temporary destination and real destination
             with local.cwd(dst_temp):
                 git("init", retcode=None)
@@ -565,7 +573,12 @@ class Worker(BaseModel):
                 git("commit", "--allow-empty", "-am", "dumb commit 2")
                 git("config", "--unset", "user.name")
                 git("config", "--unset", "user.email")
-                git("remote", "add", "real_dst", self.subproject.local_path.absolute())
+                git(
+                    "remote",
+                    "add",
+                    "real_dst",
+                    self.subproject.local_abspath.absolute(),
+                )
                 git("fetch", "--depth=1", "real_dst", "HEAD")
                 diff_cmd = git["diff-tree", "--unified=1", "HEAD...FETCH_HEAD"]
                 try:
@@ -587,13 +600,16 @@ class Worker(BaseModel):
         del self.subproject.last_answers
         del self.answers
         # Do a normal update in final destination
-        # TODO
-        copy_local(conf)
+        self.run_copy()
         # Try to apply cached diff into final destination
-        with local.cwd(conf.dst_path):
-            apply_cmd = git["apply", "--reject", "--exclude", conf.answers_file]
-            for skip_pattern in conf.skip_if_exists:
+        with local.cwd(self.subproject.local_abspath):
+            apply_cmd = git["apply", "--reject", "--exclude", self.answers_file]
+            for skip_pattern in self.skip_if_exists:
                 apply_cmd = apply_cmd["--exclude", skip_pattern]
             (apply_cmd << diff)(retcode=None)
         # Run post-migration tasks
-        run_tasks(conf, renderer, get_migration_tasks(conf, "after"))
+        self._execute_tasks(
+            self.template.migration_tasks(
+                "after", self.subproject.template.ref, self.template.commit
+            )
+        )

@@ -109,11 +109,10 @@ def copy(
 
         use_prereleases: See [use_prereleases][].
     """
-    conf = ConfigData(
-        src_path=src_path, dst_path=dst_path, data_from_init=data or {}, **kwargs
-    )
-    copier = Worker(conf=conf)
-    copier.run_auto()
+    if data is None:
+        del data
+    worker = Worker(**locals())
+    worker.run_auto()
 
 
 def copy_local(conf: ConfigData) -> None:
