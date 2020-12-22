@@ -3,10 +3,7 @@
 from pathlib import Path
 from typing import Callable, List, Tuple
 
-from copier.models import Worker
-
-from .config.objects import ConfigData
-from .tools import Renderer
+from .models import Worker
 from .types import AnyByStrDict, OptStr, StrOrPath, StrSeq
 
 __all__ = ("copy",)
@@ -97,11 +94,11 @@ def copy(
 
 # FIXME Refactor and delete
 def get_source_paths(
-    conf: ConfigData,
+    conf: "ConfigData",
     folder: Path,
     rel_folder: Path,
     files: StrSeq,
-    render: Renderer,
+    render: "Renderer",
     must_filter: Callable[[StrOrPath], bool],
 ) -> List[Tuple[Path, Path]]:
     """Get the paths to all the files to render.
