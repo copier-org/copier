@@ -3,7 +3,6 @@ from plumbum import local
 from plumbum.cmd import git
 
 import copier
-from copier.config.factory import make_config
 from copier.config.objects import UserMessageError
 
 

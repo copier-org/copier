@@ -4,7 +4,6 @@ import pytest
 from poethepoet.app import PoeThePoet
 
 from copier import tools
-from copier.config.factory import ConfigData, EnvOps
 
 from .helpers import DATA, PROJECT_TEMPLATE
 
@@ -40,7 +39,7 @@ TEST_PATTERNS = (
     # unicode patterns
     "mañana.txt",
 )
-path_filter = tools.create_path_filter(TEST_PATTERNS)
+path_filter = None  # FIXME it was `tools.create_path_filter(TEST_PATTERNS)``
 
 
 @pytest.mark.parametrize(

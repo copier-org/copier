@@ -2,9 +2,7 @@ import pexpect
 import pytest
 import yaml
 
-from copier.config.factory import filter_config, make_config
 from copier.config.objects import EnvOps
-from copier.config.user_data import InvalidTypeError, query_user_data
 
 from .helpers import COPIER_PATH, build_file_tree
 

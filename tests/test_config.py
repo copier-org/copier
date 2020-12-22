@@ -5,8 +5,7 @@ from plumbum import local
 from pydantic import ValidationError
 
 import copier
-from copier.config.factory import make_config
-from copier.config.objects import DEFAULT_EXCLUDE, ConfigData, EnvOps
+from copier.config.objects import DEFAULT_EXCLUDE
 from copier.config.user_data import (
     InvalidConfigFileError,
     MultipleConfigFilesError,

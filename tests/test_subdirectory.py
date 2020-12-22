@@ -4,8 +4,6 @@ from plumbum import local
 from plumbum.cmd import git
 
 import copier
-from copier.config import make_config
-from copier.main import update_diff
 
 
 def git_init(message="hello world"):
