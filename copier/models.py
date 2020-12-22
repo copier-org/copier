@@ -41,7 +41,12 @@ from copier.config.objects import (
     EnvOps,
     UserMessageError,
 )
-from copier.config.user_data import Question, Questionary, load_config_data
+from copier.config.user_data import (
+    Question,
+    Questionary,
+    load_config_data,
+    query_user_data,
+)
 from copier.tools import Style, printf, to_nice_yaml
 from copier.types import (
     AbsolutePath,
@@ -367,8 +372,19 @@ class Worker(BaseModel):
 
     @cached_property
     def answers(self) -> AnswersMap:
+        user = {}
+        if not self.force:
+            user = query_user_data(
+                questions_data=self.template.questions_data,
+                last_answers_data=self.subproject.last_answers,
+                forced_answers_data=self.data,
+                default_answers_data=self.template.default_answers,
+                ask_user=not self.force,
+                jinja_env=self.jinja_env,
+            )
         return AnswersMap(
             init=self.data,
+            user=user,
             last=self.subproject.last_answers,
             default=self.template.default_answers,
         )

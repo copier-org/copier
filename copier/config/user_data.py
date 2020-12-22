@@ -18,9 +18,9 @@ from questionary import unsafe_prompt
 from questionary.prompts.common import Choice
 from yamlinclude import YamlIncludeConstructor
 
-from ..tools import cast_str_to_bool, force_str_end, get_jinja_env, printf_exception
+from ..tools import cast_str_to_bool, force_str_end, printf_exception
 from ..types import AnyByStrDict, OptStrOrPath, PathSeq, StrOrPath
-from .objects import DEFAULT_DATA, EnvOps, UserMessageError
+from .objects import DEFAULT_DATA, UserMessageError
 
 __all__ = ("load_config_data", "query_user_data")
 
@@ -502,7 +502,7 @@ def query_user_data(
     forced_answers_data: AnyByStrDict,
     default_answers_data: AnyByStrDict,
     ask_user: bool,
-    envops: EnvOps,
+    jinja_env: SandboxedEnvironment,
 ) -> AnyByStrDict:
     """Query the user for questions given in the config file."""
     questionary = Questionary(
@@ -510,7 +510,7 @@ def query_user_data(
         answers_last=last_answers_data,
         answers_default=default_answers_data,
         ask_user=ask_user,
-        env=get_jinja_env(envops=envops),
+        env=jinja_env,
     )
     for question, details in questions_data.items():
         Question(var_name=question, questionary=questionary, **details)
