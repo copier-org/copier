@@ -269,6 +269,7 @@ class Worker(BaseModel):
             and isinstance(k, JSONSerializable)
             and isinstance(v, JSONSerializable)
         )
+        return answers
 
     def _execute_tasks(self, tasks: Sequence[Mapping]) -> None:
         """Run the given tasks.
@@ -298,7 +299,7 @@ class Worker(BaseModel):
             DEFAULT_DATA,
             **answers,
             _copier_answers=answers,
-            _copier_conf=self.copy(deep=True),
+            _copier_conf=self.copy(),
         )
 
     def _path_matcher(self, patterns: StrSeq) -> Callable[[Path], bool]:
@@ -462,10 +463,11 @@ class Worker(BaseModel):
             if not part:
                 return None
             rendered_parts.append(part)
-        if rendered_parts[-1].endswith(self.template.templates_suffix):
-            rendered_parts[-1] = rendered_parts[-1][
-                : -len(self.template.templates_suffix)
-            ]
+        with suppress(IndexError):
+            if rendered_parts[-1].endswith(self.template.templates_suffix):
+                rendered_parts[-1] = rendered_parts[-1][
+                    : -len(self.template.templates_suffix)
+                ]
         return Path(*rendered_parts)
 
     def render_string(self, string: str) -> str:
@@ -474,7 +476,9 @@ class Worker(BaseModel):
 
     @cached_property
     def subproject(self) -> Subproject:
-        return Subproject(local_path=self.dst_path, answers_relpath=self.answers_file)
+        return Subproject(
+            local_abspath=self.dst_path, answers_relpath=self.answers_file
+        )
 
     @cached_property
     def template(self) -> Template:
@@ -510,7 +514,6 @@ class Worker(BaseModel):
             # TODO Unify printing tools
             print("")  # padding space
 
-    # TODO
     def run_update(self) -> None:
         """Update the subproject."""
         # Check all you need is there
