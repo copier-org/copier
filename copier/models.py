@@ -1,4 +1,5 @@
 """Models representing execution context of Copier."""
+from plumbum import ProcessExecutionError
 import subprocess
 import sys
 from contextlib import suppress
@@ -10,16 +11,18 @@ from typing import (
     Callable,
     ChainMap,
     ChainMap as t_ChainMap,
+    List,
     Literal,
     Mapping,
     Optional,
     Sequence,
     Set,
+    Type,
 )
 from unicodedata import normalize
-
+from packaging.version import InvalidVersion, Version, parse
 import pathspec
-import yaml
+import yaml, tempfile
 from jinja2.loaders import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
 from plumbum import colors
@@ -36,9 +39,16 @@ from copier.config.objects import (
     DEFAULT_EXCLUDE,
     DEFAULT_TEMPLATES_SUFFIX,
     EnvOps,
+    UserMessageError,
 )
 from copier.config.user_data import Question, Questionary, load_config_data
-from copier.tools import Style, create_path_filter, printf, to_nice_yaml
+from copier.tools import (
+    Style,
+    create_path_filter,
+    get_migration_tasks,
+    printf,
+    to_nice_yaml,
+)
 from copier.types import AnyByStrDict, JSONSerializable, OptStr, PathSeq, StrSeq
 
 from .vcs import clone, get_repo, is_git_repo_root
@@ -114,6 +124,32 @@ class Template(BaseModel):
     def config_data(self) -> AnyByStrDict:
         return filter_config(self._raw_config)[0]
 
+    @lru_cache
+    def migration_tasks(self, stage: str, from_: str, to: str) -> Sequence[Mapping]:
+        """Get migration objects that match current version spec.
+
+        Versions are compared using PEP 440.
+        """
+        result: List[dict] = []
+        if not from_ or not to:
+            return result
+        parsed_from = parse(from_)
+        parsed_to = parse(to)
+        extra_env = {
+            "STAGE": stage,
+            "VERSION_FROM": from_,
+            "VERSION_TO": to,
+        }
+        migration: dict
+        for migration in self._raw_config.get("_migrations", []):
+            if parsed_to >= parse(migration["version"]) > parsed_from:
+                extra_env = dict(extra_env, VERSION_CURRENT=str(migration["version"]))
+                result += [
+                    {"task": task, "extra_env": extra_env}
+                    for task in migration.get(stage, [])
+                ]
+        return result
+
     @cached_property
     def questions_data(self) -> AnyByStrDict:
         return filter_config(self._raw_config)[1]
@@ -163,7 +199,7 @@ class Subproject(BaseModel):
                 return bool(git("status", "--porcelain").strip())
         return False
 
-    @cached_property
+    @property
     def _raw_answers(self) -> AnyByStrDict:
         try:
             return yaml.safe_load((self.local_path / self.answers_relpath).read_text())
@@ -180,8 +216,9 @@ class Subproject(BaseModel):
 
     @cached_property
     def template(self) -> Optional[Template]:
-        last_url = self._raw_answers.get("_src_path")
-        last_ref = self._raw_answers.get("_commit")
+        raw_answers = self._raw_answers
+        last_url = raw_answers.get("_src_path")
+        last_ref = raw_answers.get("_commit")
         if last_url:
             return Template(url=last_url, ref=last_ref)
 
@@ -469,41 +506,53 @@ class Worker(BaseModel):
     # TODO
     def run_update(self) -> None:
         """Update the subproject."""
-        # Ensure local repo is clean
-        if vcs.is_git_repo_root(conf.dst_path):
-            with local.cwd(conf.dst_path):
-                if git("status", "--porcelain"):
-                    raise UserMessageError(
-                        "Destination repository is dirty; cannot continue. "
-                        "Please commit or stash your local changes and retry."
-                    )
-        last_answers = load_answersfile_data(conf.dst_path, conf.answers_file)
+        # Check all you need is there
+        if self.subproject.vcs != "git":
+            raise UserMessageError(
+                "Updating is only supported in git-tracked subprojects."
+            )
+        if self.subproject.is_dirty():
+            raise UserMessageError(
+                "Destination repository is dirty; cannot continue. "
+                "Please commit or stash your local changes and retry."
+            )
+        if self.subproject.template is None or self.subproject.template.ref is None:
+            raise UserMessageError(
+                "Cannot update because cannot obtain old template references "
+                f"from `{self.subproject.answers_relpath}`."
+            )
+        if self.template.commit is None:
+            raise UserMessageError(
+                "Updating is only supported in git-tracked templates."
+            )
         downgrading = False
-        if conf.old_commit and conf.commit:
-            try:
-                downgrading = Version(conf.old_commit) > Version(conf.commit)
-            except InvalidVersion:
-                print(
-                    colors.warn
-                    | f"Either {conf.old_commit} or {conf.vcs_ref} is not a PEP 440 valid version.",
-                    file=sys.stderr,
-                )
-            else:
-                if downgrading:
-                    raise UserMessageError(
-                        f"Your are downgrading from {conf.old_commit} to {conf.commit}. "
-                        "Downgrades are not supported."
-                    )
+        try:
+            downgrading = Version(self.subproject.template.ref) > Version(
+                self.template.commit
+            )
+        except InvalidVersion:
+            print(
+                colors.warn
+                | f"Either {self.subproject.template.ref} or {self.template.commit} is not a PEP 440 valid version.",
+                file=sys.stderr,
+            )
+        if downgrading:
+            raise UserMessageError(
+                f"Your are downgrading from {self.subproject.template.ref} to {self.template.commit}. "
+                "Downgrades are not supported."
+            )
         # Copy old template into a temporary destination
         with tempfile.TemporaryDirectory(prefix=f"{__name__}.update_diff.") as dst_temp:
-            copy(
-                dst_path=dst_temp,
-                data=last_answers,
-                force=True,
-                quiet=True,
-                skip=False,
-                src_path=conf.original_src_path,
-                vcs_ref=conf.old_commit,
+            old_worker = self.copy(
+                update={
+                    "dst_path": dst_temp,
+                    "data": self.answers.last,
+                    "force": True,
+                    "quiet": True,
+                    "src_path": self.subproject.template.url,
+                    "vcs_ref": self.subproject.template.commit,
+                },
+                deep=True,
             )
             # Extract diff between temporary destination and real destination
             with local.cwd(dst_temp):
@@ -516,7 +565,7 @@ class Worker(BaseModel):
                 git("commit", "--allow-empty", "-am", "dumb commit 2")
                 git("config", "--unset", "user.name")
                 git("config", "--unset", "user.email")
-                git("remote", "add", "real_dst", conf.dst_path)
+                git("remote", "add", "real_dst", self.subproject.local_path.absolute())
                 git("fetch", "--depth=1", "real_dst", "HEAD")
                 diff_cmd = git["diff-tree", "--unified=1", "HEAD...FETCH_HEAD"]
                 try:
@@ -529,17 +578,16 @@ class Worker(BaseModel):
                     )
                     diff = diff_cmd("--inter-hunk-context=0")
         # Run pre-migration tasks
-        renderer = Renderer(conf)
-        run_tasks(conf, renderer, get_migration_tasks(conf, "before"))
-        # Import possible answers migration
-        conf = conf.copy(
-            update={
-                "data_from_answers_file": load_answersfile_data(
-                    conf.dst_path, conf.answers_file
-                )
-            }
+        self._execute_tasks(
+            self.template.migration_tasks(
+                "before", self.subproject.template.ref, self.template.commit
+            )
         )
+        # Clear last answers cache to load possible answers migration
+        del self.subproject.last_answers
+        del self.answers
         # Do a normal update in final destination
+        # TODO
         copy_local(conf)
         # Try to apply cached diff into final destination
         with local.cwd(conf.dst_path):
