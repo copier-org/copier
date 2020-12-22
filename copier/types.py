@@ -16,7 +16,7 @@ from typing import (
 
 from pydantic.validators import path_validator
 
-from copier.validators import path_is_absolute
+from copier.validators import path_is_absolute, path_is_relative
 
 if TYPE_CHECKING:
     from pydantic.typing import CallableGenerator
@@ -54,3 +54,10 @@ class AbsolutePath(Path):
     def __get_validators__(cls) -> "CallableGenerator":
         yield path_validator
         yield path_is_absolute
+
+
+class RelativePath(Path):
+    @classmethod
+    def __get_validators__(cls) -> "CallableGenerator":
+        yield path_validator
+        yield path_is_relative

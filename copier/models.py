@@ -54,6 +54,7 @@ from copier.types import (
     JSONSerializable,
     OptStr,
     PathSeq,
+    RelativePath,
     StrSeq,
 )
 
@@ -178,8 +179,11 @@ class Template(BaseModel):
     @cached_property
     def local_abspath(self) -> Path:
         if self.vcs == "git" and not is_git_repo_root(self.url_expanded):
-            return Path(clone(self.url_expanded, self.ref)).absolute()
-        return Path(self.url).absolute()
+            result = Path(clone(self.url_expanded, self.ref))
+        result = Path(self.url)
+        if not result.is_dir():
+            raise ValueError("Local template must be a directory.")
+        return result.absolute()
 
     @cached_property
     def url_expanded(self) -> str:
@@ -236,7 +240,7 @@ class Subproject(BaseModel):
 
 
 class Worker(BaseModel):
-    answers_file: Path = Field(".copier-answers.yml")
+    answers_file: RelativePath = Field(".copier-answers.yml")
     cleanup_on_error: bool = True
     data: AnyByStrDict = Field(default_factory=dict)
     dst_path: Path = Field(".")
@@ -327,7 +331,7 @@ class Worker(BaseModel):
         return bool(ask(f" Overwrite {dst_relpath}?", default=True))
 
     def _render_allowed(
-        self, dst_relpath: Path, is_dir: bool = False, expected_contents: str = ""
+        self, dst_relpath: Path, is_dir: bool = False, expected_contents: bytes = b""
     ) -> bool:
         assert not dst_relpath.is_absolute()
         assert not expected_contents or not is_dir, "Dirs cannot have expected content"
@@ -337,7 +341,7 @@ class Worker(BaseModel):
         if self.match_skip(dst_relpath) and dst_abspath.exists():
             return False
         try:
-            previous_content = dst_abspath.read_text()
+            previous_content = dst_abspath.read_bytes()
         except FileNotFoundError:
             printf(
                 "create",
@@ -440,12 +444,12 @@ class Worker(BaseModel):
             return
         if src_abspath.name.endswith(self.template.templates_suffix):
             tpl = self.jinja_env.get_template(str(src_relpath))
-            new_content = tpl.render(**self._render_context())
+            new_content = tpl.render(**self._render_context()).encode()
         else:
-            new_content = src_abspath.read_text()
+            new_content = src_abspath.read_bytes()
         if self._render_allowed(dst_relpath, expected_contents=new_content):
             dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
-            dst_abspath.write_text(new_content)
+            dst_abspath.write_bytes(new_content)
 
     def render_folder(self, src_abspath: Path) -> None:
         """Recursively render a folder.
