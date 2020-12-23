@@ -476,6 +476,11 @@ class Worker(BaseModel):
                 self.render_file(file)
 
     def render_path(self, relpath: Path) -> Optional[Path]:
+        templated_sibling = (
+            self.template.local_abspath / f"{relpath}{self.template.templates_suffix}"
+        )
+        if templated_sibling.exists():
+            return None
         rendered_parts = []
         for part in relpath.parts:
             # Skip folder if any part is rendered as an empty string
