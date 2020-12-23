@@ -88,7 +88,7 @@ def copy(
     """
     if data is None:
         del data
-    worker = Worker(**locals())
+    worker = Worker(**locals(), **kwargs)
     worker.run_auto()
 
 

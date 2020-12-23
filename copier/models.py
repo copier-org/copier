@@ -178,9 +178,9 @@ class Template(BaseModel):
 
     @cached_property
     def local_abspath(self) -> Path:
+        result = Path(self.url)
         if self.vcs == "git" and not is_git_repo_root(self.url_expanded):
             result = Path(clone(self.url_expanded, self.ref))
-        result = Path(self.url)
         if not result.is_dir():
             raise ValueError("Local template must be a directory.")
         return result.absolute()
@@ -313,7 +313,7 @@ class Worker(BaseModel):
 
     def _path_matcher(self, patterns: StrSeq) -> Callable[[Path], bool]:
         # TODO Is normalization really needed?
-        normalized_patterns = map(normalize, ("NFD",), patterns)
+        normalized_patterns = (normalize("NFD", pattern) for pattern in patterns)
         spec = pathspec.PathSpec.from_lines("gitwildmatch", normalized_patterns)
         return spec.match_file
 
@@ -335,11 +335,13 @@ class Worker(BaseModel):
     ) -> bool:
         assert not dst_relpath.is_absolute()
         assert not expected_contents or not is_dir, "Dirs cannot have expected content"
-        if self.match_exclude(dst_relpath):
-            return False
         dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
-        if self.match_skip(dst_relpath) and dst_abspath.exists():
-            return False
+        # Never check root destination for exclusions
+        if dst_relpath != Path("."):
+            if self.match_exclude(dst_relpath):
+                return False
+            if self.match_skip(dst_relpath) and dst_abspath.exists():
+                return False
         try:
             previous_content = dst_abspath.read_bytes()
         except FileNotFoundError:
@@ -476,6 +478,7 @@ class Worker(BaseModel):
                 self.render_file(file)
 
     def render_path(self, relpath: Path) -> Optional[Path]:
+        is_template = relpath.name.endswith(self.template.templates_suffix)
         templated_sibling = (
             self.template.local_abspath / f"{relpath}{self.template.templates_suffix}"
         )
@@ -489,11 +492,19 @@ class Worker(BaseModel):
                 return None
             rendered_parts.append(part)
         with suppress(IndexError):
-            if rendered_parts[-1].endswith(self.template.templates_suffix):
+            if is_template:
                 rendered_parts[-1] = rendered_parts[-1][
                     : -len(self.template.templates_suffix)
                 ]
-        return Path(*rendered_parts)
+        result = Path(*rendered_parts)
+        if not is_template:
+            templated_sibling = (
+                self.template.local_abspath
+                / f"{result}{self.template.templates_suffix}"
+            )
+            if templated_sibling.exists():
+                return None
+        return result
 
     def render_string(self, string: str) -> str:
         tpl = self.jinja_env.from_string(string)
