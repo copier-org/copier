@@ -157,11 +157,6 @@ class Template(BaseModel):
         return result
 
     @cached_property
-    def local_copy_root(self) -> Path:
-        subdirectory = self.config_data.get("subdirectory", "")
-        return self.local_abspath / subdirectory
-
-    @cached_property
     def questions_data(self) -> AnyByStrDict:
         return filter_config(self._raw_config)[1]
 
@@ -172,6 +167,10 @@ class Template(BaseModel):
             if value.get("secret"):
                 result.add(key)
         return result
+
+    @cached_property
+    def subdirectory(self) -> str:
+        return self.config_data.get("subdirectory", "")
 
     @cached_property
     def tasks(self) -> Sequence:
@@ -340,10 +339,11 @@ class Worker(BaseModel):
         assert not dst_relpath.is_absolute()
         assert not expected_contents or not is_dir, "Dirs cannot have expected content"
         dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
-        if self.match_exclude(dst_relpath):
-            return False
-        if self.match_skip(dst_relpath) and dst_abspath.exists():
-            return False
+        if dst_relpath != Path("."):
+            if self.match_exclude(dst_relpath):
+                return False
+            if self.match_skip(dst_relpath) and dst_abspath.exists():
+                return False
         try:
             previous_content = dst_abspath.read_bytes()
         except FileNotFoundError:
@@ -442,7 +442,7 @@ class Worker(BaseModel):
     def render_file(self, src_abspath: Path) -> None:
         # TODO Get from main.render_file()
         assert src_abspath.is_absolute()
-        src_relpath = src_abspath.relative_to(self.template.local_abspath)
+        src_relpath = src_abspath.relative_to(self.template_copy_root)
         dst_relpath = self.render_path(src_relpath)
         if dst_relpath is None:
             return
@@ -466,13 +466,11 @@ class Worker(BaseModel):
                 the template.
         """
         assert src_abspath.is_absolute()
-        src_relpath = src_abspath.relative_to(self.template.local_abspath)
+        src_relpath = src_abspath.relative_to(self.template_copy_root)
         dst_relpath = self.render_path(src_relpath)
         if dst_relpath is None:
             return
-        if src_abspath != self.template.local_copy_root and not self._render_allowed(
-            dst_relpath, is_dir=True
-        ):
+        if not self._render_allowed(dst_relpath, is_dir=True):
             return
         dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
         if not self.pretend:
@@ -531,6 +529,11 @@ class Worker(BaseModel):
             raise TypeError("Template not found")
         return last_template
 
+    @cached_property
+    def template_copy_root(self) -> Path:
+        subdir = self.render_string(self.template.subdirectory) or ""
+        return self.template.local_abspath / subdir
+
     # Main operations
     def run_auto(self) -> None:
         if self.src_path:
@@ -542,7 +545,7 @@ class Worker(BaseModel):
         if not self.quiet:
             # TODO Unify printing tools
             print("")  # padding space
-        src_abspath = self.template.local_copy_root
+        src_abspath = self.template_copy_root
         self.render_folder(src_abspath)
         if not self.quiet:
             # TODO Unify printing tools
