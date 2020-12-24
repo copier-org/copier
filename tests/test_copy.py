@@ -9,14 +9,7 @@ from plumbum.cmd import git
 
 import copier
 
-from .helpers import (
-    DATA,
-    PROJECT_TEMPLATE,
-    assert_file,
-    build_file_tree,
-    filecmp,
-    render,
-)
+from .helpers import PROJECT_TEMPLATE, assert_file, build_file_tree, filecmp, render
 
 
 def test_project_not_found(tmp_path):
@@ -167,38 +160,12 @@ def test_skip_if_exists_rendered_patterns(tmp_path):
     assert (tmp_path / "meh" / "c.noeof.txt").read_text() == "SKIPPED"
 
 
-def test_config_exclude(tmp_path, monkeypatch):
-    def fake_data(*_args, **_kwargs):
-        return {"_exclude": ["*.txt"]}
-
-    monkeypatch.setattr(copier.config.factory, "load_config_data", fake_data)
-    copier.copy(str(PROJECT_TEMPLATE), tmp_path, data=DATA, quiet=True)
-    assert not (tmp_path / "aaaa.txt").exists()
-
-
-def test_config_exclude_overridden(tmp_path):
-    def fake_data(*_args, **_kwargs):
-        return {"_exclude": ["*.txt"]}
-
-    copier.copy(str(PROJECT_TEMPLATE), tmp_path, data=DATA, quiet=True, exclude=[])
-    assert (tmp_path / "aaaa.txt").exists()
-
-
-def test_config_include(tmp_path, monkeypatch):
-    def fake_data(*_args, **_kwargs):
-        return {"_exclude": ["!.svn"]}
-
-    monkeypatch.setattr(copier.config.factory, "load_config_data", fake_data)
-    copier.copy(str(PROJECT_TEMPLATE), tmp_path, data=DATA, quiet=True)
-    assert (tmp_path / ".svn").exists()
-
-
 def test_skip_option(tmp_path):
     render(tmp_path)
     path = tmp_path / "pyproject.toml"
     content = "lorem ipsum"
     path.write_text(content)
-    render(tmp_path, skip=True)
+    render(tmp_path, skip_if_exists=["**"])
     assert path.read_text() == content
 
 
@@ -216,11 +183,3 @@ def test_pretend_option(tmp_path):
     assert not (tmp_path / "doc").exists()
     assert not (tmp_path / "config.py").exists()
     assert not (tmp_path / "pyproject.toml").exists()
-
-
-def test_subdirectory(tmp_path: Path):
-    render(tmp_path, subdirectory="doc")
-    assert not (tmp_path / "doc").exists()
-    assert not (tmp_path / "config.py").exists()
-    assert (tmp_path / "images").exists()
-    assert (tmp_path / "manana.txt").exists()

@@ -157,6 +157,11 @@ class Template(BaseModel):
         return result
 
     @cached_property
+    def local_copy_root(self) -> Path:
+        subdirectory = self.config_data.get("subdirectory", "")
+        return self.local_abspath / subdirectory
+
+    @cached_property
     def questions_data(self) -> AnyByStrDict:
         return filter_config(self._raw_config)[1]
 
@@ -252,7 +257,6 @@ class Worker(BaseModel):
     quiet: bool = False
     skip_if_exists: StrSeq = ()
     src_path: OptStr
-    subdirectory: OptStr
     use_prereleases: bool = False
     vcs_ref: OptStr
 
@@ -336,12 +340,10 @@ class Worker(BaseModel):
         assert not dst_relpath.is_absolute()
         assert not expected_contents or not is_dir, "Dirs cannot have expected content"
         dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
-        # Never check root destination for exclusions
-        if dst_relpath != Path("."):
-            if self.match_exclude(dst_relpath):
-                return False
-            if self.match_skip(dst_relpath) and dst_abspath.exists():
-                return False
+        if self.match_exclude(dst_relpath):
+            return False
+        if self.match_skip(dst_relpath) and dst_abspath.exists():
+            return False
         try:
             previous_content = dst_abspath.read_bytes()
         except FileNotFoundError:
@@ -420,7 +422,7 @@ class Worker(BaseModel):
 
     @cached_property
     def match_skip(self) -> Callable[[Path], bool]:
-        return self._path_matcher(self.skip_if_exists)
+        return self._path_matcher(map(self.render_string, self.skip_if_exists))
 
     @cached_property
     def questionary(self) -> Questionary:
@@ -449,7 +451,9 @@ class Worker(BaseModel):
             new_content = tpl.render(**self._render_context()).encode()
         else:
             new_content = src_abspath.read_bytes()
-        if self._render_allowed(dst_relpath, expected_contents=new_content):
+        if not self._render_allowed(dst_relpath, expected_contents=new_content):
+            return
+        if not self.pretend:
             dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
             dst_abspath.write_bytes(new_content)
 
@@ -466,7 +470,9 @@ class Worker(BaseModel):
         dst_relpath = self.render_path(src_relpath)
         if dst_relpath is None:
             return
-        if not self._render_allowed(dst_relpath, is_dir=True):
+        if src_abspath != self.template.local_copy_root and not self._render_allowed(
+            dst_relpath, is_dir=True
+        ):
             return
         dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
         if not self.pretend:
@@ -536,9 +542,7 @@ class Worker(BaseModel):
         if not self.quiet:
             # TODO Unify printing tools
             print("")  # padding space
-        src_abspath = self.template.local_abspath
-        if self.subdirectory is not None:
-            src_abspath /= self.subdirectory
+        src_abspath = self.template.local_copy_root
         self.render_folder(src_abspath)
         if not self.quiet:
             # TODO Unify printing tools

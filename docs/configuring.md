@@ -484,7 +484,7 @@ _skip_if_exists: .secret_password.yml
 ### `subdirectory`
 
 -   Format: `str`
--   CLI flags: `-b`, `--subdirectory`
+-   CLI flags: N/A
 -   Default value: N/A
 
 Subdirectory to use as the template root when generating a project. If not specified,
@@ -494,12 +494,6 @@ Example `copier.yml`:
 
 ```yaml
 _subdirectory: src
-```
-
-Example CLI usage to choose a different subdirectory template:
-
-```sh
-copier --subdirectory template2 -b copy template destination
 ```
 
 ### `tasks`
