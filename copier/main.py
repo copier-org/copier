@@ -65,9 +65,6 @@ def copy(
         force:
             Overwrite files that already exist, without asking.
 
-        skip:
-            Skip files that already exist, without asking.
-
         quiet:
             Suppress the status output.
 
@@ -80,9 +77,6 @@ def copy(
 
         only_diff:
             Try to update only the template diff.
-
-        subdirectory:
-            Specify a subdirectory to use when generating the project.
 
         use_prereleases: See [use_prereleases][].
     """

@@ -53,10 +53,8 @@ class CopierApp(cli.Application):
         extra_paths: Set [extra_paths][] option.
         exclude: Set [exclude][] option.
         vcs_ref: Set [vcs_ref][] option.
-        subdirectory: Set [subdirectory][] option.
         pretend: Set [pretend][] option.
         force: Set [force][] option.
-        skip: Set [skip_if_exists][] option.
         prereleases: Set [use_prereleases][] option.
         quiet: Set [quiet][] option.
     """
@@ -122,23 +120,11 @@ class CopierApp(cli.Application):
             "the latest version, use `--vcs-ref=HEAD`."
         ),
     )
-    subdirectory: cli.SwitchAttr = cli.SwitchAttr(
-        ["-b", "--subdirectory"],
-        str,
-        help=(
-            "Subdirectory to use when generating the project. "
-            "If you do not specify it, the root of the template is used."
-        ),
-    )
-
     pretend: cli.Flag = cli.Flag(
         ["-n", "--pretend"], help="Run but do not make any changes"
     )
     force: cli.Flag = cli.Flag(
         ["-f", "--force"], help="Overwrite files that already exist, without asking"
-    )
-    skip: cli.Flag = cli.Flag(
-        ["-s", "--skip"], help="Skip files that already exist, without asking"
     )
     quiet: cli.Flag = cli.Flag(["-q", "--quiet"], help="Suppress status output")
     prereleases: cli.Flag = cli.Flag(
@@ -180,10 +166,8 @@ class CopierApp(cli.Application):
             force=self.force,
             pretend=self.pretend,
             quiet=self.quiet,
-            skip=self.skip,
             src_path=src_path,
             vcs_ref=self.vcs_ref,
-            subdirectory=self.subdirectory,
             use_prereleases=self.prereleases,
             **kwargs,
         )
