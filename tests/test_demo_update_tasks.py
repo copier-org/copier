@@ -10,9 +10,8 @@ from .helpers import PROJECT_TEMPLATE
 REPO_BUNDLE_PATH = Path(f"{PROJECT_TEMPLATE}_update_tasks.bundle").absolute()
 
 
-def test_update_tasks(tmpdir):
+def test_update_tasks(tmp_path):
     """Test that updating a template runs tasks from the expected version."""
-    tmp_path = tmpdir / "tmp_path"
     # Copy the 1st version
     copy(
         str(REPO_BUNDLE_PATH),

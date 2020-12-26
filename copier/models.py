@@ -6,6 +6,7 @@ from contextlib import suppress
 from copy import deepcopy
 from functools import cached_property
 from pathlib import Path
+from shutil import rmtree
 from typing import (
     Any,
     Callable,
@@ -115,6 +116,12 @@ class Template(BaseModel):
         result = load_config_data(self.local_abspath)
         with suppress(KeyError):
             verify_minimum_version(result["_min_copier_version"])
+        return result
+
+    @cached_property
+    def answers_relpath(self) -> Path:
+        result = Path(self.config_data.get("answers_file", ".copier-answers.yml"))
+        assert not result.is_absolute()
         return result
 
     @cached_property
@@ -244,7 +251,7 @@ class Subproject(BaseModel):
 
 
 class Worker(BaseModel):
-    answers_file: RelativePath = Field(".copier-answers.yml")
+    answers_file: Optional[RelativePath]
     cleanup_on_error: bool = True
     data: AnyByStrDict = Field(default_factory=dict)
     dst_path: Path = Field(".")
@@ -302,7 +309,9 @@ class Worker(BaseModel):
                     | f" > Running task {i + 1} of {len(tasks)}: {task_cmd}",
                     file=sys.stderr,
                 )
-            with local.cwd(self.dst_path), local.env(**task.get("extra_env", {})):
+            with local.cwd(self.subproject.local_abspath), local.env(
+                **task.get("extra_env", {})
+            ):
                 subprocess.run(task_cmd, shell=use_shell, check=True, env=local.env)
 
     def _render_context(self) -> Mapping:
@@ -398,6 +407,10 @@ class Worker(BaseModel):
         )
 
     @cached_property
+    def answers_relpath(self) -> Path:
+        return self.answers_file or self.template.answers_relpath
+
+    @cached_property
     def all_exclusions(self) -> StrSeq:
         base = self.template.config_data.get("exclude", DEFAULT_EXCLUDE)
         return tuple(base) + tuple(self.exclude)
@@ -405,7 +418,7 @@ class Worker(BaseModel):
     @cached_property
     def jinja_env(self) -> SandboxedEnvironment:
         """Return a pre-configured Jinja environment."""
-        paths = [str(self.src_path), *map(str, self.extra_paths)]
+        paths = [str(self.template.local_abspath), *map(str, self.extra_paths)]
         loader = FileSystemLoader(paths)
         # We want to minimize the risk of hidden malware in the templates
         # so we use the SandboxedEnvironment instead of the regular one.
@@ -517,7 +530,7 @@ class Worker(BaseModel):
     @cached_property
     def subproject(self) -> Subproject:
         return Subproject(
-            local_abspath=self.dst_path, answers_relpath=self.answers_file
+            local_abspath=self.dst_path, answers_relpath=self.answers_relpath
         )
 
     @cached_property
@@ -542,17 +555,26 @@ class Worker(BaseModel):
 
     def run_copy(self) -> None:
         """Generate a subproject from zero, ignoring what was in the folder."""
+        was_existing = self.subproject.local_abspath.exists()
         if not self.quiet:
             # TODO Unify printing tools
             print("")  # padding space
         src_abspath = self.template_copy_root
-        self.render_folder(src_abspath)
-        if not self.quiet:
-            # TODO Unify printing tools
-            print("")  # padding space
-        self._execute_tasks(
-            [{"task": t, "extra_env": {"STAGE": "task"}} for t in self.template.tasks],
-        )
+        try:
+            self.render_folder(src_abspath)
+            if not self.quiet:
+                # TODO Unify printing tools
+                print("")  # padding space
+            self._execute_tasks(
+                [
+                    {"task": t, "extra_env": {"STAGE": "task"}}
+                    for t in self.template.tasks
+                ],
+            )
+        except Exception:
+            if not was_existing and self.cleanup_on_error:
+                rmtree(self.subproject.local_abspath)
+            raise
         if not self.quiet:
             # TODO Unify printing tools
             print("")  # padding space
@@ -649,7 +671,7 @@ class Worker(BaseModel):
         self.run_copy()
         # Try to apply cached diff into final destination
         with local.cwd(self.subproject.local_abspath):
-            apply_cmd = git["apply", "--reject", "--exclude", self.answers_file]
+            apply_cmd = git["apply", "--reject", "--exclude", self.answers_relpath]
             for skip_pattern in self.skip_if_exists:
                 apply_cmd = apply_cmd["--exclude", skip_pattern]
             (apply_cmd << diff)(retcode=None)
