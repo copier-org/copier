@@ -54,11 +54,6 @@ def copy(
         envops:
             Extra options for the Jinja template environment.
 
-        extra_paths:
-            Optional. Additional paths, outside the `src_path`, from where to search
-            for templates. This is intended to be used with shared parent templates,
-            files with macros, etc. outside the copied project skeleton.
-
         pretend:
             Run but do not make any changes.
 

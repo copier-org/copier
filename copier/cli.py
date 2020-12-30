@@ -50,7 +50,6 @@ class CopierApp(cli.Application):
 
     Attributes:
         answers_file: Set [answers_file][] option.
-        extra_paths: Set [extra_paths][] option.
         exclude: Set [exclude][] option.
         vcs_ref: Set [vcs_ref][] option.
         pretend: Set [pretend][] option.
@@ -94,12 +93,6 @@ class CopierApp(cli.Application):
             "Update using this path (relative to `destination_path`) "
             "to find the answers file"
         ),
-    )
-    extra_paths: cli.SwitchAttr = cli.SwitchAttr(
-        ["-p", "--extra-paths"],
-        str,
-        list=True,
-        help="Additional directories to find parent templates in",
     )
     exclude: cli.SwitchAttr = cli.SwitchAttr(
         ["-x", "--exclude"],
@@ -162,7 +155,6 @@ class CopierApp(cli.Application):
             dst_path=dst_path,
             answers_file=self.answers_file,
             exclude=self.exclude,
-            extra_paths=self.extra_paths,
             force=self.force,
             pretend=self.pretend,
             quiet=self.quiet,

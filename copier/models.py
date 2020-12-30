@@ -54,7 +54,6 @@ from copier.types import (
     AnyByStrDict,
     JSONSerializable,
     OptStr,
-    PathSeq,
     RelativePath,
     StrSeq,
 )
@@ -267,7 +266,6 @@ class Worker(BaseModel):
     dst_path: Path = Field(".")
     envops: EnvOps = Field(default_factory=EnvOps)
     exclude: StrSeq = ()
-    extra_paths: PathSeq = ()
     force: bool = False
     pretend: bool = False
     quiet: bool = False
@@ -429,7 +427,7 @@ class Worker(BaseModel):
     @cached_property
     def jinja_env(self) -> SandboxedEnvironment:
         """Return a pre-configured Jinja environment."""
-        paths = [str(self.template.local_abspath), *map(str, self.extra_paths)]
+        paths = [str(self.template.local_abspath)]
         loader = FileSystemLoader(paths)
         # We want to minimize the risk of hidden malware in the templates
         # so we use the SandboxedEnvironment instead of the regular one.

@@ -33,7 +33,6 @@ def test_config_data_is_loaded_from_file():
     assert config["_exclude"] == ["exclude1", "exclude2"]
     assert config["_skip_if_exists"] == ["skip_if_exists1", "skip_if_exists2"]
     assert config["_tasks"] == ["touch 1", "touch 2"]
-    assert config["_extra_paths"] == ["tests"]
 
 
 @pytest.mark.parametrize("template", ["tests/demo_yaml", "tests/demo_yml"])
@@ -197,24 +196,6 @@ def test_config_data_paths_required():
         raise AssertionError()
 
 
-def test_config_data_paths_existing(tmp_path):
-    try:
-        ConfigData(
-            src_path="./i_do_not_exist",
-            extra_paths=["./i_do_not_exist"],
-            dst_path=tmp_path,
-            envops=EnvOps(),
-        )
-    except ValidationError as e:
-        assert len(e.errors()) == 2
-        for i, p in enumerate(("src_path", "extra_paths")):
-            err = e.errors()[i]
-            assert err["loc"][0] == p
-            assert err["msg"] == "Project template not found."
-    else:
-        raise AssertionError()
-
-
 def test_config_data_good_data(tmp_path):
     tmp_path = Path(tmp_path).expanduser().resolve()
     expected = {
@@ -222,7 +203,6 @@ def test_config_data_good_data(tmp_path):
         "commit": None,
         "old_commit": None,
         "dst_path": tmp_path,
-        "extra_paths": [tmp_path],
         "exclude": DEFAULT_EXCLUDE,
         "original_src_path": None,
         "skip_if_exists": ["skip_me"],
@@ -265,7 +245,6 @@ def test_make_config_good_data(tmp_path):
     assert conf.exclude == ["exclude1", "exclude2"]
     assert conf.skip_if_exists == ["skip_if_exists1", "skip_if_exists2"]
     assert conf.tasks == ["touch 1", "touch 2"]
-    assert conf.extra_paths == [Path("tests").resolve()]
 
 
 @pytest.mark.parametrize(

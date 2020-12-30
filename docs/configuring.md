@@ -329,21 +329,6 @@ copier --exclude '*' --exclude '!file-i-want' copy template destination
 
     Instead, CLI/API definitions **will extend** those from `copier.yml`.
 
-### `extra_paths`
-
--   Format: `List[str]`
--   CLI flags: `-p`, `--extra-paths`
--   Default value: N/A
-
-Additional paths from where to search for templates.
-
-Example `copier.yml`:
-
-```yaml
-_extra_paths:
-    - ~/Projects/templates
-```
-
 ### `force`
 
 -   Format: `bool`
