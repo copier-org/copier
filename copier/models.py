@@ -63,10 +63,11 @@ from .vcs import clone, get_repo, is_git_repo_root
 
 
 class AnswersMap(BaseModel):
-    init: AnyByStrDict = Field(default_factory=dict)
-    user: AnyByStrDict = Field(default_factory=dict)
-    last: AnyByStrDict = Field(default_factory=dict)
     default: AnyByStrDict = Field(default_factory=dict)
+    init: AnyByStrDict = Field(default_factory=dict)
+    last: AnyByStrDict = Field(default_factory=dict)
+    metadata: AnyByStrDict = Field(default_factory=dict)
+    user: AnyByStrDict = Field(default_factory=dict)
 
     # Private
     _local: AnyByStrDict = PrivateAttr(default_factory=dict)
@@ -75,10 +76,11 @@ class AnswersMap(BaseModel):
         keep_untouched = (cached_property,)
 
     @validator(
-        "init",
-        "user",
-        "last",
         "default",
+        "init",
+        "last",
+        "metadata",
+        "user",
         allow_reuse=True,
         pre=True,
         each_item=True,
@@ -94,6 +96,7 @@ class AnswersMap(BaseModel):
             self._local,
             self.user,
             self.init,
+            self.metadata,
             self.last,
             self.default,
             DEFAULT_DATA,
@@ -137,6 +140,13 @@ class Template(BaseModel):
     @cached_property
     def config_data(self) -> AnyByStrDict:
         return filter_config(self._raw_config)[0]
+
+    @cached_property
+    def metadata(self) -> AnyByStrDict:
+        result: AnyByStrDict = {"_src_path": self.url}
+        if self.commit:
+            result["_commit"] = self.commit
+        return result
 
     def migration_tasks(self, stage: str, from_: str, to: str) -> Sequence[Mapping]:
         """Get migration objects that match current version spec.
@@ -315,12 +325,15 @@ class Worker(BaseModel):
                 subprocess.run(task_cmd, shell=use_shell, check=True, env=local.env)
 
     def _render_context(self) -> Mapping:
-        answers = self._answers_to_remember()
+        self_conf = self.dict()
+        # Backwards compatibility
+        # FIXME Remove it?
+        self_conf["answers_file"] = self.answers_relpath
         return dict(
             DEFAULT_DATA,
-            **answers,
-            _copier_answers=answers,
-            _copier_conf=self.copy(),
+            **self.answers.combined,
+            _copier_answers=self._answers_to_remember(),
+            _copier_conf=self_conf,
         )
 
     def _path_matcher(self, patterns: StrSeq) -> Callable[[Path], bool]:
@@ -389,16 +402,14 @@ class Worker(BaseModel):
 
     @cached_property
     def answers(self) -> AnswersMap:
-        user = {}
-        if not self.force:
-            user = query_user_data(
-                questions_data=self.template.questions_data,
-                last_answers_data=self.subproject.last_answers,
-                forced_answers_data=self.data,
-                default_answers_data=self.template.default_answers,
-                ask_user=not self.force,
-                jinja_env=self.jinja_env,
-            )
+        user = query_user_data(
+            questions_data=self.template.questions_data,
+            last_answers_data=self.subproject.last_answers,
+            forced_answers_data=self.data,
+            default_answers_data=self.template.default_answers,
+            ask_user=not self.force,
+            jinja_env=self.jinja_env,
+        )
         return AnswersMap(
             init=self.data,
             user=user,
@@ -530,7 +541,8 @@ class Worker(BaseModel):
     @cached_property
     def subproject(self) -> Subproject:
         return Subproject(
-            local_abspath=self.dst_path, answers_relpath=self.answers_relpath
+            local_abspath=self.dst_path,
+            answers_relpath=self.answers_file or ".copier-answers.yml",
         )
 
     @cached_property

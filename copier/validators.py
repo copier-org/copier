@@ -20,6 +20,6 @@ def path_is_absolute(value: Path) -> Path:
 
 
 def path_is_relative(value: Path) -> Path:
-    if not value.is_absolute():
+    if value.is_absolute():
         raise PathNotRelativeError(path=value)
     return value
