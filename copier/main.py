@@ -71,7 +71,7 @@ def copy(
             If `None`, it will be taken from `dst_path/answers_file` or fail.
 
         dst_path:
-            Absolute path to where to render the skeleton
+            Absolute path to where to render the skeleton.
 
         data:
             Optional. Data to be passed to the templates in addtion to the user data
