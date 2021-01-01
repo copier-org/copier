@@ -310,7 +310,7 @@ class Worker(BaseModel):
             if use_shell:
                 task_cmd = self.render_string(task_cmd)
             else:
-                task_cmd = [self.render_string(part) for part in task_cmd]
+                task_cmd = [self.render_string(str(part)) for part in task_cmd]
             if not self.quiet:
                 print(
                     colors.info
