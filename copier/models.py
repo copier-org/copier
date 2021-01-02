@@ -199,7 +199,7 @@ class Template(BaseModel):
     @cached_property
     def local_abspath(self) -> Path:
         result = Path(self.url)
-        if self.vcs == "git" and not is_git_repo_root(self.url_expanded):
+        if self.vcs == "git":
             result = Path(clone(self.url_expanded, self.ref))
         if not result.is_dir():
             raise ValueError("Local template must be a directory.")
@@ -409,10 +409,11 @@ class Worker(BaseModel):
             jinja_env=self.jinja_env,
         )
         return AnswersMap(
-            init=self.data,
-            user=user,
-            last=self.subproject.last_answers,
             default=self.template.default_answers,
+            init=self.data,
+            last=self.subproject.last_answers,
+            metadata=self.template.metadata,
+            user=user,
         )
 
     @cached_property
@@ -545,12 +546,12 @@ class Worker(BaseModel):
 
     @cached_property
     def template(self) -> Template:
-        if self.src_path:
-            return Template(url=str(self.src_path), ref=self.vcs_ref)
-        last_template = self.subproject.template
-        if last_template is None:
-            raise TypeError("Template not found")
-        return last_template
+        url = self.src_path
+        if not url:
+            if self.subproject.template is None:
+                raise TypeError("Template not found")
+            url = self.subproject.template.url
+        return Template(url=url, ref=self.vcs_ref)
 
     @cached_property
     def template_copy_root(self) -> Path:

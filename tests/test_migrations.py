@@ -62,7 +62,7 @@ def test_migrations_and_tasks(tmp_path: Path):
     # Update it to v2
     copy(dst_path=str(dst), force=True)
     # Check update was OK
-    assert (dst / "created-with-tasks.txt").read_text() == "task 1\ntask 2\n" * 2
+    assert (dst / "created-with-tasks.txt").read_text() == "task 1\ntask 2\n" * 3
     assert not (dst / "delete-in-tasks.txt").exists()
     assert not (dst / "delete-in-migration-v2.txt").exists()
     assert not (dst / "migrations.py").exists()

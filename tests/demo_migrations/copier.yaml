@@ -14,7 +14,7 @@ _migrations:
     before:
       - &mig
         - "[[ _copier_conf.template.local_abspath / 'migrations.py' ]]"
-        - "[[ _copier_conf.json() ]]"
+        - "[[ _copier_conf|tojson ]]"
     after:
       - *mig
   - version: v2
