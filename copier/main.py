@@ -75,9 +75,7 @@ def copy(
 
         use_prereleases: See [use_prereleases][].
     """
-    if data is None:
-        del data
-    worker = Worker(**locals(), **kwargs)
+    worker = Worker(src_path=src_path, dst_path=dst_path, data=data or {}, **kwargs)
     worker.run_auto()
 
 

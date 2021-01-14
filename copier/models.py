@@ -2,15 +2,15 @@
 import subprocess
 import sys
 import tempfile
+from collections import ChainMap
 from contextlib import suppress
-from copy import deepcopy
+from dataclasses import asdict, field, replace
 from functools import cached_property
 from pathlib import Path
 from shutil import rmtree
 from typing import (
     Any,
     Callable,
-    ChainMap,
     ChainMap as t_ChainMap,
     List,
     Literal,
@@ -30,9 +30,7 @@ from plumbum import ProcessExecutionError, colors
 from plumbum.cli.terminal import ask
 from plumbum.cmd import git
 from plumbum.machines import local
-from pydantic import BaseModel
-from pydantic.class_validators import validator
-from pydantic.fields import Field, PrivateAttr
+from pydantic.dataclasses import dataclass
 
 from copier.config.factory import filter_config, verify_minimum_version
 from copier.config.objects import (
@@ -61,38 +59,22 @@ from copier.types import (
 from .vcs import clone, get_repo, is_git_repo_root
 
 
-class AnswersMap(BaseModel):
-    default: AnyByStrDict = Field(default_factory=dict)
-    init: AnyByStrDict = Field(default_factory=dict)
-    last: AnyByStrDict = Field(default_factory=dict)
-    metadata: AnyByStrDict = Field(default_factory=dict)
-    user: AnyByStrDict = Field(default_factory=dict)
+@dataclass
+class AnswersMap:
+    default: AnyByStrDict = field(default_factory=dict)
+    init: AnyByStrDict = field(default_factory=dict)
+    last: AnyByStrDict = field(default_factory=dict)
+    metadata: AnyByStrDict = field(default_factory=dict)
+    user: AnyByStrDict = field(default_factory=dict)
 
     # Private
-    _local: AnyByStrDict = PrivateAttr(default_factory=dict)
-
-    class Config:
-        keep_untouched = (cached_property,)
-
-    @validator(
-        "default",
-        "init",
-        "last",
-        "metadata",
-        "user",
-        allow_reuse=True,
-        pre=True,
-        each_item=True,
-    )
-    def _deep_copy_answers(cls, v: AnyByStrDict) -> AnyByStrDict:
-        """Make sure all dicts are copied."""
-        return deepcopy(v)
+    local: AnyByStrDict = field(default_factory=dict, init=False)
 
     @cached_property
     def combined(self) -> t_ChainMap[str, Any]:
         """Answers combined from different sources, sorted by priority."""
         return ChainMap(
-            self._local,
+            self.local,
             self.user,
             self.init,
             self.metadata,
@@ -105,13 +87,10 @@ class AnswersMap(BaseModel):
         return self.last.get("_commit")
 
 
-class Template(BaseModel):
+@dataclass
+class Template:
     url: str
     ref: OptStr
-
-    class Config:
-        allow_mutation = False
-        keep_untouched = (cached_property,)
 
     @cached_property
     def _raw_config(self) -> AnyByStrDict:
@@ -215,12 +194,10 @@ class Template(BaseModel):
             return "git"
 
 
-class Subproject(BaseModel):
+@dataclass
+class Subproject:
     local_abspath: AbsolutePath
     answers_relpath: Path = Path(".copier-answers.yml")
-
-    class Config:
-        keep_untouched = (cached_property,)
 
     def is_dirty(self) -> bool:
         if self.vcs == "git":
@@ -259,24 +236,21 @@ class Subproject(BaseModel):
             return "git"
 
 
-class Worker(BaseModel):
-    answers_file: Optional[RelativePath]
+@dataclass
+class Worker:
+    answers_file: Optional[RelativePath] = None
     cleanup_on_error: bool = True
-    data: AnyByStrDict = Field(default_factory=dict)
-    dst_path: Path = Field(".")
-    envops: EnvOps = Field(default_factory=EnvOps)
+    data: AnyByStrDict = field(default_factory=dict)
+    dst_path: Path = field(default=".")
+    envops: EnvOps = field(default_factory=EnvOps)
     exclude: StrSeq = ()
     force: bool = False
     pretend: bool = False
     quiet: bool = False
     skip_if_exists: StrSeq = ()
-    src_path: OptStr
+    src_path: OptStr = None
     use_prereleases: bool = False
-    vcs_ref: OptStr
-
-    class Config:
-        allow_mutation = False
-        keep_untouched = (cached_property,)
+    vcs_ref: OptStr = None
 
     def _answers_to_remember(self) -> Mapping:
         """Get only answers that will be remembered in the copier answers file."""
@@ -323,10 +297,9 @@ class Worker(BaseModel):
                 subprocess.run(task_cmd, shell=use_shell, check=True, env=local.env)
 
     def _render_context(self) -> Mapping:
-        self_conf = self.dict()
         # Backwards compatibility
         # FIXME Remove it?
-        self_conf["answers_file"] = self.answers_relpath
+        self_conf = replace(self, answers_file=self.answers_relpath)
         return dict(
             DEFAULT_DATA,
             **self.answers.combined,
@@ -434,7 +407,7 @@ class Worker(BaseModel):
         # so we use the SandboxedEnvironment instead of the regular one.
         # Of course we still have the post-copy tasks to worry about, but at least
         # they are more visible to the final user.
-        env = SandboxedEnvironment(loader=loader, **self.envops.dict())
+        env = SandboxedEnvironment(loader=loader, **asdict(self.envops))
         default_filters = {"to_nice_yaml": to_nice_yaml}
         env.filters.update(default_filters)
         return env

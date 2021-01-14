@@ -10,6 +10,7 @@ from typing import (
     List,
     Optional,
     Sequence,
+    Tuple,
     TypeVar,
     Union,
 )
@@ -24,6 +25,7 @@ if TYPE_CHECKING:
 # simple types
 StrOrPath = Union[str, Path]
 AnyByStrDict = Dict[str, Any]
+AnyByStrDictOrTuple = Union[AnyByStrDict, Tuple[str, Any]]
 
 # sequences
 IntSeq = Sequence[int]

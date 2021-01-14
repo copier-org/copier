@@ -4,7 +4,8 @@ from hashlib import sha512
 from os import urandom
 from typing import Tuple
 
-from pydantic import BaseModel, Extra, StrictBool
+from pydantic import StrictBool
+from pydantic.dataclasses import dataclass
 
 from ..types import AnyByStrDict
 
@@ -36,7 +37,8 @@ class NoSrcPathError(UserMessageError):
     pass
 
 
-class EnvOps(BaseModel):
+@dataclass
+class EnvOps:
     """Jinja2 environment options."""
 
     autoescape: StrictBool = False
@@ -47,7 +49,3 @@ class EnvOps(BaseModel):
     variable_start_string: str = "[["
     variable_end_string: str = "]]"
     keep_trailing_newline: StrictBool = True
-
-    class Config:
-        allow_mutation = False
-        extra = Extra.allow
