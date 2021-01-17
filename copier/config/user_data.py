@@ -18,9 +18,10 @@ from questionary import unsafe_prompt
 from questionary.prompts.common import Choice
 from yamlinclude import YamlIncludeConstructor
 
+from ..errors import UserMessageError
 from ..tools import cast_str_to_bool, force_str_end, printf_exception
 from ..types import AnyByStrDict, OptStrOrPath, PathSeq, StrOrPath
-from .objects import DEFAULT_DATA, UserMessageError
+from .objects import DEFAULT_DATA
 
 __all__ = ("load_config_data", "query_user_data")
 

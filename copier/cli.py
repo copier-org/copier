@@ -23,7 +23,7 @@ from unittest.mock import patch
 from plumbum import cli, colors
 
 from . import __version__
-from .config.objects import UserMessageError
+from .errors import UserMessageError
 from .main import copy
 from .types import AnyByStrDict, List, OptStr
 

@@ -3,30 +3,47 @@ from plumbum import local
 from plumbum.cmd import git
 
 import copier
-from copier.config.objects import UserMessageError
+from copier.errors import UnsupportedVersionError
+
+from .helpers import build_file_tree
 
 
-def test_version_less_than_required(monkeypatch):
+@pytest.fixture(scope="module")
+def template_path(tmp_path_factory) -> str:
+    root = tmp_path_factory.mktemp("template")
+    build_file_tree(
+        {
+            root
+            / "copier.yaml": """\
+                _min_copier_version: "10.5.1"
+            """,
+            root / "README.md": "",
+        }
+    )
+    return str(root)
+
+
+def test_version_less_than_required(template_path, tmp_path, monkeypatch):
     monkeypatch.setattr("copier.__version__", "0.0.0a0")
-    with pytest.raises(UserMessageError):
-        make_config("./tests/demo_minimum_version")
+    with pytest.raises(UnsupportedVersionError):
+        copier.copy(template_path, tmp_path)
 
 
-def test_version_equal_required(monkeypatch):
+def test_version_equal_required(template_path, monkeypatch):
     monkeypatch.setattr("copier.__version__", "10.5.1")
     # assert no error
-    make_config("./tests/demo_minimum_version")
+    copier.copy(template_path)
 
 
-def test_version_greater_than_required(monkeypatch):
+def test_version_greater_than_required(template_path, monkeypatch):
     monkeypatch.setattr("copier.__version__", "99.99.99")
     # assert no error
-    make_config("./tests/demo_minimum_version")
+    copier.copy(template_path)
 
 
-def test_minimum_version_update(tmp_path, monkeypatch):
-    monkeypatch.setattr("copier.__version__", "99.99.99")
-    copier.copy("./tests/demo_minimum_version", tmp_path)
+def test_minimum_version_update(template_path, tmp_path, monkeypatch):
+    monkeypatch.setattr("copier.__version__", "11.0.0")
+    copier.copy(template_path, tmp_path)
 
     with local.cwd(tmp_path):
         git("init")
@@ -36,19 +53,19 @@ def test_minimum_version_update(tmp_path, monkeypatch):
         git("commit", "-m", "hello world")
 
     monkeypatch.setattr("copier.__version__", "0.0.0.post0")
-    with pytest.raises(UserMessageError):
-        make_config("./tests/demo_minimum_version", tmp_path)
+    with pytest.raises(UnsupportedVersionError):
+        copier.copy(template_path, tmp_path)
 
     monkeypatch.setattr("copier.__version__", "10.5.1")
     # assert no error
-    make_config("./tests/demo_minimum_version", tmp_path)
+    copier.copy(template_path, tmp_path)
 
     monkeypatch.setattr("copier.__version__", "99.99.99")
     # assert no error
-    make_config("./tests/demo_minimum_version", tmp_path)
+    copier.copy(template_path, tmp_path)
 
 
-def test_version_0_0_0_ignored(monkeypatch):
+def test_version_0_0_0_ignored(template_path, monkeypatch):
     monkeypatch.setattr("copier.__version__", "0.0.0")
     # assert no error
-    make_config("./tests/demo_minimum_version")
+    copier.copy(template_path)

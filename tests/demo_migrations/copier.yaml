@@ -4,8 +4,8 @@ _exclude:
   - .git
 
 _tasks:
-  - "python [[ _copier_conf.template.local_abspath / 'tasks.py' ]] 1"
-  - [python, "[[ _copier_conf.template.local_abspath / 'tasks.py' ]]", 2]
+  - "python [[ _copier_conf.src_path / 'tasks.py' ]] 1"
+  - [python, "[[ _copier_conf.src_path / 'tasks.py' ]]", 2]
 
 _migrations:
   # This migration is never executed because it's the 1st version copied, and
@@ -13,8 +13,8 @@ _migrations:
   - version: v1.0.0
     before:
       - &mig
-        - "[[ _copier_conf.template.local_abspath / 'migrations.py' ]]"
-        - "[[ _copier_conf|tojson ]]"
+        - "[[ _copier_conf.src_path / 'migrations.py' ]]"
+        - "[[ _copier_conf.json() ]]"
     after:
       - *mig
   - version: v2

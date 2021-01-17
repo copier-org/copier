@@ -2,10 +2,10 @@
 import datetime
 from hashlib import sha512
 from os import urandom
+from pathlib import Path
 from typing import Tuple
 
-from pydantic import StrictBool
-from pydantic.dataclasses import dataclass
+from pydantic.main import BaseModel
 
 from ..types import AnyByStrDict
 
@@ -29,23 +29,10 @@ DEFAULT_DATA: AnyByStrDict = {
 DEFAULT_TEMPLATES_SUFFIX = ".tmpl"
 
 
-class UserMessageError(Exception):
-    """Exit the program giving a message to the user."""
+# TODO Delete
+class ConfigData(BaseModel):
+    """A model holding configuration data."""
 
-
-class NoSrcPathError(UserMessageError):
-    pass
-
-
-@dataclass
-class EnvOps:
-    """Jinja2 environment options."""
-
-    autoescape: StrictBool = False
-    block_start_string: str = "[%"
-    block_end_string: str = "%]"
-    comment_start_string: str = "[#"
-    comment_end_string: str = "#]"
-    variable_start_string: str = "[["
-    variable_end_string: str = "]]"
-    keep_trailing_newline: StrictBool = True
+    src_path: Path
+    dst_path: Path
+    answers_file: Path = Path(".copier-answers.yml")

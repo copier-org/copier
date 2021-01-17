@@ -4,8 +4,8 @@ from typing import Tuple
 
 from packaging import version
 
+from ..errors import UnsupportedVersionError
 from ..types import AnyByStrDict
-from .objects import UserMessageError
 
 
 def filter_config(data: AnyByStrDict) -> Tuple[AnyByStrDict, AnyByStrDict]:
@@ -39,7 +39,7 @@ def verify_minimum_version(version_str: str) -> None:
         return
 
     if version.parse(__version__) < version.parse(version_str):
-        raise UserMessageError(
+        raise UnsupportedVersionError(
             f"This template requires Copier version >= {version_str}, "
             f"while your version of Copier is {__version__}."
         )

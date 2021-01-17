@@ -2,11 +2,9 @@ import pexpect
 import pytest
 import yaml
 
-from copier.config.objects import EnvOps
-
 from .helpers import COPIER_PATH, build_file_tree
 
-envops = EnvOps()
+envops = {}
 main_default = "copier"
 main_question = {"main": {"default": main_default}}
 

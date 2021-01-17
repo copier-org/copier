@@ -4,7 +4,7 @@ import sys
 import tempfile
 from collections import ChainMap
 from contextlib import suppress
-from dataclasses import asdict, field, replace
+from dataclasses import field, replace
 from functools import cached_property
 from pathlib import Path
 from shutil import rmtree
@@ -407,7 +407,7 @@ class Worker:
         # so we use the SandboxedEnvironment instead of the regular one.
         # Of course we still have the post-copy tasks to worry about, but at least
         # they are more visible to the final user.
-        env = SandboxedEnvironment(loader=loader, **asdict(self.envops))
+        env = SandboxedEnvironment(loader=loader, **self.template.envops)
         default_filters = {"to_nice_yaml": to_nice_yaml}
         env.filters.update(default_filters)
         return env
