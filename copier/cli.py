@@ -24,7 +24,7 @@ from plumbum import cli, colors
 
 from . import __version__
 from .errors import UserMessageError
-from .main import copy
+from .models import Worker
 from .types import AnyByStrDict, List, OptStr
 
 
@@ -54,6 +54,7 @@ class CopierApp(cli.Application):
         vcs_ref: Set [vcs_ref][] option.
         pretend: Set [pretend][] option.
         force: Set [force][] option.
+        skip: Set [skip_if_exists][] option.
         prereleases: Set [use_prereleases][] option.
         quiet: Set [quiet][] option.
     """
@@ -119,6 +120,12 @@ class CopierApp(cli.Application):
     force: cli.Flag = cli.Flag(
         ["-f", "--force"], help="Overwrite files that already exist, without asking"
     )
+    skip: cli.Flag = cli.SwitchAttr(
+        ["-s", "--skip"],
+        str,
+        list=True,
+        help="Skip specified files if they exist already",
+    )
     quiet: cli.Flag = cli.Flag(["-q", "--quiet"], help="Suppress status output")
     prereleases: cli.Flag = cli.Flag(
         ["-g", "--prereleases"],
@@ -141,7 +148,7 @@ class CopierApp(cli.Application):
         """
         self.data.update(value.split("=", 1) for value in values)  # type: ignore
 
-    def _copy(self, src_path: OptStr = None, dst_path: str = ".", **kwargs) -> None:
+    def _worker(self, src_path: OptStr = None, dst_path: str = ".", **kwargs) -> Worker:
         """
         Run Copier's internal API using CLI switches.
 
@@ -150,7 +157,7 @@ class CopierApp(cli.Application):
             dst_path: The path to generate the project to.
             **kwargs: Arguments passed to [`copy`][copier.main.copy].
         """
-        return copy(
+        return Worker(
             data=self.data,
             dst_path=dst_path,
             answers_file=self.answers_file,
@@ -236,12 +243,11 @@ class CopierCopySubApp(cli.Application):
             destination_path:
                 Where to generate the new subproject. It must not exist or be empty.
         """
-        self.parent._copy(
+        self.parent._worker(
             template_src,
             destination_path,
             cleanup_on_error=self.cleanup_on_error,
-            only_diff=False,
-        )
+        ).run_copy()
         return 0
 
 
@@ -279,10 +285,9 @@ class CopierUpdateSubApp(cli.Application):
                 The subproject must exist. If not specified, the currently
                 working directory is used.
         """
-        self.parent._copy(
+        self.parent._worker(
             dst_path=destination_path,
-            only_diff=True,
-        )
+        ).run_update()
         return 0
 
 

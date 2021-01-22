@@ -6,6 +6,7 @@ from collections import ChainMap
 from contextlib import suppress
 from dataclasses import field, replace
 from functools import cached_property
+from itertools import chain
 from pathlib import Path
 from shutil import rmtree
 from typing import (
@@ -169,6 +170,10 @@ class Template:
         return result
 
     @cached_property
+    def skip_if_exists(self) -> StrSeq:
+        return self.config_data.get("skip_if_exists", ())
+
+    @cached_property
     def subdirectory(self) -> str:
         return self.config_data.get("subdirectory", "")
 
@@ -327,7 +332,23 @@ class Worker:
             quiet=self.quiet,
             file_=sys.stderr,
         )
+        if self.match_skip(dst_relpath):
+            printf(
+                "skip",
+                dst_relpath,
+                style=Style.OK,
+                quiet=self.quiet,
+                file_=sys.stderr,
+            )
+            return False
         if self.force:
+            printf(
+                "force",
+                dst_relpath,
+                style=Style.WARNING,
+                quiet=self.quiet,
+                file_=sys.stderr,
+            )
             return True
         return bool(ask(f" Overwrite {dst_relpath}?", default=True))
 
@@ -339,8 +360,6 @@ class Worker:
         dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
         if dst_relpath != Path("."):
             if self.match_exclude(dst_relpath):
-                return False
-            if self.match_skip(dst_relpath) and dst_abspath.exists():
                 return False
         try:
             previous_content = dst_abspath.read_bytes()
@@ -423,7 +442,12 @@ class Worker:
 
     @cached_property
     def match_skip(self) -> Callable[[Path], bool]:
-        return self._path_matcher(map(self.render_string, self.skip_if_exists))
+        return self._path_matcher(
+            map(
+                self.render_string,
+                tuple(chain(self.skip_if_exists, self.template.skip_if_exists)),
+            )
+        )
 
     @cached_property
     def questionary(self) -> Questionary:
