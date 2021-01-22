@@ -32,22 +32,12 @@ from plumbum.cmd import git
 from plumbum.machines import local
 from pydantic.dataclasses import dataclass
 
-from copier.config.factory import filter_config, verify_minimum_version
-from copier.config.objects import (
-    DEFAULT_DATA,
-    DEFAULT_EXCLUDE,
-    DEFAULT_TEMPLATES_SUFFIX,
-    EnvOps,
-    UserMessageError,
-)
-from copier.config.user_data import (
-    Question,
-    Questionary,
-    load_config_data,
-    query_user_data,
-)
-from copier.tools import Style, printf, to_nice_yaml
-from copier.types import (
+from .config.factory import filter_config, verify_minimum_version
+from .config.objects import DEFAULT_DATA, DEFAULT_EXCLUDE, DEFAULT_TEMPLATES_SUFFIX
+from .config.user_data import Question, Questionary, load_config_data, query_user_data
+from .errors import UserMessageError
+from .tools import Style, printf, to_nice_yaml
+from .types import (
     AbsolutePath,
     AnyByStrDict,
     JSONSerializable,
@@ -55,7 +45,6 @@ from copier.types import (
     RelativePath,
     StrSeq,
 )
-
 from .vcs import clone, get_repo, is_git_repo_root
 
 
@@ -112,12 +101,28 @@ class Template:
                 return git("describe", "--tags", "--always").strip()
 
     @cached_property
+    def config_data(self) -> AnyByStrDict:
+        return filter_config(self._raw_config)[0]
+
+    @cached_property
     def default_answers(self) -> AnyByStrDict:
         return {key: value.get("default") for key, value in self.questions_data.items()}
 
     @cached_property
-    def config_data(self) -> AnyByStrDict:
-        return filter_config(self._raw_config)[0]
+    def envops(self) -> Mapping:
+        # TODO Use Jinja defaults
+        result = {
+            "autoescape": False,
+            "block_end_string": "%]",
+            "block_start_string": "[%",
+            "comment_end_string": "#]",
+            "comment_start_string": "[#",
+            "keep_trailing_newline": True,
+            "variable_end_string": "]]",
+            "variable_start_string": "[[",
+        }
+        result.update(self.config_data.get("envops", {}))
+        return result
 
     @cached_property
     def metadata(self) -> AnyByStrDict:
@@ -242,7 +247,7 @@ class Worker:
     cleanup_on_error: bool = True
     data: AnyByStrDict = field(default_factory=dict)
     dst_path: Path = field(default=".")
-    envops: EnvOps = field(default_factory=EnvOps)
+    envops: dict = field(default_factory=dict)
     exclude: StrSeq = ()
     force: bool = False
     pretend: bool = False
@@ -513,7 +518,7 @@ class Worker:
     @cached_property
     def subproject(self) -> Subproject:
         return Subproject(
-            local_abspath=self.dst_path,
+            local_abspath=self.dst_path.absolute(),
             answers_relpath=self.answers_file or ".copier-answers.yml",
         )
 

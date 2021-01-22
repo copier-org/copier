@@ -197,10 +197,3 @@ def test_templated_prompt_invalid():
         False,
         envops,
     )
-
-    # TODO: uncomment this later when EnvOps supports setting the undefined behavior
-    # envops.undefined = StrictUndefined
-    # with pytest.raises(UserMessageError):
-    #     query_user_data(
-    #         {"question": {"default": "[[ not_valid ]]"}}, {}, False, envops
-    #     )

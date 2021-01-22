@@ -160,32 +160,10 @@ def test_flags_extra_ignored():
     assert key not in confs.dict()
 
 
-# EnvOps
-@pytest.mark.parametrize(
-    "data",
-    (
-        {"autoescape": "not_a_bool"},
-        {"block_start_string": None},
-        {"block_end_string": None},
-        {"variable_start_string": None},
-        {"variable_end_string": None},
-        {"keep_trailing_newline": "not_a_bool"},
-    ),
-)
-def test_envops_bad_data(data):
-    with pytest.raises(ValidationError):
-        EnvOps(**data)
-
-
-def test_envops_good_data():
-    ops = EnvOps(**GOOD_ENV_OPS)
-    assert ops.dict() == GOOD_ENV_OPS
-
-
 # ConfigData
 def test_config_data_paths_required():
     try:
-        ConfigData(envops=EnvOps())
+        ConfigData()
     except ValidationError as e:
         assert len(e.errors()) == 2
         for i, p in enumerate(("src_path", "dst_path")):
@@ -209,7 +187,7 @@ def test_config_data_good_data(tmp_path):
         "tasks": ["echo python rulez"],
         "templates_suffix": ".tmpl",
         "cleanup_on_error": True,
-        "envops": EnvOps().dict(),
+        "envops": {},
         "force": False,
         "only_diff": True,
         "pretend": False,

@@ -9,7 +9,7 @@ from .helpers import DATA, PROJECT_TEMPLATE
 
 
 def test_render(tmp_path):
-    envops = EnvOps().dict()
+    envops = {}
     render = tools.Renderer(
         ConfigData(
             src_path=PROJECT_TEMPLATE,
