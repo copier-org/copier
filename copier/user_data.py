@@ -1,9 +1,13 @@
 """Functions used to load user data."""
-
+import datetime
 import json
 import re
 from collections import ChainMap
 from contextlib import suppress
+from dataclasses import field
+from functools import cached_property
+from hashlib import sha512
+from os import urandom
 from pathlib import Path
 from typing import Any, Callable, ChainMap as t_ChainMap, Dict, List, Union
 
@@ -13,39 +17,53 @@ from jinja2 import UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
 from prompt_toolkit.lexers import PygmentsLexer
 from pydantic import BaseModel, Field, PrivateAttr, validator
+from pydantic.dataclasses import dataclass
 from pygments.lexers.data import JsonLexer, YamlLexer
 from questionary import unsafe_prompt
 from questionary.prompts.common import Choice
 from yamlinclude import YamlIncludeConstructor
 
-from ..errors import UserMessageError
-from ..tools import cast_str_to_bool, force_str_end, printf_exception
-from ..types import AnyByStrDict, OptStrOrPath, PathSeq, StrOrPath
-from .objects import DEFAULT_DATA
+from .errors import (
+    InvalidConfigFileError,
+    InvalidTypeError,
+    MultipleConfigFilesError,
+    UserMessageError,
+)
+from .tools import cast_str_to_bool, force_str_end
+from .types import AnyByStrDict, OptStr, OptStrOrPath, StrOrPath
 
-__all__ = ("load_config_data", "query_user_data")
-
-
-class ConfigFileError(ValueError):
-    pass
-
-
-class InvalidConfigFileError(ConfigFileError):
-    def __init__(self, conf_path: Path, quiet: bool):
-        msg = str(conf_path)
-        printf_exception(self, "INVALID CONFIG FILE", msg=msg, quiet=quiet)
-        super().__init__(msg)
+DEFAULT_DATA: AnyByStrDict = {
+    "now": datetime.datetime.utcnow,
+    "make_secret": lambda: sha512(urandom(48)).hexdigest(),
+}
 
 
-class MultipleConfigFilesError(ConfigFileError):
-    def __init__(self, conf_paths: PathSeq, quiet: bool):
-        msg = str(conf_paths)
-        printf_exception(self, "MULTIPLE CONFIG FILES", msg=msg, quiet=quiet)
-        super().__init__(msg)
+@dataclass
+class AnswersMap:
+    default: AnyByStrDict = field(default_factory=dict)
+    init: AnyByStrDict = field(default_factory=dict)
+    last: AnyByStrDict = field(default_factory=dict)
+    metadata: AnyByStrDict = field(default_factory=dict)
+    user: AnyByStrDict = field(default_factory=dict)
 
+    # Private
+    local: AnyByStrDict = field(default_factory=dict, init=False)
 
-class InvalidTypeError(TypeError):
-    pass
+    @cached_property
+    def combined(self) -> t_ChainMap[str, Any]:
+        """Answers combined from different sources, sorted by priority."""
+        return ChainMap(
+            self.local,
+            self.user,
+            self.init,
+            self.metadata,
+            self.last,
+            self.default,
+            DEFAULT_DATA,
+        )
+
+    def old_commit(self) -> OptStr:
+        return self.last.get("_commit")
 
 
 class Question(BaseModel):

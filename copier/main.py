@@ -1,12 +1,489 @@
 """The main functions, used to generate or update projects."""
 
+import subprocess
+import sys
+import tempfile
+from contextlib import suppress
+from dataclasses import field, replace
+from functools import cached_property
+from itertools import chain
 from pathlib import Path
-from typing import Callable, List, Tuple
+from shutil import rmtree
+from typing import Callable, Mapping, Optional, Sequence
+from unicodedata import normalize
 
-from .models import Worker
-from .types import AnyByStrDict, OptStr, StrOrPath, StrSeq
+import pathspec
+from jinja2.loaders import FileSystemLoader
+from jinja2.sandbox import SandboxedEnvironment
+from packaging.version import InvalidVersion, Version
+from plumbum import ProcessExecutionError, colors
+from plumbum.cli.terminal import ask
+from plumbum.cmd import git
+from plumbum.machines import local
+from pydantic.dataclasses import dataclass
 
-__all__ = ("copy",)
+from .errors import UserMessageError
+from .subproject import Subproject
+from .template import Template
+from .tools import Style, printf, to_nice_yaml
+from .types import (
+    AnyByStrDict,
+    JSONSerializable,
+    OptStr,
+    RelativePath,
+    StrOrPath,
+    StrSeq,
+)
+from .user_data import DEFAULT_DATA, AnswersMap, Question, Questionary, query_user_data
+
+
+@dataclass
+class Worker:
+    answers_file: Optional[RelativePath] = None
+    cleanup_on_error: bool = True
+    data: AnyByStrDict = field(default_factory=dict)
+    dst_path: Path = field(default=".")
+    envops: dict = field(default_factory=dict)
+    exclude: StrSeq = ()
+    force: bool = False
+    pretend: bool = False
+    quiet: bool = False
+    skip_if_exists: StrSeq = ()
+    src_path: OptStr = None
+    use_prereleases: bool = False
+    vcs_ref: OptStr = None
+
+    def _answers_to_remember(self) -> Mapping:
+        """Get only answers that will be remembered in the copier answers file."""
+        # All internal values must appear first
+        answers: AnyByStrDict = {}
+        commit = self.template.commit
+        src = self.template.url
+        for key, value in (("_commit", commit), ("_src_path", src)):
+            if value is not None:
+                answers[key] = value
+        # Other data goes next
+        answers.update(
+            (k, v)
+            for (k, v) in self.answers.combined.items()
+            if not k.startswith("_")
+            and k not in self.template.secret_questions
+            and isinstance(k, JSONSerializable)
+            and isinstance(v, JSONSerializable)
+        )
+        return answers
+
+    def _execute_tasks(self, tasks: Sequence[Mapping]) -> None:
+        """Run the given tasks.
+
+        Arguments:
+            tasks: The list of tasks to run.
+        """
+        for i, task in enumerate(tasks):
+            task_cmd = task["task"]
+            use_shell = isinstance(task_cmd, str)
+            if use_shell:
+                task_cmd = self.render_string(task_cmd)
+            else:
+                task_cmd = [self.render_string(str(part)) for part in task_cmd]
+            if not self.quiet:
+                print(
+                    colors.info
+                    | f" > Running task {i + 1} of {len(tasks)}: {task_cmd}",
+                    file=sys.stderr,
+                )
+            with local.cwd(self.subproject.local_abspath), local.env(
+                **task.get("extra_env", {})
+            ):
+                subprocess.run(task_cmd, shell=use_shell, check=True, env=local.env)
+
+    def _render_context(self) -> Mapping:
+        # Backwards compatibility
+        # FIXME Remove it?
+        self_conf = replace(self, answers_file=self.answers_relpath)
+        return dict(
+            DEFAULT_DATA,
+            **self.answers.combined,
+            _copier_answers=self._answers_to_remember(),
+            _copier_conf=self_conf,
+        )
+
+    def _path_matcher(self, patterns: StrSeq) -> Callable[[Path], bool]:
+        # TODO Is normalization really needed?
+        normalized_patterns = (normalize("NFD", pattern) for pattern in patterns)
+        spec = pathspec.PathSpec.from_lines("gitwildmatch", normalized_patterns)
+        return spec.match_file
+
+    def _solve_render_conflict(self, dst_relpath: Path):
+        assert not dst_relpath.is_absolute()
+        printf(
+            "conflict",
+            dst_relpath,
+            style=Style.DANGER,
+            quiet=self.quiet,
+            file_=sys.stderr,
+        )
+        if self.match_skip(dst_relpath):
+            printf(
+                "skip",
+                dst_relpath,
+                style=Style.OK,
+                quiet=self.quiet,
+                file_=sys.stderr,
+            )
+            return False
+        if self.force:
+            printf(
+                "force",
+                dst_relpath,
+                style=Style.WARNING,
+                quiet=self.quiet,
+                file_=sys.stderr,
+            )
+            return True
+        return bool(ask(f" Overwrite {dst_relpath}?", default=True))
+
+    def _render_allowed(
+        self, dst_relpath: Path, is_dir: bool = False, expected_contents: bytes = b""
+    ) -> bool:
+        assert not dst_relpath.is_absolute()
+        assert not expected_contents or not is_dir, "Dirs cannot have expected content"
+        dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
+        if dst_relpath != Path("."):
+            if self.match_exclude(dst_relpath):
+                return False
+        try:
+            previous_content = dst_abspath.read_bytes()
+        except FileNotFoundError:
+            printf(
+                "create",
+                dst_relpath,
+                style=Style.OK,
+                quiet=self.quiet,
+                file_=sys.stderr,
+            )
+            return True
+        except IsADirectoryError:
+            if is_dir:
+                printf(
+                    "identical",
+                    dst_relpath,
+                    style=Style.IGNORE,
+                    quiet=self.quiet,
+                    file_=sys.stderr,
+                )
+                return True
+            return self._solve_render_conflict(dst_relpath)
+        else:
+            if previous_content == expected_contents:
+                printf(
+                    "identical",
+                    dst_relpath,
+                    style=Style.IGNORE,
+                    quiet=self.quiet,
+                    file_=sys.stderr,
+                )
+                return True
+            return self._solve_render_conflict(dst_relpath)
+
+    @cached_property
+    def answers(self) -> AnswersMap:
+        user = query_user_data(
+            questions_data=self.template.questions_data,
+            last_answers_data=self.subproject.last_answers,
+            forced_answers_data=self.data,
+            default_answers_data=self.template.default_answers,
+            ask_user=not self.force,
+            jinja_env=self.jinja_env,
+        )
+        return AnswersMap(
+            default=self.template.default_answers,
+            init=self.data,
+            last=self.subproject.last_answers,
+            metadata=self.template.metadata,
+            user=user,
+        )
+
+    @cached_property
+    def answers_relpath(self) -> Path:
+        return self.answers_file or self.template.answers_relpath
+
+    @cached_property
+    def all_exclusions(self) -> StrSeq:
+        return self.template.exclude + tuple(self.exclude)
+
+    @cached_property
+    def jinja_env(self) -> SandboxedEnvironment:
+        """Return a pre-configured Jinja environment."""
+        paths = [str(self.template.local_abspath)]
+        loader = FileSystemLoader(paths)
+        # We want to minimize the risk of hidden malware in the templates
+        # so we use the SandboxedEnvironment instead of the regular one.
+        # Of course we still have the post-copy tasks to worry about, but at least
+        # they are more visible to the final user.
+        env = SandboxedEnvironment(loader=loader, **self.template.envops)
+        default_filters = {"to_nice_yaml": to_nice_yaml}
+        env.filters.update(default_filters)
+        return env
+
+    @cached_property
+    def match_exclude(self) -> Callable[[Path], bool]:
+        return self._path_matcher(self.all_exclusions)
+
+    @cached_property
+    def match_skip(self) -> Callable[[Path], bool]:
+        return self._path_matcher(
+            map(
+                self.render_string,
+                tuple(chain(self.skip_if_exists, self.template.skip_if_exists)),
+            )
+        )
+
+    @cached_property
+    def questionary(self) -> Questionary:
+        result = Questionary(
+            answers_default=self.answers.default,
+            answers_forced=self.answers.init,
+            answers_last=self.answers.last,
+            answers_user=self.answers.user,
+            ask_user=not self.force,
+            env=self.jinja_env,
+        )
+        for question, details in self.template.questions_data.items():
+            # TODO Append explicitly?
+            Question(var_name=question, questionary=result, **details)
+        return result
+
+    def render_file(self, src_abspath: Path) -> None:
+        # TODO Get from main.render_file()
+        assert src_abspath.is_absolute()
+        src_relpath = src_abspath.relative_to(self.template_copy_root)
+        dst_relpath = self.render_path(src_relpath)
+        if dst_relpath is None:
+            return
+        if src_abspath.name.endswith(self.template.templates_suffix):
+            tpl = self.jinja_env.get_template(str(src_relpath))
+            new_content = tpl.render(**self._render_context()).encode()
+        else:
+            new_content = src_abspath.read_bytes()
+        if not self._render_allowed(dst_relpath, expected_contents=new_content):
+            return
+        if not self.pretend:
+            dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
+            dst_abspath.write_bytes(new_content)
+
+    def render_folder(self, src_abspath: Path) -> None:
+        """Recursively render a folder.
+
+        Args:
+            src_path:
+                Folder to be rendered. It must be an absolute path within
+                the template.
+        """
+        assert src_abspath.is_absolute()
+        src_relpath = src_abspath.relative_to(self.template_copy_root)
+        dst_relpath = self.render_path(src_relpath)
+        if dst_relpath is None:
+            return
+        if not self._render_allowed(dst_relpath, is_dir=True):
+            return
+        dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
+        if not self.pretend:
+            dst_abspath.mkdir(exist_ok=True)
+        for file in src_abspath.iterdir():
+            if file.is_dir():
+                self.render_folder(file)
+            else:
+                self.render_file(file)
+
+    def render_path(self, relpath: Path) -> Optional[Path]:
+        is_template = relpath.name.endswith(self.template.templates_suffix)
+        templated_sibling = (
+            self.template.local_abspath / f"{relpath}{self.template.templates_suffix}"
+        )
+        if templated_sibling.exists():
+            return None
+        rendered_parts = []
+        for part in relpath.parts:
+            # Skip folder if any part is rendered as an empty string
+            part = self.render_string(part)
+            if not part:
+                return None
+            rendered_parts.append(part)
+        with suppress(IndexError):
+            if is_template:
+                rendered_parts[-1] = rendered_parts[-1][
+                    : -len(self.template.templates_suffix)
+                ]
+        result = Path(*rendered_parts)
+        if not is_template:
+            templated_sibling = (
+                self.template.local_abspath
+                / f"{result}{self.template.templates_suffix}"
+            )
+            if templated_sibling.exists():
+                return None
+        return result
+
+    def render_string(self, string: str) -> str:
+        tpl = self.jinja_env.from_string(string)
+        return tpl.render(**self._render_context())
+
+    @cached_property
+    def subproject(self) -> Subproject:
+        return Subproject(
+            local_abspath=self.dst_path.absolute(),
+            answers_relpath=self.answers_file or ".copier-answers.yml",
+        )
+
+    @cached_property
+    def template(self) -> Template:
+        url = self.src_path
+        if not url:
+            if self.subproject.template is None:
+                raise TypeError("Template not found")
+            url = self.subproject.template.url
+        return Template(url=url, ref=self.vcs_ref)
+
+    @cached_property
+    def template_copy_root(self) -> Path:
+        subdir = self.render_string(self.template.subdirectory) or ""
+        return self.template.local_abspath / subdir
+
+    # Main operations
+    def run_auto(self) -> None:
+        if self.src_path:
+            return self.run_copy()
+        return self.run_update()
+
+    def run_copy(self) -> None:
+        """Generate a subproject from zero, ignoring what was in the folder."""
+        was_existing = self.subproject.local_abspath.exists()
+        if not self.quiet:
+            # TODO Unify printing tools
+            print("")  # padding space
+        src_abspath = self.template_copy_root
+        try:
+            self.render_folder(src_abspath)
+            if not self.quiet:
+                # TODO Unify printing tools
+                print("")  # padding space
+            self._execute_tasks(
+                [
+                    {"task": t, "extra_env": {"STAGE": "task"}}
+                    for t in self.template.tasks
+                ],
+            )
+        except Exception:
+            if not was_existing and self.cleanup_on_error:
+                rmtree(self.subproject.local_abspath)
+            raise
+        if not self.quiet:
+            # TODO Unify printing tools
+            print("")  # padding space
+
+    def run_update(self) -> None:
+        """Update the subproject."""
+        # Check all you need is there
+        if self.subproject.vcs != "git":
+            raise UserMessageError(
+                "Updating is only supported in git-tracked subprojects."
+            )
+        if self.subproject.is_dirty():
+            raise UserMessageError(
+                "Destination repository is dirty; cannot continue. "
+                "Please commit or stash your local changes and retry."
+            )
+        if self.subproject.template is None or self.subproject.template.ref is None:
+            raise UserMessageError(
+                "Cannot update because cannot obtain old template references "
+                f"from `{self.subproject.answers_relpath}`."
+            )
+        if self.template.commit is None:
+            raise UserMessageError(
+                "Updating is only supported in git-tracked templates."
+            )
+        downgrading = False
+        try:
+            downgrading = Version(self.subproject.template.ref) > Version(
+                self.template.commit
+            )
+        except InvalidVersion:
+            print(
+                colors.warn
+                | f"Either {self.subproject.template.ref} or {self.template.commit} is not a PEP 440 valid version.",
+                file=sys.stderr,
+            )
+        if downgrading:
+            raise UserMessageError(
+                f"Your are downgrading from {self.subproject.template.ref} to {self.template.commit}. "
+                "Downgrades are not supported."
+            )
+        # Copy old template into a temporary destination
+        with tempfile.TemporaryDirectory(prefix=f"{__name__}.update_diff.") as dst_temp:
+            old_worker = self.copy(
+                update={
+                    "dst_path": dst_temp,
+                    "data": self.answers.last,
+                    "force": True,
+                    "quiet": True,
+                    "src_path": self.subproject.template.url,
+                    "vcs_ref": self.subproject.template.commit,
+                },
+                deep=True,
+            )
+            old_worker.run_copy()
+            # Extract diff between temporary destination and real destination
+            with local.cwd(dst_temp):
+                git("init", retcode=None)
+                git("add", ".")
+                git("config", "user.name", "Copier")
+                git("config", "user.email", "copier@copier")
+                # 1st commit could fail if any pre-commit hook reformats code
+                git("commit", "--allow-empty", "-am", "dumb commit 1", retcode=None)
+                git("commit", "--allow-empty", "-am", "dumb commit 2")
+                git("config", "--unset", "user.name")
+                git("config", "--unset", "user.email")
+                git(
+                    "remote",
+                    "add",
+                    "real_dst",
+                    self.subproject.local_abspath.absolute(),
+                )
+                git("fetch", "--depth=1", "real_dst", "HEAD")
+                diff_cmd = git["diff-tree", "--unified=1", "HEAD...FETCH_HEAD"]
+                try:
+                    diff = diff_cmd("--inter-hunk-context=-1")
+                except ProcessExecutionError:
+                    print(
+                        colors.warn
+                        | "Make sure Git >= 2.24 is installed to improve updates.",
+                        file=sys.stderr,
+                    )
+                    diff = diff_cmd("--inter-hunk-context=0")
+        # Run pre-migration tasks
+        self._execute_tasks(
+            self.template.migration_tasks(
+                "before", self.subproject.template.ref, self.template.commit
+            )
+        )
+        # Clear last answers cache to load possible answers migration
+        del self.subproject.last_answers
+        del self.answers
+        # Do a normal update in final destination
+        self.run_copy()
+        # Try to apply cached diff into final destination
+        with local.cwd(self.subproject.local_abspath):
+            apply_cmd = git["apply", "--reject", "--exclude", self.answers_relpath]
+            for skip_pattern in self.skip_if_exists:
+                apply_cmd = apply_cmd["--exclude", skip_pattern]
+            (apply_cmd << diff)(retcode=None)
+        # Run post-migration tasks
+        self._execute_tasks(
+            self.template.migration_tasks(
+                "after", self.subproject.template.ref, self.template.commit
+            )
+        )
 
 
 def copy(
@@ -77,45 +554,3 @@ def copy(
     """
     worker = Worker(src_path=src_path, dst_path=dst_path, data=data or {}, **kwargs)
     worker.run_auto()
-
-
-# FIXME Refactor and delete
-def get_source_paths(
-    conf: "ConfigData",
-    folder: Path,
-    rel_folder: Path,
-    files: StrSeq,
-    render: "Renderer",
-    must_filter: Callable[[StrOrPath], bool],
-) -> List[Tuple[Path, Path]]:
-    """Get the paths to all the files to render.
-
-    Arguments:
-        conf: Configuration obtained with [`make_config`][copier.config.factory.make_config].
-        folder:
-        rel_folder: Relative path to the folder.
-        files:
-        render: The [template renderer][copier.tools.Renderer] instance.
-        must_filter: A callable telling whether to skip rendering a file.
-
-    Returns:
-        The list of files to render.
-    """
-    source_paths = []
-    files_set = set(files)
-    for src_name in files:
-        src_name = str(src_name)
-        if f"{src_name}{conf.templates_suffix}" in files_set:
-            continue
-        dst_name = (
-            src_name[: -len(conf.templates_suffix)]
-            if src_name.endswith(conf.templates_suffix)
-            else src_name
-        )
-        dst_name = render.string(dst_name)
-        rel_path = rel_folder / dst_name
-
-        if rel_folder == rel_path or must_filter(rel_path):
-            continue
-        source_paths.append((folder / src_name, rel_path))
-    return source_paths
