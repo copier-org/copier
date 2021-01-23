@@ -2,18 +2,98 @@ from pathlib import Path
 from textwrap import dedent
 
 import pexpect
+import pytest
 
 from copier import copy
 
-from .helpers import COPIER_PATH, PROJECT_TEMPLATE, Keyboard
-
-SRC = f"{PROJECT_TEMPLATE}_complex_questions"
+from .helpers import COPIER_PATH, Keyboard, build_file_tree
 
 
-def test_api(tmp_path):
+@pytest.fixture(scope="module")
+def template_path(tmp_path_factory) -> str:
+    root = tmp_path_factory.mktemp("template")
+    build_file_tree(
+        {
+            root
+            / "copier.yml": """\
+                love_me:
+                    help: I need to know it. Do you love me?
+                    type: bool
+                your_name:
+                    help: Please tell me your name.
+                    type: str
+                your_age:
+                    help: How old are you?
+                    type: int
+                your_height:
+                    help: What's your height?
+                    type: float
+                more_json_info:
+                    multiline: true
+                    type: json
+                anything_else:
+                    multiline: true
+                    help: Wanna give me any more info?
+
+                # In choices, the user will always write the choice index (1, 2, 3...)
+                choose_list:
+                    help: You see the value of the list items
+                    default: first
+                    choices:
+                        - first
+                        - second
+                        - third
+                choose_tuple:
+                    help: You see the 1st tuple item, but I get the 2nd item as a result
+                    default: second
+                    choices:
+                        - [one, first]
+                        - [two, second]
+                        - [three, third]
+                choose_dict:
+                    help: You see the dict key, but I get the dict value
+                    default: third
+                    choices:
+                        one: first
+                        two: second
+                        three: third
+                choose_number:
+                    help: This must be a number
+                    default: null
+                    type: float
+                    choices:
+                        - -1.1
+                        - 0
+                        - 1
+
+                # Simplified format is still supported
+                minutes_under_water: 10
+                optional_value: null
+            """,
+            root
+            / "results.txt.tmpl": """\
+                love_me: [[love_me|tojson]]
+                your_name: [[your_name|tojson]]
+                your_age: [[your_age|tojson]]
+                your_height: [[your_height|tojson]]
+                more_json_info: [[more_json_info|tojson]]
+                anything_else: [[anything_else|tojson]]
+                choose_list: [[choose_list|tojson]]
+                choose_tuple: [[choose_tuple|tojson]]
+                choose_dict: [[choose_dict|tojson]]
+                choose_number: [[choose_number|tojson]]
+                minutes_under_water: [[minutes_under_water|tojson]]
+                optional_value: [[optional_value|tojson]]
+            """,
+        }
+    )
+    return str(root)
+
+
+def test_api(tmp_path, template_path):
     """Test copier correctly processes advanced questions and answers through API."""
     copy(
-        SRC,
+        template_path,
         tmp_path,
         {
             "love_me": False,
@@ -27,7 +107,7 @@ def test_api(tmp_path):
     )
     results_file = tmp_path / "results.txt"
     assert results_file.read_text() == dedent(
-        """
+        """\
             love_me: false
             your_name: "LeChuck"
             your_age: 220
@@ -44,13 +124,13 @@ def test_api(tmp_path):
     )
 
 
-def test_cli_interactive(tmp_path, spawn):
+def test_cli_interactive(tmp_path, spawn, template_path):
     """Test copier correctly processes advanced questions and answers through CLI."""
     invalid = [
         "Invalid value",
         "please try again",
     ]
-    tui = spawn([COPIER_PATH, "copy", SRC, str(tmp_path)], timeout=10)
+    tui = spawn([COPIER_PATH, "copy", template_path, str(tmp_path)], timeout=10)
     tui.expect_exact(["I need to know it. Do you love me?", "love_me", "Format: bool"])
     tui.send("y")
     tui.expect_exact(["Please tell me your name.", "your_name", "Format: str"])
@@ -120,13 +200,13 @@ def test_cli_interactive(tmp_path, spawn):
     tui.expect_exact(pexpect.EOF)
     results_file = tmp_path / "results.txt"
     assert results_file.read_text() == dedent(
-        r"""
+        """\
             love_me: true
             your_name: "Guybrush Threpwood"
             your_age: 22
             your_height: 1.56
             more_json_info: {"objective": "be a pirate"}
-            anything_else: ["Want some grog?", "I\u0027d love it"]
+            anything_else: ["Want some grog?", "I\\u0027d love it"]
             choose_list: "first"
             choose_tuple: "second"
             choose_dict: "third"
@@ -137,13 +217,13 @@ def test_cli_interactive(tmp_path, spawn):
     )
 
 
-def test_api_str_data(tmp_path):
+def test_api_str_data(tmp_path, template_path):
     """Test copier when all data comes as a string.
 
     This happens i.e. when using the --data CLI argument.
     """
     copy(
-        SRC,
+        template_path,
         tmp_path,
         data={
             "love_me": "false",
@@ -158,7 +238,7 @@ def test_api_str_data(tmp_path):
     )
     results_file = tmp_path / "results.txt"
     assert results_file.read_text() == dedent(
-        r"""
+        """\
             love_me: false
             your_name: "LeChuck"
             your_age: 220
@@ -175,7 +255,9 @@ def test_api_str_data(tmp_path):
     )
 
 
-def test_cli_interatively_with_flag_data_and_type_casts(tmp_path: Path, spawn):
+def test_cli_interatively_with_flag_data_and_type_casts(
+    tmp_path: Path, spawn, template_path
+):
     """Assert how choices work when copier is invoked with --data interactively."""
     invalid = [
         "Invalid value",
@@ -189,7 +271,7 @@ def test_cli_interatively_with_flag_data_and_type_casts(tmp_path: Path, spawn):
             "--data=choose_tuple=third",
             "--data=choose_number=1",
             "copy",
-            SRC,
+            template_path,
             str(tmp_path),
         ],
         timeout=10,
@@ -229,13 +311,13 @@ def test_cli_interatively_with_flag_data_and_type_casts(tmp_path: Path, spawn):
     tui.expect_exact(pexpect.EOF)
     results_file = tmp_path / "results.txt"
     assert results_file.read_text() == dedent(
-        r"""
+        """\
             love_me: true
             your_name: "Guybrush Threpwood"
             your_age: 22
             your_height: 1.56
             more_json_info: {"objective": "be a pirate"}
-            anything_else: ["Want some grog?", "I\u0027d love it"]
+            anything_else: ["Want some grog?", "I\\u0027d love it"]
             choose_list: "second"
             choose_tuple: "third"
             choose_dict: "first"
