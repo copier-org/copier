@@ -5,13 +5,9 @@ from plumbum import local
 from pydantic import ValidationError
 
 import copier
-from copier.config.objects import DEFAULT_EXCLUDE
-from copier.config.user_data import (
-    InvalidConfigFileError,
-    MultipleConfigFilesError,
-    load_config_data,
-    load_yaml_data,
-)
+from copier.errors import InvalidConfigFileError, MultipleConfigFilesError
+from copier.template import DEFAULT_EXCLUDE
+from copier.user_data import load_config_data, load_yaml_data
 
 from .helpers import build_file_tree
 

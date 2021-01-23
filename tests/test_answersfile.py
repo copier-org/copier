@@ -3,7 +3,7 @@ from textwrap import dedent
 import pytest
 
 import copier
-from copier.config.user_data import load_answersfile_data
+from copier.user_data import load_answersfile_data
 
 from .helpers import build_file_tree
 

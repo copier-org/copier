@@ -24,7 +24,7 @@ from plumbum import cli, colors
 
 from . import __version__
 from .errors import UserMessageError
-from .models import Worker
+from .main import Worker
 from .types import AnyByStrDict, List, OptStr
 
 

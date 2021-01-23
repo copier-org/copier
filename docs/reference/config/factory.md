@@ -1,1 +1,0 @@
-::: copier.config.factory
