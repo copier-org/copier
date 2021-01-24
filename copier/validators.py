@@ -3,6 +3,10 @@ from pathlib import Path
 from pydantic.errors import _PathValueError
 
 
+class AllowArbitraryTypes:
+    arbitrary_types_allowed = True
+
+
 class PathNotAbsoluteError(_PathValueError):
     code = "path.not_absolute"
     msg_template = '"{path}" is not an absolute path'

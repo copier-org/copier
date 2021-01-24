@@ -4,7 +4,7 @@ import subprocess
 import sys
 import tempfile
 from contextlib import suppress
-from dataclasses import field, replace
+from dataclasses import asdict, field, replace
 from functools import cached_property
 from itertools import chain
 from pathlib import Path
@@ -34,7 +34,7 @@ from .types import (
     StrOrPath,
     StrSeq,
 )
-from .user_data import DEFAULT_DATA, AnswersMap, Question, Questionary, query_user_data
+from .user_data import DEFAULT_DATA, AnswersMap, Question, Questionary
 
 
 @dataclass
@@ -100,12 +100,18 @@ class Worker:
     def _render_context(self) -> Mapping:
         # Backwards compatibility
         # FIXME Remove it?
-        self_conf = replace(self, answers_file=self.answers_relpath)
+        conf = asdict(self)
+        conf.update(
+            {
+                "answers_file": self.answers_relpath,
+                "src_path": self.template.local_abspath,
+            }
+        )
         return dict(
             DEFAULT_DATA,
             **self.answers.combined,
             _copier_answers=self._answers_to_remember(),
-            _copier_conf=self_conf,
+            _copier_conf=conf,
         )
 
     def _path_matcher(self, patterns: StrSeq) -> Callable[[Path], bool]:
@@ -188,21 +194,7 @@ class Worker:
 
     @cached_property
     def answers(self) -> AnswersMap:
-        user = query_user_data(
-            questions_data=self.template.questions_data,
-            last_answers_data=self.subproject.last_answers,
-            forced_answers_data=self.data,
-            default_answers_data=self.template.default_answers,
-            ask_user=not self.force,
-            jinja_env=self.jinja_env,
-        )
-        return AnswersMap(
-            default=self.template.default_answers,
-            init=self.data,
-            last=self.subproject.last_answers,
-            metadata=self.template.metadata,
-            user=user,
-        )
+        return self.questionary.get_user_answers()
 
     @cached_property
     def answers_relpath(self) -> Path:
@@ -241,11 +233,14 @@ class Worker:
 
     @cached_property
     def questionary(self) -> Questionary:
+        answers = AnswersMap(
+            default=self.template.default_answers,
+            init=self.data,
+            last=self.subproject.last_answers,
+            metadata=self.template.metadata,
+        )
         result = Questionary(
-            answers_default=self.answers.default,
-            answers_forced=self.answers.init,
-            answers_last=self.answers.last,
-            answers_user=self.answers.user,
+            answers=answers,
             ask_user=not self.force,
             env=self.jinja_env,
         )
@@ -421,16 +416,14 @@ class Worker:
             )
         # Copy old template into a temporary destination
         with tempfile.TemporaryDirectory(prefix=f"{__name__}.update_diff.") as dst_temp:
-            old_worker = self.copy(
-                update={
-                    "dst_path": dst_temp,
-                    "data": self.answers.last,
-                    "force": True,
-                    "quiet": True,
-                    "src_path": self.subproject.template.url,
-                    "vcs_ref": self.subproject.template.commit,
-                },
-                deep=True,
+            old_worker = replace(
+                self,
+                dst_path=dst_temp,
+                data=self.subproject.last_answers,
+                force=True,
+                quiet=True,
+                src_path=self.subproject.template.url,
+                vcs_ref=self.subproject.template.commit,
             )
             old_worker.run_copy()
             # Extract diff between temporary destination and real destination
@@ -468,8 +461,9 @@ class Worker:
             )
         )
         # Clear last answers cache to load possible answers migration
-        del self.subproject.last_answers
         del self.answers
+        del self.questionary
+        del self.subproject.last_answers
         # Do a normal update in final destination
         self.run_copy()
         # Try to apply cached diff into final destination

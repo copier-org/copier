@@ -141,7 +141,7 @@ def test_skip_if_exists(tmp_path):
         force=True,
     )
 
-    assert (tmp_path / "a.noeof.txt").read_text() == "OVERWRITTEN"
+    assert (tmp_path / "a.noeof.txt").read_text() == "SKIPPED"
     assert (tmp_path / "b.noeof.txt").read_text() == "SKIPPED"
     assert (tmp_path / "meh" / "c.noeof.txt").read_text() == "SKIPPED"
 
@@ -155,7 +155,7 @@ def test_skip_if_exists_rendered_patterns(tmp_path):
         skip_if_exists=["[[ name ]]/c.noeof.txt"],
         force=True,
     )
-    assert (tmp_path / "a.noeof.txt").read_text() == "OVERWRITTEN"
+    assert (tmp_path / "a.noeof.txt").read_text() == "SKIPPED"
     assert (tmp_path / "b.noeof.txt").read_text() == "OVERWRITTEN"
     assert (tmp_path / "meh" / "c.noeof.txt").read_text() == "SKIPPED"
 

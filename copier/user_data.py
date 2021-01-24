@@ -3,9 +3,8 @@ import datetime
 import json
 import re
 from collections import ChainMap
-from contextlib import suppress
 from dataclasses import field
-from functools import cached_property
+from functools import cached_property, lru_cache
 from hashlib import sha512
 from os import urandom
 from pathlib import Path
@@ -16,12 +15,14 @@ from iteration_utilities import deepflatten
 from jinja2 import UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
 from prompt_toolkit.lexers import PygmentsLexer
-from pydantic import BaseModel, Field, PrivateAttr, validator
+from pydantic import validator
 from pydantic.dataclasses import dataclass
 from pygments.lexers.data import JsonLexer, YamlLexer
 from questionary import unsafe_prompt
 from questionary.prompts.common import Choice
 from yamlinclude import YamlIncludeConstructor
+
+from copier.validators import AllowArbitraryTypes
 
 from .errors import (
     InvalidConfigFileError,
@@ -66,7 +67,8 @@ class AnswersMap:
         return self.last.get("_commit")
 
 
-class Question(BaseModel):
+@dataclass
+class Question:
     """One question asked to the user.
 
     All attributes are init kwargs.
@@ -80,7 +82,7 @@ class Question(BaseModel):
             Default value presented to the user to make it easier to respond.
             Can be templated.
 
-        help_text:
+        help:
             Additional text printed to the user, explaining the purpose of
             this question. Can be templated.
 
@@ -116,35 +118,20 @@ class Question(BaseModel):
             boolean values.
     """
 
-    choices: Union[Dict[Any, Any], List[Any]] = Field(default_factory=list)
+    var_name: str
+    questionary: "Questionary"
+    choices: Union[Dict[Any, Any], List[Any]] = field(default_factory=list)
     default: Any = None
-    help_text: str = ""
+    help: str = ""
     multiline: Union[str, bool] = False
     placeholder: str = ""
-    questionary: "Questionary"
     secret: bool = False
-    type_name: str = ""
-    var_name: str
+    type: str = ""
     when: Union[str, bool] = True
 
-    # Private
-    _cached_choices: List[Choice] = PrivateAttr(default_factory=list)
-
-    class Config:
-        arbitrary_types_allowed = True
-
-    def __init__(self, **kwargs):
-        # Transform arguments that are named like python keywords
-        to_rename = (("help", "help_text"), ("type", "type_name"))
-        for from_, to in to_rename:
-            with suppress(KeyError):
-                kwargs.setdefault(to, kwargs.pop(from_))
-        # Infer type from default if missing
-        super().__init__(**kwargs)
+    def __post_init__(self):
+        """Autoregister question in questionary."""
         self.questionary.questions.append(self)
-
-    def __repr__(self):
-        return f"Question({self.var_name})"
 
     @validator("var_name")
     def _check_var_name(cls, v):
@@ -152,45 +139,21 @@ class Question(BaseModel):
             raise ValueError("Invalid question name")
         return v
 
-    @validator("type_name", always=True)
-    def _check_type_name(cls, v, values):
+    @validator("type", always=True)
+    def _check_type(cls, v, values):
         if v == "":
             default_type_name = type(values.get("default")).__name__
             v = default_type_name if default_type_name in CAST_STR_TO_NATIVE else "yaml"
         return v
 
-    def _generate_choices(self) -> None:
-        """Iterates choices in a format that the questionary lib likes."""
-        if self._cached_choices:
-            return
-        choices = self.choices
-        if isinstance(self.choices, dict):
-            choices = list(self.choices.items())
-        for choice in choices:
-            # If a choice is a dict, it can be used raw
-            if isinstance(choice, dict):
-                name = choice["name"]
-                value = choice["value"]
-            # ... or a value pair
-            elif isinstance(choice, (tuple, list)):
-                name, value = choice
-            # However, a choice can also be a single value...
-            else:
-                name = value = choice
-            # The name must always be a str
-            name = str(name)
-            # The value can be templated
-            value = self.render_value(value)
-            self._cached_choices.append(Choice(name, value))
-
     def get_default(self) -> Any:
         """Get the default value for this question, casted to its expected type."""
         cast_fn = self.get_cast_fn()
         try:
-            result = self.questionary.answers_forced[self.var_name]
+            result = self.questionary.answers.init[self.var_name]
         except KeyError:
             try:
-                result = self.questionary.answers_last[self.var_name]
+                result = self.questionary.answers.last[self.var_name]
             except KeyError:
                 result = self.render_value(self.default)
         result = cast_answer_type(result, cast_fn)
@@ -213,7 +176,7 @@ class Question(BaseModel):
                     return choice
             return None
         # Yes/No questions expect and return bools
-        if isinstance(default, bool) and self.type_name == "bool":
+        if isinstance(default, bool) and self.type == "bool":
             return default
         # Emptiness is expressed as an empty str
         if default is None:
@@ -221,10 +184,30 @@ class Question(BaseModel):
         # All other data has to be str
         return str(default)
 
+    @lru_cache
     def get_choices(self) -> List[Choice]:
         """Obtain choices rendered and properly formatted."""
-        self._generate_choices()
-        return self._cached_choices
+        result = []
+        choices = self.choices
+        if isinstance(self.choices, dict):
+            choices = list(self.choices.items())
+        for choice in choices:
+            # If a choice is a dict, it can be used raw
+            if isinstance(choice, dict):
+                name = choice["name"]
+                value = choice["value"]
+            # ... or a value pair
+            elif isinstance(choice, (tuple, list)):
+                name, value = choice
+            # However, a choice can also be a single value...
+            else:
+                name = value = choice
+            # The name must always be a str
+            name = str(name)
+            # The value can be templated
+            value = self.render_value(value)
+            result.append(Choice(name, value))
+        return result
 
     def filter_answer(self, answer) -> Any:
         """Cast the answer to the desired type."""
@@ -235,10 +218,10 @@ class Question(BaseModel):
     def get_message(self) -> str:
         """Get the message that will be printed to the user."""
         message = ""
-        if self.help_text:
-            rendered_help = self.render_value(self.help_text)
+        if self.help:
+            rendered_help = self.render_value(self.help)
             message = force_str_end(rendered_help)
-        message += f"{self.var_name}? Format: {self.type_name}"
+        message += f"{self.var_name}? Format: {self.type}"
         return message
 
     def get_placeholder(self) -> str:
@@ -258,7 +241,7 @@ class Question(BaseModel):
             "when": self.get_when,
         }
         questionary_type = "input"
-        if self.type_name == "bool":
+        if self.type == "bool":
             questionary_type = "confirm"
         if self.choices:
             questionary_type = "select"
@@ -266,9 +249,9 @@ class Question(BaseModel):
         if questionary_type == "input":
             if self.secret:
                 questionary_type = "password"
-            elif self.type_name == "yaml":
+            elif self.type == "yaml":
                 lexer = PygmentsLexer(YamlLexer)
-            elif self.type_name == "json":
+            elif self.type == "json":
                 lexer = PygmentsLexer(JsonLexer)
             if lexer:
                 result["lexer"] = lexer
@@ -282,7 +265,7 @@ class Question(BaseModel):
 
     def get_cast_fn(self) -> Callable:
         """Obtain function to cast user answer to desired type."""
-        type_name = self.render_value(self.type_name)
+        type_name = self.render_value(self.type)
         if type_name not in CAST_STR_TO_NATIVE:
             raise InvalidTypeError("Invalid question type")
         return CAST_STR_TO_NATIVE.get(type_name, parse_yaml_string)
@@ -308,7 +291,7 @@ class Question(BaseModel):
             # Skip on --force
             not self.questionary.ask_user
             # Skip on --data=this_question=some_answer
-            or self.var_name in self.questionary.answers_forced
+            or self.var_name in self.questionary.answers.init
         ):
             return False
         when = self.when
@@ -327,33 +310,20 @@ class Question(BaseModel):
             # value was not a string
             return value
         try:
-            return template.render(
-                **self.questionary.get_best_answers(), **DEFAULT_DATA
-            )
+            return template.render(**self.questionary.answers.combined)
         except UndefinedError as error:
             raise UserMessageError(str(error)) from error
 
 
-class Questionary(BaseModel):
+@dataclass(config=AllowArbitraryTypes)
+class Questionary:
     """An object holding all [Question][] items and user answers.
 
     All attributes are also init kwargs.
 
     Attributes:
-        answers_default:
-            Default answers as specified in the template.
-
-        answers_forced:
-            Answers forced by the user, either by an API call like
-            `data={'some_question': 'forced_answer'}` or by a CLI call like
-            `--data=some_question=forced_answer`.
-
-        answers_last:
-            Answers obtained from the `.copier-answers.yml` file.
-
-        answers_user:
-            Dict containing user answers for the current questionary. It should
-            be empty always.
+        answers:
+            [AnswersMap][] that will contain data. It will be modified.
 
         ask_user:
             Indicates if the questionary should be asked, or just forced.
@@ -365,39 +335,20 @@ class Questionary(BaseModel):
             A list containing all [Question][] objects for this [Questionary][].
     """
 
-    # TODO Use AnsersMap instead
-    answers_default: AnyByStrDict = Field(default_factory=dict)
-    answers_forced: AnyByStrDict = Field(default_factory=dict)
-    answers_last: AnyByStrDict = Field(default_factory=dict)
-    answers_user: AnyByStrDict = Field(default_factory=dict)
-    ask_user: bool = True
+    answers: AnswersMap
+    ask_user: bool
     env: SandboxedEnvironment
-    questions: List[Question] = Field(default_factory=list)
+    questions: List[Question] = field(default_factory=list)
 
-    class Config:
-        arbitrary_types_allowed = True
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-    def get_best_answers(self) -> t_ChainMap[str, Any]:
-        """Get dict-like object with the best answers for each question."""
-        return ChainMap(
-            self.answers_user,
-            self.answers_last,
-            self.answers_forced,
-            self.answers_default,
-        )
-
-    def get_answers(self) -> AnyByStrDict:
+    def get_user_answers(self) -> AnswersMap:
         """Obtain answers for all questions.
 
         It produces a TUI for querying the user if `ask_user` is true. Otherwise,
         it gets answers from other sources.
         """
-        previous_answers = self.get_best_answers()
+        previous_answers = self.answers.combined
         if self.ask_user:
-            self.answers_user = unsafe_prompt(
+            self.answers.user = unsafe_prompt(
                 (question.get_questionary_structure() for question in self.questions),
                 answers=previous_answers,
             )
@@ -407,11 +358,11 @@ class Questionary(BaseModel):
                 new_answer = question.get_default()
                 previous_answer = previous_answers.get(question.var_name)
                 if new_answer != previous_answer:
-                    self.answers_user[question.var_name] = new_answer
-        return self.answers_user
+                    self.answers.user[question.var_name] = new_answer
+        return self.answers
 
 
-Question.update_forward_refs()
+Question.__pydantic_model__.update_forward_refs()
 
 
 def load_yaml_data(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
@@ -513,24 +464,3 @@ CAST_STR_TO_NATIVE: Dict[str, Callable] = {
     "str": str,
     "yaml": parse_yaml_string,
 }
-
-
-def query_user_data(
-    questions_data: AnyByStrDict,
-    last_answers_data: AnyByStrDict,
-    forced_answers_data: AnyByStrDict,
-    default_answers_data: AnyByStrDict,
-    ask_user: bool,
-    jinja_env: SandboxedEnvironment,
-) -> AnyByStrDict:
-    """Query the user for questions given in the config file."""
-    questionary = Questionary(
-        answers_forced=forced_answers_data,
-        answers_last=last_answers_data,
-        answers_default=default_answers_data,
-        ask_user=ask_user,
-        env=jinja_env,
-    )
-    for question, details in questions_data.items():
-        Question(var_name=question, questionary=questionary, **details)
-    return questionary.get_answers()
