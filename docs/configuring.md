@@ -438,7 +438,7 @@ It makes no sense to define this in `copier.yml`.
 ### `pretend`
 
 -   Format: `bool`
--   CLI flags: `-q`, `--pretend`
+-   CLI flags: `-n`, `--pretend`
 -   Default value: `False`
 
 Run but do not make any changes.
