@@ -42,17 +42,17 @@ from .user_data import DEFAULT_DATA, AnswersMap, Question
 
 @dataclass
 class Worker:
+    src_path: OptStr = None
+    dst_path: Path = field(default=".")
     answers_file: Optional[RelativePath] = None
     cleanup_on_error: bool = True
     data: AnyByStrDict = field(default_factory=dict)
-    dst_path: Path = field(default=".")
     envops: dict = field(default_factory=dict)
     exclude: StrSeq = ()
     force: bool = False
     pretend: bool = False
     quiet: bool = False
     skip_if_exists: StrSeq = ()
-    src_path: OptStr = None
     use_prereleases: bool = False
     vcs_ref: OptStr = None
 
@@ -117,6 +117,7 @@ class Worker:
             **self.answers.combined,
             _copier_answers=self._answers_to_remember(),
             _copier_conf=conf,
+            _folder_name=self.subproject.local_abspath.name,
         )
 
     def _path_matcher(self, patterns: StrSeq) -> Callable[[Path], bool]:

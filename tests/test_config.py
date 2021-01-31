@@ -139,108 +139,60 @@ def test_multiple_config_file_error(capsys):
         {"pretend": "not_a_bool"},
         {"quiet": "not_a_bool"},
         {"force": "not_a_bool"},
-        {"skip": "not_a_bool"},
         {"cleanup_on_error": "not_a_bool"},
         {"force": True, "skip": True},
     ),
 )
 def test_flags_bad_data(data):
     with pytest.raises(ValidationError):
-        ConfigData(**data)
+        copier.Worker(**data)
 
 
-def test_flags_extra_ignored():
+def test_flags_extra_fails():
     key = "i_am_not_a_member"
     conf_data = {"src_path": "..", "dst_path": ".", key: "and_i_do_not_belong_here"}
-    confs = ConfigData(**conf_data)
-    assert key not in confs.dict()
+    with pytest.raises(TypeError):
+        copier.Worker(**conf_data)
 
 
-# ConfigData
-def test_config_data_paths_required():
-    try:
-        ConfigData()
-    except ValidationError as e:
-        assert len(e.errors()) == 2
-        for i, p in enumerate(("src_path", "dst_path")):
-            err = e.errors()[i]
-            assert err["loc"][0] == p
-            assert err["type"] == "value_error.missing"
-    else:
-        raise AssertionError()
-
-
-def test_config_data_good_data(tmp_path):
-    tmp_path = Path(tmp_path).expanduser().resolve()
-    expected = {
-        "src_path": tmp_path,
-        "commit": None,
-        "old_commit": None,
-        "dst_path": tmp_path,
-        "exclude": DEFAULT_EXCLUDE,
-        "original_src_path": None,
-        "skip_if_exists": ["skip_me"],
-        "tasks": ["echo python rulez"],
-        "templates_suffix": ".tmpl",
-        "cleanup_on_error": True,
-        "envops": {},
-        "force": False,
-        "only_diff": True,
-        "pretend": False,
-        "quiet": False,
-        "skip": False,
-        "vcs_ref": None,
-        "migrations": (),
-        "secret_questions": (),
-        "subdirectory": None,
-    }
-    conf = ConfigData(**expected)
-    conf.data["_folder_name"] = tmp_path.name
-    expected["answers_file"] = Path(".copier-answers.yml")
-    conf_dict = conf.dict()
-    for key, value in expected.items():
-        assert conf_dict[key] == value
-
-
-def test_make_config_bad_data(tmp_path):
-    with pytest.raises(ValidationError):
-        make_config("./i_do_not_exist", tmp_path)
+def test_missing_template(tmp_path):
+    with pytest.raises(ValueError):
+        copier.copy("./i_do_not_exist", tmp_path)
 
 
 def is_subdict(small, big):
     return {**big, **small} == big
 
 
-def test_make_config_good_data(tmp_path):
-    conf = make_config("./tests/demo_data", tmp_path)
-    assert conf is not None
-    assert "_folder_name" in conf.data
-    assert conf.data["_folder_name"] == tmp_path.name
-    assert conf.exclude == ["exclude1", "exclude2"]
-    assert conf.skip_if_exists == ["skip_if_exists1", "skip_if_exists2"]
-    assert conf.tasks == ["touch 1", "touch 2"]
+def test_worker_good_data(tmp_path):
+    # This test is probably useless, as it tests the what and not the how
+    conf = copier.Worker("./tests/demo_data", tmp_path)
+    assert conf._render_context()["_folder_name"] == tmp_path.name
+    assert conf.all_exclusions == ("exclude1", "exclude2")
+    assert conf.template.skip_if_exists == ["skip_if_exists1", "skip_if_exists2"]
+    assert conf.template.tasks == ["touch 1", "touch 2"]
 
 
 @pytest.mark.parametrize(
-    "test_input, expected",
+    "test_input, expected_exclusions",
     [
         # func_args > defaults
         (
             {"src_path": ".", "exclude": ["aaa"]},
-            {"exclude": list(DEFAULT_EXCLUDE) + ["aaa"]},
+            tuple(DEFAULT_EXCLUDE) + ("aaa",),
         ),
         # func_args > user_data
         (
             {"src_path": "tests/demo_data", "exclude": ["aaa"]},
-            {"exclude": ["exclude1", "exclude2", "aaa"]},
+            ("exclude1", "exclude2", "aaa"),
         ),
     ],
 )
-def test_make_config_precedence(tmp_path, test_input, expected):
-    conf = make_config(dst_path=tmp_path, vcs_ref="HEAD", **test_input)
-    assert is_subdict(expected, conf.dict())
+def test_worker_config_precedence(tmp_path, test_input, expected_exclusions):
+    conf = copier.Worker(dst_path=tmp_path, vcs_ref="HEAD", **test_input)
+    assert expected_exclusions == conf.all_exclusions
 
 
 def test_config_data_transclusion():
-    config = load_config_data("tests/demo_transclude/demo")
-    assert config["_exclude"] == ["exclude1", "exclude2"]
+    config = copier.Worker("tests/demo_transclude/demo")
+    assert config.all_exclusions == ("exclude1", "exclude2")
