@@ -239,16 +239,16 @@ def test_api_str_data(tmp_path, template_path):
     results_file = tmp_path / "results.txt"
     assert results_file.read_text() == dedent(
         """\
-            love_me: false
+            love_me: "false"
             your_name: "LeChuck"
-            your_age: 220
-            your_height: 1.9
-            more_json_info: ["bad", "guy"]
-            anything_else: {"hates": "all"}
+            your_age: "220"
+            your_height: "1.9"
+            more_json_info: "[\\"bad\\", \\"guy\\"]"
+            anything_else: "{\\u0027hates\\u0027: \\u0027all\\u0027}"
             choose_list: "first"
             choose_tuple: "second"
             choose_dict: "third"
-            choose_number: 0.0
+            choose_number: "0"
             minutes_under_water: 10
             optional_value: null
         """
@@ -321,7 +321,7 @@ def test_cli_interatively_with_flag_data_and_type_casts(
             choose_list: "second"
             choose_tuple: "third"
             choose_dict: "first"
-            choose_number: 1.0
+            choose_number: 1
             minutes_under_water: 10
             optional_value: null
         """

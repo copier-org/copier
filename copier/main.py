@@ -1,15 +1,16 @@
 """The main functions, used to generate or update projects."""
 
+import json
 import subprocess
 import sys
 import tempfile
 from contextlib import suppress
 from dataclasses import asdict, field, replace
-from functools import cached_property
+from functools import cached_property, partial
 from itertools import chain
 from pathlib import Path
 from shutil import rmtree
-from typing import Callable, Mapping, Optional, Sequence
+from typing import Callable, List, Mapping, Optional, Sequence
 from unicodedata import normalize
 
 import pathspec
@@ -21,6 +22,8 @@ from plumbum.cli.terminal import ask
 from plumbum.cmd import git
 from plumbum.machines import local
 from pydantic.dataclasses import dataclass
+from pydantic.json import pydantic_encoder
+from questionary import unsafe_prompt
 
 from .errors import UserMessageError
 from .subproject import Subproject
@@ -34,7 +37,7 @@ from .types import (
     StrOrPath,
     StrSeq,
 )
-from .user_data import DEFAULT_DATA, AnswersMap, Question, Questionary
+from .user_data import DEFAULT_DATA, AnswersMap, Question
 
 
 @dataclass
@@ -107,6 +110,8 @@ class Worker:
                 "src_path": self.template.local_abspath,
             }
         )
+        copied_conf = conf.copy()
+        conf["json"] = partial(json.dumps, copied_conf, default=pydantic_encoder)
         return dict(
             DEFAULT_DATA,
             **self.answers.combined,
@@ -194,7 +199,42 @@ class Worker:
 
     @cached_property
     def answers(self) -> AnswersMap:
-        return self.questionary.get_user_answers()
+        result = AnswersMap(
+            default=self.template.default_answers,
+            init=self.data,
+            last=self.subproject.last_answers,
+            metadata=self.template.metadata,
+        )
+        questions: List[Question] = []
+        for var_name, details in self.template.questions_data.items():
+            if var_name in result.init:
+                # Do not ask again
+                continue
+            questions.append(
+                Question(
+                    answers=result,
+                    ask_user=not self.force,
+                    jinja_env=self.jinja_env,
+                    var_name=var_name,
+                    **details,
+                )
+            )
+        if self.force:
+            # Avoid prompting to not requiring a TTy when --force
+            for question in questions:
+                new_answer = question.get_default()
+                previous_answer = result.combined.get(question.var_name)
+                if new_answer != previous_answer:
+                    result.user[question.var_name] = new_answer
+        else:
+            # Display TUI and ask user interactively
+            result.user.update(
+                unsafe_prompt(
+                    (question.get_questionary_structure() for question in questions),
+                    answers=result.combined,
+                )
+            )
+        return result
 
     @cached_property
     def answers_relpath(self) -> Path:
@@ -230,24 +270,6 @@ class Worker:
                 tuple(chain(self.skip_if_exists, self.template.skip_if_exists)),
             )
         )
-
-    @cached_property
-    def questionary(self) -> Questionary:
-        answers = AnswersMap(
-            default=self.template.default_answers,
-            init=self.data,
-            last=self.subproject.last_answers,
-            metadata=self.template.metadata,
-        )
-        result = Questionary(
-            answers=answers,
-            ask_user=not self.force,
-            env=self.jinja_env,
-        )
-        for question, details in self.template.questions_data.items():
-            # TODO Append explicitly?
-            Question(var_name=question, questionary=result, **details)
-        return result
 
     def render_file(self, src_abspath: Path) -> None:
         # TODO Get from main.render_file()
@@ -338,7 +360,7 @@ class Worker:
             if self.subproject.template is None:
                 raise TypeError("Template not found")
             url = self.subproject.template.url
-        return Template(url=url, ref=self.vcs_ref)
+        return Template(url=url, ref=self.vcs_ref, use_prereleases=self.use_prereleases)
 
     @cached_property
     def template_copy_root(self) -> Path:
@@ -461,9 +483,10 @@ class Worker:
             )
         )
         # Clear last answers cache to load possible answers migration
-        del self.answers
-        del self.questionary
-        del self.subproject.last_answers
+        with suppress(AttributeError):
+            del self.answers
+        with suppress(AttributeError):
+            del self.subproject.last_answers
         # Do a normal update in final destination
         self.run_copy()
         # Try to apply cached diff into final destination

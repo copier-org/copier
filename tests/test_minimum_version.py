@@ -29,16 +29,16 @@ def test_version_less_than_required(template_path, tmp_path, monkeypatch):
         copier.copy(template_path, tmp_path)
 
 
-def test_version_equal_required(template_path, monkeypatch):
+def test_version_equal_required(template_path, tmp_path, monkeypatch):
     monkeypatch.setattr("copier.__version__", "10.5.1")
     # assert no error
-    copier.copy(template_path)
+    copier.copy(template_path, tmp_path)
 
 
-def test_version_greater_than_required(template_path, monkeypatch):
+def test_version_greater_than_required(template_path, tmp_path, monkeypatch):
     monkeypatch.setattr("copier.__version__", "99.99.99")
     # assert no error
-    copier.copy(template_path)
+    copier.copy(template_path, tmp_path)
 
 
 def test_minimum_version_update(template_path, tmp_path, monkeypatch):
@@ -65,7 +65,7 @@ def test_minimum_version_update(template_path, tmp_path, monkeypatch):
     copier.copy(template_path, tmp_path)
 
 
-def test_version_0_0_0_ignored(template_path, monkeypatch):
+def test_version_0_0_0_ignored(template_path, tmp_path, monkeypatch):
     monkeypatch.setattr("copier.__version__", "0.0.0")
     # assert no error
-    copier.copy(template_path)
+    copier.copy(template_path, tmp_path)

@@ -4,11 +4,19 @@ import json
 import re
 from collections import ChainMap
 from dataclasses import field
-from functools import cached_property, lru_cache
+from functools import cached_property
 from hashlib import sha512
 from os import urandom
 from pathlib import Path
-from typing import Any, Callable, ChainMap as t_ChainMap, Dict, List, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    ChainMap as t_ChainMap,
+    Dict,
+    List,
+    Union,
+)
 
 import yaml
 from iteration_utilities import deepflatten
@@ -18,7 +26,6 @@ from prompt_toolkit.lexers import PygmentsLexer
 from pydantic import validator
 from pydantic.dataclasses import dataclass
 from pygments.lexers.data import JsonLexer, YamlLexer
-from questionary import unsafe_prompt
 from questionary.prompts.common import Choice
 from yamlinclude import YamlIncludeConstructor
 
@@ -33,6 +40,9 @@ from .errors import (
 from .tools import cast_str_to_bool, force_str_end
 from .types import AnyByStrDict, OptStr, OptStrOrPath, StrOrPath
 
+if TYPE_CHECKING:
+    pass
+
 DEFAULT_DATA: AnyByStrDict = {
     "now": datetime.datetime.utcnow,
     "make_secret": lambda: sha512(urandom(48)).hexdigest(),
@@ -41,14 +51,15 @@ DEFAULT_DATA: AnyByStrDict = {
 
 @dataclass
 class AnswersMap:
-    default: AnyByStrDict = field(default_factory=dict)
-    init: AnyByStrDict = field(default_factory=dict)
-    last: AnyByStrDict = field(default_factory=dict)
-    metadata: AnyByStrDict = field(default_factory=dict)
-    user: AnyByStrDict = field(default_factory=dict)
-
     # Private
     local: AnyByStrDict = field(default_factory=dict, init=False)
+
+    # Public
+    user: AnyByStrDict = field(default_factory=dict)
+    init: AnyByStrDict = field(default_factory=dict)
+    metadata: AnyByStrDict = field(default_factory=dict)
+    last: AnyByStrDict = field(default_factory=dict)
+    default: AnyByStrDict = field(default_factory=dict)
 
     @cached_property
     def combined(self) -> t_ChainMap[str, Any]:
@@ -67,7 +78,7 @@ class AnswersMap:
         return self.last.get("_commit")
 
 
-@dataclass
+@dataclass(config=AllowArbitraryTypes)
 class Question:
     """One question asked to the user.
 
@@ -95,10 +106,6 @@ class Question:
             Text that appears if there's nothing written in the input field,
             but disappears as soon as the user writes anything. Can be templated.
 
-        questionary:
-            Reference to the [Questionary][] object where this [Question][] is
-            attached.
-
         secret:
             Indicates if the question should be removed from the answers file.
             If the question type is str, it will hide user input on the screen
@@ -119,19 +126,17 @@ class Question:
     """
 
     var_name: str
-    questionary: "Questionary"
+    answers: AnswersMap
+    jinja_env: SandboxedEnvironment
     choices: Union[Dict[Any, Any], List[Any]] = field(default_factory=list)
     default: Any = None
     help: str = ""
+    ask_user: bool = False
     multiline: Union[str, bool] = False
     placeholder: str = ""
     secret: bool = False
     type: str = ""
     when: Union[str, bool] = True
-
-    def __post_init__(self):
-        """Autoregister question in questionary."""
-        self.questionary.questions.append(self)
 
     @validator("var_name")
     def _check_var_name(cls, v):
@@ -150,10 +155,10 @@ class Question:
         """Get the default value for this question, casted to its expected type."""
         cast_fn = self.get_cast_fn()
         try:
-            result = self.questionary.answers.init[self.var_name]
+            result = self.answers.init[self.var_name]
         except KeyError:
             try:
-                result = self.questionary.answers.last[self.var_name]
+                result = self.answers.last[self.var_name]
             except KeyError:
                 result = self.render_value(self.default)
         result = cast_answer_type(result, cast_fn)
@@ -171,7 +176,7 @@ class Question:
         default = self.get_default()
         # If there are choices, return the one that matches the expressed default
         if self.choices:
-            for choice in self.get_choices():
+            for choice in self._formatted_choices:
                 if choice.value == default:
                     return choice
             return None
@@ -184,8 +189,8 @@ class Question:
         # All other data has to be str
         return str(default)
 
-    @lru_cache
-    def get_choices(self) -> List[Choice]:
+    @cached_property
+    def _formatted_choices(self) -> List[Choice]:
         """Obtain choices rendered and properly formatted."""
         result = []
         choices = self.choices
@@ -245,7 +250,7 @@ class Question:
             questionary_type = "confirm"
         if self.choices:
             questionary_type = "select"
-            result["choices"] = self.get_choices()
+            result["choices"] = self._formatted_choices
         if questionary_type == "input":
             if self.secret:
                 questionary_type = "password"
@@ -289,9 +294,9 @@ class Question:
         """Get skip condition for question."""
         if (
             # Skip on --force
-            not self.questionary.ask_user
+            not self.ask_user
             # Skip on --data=this_question=some_answer
-            or self.var_name in self.questionary.answers.init
+            or self.var_name in self.answers.init
         ):
             return False
         when = self.when
@@ -305,64 +310,14 @@ class Question:
         If the value cannot be used as a template, it will be returned as is.
         """
         try:
-            template = self.questionary.env.from_string(value)
+            template = self.jinja_env.from_string(value)
         except TypeError:
             # value was not a string
             return value
         try:
-            return template.render(**self.questionary.answers.combined)
+            return template.render(**self.answers.combined)
         except UndefinedError as error:
             raise UserMessageError(str(error)) from error
-
-
-@dataclass(config=AllowArbitraryTypes)
-class Questionary:
-    """An object holding all [Question][] items and user answers.
-
-    All attributes are also init kwargs.
-
-    Attributes:
-        answers:
-            [AnswersMap][] that will contain data. It will be modified.
-
-        ask_user:
-            Indicates if the questionary should be asked, or just forced.
-
-        env:
-            The Jinja environment for rendering.
-
-        questions:
-            A list containing all [Question][] objects for this [Questionary][].
-    """
-
-    answers: AnswersMap
-    ask_user: bool
-    env: SandboxedEnvironment
-    questions: List[Question] = field(default_factory=list)
-
-    def get_user_answers(self) -> AnswersMap:
-        """Obtain answers for all questions.
-
-        It produces a TUI for querying the user if `ask_user` is true. Otherwise,
-        it gets answers from other sources.
-        """
-        previous_answers = self.answers.combined
-        if self.ask_user:
-            self.answers.user = unsafe_prompt(
-                (question.get_questionary_structure() for question in self.questions),
-                answers=previous_answers,
-            )
-        else:
-            # Avoid prompting to not requiring a TTy when --force
-            for question in self.questions:
-                new_answer = question.get_default()
-                previous_answer = previous_answers.get(question.var_name)
-                if new_answer != previous_answer:
-                    self.answers.user[question.var_name] = new_answer
-        return self.answers
-
-
-Question.__pydantic_model__.update_forward_refs()
 
 
 def load_yaml_data(conf_path: Path, quiet: bool = False) -> AnyByStrDict:

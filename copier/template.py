@@ -13,7 +13,7 @@ from pydantic.dataclasses import dataclass
 from .errors import UnsupportedVersionError
 from .types import AnyByStrDict, OptStr, StrSeq
 from .user_data import load_config_data
-from .vcs import clone, get_repo
+from .vcs import checkout_latest_tag, clone, get_repo
 
 # Default list of files in the template to exclude from the rendered project
 DEFAULT_EXCLUDE: Tuple[str, ...] = (
@@ -70,7 +70,8 @@ def verify_minimum_version(version_str: str) -> None:
 @dataclass
 class Template:
     url: str
-    ref: OptStr
+    ref: OptStr = None
+    use_prereleases: bool = False
 
     @cached_property
     def _raw_config(self) -> AnyByStrDict:
@@ -184,6 +185,8 @@ class Template:
         result = Path(self.url)
         if self.vcs == "git":
             result = Path(clone(self.url_expanded, self.ref))
+            if self.ref is None:
+                checkout_latest_tag(result, self.use_prereleases)
         if not result.is_dir():
             raise ValueError("Local template must be a directory.")
         return result.absolute()

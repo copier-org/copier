@@ -20,6 +20,7 @@ from io import StringIO
 from textwrap import dedent
 from unittest.mock import patch
 
+import yaml
 from plumbum import cli, colors
 
 from . import __version__
@@ -146,7 +147,10 @@ class CopierApp(cli.Application):
             values: The list of values to apply.
                 Each value in the list is of the following form: `NAME=VALUE`.
         """
-        self.data.update(value.split("=", 1) for value in values)  # type: ignore
+        for arg in values:
+            key, value = arg.split("=", 1)
+            value = yaml.safe_load(value)
+            self.data[key] = value
 
     def _worker(self, src_path: OptStr = None, dst_path: str = ".", **kwargs) -> Worker:
         """
