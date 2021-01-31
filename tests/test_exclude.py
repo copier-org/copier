@@ -1,4 +1,7 @@
 from pathlib import Path
+from sys import platform
+
+import pytest
 
 from copier.main import copy
 
@@ -48,6 +51,11 @@ def test_config_include(tmp_path):
     assert (dst / "copier.yml").exists()
 
 
+@pytest.mark.xfail(
+    condition=platform.system() == "Darwin",
+    reason="Mac claims to use UTF-8 filesystem, but behaves differently.",
+    strict=True,
+)
 def test_path_filter(tmp_path_factory):
     src, dst = tmp_path_factory.mktemp("src"), tmp_path_factory.mktemp("dst")
     file_excluded = {
