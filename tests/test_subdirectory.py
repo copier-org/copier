@@ -9,6 +9,14 @@ import copier
 from .helpers import build_file_tree
 
 
+def git_init(message="hello world"):
+    git("init")
+    git("config", "user.name", "Copier Test")
+    git("config", "user.email", "test@copier")
+    git("add", ".")
+    git("commit", "-m", message)
+
+
 @pytest.fixture(scope="module")
 def demo_template(tmp_path_factory):
     root = tmp_path_factory.mktemp("demo_subdirectory")
@@ -16,12 +24,18 @@ def demo_template(tmp_path_factory):
         {
             root / "api_project" / "api_readme.md": "",
             root
+            / "api_project"
+            / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
+            root
             / "conf_project"
             / "conf_readme.md": """\
                 # Demo subdirectory
 
                 Generated using previous answers `_subdirectory` value.
                 """,
+            root
+            / "conf_project"
+            / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
             root
             / "copier.yml": """\
                 choose_subdir:
@@ -34,15 +48,9 @@ def demo_template(tmp_path_factory):
             """,
         }
     )
+    with local.cwd(root):
+        git_init()
     return str(root)
-
-
-def git_init(message="hello world"):
-    git("init")
-    git("config", "user.name", "Copier Test")
-    git("config", "user.email", "test@copier")
-    git("add", ".")
-    git("commit", "-m", message)
 
 
 def test_copy_subdirectory_api_option(demo_template, tmp_path):
@@ -65,8 +73,7 @@ def test_update_subdirectory(demo_template, tmp_path):
     with local.cwd(tmp_path):
         git_init()
 
-    conf = make_config(demo_template, str(tmp_path), force=True)
-    update_diff(conf)
+    copier.copy(dst_path=tmp_path, force=True)
     assert not (tmp_path / "conf_project").exists()
     assert not (tmp_path / "api_project").exists()
     assert not (tmp_path / "api_readme.md").exists()
