@@ -6,7 +6,7 @@ import sys
 import tempfile
 from contextlib import suppress
 from dataclasses import asdict, field, replace
-from functools import cached_property, partial
+from functools import partial
 from itertools import chain
 from pathlib import Path
 from shutil import rmtree
@@ -38,6 +38,11 @@ from .types import (
     StrSeq,
 )
 from .user_data import DEFAULT_DATA, AnswersMap, Question
+
+try:
+    from functools import cached_property
+except ImportError:
+    from backports.cached_property import cached_property
 
 
 @dataclass

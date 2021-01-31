@@ -4,7 +4,6 @@ import json
 import re
 from collections import ChainMap
 from dataclasses import field
-from functools import cached_property
 from hashlib import sha512
 from os import urandom
 from pathlib import Path
@@ -39,6 +38,11 @@ from .errors import (
 )
 from .tools import cast_str_to_bool, force_str_end
 from .types import AnyByStrDict, OptStr, OptStrOrPath, StrOrPath
+
+try:
+    from functools import cached_property
+except ImportError:
+    from backports.cached_property import cached_property
 
 if TYPE_CHECKING:
     pass

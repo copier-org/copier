@@ -1,5 +1,5 @@
 """Models representing execution context of Copier."""
-from functools import cached_property
+
 from pathlib import Path
 from typing import Literal, Optional
 
@@ -11,6 +11,11 @@ from pydantic.dataclasses import dataclass
 from .template import Template
 from .types import AbsolutePath, AnyByStrDict
 from .vcs import is_git_repo_root
+
+try:
+    from functools import cached_property
+except ImportError:
+    from backports.cached_property import cached_property
 
 
 @dataclass

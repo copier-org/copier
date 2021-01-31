@@ -1,6 +1,5 @@
 """Tools related to template management."""
 from contextlib import suppress
-from functools import cached_property
 from pathlib import Path
 from typing import List, Literal, Mapping, Optional, Sequence, Set, Tuple
 
@@ -14,6 +13,11 @@ from .errors import UnsupportedVersionError
 from .types import AnyByStrDict, OptStr, StrSeq
 from .user_data import load_config_data
 from .vcs import checkout_latest_tag, clone, get_repo
+
+try:
+    from functools import cached_property
+except ImportError:
+    from backports.cached_property import cached_property
 
 # Default list of files in the template to exclude from the rendered project
 DEFAULT_EXCLUDE: Tuple[str, ...] = (
