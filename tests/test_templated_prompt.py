@@ -1,6 +1,11 @@
+from datetime import datetime
+
 import pexpect
 import pytest
 import yaml
+
+from copier import Worker
+from copier.errors import InvalidTypeError
 
 from .helpers import COPIER_PATH, build_file_tree
 
@@ -116,7 +121,7 @@ def test_templated_prompt(
         tmp_path_factory.mktemp("template"),
         tmp_path_factory.mktemp("subproject"),
     )
-    questions_combined = filter_config({**main_question, **questions_data})[1]
+    questions_combined = {**main_question, **questions_data}
     # There's always only 1 question; get its name
     question_name = questions_data.copy().popitem()[0]
     build_file_tree(
@@ -136,64 +141,84 @@ def test_templated_prompt(
     assert answers[question_name] == expected_value
 
 
-def test_templated_prompt_custom_envops(tmp_path):
-    conf = make_config("./tests/demo_templated_prompt", tmp_path, force=True)
-    assert conf.data["sentence"] == "It's over 9000!"
+def test_templated_prompt_custom_envops(tmp_path_factory):
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src
+            / "copier.yml": """
+                _envops:
+                    block_start_string: "<%"
+                    block_end_string: "%>"
+                    comment_start_string: "<#"
+                    comment_end_string: "#>"
+                    variable_start_string: "<<"
+                    variable_end_string: ">>"
 
-    conf = make_config(
-        "./tests/demo_templated_prompt", tmp_path, data={"powerlevel": 1}, force=True
+                powerlevel:
+                    type: int
+                    default: 9000
+
+                sentence:
+                    type: str
+                    default:
+                        "<% if powerlevel >= 9000 %>It's over 9000!<% else %>It's only << powerlevel >>...<%
+                        endif %>"
+            """,
+            src / "result.tmpl": "<<sentence>>",
+        }
     )
-    assert conf.data["sentence"] == "It's only 1..."
+    worker1 = Worker(str(src), dst, force=True)
+    worker1.run_copy()
+    assert (dst / "result").read_text() == "It's over 9000!"
+
+    worker2 = Worker(str(src), dst, data={"powerlevel": 1}, force=True)
+    worker2.run_copy()
+    assert (dst / "result").read_text() == "It's only 1..."
 
 
-def test_templated_prompt_builtins():
-    data = query_user_data(
-        {"question": {"default": "[[ now() ]]"}}, {}, {}, {}, False, envops
+def test_templated_prompt_builtins(tmp_path_factory):
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src
+            / "copier.yaml": """
+                question1:
+                    default: "[[ now() ]]"
+                question2:
+                    default: "[[ make_secret() ]]"
+            """,
+            src / "now.tmpl": "[[ question1 ]]",
+            src / "make_secret.tmpl": "[[ question2 ]]",
+        }
     )
+    Worker(str(src), dst, force=True).run_copy()
+    that_now = datetime.fromisoformat((dst / "now").read_text())
+    assert that_now <= datetime.now()
+    assert len((dst / "make_secret").read_text()) == 128
 
-    data = query_user_data(
-        {"question": {"default": "[[ make_secret() ]]"}},
-        {},
-        {},
-        {},
-        False,
-        envops,
+
+@pytest.mark.parametrize(
+    "questions, raises, returns",
+    (
+        ({"question": {"default": "[[ not_valid ]]"}}, None, ""),
+        ({"question": {"help": "[[ not_valid ]]"}}, None, "None"),
+        ({"question": {"type": "[[ not_valid ]]"}}, InvalidTypeError, "None"),
+        ({"question": {"choices": ["[[ not_valid ]]"]}}, None, "None"),
+    ),
+)
+def test_templated_prompt_invalid(tmp_path_factory, questions, raises, returns):
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "copier.yml": yaml.safe_dump(questions),
+            src / "result.tmpl": "[[question]]",
+        }
     )
-    assert isinstance(data["question"], str) and len(data["question"]) == 128
-
-
-def test_templated_prompt_invalid():
-    # assert no exception in non-strict mode
-    query_user_data(
-        {"question": {"default": "[[ not_valid ]]"}},
-        {},
-        {},
-        {},
-        False,
-        envops,
-    )
-
-    # assert no exception in non-strict mode
-    query_user_data(
-        {"question": {"help": "[[ not_valid ]]"}}, {}, {}, {}, False, envops
-    )
-
-    with pytest.raises(InvalidTypeError):
-        query_user_data(
-            {"question": {"type": "[[ not_valid ]]"}},
-            {},
-            {},
-            {},
-            False,
-            envops,
-        )
-
-    # assert no exception in non-strict mode
-    query_user_data(
-        {"question": {"choices": ["[[ not_valid ]]"]}},
-        {},
-        {},
-        {},
-        False,
-        envops,
-    )
+    worker = Worker(str(src), dst, force=True)
+    if raises:
+        with pytest.raises(raises):
+            worker.run_copy()
+    else:
+        worker.run_copy()
+        assert (dst / "result").read_text() == returns

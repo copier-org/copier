@@ -140,7 +140,7 @@ def test_multiple_config_file_error(capsys):
         {"quiet": "not_a_bool"},
         {"force": "not_a_bool"},
         {"cleanup_on_error": "not_a_bool"},
-        {"force": True, "skip": True},
+        {"force": True, "skip_if_exists": True},
     ),
 )
 def test_flags_bad_data(data):
