@@ -302,6 +302,11 @@ def test_update_choice(tmp_path_factory, spawn, choices):
             / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
         }
     )
+    with local.cwd(template):
+        git("init")
+        git("add", ".")
+        git("commit", "-m one")
+        git("tag", "v1")
     # Copy
     tui = spawn([COPIER_PATH, str(template), str(subproject)], timeout=10)
     tui.expect_exact(["pick_one?"])
