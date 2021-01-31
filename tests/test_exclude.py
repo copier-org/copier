@@ -1,5 +1,5 @@
+import platform
 from pathlib import Path
-from sys import platform
 
 import pytest
 
