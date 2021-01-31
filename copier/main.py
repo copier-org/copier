@@ -280,7 +280,7 @@ class Worker:
     def render_file(self, src_abspath: Path) -> None:
         # TODO Get from main.render_file()
         assert src_abspath.is_absolute()
-        src_relpath = src_abspath.relative_to(self.template.local_abspath)
+        src_relpath = src_abspath.relative_to(self.template.local_abspath).as_posix()
         src_renderpath = src_abspath.relative_to(self.template_copy_root)
         dst_relpath = self.render_path(src_renderpath)
         if dst_relpath is None:
