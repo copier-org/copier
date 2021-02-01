@@ -7,7 +7,7 @@ import yaml
 from copier import Worker
 from copier.errors import InvalidTypeError
 
-from .helpers import COPIER_PATH, build_file_tree
+from .helpers import COPIER_PATH, ISOFORMAT, build_file_tree
 
 envops = {}
 main_default = "copier"
@@ -193,7 +193,7 @@ def test_templated_prompt_builtins(tmp_path_factory):
         }
     )
     Worker(str(src), dst, force=True).run_copy()
-    that_now = datetime.fromisoformat((dst / "now").read_text())
+    that_now = datetime.strptime((dst / "now").read_text(), ISOFORMAT)
     assert that_now <= datetime.now()
     assert len((dst / "make_secret").read_text()) == 128
 
