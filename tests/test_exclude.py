@@ -52,8 +52,8 @@ def test_config_include(tmp_path):
 
 
 @pytest.mark.xfail(
-    condition=platform.system() == "Darwin",
-    reason="Mac claims to use UTF-8 filesystem, but behaves differently.",
+    condition=platform.system() in {"Darwin", "Windows"},
+    reason="OS without proper UTF-8 filesystem.",
     strict=True,
 )
 def test_path_filter(tmp_path_factory):
