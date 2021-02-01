@@ -19,6 +19,11 @@ from pydantic.validators import path_validator
 
 from copier.validators import path_is_absolute, path_is_relative
 
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
+
 if TYPE_CHECKING:
     from pydantic.typing import CallableGenerator
 
@@ -48,6 +53,7 @@ T = TypeVar("T")
 JSONSerializable = (dict, list, str, int, float, bool, type(None))
 Filters = Dict[str, Callable]
 LoaderPaths = Union[str, Iterable[str]]
+VCSTypes = Literal["git"]
 
 
 # Validated types

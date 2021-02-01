@@ -1,7 +1,7 @@
 """Models representing execution context of Copier."""
 
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Optional
 
 import yaml
 from plumbum.cmd import git
@@ -9,7 +9,7 @@ from plumbum.machines import local
 from pydantic.dataclasses import dataclass
 
 from .template import Template
-from .types import AbsolutePath, AnyByStrDict
+from .types import AbsolutePath, AnyByStrDict, VCSTypes
 from .vcs import is_git_repo_root
 
 try:
@@ -55,6 +55,6 @@ class Subproject:
             return Template(url=last_url, ref=last_ref)
 
     @cached_property
-    def vcs(self) -> Optional[Literal["git"]]:
+    def vcs(self) -> Optional[VCSTypes]:
         if is_git_repo_root(self.local_abspath):
             return "git"

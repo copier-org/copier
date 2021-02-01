@@ -1,7 +1,7 @@
 """Tools related to template management."""
 from contextlib import suppress
 from pathlib import Path
-from typing import List, Literal, Mapping, Optional, Sequence, Set, Tuple
+from typing import List, Mapping, Optional, Sequence, Set, Tuple
 
 from packaging import version
 from packaging.version import parse
@@ -10,7 +10,7 @@ from plumbum.machines import local
 from pydantic.dataclasses import dataclass
 
 from .errors import UnsupportedVersionError
-from .types import AnyByStrDict, OptStr, StrSeq
+from .types import AnyByStrDict, OptStr, StrSeq, VCSTypes
 from .user_data import load_config_data
 from .vcs import checkout_latest_tag, clone, get_repo
 
@@ -200,6 +200,6 @@ class Template:
         return get_repo(self.url) or self.url
 
     @cached_property
-    def vcs(self) -> Optional[Literal["git"]]:
+    def vcs(self) -> Optional[VCSTypes]:
         if get_repo(self.url):
             return "git"

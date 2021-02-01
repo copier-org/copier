@@ -999,7 +999,7 @@ docs = ["mkdocstrings", "mkdocs-material", "mkdocs-mermaid2-plugin"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.6.1,<3.10"
-content-hash = "da3161544c3274852ab233e13ebd7cda46663471808565ff4d8b866862e1516a"
+content-hash = "3f19b6557c1ca4e840f2b999095b64c98d6c0e7367285f0bab4c19684fe3eb11"
 
 [metadata.files]
 apipkg = [
