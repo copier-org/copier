@@ -39,7 +39,7 @@ COPIER_PATH = str(COPIER_CMD.executable)
 
 # Helper to parse back an iso-formatted datetime; needed for py3.6, where
 # datetime.datetime.fromisoformat() doesn't exist
-ISOFORMAT = "%Y-%m-%dT%H:%M:%S.%f"
+ISOFORMAT = "%Y-%m-%d %H:%M:%S.%f"
 
 
 class Keyboard(str, Enum):
