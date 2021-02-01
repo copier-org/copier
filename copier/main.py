@@ -1,6 +1,7 @@
 """The main functions, used to generate or update projects."""
 
 import json
+import platform
 import subprocess
 import sys
 import tempfile
@@ -180,7 +181,11 @@ class Worker:
                 file_=sys.stderr,
             )
             return True
-        except IsADirectoryError:
+        except (IsADirectoryError, PermissionError) as error:
+            # HACK https://bugs.python.org/issue43095
+            if isinstance(error, PermissionError):
+                if not (error.errno == 13 and platform.system() == "Windows"):
+                    raise
             if is_dir:
                 printf(
                     "identical",
