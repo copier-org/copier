@@ -77,7 +77,7 @@ def test_copy_default_advertised(tmp_path_factory, spawn, name):
         git("add", ".")
         assert "_commit: v1" in Path(".copier-answers.yml").read_text()
         git("commit", "-m", "v1")
-        tui = spawn([COPIER_PATH], timeout=10)
+        tui = spawn([COPIER_PATH], timeout=20)
         # Check what was captured
         tui.expect_exact(["in_love?", "Format: bool", "(Y/n)"])
         tui.sendline()
