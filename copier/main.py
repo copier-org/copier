@@ -46,6 +46,14 @@ except ImportError:
     from backports.cached_property import cached_property
 
 
+__all__ = (
+    "run_auto",
+    "run_copy",
+    "run_update",
+    "Worker",
+)
+
+
 @dataclass
 class Worker:
     """Copier process state manager.
@@ -680,7 +688,9 @@ def run_copy(
 
     See [Worker][copier.main.Worker] fields to understand this function's args.
     """
-    worker = Worker(src_path=src_path, dst_path=dst_path, data=data, **kwargs)
+    if data is not None:
+        kwargs["data"] = data
+    worker = Worker(src_path=src_path, dst_path=dst_path, **kwargs)
     worker.run_copy()
     return worker
 
@@ -696,7 +706,9 @@ def run_update(
 
     See [Worker][copier.main.Worker] fields to understand this function's args.
     """
-    worker = Worker(dst_path=dst_path, data=data, **kwargs)
+    if data is not None:
+        kwargs["data"] = data
+    worker = Worker(dst_path=dst_path, **kwargs)
     worker.run_update()
     return worker
 
@@ -706,70 +718,13 @@ def run_auto(
     dst_path: StrOrPath = ".",
     data: AnyByStrDict = None,
     **kwargs,
-) -> None:
-    """Uses the template in `src_path` to generate a new project at `dst_path`.
+) -> Worker:
+    """Generate or update a subproject.
 
-    This is usually the main entrypoint for API usage.
+    This is a shortcut for [run_auto][copier.main.Worker.run_auto].
 
-    Arguments:
-        src_path:
-            Absolute path to the project skeleton. May be a version control system URL.
-            If `None`, it will be taken from `dst_path/answers_file` or fail.
-
-        dst_path:
-            Absolute path to where to render the skeleton
-
-        data:
-            Optional. Data to be passed to the templates in addtion to the user data
-            from a `copier.json`.
-
-        answers_file:
-            Path where to obtain the answers recorded from the last update.
-            The path must be relative to `dst_path`.
-
-        exclude:
-            A list of names or gitignore-style patterns matching files or folders that
-            must not be copied.
-
-        skip_if_exists:
-            A list of names or gitignore-style patterns matching files or folders,
-            that are skipped if another with the same name already exists in the
-            destination folder. (It only makes sense if you are copying to a folder
-            that already exists).
-
-        tasks:
-            Optional lists of commands to run in order after finishing the copy.
-            Like in the templates files, you can use variables on the commands that
-            will be replaced by the real values before running the command.
-            If one of the commands fail, the rest of them will not run.
-
-        envops:
-            Extra options for the Jinja template environment.
-
-        pretend:
-            Run but do not make any changes.
-
-        force:
-            Overwrite files that already exist, without asking.
-
-        quiet:
-            Suppress the status output.
-
-        cleanup_on_error:
-            Remove the destination folder if Copier created it and the copy process
-            or one of the tasks fail.
-
-        vcs_ref:
-            VCS reference to checkout in the template.
-
-        only_diff:
-            Try to update only the template diff.
-
-        use_prereleases: See [use_prereleases][].
+    See [Worker][copier.main.Worker] fields to understand this function's args.
     """
-    worker = Worker(src_path=src_path, dst_path=dst_path, data=data or {}, **kwargs)
-    worker.run_auto()
-
-
-# Backwards compatibility
-copy = run_update
+    if src_path is None:
+        return run_update(dst_path, data, **kwargs)
+    return run_copy(src_path, dst_path, data, **kwargs)
