@@ -483,15 +483,22 @@ version = "0.14.0"
 description = "Automatic documentation from sources, for MkDocs."
 category = "main"
 optional = true
-python-versions = ">=3.6,<4.0"
+python-versions = "^3.6"
+develop = false
 
 [package.dependencies]
-Jinja2 = ">=2.11,<3.0"
-Markdown = ">=3.3,<4.0"
-MarkupSafe = ">=1.1,<2.0"
-mkdocs = ">=1.1,<2.0"
-pymdown-extensions = ">=6.3,<9.0"
-pytkdocs = ">=0.2.0,<0.11.0"
+Jinja2 = "^2.11"
+Markdown = "^3.3"
+MarkupSafe = "^1.1"
+mkdocs = "^1.1"
+pymdown-extensions = ">=6.3, <9.0"
+pytkdocs = ">=0.2.0, <0.11.0"
+
+[package.source]
+type = "git"
+url = "https://github.com/pawamoy/mkdocstrings.git"
+reference = "master"
+resolved_reference = "bf217e66c3b459781100d53c2a048272260b355c"
 
 [[package]]
 name = "mypy"
@@ -999,7 +1006,7 @@ docs = ["mkdocstrings", "mkdocs-material", "mkdocs-mermaid2-plugin"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.6.1,<3.10"
-content-hash = "e4be17eb4b96ecfa6d8057305001ce26104fb25d839d9769182087117d897997"
+content-hash = "162b3670241f9d3c1a511cf9fe9eef727b905a138fe6a9410aada2b7c8bb9b07"
 
 [metadata.files]
 apipkg = [
@@ -1263,10 +1270,7 @@ mkdocs-mermaid2-plugin = [
     {file = "mkdocs-mermaid2-plugin-0.5.1.tar.gz", hash = "sha256:a267b77d0e80336ca12a72851209e90a07ba86b3551fa5422f3cd2ee1886f38a"},
     {file = "mkdocs_mermaid2_plugin-0.5.1-py3-none-any.whl", hash = "sha256:03709ef450ddcbd0a07ebeee2b68d6a90e63c4611401c2d3cf8bca24e075ff3e"},
 ]
-mkdocstrings = [
-    {file = "mkdocstrings-0.14.0-py3-none-any.whl", hash = "sha256:ac821a339c53e843045d3915de208e389d48493f2612a4317cde841677bcbe48"},
-    {file = "mkdocstrings-0.14.0.tar.gz", hash = "sha256:f1b832943c4fe980fcfc17d07abfe9a8091044dbf553cb7be0ca263953130b2c"},
-]
+mkdocstrings = []
 mypy = [
     {file = "mypy-0.790-cp35-cp35m-macosx_10_6_x86_64.whl", hash = "sha256:bd03b3cf666bff8d710d633d1c56ab7facbdc204d567715cb3b9f85c6e94f669"},
     {file = "mypy-0.790-cp35-cp35m-manylinux1_x86_64.whl", hash = "sha256:2170492030f6faa537647d29945786d297e4862765f0b4ac5930ff62e300d802"},

@@ -328,7 +328,7 @@ def load_yaml_data(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
     """Load the `copier.yml` file.
 
     This is like a simple YAML load, but applying all specific quirks needed
-    for [the `copier.yml` file][the-copieryml-file].
+    for [the `copier.yml` file](configuring.md#the-copieryml-file).
 
     For example, it supports the `!include` tag with glob includes, and
     merges multiple sections.

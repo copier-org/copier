@@ -1,4 +1,4 @@
-"""The main functions, used to generate or update projects."""
+"""Main functions and classes, used to generate or update projects."""
 
 import json
 import platform
@@ -48,19 +48,84 @@ except ImportError:
 
 @dataclass
 class Worker:
-    src_path: OptStr = None
+    """Copier process state manager.
+
+    This class represents the state of a copier work, and contains methods to
+    actually produce the desired work.
+
+    To use it properly, instantiate it by filling properly all dataclass fields.
+
+    Then, execute one of its main methods, which are prefixed with `run_`:
+
+    -   [run_copy][copier.main.Worker.run_copy] to copy a subproject.
+    -   [run_update][copier.main.Worker.run_update] to update a subproject.
+    -   [run_auto][copier.main.Worker.run_auto] to let it choose whether you
+        want to copy or update the subproject.
+    """
+
+    src_path: Optional[str] = None
+    """String that can be resolved to a template path, be it local or remote.
+
+See [Template.url][copier.main.Template.url] for more details.
+
+If it is `None`, then it means that you are [updating a
+project](updating.md), and the original `src_path` will be obtained from
+[the answers file](configuring.md#the-answers-file).
+    """
+
     dst_path: Path = field(default=".")
+    """Destination path where to render the subproject."""
+
     answers_file: Optional[RelativePath] = None
-    cleanup_on_error: bool = True
-    data: AnyByStrDict = field(default_factory=dict)
-    envops: dict = field(default_factory=dict)
-    exclude: StrSeq = ()
-    force: bool = False
-    pretend: bool = False
-    quiet: bool = False
-    skip_if_exists: StrSeq = ()
-    use_prereleases: bool = False
+    """Indicates the path for [the answers file](configuring.md#the-answers-file).
+
+The path must be relative to [dst_path][copier.main.Worker.dst_path].
+
+If it is `None`, the default value will be obtained from
+[copier.template.Template.answers_relpath][].
+    """
+
     vcs_ref: OptStr = None
+    """Specify the VCS tag/commit to use in the template."""
+
+    data: AnyByStrDict = field(default_factory=dict)
+    """Answers to the questionary defined in the template."""
+
+    exclude: StrSeq = ()
+    """Additional file exclusion patterns.
+
+See [copier.template.Template.exclude][] for more details.
+    """
+
+    use_prereleases: bool = False
+    """When `True`, the template's *latest* release will consider prereleases.
+
+Otherwise, they are ignored.
+
+Useless if specifying a [vcs_ref][copier.main.Worker.vcs_ref].
+    """
+
+    skip_if_exists: StrSeq = ()
+    """Additional file skip patterns.
+
+See [copier.template.Template.skip_if_exists][] for more details.
+    """
+
+    cleanup_on_error: bool = True
+    """Delete [dst_path][copier.main.Worker.dst_path] if there's an error?
+
+It only applies when [dst_path][copier.main.Worker.dst_path] was created by
+this process. Preexisting subprojects are never cleaned up.
+    """
+
+    force: bool = False
+    """When `True`, disable all user interactions."""
+
+    pretend: bool = False
+    """When `True`, produce no real rendering."""
+
+    quiet: bool = False
+    """When `True`, disable all output."""
 
     def _answers_to_remember(self) -> Mapping:
         """Get only answers that will be remembered in the copier answers file."""
@@ -92,9 +157,9 @@ class Worker:
             task_cmd = task["task"]
             use_shell = isinstance(task_cmd, str)
             if use_shell:
-                task_cmd = self.render_string(task_cmd)
+                task_cmd = self._render_string(task_cmd)
             else:
-                task_cmd = [self.render_string(str(part)) for part in task_cmd]
+                task_cmd = [self._render_string(str(part)) for part in task_cmd]
             if not self.quiet:
                 print(
                     colors.info
@@ -107,6 +172,7 @@ class Worker:
                 subprocess.run(task_cmd, shell=use_shell, check=True, env=local.env)
 
     def _render_context(self) -> Mapping:
+        """Produce render context for Jinja."""
         # Backwards compatibility
         # FIXME Remove it?
         conf = asdict(self)
@@ -127,12 +193,17 @@ class Worker:
         )
 
     def _path_matcher(self, patterns: StrSeq) -> Callable[[Path], bool]:
+        """Produce a function that matches against specified patterns."""
         # TODO Is normalization really needed?
         normalized_patterns = (normalize("NFD", pattern) for pattern in patterns)
         spec = pathspec.PathSpec.from_lines("gitwildmatch", normalized_patterns)
         return spec.match_file
 
     def _solve_render_conflict(self, dst_relpath: Path):
+        """Properly solve render conflicts.
+
+        It can ask the user if running in interactive mode.
+        """
         assert not dst_relpath.is_absolute()
         printf(
             "conflict",
@@ -164,6 +235,7 @@ class Worker:
     def _render_allowed(
         self, dst_relpath: Path, is_dir: bool = False, expected_contents: bytes = b""
     ) -> bool:
+        """Determine if a file or directory can be rendered."""
         assert not dst_relpath.is_absolute()
         assert not expected_contents or not is_dir, "Dirs cannot have expected content"
         dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
@@ -210,6 +282,10 @@ class Worker:
 
     @cached_property
     def answers(self) -> AnswersMap:
+        """Container of all answers to the questionary.
+
+        It asks the user the 1st time it is called, if running interactively.
+        """
         result = AnswersMap(
             default=self.template.default_answers,
             init=self.data,
@@ -277,17 +353,17 @@ class Worker:
     def match_skip(self) -> Callable[[Path], bool]:
         return self._path_matcher(
             map(
-                self.render_string,
+                self._render_string,
                 tuple(chain(self.skip_if_exists, self.template.skip_if_exists)),
             )
         )
 
-    def render_file(self, src_abspath: Path) -> None:
+    def _render_file(self, src_abspath: Path) -> None:
         # TODO Get from main.render_file()
         assert src_abspath.is_absolute()
         src_relpath = src_abspath.relative_to(self.template.local_abspath).as_posix()
         src_renderpath = src_abspath.relative_to(self.template_copy_root)
-        dst_relpath = self.render_path(src_renderpath)
+        dst_relpath = self._render_path(src_renderpath)
         if dst_relpath is None:
             return
         if src_abspath.name.endswith(self.template.templates_suffix):
@@ -301,7 +377,7 @@ class Worker:
             dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
             dst_abspath.write_bytes(new_content)
 
-    def render_folder(self, src_abspath: Path) -> None:
+    def _render_folder(self, src_abspath: Path) -> None:
         """Recursively render a folder.
 
         Args:
@@ -311,7 +387,7 @@ class Worker:
         """
         assert src_abspath.is_absolute()
         src_relpath = src_abspath.relative_to(self.template_copy_root)
-        dst_relpath = self.render_path(src_relpath)
+        dst_relpath = self._render_path(src_relpath)
         if dst_relpath is None:
             return
         if not self._render_allowed(dst_relpath, is_dir=True):
@@ -321,11 +397,11 @@ class Worker:
             dst_abspath.mkdir(exist_ok=True)
         for file in src_abspath.iterdir():
             if file.is_dir():
-                self.render_folder(file)
+                self._render_folder(file)
             else:
-                self.render_file(file)
+                self._render_file(file)
 
-    def render_path(self, relpath: Path) -> Optional[Path]:
+    def _render_path(self, relpath: Path) -> Optional[Path]:
         is_template = relpath.name.endswith(self.template.templates_suffix)
         templated_sibling = (
             self.template.local_abspath / f"{relpath}{self.template.templates_suffix}"
@@ -335,7 +411,7 @@ class Worker:
         rendered_parts = []
         for part in relpath.parts:
             # Skip folder if any part is rendered as an empty string
-            part = self.render_string(part)
+            part = self._render_string(part)
             if not part:
                 return None
             rendered_parts.append(part)
@@ -354,7 +430,7 @@ class Worker:
                 return None
         return result
 
-    def render_string(self, string: str) -> str:
+    def _render_string(self, string: str) -> str:
         tpl = self.jinja_env.from_string(string)
         return tpl.render(**self._render_context())
 
@@ -376,7 +452,7 @@ class Worker:
 
     @cached_property
     def template_copy_root(self) -> Path:
-        subdir = self.render_string(self.template.subdirectory) or ""
+        subdir = self._render_string(self.template.subdirectory) or ""
         return self.template.local_abspath / subdir
 
     # Main operations
@@ -393,7 +469,7 @@ class Worker:
             print("")  # padding space
         src_abspath = self.template_copy_root
         try:
-            self.render_folder(src_abspath)
+            self._render_folder(src_abspath)
             if not self.quiet:
                 # TODO Unify printing tools
                 print("")  # padding space

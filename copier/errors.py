@@ -1,3 +1,5 @@
+"""Custom exceptions used by Copier."""
+
 from pathlib import Path
 
 from copier.types import PathSeq
@@ -14,10 +16,12 @@ class UnsupportedVersionError(UserMessageError):
 
 
 class ConfigFileError(ValueError):
-    pass
+    """Parent class defining problems with the config file."""
 
 
 class InvalidConfigFileError(ConfigFileError):
+    """Indicates that the config file is wrong."""
+
     def __init__(self, conf_path: Path, quiet: bool):
         msg = str(conf_path)
         printf_exception(self, "INVALID CONFIG FILE", msg=msg, quiet=quiet)
@@ -25,6 +29,8 @@ class InvalidConfigFileError(ConfigFileError):
 
 
 class MultipleConfigFilesError(ConfigFileError):
+    """Both copier.yml and copier.yaml found, and that's an error."""
+
     def __init__(self, conf_paths: PathSeq, quiet: bool):
         msg = str(conf_paths)
         printf_exception(self, "MULTIPLE CONFIG FILES", msg=msg, quiet=quiet)
@@ -32,4 +38,4 @@ class MultipleConfigFilesError(ConfigFileError):
 
 
 class InvalidTypeError(TypeError):
-    pass
+    """The question type is not among the supported ones."""

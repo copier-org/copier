@@ -32,7 +32,9 @@ iteration_utilities = "^0.10.1"
 jinja2 = "^2.11.2"
 mkdocs-material = {version = "^5.5.2", optional = true}
 mkdocs-mermaid2-plugin = {version = "^0.5.0", optional = true}
-mkdocstrings = {version = "^0.14.0", optional = true}
+# HACK https://github.com/pawamoy/mkdocstrings/issues/222#issuecomment-774394285
+# TODO install from Pypi when 0.15 is released
+mkdocstrings = {git = "https://github.com/pawamoy/mkdocstrings.git", rev = "master", optional = true}
 packaging = "^20.4" # packaging is needed when installing from PyPI
 pathspec = "^0.8.0"
 plumbum = "^1.6.9"
