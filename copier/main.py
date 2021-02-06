@@ -235,7 +235,18 @@ this process. Preexisting subprojects are never cleaned up.
     def _render_allowed(
         self, dst_relpath: Path, is_dir: bool = False, expected_contents: bytes = b""
     ) -> bool:
-        """Determine if a file or directory can be rendered."""
+        """Determine if a file or directory can be rendered.
+
+        Args:
+
+            dst_relpath:
+                Relative path to destination.
+            is_dir:
+                Indicate if the path must be treated as a directory or not.
+            expected_contents:
+                Used to compare existing file contents with them. Allows to know if
+                rendering is needed.
+        """
         assert not dst_relpath.is_absolute()
         assert not expected_contents or not is_dir, "Dirs cannot have expected content"
         dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
@@ -325,15 +336,27 @@ this process. Preexisting subprojects are never cleaned up.
 
     @cached_property
     def answers_relpath(self) -> Path:
+        """Obtain the proper relative path for the answers file.
+
+        It comes from:
+
+        1. User choice.
+        2. Template default.
+        3. Copier default.
+        """
         return self.answers_file or self.template.answers_relpath
 
     @cached_property
     def all_exclusions(self) -> StrSeq:
+        """Combine default, template and user-chosen exclusions."""
         return self.template.exclude + tuple(self.exclude)
 
     @cached_property
     def jinja_env(self) -> SandboxedEnvironment:
-        """Return a pre-configured Jinja environment."""
+        """Return a pre-configured Jinja environment.
+
+        Respects template settings.
+        """
         paths = [str(self.template.local_abspath)]
         loader = FileSystemLoader(paths)
         # We want to minimize the risk of hidden malware in the templates
@@ -347,10 +370,12 @@ this process. Preexisting subprojects are never cleaned up.
 
     @cached_property
     def match_exclude(self) -> Callable[[Path], bool]:
+        """Get a callable to match paths against all exclusions."""
         return self._path_matcher(self.all_exclusions)
 
     @cached_property
     def match_skip(self) -> Callable[[Path], bool]:
+        """Get a callable to match paths against all skip-if-exists patterns."""
         return self._path_matcher(
             map(
                 self._render_string,
@@ -359,6 +384,13 @@ this process. Preexisting subprojects are never cleaned up.
         )
 
     def _render_file(self, src_abspath: Path) -> None:
+        """Render one file.
+
+        Args:
+
+            src_abspath:
+                The absolute path to the file that will be rendered.
+        """
         # TODO Get from main.render_file()
         assert src_abspath.is_absolute()
         src_relpath = src_abspath.relative_to(self.template.local_abspath).as_posix()
@@ -402,6 +434,12 @@ this process. Preexisting subprojects are never cleaned up.
                 self._render_file(file)
 
     def _render_path(self, relpath: Path) -> Optional[Path]:
+        """Render one relative path.
+
+        Args:
+            relpath:
+                The relative path to be rendered. Obviously, it can be templated.
+        """
         is_template = relpath.name.endswith(self.template.templates_suffix)
         templated_sibling = (
             self.template.local_abspath / f"{relpath}{self.template.templates_suffix}"
@@ -431,11 +469,18 @@ this process. Preexisting subprojects are never cleaned up.
         return result
 
     def _render_string(self, string: str) -> str:
+        """Render one templated string.
+
+        Args:
+            string:
+                The template source string.
+        """
         tpl = self.jinja_env.from_string(string)
         return tpl.render(**self._render_context())
 
     @cached_property
     def subproject(self) -> Subproject:
+        """Get related subproject."""
         return Subproject(
             local_abspath=self.dst_path.absolute(),
             answers_relpath=self.answers_file or ".copier-answers.yml",
@@ -443,6 +488,7 @@ this process. Preexisting subprojects are never cleaned up.
 
     @cached_property
     def template(self) -> Template:
+        """Get related template."""
         url = self.src_path
         if not url:
             if self.subproject.template is None:
@@ -452,17 +498,34 @@ this process. Preexisting subprojects are never cleaned up.
 
     @cached_property
     def template_copy_root(self) -> Path:
+        """Absolute path from where to start copying.
+
+        It points to the cloned template local abspath + the rendered subdir, if any.
+        """
         subdir = self._render_string(self.template.subdirectory) or ""
         return self.template.local_abspath / subdir
 
     # Main operations
     def run_auto(self) -> None:
+        """Copy or update automatically.
+
+        If [src_path][copier.main.Worker.src_path] was supplied, execute
+        [run_copy][copier.main.Worker.run_copy].
+
+        Otherwise, execute [run_update][copier.main.Worker.run_update].
+        """
         if self.src_path:
             return self.run_copy()
         return self.run_update()
 
     def run_copy(self) -> None:
-        """Generate a subproject from zero, ignoring what was in the folder."""
+        """Generate a subproject from zero, ignoring what was in the folder.
+
+        If [dst_path][copier.main.Worker.dst_path] was missing, it will be
+        created. Otherwise, [src_path][copier.main.Worker.src_path] be rendered
+        directly into it, without worrying about evolving what was there
+        already.
+        """
         was_existing = self.subproject.local_abspath.exists()
         if not self.quiet:
             # TODO Unify printing tools
@@ -488,7 +551,21 @@ this process. Preexisting subprojects are never cleaned up.
             print("")  # padding space
 
     def run_update(self) -> None:
-        """Update the subproject."""
+        """Update the subproject.
+
+        Before running this, [dst_path][copier.main.Worker.dst_path] must exist
+        and must contain an already-applied template, with a valid [copier
+        answers](configuring.md#the-answers-file) file that points to a
+        versioned git template.
+
+        Copier will download the old template, render it with last answers,
+        download the latest version, apply it to the current subproject, and
+        compare both renders to apply a smart diff that, in practice, applies
+        the evolution of the template dynamically over the subproject.
+
+        In case of conflicts, `.rej` files will be dropped, next to the
+        conflicting ones.
+        """
         # Check all you need is there
         if self.subproject.vcs != "git":
             raise UserMessageError(
@@ -591,7 +668,40 @@ this process. Preexisting subprojects are never cleaned up.
         )
 
 
-def copy(
+def run_copy(
+    src_path: str,
+    dst_path: StrOrPath = ".",
+    data: AnyByStrDict = None,
+    **kwargs,
+) -> Worker:
+    """Copy a template to a destination, from zero.
+
+    This is a shortcut for [run_copy][copier.main.Worker.run_copy].
+
+    See [Worker][copier.main.Worker] fields to understand this function's args.
+    """
+    worker = Worker(src_path=src_path, dst_path=dst_path, data=data, **kwargs)
+    worker.run_copy()
+    return worker
+
+
+def run_update(
+    dst_path: StrOrPath = ".",
+    data: AnyByStrDict = None,
+    **kwargs,
+) -> Worker:
+    """Update a subproject, from its template.
+
+    This is a shortcut for [run_update][copier.main.Worker.run_update].
+
+    See [Worker][copier.main.Worker] fields to understand this function's args.
+    """
+    worker = Worker(dst_path=dst_path, data=data, **kwargs)
+    worker.run_update()
+    return worker
+
+
+def run_auto(
     src_path: OptStr = None,
     dst_path: StrOrPath = ".",
     data: AnyByStrDict = None,
@@ -659,3 +769,7 @@ def copy(
     """
     worker = Worker(src_path=src_path, dst_path=dst_path, data=data or {}, **kwargs)
     worker.run_auto()
+
+
+# Backwards compatibility
+copy = run_update
