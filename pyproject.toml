@@ -44,9 +44,11 @@ pyyaml = "^5.3.1"
 pyyaml-include = "^1.2"
 questionary = "^1.8.1"
 typing-extensions = {version = "^3.7.4", python = "<3.8"}
+# HACK https://github.com/pawamoy/mkdocstrings/issues/225#issuecomment-774669999
+pytkdocs = {git = "https://github.com/pawamoy/pytkdocs.git", rev = "master", optional = true}
 
 [tool.poetry.extras]
-docs = ["mkdocstrings", "mkdocs-material", "mkdocs-mermaid2-plugin"]
+docs = ["mkdocstrings", "mkdocs-material", "mkdocs-mermaid2-plugin", "pytkdocs"]
 
 [tool.poetry.dev-dependencies]
 autoflake = "^1.4"

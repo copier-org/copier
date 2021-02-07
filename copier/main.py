@@ -74,11 +74,11 @@ class Worker:
     src_path: Optional[str] = None
     """String that can be resolved to a template path, be it local or remote.
 
-See [Template.url][copier.main.Template.url] for more details.
+    See [Template.url][copier.main.Template.url] for more details.
 
-If it is `None`, then it means that you are [updating a
-project](../updating.md), and the original `src_path` will be obtained from
-[the answers file](../configuring.md#the-answers-file).
+    If it is `None`, then it means that you are [updating a
+    project](../updating.md), and the original `src_path` will be obtained from
+    [the answers file](../configuring.md#the-answers-file).
     """
 
     dst_path: Path = field(default=".")
@@ -87,10 +87,10 @@ project](../updating.md), and the original `src_path` will be obtained from
     answers_file: Optional[RelativePath] = None
     """Indicates the path for [the answers file](../configuring.md#the-answers-file).
 
-The path must be relative to [dst_path][copier.main.Worker.dst_path].
+    The path must be relative to [dst_path][copier.main.Worker.dst_path].
 
-If it is `None`, the default value will be obtained from
-[copier.template.Template.answers_relpath][].
+    If it is `None`, the default value will be obtained from
+    [copier.template.Template.answers_relpath][].
     """
 
     vcs_ref: OptStr = None
@@ -102,28 +102,28 @@ If it is `None`, the default value will be obtained from
     exclude: StrSeq = ()
     """Additional file exclusion patterns.
 
-See [copier.template.Template.exclude][] for more details.
+    See [copier.template.Template.exclude][] for more details.
     """
 
     use_prereleases: bool = False
     """Consider prereleases when detecting the *latest* one?
 
-See [copier.template.Template.use_prereleases][].
+    See [copier.template.Template.use_prereleases][].
 
-Useless if specifying a [vcs_ref][copier.main.Worker.vcs_ref].
+    Useless if specifying a [vcs_ref][copier.main.Worker.vcs_ref].
     """
 
     skip_if_exists: StrSeq = ()
     """Additional file skip patterns.
 
-See [copier.template.Template.skip_if_exists][] for more details.
+    See [copier.template.Template.skip_if_exists][] for more details.
     """
 
     cleanup_on_error: bool = True
     """Delete [dst_path][copier.main.Worker.dst_path] if there's an error?
 
-It only applies when [dst_path][copier.main.Worker.dst_path] was created by
-this process. Preexisting subprojects are never cleaned up.
+    It only applies when [dst_path][copier.main.Worker.dst_path] was created by
+    this process. Preexisting subprojects are never cleaned up.
     """
 
     force: bool = False
