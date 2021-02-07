@@ -77,15 +77,15 @@ class Worker:
 See [Template.url][copier.main.Template.url] for more details.
 
 If it is `None`, then it means that you are [updating a
-project](updating.md), and the original `src_path` will be obtained from
-[the answers file](configuring.md#the-answers-file).
+project](../updating.md), and the original `src_path` will be obtained from
+[the answers file](../configuring.md#the-answers-file).
     """
 
     dst_path: Path = field(default=".")
     """Destination path where to render the subproject."""
 
     answers_file: Optional[RelativePath] = None
-    """Indicates the path for [the answers file](configuring.md#the-answers-file).
+    """Indicates the path for [the answers file](../configuring.md#the-answers-file).
 
 The path must be relative to [dst_path][copier.main.Worker.dst_path].
 
@@ -563,7 +563,7 @@ this process. Preexisting subprojects are never cleaned up.
 
         Before running this, [dst_path][copier.main.Worker.dst_path] must exist
         and must contain an already-applied template, with a valid [copier
-        answers](configuring.md#the-answers-file) file that points to a
+        answers](../configuring.md#the-answers-file) file that points to a
         versioned git template.
 
         Copier will download the old template, render it with last answers,
