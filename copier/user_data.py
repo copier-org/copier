@@ -53,13 +53,29 @@ DEFAULT_DATA: AnyByStrDict = {
 
 @dataclass
 class AnswersMap:
+    """Object that gathers answers from different sources."""
+
     # Private
     local: AnyByStrDict = field(default_factory=dict, init=False)
+    """Local overrides to other answers."""
 
     # Public
     user: AnyByStrDict = field(default_factory=dict)
+    """Answers provided by the user, interactively."""
+
     init: AnyByStrDict = field(default_factory=dict)
+    """Answers provided on init.
+
+    This will hold those answers that come from `--data` in CLI mode, or
+    [copier.main.Worker.data][] in API mode.
+    """
+
     metadata: AnyByStrDict = field(default_factory=dict)
+    """Data used to be able to reproduce the template.
+
+    It comes from [copier.template.Template.metadata][].
+    """
+
     last: AnyByStrDict = field(default_factory=dict)
     default: AnyByStrDict = field(default_factory=dict)
 
