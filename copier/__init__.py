@@ -1,9 +1,10 @@
-"""Copier (previously known as "Voodoo")."""
-from .main import Worker, run_auto, run_copy, run_update  # noqa
+"""Copier.
 
-# Backwards compatibility
-copy = run_auto
+Docs: https://copier.readthedocs.io/
+"""
 
+from .main import *  # noqa: F401,F403
+from .main import run_auto as copy  # noqa: F401; Backwards compatibility
 
 # This version is a placeholder autoupdated by poetry-dynamic-versioning
 __version__ = "0.0.0"
