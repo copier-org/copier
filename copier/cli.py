@@ -226,7 +226,7 @@ class CopierCopySubApp(cli.Application):
         cleanup_on_error: Set [cleanup_on_error][] option.
     """
 
-    DESCRIPTION = "Copy form a template source to a destination."
+    DESCRIPTION = "Copy from a template source to a destination."
 
     cleanup_on_error: cli.Flag = cli.Flag(
         ["-C", "--no-cleanup"],

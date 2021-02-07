@@ -423,7 +423,7 @@ It makes no sense to define this in `copier.yml`.
 ### `pretend`
 
 -   Format: `bool`
--   CLI flags: `-q`, `--pretend`
+-   CLI flags: `-n`, `--pretend`
 -   Default value: `False`
 
 Run but do not make any changes.
@@ -596,8 +596,7 @@ will be the last ones he used.
 
 The file **must be called exactly `[[ _copier_conf.answers_file ]].tmpl`** (or ended
 with [your chosen suffix](#templates_suffix)) in your template's root folder) to allow
-[applying multiple templates to the same
-subproject][applying-multiple-templates-to-the-same-subproject].
+[applying multiple templates to the same subproject][applying-multiple-templates-to-the-same-subproject].
 
 The default name will be `.copier-answers.yml`, but
 [you can define a different default path for this file](#answers_file).

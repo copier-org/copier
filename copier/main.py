@@ -53,7 +53,6 @@ __all__ = (
     "Worker",
 )
 
-
 @dataclass
 class Worker:
     """Copier process state manager.
