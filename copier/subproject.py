@@ -41,8 +41,9 @@ class Subproject:
                 return bool(git("status", "--porcelain").strip())
         return False
 
-    @property
+    @cached_property
     def _raw_answers(self) -> AnyByStrDict:
+        """The last answers, loaded raw as yaml."""
         try:
             return yaml.safe_load(
                 (self.local_abspath / self.answers_relpath).read_text()
@@ -52,6 +53,7 @@ class Subproject:
 
     @cached_property
     def last_answers(self) -> AnyByStrDict:
+        """Last answers, excluding private ones (except _src_path and _commit)."""
         return {
             key: value
             for key, value in self._raw_answers.items()
@@ -60,13 +62,14 @@ class Subproject:
 
     @cached_property
     def template(self) -> Optional[Template]:
-        raw_answers = self._raw_answers
-        last_url = raw_answers.get("_src_path")
-        last_ref = raw_answers.get("_commit")
+        """Template, as it was used the last time."""
+        last_url = self.last_answers.get("_src_path")
+        last_ref = self.last_answers.get("_commit")
         if last_url:
             return Template(url=last_url, ref=last_ref)
 
     @cached_property
     def vcs(self) -> Optional[VCSTypes]:
+        """VCS type of the subproject."""
         if is_git_repo_root(self.local_abspath):
             return "git"

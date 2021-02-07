@@ -53,6 +53,7 @@ __all__ = (
     "Worker",
 )
 
+
 @dataclass
 class Worker:
     """Copier process state manager.
@@ -105,9 +106,9 @@ See [copier.template.Template.exclude][] for more details.
     """
 
     use_prereleases: bool = False
-    """When `True`, the template's *latest* release will consider prereleases.
+    """Consider prereleases when detecting the *latest* one?
 
-Otherwise, they are ignored.
+See [copier.template.Template.use_prereleases][].
 
 Useless if specifying a [vcs_ref][copier.main.Worker.vcs_ref].
     """

@@ -2,9 +2,10 @@
 
 from pathlib import Path
 
-from copier.types import PathSeq
+from pydantic.errors import _PathValueError
 
 from .tools import printf_exception
+from .types import PathSeq
 
 
 class UserMessageError(Exception):
@@ -31,7 +32,7 @@ class InvalidConfigFileError(ConfigFileError):
 class MultipleConfigFilesError(ConfigFileError):
     """Both copier.yml and copier.yaml found, and that's an error."""
 
-    def __init__(self, conf_paths: PathSeq, quiet: bool):
+    def __init__(self, conf_paths: "PathSeq", quiet: bool):
         msg = str(conf_paths)
         printf_exception(self, "MULTIPLE CONFIG FILES", msg=msg, quiet=quiet)
         super().__init__(msg)
@@ -39,3 +40,17 @@ class MultipleConfigFilesError(ConfigFileError):
 
 class InvalidTypeError(TypeError):
     """The question type is not among the supported ones."""
+
+
+class PathNotAbsoluteError(_PathValueError):
+    """The path is not absolute, but it should be."""
+
+    code = "path.not_absolute"
+    msg_template = '"{path}" is not an absolute path'
+
+
+class PathNotRelativeError(_PathValueError):
+    """The path is not relative, but it should be."""
+
+    code = "path.not_relative"
+    msg_template = '"{path}" is not a relative path'

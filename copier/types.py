@@ -1,4 +1,4 @@
-"""All complex types and annotations are declared here."""
+"""Complex types, annotations, validators."""
 
 from pathlib import Path
 from typing import (
@@ -17,8 +17,6 @@ from typing import (
 
 from pydantic.validators import path_validator
 
-from copier.validators import path_is_absolute, path_is_relative
-
 try:
     from typing import Literal
 except ImportError:
@@ -26,6 +24,7 @@ except ImportError:
 
 if TYPE_CHECKING:
     from pydantic.typing import CallableGenerator
+
 
 # simple types
 StrOrPath = Union[str, Path]
@@ -54,6 +53,27 @@ JSONSerializable = (dict, list, str, int, float, bool, type(None))
 Filters = Dict[str, Callable]
 LoaderPaths = Union[str, Iterable[str]]
 VCSTypes = Literal["git"]
+
+
+class AllowArbitraryTypes:
+    arbitrary_types_allowed = True
+
+
+# Validators
+def path_is_absolute(value: Path) -> Path:
+    if not value.is_absolute():
+        from .errors import PathNotAbsoluteError
+
+        raise PathNotAbsoluteError(path=value)
+    return value
+
+
+def path_is_relative(value: Path) -> Path:
+    if value.is_absolute():
+        from .errors import PathNotRelativeError
+
+        raise PathNotRelativeError(path=value)
+    return value
 
 
 # Validated types

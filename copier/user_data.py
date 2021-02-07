@@ -28,8 +28,6 @@ from pygments.lexers.data import JsonLexer, YamlLexer
 from questionary.prompts.common import Choice
 from yamlinclude import YamlIncludeConstructor
 
-from copier.validators import AllowArbitraryTypes
-
 from .errors import (
     InvalidConfigFileError,
     InvalidTypeError,
@@ -37,7 +35,7 @@ from .errors import (
     UserMessageError,
 )
 from .tools import cast_str_to_bool, force_str_end
-from .types import AnyByStrDict, OptStr, OptStrOrPath, StrOrPath
+from .types import AllowArbitraryTypes, AnyByStrDict, OptStr, OptStrOrPath, StrOrPath
 
 try:
     from functools import cached_property
