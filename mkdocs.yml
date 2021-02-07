@@ -19,7 +19,6 @@ nav:
       - tools.py: "reference/tools.md"
       - types.py: "reference/types.md"
       - user_data.py: "reference/user_data.md"
-      - validators.py: "reference/validators.md"
       - vcs.py: "reference/vcs.md"
   - Comparisons: comparisons.md
   - Contributing: "contributing.md"
