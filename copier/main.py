@@ -74,18 +74,18 @@ class Worker:
     src_path: Optional[str] = None
     """String that can be resolved to a template path, be it local or remote.
 
-    See [Template.url][copier.template.Template.url] for more details.
+    See [Template.url][copier.template.Template.url].
 
-    If it is `None`, then it means that you are [updating a
-    project](../updating.md), and the original `src_path` will be obtained from
-    [the answers file](../configuring.md#the-answers-file).
+    If it is `None`, then it means that you are [updating a project][updating-a-project],
+    and the original `src_path` will be obtained from
+    [the answers file][the-copier-answersyml-file].
     """
 
     dst_path: Path = field(default=".")
     """Destination path where to render the subproject."""
 
     answers_file: Optional[RelativePath] = None
-    """Indicates the path for [the answers file](../configuring.md#the-answers-file).
+    """Indicates the path for [the answers file][the-copier-answersyml-file].
 
     The path must be relative to [dst_path][copier.main.Worker.dst_path].
 
@@ -102,13 +102,13 @@ class Worker:
     exclude: StrSeq = ()
     """Additional file exclusion patterns.
 
-    See [copier.template.Template.exclude][] for more details.
+    See [exclude][].
     """
 
     use_prereleases: bool = False
     """Consider prereleases when detecting the *latest* one?
 
-    See [copier.template.Template.use_prereleases][].
+    See [use_prereleases][].
 
     Useless if specifying a [vcs_ref][copier.main.Worker.vcs_ref].
     """
@@ -116,24 +116,32 @@ class Worker:
     skip_if_exists: StrSeq = ()
     """Additional file skip patterns.
 
-    See [copier.template.Template.skip_if_exists][] for more details.
+    See [skip_if_exists][].
     """
 
     cleanup_on_error: bool = True
     """Delete [dst_path][copier.main.Worker.dst_path] if there's an error?
 
-    It only applies when [dst_path][copier.main.Worker.dst_path] was created by
-    this process. Preexisting subprojects are never cleaned up.
+    See [cleanup_on_error][].
     """
 
     force: bool = False
-    """When `True`, disable all user interactions."""
+    """When `True`, disable all user interactions.
+
+    See [force][].
+    """
 
     pretend: bool = False
-    """When `True`, produce no real rendering."""
+    """When `True`, produce no real rendering.
+
+    See [pretend][].
+    """
 
     quiet: bool = False
-    """When `True`, disable all output."""
+    """When `True`, disable all output.
+
+    See [quiet][].
+    """
 
     def _answers_to_remember(self) -> Mapping:
         """Get only answers that will be remembered in the copier answers file."""
@@ -533,6 +541,8 @@ class Worker:
         created. Otherwise, [src_path][copier.main.Worker.src_path] be rendered
         directly into it, without worrying about evolving what was there
         already.
+
+        See [generating a project][generating-a-project].
         """
         was_existing = self.subproject.local_abspath.exists()
         if not self.quiet:
@@ -559,20 +569,9 @@ class Worker:
             print("")  # padding space
 
     def run_update(self) -> None:
-        """Update the subproject.
+        """Update a subproject that was already generated.
 
-        Before running this, [dst_path][copier.main.Worker.dst_path] must exist
-        and must contain an already-applied template, with a valid [copier
-        answers](../configuring.md#the-answers-file) file that points to a
-        versioned git template.
-
-        Copier will download the old template, render it with last answers,
-        download the latest version, apply it to the current subproject, and
-        compare both renders to apply a smart diff that, in practice, applies
-        the evolution of the template dynamically over the subproject.
-
-        In case of conflicts, `.rej` files will be dropped, next to the
-        conflicting ones.
+        See [updating a project][updating-a-project].
         """
         # Check all you need is there
         if self.subproject.vcs != "git":

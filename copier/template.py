@@ -73,7 +73,10 @@ def verify_minimum_version(version_str: str) -> None:
 
 @dataclass
 class Template:
-    """Object that represents a template and its current state."""
+    """Object that represents a template and its current state.
+
+    See [configuring a template][configuring-a-template].
+    """
 
     url: str
     """Absolute origin that points to the template.

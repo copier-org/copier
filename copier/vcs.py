@@ -10,8 +10,6 @@ from plumbum.cmd import git
 
 from .types import OptBool, OptStr, StrOrPath
 
-__all__ = ("get_repo", "clone")
-
 GIT_PREFIX = ("git@", "git://", "git+")
 GIT_POSTFIX = (".git",)
 REPLACEMENTS = (
@@ -40,6 +38,19 @@ def is_git_bundle(path: Path) -> bool:
 
 
 def get_repo(url: str) -> OptStr:
+    """Transforms `url` into a git-parseable origin URL.
+
+    Args:
+        url:
+            Valid examples:
+
+            - gh:copier-org/copier
+            - gl:copier-org/copier
+            - git@github.com:copier-org/copier.git
+            - git+https://mywebsiteisagitrepo.example.com/
+            - /local/path/to/git/repo
+            - /local/path/to/git/bundle/file.bundle
+    """
     for pattern, replacement in REPLACEMENTS:
         url = re.sub(pattern, replacement, url)
     url_path = Path(url)
@@ -86,6 +97,15 @@ def checkout_latest_tag(local_repo: StrOrPath, use_prereleases: OptBool = False)
 
 
 def clone(url: str, ref: OptStr = None) -> str:
+    """Clone repo into some temporary destination.
+
+    Args:
+        url:
+            Git-parseable URL of the repo. As returned by
+            [get_repo][copier.vcs.get_repo].
+        ref:
+            Reference to checkout. For Git repos, defaults to `HEAD`.
+    """
     location = tempfile.mkdtemp(prefix=f"{__name__}.clone.")
     git("clone", "--no-checkout", url, location)
     with local.cwd(location):

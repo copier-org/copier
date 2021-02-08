@@ -66,8 +66,8 @@ class AnswersMap:
     init: AnyByStrDict = field(default_factory=dict)
     """Answers provided on init.
 
-    This will hold those answers that come from `--data` in CLI mode, or
-    [copier.main.Worker.data][] in API mode.
+    This will hold those answers that come from `--data` in
+    CLI mode ([copier.main.Worker.data][] in API mode).
     """
 
     metadata: AnyByStrDict = field(default_factory=dict)
@@ -77,7 +77,13 @@ class AnswersMap:
     """
 
     last: AnyByStrDict = field(default_factory=dict)
+    """Data from [the answers file][the-copier-answersyml-file]."""
+
     default: AnyByStrDict = field(default_factory=dict)
+    """Default data from the template.
+
+    See [copier.template.Template.default_answers][].
+    """
 
     @cached_property
     def combined(self) -> t_ChainMap[str, Any]:
@@ -342,7 +348,7 @@ def load_yaml_data(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
     """Load the `copier.yml` file.
 
     This is like a simple YAML load, but applying all specific quirks needed
-    for [the `copier.yml` file](../configuring.md#the-copieryml-file).
+    for [the `copier.yml` file][the-copieryml-file].
 
     For example, it supports the `!include` tag with glob includes, and
     merges multiple sections.

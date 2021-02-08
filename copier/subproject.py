@@ -29,7 +29,7 @@ class Subproject:
     """Absolute path on local disk pointing to the subproject root folder."""
 
     answers_relpath: Path = Path(".copier-answers.yml")
-    """Relative path to [the answers file](../configuring.md#the-answers-file)."""
+    """Relative path to [the answers file][the-copier-answersyml-file]."""
 
     def is_dirty(self) -> bool:
         """Indicates if the local template root is dirty.
