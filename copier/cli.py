@@ -159,7 +159,7 @@ class CopierApp(cli.Application):
         Arguments:
             src_path: The source path of the template to generate the project from.
             dst_path: The path to generate the project to.
-            **kwargs: Arguments passed to [`copy`][copier.main.copy].
+            **kwargs: Arguments passed to [Worker][copier.main.Worker].
         """
         return Worker(
             data=self.data,
@@ -236,7 +236,7 @@ class CopierCopySubApp(cli.Application):
 
     @handle_exceptions
     def main(self, template_src: str, destination_path: str) -> int:
-        """Call [`copy`][copier.main.copy] in copy mode.
+        """Call [run_copy][copier.main.Worker.run_copy].
 
         Params:
             template_src:
@@ -279,7 +279,7 @@ class CopierUpdateSubApp(cli.Application):
 
     @handle_exceptions
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
-        """Call [`copy`][copier.main.copy] in update mode.
+        """Call [run_update][copier.main.Worker.run_update].
 
         Parameters:
             destination_path:
