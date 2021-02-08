@@ -74,7 +74,7 @@ class Worker:
     src_path: Optional[str] = None
     """String that can be resolved to a template path, be it local or remote.
 
-    See [Template.url][copier.main.Template.url] for more details.
+    See [Template.url][copier.template.Template.url] for more details.
 
     If it is `None`, then it means that you are [updating a
     project](../updating.md), and the original `src_path` will be obtained from

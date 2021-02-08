@@ -41,7 +41,7 @@ class Subproject:
                 return bool(git("status", "--porcelain").strip())
         return False
 
-    @cached_property
+    @property
     def _raw_answers(self) -> AnyByStrDict:
         """The last answers, loaded raw as yaml."""
         try:
