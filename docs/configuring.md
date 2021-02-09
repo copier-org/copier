@@ -290,6 +290,32 @@ is overriden, and don't ask user anything else:
 copier -fd 'user_name=Manuel Calavera' copy template destination
 ```
 
+### `envops`
+
+-   Format: `dict`
+-   CLI flags: N/A
+-   Default value:
+
+    ```yaml
+    {
+        "autoescape": False,
+        "block_end_string": "%]",
+        "block_start_string": "[%",
+        "comment_end_string": "#]",
+        "comment_start_string": "[#",
+        "keep_trailing_newline": True,
+        "variable_end_string": "]]",
+        "variable_start_string": "[[",
+    }
+    ```
+
+Configurations for the Jinja environment.
+
+These defaults are different from upstream Jinja's.
+
+See [upstream docs](https://jinja.palletsprojects.com/en/2.11.x/api/#jinja2.Environment)
+to know available options.
+
 ### `exclude`
 
 -   Format: `List[str]`

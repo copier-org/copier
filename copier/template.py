@@ -112,7 +112,10 @@ class Template:
 
     @cached_property
     def _raw_config(self) -> AnyByStrDict:
-        """Get template configuration, raw."""
+        """Get template configuration, raw.
+
+        It reads [the `copier.yml` file][the-copieryml-file].
+        """
         result = load_config_data(self.local_abspath)
         with suppress(KeyError):
             verify_minimum_version(result["_min_copier_version"])
@@ -123,6 +126,8 @@ class Template:
         """Get the answers file relative path, as specified in the template.
 
         If not specified, returns the default `.copier-answers.yml`.
+
+        See [answers_file][].
         """
         result = Path(self.config_data.get("answers_file", ".copier-answers.yml"))
         assert not result.is_absolute()
@@ -137,7 +142,11 @@ class Template:
 
     @cached_property
     def config_data(self) -> AnyByStrDict:
-        """Get config from the template."""
+        """Get config from the template.
+
+        It reads [the `copier.yml` file][the-copieryml-file] to get its
+        [settings][available-settings].
+        """
         return filter_config(self._raw_config)[0]
 
     @cached_property
@@ -147,7 +156,10 @@ class Template:
 
     @cached_property
     def envops(self) -> Mapping:
-        """Get the Jinja configuration specified in the template, or default values."""
+        """Get the Jinja configuration specified in the template, or default values.
+
+        See [envops][].
+        """
         # TODO Use Jinja defaults
         result = {
             "autoescape": False,
@@ -164,7 +176,10 @@ class Template:
 
     @cached_property
     def exclude(self) -> Tuple[str, ...]:
-        """Get exclusions specified in the template, or default ones."""
+        """Get exclusions specified in the template, or default ones.
+
+        See [exclude][].
+        """
         return tuple(self.config_data.get("exclude", DEFAULT_EXCLUDE))
 
     @cached_property
@@ -183,6 +198,8 @@ class Template:
         """Get migration objects that match current version spec.
 
         Versions are compared using PEP 440.
+
+        See [migrations][].
         """
         result: List[dict] = []
         if not from_ or not to:
@@ -206,7 +223,10 @@ class Template:
 
     @cached_property
     def questions_data(self) -> AnyByStrDict:
-        """Get questions from the template."""
+        """Get questions from the template.
+
+        See [questions][].
+        """
         return filter_config(self._raw_config)[1]
 
     @cached_property
@@ -226,6 +246,8 @@ class Template:
         """Get skip patterns from the template.
 
         These files will never be rewritten when rendering the template.
+
+        See [skip_if_exists][].
         """
         return self.config_data.get("skip_if_exists", ())
 
@@ -236,12 +258,17 @@ class Template:
         The subdirectory points to the real template code, allowing the
         templater to separate it from other template assets, such as docs,
         tests, etc.
+
+        See [subdirectory][].
         """
         return self.config_data.get("subdirectory", "")
 
     @cached_property
     def tasks(self) -> Sequence:
-        """Get tasks defined in the template."""
+        """Get tasks defined in the template.
+
+        See [tasks][].
+        """
         return self.config_data.get("tasks", [])
 
     @cached_property
@@ -249,6 +276,8 @@ class Template:
         """Get the suffix defined for templates.
 
         By default: `.tmpl`.
+
+        See [templates_suffix][].
         """
         return self.config_data.get("templates_suffix", DEFAULT_TEMPLATES_SUFFIX)
 
