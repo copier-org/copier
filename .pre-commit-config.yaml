@@ -28,7 +28,6 @@ repos:
         entry: poetry run flake8
         language: system
         types: [python]
-        args: ["--config", "pyproject.toml"]
         require_serial: true
       - id: poetry_check
         description: Check the integrity of pyproject.toml

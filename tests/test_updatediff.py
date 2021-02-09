@@ -6,7 +6,7 @@ import pytest
 from plumbum import local
 from plumbum.cmd import git
 
-from copier import copy
+from copier import Worker, copy
 from copier.cli import CopierApp
 
 from .helpers import PROJECT_TEMPLATE, build_file_tree
@@ -141,12 +141,11 @@ def test_updatediff(tmpdir):
         )
         commit("-m", "Subproject evolved")
         # Reapply template ignoring subproject evolution
-        copy(
+        Worker(
             data={"author_name": "Largo LaGrande", "project_name": "to steal a lot"},
             force=True,
             vcs_ref="HEAD",
-            only_diff=False,
-        )
+        ).run_copy()
         assert readme.read_text() == dedent(
             """
             Let me introduce myself.

@@ -10,7 +10,7 @@ from plumbum import local
 from plumbum.cmd import git
 
 from copier import copy
-from copier.config.objects import UserMessageError
+from copier.errors import UserMessageError
 
 from .helpers import PROJECT_TEMPLATE, build_file_tree
 

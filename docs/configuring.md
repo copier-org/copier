@@ -290,6 +290,32 @@ is overriden, and don't ask user anything else:
 copier -fd 'user_name=Manuel Calavera' copy template destination
 ```
 
+### `envops`
+
+-   Format: `dict`
+-   CLI flags: N/A
+-   Default value:
+
+    ```yaml
+    {
+        "autoescape": False,
+        "block_end_string": "%]",
+        "block_start_string": "[%",
+        "comment_end_string": "#]",
+        "comment_start_string": "[#",
+        "keep_trailing_newline": True,
+        "variable_end_string": "]]",
+        "variable_start_string": "[[",
+    }
+    ```
+
+Configurations for the Jinja environment.
+
+These defaults are different from upstream Jinja's.
+
+See [upstream docs](https://jinja.palletsprojects.com/en/2.11.x/api/#jinja2.Environment)
+to know available options.
+
 ### `exclude`
 
 -   Format: `List[str]`
@@ -328,21 +354,6 @@ copier --exclude '*' --exclude '!file-i-want' copy template destination
     defined in `copier.yml` (or the defaults, if missing).
 
     Instead, CLI/API definitions **will extend** those from `copier.yml`.
-
-### `extra_paths`
-
--   Format: `List[str]`
--   CLI flags: `-p`, `--extra-paths`
--   Default value: N/A
-
-Additional paths from where to search for templates.
-
-Example `copier.yml`:
-
-```yaml
-_extra_paths:
-    - ~/Projects/templates
-```
 
 ### `force`
 
@@ -484,7 +495,7 @@ _skip_if_exists: .secret_password.yml
 ### `subdirectory`
 
 -   Format: `str`
--   CLI flags: `-b`, `--subdirectory`
+-   CLI flags: N/A
 -   Default value: N/A
 
 Subdirectory to use as the template root when generating a project. If not specified,
@@ -494,12 +505,6 @@ Example `copier.yml`:
 
 ```yaml
 _subdirectory: src
-```
-
-Example CLI usage to choose a different subdirectory template:
-
-```sh
-copier --subdirectory template2 -b copy template destination
 ```
 
 ### `tasks`
@@ -617,7 +622,7 @@ will be the last ones he used.
 
 The file **must be called exactly `[[ _copier_conf.answers_file ]].tmpl`** (or ended
 with [your chosen suffix](#templates_suffix)) in your template's root folder) to allow
-[applying multiple templates to the same subproject][applying-multiple-templates-to-the-same-subproject].
+[applying multiple templates to the same subproject](#applying-multiple-templates-to-the-same-subproject).
 
 The default name will be `.copier-answers.yml`, but
 [you can define a different default path for this file](#answers_file).

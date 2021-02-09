@@ -37,6 +37,10 @@ COPIER_CMD = local.get(
 )
 COPIER_PATH = str(COPIER_CMD.executable)
 
+# Helper to parse back an iso-formatted datetime; needed for py3.6, where
+# datetime.datetime.fromisoformat() doesn't exist
+ISOFORMAT = "%Y-%m-%d %H:%M:%S.%f"
+
 
 class Keyboard(str, Enum):
     ControlH = REVERSE_ANSI_SEQUENCES[Keys.ControlH]

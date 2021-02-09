@@ -9,6 +9,3 @@ _skip_if_exists:
 _tasks:
   - "touch 1"
   - "touch 2"
-
-_extra_paths:
-  - "tests"

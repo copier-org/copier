@@ -1,487 +1,731 @@
-"""The main functions, used to generate or update projects."""
+"""Main functions and classes, used to generate or update projects."""
 
-import filecmp
-import os
-import shutil
+import json
+import platform
 import subprocess
 import sys
 import tempfile
+from contextlib import suppress
+from dataclasses import asdict, field, replace
+from functools import partial
+from itertools import chain
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Sequence, Tuple
+from shutil import rmtree
+from typing import Callable, List, Mapping, Optional, Sequence
+from unicodedata import normalize
 
+import pathspec
+from jinja2.loaders import FileSystemLoader
+from jinja2.sandbox import SandboxedEnvironment
 from packaging.version import InvalidVersion, Version
-from plumbum import ProcessExecutionError, colors, local
+from plumbum import ProcessExecutionError, colors
 from plumbum.cli.terminal import ask
 from plumbum.cmd import git
+from plumbum.machines import local
+from pydantic.dataclasses import dataclass
+from pydantic.json import pydantic_encoder
+from questionary import unsafe_prompt
 
-from . import vcs
-from .config import make_config
-from .config.objects import ConfigData, UserMessageError
-from .config.user_data import load_answersfile_data
-from .tools import (
-    Renderer,
-    Style,
-    copy_file,
-    create_path_filter,
-    get_migration_tasks,
-    make_folder,
-    printf,
-)
+from .errors import UserMessageError
+from .subproject import Subproject
+from .template import Template
+from .tools import Style, printf, to_nice_yaml
 from .types import (
     AnyByStrDict,
-    CheckPathFunc,
-    OptBool,
+    JSONSerializable,
     OptStr,
-    OptStrSeq,
+    RelativePath,
     StrOrPath,
     StrSeq,
 )
+from .user_data import DEFAULT_DATA, AnswersMap, Question
 
-__all__ = ("copy", "copy_local")
+try:
+    from functools import cached_property
+except ImportError:
+    from backports.cached_property import cached_property
 
 
-def copy(
-    src_path: OptStr = None,
-    dst_path: StrOrPath = ".",
-    data: AnyByStrDict = None,
-    *,
-    answers_file: OptStr = None,
-    exclude: OptStrSeq = None,
-    skip_if_exists: OptStrSeq = None,
-    tasks: OptStrSeq = None,
-    envops: AnyByStrDict = None,
-    extra_paths: OptStrSeq = None,
-    pretend: OptBool = False,
-    force: OptBool = False,
-    skip: OptBool = False,
-    quiet: OptBool = False,
-    cleanup_on_error: OptBool = True,
-    vcs_ref: OptStr = None,
-    only_diff: OptBool = True,
-    subdirectory: OptStr = None,
-    use_prereleases: OptBool = False,
-) -> None:
-    """Uses the template in `src_path` to generate a new project at `dst_path`.
+__all__ = (
+    "run_auto",
+    "run_copy",
+    "run_update",
+    "Worker",
+)
 
-    This is usually the main entrypoint for API usage.
 
-    Arguments:
+@dataclass
+class Worker:
+    """Copier process state manager.
+
+    This class represents the state of a copier work, and contains methods to
+    actually produce the desired work.
+
+    To use it properly, instantiate it by filling properly all dataclass fields.
+
+    Then, execute one of its main methods, which are prefixed with `run_`:
+
+    -   [run_copy][copier.main.Worker.run_copy] to copy a subproject.
+    -   [run_update][copier.main.Worker.run_update] to update a subproject.
+    -   [run_auto][copier.main.Worker.run_auto] to let it choose whether you
+        want to copy or update the subproject.
+
+    Attributes:
         src_path:
-            Absolute path to the project skeleton. May be a version control system URL.
-            If `None`, it will be taken from `dst_path/answers_file` or fail.
+            String that can be resolved to a template path, be it local or remote.
+
+            See [copier.vcs.get_repo][].
+
+            If it is `None`, then it means that you are
+            [updating a project][updating-a-project], and the original
+            `src_path` will be obtained from
+            [the answers file][the-copier-answersyml-file].
 
         dst_path:
-            Absolute path to where to render the skeleton.
-
-        data:
-            Optional. Data to be passed to the templates in addtion to the user data
-            from a `copier.json`.
+            Destination path where to render the subproject.
 
         answers_file:
-            Path where to obtain the answers recorded from the last update.
+            Indicates the path for [the answers file][the-copier-answersyml-file].
+
             The path must be relative to `dst_path`.
 
-        exclude:
-            A list of names or gitignore-style patterns matching files or folders that
-            must not be copied.
-
-        skip_if_exists:
-            A list of names or gitignore-style patterns matching files or folders,
-            that are skipped if another with the same name already exists in the
-            destination folder. (It only makes sense if you are copying to a folder
-            that already exists).
-
-        tasks:
-            Optional lists of commands to run in order after finishing the copy.
-            Like in the templates files, you can use variables on the commands that
-            will be replaced by the real values before running the command.
-            If one of the commands fail, the rest of them will not run.
-
-        envops:
-            Extra options for the Jinja template environment.
-
-        extra_paths:
-            Optional. Additional paths, outside the `src_path`, from where to search
-            for templates. This is intended to be used with shared parent templates,
-            files with macros, etc. outside the copied project skeleton.
-
-        pretend:
-            Run but do not make any changes.
-
-        force:
-            Overwrite files that already exist, without asking.
-
-        skip:
-            Skip files that already exist, without asking.
-
-        quiet:
-            Suppress the status output.
-
-        cleanup_on_error:
-            Remove the destination folder if Copier created it and the copy process
-            or one of the tasks fail.
+            If it is `None`, the default value will be obtained from
+            [copier.template.Template.answers_relpath][].
 
         vcs_ref:
-            VCS reference to checkout in the template.
+            Specify the VCS tag/commit to use in the template.
 
-        only_diff:
-            Try to update only the template diff.
+        data:
+            Answers to the questionary defined in the template.
 
-        subdirectory:
-            Specify a subdirectory to use when generating the project.
+        exclude:
+            User-chosen additional [file exclusion patterns][exclude].
 
-        use_prereleases: See [use_prereleases][].
+        use_prereleases:
+            Consider prereleases when detecting the *latest* one?
+
+            See [use_prereleases][].
+
+            Useless if specifying a [vcs_ref][].
+
+        skip_if_exists:
+            User-chosen additional [file skip patterns][skip_if_exists].
+
+        cleanup_on_error:
+            Delete `dst_path` if there's an error?
+
+            See [cleanup_on_error][].
+
+        force:
+            When `True`, disable all user interactions.
+
+            See [force][].
+
+        pretend:
+            When `True`, produce no real rendering.
+
+            See [pretend][].
+
+        quiet:
+            When `True`, disable all output.
+
+            See [quiet][].
     """
-    conf = make_config(**locals())
-    dst_existed = conf.dst_path.exists()
-    is_update = conf.original_src_path != conf.src_path and vcs.is_git_repo_root(
-        conf.src_path
-    )
-    do_diff_update = (
-        conf.only_diff
-        and is_update
-        and conf.old_commit
-        and vcs.is_git_repo_root(conf.dst_path)
-    )
-    try:
-        if do_diff_update:
-            update_diff(conf=conf)
-        else:
-            copy_local(conf=conf)
-    except Exception:
-        if conf.cleanup_on_error and not do_diff_update and not dst_existed:
-            print(
-                colors.warn | "Something went wrong. Removing destination folder.",
-                file=sys.stderr,
-            )
-            shutil.rmtree(conf.dst_path, ignore_errors=True)
-        raise
-    finally:
-        if is_update:
-            shutil.rmtree(conf.src_path, ignore_errors=True)
 
+    src_path: Optional[str] = None
+    dst_path: Path = field(default=".")
+    answers_file: Optional[RelativePath] = None
+    vcs_ref: OptStr = None
+    data: AnyByStrDict = field(default_factory=dict)
+    exclude: StrSeq = ()
+    use_prereleases: bool = False
+    skip_if_exists: StrSeq = ()
+    cleanup_on_error: bool = True
+    force: bool = False
+    pretend: bool = False
+    quiet: bool = False
 
-def copy_local(conf: ConfigData) -> None:
-    """Use the given configuration to generate a project.
-
-    Arguments:
-        conf: Configuration obtained with [`make_config`][copier.config.factory.make_config].
-    """
-    must_filter = create_path_filter(conf.exclude)
-
-    render = Renderer(conf)
-    skip_patterns = [render.string(pattern) for pattern in conf.skip_if_exists]
-    must_skip = create_path_filter(skip_patterns)
-
-    if not conf.quiet:
-        print("")  # padding space
-
-    folder: StrOrPath
-    rel_folder: StrOrPath
-
-    src_path = conf.src_path
-    if conf.subdirectory is not None:
-        src_path /= conf.subdirectory
-
-    for folder, sub_dirs, files in os.walk(src_path):
-        rel_folder = str(folder).replace(str(src_path), "", 1).lstrip(os.path.sep)
-        rel_folder = render.string(rel_folder)
-        rel_folder = str(rel_folder).replace("." + os.path.sep, ".", 1)
-
-        if must_filter(rel_folder):
-            # Folder is excluded, so stop walking it
-            sub_dirs[:] = []
-            continue
-
-        folder = Path(folder)
-        rel_folder = Path(rel_folder)
-
-        render_folder(rel_folder, conf)
-
-        source_paths = get_source_paths(
-            conf, folder, rel_folder, files, render, must_filter
+    def _answers_to_remember(self) -> Mapping:
+        """Get only answers that will be remembered in the copier answers file."""
+        # All internal values must appear first
+        answers: AnyByStrDict = {}
+        commit = self.template.commit
+        src = self.template.url
+        for key, value in (("_commit", commit), ("_src_path", src)):
+            if value is not None:
+                answers[key] = value
+        # Other data goes next
+        answers.update(
+            (k, v)
+            for (k, v) in self.answers.combined.items()
+            if not k.startswith("_")
+            and k not in self.template.secret_questions
+            and isinstance(k, JSONSerializable)
+            and isinstance(v, JSONSerializable)
         )
-        for source_path, rel_path in source_paths:
-            render_file(conf, rel_path, source_path, render, must_skip)
+        return answers
 
-    if not conf.quiet:
-        print("")  # padding space
+    def _execute_tasks(self, tasks: Sequence[Mapping]) -> None:
+        """Run the given tasks.
 
-    run_tasks(
-        conf, render, [{"task": t, "extra_env": {"STAGE": "task"}} for t in conf.tasks]
-    )
-    if not conf.quiet:
-        print("")  # padding space
-
-
-def update_diff(conf: ConfigData) -> None:
-    """Use the given configuration to update a project.
-
-    Arguments:
-        conf: Configuration obtained with [`make_config`][copier.config.factory.make_config].
-    """
-    # Ensure local repo is clean
-    if vcs.is_git_repo_root(conf.dst_path):
-        with local.cwd(conf.dst_path):
-            if git("status", "--porcelain"):
-                raise UserMessageError(
-                    "Destination repository is dirty; cannot continue. "
-                    "Please commit or stash your local changes and retry."
+        Arguments:
+            tasks: The list of tasks to run.
+        """
+        for i, task in enumerate(tasks):
+            task_cmd = task["task"]
+            use_shell = isinstance(task_cmd, str)
+            if use_shell:
+                task_cmd = self._render_string(task_cmd)
+            else:
+                task_cmd = [self._render_string(str(part)) for part in task_cmd]
+            if not self.quiet:
+                print(
+                    colors.info
+                    | f" > Running task {i + 1} of {len(tasks)}: {task_cmd}",
+                    file=sys.stderr,
                 )
-    last_answers = load_answersfile_data(conf.dst_path, conf.answers_file)
-    downgrading = False
-    if conf.old_commit and conf.commit:
+            with local.cwd(self.subproject.local_abspath), local.env(
+                **task.get("extra_env", {})
+            ):
+                subprocess.run(task_cmd, shell=use_shell, check=True, env=local.env)
+
+    def _render_context(self) -> Mapping:
+        """Produce render context for Jinja."""
+        # Backwards compatibility
+        # FIXME Remove it?
+        conf = asdict(self)
+        conf.update(
+            {
+                "answers_file": self.answers_relpath,
+                "src_path": self.template.local_abspath,
+            }
+        )
+        copied_conf = conf.copy()
+        conf["json"] = partial(json.dumps, copied_conf, default=pydantic_encoder)
+        return dict(
+            DEFAULT_DATA,
+            **self.answers.combined,
+            _copier_answers=self._answers_to_remember(),
+            _copier_conf=conf,
+            _folder_name=self.subproject.local_abspath.name,
+        )
+
+    def _path_matcher(self, patterns: StrSeq) -> Callable[[Path], bool]:
+        """Produce a function that matches against specified patterns."""
+        # TODO Is normalization really needed?
+        normalized_patterns = (normalize("NFD", pattern) for pattern in patterns)
+        spec = pathspec.PathSpec.from_lines("gitwildmatch", normalized_patterns)
+        return spec.match_file
+
+    def _solve_render_conflict(self, dst_relpath: Path):
+        """Properly solve render conflicts.
+
+        It can ask the user if running in interactive mode.
+        """
+        assert not dst_relpath.is_absolute()
+        printf(
+            "conflict",
+            dst_relpath,
+            style=Style.DANGER,
+            quiet=self.quiet,
+            file_=sys.stderr,
+        )
+        if self.match_skip(dst_relpath):
+            printf(
+                "skip",
+                dst_relpath,
+                style=Style.OK,
+                quiet=self.quiet,
+                file_=sys.stderr,
+            )
+            return False
+        if self.force:
+            printf(
+                "force",
+                dst_relpath,
+                style=Style.WARNING,
+                quiet=self.quiet,
+                file_=sys.stderr,
+            )
+            return True
+        return bool(ask(f" Overwrite {dst_relpath}?", default=True))
+
+    def _render_allowed(
+        self, dst_relpath: Path, is_dir: bool = False, expected_contents: bytes = b""
+    ) -> bool:
+        """Determine if a file or directory can be rendered.
+
+        Args:
+
+            dst_relpath:
+                Relative path to destination.
+            is_dir:
+                Indicate if the path must be treated as a directory or not.
+            expected_contents:
+                Used to compare existing file contents with them. Allows to know if
+                rendering is needed.
+        """
+        assert not dst_relpath.is_absolute()
+        assert not expected_contents or not is_dir, "Dirs cannot have expected content"
+        dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
+        if dst_relpath != Path("."):
+            if self.match_exclude(dst_relpath):
+                return False
         try:
-            downgrading = Version(conf.old_commit) > Version(conf.commit)
+            previous_content = dst_abspath.read_bytes()
+        except FileNotFoundError:
+            printf(
+                "create",
+                dst_relpath,
+                style=Style.OK,
+                quiet=self.quiet,
+                file_=sys.stderr,
+            )
+            return True
+        except (IsADirectoryError, PermissionError) as error:
+            # HACK https://bugs.python.org/issue43095
+            if isinstance(error, PermissionError):
+                if not (error.errno == 13 and platform.system() == "Windows"):
+                    raise
+            if is_dir:
+                printf(
+                    "identical",
+                    dst_relpath,
+                    style=Style.IGNORE,
+                    quiet=self.quiet,
+                    file_=sys.stderr,
+                )
+                return True
+            return self._solve_render_conflict(dst_relpath)
+        else:
+            if previous_content == expected_contents:
+                printf(
+                    "identical",
+                    dst_relpath,
+                    style=Style.IGNORE,
+                    quiet=self.quiet,
+                    file_=sys.stderr,
+                )
+                return True
+            return self._solve_render_conflict(dst_relpath)
+
+    @cached_property
+    def answers(self) -> AnswersMap:
+        """Container of all answers to the questionary.
+
+        It asks the user the 1st time it is called, if running interactively.
+        """
+        result = AnswersMap(
+            default=self.template.default_answers,
+            init=self.data,
+            last=self.subproject.last_answers,
+            metadata=self.template.metadata,
+        )
+        questions: List[Question] = []
+        for var_name, details in self.template.questions_data.items():
+            if var_name in result.init:
+                # Do not ask again
+                continue
+            questions.append(
+                Question(
+                    answers=result,
+                    ask_user=not self.force,
+                    jinja_env=self.jinja_env,
+                    var_name=var_name,
+                    **details,
+                )
+            )
+        if self.force:
+            # Avoid prompting to not requiring a TTy when --force
+            for question in questions:
+                new_answer = question.get_default()
+                previous_answer = result.combined.get(question.var_name)
+                if new_answer != previous_answer:
+                    result.user[question.var_name] = new_answer
+        else:
+            # Display TUI and ask user interactively
+            result.user.update(
+                unsafe_prompt(
+                    (question.get_questionary_structure() for question in questions),
+                    answers=result.combined,
+                )
+            )
+        return result
+
+    @cached_property
+    def answers_relpath(self) -> Path:
+        """Obtain the proper relative path for the answers file.
+
+        It comes from:
+
+        1. User choice.
+        2. Template default.
+        3. Copier default.
+        """
+        return self.answers_file or self.template.answers_relpath
+
+    @cached_property
+    def all_exclusions(self) -> StrSeq:
+        """Combine default, template and user-chosen exclusions."""
+        return self.template.exclude + tuple(self.exclude)
+
+    @cached_property
+    def jinja_env(self) -> SandboxedEnvironment:
+        """Return a pre-configured Jinja environment.
+
+        Respects template settings.
+        """
+        paths = [str(self.template.local_abspath)]
+        loader = FileSystemLoader(paths)
+        # We want to minimize the risk of hidden malware in the templates
+        # so we use the SandboxedEnvironment instead of the regular one.
+        # Of course we still have the post-copy tasks to worry about, but at least
+        # they are more visible to the final user.
+        env = SandboxedEnvironment(loader=loader, **self.template.envops)
+        default_filters = {"to_nice_yaml": to_nice_yaml}
+        env.filters.update(default_filters)
+        return env
+
+    @cached_property
+    def match_exclude(self) -> Callable[[Path], bool]:
+        """Get a callable to match paths against all exclusions."""
+        return self._path_matcher(self.all_exclusions)
+
+    @cached_property
+    def match_skip(self) -> Callable[[Path], bool]:
+        """Get a callable to match paths against all skip-if-exists patterns."""
+        return self._path_matcher(
+            map(
+                self._render_string,
+                tuple(chain(self.skip_if_exists, self.template.skip_if_exists)),
+            )
+        )
+
+    def _render_file(self, src_abspath: Path) -> None:
+        """Render one file.
+
+        Args:
+
+            src_abspath:
+                The absolute path to the file that will be rendered.
+        """
+        # TODO Get from main.render_file()
+        assert src_abspath.is_absolute()
+        src_relpath = src_abspath.relative_to(self.template.local_abspath).as_posix()
+        src_renderpath = src_abspath.relative_to(self.template_copy_root)
+        dst_relpath = self._render_path(src_renderpath)
+        if dst_relpath is None:
+            return
+        if src_abspath.name.endswith(self.template.templates_suffix):
+            tpl = self.jinja_env.get_template(str(src_relpath))
+            new_content = tpl.render(**self._render_context()).encode()
+        else:
+            new_content = src_abspath.read_bytes()
+        if not self._render_allowed(dst_relpath, expected_contents=new_content):
+            return
+        if not self.pretend:
+            dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
+            dst_abspath.write_bytes(new_content)
+
+    def _render_folder(self, src_abspath: Path) -> None:
+        """Recursively render a folder.
+
+        Args:
+            src_path:
+                Folder to be rendered. It must be an absolute path within
+                the template.
+        """
+        assert src_abspath.is_absolute()
+        src_relpath = src_abspath.relative_to(self.template_copy_root)
+        dst_relpath = self._render_path(src_relpath)
+        if dst_relpath is None:
+            return
+        if not self._render_allowed(dst_relpath, is_dir=True):
+            return
+        dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
+        if not self.pretend:
+            dst_abspath.mkdir(exist_ok=True)
+        for file in src_abspath.iterdir():
+            if file.is_dir():
+                self._render_folder(file)
+            else:
+                self._render_file(file)
+
+    def _render_path(self, relpath: Path) -> Optional[Path]:
+        """Render one relative path.
+
+        Args:
+            relpath:
+                The relative path to be rendered. Obviously, it can be templated.
+        """
+        is_template = relpath.name.endswith(self.template.templates_suffix)
+        templated_sibling = (
+            self.template.local_abspath / f"{relpath}{self.template.templates_suffix}"
+        )
+        if templated_sibling.exists():
+            return None
+        rendered_parts = []
+        for part in relpath.parts:
+            # Skip folder if any part is rendered as an empty string
+            part = self._render_string(part)
+            if not part:
+                return None
+            rendered_parts.append(part)
+        with suppress(IndexError):
+            if is_template:
+                rendered_parts[-1] = rendered_parts[-1][
+                    : -len(self.template.templates_suffix)
+                ]
+        result = Path(*rendered_parts)
+        if not is_template:
+            templated_sibling = (
+                self.template.local_abspath
+                / f"{result}{self.template.templates_suffix}"
+            )
+            if templated_sibling.exists():
+                return None
+        return result
+
+    def _render_string(self, string: str) -> str:
+        """Render one templated string.
+
+        Args:
+            string:
+                The template source string.
+        """
+        tpl = self.jinja_env.from_string(string)
+        return tpl.render(**self._render_context())
+
+    @cached_property
+    def subproject(self) -> Subproject:
+        """Get related subproject."""
+        return Subproject(
+            local_abspath=self.dst_path.absolute(),
+            answers_relpath=self.answers_file or ".copier-answers.yml",
+        )
+
+    @cached_property
+    def template(self) -> Template:
+        """Get related template."""
+        url = self.src_path
+        if not url:
+            if self.subproject.template is None:
+                raise TypeError("Template not found")
+            url = self.subproject.template.url
+        return Template(url=url, ref=self.vcs_ref, use_prereleases=self.use_prereleases)
+
+    @cached_property
+    def template_copy_root(self) -> Path:
+        """Absolute path from where to start copying.
+
+        It points to the cloned template local abspath + the rendered subdir, if any.
+        """
+        subdir = self._render_string(self.template.subdirectory) or ""
+        return self.template.local_abspath / subdir
+
+    # Main operations
+    def run_auto(self) -> None:
+        """Copy or update automatically.
+
+        If `src_path` was supplied, execute
+        [run_copy][copier.main.Worker.run_copy].
+
+        Otherwise, execute [run_update][copier.main.Worker.run_update].
+        """
+        if self.src_path:
+            return self.run_copy()
+        return self.run_update()
+
+    def run_copy(self) -> None:
+        """Generate a subproject from zero, ignoring what was in the folder.
+
+        If `dst_path` was missing, it will be
+        created. Otherwise, `src_path` be rendered
+        directly into it, without worrying about evolving what was there
+        already.
+
+        See [generating a project][generating-a-project].
+        """
+        was_existing = self.subproject.local_abspath.exists()
+        if not self.quiet:
+            # TODO Unify printing tools
+            print("")  # padding space
+        src_abspath = self.template_copy_root
+        try:
+            self._render_folder(src_abspath)
+            if not self.quiet:
+                # TODO Unify printing tools
+                print("")  # padding space
+            self._execute_tasks(
+                [
+                    {"task": t, "extra_env": {"STAGE": "task"}}
+                    for t in self.template.tasks
+                ],
+            )
+        except Exception:
+            if not was_existing and self.cleanup_on_error:
+                rmtree(self.subproject.local_abspath)
+            raise
+        if not self.quiet:
+            # TODO Unify printing tools
+            print("")  # padding space
+
+    def run_update(self) -> None:
+        """Update a subproject that was already generated.
+
+        See [updating a project][updating-a-project].
+        """
+        # Check all you need is there
+        if self.subproject.vcs != "git":
+            raise UserMessageError(
+                "Updating is only supported in git-tracked subprojects."
+            )
+        if self.subproject.is_dirty():
+            raise UserMessageError(
+                "Destination repository is dirty; cannot continue. "
+                "Please commit or stash your local changes and retry."
+            )
+        if self.subproject.template is None or self.subproject.template.ref is None:
+            raise UserMessageError(
+                "Cannot update because cannot obtain old template references "
+                f"from `{self.subproject.answers_relpath}`."
+            )
+        if self.template.commit is None:
+            raise UserMessageError(
+                "Updating is only supported in git-tracked templates."
+            )
+        downgrading = False
+        try:
+            downgrading = Version(self.subproject.template.ref) > Version(
+                self.template.commit
+            )
         except InvalidVersion:
             print(
                 colors.warn
-                | f"Either {conf.old_commit} or {conf.vcs_ref} is not a PEP 440 valid version.",
+                | f"Either {self.subproject.template.ref} or {self.template.commit} is not a PEP 440 valid version.",
                 file=sys.stderr,
             )
-        else:
-            if downgrading:
-                raise UserMessageError(
-                    f"Your are downgrading from {conf.old_commit} to {conf.commit}. "
-                    "Downgrades are not supported."
-                )
-    # Copy old template into a temporary destination
-    with tempfile.TemporaryDirectory(prefix=f"{__name__}.update_diff.") as dst_temp:
-        copy(
-            dst_path=dst_temp,
-            data=last_answers,
-            force=True,
-            quiet=True,
-            skip=False,
-            src_path=conf.original_src_path,
-            vcs_ref=conf.old_commit,
-        )
-        # Extract diff between temporary destination and real destination
-        with local.cwd(dst_temp):
-            git("init", retcode=None)
-            git("add", ".")
-            git("config", "user.name", "Copier")
-            git("config", "user.email", "copier@copier")
-            # 1st commit could fail if any pre-commit hook reformats code
-            git("commit", "--allow-empty", "-am", "dumb commit 1", retcode=None)
-            git("commit", "--allow-empty", "-am", "dumb commit 2")
-            git("config", "--unset", "user.name")
-            git("config", "--unset", "user.email")
-            git("remote", "add", "real_dst", conf.dst_path)
-            git("fetch", "--depth=1", "real_dst", "HEAD")
-            diff_cmd = git["diff-tree", "--unified=1", "HEAD...FETCH_HEAD"]
-            try:
-                diff = diff_cmd("--inter-hunk-context=-1")
-            except ProcessExecutionError:
-                print(
-                    colors.warn
-                    | "Make sure Git >= 2.24 is installed to improve updates.",
-                    file=sys.stderr,
-                )
-                diff = diff_cmd("--inter-hunk-context=0")
-    # Run pre-migration tasks
-    renderer = Renderer(conf)
-    run_tasks(conf, renderer, get_migration_tasks(conf, "before"))
-    # Import possible answers migration
-    conf = conf.copy(
-        update={
-            "data_from_answers_file": load_answersfile_data(
-                conf.dst_path, conf.answers_file
+        if downgrading:
+            raise UserMessageError(
+                f"Your are downgrading from {self.subproject.template.ref} to {self.template.commit}. "
+                "Downgrades are not supported."
             )
-        }
-    )
-    # Do a normal update in final destination
-    copy_local(conf)
-    # Try to apply cached diff into final destination
-    with local.cwd(conf.dst_path):
-        apply_cmd = git["apply", "--reject", "--exclude", conf.answers_file]
-        for skip_pattern in conf.skip_if_exists:
-            apply_cmd = apply_cmd["--exclude", skip_pattern]
-        (apply_cmd << diff)(retcode=None)
-    # Run post-migration tasks
-    run_tasks(conf, renderer, get_migration_tasks(conf, "after"))
-
-
-def get_source_paths(
-    conf: ConfigData,
-    folder: Path,
-    rel_folder: Path,
-    files: StrSeq,
-    render: Renderer,
-    must_filter: Callable[[StrOrPath], bool],
-) -> List[Tuple[Path, Path]]:
-    """Get the paths to all the files to render.
-
-    Arguments:
-        conf: Configuration obtained with [`make_config`][copier.config.factory.make_config].
-        folder:
-        rel_folder: Relative path to the folder.
-        files:
-        render: The [template renderer][copier.tools.Renderer] instance.
-        must_filter: A callable telling whether to skip rendering a file.
-
-    Returns:
-        The list of files to render.
-    """
-    source_paths = []
-    files_set = set(files)
-    for src_name in files:
-        src_name = str(src_name)
-        if f"{src_name}{conf.templates_suffix}" in files_set:
-            continue
-        dst_name = (
-            src_name[: -len(conf.templates_suffix)]
-            if src_name.endswith(conf.templates_suffix)
-            else src_name
-        )
-        dst_name = render.string(dst_name)
-        rel_path = rel_folder / dst_name
-
-        if rel_folder == rel_path or must_filter(rel_path):
-            continue
-        source_paths.append((folder / src_name, rel_path))
-    return source_paths
-
-
-def render_folder(rel_folder: Path, conf: ConfigData) -> None:
-    """Render a complete folder.
-
-    This function renders the folder's name as well as its contents.
-
-    Arguments:
-        rel_folder: The relative path to the folder.
-        conf: Configuration obtained with [`make_config`][copier.config.factory.make_config].
-    """
-    dst_path = conf.dst_path / rel_folder
-    rel_path = f"{rel_folder}{os.path.sep}"
-
-    if rel_folder == Path("."):
-        if not conf.pretend:
-            make_folder(dst_path)
-        return
-
-    if dst_path.exists():
-        printf(
-            "identical",
-            rel_path,
-            style=Style.IGNORE,
-            quiet=conf.quiet,
-            file_=sys.stderr,
-        )
-        return
-
-    if not conf.pretend:
-        make_folder(dst_path)
-
-    printf("create", rel_path, style=Style.OK, quiet=conf.quiet, file_=sys.stderr)
-
-
-def render_file(
-    conf: ConfigData,
-    rel_path: Path,
-    src_path: Path,
-    render: Renderer,
-    must_skip: CheckPathFunc,
-) -> None:
-    """Process or copy a file of the skeleton.
-
-    Arguments:
-        conf: Configuration obtained with [`make_config`][copier.config.factory.make_config].
-        rel_path: The relative path to the file.
-        src_path:
-        render: The [template renderer][copier.tools.Renderer] instance.
-        must_skip: A callable telling whether to skip a file.
-    """
-    content: Optional[str] = None
-    if str(src_path).endswith(conf.templates_suffix):
-        content = render(src_path)
-
-    dst_path = conf.dst_path / rel_path
-
-    if not dst_path.exists():
-        printf("create", rel_path, style=Style.OK, quiet=conf.quiet, file_=sys.stderr)
-    elif files_are_identical(src_path, dst_path, content):
-        printf(
-            "identical",
-            rel_path,
-            style=Style.IGNORE,
-            quiet=conf.quiet,
-            file_=sys.stderr,
-        )
-        return
-    elif must_skip(rel_path) or not overwrite_file(conf, dst_path, rel_path):
-        printf(
-            "skip", rel_path, style=Style.WARNING, quiet=conf.quiet, file_=sys.stderr
-        )
-        return
-    else:
-        printf(
-            "force", rel_path, style=Style.WARNING, quiet=conf.quiet, file_=sys.stderr
-        )
-
-    if conf.pretend:
-        pass
-    elif content is None:
-        copy_file(src_path, dst_path)
-    else:
-        dst_path.write_text(content)
-
-
-def files_are_identical(src_path: Path, dst_path: Path, content: Optional[str]) -> bool:
-    """Tell whether two files are identical.
-
-    Arguments:
-        src_path: Source file.
-        dst_path: Destination file.
-        content: File contents.
-
-    Returns:
-        True if the files are identical, False otherwise.
-    """
-    if content is None:
-        return filecmp.cmp(str(src_path), str(dst_path), shallow=False)
-    return dst_path.read_text() == content
-
-
-def overwrite_file(conf: ConfigData, dst_path: Path, rel_path: Path) -> bool:
-    """Handle the case when there's an update conflict.
-
-    Arguments:
-        conf: Configuration obtained with [`make_config`][copier.config.factory.make_config].
-        dst_path: The destination file.
-        rel_path: The new file.
-
-    Returns:
-        True if the overwrite was forced or the user answered yes,
-        False if skipped by configuration or if the user answered no.
-    """
-    printf("conflict", rel_path, style=Style.DANGER, quiet=conf.quiet, file_=sys.stderr)
-    if conf.force:
-        return True
-    if conf.skip:
-        return False
-    return bool(ask(f" Overwrite {dst_path}?", default=True))
-
-
-def run_tasks(conf: ConfigData, render: Renderer, tasks: Sequence[Dict]) -> None:
-    """Run the given tasks.
-
-    Arguments:
-        conf: Configuration obtained with [`make_config`][copier.config.factory.make_config].
-        render: The [template renderer][copier.tools.Renderer] instance.
-        tasks: The list of tasks to run.
-    """
-    for i, task in enumerate(tasks):
-        task_cmd = task["task"]
-        use_shell = isinstance(task_cmd, str)
-        if use_shell:
-            task_cmd = render.string(task_cmd)
-        else:
-            task_cmd = [render.string(part) for part in task_cmd]
-        if not conf.quiet:
-            print(
-                colors.info | f" > Running task {i + 1} of {len(tasks)}: {task_cmd}",
-                file=sys.stderr,
+        # Copy old template into a temporary destination
+        with tempfile.TemporaryDirectory(prefix=f"{__name__}.update_diff.") as dst_temp:
+            old_worker = replace(
+                self,
+                dst_path=dst_temp,
+                data=self.subproject.last_answers,
+                force=True,
+                quiet=True,
+                src_path=self.subproject.template.url,
+                vcs_ref=self.subproject.template.commit,
             )
-        with local.cwd(conf.dst_path), local.env(**task.get("extra_env", {})):
-            subprocess.run(task_cmd, shell=use_shell, check=True, env=local.env)
+            old_worker.run_copy()
+            # Extract diff between temporary destination and real destination
+            with local.cwd(dst_temp):
+                git("init", retcode=None)
+                git("add", ".")
+                git("config", "user.name", "Copier")
+                git("config", "user.email", "copier@copier")
+                # 1st commit could fail if any pre-commit hook reformats code
+                git("commit", "--allow-empty", "-am", "dumb commit 1", retcode=None)
+                git("commit", "--allow-empty", "-am", "dumb commit 2")
+                git("config", "--unset", "user.name")
+                git("config", "--unset", "user.email")
+                git(
+                    "remote",
+                    "add",
+                    "real_dst",
+                    self.subproject.local_abspath.absolute(),
+                )
+                git("fetch", "--depth=1", "real_dst", "HEAD")
+                diff_cmd = git["diff-tree", "--unified=1", "HEAD...FETCH_HEAD"]
+                try:
+                    diff = diff_cmd("--inter-hunk-context=-1")
+                except ProcessExecutionError:
+                    print(
+                        colors.warn
+                        | "Make sure Git >= 2.24 is installed to improve updates.",
+                        file=sys.stderr,
+                    )
+                    diff = diff_cmd("--inter-hunk-context=0")
+        # Run pre-migration tasks
+        self._execute_tasks(
+            self.template.migration_tasks(
+                "before", self.subproject.template.ref, self.template.commit
+            )
+        )
+        # Clear last answers cache to load possible answers migration
+        with suppress(AttributeError):
+            del self.answers
+        with suppress(AttributeError):
+            del self.subproject.last_answers
+        # Do a normal update in final destination
+        self.run_copy()
+        # Try to apply cached diff into final destination
+        with local.cwd(self.subproject.local_abspath):
+            apply_cmd = git["apply", "--reject", "--exclude", self.answers_relpath]
+            for skip_pattern in self.skip_if_exists:
+                apply_cmd = apply_cmd["--exclude", skip_pattern]
+            (apply_cmd << diff)(retcode=None)
+        # Run post-migration tasks
+        self._execute_tasks(
+            self.template.migration_tasks(
+                "after", self.subproject.template.ref, self.template.commit
+            )
+        )
+
+
+def run_copy(
+    src_path: str,
+    dst_path: StrOrPath = ".",
+    data: AnyByStrDict = None,
+    **kwargs,
+) -> Worker:
+    """Copy a template to a destination, from zero.
+
+    This is a shortcut for [run_copy][copier.main.Worker.run_copy].
+
+    See [Worker][copier.main.Worker] fields to understand this function's args.
+    """
+    if data is not None:
+        kwargs["data"] = data
+    worker = Worker(src_path=src_path, dst_path=dst_path, **kwargs)
+    worker.run_copy()
+    return worker
+
+
+def run_update(
+    dst_path: StrOrPath = ".",
+    data: AnyByStrDict = None,
+    **kwargs,
+) -> Worker:
+    """Update a subproject, from its template.
+
+    This is a shortcut for [run_update][copier.main.Worker.run_update].
+
+    See [Worker][copier.main.Worker] fields to understand this function's args.
+    """
+    if data is not None:
+        kwargs["data"] = data
+    worker = Worker(dst_path=dst_path, **kwargs)
+    worker.run_update()
+    return worker
+
+
+def run_auto(
+    src_path: OptStr = None,
+    dst_path: StrOrPath = ".",
+    data: AnyByStrDict = None,
+    **kwargs,
+) -> Worker:
+    """Generate or update a subproject.
+
+    This is a shortcut for [run_auto][copier.main.Worker.run_auto].
+
+    See [Worker][copier.main.Worker] fields to understand this function's args.
+    """
+    if src_path is None:
+        return run_update(dst_path, data, **kwargs)
+    return run_copy(src_path, dst_path, data, **kwargs)

@@ -1,53 +1,118 @@
 """Functions used to load user data."""
-
+import datetime
 import json
 import re
 from collections import ChainMap
-from contextlib import suppress
+from dataclasses import field
+from hashlib import sha512
+from os import urandom
 from pathlib import Path
-from typing import Any, Callable, ChainMap as t_ChainMap, Dict, List, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    ChainMap as t_ChainMap,
+    Dict,
+    List,
+    Union,
+)
 
 import yaml
 from iteration_utilities import deepflatten
 from jinja2 import UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
 from prompt_toolkit.lexers import PygmentsLexer
-from pydantic import BaseModel, Field, PrivateAttr, validator
+from pydantic import validator
+from pydantic.dataclasses import dataclass
 from pygments.lexers.data import JsonLexer, YamlLexer
-from questionary import unsafe_prompt
 from questionary.prompts.common import Choice
 from yamlinclude import YamlIncludeConstructor
 
-from ..tools import cast_str_to_bool, force_str_end, get_jinja_env, printf_exception
-from ..types import AnyByStrDict, OptStrOrPath, PathSeq, StrOrPath
-from .objects import DEFAULT_DATA, EnvOps, UserMessageError
+from .errors import (
+    InvalidConfigFileError,
+    InvalidTypeError,
+    MultipleConfigFilesError,
+    UserMessageError,
+)
+from .tools import cast_str_to_bool, force_str_end
+from .types import AllowArbitraryTypes, AnyByStrDict, OptStr, OptStrOrPath, StrOrPath
 
-__all__ = ("load_config_data", "query_user_data")
+try:
+    from functools import cached_property
+except ImportError:
+    from backports.cached_property import cached_property
 
-
-class ConfigFileError(ValueError):
+if TYPE_CHECKING:
     pass
 
-
-class InvalidConfigFileError(ConfigFileError):
-    def __init__(self, conf_path: Path, quiet: bool):
-        msg = str(conf_path)
-        printf_exception(self, "INVALID CONFIG FILE", msg=msg, quiet=quiet)
-        super().__init__(msg)
+DEFAULT_DATA: AnyByStrDict = {
+    "now": datetime.datetime.utcnow,
+    "make_secret": lambda: sha512(urandom(48)).hexdigest(),
+}
 
 
-class MultipleConfigFilesError(ConfigFileError):
-    def __init__(self, conf_paths: PathSeq, quiet: bool):
-        msg = str(conf_paths)
-        printf_exception(self, "MULTIPLE CONFIG FILES", msg=msg, quiet=quiet)
-        super().__init__(msg)
+@dataclass
+class AnswersMap:
+    """Object that gathers answers from different sources.
+
+    Attributes:
+        local:
+            Local overrides to other answers.
+
+        user:
+            Answers provided by the user, interactively.
+
+        init:
+            Answers provided on init.
+
+            This will hold those answers that come from `--data` in
+            CLI mode.
+
+            See [data][].
+
+        metadata:
+            Data used to be able to reproduce the template.
+
+            It comes from [copier.template.Template.metadata][].
+
+        last:
+            Data from [the answers file][the-copier-answersyml-file].
+
+        default:
+            Default data from the template.
+
+            See [copier.template.Template.default_answers][].
+    """
+
+    # Private
+    local: AnyByStrDict = field(default_factory=dict, init=False)
+
+    # Public
+    user: AnyByStrDict = field(default_factory=dict)
+    init: AnyByStrDict = field(default_factory=dict)
+    metadata: AnyByStrDict = field(default_factory=dict)
+    last: AnyByStrDict = field(default_factory=dict)
+    default: AnyByStrDict = field(default_factory=dict)
+
+    @cached_property
+    def combined(self) -> t_ChainMap[str, Any]:
+        """Answers combined from different sources, sorted by priority."""
+        return ChainMap(
+            self.local,
+            self.user,
+            self.init,
+            self.metadata,
+            self.last,
+            self.default,
+            DEFAULT_DATA,
+        )
+
+    def old_commit(self) -> OptStr:
+        return self.last.get("_commit")
 
 
-class InvalidTypeError(TypeError):
-    pass
-
-
-class Question(BaseModel):
+@dataclass(config=AllowArbitraryTypes)
+class Question:
     """One question asked to the user.
 
     All attributes are init kwargs.
@@ -61,7 +126,7 @@ class Question(BaseModel):
             Default value presented to the user to make it easier to respond.
             Can be templated.
 
-        help_text:
+        help:
             Additional text printed to the user, explaining the purpose of
             this question. Can be templated.
 
@@ -73,10 +138,6 @@ class Question(BaseModel):
         placeholder:
             Text that appears if there's nothing written in the input field,
             but disappears as soon as the user writes anything. Can be templated.
-
-        questionary:
-            Reference to the [Questionary][] object where this [Question][] is
-            attached.
 
         secret:
             Indicates if the question should be removed from the answers file.
@@ -97,35 +158,18 @@ class Question(BaseModel):
             boolean values.
     """
 
-    choices: Union[Dict[Any, Any], List[Any]] = Field(default_factory=list)
+    var_name: str
+    answers: AnswersMap
+    jinja_env: SandboxedEnvironment
+    choices: Union[Dict[Any, Any], List[Any]] = field(default_factory=list)
     default: Any = None
-    help_text: str = ""
+    help: str = ""
+    ask_user: bool = False
     multiline: Union[str, bool] = False
     placeholder: str = ""
-    questionary: "Questionary"
     secret: bool = False
-    type_name: str = ""
-    var_name: str
+    type: str = ""
     when: Union[str, bool] = True
-
-    # Private
-    _cached_choices: List[Choice] = PrivateAttr(default_factory=list)
-
-    class Config:
-        arbitrary_types_allowed = True
-
-    def __init__(self, **kwargs):
-        # Transform arguments that are named like python keywords
-        to_rename = (("help", "help_text"), ("type", "type_name"))
-        for from_, to in to_rename:
-            with suppress(KeyError):
-                kwargs.setdefault(to, kwargs.pop(from_))
-        # Infer type from default if missing
-        super().__init__(**kwargs)
-        self.questionary.questions.append(self)
-
-    def __repr__(self):
-        return f"Question({self.var_name})"
 
     @validator("var_name")
     def _check_var_name(cls, v):
@@ -133,17 +177,55 @@ class Question(BaseModel):
             raise ValueError("Invalid question name")
         return v
 
-    @validator("type_name", always=True)
-    def _check_type_name(cls, v, values):
+    @validator("type", always=True)
+    def _check_type(cls, v, values):
         if v == "":
             default_type_name = type(values.get("default")).__name__
             v = default_type_name if default_type_name in CAST_STR_TO_NATIVE else "yaml"
         return v
 
-    def _generate_choices(self) -> None:
-        """Iterates choices in a format that the questionary lib likes."""
-        if self._cached_choices:
-            return
+    def get_default(self) -> Any:
+        """Get the default value for this question, casted to its expected type."""
+        cast_fn = self.get_cast_fn()
+        try:
+            result = self.answers.init[self.var_name]
+        except KeyError:
+            try:
+                result = self.answers.last[self.var_name]
+            except KeyError:
+                result = self.render_value(self.default)
+        result = cast_answer_type(result, cast_fn)
+        return result
+
+    def get_default_rendered(self) -> Union[bool, str, Choice, None]:
+        """Get default answer rendered for the questionary lib.
+
+        The questionary lib expects some specific data types, and returns
+        it when the user answers. Sometimes you need to compare the response
+        to the rendered one, or viceversa.
+
+        This helper allows such usages.
+        """
+        default = self.get_default()
+        # If there are choices, return the one that matches the expressed default
+        if self.choices:
+            for choice in self._formatted_choices:
+                if choice.value == default:
+                    return choice
+            return None
+        # Yes/No questions expect and return bools
+        if isinstance(default, bool) and self.type == "bool":
+            return default
+        # Emptiness is expressed as an empty str
+        if default is None:
+            return ""
+        # All other data has to be str
+        return str(default)
+
+    @cached_property
+    def _formatted_choices(self) -> List[Choice]:
+        """Obtain choices rendered and properly formatted."""
+        result = []
         choices = self.choices
         if isinstance(self.choices, dict):
             choices = list(self.choices.items())
@@ -162,50 +244,8 @@ class Question(BaseModel):
             name = str(name)
             # The value can be templated
             value = self.render_value(value)
-            self._cached_choices.append(Choice(name, value))
-
-    def get_default(self) -> Any:
-        """Get the default value for this question, casted to its expected type."""
-        cast_fn = self.get_cast_fn()
-        try:
-            result = self.questionary.answers_forced[self.var_name]
-        except KeyError:
-            try:
-                result = self.questionary.answers_last[self.var_name]
-            except KeyError:
-                result = self.render_value(self.default)
-        result = cast_answer_type(result, cast_fn)
+            result.append(Choice(name, value))
         return result
-
-    def get_default_rendered(self) -> Union[bool, str, Choice, None]:
-        """Get default answer rendered for the questionary lib.
-
-        The questionary lib expects some specific data types, and returns
-        it when the user answers. Sometimes you need to compare the response
-        to the rendered one, or viceversa.
-
-        This helper allows such usages.
-        """
-        default = self.get_default()
-        # If there are choices, return the one that matches the expressed default
-        if self.choices:
-            for choice in self.get_choices():
-                if choice.value == default:
-                    return choice
-            return None
-        # Yes/No questions expect and return bools
-        if isinstance(default, bool) and self.type_name == "bool":
-            return default
-        # Emptiness is expressed as an empty str
-        if default is None:
-            return ""
-        # All other data has to be str
-        return str(default)
-
-    def get_choices(self) -> List[Choice]:
-        """Obtain choices rendered and properly formatted."""
-        self._generate_choices()
-        return self._cached_choices
 
     def filter_answer(self, answer) -> Any:
         """Cast the answer to the desired type."""
@@ -216,10 +256,10 @@ class Question(BaseModel):
     def get_message(self) -> str:
         """Get the message that will be printed to the user."""
         message = ""
-        if self.help_text:
-            rendered_help = self.render_value(self.help_text)
+        if self.help:
+            rendered_help = self.render_value(self.help)
             message = force_str_end(rendered_help)
-        message += f"{self.var_name}? Format: {self.type_name}"
+        message += f"{self.var_name}? Format: {self.type}"
         return message
 
     def get_placeholder(self) -> str:
@@ -239,17 +279,17 @@ class Question(BaseModel):
             "when": self.get_when,
         }
         questionary_type = "input"
-        if self.type_name == "bool":
+        if self.type == "bool":
             questionary_type = "confirm"
         if self.choices:
             questionary_type = "select"
-            result["choices"] = self.get_choices()
+            result["choices"] = self._formatted_choices
         if questionary_type == "input":
             if self.secret:
                 questionary_type = "password"
-            elif self.type_name == "yaml":
+            elif self.type == "yaml":
                 lexer = PygmentsLexer(YamlLexer)
-            elif self.type_name == "json":
+            elif self.type == "json":
                 lexer = PygmentsLexer(JsonLexer)
             if lexer:
                 result["lexer"] = lexer
@@ -263,7 +303,7 @@ class Question(BaseModel):
 
     def get_cast_fn(self) -> Callable:
         """Obtain function to cast user answer to desired type."""
-        type_name = self.render_value(self.type_name)
+        type_name = self.render_value(self.type)
         if type_name not in CAST_STR_TO_NATIVE:
             raise InvalidTypeError("Invalid question type")
         return CAST_STR_TO_NATIVE.get(type_name, parse_yaml_string)
@@ -287,9 +327,9 @@ class Question(BaseModel):
         """Get skip condition for question."""
         if (
             # Skip on --force
-            not self.questionary.ask_user
+            not self.ask_user
             # Skip on --data=this_question=some_answer
-            or self.var_name in self.questionary.answers_forced
+            or self.var_name in self.answers.init
         ):
             return False
         when = self.when
@@ -303,95 +343,14 @@ class Question(BaseModel):
         If the value cannot be used as a template, it will be returned as is.
         """
         try:
-            template = self.questionary.env.from_string(value)
+            template = self.jinja_env.from_string(value)
         except TypeError:
             # value was not a string
             return value
         try:
-            return template.render(
-                **self.questionary.get_best_answers(), **DEFAULT_DATA
-            )
+            return template.render(**self.answers.combined)
         except UndefinedError as error:
             raise UserMessageError(str(error)) from error
-
-
-class Questionary(BaseModel):
-    """An object holding all [Question][] items and user answers.
-
-    All attributes are also init kwargs.
-
-    Attributes:
-        answers_default:
-            Default answers as specified in the template.
-
-        answers_forced:
-            Answers forced by the user, either by an API call like
-            `data={'some_question': 'forced_answer'}` or by a CLI call like
-            `--data=some_question=forced_answer`.
-
-        answers_last:
-            Answers obtained from the `.copier-answers.yml` file.
-
-        answers_user:
-            Dict containing user answers for the current questionary. It should
-            be empty always.
-
-        ask_user:
-            Indicates if the questionary should be asked, or just forced.
-
-        env:
-            The Jinja environment for rendering.
-
-        questions:
-            A list containing all [Question][] objects for this [Questionary][].
-    """
-
-    answers_default: AnyByStrDict = Field(default_factory=dict)
-    answers_forced: AnyByStrDict = Field(default_factory=dict)
-    answers_last: AnyByStrDict = Field(default_factory=dict)
-    answers_user: AnyByStrDict = Field(default_factory=dict)
-    ask_user: bool = True
-    env: SandboxedEnvironment
-    questions: List[Question] = Field(default_factory=list)
-
-    class Config:
-        arbitrary_types_allowed = True
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-    def get_best_answers(self) -> t_ChainMap[str, Any]:
-        """Get dict-like object with the best answers for each question."""
-        return ChainMap(
-            self.answers_user,
-            self.answers_last,
-            self.answers_forced,
-            self.answers_default,
-        )
-
-    def get_answers(self) -> AnyByStrDict:
-        """Obtain answers for all questions.
-
-        It produces a TUI for querying the user if `ask_user` is true. Otherwise,
-        it gets answers from other sources.
-        """
-        previous_answers = self.get_best_answers()
-        if self.ask_user:
-            self.answers_user = unsafe_prompt(
-                (question.get_questionary_structure() for question in self.questions),
-                answers=previous_answers,
-            )
-        else:
-            # Avoid prompting to not requiring a TTy when --force
-            for question in self.questions:
-                new_answer = question.get_default()
-                previous_answer = previous_answers.get(question.var_name)
-                if new_answer != previous_answer:
-                    self.answers_user[question.var_name] = new_answer
-        return self.answers_user
-
-
-Question.update_forward_refs()
 
 
 def load_yaml_data(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
@@ -493,24 +452,3 @@ CAST_STR_TO_NATIVE: Dict[str, Callable] = {
     "str": str,
     "yaml": parse_yaml_string,
 }
-
-
-def query_user_data(
-    questions_data: AnyByStrDict,
-    last_answers_data: AnyByStrDict,
-    forced_answers_data: AnyByStrDict,
-    default_answers_data: AnyByStrDict,
-    ask_user: bool,
-    envops: EnvOps,
-) -> AnyByStrDict:
-    """Query the user for questions given in the config file."""
-    questionary = Questionary(
-        answers_forced=forced_answers_data,
-        answers_last=last_answers_data,
-        answers_default=default_answers_data,
-        ask_user=ask_user,
-        env=get_jinja_env(envops=envops),
-    )
-    for question, details in questions_data.items():
-        Question(var_name=question, questionary=questionary, **details)
-    return questionary.get_answers()

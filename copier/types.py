@@ -1,7 +1,8 @@
-"""All complex types and annotations are declared here."""
+"""Complex types, annotations, validators."""
 
 from pathlib import Path
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -9,13 +10,26 @@ from typing import (
     List,
     Optional,
     Sequence,
+    Tuple,
     TypeVar,
     Union,
 )
 
+from pydantic.validators import path_validator
+
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
+
+if TYPE_CHECKING:
+    from pydantic.typing import CallableGenerator
+
+
 # simple types
 StrOrPath = Union[str, Path]
 AnyByStrDict = Dict[str, Any]
+AnyByStrDictOrTuple = Union[AnyByStrDict, Tuple[str, Any]]
 
 # sequences
 IntSeq = Sequence[int]
@@ -38,3 +52,40 @@ T = TypeVar("T")
 JSONSerializable = (dict, list, str, int, float, bool, type(None))
 Filters = Dict[str, Callable]
 LoaderPaths = Union[str, Iterable[str]]
+VCSTypes = Literal["git"]
+
+
+class AllowArbitraryTypes:
+    arbitrary_types_allowed = True
+
+
+# Validators
+def path_is_absolute(value: Path) -> Path:
+    if not value.is_absolute():
+        from .errors import PathNotAbsoluteError
+
+        raise PathNotAbsoluteError(path=value)
+    return value
+
+
+def path_is_relative(value: Path) -> Path:
+    if value.is_absolute():
+        from .errors import PathNotRelativeError
+
+        raise PathNotRelativeError(path=value)
+    return value
+
+
+# Validated types
+class AbsolutePath(Path):
+    @classmethod
+    def __get_validators__(cls) -> "CallableGenerator":
+        yield path_validator
+        yield path_is_absolute
+
+
+class RelativePath(Path):
+    @classmethod
+    def __get_validators__(cls) -> "CallableGenerator":
+        yield path_validator
+        yield path_is_relative

@@ -33,7 +33,7 @@ def test_output_force(capsys, tmp_path):
 def test_output_skip(capsys, tmp_path):
     render(tmp_path)
     capsys.readouterr()
-    render(tmp_path, quiet=False, skip=True)
+    render(tmp_path, quiet=False, skip_if_exists=["config.py"])
     _, err = capsys.readouterr()
     assert re.search(r"conflict[^\s]*  config\.py", err)
     assert re.search(r"skip[^\s]*  config\.py", err)

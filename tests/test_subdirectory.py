@@ -1,11 +1,12 @@
 import os
 
+import pytest
 from plumbum import local
 from plumbum.cmd import git
 
 import copier
-from copier.config import make_config
-from copier.main import update_diff
+
+from .helpers import build_file_tree
 
 
 def git_init(message="hello world"):
@@ -16,28 +17,63 @@ def git_init(message="hello world"):
     git("commit", "-m", message)
 
 
-def test_copy_subdirectory_api_option(tmp_path):
+@pytest.fixture(scope="module")
+def demo_template(tmp_path_factory):
+    root = tmp_path_factory.mktemp("demo_subdirectory")
+    build_file_tree(
+        {
+            root / "api_project" / "api_readme.md": "",
+            root
+            / "api_project"
+            / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
+            root
+            / "conf_project"
+            / "conf_readme.md": """\
+                # Demo subdirectory
+
+                Generated using previous answers `_subdirectory` value.
+                """,
+            root
+            / "conf_project"
+            / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
+            root
+            / "copier.yml": """\
+                choose_subdir:
+                    type: str
+                    default: conf_project
+                    choices:
+                        - api_project
+                        - conf_project
+                _subdirectory: "[[ choose_subdir ]]"
+            """,
+        }
+    )
+    with local.cwd(root):
+        git_init()
+    return str(root)
+
+
+def test_copy_subdirectory_api_option(demo_template, tmp_path):
     copier.copy(
-        "./tests/demo_subdirectory", tmp_path, force=True, subdirectory="api_project"
+        demo_template, tmp_path, force=True, data={"choose_subdir": "api_project"}
     )
     assert (tmp_path / "api_readme.md").exists()
     assert not (tmp_path / "conf_readme.md").exists()
 
 
-def test_copy_subdirectory_config(tmp_path):
-    copier.copy("./tests/demo_subdirectory", tmp_path, force=True)
+def test_copy_subdirectory_config(demo_template, tmp_path):
+    copier.copy(demo_template, tmp_path, force=True)
     assert (tmp_path / "conf_readme.md").exists()
     assert not (tmp_path / "api_readme.md").exists()
 
 
-def test_update_subdirectory(tmp_path):
-    copier.copy("./tests/demo_subdirectory", tmp_path, force=True)
+def test_update_subdirectory(demo_template, tmp_path):
+    copier.copy(demo_template, tmp_path, force=True)
 
     with local.cwd(tmp_path):
         git_init()
 
-    conf = make_config("./tests/demo_subdirectory", str(tmp_path), force=True)
-    update_diff(conf)
+    copier.copy(dst_path=tmp_path, force=True)
     assert not (tmp_path / "conf_project").exists()
     assert not (tmp_path / "api_project").exists()
     assert not (tmp_path / "api_readme.md").exists()

@@ -1,34 +1,16 @@
 """Some utility functions."""
 
-import errno
-import os
 import shutil
 import sys
-import unicodedata
 from contextlib import suppress
 from pathlib import Path
-from typing import Any, Dict, List, Optional, TextIO, Union
+from typing import Any, Optional, TextIO, Union
 
 import colorama
-import pathspec
-from jinja2 import FileSystemLoader
-from jinja2.sandbox import SandboxedEnvironment
-from packaging import version
 from pydantic import StrictBool
 from yaml import safe_dump
 
-from .config.objects import ConfigData, EnvOps
-from .types import (
-    AnyByStrDict,
-    CheckPathFunc,
-    Filters,
-    IntSeq,
-    JSONSerializable,
-    LoaderPaths,
-    StrOrPath,
-    StrOrPathSeq,
-    T,
-)
+from .types import IntSeq
 
 __all__ = ("Style", "printf")
 
@@ -80,12 +62,6 @@ def printf_exception(
         print(HLINE, file=sys.stderr)
 
 
-def required(value: T, **kwargs: Any) -> T:
-    if not value:
-        raise ValueError()
-    return value
-
-
 def cast_str_to_bool(value: Any) -> bool:
     """Parse anything to bool.
 
@@ -113,15 +89,6 @@ def cast_str_to_bool(value: Any) -> bool:
     return bool(value)
 
 
-def make_folder(folder: Path) -> None:
-    if not folder.exists():
-        try:
-            os.makedirs(str(folder))
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
-
-
 def copy_file(src_path: Path, dst_path: Path, follow_symlinks: bool = True) -> None:
     shutil.copy2(src_path, dst_path, follow_symlinks=follow_symlinks)
 
@@ -137,69 +104,6 @@ def to_nice_yaml(data: Any, **kwargs) -> str:
     return result or ""
 
 
-def get_jinja_env(
-    envops: "EnvOps",
-    filters: Optional[Filters] = None,
-    paths: Optional[LoaderPaths] = None,
-    **kwargs: Any,
-) -> SandboxedEnvironment:
-    """Return a pre-configured Jinja environment."""
-    loader = FileSystemLoader(paths) if paths else None
-    # We want to minimize the risk of hidden malware in the templates
-    # so we use the SandboxedEnvironment instead of the regular one.
-    # Of couse we still have the post-copy tasks to worry about, but at least
-    # they are more visible to the final user.
-    env = SandboxedEnvironment(loader=loader, **envops.dict(), **kwargs)
-    default_filters = {"to_nice_yaml": to_nice_yaml}
-    default_filters.update(filters or {})
-    env.filters.update(default_filters)
-    return env
-
-
-class Renderer:
-    """The Jinja template renderer."""
-
-    def __init__(self, conf: "ConfigData") -> None:
-        envops: "EnvOps" = conf.envops
-        paths = [str(conf.src_path)] + list(map(str, conf.extra_paths or []))
-        self.env = get_jinja_env(envops=envops, paths=paths)
-        self.conf = conf
-        answers: AnyByStrDict = {}
-        # All internal values must appear first
-        if conf.commit:
-            answers["_commit"] = conf.commit
-        if conf.original_src_path is not None:
-            answers["_src_path"] = conf.original_src_path
-        # Other data goes next
-        answers.update(
-            (k, v)
-            for (k, v) in conf.data.items()
-            if not k.startswith("_")
-            and k not in conf.secret_questions
-            and isinstance(k, JSONSerializable)
-            and isinstance(v, JSONSerializable)
-        )
-        self.data = dict(
-            conf.data,
-            _copier_answers=answers,
-            _copier_conf=conf.copy(deep=True, exclude={"data": {"now", "make_secret"}}),
-        )
-
-    def __call__(self, fullpath: StrOrPath) -> str:
-        relpath = Path(fullpath).relative_to(self.conf.src_path).as_posix()
-        tmpl = self.env.get_template(str(relpath))
-        return tmpl.render(**self.data)
-
-    def string(self, string: StrOrPath) -> str:
-        tmpl = self.env.from_string(str(string))
-        return tmpl.render(**self.data)
-
-
-def normalize_str(text: StrOrPath, form: str = "NFD") -> str:
-    """Normalize unicode text. Uses the NFD algorithm by default."""
-    return unicodedata.normalize(form, str(text))
-
-
 def force_str_end(original_str: str, end: str = "\n") -> str:
     """Make sure a `original_str` ends with `end`.
 
@@ -210,39 +114,3 @@ def force_str_end(original_str: str, end: str = "\n") -> str:
     if not original_str.endswith(end):
         return original_str + end
     return original_str
-
-
-def create_path_filter(patterns: StrOrPathSeq) -> CheckPathFunc:
-    """Returns a function that matches a path against given patterns."""
-    patterns = [normalize_str(p) for p in patterns]
-    spec = pathspec.PathSpec.from_lines("gitwildmatch", patterns)
-
-    def match(path: StrOrPath) -> bool:
-        return spec.match_file(str(path))
-
-    return match
-
-
-def get_migration_tasks(conf: "ConfigData", stage: str) -> List[Dict]:
-    """Get migration objects that match current version spec.
-
-    Versions are compared using PEP 440.
-    """
-    result: List[Dict] = []
-    if not conf.old_commit or not conf.commit:
-        return result
-    vfrom = version.parse(conf.old_commit)
-    vto = version.parse(conf.commit)
-    extra_env = {
-        "STAGE": stage,
-        "VERSION_FROM": conf.old_commit,
-        "VERSION_TO": conf.commit,
-    }
-    for migration in conf.migrations:
-        if vto >= version.parse(migration.version) > vfrom:
-            extra_env = dict(extra_env, VERSION_CURRENT=str(migration.version))
-            result += [
-                {"task": task, "extra_env": extra_env}
-                for task in migration.dict().get(stage, [])
-            ]
-    return result

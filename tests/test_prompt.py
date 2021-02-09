@@ -77,7 +77,7 @@ def test_copy_default_advertised(tmp_path_factory, spawn, name):
         git("add", ".")
         assert "_commit: v1" in Path(".copier-answers.yml").read_text()
         git("commit", "-m", "v1")
-        tui = spawn([COPIER_PATH], timeout=10)
+        tui = spawn([COPIER_PATH], timeout=20)
         # Check what was captured
         tui.expect_exact(["in_love?", "Format: bool", "(Y/n)"])
         tui.sendline()
@@ -302,6 +302,11 @@ def test_update_choice(tmp_path_factory, spawn, choices):
             / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
         }
     )
+    with local.cwd(template):
+        git("init")
+        git("add", ".")
+        git("commit", "-m one")
+        git("tag", "v1")
     # Copy
     tui = spawn([COPIER_PATH, str(template), str(subproject)], timeout=10)
     tui.expect_exact(["pick_one?"])

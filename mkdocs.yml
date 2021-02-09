@@ -11,14 +11,14 @@ nav:
   - Generating a project: "generating.md"
   - Updating a project: "updating.md"
   - Reference:
-      - config:
-          - factory.py: "reference/config/factory.md"
-          - objects.py: "reference/config/objects.md"
-          - user_data.py: "reference/config/user_data.md"
       - cli.py: "reference/cli.md"
+      - errors.py: "reference/errors.md"
       - main.py: "reference/main.md"
+      - subproject.py: "reference/subproject.md"
+      - template.py: "reference/template.md"
       - tools.py: "reference/tools.md"
       - types.py: "reference/types.md"
+      - user_data.py: "reference/user_data.md"
       - vcs.py: "reference/vcs.md"
   - Comparisons: comparisons.md
   - Contributing: "contributing.md"
@@ -41,6 +41,7 @@ markdown_extensions:
       permalink: true
 
 plugins:
+  - autorefs
   - search
   - mermaid2:
       arguments:

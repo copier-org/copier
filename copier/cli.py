@@ -20,11 +20,12 @@ from io import StringIO
 from textwrap import dedent
 from unittest.mock import patch
 
+import yaml
 from plumbum import cli, colors
 
 from . import __version__
-from .config.objects import UserMessageError
-from .main import copy
+from .errors import UserMessageError
+from .main import Worker
 from .types import AnyByStrDict, List, OptStr
 
 
@@ -50,10 +51,8 @@ class CopierApp(cli.Application):
 
     Attributes:
         answers_file: Set [answers_file][] option.
-        extra_paths: Set [extra_paths][] option.
         exclude: Set [exclude][] option.
         vcs_ref: Set [vcs_ref][] option.
-        subdirectory: Set [subdirectory][] option.
         pretend: Set [pretend][] option.
         force: Set [force][] option.
         skip: Set [skip_if_exists][] option.
@@ -97,12 +96,6 @@ class CopierApp(cli.Application):
             "to find the answers file"
         ),
     )
-    extra_paths: cli.SwitchAttr = cli.SwitchAttr(
-        ["-p", "--extra-paths"],
-        str,
-        list=True,
-        help="Additional directories to find parent templates in",
-    )
     exclude: cli.SwitchAttr = cli.SwitchAttr(
         ["-x", "--exclude"],
         str,
@@ -122,23 +115,17 @@ class CopierApp(cli.Application):
             "the latest version, use `--vcs-ref=HEAD`."
         ),
     )
-    subdirectory: cli.SwitchAttr = cli.SwitchAttr(
-        ["-b", "--subdirectory"],
-        str,
-        help=(
-            "Subdirectory to use when generating the project. "
-            "If you do not specify it, the root of the template is used."
-        ),
-    )
-
     pretend: cli.Flag = cli.Flag(
         ["-n", "--pretend"], help="Run but do not make any changes"
     )
     force: cli.Flag = cli.Flag(
         ["-f", "--force"], help="Overwrite files that already exist, without asking"
     )
-    skip: cli.Flag = cli.Flag(
-        ["-s", "--skip"], help="Skip files that already exist, without asking"
+    skip: cli.Flag = cli.SwitchAttr(
+        ["-s", "--skip"],
+        str,
+        list=True,
+        help="Skip specified files if they exist already",
     )
     quiet: cli.Flag = cli.Flag(["-q", "--quiet"], help="Suppress status output")
     prereleases: cli.Flag = cli.Flag(
@@ -160,30 +147,30 @@ class CopierApp(cli.Application):
             values: The list of values to apply.
                 Each value in the list is of the following form: `NAME=VALUE`.
         """
-        self.data.update(value.split("=", 1) for value in values)  # type: ignore
+        for arg in values:
+            key, value = arg.split("=", 1)
+            value = yaml.safe_load(value)
+            self.data[key] = value
 
-    def _copy(self, src_path: OptStr = None, dst_path: str = ".", **kwargs) -> None:
+    def _worker(self, src_path: OptStr = None, dst_path: str = ".", **kwargs) -> Worker:
         """
         Run Copier's internal API using CLI switches.
 
         Arguments:
             src_path: The source path of the template to generate the project from.
             dst_path: The path to generate the project to.
-            **kwargs: Arguments passed to [`copy`][copier.main.copy].
+            **kwargs: Arguments passed to [Worker][copier.main.Worker].
         """
-        return copy(
+        return Worker(
             data=self.data,
             dst_path=dst_path,
             answers_file=self.answers_file,
             exclude=self.exclude,
-            extra_paths=self.extra_paths,
             force=self.force,
             pretend=self.pretend,
             quiet=self.quiet,
-            skip=self.skip,
             src_path=src_path,
             vcs_ref=self.vcs_ref,
-            subdirectory=self.subdirectory,
             use_prereleases=self.prereleases,
             **kwargs,
         )
@@ -249,7 +236,7 @@ class CopierCopySubApp(cli.Application):
 
     @handle_exceptions
     def main(self, template_src: str, destination_path: str) -> int:
-        """Call [`copy`][copier.main.copy] in copy mode.
+        """Call [run_copy][copier.main.Worker.run_copy].
 
         Params:
             template_src:
@@ -260,12 +247,11 @@ class CopierCopySubApp(cli.Application):
             destination_path:
                 Where to generate the new subproject. It must not exist or be empty.
         """
-        self.parent._copy(
+        self.parent._worker(
             template_src,
             destination_path,
             cleanup_on_error=self.cleanup_on_error,
-            only_diff=False,
-        )
+        ).run_copy()
         return 0
 
 
@@ -293,7 +279,7 @@ class CopierUpdateSubApp(cli.Application):
 
     @handle_exceptions
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
-        """Call [`copy`][copier.main.copy] in update mode.
+        """Call [run_update][copier.main.Worker.run_update].
 
         Parameters:
             destination_path:
@@ -303,10 +289,9 @@ class CopierUpdateSubApp(cli.Application):
                 The subproject must exist. If not specified, the currently
                 working directory is used.
         """
-        self.parent._copy(
+        self.parent._worker(
             dst_path=destination_path,
-            only_diff=True,
-        )
+        ).run_update()
         return 0
 
 
