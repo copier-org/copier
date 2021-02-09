@@ -70,7 +70,6 @@ class AnswersMap:
 
             See [data][].
 
-
         metadata:
             Data used to be able to reproduce the template.
 
