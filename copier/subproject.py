@@ -26,7 +26,6 @@ class Subproject:
     """Object that represents the subproject and its current state.
 
     Attributes:
-
         local_abspath:
             Absolute path on local disk pointing to the subproject root folder.
 

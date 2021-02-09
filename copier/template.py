@@ -78,7 +78,6 @@ class Template:
     See [configuring a template][configuring-a-template].
 
     Attributes:
-
         url:
             Absolute origin that points to the template.
 
