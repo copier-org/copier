@@ -53,37 +53,47 @@ DEFAULT_DATA: AnyByStrDict = {
 
 @dataclass
 class AnswersMap:
-    """Object that gathers answers from different sources."""
+    """Object that gathers answers from different sources.
+
+    Attributes:
+        local:
+            Local overrides to other answers.
+
+        user:
+            Answers provided by the user, interactively.
+
+        init:
+            Answers provided on init.
+
+            This will hold those answers that come from `--data` in
+            CLI mode.
+
+            See [data][].
+
+
+        metadata:
+            Data used to be able to reproduce the template.
+
+            It comes from [copier.template.Template.metadata][].
+
+        last:
+            Data from [the answers file][the-copier-answersyml-file].
+
+        default:
+            Default data from the template.
+
+            See [copier.template.Template.default_answers][].
+    """
 
     # Private
     local: AnyByStrDict = field(default_factory=dict, init=False)
-    """Local overrides to other answers."""
 
     # Public
     user: AnyByStrDict = field(default_factory=dict)
-    """Answers provided by the user, interactively."""
-
     init: AnyByStrDict = field(default_factory=dict)
-    """Answers provided on init.
-
-    This will hold those answers that come from `--data` in
-    CLI mode ([copier.main.Worker.data][] in API mode).
-    """
-
     metadata: AnyByStrDict = field(default_factory=dict)
-    """Data used to be able to reproduce the template.
-
-    It comes from [copier.template.Template.metadata][].
-    """
-
     last: AnyByStrDict = field(default_factory=dict)
-    """Data from [the answers file][the-copier-answersyml-file]."""
-
     default: AnyByStrDict = field(default_factory=dict)
-    """Default data from the template.
-
-    See [copier.template.Template.default_answers][].
-    """
 
     @cached_property
     def combined(self) -> t_ChainMap[str, Any]:

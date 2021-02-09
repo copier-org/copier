@@ -23,13 +23,19 @@ except ImportError:
 
 @dataclass
 class Subproject:
-    """Object that represents the subproject and its current state."""
+    """Object that represents the subproject and its current state.
+
+    Attributes:
+
+        local_abspath:
+            Absolute path on local disk pointing to the subproject root folder.
+
+        answers_relpath:
+            Relative path to [the answers file][the-copier-answersyml-file].
+    """
 
     local_abspath: AbsolutePath
-    """Absolute path on local disk pointing to the subproject root folder."""
-
     answers_relpath: Path = Path(".copier-answers.yml")
-    """Relative path to [the answers file][the-copier-answersyml-file]."""
 
     def is_dirty(self) -> bool:
         """Indicates if the local template root is dirty.

@@ -76,39 +76,42 @@ class Template:
     """Object that represents a template and its current state.
 
     See [configuring a template][configuring-a-template].
+
+    Attributes:
+
+        url:
+            Absolute origin that points to the template.
+
+            It can be:
+
+            - A local path.
+            - A Git url. Note: if something fails, prefix the URL with `git+`.
+
+        ref:
+            The tag to checkout in the template.
+
+            Only used if `url` points to a VCS-tracked template.
+
+            If `None`, then it will checkout the latest tag, sorted by PEP440.
+            Otherwise it will checkout the reference used here.
+
+            Usually it should be a tag, or `None`.
+
+        use_prereleases:
+            When `True`, the template's *latest* release will consider prereleases.
+
+            Only used if:
+
+            - `url` points to a VCS-tracked template
+            - `ref` is `None`.
+
+            Helpful if you want to test templates before doing a proper release, but you
+            need some features that require a proper PEP440 version identifier.
     """
 
     url: str
-    """Absolute origin that points to the template.
-
-    It can be:
-
-    - A local path.
-    - A Git url. Note: if something fails, prefix the URL with `git+`.
-    """
-
     ref: OptStr = None
-    """The tag to checkout in the template.
-
-    Only used if [url][copier.template.Template.url] points to a VCS-tracked template.
-
-    If `None`, then it will checkout the latest tag, sorted by PEP440.
-    Otherwise it will checkout the reference used here.
-
-    Usually it should be a tag, or `None`.
-    """
-
     use_prereleases: bool = False
-    """When `True`, the template's *latest* release will consider prereleases.
-
-    Only used if:
-
-    - [url][copier.template.Template.url] points to a VCS-tracked template
-    - [ref][copier.template.Template.ref] is `None`.
-
-    Helpful if you want to test templates before doing a proper release, but you
-    need some features that require a proper PEP440 version identifier.
-    """
 
     @cached_property
     def _raw_config(self) -> AnyByStrDict:
@@ -285,7 +288,7 @@ class Template:
     def local_abspath(self) -> Path:
         """Get the absolute path to the template on disk.
 
-        This may clone it if [url][copier.template.Template.url] points to a
+        This may clone it if `url` points to a
         VCS-tracked template.
         """
         result = Path(self.url)
@@ -301,7 +304,7 @@ class Template:
     def url_expanded(self) -> str:
         """Get usable URL.
 
-        [url][copier.template.Template.url] can be specified in shortcut
+        `url` can be specified in shortcut
         format, which wouldn't be understood by the underlying VCS system. This
         property returns the expanded version, which should work properly.
         """

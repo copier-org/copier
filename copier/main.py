@@ -69,79 +69,81 @@ class Worker:
     -   [run_update][copier.main.Worker.run_update] to update a subproject.
     -   [run_auto][copier.main.Worker.run_auto] to let it choose whether you
         want to copy or update the subproject.
+
+    Attributes:
+        src_path:
+            String that can be resolved to a template path, be it local or remote.
+
+            See [copier.vcs.get_repo][].
+
+            If it is `None`, then it means that you are
+            [updating a project][updating-a-project], and the original
+            `src_path` will be obtained from
+            [the answers file][the-copier-answersyml-file].
+
+        dst_path:
+            Destination path where to render the subproject.
+
+        answers_file:
+            Indicates the path for [the answers file][the-copier-answersyml-file].
+
+            The path must be relative to `dst_path`.
+
+            If it is `None`, the default value will be obtained from
+            [copier.template.Template.answers_relpath][].
+
+        vcs_ref:
+            Specify the VCS tag/commit to use in the template.
+
+        data:
+            Answers to the questionary defined in the template.
+
+        exclude:
+            User-chosen additional [file exclusion patterns][exclude].
+
+        use_prereleases:
+            Consider prereleases when detecting the *latest* one?
+
+            See [use_prereleases][].
+
+            Useless if specifying a [vcs_ref][].
+
+        skip_if_exists:
+            User-chosen additional [file skip patterns][skip_if_exists].
+
+        cleanup_on_error:
+            Delete `dst_path` if there's an error?
+
+            See [cleanup_on_error][].
+
+        force:
+            When `True`, disable all user interactions.
+
+            See [force][].
+
+        pretend:
+            When `True`, produce no real rendering.
+
+            See [pretend][].
+
+        quiet:
+            When `True`, disable all output.
+
+            See [quiet][].
     """
 
     src_path: Optional[str] = None
-    """String that can be resolved to a template path, be it local or remote.
-
-    See [Template.url][copier.template.Template.url].
-
-    If it is `None`, then it means that you are [updating a project][updating-a-project],
-    and the original `src_path` will be obtained from
-    [the answers file][the-copier-answersyml-file].
-    """
-
     dst_path: Path = field(default=".")
-    """Destination path where to render the subproject."""
-
     answers_file: Optional[RelativePath] = None
-    """Indicates the path for [the answers file][the-copier-answersyml-file].
-
-    The path must be relative to [dst_path][copier.main.Worker.dst_path].
-
-    If it is `None`, the default value will be obtained from
-    [copier.template.Template.answers_relpath][].
-    """
-
     vcs_ref: OptStr = None
-    """Specify the VCS tag/commit to use in the template."""
-
     data: AnyByStrDict = field(default_factory=dict)
-    """Answers to the questionary defined in the template."""
-
     exclude: StrSeq = ()
-    """Additional file exclusion patterns.
-
-    See [exclude][].
-    """
-
     use_prereleases: bool = False
-    """Consider prereleases when detecting the *latest* one?
-
-    See [use_prereleases][].
-
-    Useless if specifying a [vcs_ref][copier.main.Worker.vcs_ref].
-    """
-
     skip_if_exists: StrSeq = ()
-    """Additional file skip patterns.
-
-    See [skip_if_exists][].
-    """
-
     cleanup_on_error: bool = True
-    """Delete [dst_path][copier.main.Worker.dst_path] if there's an error?
-
-    See [cleanup_on_error][].
-    """
-
     force: bool = False
-    """When `True`, disable all user interactions.
-
-    See [force][].
-    """
-
     pretend: bool = False
-    """When `True`, produce no real rendering.
-
-    See [pretend][].
-    """
-
     quiet: bool = False
-    """When `True`, disable all output.
-
-    See [quiet][].
-    """
 
     def _answers_to_remember(self) -> Mapping:
         """Get only answers that will be remembered in the copier answers file."""
@@ -525,7 +527,7 @@ class Worker:
     def run_auto(self) -> None:
         """Copy or update automatically.
 
-        If [src_path][copier.main.Worker.src_path] was supplied, execute
+        If `src_path` was supplied, execute
         [run_copy][copier.main.Worker.run_copy].
 
         Otherwise, execute [run_update][copier.main.Worker.run_update].
@@ -537,8 +539,8 @@ class Worker:
     def run_copy(self) -> None:
         """Generate a subproject from zero, ignoring what was in the folder.
 
-        If [dst_path][copier.main.Worker.dst_path] was missing, it will be
-        created. Otherwise, [src_path][copier.main.Worker.src_path] be rendered
+        If `dst_path` was missing, it will be
+        created. Otherwise, `src_path` be rendered
         directly into it, without worrying about evolving what was there
         already.
 
