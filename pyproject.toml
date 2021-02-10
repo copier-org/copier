@@ -110,7 +110,5 @@ multi_line_output = 3  # black interop
 use_parentheses = true
 
 [build-system]
-# TODO Switch back to poetry-core when it's possible again
-# HACK https://github.com/mtkennerly/poetry-dynamic-versioning/issues/35
-requires = ["poetry>=1.1.0", "poetry-dynamic-versioning"]
+requires = ["poetry_core>=1.0.0", "poetry-dynamic-versioning"]
 build-backend = "poetry.core.masonry.api"
