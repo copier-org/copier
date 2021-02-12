@@ -421,10 +421,12 @@ class Worker:
             new_content = tpl.render(**self._render_context()).encode()
         else:
             new_content = src_abspath.read_bytes()
+        dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
+        if dst_abspath.is_dir():
+            return
         if not self._render_allowed(dst_relpath, expected_contents=new_content):
             return
         if not self.pretend:
-            dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
             dst_abspath.write_bytes(new_content)
 
     def _render_folder(self, src_abspath: Path) -> None:
