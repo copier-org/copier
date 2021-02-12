@@ -183,3 +183,40 @@ def test_pretend_option(tmp_path):
     assert not (tmp_path / "doc").exists()
     assert not (tmp_path / "config.py").exists()
     assert not (tmp_path / "pyproject.toml").exists()
+
+
+@pytest.mark.parametrize("generate", (True, False))
+def test_empty_dir(tmp_path_factory, generate):
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src
+            / "copier.yaml": """
+                _subdirectory: tpl
+                _templates_suffix: .jinja
+                do_it:
+                    type: bool
+            """,
+            src
+            / "tpl"
+            / "[% if do_it %]one_dir[% endif %]"
+            / "one.txt.jinja": "[[ do_it ]]",
+            src / "tpl" / "two.txt": "[[ do_it ]]",
+            src / "tpl" / "[% if do_it %]three.txt[% endif %].jinja": "[[ do_it ]]",
+            src
+            / "tpl"
+            / "four"
+            / "[% if do_it %]five.txt[% endif %].jinja": "[[ do_it ]]",
+        },
+    )
+    copier.run_copy(str(src), dst, {"do_it": generate}, force=True)
+    assert (dst / "four").is_dir()
+    assert (dst / "two.txt").read_text() == "[[ do_it ]]"
+    assert (dst / "one_dir").exists() == generate
+    assert (dst / "three.txt").exists() == generate
+    assert (dst / "one_dir").is_dir() == generate
+    assert (dst / "one_dir" / "one.txt").is_file() == generate
+    if generate:
+        assert (dst / "one_dir" / "one.txt").read_text() == repr(generate)
+        assert (dst / "three.txt").read_text() == repr(generate)
+        assert (dst / "four" / "five.txt").read_text() == repr(generate)
