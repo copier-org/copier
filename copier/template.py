@@ -2,14 +2,18 @@
 from contextlib import suppress
 from pathlib import Path
 from typing import List, Mapping, Optional, Sequence, Set, Tuple
+from warnings import warn
 
-from packaging import version
-from packaging.version import parse
+from packaging.version import Version, parse
 from plumbum.cmd import git
 from plumbum.machines import local
 from pydantic.dataclasses import dataclass
 
-from .errors import UnsupportedVersionError
+from .errors import (
+    OldTemplateWarning,
+    UnknownCopierVersionWarning,
+    UnsupportedVersionError,
+)
 from .types import AnyByStrDict, OptStr, StrSeq, VCSTypes
 from .user_data import load_config_data
 from .vcs import checkout_latest_tag, clone, get_repo
@@ -53,8 +57,13 @@ def filter_config(data: AnyByStrDict) -> Tuple[AnyByStrDict, AnyByStrDict]:
     return conf_data, questions_data
 
 
-def verify_minimum_version(version_str: str) -> None:
-    """Raise an error if the current Copier version is less than the given version."""
+def verify_copier_version(version_str: str) -> None:
+    """Raise an error if the current Copier version is less than the given version.
+
+    Args:
+        version_str:
+            Minimal copier version for the template.
+    """
     # Importing __version__ at the top of the module creates a circular import
     # ("cannot import name '__version__' from partially initialized module 'copier'"),
     # so instead we do a lazy import here
@@ -62,12 +71,23 @@ def verify_minimum_version(version_str: str) -> None:
 
     # Disable check when running copier as editable installation
     if __version__ == "0.0.0":
+        warn(
+            "Cannot check Copier version constraint.",
+            UnknownCopierVersionWarning,
+        )
         return
-
-    if version.parse(__version__) < version.parse(version_str):
+    parsed_installed, parsed_min = map(Version, (__version__, version_str))
+    if parsed_installed < parsed_min:
         raise UnsupportedVersionError(
             f"This template requires Copier version >= {version_str}, "
             f"while your version of Copier is {__version__}."
+        )
+    if parsed_installed.major > parsed_min.major:
+        warn(
+            f"This template was designed for Copier {version_str}, "
+            f"but your version of Copier is {__version__}. "
+            f"You could find some incompatibilities.",
+            OldTemplateWarning,
         )
 
 
@@ -120,7 +140,7 @@ class Template:
         """
         result = load_config_data(self.local_abspath)
         with suppress(KeyError):
-            verify_minimum_version(result["_min_copier_version"])
+            verify_copier_version(result["_min_copier_version"])
         return result
 
     @cached_property
