@@ -29,6 +29,8 @@ MANIFEST
 covreport
 pip-wheel-metadata
 .tox
+.pdm.toml
+__pypackages__/
 
 # Documentation
 */_build/*

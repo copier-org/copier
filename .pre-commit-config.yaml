@@ -13,28 +13,21 @@ repos:
     hooks:
       - id: autoflake
         name: autoflake
-        entry: poetry run autoflake
+        entry: pdm run autoflake
         language: system
         types: [python]
         args: ["-i", "--remove-all-unused-imports", "--ignore-init-module-imports"]
       - id: black
         name: black
-        entry: poetry run black
+        entry: pdm run black
         language: system
         types: [python]
         require_serial: true
       - id: flake8
         name: flake8
-        entry: poetry run flake8
+        entry: pdm run flake8
         language: system
         types: [python]
-        require_serial: true
-      - id: poetry_check
-        description: Check the integrity of pyproject.toml
-        name: poetry_check
-        entry: poetry check
-        language: system
-        pass_filenames: false
         require_serial: true
 
   # isorting our imports
