@@ -37,9 +37,9 @@ class InvalidConfigFileError(ConfigFileError, CopierError):
 class MultipleConfigFilesError(ConfigFileError, CopierError):
     """Both copier.yml and copier.yaml found, and that's an error."""
 
-    def __init__(self, conf_paths: "PathSeq", quiet: bool):
+    def __init__(self, conf_paths: "PathSeq"):
         msg = str(conf_paths)
-        printf_exception(self, "MULTIPLE CONFIG FILES", msg=msg, quiet=quiet)
+        printf_exception(self, "MULTIPLE CONFIG FILES", msg=msg)
         super().__init__(msg)
 
 

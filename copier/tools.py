@@ -7,10 +7,17 @@ from pathlib import Path
 from typing import Any, Optional, TextIO, Union
 
 import colorama
+from packaging.version import Version
 from pydantic import StrictBool
 from yaml import safe_dump
 
 from .types import IntSeq
+
+try:
+    from importlib.metadata import version
+except ImportError:
+    # Python < 3.8
+    from importlib_metadata import version
 
 __all__ = ("Style", "printf")
 
@@ -29,6 +36,20 @@ INDENT = " " * 2
 HLINE = "-" * 42
 
 NO_VALUE: object = object()
+
+
+def copier_version() -> Version:
+    """Get closest match for the installed copier version."""
+    # Importing __version__ at the top of the module creates a circular import
+    # ("cannot import name '__version__' from partially initialized module 'copier'"),
+    # so instead we do a lazy import here
+    from . import __version__
+
+    if __version__ != "0.0.0":
+        return Version(__version__)
+
+    # Get the installed package version otherwise, which is sometimes more specific
+    return Version(version("copier"))
 
 
 def printf(

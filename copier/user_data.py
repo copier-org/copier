@@ -1,7 +1,6 @@
 """Functions used to load user data."""
 import datetime
 import json
-import re
 from collections import ChainMap
 from dataclasses import field
 from hashlib import sha512
@@ -18,7 +17,6 @@ from typing import (
 )
 
 import yaml
-from iteration_utilities import deepflatten
 from jinja2 import UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
 from prompt_toolkit.lexers import PygmentsLexer
@@ -26,14 +24,8 @@ from pydantic import validator
 from pydantic.dataclasses import dataclass
 from pygments.lexers.data import JsonLexer, YamlLexer
 from questionary.prompts.common import Choice
-from yamlinclude import YamlIncludeConstructor
 
-from .errors import (
-    InvalidConfigFileError,
-    InvalidTypeError,
-    MultipleConfigFilesError,
-    UserMessageError,
-)
+from .errors import InvalidTypeError, UserMessageError
 from .tools import cast_str_to_bool, force_str_end
 from .types import AllowArbitraryTypes, AnyByStrDict, OptStr, OptStrOrPath, StrOrPath
 
@@ -353,43 +345,6 @@ class Question:
             raise UserMessageError(str(error)) from error
 
 
-def load_yaml_data(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
-    """Load the `copier.yml` file.
-
-    This is like a simple YAML load, but applying all specific quirks needed
-    for [the `copier.yml` file][the-copieryml-file].
-
-    For example, it supports the `!include` tag with glob includes, and
-    merges multiple sections.
-
-    Params:
-        conf_path: The path to the `copier.yml` file.
-        quiet: Used to configure the exception.
-
-    Raises:
-        InvalidConfigFileError: When the file is formatted badly.
-    """
-    YamlIncludeConstructor.add_to_loader_class(
-        loader_class=yaml.FullLoader, base_dir=conf_path.parent
-    )
-
-    try:
-        with open(conf_path) as f:
-            flattened_result = deepflatten(
-                yaml.load_all(f, Loader=yaml.FullLoader),
-                depth=2,
-                types=(list,),
-            )
-            # HACK https://bugs.python.org/issue32792#msg311822
-            # I'd use ChainMap, but it doesn't respect order in Python 3.6
-            result = {}
-            for part in flattened_result:
-                result.update(part)
-            return result
-    except yaml.parser.ParserError as e:
-        raise InvalidConfigFileError(conf_path, quiet) from e
-
-
 def parse_yaml_string(string: str) -> Any:
     """Parse a YAML string and raise a ValueError if parsing failed.
 
@@ -400,24 +355,6 @@ def parse_yaml_string(string: str) -> Any:
         return yaml.safe_load(string)
     except yaml.error.YAMLError as error:
         raise ValueError(str(error))
-
-
-def load_config_data(
-    src_path: StrOrPath, quiet: bool = False, _warning: bool = True
-) -> AnyByStrDict:
-    """Try to load the content from a `copier.yml` or a `copier.yaml` file."""
-    conf_paths = [
-        p
-        for p in Path(src_path).glob("copier.*")
-        if p.is_file() and re.match(r"\.ya?ml", p.suffix, re.I)
-    ]
-
-    if len(conf_paths) > 1:
-        raise MultipleConfigFilesError(conf_paths, quiet=quiet)
-    elif len(conf_paths) == 1:
-        return load_yaml_data(conf_paths[0], quiet=quiet)
-    else:
-        return {}
 
 
 def load_answersfile_data(

@@ -23,7 +23,8 @@ from unittest.mock import patch
 import yaml
 from plumbum import cli, colors
 
-from . import __version__
+from copier.tools import copier_version
+
 from .errors import UserMessageError
 from .main import Worker
 from .types import AnyByStrDict, List, OptStr
@@ -84,7 +85,7 @@ class CopierApp(cli.Application):
         copier [MAIN_SWITCHES] [update] [SUB_SWITCHES] [destination_path]
         """
     )
-    VERSION = __version__
+    VERSION = copier_version()
     CALL_MAIN_IF_NESTED_COMMAND = False
     data: AnyByStrDict = {}
 

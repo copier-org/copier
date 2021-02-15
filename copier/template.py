@@ -1,21 +1,27 @@
 """Tools related to template management."""
+import re
 from contextlib import suppress
 from pathlib import Path
 from typing import List, Mapping, Optional, Sequence, Set, Tuple
 from warnings import warn
 
+import yaml
+from iteration_utilities import deepflatten
 from packaging.version import Version, parse
 from plumbum.cmd import git
 from plumbum.machines import local
 from pydantic.dataclasses import dataclass
+from yamlinclude import YamlIncludeConstructor
 
 from .errors import (
+    InvalidConfigFileError,
+    MultipleConfigFilesError,
     OldTemplateWarning,
     UnknownCopierVersionWarning,
     UnsupportedVersionError,
 )
+from .tools import copier_version
 from .types import AnyByStrDict, OptStr, StrSeq, VCSTypes
-from .user_data import load_config_data
 from .vcs import checkout_latest_tag, clone, get_repo
 
 try:
@@ -57,6 +63,43 @@ def filter_config(data: AnyByStrDict) -> Tuple[AnyByStrDict, AnyByStrDict]:
     return conf_data, questions_data
 
 
+def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
+    """Load the `copier.yml` file.
+
+    This is like a simple YAML load, but applying all specific quirks needed
+    for [the `copier.yml` file][the-copieryml-file].
+
+    For example, it supports the `!include` tag with glob includes, and
+    merges multiple sections.
+
+    Params:
+        conf_path: The path to the `copier.yml` file.
+        quiet: Used to configure the exception.
+
+    Raises:
+        InvalidConfigFileError: When the file is formatted badly.
+    """
+    YamlIncludeConstructor.add_to_loader_class(
+        loader_class=yaml.FullLoader, base_dir=conf_path.parent
+    )
+
+    try:
+        with open(conf_path) as f:
+            flattened_result = deepflatten(
+                yaml.load_all(f, Loader=yaml.FullLoader),
+                depth=2,
+                types=(list,),
+            )
+            # HACK https://bugs.python.org/issue32792#msg311822
+            # I'd use ChainMap, but it doesn't respect order in Python 3.6
+            result = {}
+            for part in flattened_result:
+                result.update(part)
+            return result
+    except yaml.parser.ParserError as e:
+        raise InvalidConfigFileError(conf_path, quiet) from e
+
+
 def verify_copier_version(version_str: str) -> None:
     """Raise an error if the current Copier version is less than the given version.
 
@@ -64,28 +107,25 @@ def verify_copier_version(version_str: str) -> None:
         version_str:
             Minimal copier version for the template.
     """
-    # Importing __version__ at the top of the module creates a circular import
-    # ("cannot import name '__version__' from partially initialized module 'copier'"),
-    # so instead we do a lazy import here
-    from . import __version__
+    installed_version = copier_version()
 
     # Disable check when running copier as editable installation
-    if __version__ == "0.0.0":
+    if installed_version == Version("0.0.0"):
         warn(
             "Cannot check Copier version constraint.",
             UnknownCopierVersionWarning,
         )
         return
-    parsed_installed, parsed_min = map(Version, (__version__, version_str))
-    if parsed_installed < parsed_min:
+    parsed_min = Version(version_str)
+    if installed_version < parsed_min:
         raise UnsupportedVersionError(
             f"This template requires Copier version >= {version_str}, "
-            f"while your version of Copier is {__version__}."
+            f"while your version of Copier is {installed_version}."
         )
-    if parsed_installed.major > parsed_min.major:
+    if installed_version.major > parsed_min.major:
         warn(
             f"This template was designed for Copier {version_str}, "
-            f"but your version of Copier is {__version__}. "
+            f"but your version of Copier is {installed_version}. "
             f"You could find some incompatibilities.",
             OldTemplateWarning,
         )
@@ -138,10 +178,16 @@ class Template:
 
         It reads [the `copier.yml` file][the-copieryml-file].
         """
-        result = load_config_data(self.local_abspath)
-        with suppress(KeyError):
-            verify_copier_version(result["_min_copier_version"])
-        return result
+        conf_paths = [
+            p
+            for p in self.local_abspath.glob("copier.*")
+            if p.is_file() and re.match(r"\.ya?ml", p.suffix, re.I)
+        ]
+        if len(conf_paths) > 1:
+            raise MultipleConfigFilesError(conf_paths)
+        elif len(conf_paths) == 1:
+            return load_template_config(conf_paths[0])
+        return {}
 
     @cached_property
     def answers_relpath(self) -> Path:
@@ -169,7 +215,10 @@ class Template:
         It reads [the `copier.yml` file][the-copieryml-file] to get its
         [settings][available-settings].
         """
-        return filter_config(self._raw_config)[0]
+        result = filter_config(self._raw_config)[0]
+        with suppress(KeyError):
+            verify_copier_version(result["min_copier_version"])
+        return result
 
     @cached_property
     def default_answers(self) -> AnyByStrDict:
@@ -242,6 +291,17 @@ class Template:
                     for task in migration.get(stage, [])
                 ]
         return result
+
+    @cached_property
+    def min_copier_version(self) -> Optional[Version]:
+        """Gets minimal copier version for the template and validates it.
+
+        See [min_copier_version][].
+        """
+        try:
+            return Version(self.config_data["min_copier_version"])
+        except KeyError:
+            return None
 
     @cached_property
     def questions_data(self) -> AnyByStrDict:
