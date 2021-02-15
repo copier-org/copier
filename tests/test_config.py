@@ -6,8 +6,7 @@ from pydantic import ValidationError
 
 import copier
 from copier.errors import InvalidConfigFileError, MultipleConfigFilesError
-from copier.template import DEFAULT_EXCLUDE
-from copier.user_data import load_config_data, load_yaml_data
+from copier.template import DEFAULT_EXCLUDE, Template, load_template_config
 
 from .helpers import build_file_tree
 
@@ -25,10 +24,10 @@ GOOD_ENV_OPS = {
 
 
 def test_config_data_is_loaded_from_file():
-    config = load_config_data("tests/demo_data")
-    assert config["_exclude"] == ["exclude1", "exclude2"]
-    assert config["_skip_if_exists"] == ["skip_if_exists1", "skip_if_exists2"]
-    assert config["_tasks"] == ["touch 1", "touch 2"]
+    tpl = Template("tests/demo_data")
+    assert tpl.exclude == ("exclude1", "exclude2")
+    assert tpl.skip_if_exists == ["skip_if_exists1", "skip_if_exists2"]
+    assert tpl.tasks == ["touch 1", "touch 2"]
 
 
 @pytest.mark.parametrize("template", ["tests/demo_yaml", "tests/demo_yml"])
@@ -43,7 +42,7 @@ def test_read_data(tmp_path, template):
 def test_invalid_yaml(capsys):
     conf_path = Path("tests", "demo_invalid", "copier.yml")
     with pytest.raises(InvalidConfigFileError):
-        load_yaml_data(conf_path)
+        load_template_config(conf_path)
     _, err = capsys.readouterr()
     assert "INVALID CONFIG FILE" in err
     assert str(conf_path) in err
@@ -53,7 +52,6 @@ def test_invalid_yaml(capsys):
     "conf_path,flags,check_err",
     (
         ("tests/demo_invalid", {"_warning": False}, lambda x: "INVALID" in x),
-        ("tests/demo_invalid", {"quiet": True}, lambda x: x == ""),
         # test key collision between including and included file
         ("tests/demo_transclude_invalid/demo", {}, None),
         # test key collision between two included files
@@ -61,8 +59,9 @@ def test_invalid_yaml(capsys):
     ),
 )
 def test_invalid_config_data(conf_path, flags, check_err, capsys):
+    template = Template(conf_path)
     with pytest.raises(InvalidConfigFileError):
-        load_config_data(conf_path, **flags)
+        template.config_data
     if check_err:
         _, err = capsys.readouterr()
         assert check_err(err)
@@ -103,33 +102,34 @@ def test_valid_multi_section(tmp_path):
                     """,
             }
         )
-    data = load_config_data(tmp_path)
-    assert data == {
-        "_exclude": ["*.yml"],
-        "_envops": {
-            "block_start_string": "[%",
-            "block_end_string": "%]",
-            "comment_start_string": "[#",
-            "comment_end_string": "#]",
-            "variable_start_string": "[[",
-            "variable_end_string": "]]",
-            "keep_trailing_newline": True,
-        },
+    template = Template(str(tmp_path))
+    assert template.exclude == ("*.yml",)
+    assert template.envops == {
+        "autoescape": False,
+        "block_end_string": "%]",
+        "block_start_string": "[%",
+        "comment_end_string": "#]",
+        "comment_start_string": "[#",
+        "keep_trailing_newline": True,
+        "variable_end_string": "]]",
+        "variable_start_string": "[[",
+    }
+    assert template.questions_data == {
         "your_age": {"type": "int"},
         "your_name": {"type": "str", "help": "your name from latest section"},
     }
 
 
 def test_config_data_empty():
-    data = load_config_data("tests/demo_config_empty")
-    assert data == {}
+    template = Template("tests/demo_config_empty")
+    assert template.config_data == {"secret_questions": set()}
+    assert template.questions_data == {}
 
 
-def test_multiple_config_file_error(capsys):
+def test_multiple_config_file_error():
+    template = Template("tests/demo_multi_config")
     with pytest.raises(MultipleConfigFilesError):
-        load_config_data("tests/demo_multi_config", quiet=True)
-    out, _ = capsys.readouterr()
-    assert out == ""
+        template.config_data
 
 
 # ConfigData
