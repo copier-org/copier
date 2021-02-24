@@ -55,15 +55,15 @@ homepage = "https://github.com/copier-org/copier"
 repository = "https://github.com/copier-org/copier"
 
 [project.optional-dependencies]
+# FIXME Use mkdocstrings >= 0.15 and pytkdocs >= 0.11 to fix docs, to fix:
+# - https://github.com/pawamoy/mkdocstrings/issues/222
+# - https://github.com/pawamoy/pytkdocs/issues/86
+# - https://github.com/pawamoy/mkdocstrings/issues/225
 docs = [
     "mkdocs-material<6.0.0,>=5.5.2",
     "mkdocs-mermaid2-plugin<1.0.0,>=0.5.0",
-    # HACK https://github.com/pawamoy/mkdocstrings/issues/222#issuecomment-774394285
-    # TODO install from Pypi when 0.15 is released
-    "git+https://github.com/pawamoy/mkdocstrings.git@master#egg=mkdocstrings",
-    # HACK https://github.com/pawamoy/pytkdocs/issues/86
-    # HACK https://github.com/pawamoy/mkdocstrings/issues/225#issuecomment-774669999
-    "git+https://github.com/pawamoy/pytkdocs.git@master#egg=pytkdocs",
+    "mkdocstrings~=0.14",
+    "pytkdocs~=0.10",
 ]
 
 [project.scripts]

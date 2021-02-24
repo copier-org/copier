@@ -251,7 +251,6 @@ dependencies = [
 name = "joblib"
 sections = ["docs"]
 version = "1.0.1"
-marker = "python_version >= '2.8'"
 summary = "Lightweight pipelining with Python functions"
 
 [[package]]
@@ -375,8 +374,6 @@ dependencies = [
 name = "mkdocstrings"
 sections = ["docs"]
 version = "0.14.0"
-git = "https://github.com/pawamoy/mkdocstrings.git"
-revision = "e2d74efb0d59f9a1aa45e42525ceb1d4b7638426"
 summary = "Automatic documentation from sources, for MkDocs."
 dependencies = [
     "Jinja2<3.0,>=2.11",
@@ -606,8 +603,6 @@ dependencies = [
 name = "pytkdocs"
 sections = ["docs"]
 version = "0.10.1"
-git = "https://github.com/pawamoy/pytkdocs.git"
-revision = "bf04764f1608970643932329c9f6c8c63a0c5632"
 summary = "Load Python objects documentation."
 dependencies = [
     "cached-property<2.0.0,>=1.5.2; python_version < \"3.8\"",
@@ -699,7 +694,6 @@ summary = "Tornado is a Python web framework and asynchronous networking library
 name = "tqdm"
 sections = ["docs"]
 version = "4.57.0"
-marker = "python_version >= '2.8'"
 summary = "Fast, Extensible Progress Meter"
 
 [[package]]
@@ -749,14 +743,14 @@ summary = "Measures the displayed width of unicode strings in a terminal"
 
 [[package]]
 name = "zipp"
-sections = ["dev"]
+sections = ["dev", "docs"]
 version = "3.4.0"
 marker = "python_version < '3.8'"
 summary = "Backport of pathlib-compatible object wrapper for zip files"
 
 [metadata]
 lock_version = "2"
-content_hash = "sha256:73db481f18340480c750e910cd5b205e4592a0c7f0c6c3633814a47e6dddd22b"
+content_hash = "sha256:e511cc09f70334045543830fd4cc658a6f936451c5f54ae0447491404ddffc40"
 
 [metadata.files]
 "apipkg 1.5" = [
@@ -1058,6 +1052,10 @@ content_hash = "sha256:73db481f18340480c750e910cd5b205e4592a0c7f0c6c3633814a47e6
     {file = "mkdocs_mermaid2_plugin-0.5.1-py3-none-any.whl", hash = "sha256:03709ef450ddcbd0a07ebeee2b68d6a90e63c4611401c2d3cf8bca24e075ff3e"},
     {file = "mkdocs-mermaid2-plugin-0.5.1.tar.gz", hash = "sha256:a267b77d0e80336ca12a72851209e90a07ba86b3551fa5422f3cd2ee1886f38a"},
 ]
+"mkdocstrings 0.14.0" = [
+    {file = "mkdocstrings-0.14.0-py3-none-any.whl", hash = "sha256:ac821a339c53e843045d3915de208e389d48493f2612a4317cde841677bcbe48"},
+    {file = "mkdocstrings-0.14.0.tar.gz", hash = "sha256:f1b832943c4fe980fcfc17d07abfe9a8091044dbf553cb7be0ca263953130b2c"},
+]
 "mypy 0.812" = [
     {file = "mypy-0.812-cp35-cp35m-macosx_10_9_x86_64.whl", hash = "sha256:a26f8ec704e5a7423c8824d425086705e381b4f1dfdef6e3a1edab7ba174ec49"},
     {file = "mypy-0.812-cp35-cp35m-manylinux1_x86_64.whl", hash = "sha256:28fb5479c494b1bab244620685e2eb3c3f988d71fd5d64cc753195e8ed53df7c"},
@@ -1192,6 +1190,10 @@ content_hash = "sha256:73db481f18340480c750e910cd5b205e4592a0c7f0c6c3633814a47e6
 "pytest-xdist 2.2.1" = [
     {file = "pytest_xdist-2.2.1-py3-none-any.whl", hash = "sha256:2447a1592ab41745955fb870ac7023026f20a5f0bfccf1b52a879bd193d46450"},
     {file = "pytest-xdist-2.2.1.tar.gz", hash = "sha256:718887296892f92683f6a51f25a3ae584993b06f7076ce1e1fd482e59a8220a2"},
+]
+"pytkdocs 0.10.1" = [
+    {file = "pytkdocs-0.10.1-py3-none-any.whl", hash = "sha256:01fbb6f624abab5e034fffe9283ef1f36aa01702c0afae7dd29da16b3f48ce3b"},
+    {file = "pytkdocs-0.10.1.tar.gz", hash = "sha256:f3d510063e7c2951c7b52cc860846ecbd7b21ec4b2253ae5c0084a26b233132f"},
 ]
 "pywin32 300" = [
     {file = "pywin32-300-cp35-cp35m-win32.whl", hash = "sha256:1c204a81daed2089e55d11eefa4826c05e604d27fe2be40b6bf8db7b6a39da63"},
