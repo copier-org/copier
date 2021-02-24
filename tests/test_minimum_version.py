@@ -1,9 +1,15 @@
+import warnings
+
 import pytest
 from plumbum import local
 from plumbum.cmd import git
 
 import copier
-from copier.errors import UnsupportedVersionError
+from copier.errors import (
+    OldTemplateWarning,
+    UnknownCopierVersionWarning,
+    UnsupportedVersionError,
+)
 
 from .helpers import build_file_tree
 
@@ -68,4 +74,15 @@ def test_minimum_version_update(template_path, tmp_path, monkeypatch):
 def test_version_0_0_0_ignored(template_path, tmp_path, monkeypatch):
     monkeypatch.setattr("copier.__version__", "0.0.0")
     # assert no error
-    copier.copy(template_path, tmp_path)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        with pytest.raises(UnknownCopierVersionWarning):
+            copier.run_copy(template_path, tmp_path)
+
+
+def test_version_bigger_major_warning(template_path, tmp_path, monkeypatch):
+    monkeypatch.setattr("copier.__version__", "11.0.0a0")
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        with pytest.raises(OldTemplateWarning):
+            copier.run_copy(template_path, tmp_path)
