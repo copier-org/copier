@@ -8,4 +8,4 @@ tasks:
       exit
   - init: |
       export PIP_USER=no
-      poetry install -E docs
+      pdm install -ds docs

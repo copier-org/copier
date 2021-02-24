@@ -39,16 +39,7 @@ NO_VALUE: object = object()
 
 
 def copier_version() -> Version:
-    """Get closest match for the installed copier version."""
-    # Importing __version__ at the top of the module creates a circular import
-    # ("cannot import name '__version__' from partially initialized module 'copier'"),
-    # so instead we do a lazy import here
-    from . import __version__
-
-    if __version__ != "0.0.0":
-        return Version(__version__)
-
-    # Get the installed package version otherwise, which is sometimes more specific
+    """Get installed copier version."""
     return Version(version("copier"))
 
 

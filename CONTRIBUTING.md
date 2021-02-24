@@ -50,8 +50,7 @@ Feel free to discuss with our community through
 We use some tools as part of our development workflow which you'll need to install into
 your host environment:
 
--   [poetry](https://python-poetry.org/) for packaging and dependency management
--   [poethepoet](https://github.com/nat-n/poethepoet) for running development tasks
+-   [pdm](https://pdm.fming.dev/) for packaging, dev task and dependency management
 
 Or you can use
 [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/copier-org/copier)
@@ -68,11 +67,10 @@ Ready to contribute? Here's how to set up the project for local development.
 git clone git@github.com:copier-org/copier.git
 ```
 
-3.  Use poetry to setup a virtualenv to develop in
+3.  Use pdm to setup a development environment:
 
 ```bash
-poetry install -E docs # create's a virtualenv with all dependencies from pyproject.toml
-poetry shell   # creates a new shell with the virtualenv activated
+pdm install -E docs
 ```
 
 5.  Create a branch for local development:
