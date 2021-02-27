@@ -24,6 +24,8 @@ wheels/
 MANIFEST
 
 # Environments
+__pypackages__
+.pdm.toml
 .env
 .venv
 covreport
