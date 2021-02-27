@@ -70,7 +70,7 @@ jobs:
           python -m pip install pdm
           pdm install -ds docs -vvv
       - name: Run pytest
-        run: pdm run test --cov=./ --cov-report=xml -ra .
+        run: pdm run test --cov=./ --cov-report=xml .
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         env:
@@ -89,10 +89,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python 3.8
+      - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.9
       - name: generate cache key PY
         run:
           echo "PY=$((python -VV; pip freeze) | sha256sum | cut -d' ' -f1)" >>
