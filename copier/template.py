@@ -7,6 +7,7 @@ from warnings import warn
 
 import yaml
 from iteration_utilities import deepflatten
+from packaging.specifiers import SpecifierSet
 from packaging.version import Version, parse
 from plumbum.cmd import git
 from plumbum.machines import local
@@ -231,8 +232,10 @@ class Template:
 
         See [envops][].
         """
-        # TODO Use Jinja defaults
-        result = {
+        result = self.config_data.get("envops", {})
+        # TODO Copier v7+ will not use any of these altered defaults
+        old_copier = SpecifierSet("<6.0.0a6", prereleases=True)
+        old_defaults = {
             "autoescape": False,
             "block_end_string": "%]",
             "block_start_string": "[%",
@@ -242,7 +245,18 @@ class Template:
             "variable_end_string": "]]",
             "variable_start_string": "[[",
         }
-        result.update(self.config_data.get("envops", {}))
+        if not self.min_copier_version or self.min_copier_version in old_copier:
+            warned = False
+            for key, value in old_defaults.items():
+                if key not in result:
+                    if not warned:
+                        warn(
+                            "On future releases, Copier will switch to standard Jinja "
+                            "defaults and this template will not work unless updated. ",
+                            FutureWarning,
+                        )
+                        warned = True
+                    result[key] = value
         return result
 
     @cached_property
