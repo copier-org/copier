@@ -42,7 +42,10 @@ DEFAULT_EXCLUDE: Tuple[str, ...] = (
     ".svn",
 )
 
-DEFAULT_TEMPLATES_SUFFIX = ".tmpl"
+DEFAULT_TEMPLATES_SUFFIX = ".jinja"
+
+# TODO Remove usage of this on Copier v7
+COPIER_JINJA_BREAK = SpecifierSet("<=6.0.0a5", prereleases=True)
 
 
 def filter_config(data: AnyByStrDict) -> Tuple[AnyByStrDict, AnyByStrDict]:
@@ -234,7 +237,6 @@ class Template:
         """
         result = self.config_data.get("envops", {})
         # TODO Copier v7+ will not use any of these altered defaults
-        old_copier = SpecifierSet("<6.0.0a6", prereleases=True)
         old_defaults = {
             "autoescape": False,
             "block_end_string": "%]",
@@ -245,14 +247,14 @@ class Template:
             "variable_end_string": "]]",
             "variable_start_string": "[[",
         }
-        if not self.min_copier_version or self.min_copier_version in old_copier:
+        if self.min_copier_version and self.min_copier_version in COPIER_JINJA_BREAK:
             warned = False
             for key, value in old_defaults.items():
                 if key not in result:
                     if not warned:
                         warn(
                             "On future releases, Copier will switch to standard Jinja "
-                            "defaults and this template will not work unless updated. ",
+                            "defaults and this template will not work unless updated.",
                             FutureWarning,
                         )
                         warned = True
@@ -371,11 +373,26 @@ class Template:
     def templates_suffix(self) -> str:
         """Get the suffix defined for templates.
 
-        By default: `.tmpl`.
+        By default: `.jinja`.
 
         See [templates_suffix][].
         """
-        return self.config_data.get("templates_suffix", DEFAULT_TEMPLATES_SUFFIX)
+        result = self.config_data.get("templates_suffix")
+        if result is None:
+            # TODO Delete support for .tmpl default in Copier 7
+            if (
+                self.min_copier_version
+                and self.min_copier_version in COPIER_JINJA_BREAK
+            ):
+                warn(
+                    "In future Copier releases, the default value for template suffix "
+                    "will change from .tmpl to .jinja, and this template will "
+                    "fail unless updated.",
+                    FutureWarning,
+                )
+                return ".tmpl"
+            return DEFAULT_TEMPLATES_SUFFIX
+        return result
 
     @cached_property
     def local_abspath(self) -> Path:
