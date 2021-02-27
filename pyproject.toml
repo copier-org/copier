@@ -60,6 +60,7 @@ repository = "https://github.com/copier-org/copier"
 # - https://github.com/pawamoy/pytkdocs/issues/86
 # - https://github.com/pawamoy/mkdocstrings/issues/225
 docs = [
+    "mkdocs-autorefs~=0.1",
     "mkdocs-material<6.0.0,>=5.5.2",
     "mkdocs-mermaid2-plugin<1.0.0,>=0.5.0",
     "mkdocstrings~=0.14",

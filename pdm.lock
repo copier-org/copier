@@ -251,6 +251,7 @@ dependencies = [
 name = "joblib"
 sections = ["docs"]
 version = "1.0.1"
+marker = "python_version >= '2.8'"
 summary = "Lightweight pipelining with Python functions"
 
 [[package]]
@@ -330,6 +331,20 @@ dependencies = [
     "Markdown>=3.2.1",
     "PyYAML>=3.10",
     "tornado>=5.0",
+]
+
+[[package]]
+name = "mkdocs-autorefs"
+sections = ["docs"]
+version = "0.1.0"
+summary = "Automatically link across pages in MkDocs."
+dependencies = [
+    "Jinja2<3.0,>=2.11",
+    "Markdown<4.0,>=3.3",
+    "MarkupSafe<2.0,>=1.1",
+    "mkdocs<2.0,>=1.1",
+    "pymdown-extensions<9.0,>=6.3",
+    "pytkdocs<0.11.0,>=0.2.0",
 ]
 
 [[package]]
@@ -694,6 +709,7 @@ summary = "Tornado is a Python web framework and asynchronous networking library
 name = "tqdm"
 sections = ["docs"]
 version = "4.57.0"
+marker = "python_version >= '2.8'"
 summary = "Fast, Extensible Progress Meter"
 
 [[package]]
@@ -750,7 +766,7 @@ summary = "Backport of pathlib-compatible object wrapper for zip files"
 
 [metadata]
 lock_version = "2"
-content_hash = "sha256:e511cc09f70334045543830fd4cc658a6f936451c5f54ae0447491404ddffc40"
+content_hash = "sha256:8d1c50e19391d7f56f168c895b09fc1de5b29690833b4b375a4017228e391131"
 
 [metadata.files]
 "apipkg 1.5" = [
@@ -1039,6 +1055,10 @@ content_hash = "sha256:e511cc09f70334045543830fd4cc658a6f936451c5f54ae0447491404
 "mkdocs 1.1.2" = [
     {file = "mkdocs-1.1.2-py3-none-any.whl", hash = "sha256:096f52ff52c02c7e90332d2e53da862fde5c062086e1b5356a6e392d5d60f5e9"},
     {file = "mkdocs-1.1.2.tar.gz", hash = "sha256:f0b61e5402b99d7789efa032c7a74c90a20220a9c81749da06dbfbcbd52ffb39"},
+]
+"mkdocs-autorefs 0.1.0" = [
+    {file = "mkdocs_autorefs-0.1.0-py3-none-any.whl", hash = "sha256:ad73571232aae16c980d3f4497efd6299d029b866e9fa299bbfc040566b8d319"},
+    {file = "mkdocs-autorefs-0.1.0.tar.gz", hash = "sha256:b255e9a60deed6567ff641eb8c2cb4a042eba9752d3c652684746e18cdecd4f7"},
 ]
 "mkdocs-material 5.5.14" = [
     {file = "mkdocs_material-5.5.14-py2.py3-none-any.whl", hash = "sha256:a0b3b3e67606e04d13e777d13f3195402ea09e0c3ce279abc3666cac2c5b3a6d"},
