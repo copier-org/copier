@@ -70,7 +70,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install poetry
-          poetry install -E docs -vvv
+          poetry install -E docs -v
       - name: Run pytest
         run: poetry run poe test --cov=./ --cov-report=xml -ra .
       - name: Upload coverage to Codecov
