@@ -34,10 +34,6 @@ jobs:
           - ubuntu-latest
           - windows-latest
         python-version: [3.6, 3.7, 3.8, 3.9]
-        exclude:
-          # Windows is only supported on Python 3.8+
-          - {os: windows-latest, python-version: 3.6}
-          - {os: windows-latest, python-version: 3.7}
     runs-on: ${{ matrix.os }}
     steps:
       # HACK https://github.com/actions/cache/issues/315
