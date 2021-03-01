@@ -216,3 +216,64 @@ def test_new_version_changes_subdirectory(tmp_path_factory):
     # Also assert the subdirectories themselves were not rendered
     assert not (project_path / "subdir1").exists()
     assert not (project_path / "subdir2").exists()
+
+
+def test_branch(tmp_path_factory):
+    template_path = tmp_path_factory.mktemp("subdirectory_template")
+    project_path = tmp_path_factory.mktemp("subdirectory_project")
+
+    # First, create the template with an initial subdirectory and README inside it
+    with local.cwd(template_path):
+        os.mkdir("subdir1")
+
+        with open("subdir1/README.md", "w") as fd:
+            fd.write("upstream version 1\n")
+
+        with open("subdir1/[[_copier_conf.answers_file]].tmpl", "w") as fd:
+            fd.write("[[_copier_answers|to_nice_yaml]]\n")
+
+        git_init("hello template")
+        git("checkout", "-b", "one")
+        git("checkout", "-b", "two")
+        with open("subdir1/README.md", "w") as fd:
+            fd.write("upstream version 2\n")
+        git("add", ".", "-A")
+        git("commit", "-m", "upstream v2 on branch two")
+
+
+    # Generate the project a first time, assert the README exists
+    copier.copy(str(template_path), project_path, branch="one", force=True)
+
+    # Start versioning the generated project
+    with local.cwd(project_path):
+        git_init("hello project")
+
+    # Assert that the README  exists, and is v1
+    assert (project_path / "README.md").exists()
+    with (project_path / "README.md").open() as fd:
+        assert fd.read() == "downstream version 1\n"
+
+    # Now change the template
+    with local.cwd(template_path):
+        git("checkout", "-b", "one")
+        # Update the README
+        with open("subdir1/README.md", "w") as fd:
+            fd.write("upstream version 3\n")
+        git("add", ".", "-A")
+        git("commit", "-m", "upstream v3 on branch one")
+
+        git("checkout", "-b", "two")
+        # Update the README
+        with open("subdir1/README.md", "w") as fd:
+            fd.write("upstream version 4\n")
+        git("add", ".", "-A")
+        git("commit", "-m", "upstream v4 on branch two")
+
+    # Finally, update the generated project
+    copier.copy(
+        str(template_path), project_path, force=True, branch="one"
+    )
+
+    assert (project_path / "README.md").exists()
+    with (project_path / "README.md").open() as fd:
+        assert fd.read() == "upstream version 3\n"

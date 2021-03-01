@@ -62,7 +62,7 @@ class Subproject:
         return {
             key: value
             for key, value in self._raw_answers.items()
-            if key in {"_src_path", "_commit"} or not key.startswith("_")
+            if key in {"_src_path", "_commit", "_branch"} or not key.startswith("_")
         }
 
     @cached_property
@@ -70,8 +70,9 @@ class Subproject:
         """Template, as it was used the last time."""
         last_url = self.last_answers.get("_src_path")
         last_ref = self.last_answers.get("_commit")
+        last_branch = self.last_answers.get("_branch")
         if last_url:
-            return Template(url=last_url, ref=last_ref)
+            return Template(url=last_url, ref=last_ref, branch=last_branch)
 
     @cached_property
     def vcs(self) -> Optional[VCSTypes]:

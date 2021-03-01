@@ -96,7 +96,7 @@ def checkout_latest_tag(local_repo: StrOrPath, use_prereleases: OptBool = False)
         return latest_tag
 
 
-def clone(url: str, ref: OptStr = None) -> str:
+def clone(url: str, ref: OptStr = None, branch: OptStr = None) -> str:
     """Clone repo into some temporary destination.
 
     Args:
@@ -107,7 +107,11 @@ def clone(url: str, ref: OptStr = None) -> str:
             Reference to checkout. For Git repos, defaults to `HEAD`.
     """
     location = tempfile.mkdtemp(prefix=f"{__name__}.clone.")
-    git("clone", "--no-checkout", url, location)
+    if branch:
+        branch_arg = ["-b", branch]
+    else:
+        branch_arg = []
+    git("clone", "--no-checkout", url, location, *branch_arg)
     with local.cwd(location):
         git("checkout", ref or "HEAD")
         git("submodule", "update", "--checkout", "--init", "--recursive", "--force")

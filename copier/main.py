@@ -95,6 +95,9 @@ class Worker:
         vcs_ref:
             Specify the VCS tag/commit to use in the template.
 
+        vcs_branch:
+            Specify the VCS branch to use in the template.
+
         data:
             Answers to the questionary defined in the template.
 
@@ -136,6 +139,7 @@ class Worker:
     dst_path: Path = field(default=".")
     answers_file: Optional[RelativePath] = None
     vcs_ref: OptStr = None
+    vcs_branch: OptStr = None
     data: AnyByStrDict = field(default_factory=dict)
     exclude: StrSeq = ()
     use_prereleases: bool = False
@@ -151,7 +155,8 @@ class Worker:
         answers: AnyByStrDict = {}
         commit = self.template.commit
         src = self.template.url
-        for key, value in (("_commit", commit), ("_src_path", src)):
+        branch = self.template.branch
+        for key, value in (("_branch", branch), ("_commit", commit), ("_src_path", src)):
             if value is not None:
                 answers[key] = value
         # Other data goes next
@@ -514,7 +519,11 @@ class Worker:
             if self.subproject.template is None:
                 raise TypeError("Template not found")
             url = self.subproject.template.url
-        return Template(url=url, ref=self.vcs_ref, use_prereleases=self.use_prereleases)
+        branch = self.vcs_branch
+        if not branch:
+            if self.subproject.template is not None:
+                branch = self.subproject.template.branch
+        return Template(url=url, ref=self.vcs_ref, branch=branch, use_prereleases=self.use_prereleases)
 
     @cached_property
     def template_copy_root(self) -> Path:
@@ -622,6 +631,8 @@ class Worker:
                 quiet=True,
                 src_path=self.subproject.template.url,
                 vcs_ref=self.subproject.template.commit,
+                vcs_branch=self.subproject.template.branch,
+
             )
             old_worker.run_copy()
             # Extract diff between temporary destination and real destination

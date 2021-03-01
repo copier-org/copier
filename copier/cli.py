@@ -54,6 +54,7 @@ class CopierApp(cli.Application):
         answers_file: Set [answers_file][] option.
         exclude: Set [exclude][] option.
         vcs_ref: Set [vcs_ref][] option.
+        vcs_branch: Set [vcs_branch][] option.
         pretend: Set [pretend][] option.
         force: Set [force][] option.
         skip: Set [skip_if_exists][] option.
@@ -116,6 +117,15 @@ class CopierApp(cli.Application):
             "the latest version, use `--vcs-ref=HEAD`."
         ),
     )
+    vcs_branch: cli.SwitchAttr = cli.SwitchAttr(
+        ["-b", "--vcs-branch"],
+        str,
+        help=(
+            "Git branch to checkout in `template_src`. "
+            "If you specify it, it will try to checkout the lastest git tag "
+            " in this branch."
+        ),
+    )
     pretend: cli.Flag = cli.Flag(
         ["-n", "--pretend"], help="Run but do not make any changes"
     )
@@ -172,6 +182,7 @@ class CopierApp(cli.Application):
             quiet=self.quiet,
             src_path=src_path,
             vcs_ref=self.vcs_ref,
+            vcs_branch=self.vcs_branch,
             use_prereleases=self.prereleases,
             **kwargs,
         )
