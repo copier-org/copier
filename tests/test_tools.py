@@ -1,9 +1,10 @@
 from pathlib import Path
 from stat import S_IREAD
-from tempfile import TemporaryDirectory
 
 from poethepoet.app import PoeThePoet
 from plumbum.cmd import git
+
+from copier.tools import TemporaryDirectory
 
 
 def test_lint():

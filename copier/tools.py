@@ -1,7 +1,12 @@
 """Some utility functions."""
 
+import errno
+import os
 import shutil
+import stat
 import sys
+import tempfile
+import warnings
 from contextlib import suppress
 from pathlib import Path
 from typing import Any, Optional, TextIO, Union
@@ -135,3 +140,27 @@ def force_str_end(original_str: str, end: str = "\n") -> str:
     if not original_str.endswith(end):
         return original_str + end
     return original_str
+
+
+def handle_remove_readonly(func, path, exc):
+    excvalue = exc[1]
+    if func in (os.rmdir, os.remove, os.unlink) and excvalue.errno == errno.EACCES:
+        os.chmod(path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)  # 0777
+        func(path)
+    else:
+        raise exc
+
+
+class TemporaryDirectory(tempfile.TemporaryDirectory):
+    @classmethod
+    def _cleanup(cls, name, warn_message):
+        cls._robust_cleanup(name)
+        warnings.warn(warn_message, ResourceWarning)
+
+    def cleanup(self):
+        if self._finalizer.detach():
+            self._robust_cleanup(self.name)
+
+    @staticmethod
+    def _robust_cleanup(name):
+        shutil.rmtree(name, ignore_errors=False, onerror=handle_remove_readonly)
