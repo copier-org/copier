@@ -1,6 +1,7 @@
 """Complex types, annotations, validators."""
 
 from pathlib import Path
+from types import TracebackType
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -53,6 +54,7 @@ JSONSerializable = (dict, list, str, int, float, bool, type(None))
 Filters = Dict[str, Callable]
 LoaderPaths = Union[str, Iterable[str]]
 VCSTypes = Literal["git"]
+ExcInfo = Tuple[BaseException, Exception, TracebackType]
 
 
 class AllowArbitraryTypes:

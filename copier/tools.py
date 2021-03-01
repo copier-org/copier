@@ -9,14 +9,14 @@ import tempfile
 import warnings
 from contextlib import suppress
 from pathlib import Path
-from typing import Any, Optional, TextIO, Union
+from typing import Any, Callable, Optional, TextIO, Union
 
 import colorama
 from packaging.version import Version
 from pydantic import StrictBool
 from yaml import safe_dump
 
-from .types import IntSeq
+from .types import ExcInfo, IntSeq
 
 try:
     from importlib.metadata import version
@@ -142,16 +142,35 @@ def force_str_end(original_str: str, end: str = "\n") -> str:
     return original_str
 
 
-def handle_remove_readonly(func, path, exc):
+def handle_remove_readonly(func: Callable, path: str, exc: ExcInfo) -> None:
+    """Handle errors when trying to remove read-only files through `shutil.rmtree`.
+
+    This handler makes sure the given file is writable, then re-execute the given removal function.
+
+    Arguments:
+        func: An OS-dependant function used to remove a file.
+        path: The path to the file to remove.
+        exc: A `sys.exc_info()` object.
+    """
     excvalue = exc[1]
     if func in (os.rmdir, os.remove, os.unlink) and excvalue.errno == errno.EACCES:
         os.chmod(path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)  # 0777
         func(path)
     else:
-        raise exc
+        raise
 
 
+# See https://github.com/copier-org/copier/issues/345
 class TemporaryDirectory(tempfile.TemporaryDirectory):
+    """A custom version of `tempfile.TemporaryDirectory` that handles read-only files better.
+
+    On Windows, before Python 3.8, `shutil.rmtree` does not handle read-only files very well.
+    This custom class makes use of a [special error handler][copier.tools.handle_remove_readonly]
+    to make sure that a temporary directory containing read-only files (typically created
+    when git-cloning a repository) is properly cleaned-up (i.e. removed) after using it
+    in a context manager.
+    """
+
     @classmethod
     def _cleanup(cls, name, warn_message):
         cls._robust_cleanup(name)
