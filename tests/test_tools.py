@@ -1,8 +1,8 @@
 from pathlib import Path
 from stat import S_IREAD
 
-from poethepoet.app import PoeThePoet
 from plumbum.cmd import git
+from poethepoet.app import PoeThePoet
 
 from copier.tools import TemporaryDirectory
 
@@ -20,7 +20,7 @@ def test_types():
 def test_temporary_directory_with_readonly_files_deletion():
     """Ensure temporary directories containing read-only files are properly deleted, whatever the OS."""
     with TemporaryDirectory() as tmp_dir:
-        ro_file = Path(tmp_dir) /  "readonly.txt"
+        ro_file = Path(tmp_dir) / "readonly.txt"
         with ro_file.open("w") as fp:
             fp.write("don't touch me!")
         ro_file.chmod(S_IREAD)
