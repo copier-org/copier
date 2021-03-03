@@ -50,6 +50,8 @@ jobs:
       - run: git config --global user.email copier@copier
       - run: git config --global core.autocrlf input
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 500
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
@@ -91,6 +93,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 500
       - name: Set up Python 3.8
         uses: actions/setup-python@v2
         with:
