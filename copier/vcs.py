@@ -8,6 +8,7 @@ from packaging import version
 from plumbum import TF, colors, local
 from plumbum.cmd import git
 
+from .tools import TemporaryDirectory
 from .types import OptBool, OptStr, StrOrPath
 
 GIT_PREFIX = ("git@", "git://", "git+")
@@ -31,7 +32,7 @@ def is_git_repo_root(path: StrOrPath) -> bool:
 
 def is_git_bundle(path: Path) -> bool:
     """Indicate if a path is a valid git bundle."""
-    with tempfile.TemporaryDirectory(prefix=f"{__name__}.is_git_bundle.") as dirname:
+    with TemporaryDirectory(prefix=f"{__name__}.is_git_bundle.") as dirname:
         with local.cwd(dirname):
             git("init")
             return bool(git["bundle", "verify", path] & TF)

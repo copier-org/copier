@@ -4,7 +4,6 @@ import json
 import platform
 import subprocess
 import sys
-import tempfile
 from contextlib import suppress
 from dataclasses import asdict, field, replace
 from functools import partial
@@ -29,7 +28,7 @@ from questionary import unsafe_prompt
 from .errors import UserMessageError
 from .subproject import Subproject
 from .template import Template
-from .tools import Style, printf, to_nice_yaml
+from .tools import Style, TemporaryDirectory, printf, to_nice_yaml
 from .types import (
     AnyByStrDict,
     JSONSerializable,
@@ -613,7 +612,7 @@ class Worker:
                 "Downgrades are not supported."
             )
         # Copy old template into a temporary destination
-        with tempfile.TemporaryDirectory(prefix=f"{__name__}.update_diff.") as dst_temp:
+        with TemporaryDirectory(prefix=f"{__name__}.update_diff.") as dst_temp:
             old_worker = replace(
                 self,
                 dst_path=dst_temp,
