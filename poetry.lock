@@ -275,7 +275,7 @@ python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 
 [[package]]
 name = "identify"
-version = "2.0.0"
+version = "2.1.0"
 description = "File identification library for Python"
 category = "dev"
 optional = false
@@ -514,23 +514,16 @@ version = "0.15.0"
 description = "Automatic documentation from sources, for MkDocs."
 category = "main"
 optional = true
-python-versions = "^3.6"
-develop = false
+python-versions = ">=3.6,<4.0"
 
 [package.dependencies]
-Jinja2 = "^2.11"
-Markdown = "^3.3"
-MarkupSafe = "^1.1"
-mkdocs = "^1.1"
-mkdocs-autorefs = "^0.1"
-pymdown-extensions = ">=6.3, <9.0"
-pytkdocs = ">=0.2.0, <0.12.0"
-
-[package.source]
-type = "git"
-url = "https://github.com/pawamoy/mkdocstrings.git"
-reference = "master"
-resolved_reference = "e111f12014cfebd6becc7823fbf503babe318f17"
+Jinja2 = ">=2.11,<3.0"
+Markdown = ">=3.3,<4.0"
+MarkupSafe = ">=1.1,<2.0"
+mkdocs = ">=1.1,<2.0"
+mkdocs-autorefs = ">=0.1,<0.2"
+pymdown-extensions = ">=6.3,<9.0"
+pytkdocs = ">=0.2.0,<0.12.0"
 
 [[package]]
 name = "mypy"
@@ -853,22 +846,16 @@ version = "0.11.0"
 description = "Load Python objects documentation."
 category = "main"
 optional = true
-python-versions = "^3.6"
-develop = false
+python-versions = ">=3.6,<4.0"
 
 [package.dependencies]
-astunparse = {version = "^1.6.3", markers = "python_version < \"3.9\""}
-cached-property = {version = "^1.5.2", markers = "python_version < \"3.8\""}
-typing-extensions = {version = "^3.7.4.3", markers = "python_version < \"3.8\""}
+astunparse = {version = ">=1.6.3,<2.0.0", markers = "python_version < \"3.9\""}
+cached-property = {version = ">=1.5.2,<2.0.0", markers = "python_version < \"3.8\""}
+dataclasses = {version = ">=0.7,<0.9", markers = "python_version == \"3.6\""}
+typing-extensions = {version = ">=3.7.4.3,<4.0.0.0", markers = "python_version < \"3.8\""}
 
 [package.extras]
 numpy-style = ["docstring_parser (>=0.7.3,<0.8.0)"]
-
-[package.source]
-type = "git"
-url = "https://github.com/pawamoy/pytkdocs.git"
-reference = "master"
-resolved_reference = "a22bbdb609089674434fd8eba3db748328255566"
 
 [[package]]
 name = "pywin32"
@@ -1071,12 +1058,12 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pytest-cov", "jaraco.test (>=3.2.0)", "jaraco.itertools", "func-timeout", "pytest-black (>=0.3.7)", "pytest-mypy"]
 
 [extras]
-docs = ["mkdocstrings", "mkdocs-material", "mkdocs-mermaid2-plugin", "pytkdocs"]
+docs = ["mkdocs-material", "mkdocs-mermaid2-plugin", "mkdocstrings"]
 
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.6.1,<3.10"
-content-hash = "81484da220c656ccdc239be7220c21110d5ec192a732567269ca9fe041479f1f"
+content-hash = "71a67b11664e8bd0f85217aaa891d02611dd183e47a1e0a706058f90c5703ffa"
 
 [metadata.files]
 apipkg = [
@@ -1112,6 +1099,7 @@ beautifulsoup4 = [
     {file = "beautifulsoup4-4.9.3.tar.gz", hash = "sha256:84729e322ad1d5b4d25f805bfa05b902dd96450f43842c4e99067d5e1369eb25"},
 ]
 black = [
+    {file = "black-20.8b1-py3-none-any.whl", hash = "sha256:70b62ef1527c950db59062cda342ea224d772abdf6adc58b86a45421bab20a6b"},
     {file = "black-20.8b1.tar.gz", hash = "sha256:1c02557aa099101b9d21496f8a914e9ed2222ef70336404eeeac8edba836fbea"},
 ]
 cached-property = [
@@ -1230,8 +1218,8 @@ future = [
     {file = "future-0.18.2.tar.gz", hash = "sha256:b1bead90b70cf6ec3f0710ae53a525360fa360d306a86583adc6bf83a4db537d"},
 ]
 identify = [
-    {file = "identify-2.0.0-py2.py3-none-any.whl", hash = "sha256:9cdd81e5d2b6e76c3006d5226316dd947bd6324fbeebb881bec489202fa09d3a"},
-    {file = "identify-2.0.0.tar.gz", hash = "sha256:b99aa309329c4fea679463eb35d169f3fbe13e66e9dd6162ad1856cbeb03dcbd"},
+    {file = "identify-2.1.0-py2.py3-none-any.whl", hash = "sha256:2a5fdf2f5319cc357eda2550bea713a404392495961022cf2462624ce62f0f46"},
+    {file = "identify-2.1.0.tar.gz", hash = "sha256:2179e7359471ab55729f201b3fdf7dc2778e221f868410fedcb0987b791ba552"},
 ]
 idna = [
     {file = "idna-2.10-py2.py3-none-any.whl", hash = "sha256:b97d804b1e9b523befed77c48dacec60e6dcb0b5391d57af6a65a312a90648c0"},
@@ -1353,7 +1341,10 @@ mkdocs-mermaid2-plugin = [
     {file = "mkdocs-mermaid2-plugin-0.5.1.tar.gz", hash = "sha256:a267b77d0e80336ca12a72851209e90a07ba86b3551fa5422f3cd2ee1886f38a"},
     {file = "mkdocs_mermaid2_plugin-0.5.1-py3-none-any.whl", hash = "sha256:03709ef450ddcbd0a07ebeee2b68d6a90e63c4611401c2d3cf8bca24e075ff3e"},
 ]
-mkdocstrings = []
+mkdocstrings = [
+    {file = "mkdocstrings-0.15.0-py3-none-any.whl", hash = "sha256:a9891420c6b9e91903a4cdf4eaf5b79dab71f3af992f7871fb43fb0f869bb26f"},
+    {file = "mkdocstrings-0.15.0.tar.gz", hash = "sha256:f1e46125c7381beccb79f213468fb4e5c4492d1c6881c06b8afbec30c737733c"},
+]
 mypy = [
     {file = "mypy-0.790-cp35-cp35m-macosx_10_6_x86_64.whl", hash = "sha256:bd03b3cf666bff8d710d633d1c56ab7facbdc204d567715cb3b9f85c6e94f669"},
     {file = "mypy-0.790-cp35-cp35m-manylinux1_x86_64.whl", hash = "sha256:2170492030f6faa537647d29945786d297e4862765f0b4ac5930ff62e300d802"},
@@ -1489,7 +1480,10 @@ pytest-xdist = [
     {file = "pytest-xdist-2.2.1.tar.gz", hash = "sha256:718887296892f92683f6a51f25a3ae584993b06f7076ce1e1fd482e59a8220a2"},
     {file = "pytest_xdist-2.2.1-py3-none-any.whl", hash = "sha256:2447a1592ab41745955fb870ac7023026f20a5f0bfccf1b52a879bd193d46450"},
 ]
-pytkdocs = []
+pytkdocs = [
+    {file = "pytkdocs-0.11.0-py3-none-any.whl", hash = "sha256:8fb46adc1416fbeafebc3ea6f2adbf71efec2ff5d651a3f82801f0b6514703c2"},
+    {file = "pytkdocs-0.11.0.tar.gz", hash = "sha256:e63ec71dc5e9feabc672f862f04394abd26557c7831c25cb8a60c99af36693b9"},
+]
 pywin32 = [
     {file = "pywin32-300-cp35-cp35m-win32.whl", hash = "sha256:1c204a81daed2089e55d11eefa4826c05e604d27fe2be40b6bf8db7b6a39da63"},
     {file = "pywin32-300-cp35-cp35m-win_amd64.whl", hash = "sha256:350c5644775736351b77ba68da09a39c760d75d2467ecec37bd3c36a94fbed64"},
@@ -1526,7 +1520,6 @@ pyyaml = [
     {file = "PyYAML-5.4.1.tar.gz", hash = "sha256:607774cbba28732bfa802b54baa7484215f530991055bb562efbed5b2f20a45e"},
 ]
 pyyaml-include = [
-    {file = "pyyaml-include-1.2.post2.tar.gz", hash = "sha256:60047fc0a186debb9c80b3c3a23ef73b0096f6ee4ab2124b29d642c3fea0aebe"},
     {file = "pyyaml_include-1.2.post2-py3-none-any.whl", hash = "sha256:d74c7209f5150d841a529acf47d7a023769c9160949f366fb4e17efa8999c4be"},
 ]
 questionary = [
