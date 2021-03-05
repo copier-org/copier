@@ -9,7 +9,7 @@ from plumbum.cmd import git
 from copier import Worker, copy
 from copier.cli import CopierApp
 
-from .helpers import build_file_tree
+from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree
 
 
 def test_updatediff(tmp_path_factory):
@@ -17,6 +17,7 @@ def test_updatediff(tmp_path_factory):
     # Prepare repo bundle
     repo = src / "repo"
     bundle = src / "demo_updatediff_repo.bundle"
+    last_commit = ""
     build_file_tree(
         {
             repo
@@ -120,6 +121,7 @@ def test_updatediff(tmp_path_factory):
         git("add", ".")
         git("commit", "-m", "Elaine wants to rule")
         git("bundle", "create", bundle, "--all")
+        last_commit = git("describe", "--tags").strip()
     # Generate repo bundle
     target = dst / "target"
     readme = target / "README.txt"
@@ -201,9 +203,9 @@ def test_updatediff(tmp_path_factory):
         assert not (target / "after-v1.0.0").is_file()
         # Check it's updated OK
         assert answers.read_text() == dedent(
-            f"""
+            f"""\
                 # Changes here will be overwritten by Copier
-                _commit: v0.0.2-1-g81c335d
+                _commit: {last_commit}
                 _src_path: {bundle}
                 author_name: Guybrush
                 project_name: to become a pirate
@@ -220,7 +222,7 @@ def test_updatediff(tmp_path_factory):
             Thanks for your grog.
             """
         )
-        commit("-m", "Update template to v0.0.2-1-g81c335d")
+        commit("-m", f"Update template to {last_commit}")
         assert not git("status", "--porcelain")
         # No more updates exist, so updating again should change nothing
         CopierApp.invoke(force=True, vcs_ref="HEAD")
@@ -276,7 +278,9 @@ def test_commit_hooks_respected(tmp_path_factory):
     with local.cwd(src):
         build_file_tree(
             {
-                "copier.yml": """
+                "copier.yml": f"""
+                _envops: {BRACKET_ENVOPS_JSON}
+                _templates_suffix: {SUFFIX_TMPL}
                 _tasks:
                   - git init
                   - pre-commit install
