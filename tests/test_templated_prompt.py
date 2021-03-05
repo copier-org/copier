@@ -7,11 +7,22 @@ import yaml
 from copier import Worker
 from copier.errors import InvalidTypeError
 
-from .helpers import COPIER_PATH, ISOFORMAT, build_file_tree
+from .helpers import (
+    BRACKET_ENVOPS,
+    BRACKET_ENVOPS_JSON,
+    COPIER_PATH,
+    ISOFORMAT,
+    SUFFIX_TMPL,
+    build_file_tree,
+)
 
 envops = {}
 main_default = "copier"
-main_question = {"main": {"default": main_default}}
+main_question = {
+    "main": {"default": main_default},
+    "_envops": BRACKET_ENVOPS,
+    "_templates_suffix": SUFFIX_TMPL,
+}
 
 
 @pytest.mark.parametrize(
@@ -165,7 +176,7 @@ def test_templated_prompt_custom_envops(tmp_path_factory):
                         "<% if powerlevel >= 9000 %>It's over 9000!<% else %>It's only << powerlevel >>...<%
                         endif %>"
             """,
-            src / "result.tmpl": "<<sentence>>",
+            src / "result.jinja": "<<sentence>>",
         }
     )
     worker1 = Worker(str(src), dst, force=True)
@@ -182,7 +193,9 @@ def test_templated_prompt_builtins(tmp_path_factory):
     build_file_tree(
         {
             src
-            / "copier.yaml": """
+            / "copier.yaml": f"""
+                _templates_suffix: {SUFFIX_TMPL}
+                _envops: {BRACKET_ENVOPS_JSON}
                 question1:
                     default: "[[ now() ]]"
                 question2:
@@ -201,10 +214,10 @@ def test_templated_prompt_builtins(tmp_path_factory):
 @pytest.mark.parametrize(
     "questions, raises, returns",
     (
-        ({"question": {"default": "[[ not_valid ]]"}}, None, ""),
-        ({"question": {"help": "[[ not_valid ]]"}}, None, "None"),
-        ({"question": {"type": "[[ not_valid ]]"}}, InvalidTypeError, "None"),
-        ({"question": {"choices": ["[[ not_valid ]]"]}}, None, "None"),
+        ({"question": {"default": "{{ not_valid }}"}}, None, ""),
+        ({"question": {"help": "{{ not_valid }}"}}, None, "None"),
+        ({"question": {"type": "{{ not_valid }}"}}, InvalidTypeError, "None"),
+        ({"question": {"choices": ["{{ not_valid }}"]}}, None, "None"),
     ),
 )
 def test_templated_prompt_invalid(tmp_path_factory, questions, raises, returns):
@@ -212,7 +225,7 @@ def test_templated_prompt_invalid(tmp_path_factory, questions, raises, returns):
     build_file_tree(
         {
             src / "copier.yml": yaml.safe_dump(questions),
-            src / "result.tmpl": "[[question]]",
+            src / "result.jinja": "{{question}}",
         }
     )
     worker = Worker(str(src), dst, force=True)

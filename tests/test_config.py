@@ -1,4 +1,5 @@
 from pathlib import Path
+from textwrap import dedent
 
 import pytest
 from plumbum import local
@@ -8,7 +9,7 @@ import copier
 from copier.errors import InvalidConfigFileError, MultipleConfigFilesError
 from copier.template import DEFAULT_EXCLUDE, Template, load_template_config
 
-from .helpers import build_file_tree
+from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree
 
 GOOD_ENV_OPS = {
     "autoescape": True,
@@ -30,13 +31,43 @@ def test_config_data_is_loaded_from_file():
     assert tpl.tasks == ["touch 1", "touch 2"]
 
 
-@pytest.mark.parametrize("template", ["tests/demo_yaml", "tests/demo_yml"])
-def test_read_data(tmp_path, template):
-    copier.copy(template, tmp_path, force=True)
-    gen_file = tmp_path / "user_data.txt"
+@pytest.mark.parametrize("config_suffix", ["yaml", "yml"])
+def test_read_data(tmp_path_factory, config_suffix):
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src
+            / f"copier.{config_suffix}": f"""\
+                # This is a comment
+                _envops: {BRACKET_ENVOPS_JSON}
+                a_string: lorem ipsum
+                a_number: 12345
+                a_boolean: true
+                a_list:
+                    - one
+                    - two
+                    - three
+            """,
+            src
+            / "user_data.txt.jinja": """\
+                A string: [[ a_string ]]
+                A number: [[ a_number ]]
+                A boolean: [[ a_boolean ]]
+                A list: [[ ", ".join(a_list) ]]
+            """,
+        }
+    )
+    copier.copy(str(src), dst, force=True)
+    gen_file = dst / "user_data.txt"
     result = gen_file.read_text()
-    expected = Path("tests/reference_files/user_data.txt").read_text()
-    assert result == expected
+    assert result == dedent(
+        """\
+        A string: lorem ipsum
+        A number: 12345
+        A boolean: True
+        A list: one, two, three
+        """
+    )
 
 
 def test_invalid_yaml(capsys):
@@ -73,7 +104,8 @@ def test_valid_multi_section(tmp_path):
         build_file_tree(
             {
                 "exclusions.yml": "_exclude: ['*.yml']",
-                "common_jinja.yml": """
+                "common_jinja.yml": f"""
+                    _templates_suffix: {SUFFIX_TMPL}
                     _envops:
                         block_start_string: "[%"
                         block_end_string: "%]"
@@ -105,7 +137,6 @@ def test_valid_multi_section(tmp_path):
     template = Template(str(tmp_path))
     assert template.exclude == ("*.yml",)
     assert template.envops == {
-        "autoescape": False,
         "block_end_string": "%]",
         "block_start_string": "[%",
         "comment_end_string": "#]",

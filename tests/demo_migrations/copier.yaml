@@ -1,3 +1,14 @@
+_templates_suffix: .tmpl
+_envops:
+  autoescape: false
+  block_end_string: "%]"
+  block_start_string: "[%"
+  comment_end_string: "#]"
+  comment_start_string: "[#"
+  keep_trailing_newline: true
+  variable_end_string: "]]"
+  variable_start_string: "[["
+
 _exclude:
   - tasks.py
   - migrations.py

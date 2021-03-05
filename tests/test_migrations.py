@@ -12,7 +12,7 @@ from plumbum.cmd import git
 from copier import copy
 from copier.errors import UserMessageError
 
-from .helpers import PROJECT_TEMPLATE, build_file_tree
+from .helpers import BRACKET_ENVOPS_JSON, PROJECT_TEMPLATE, build_file_tree
 
 SRC = Path(f"{PROJECT_TEMPLATE}_migrations").absolute()
 
@@ -81,11 +81,12 @@ def test_pre_migration_modifies_answers(tmp_path_factory):
     with local.cwd(template):
         build_file_tree(
             {
-                "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|tojson ]]",
-                "copier.yml": """\
+                "[[ _copier_conf.answers_file ]].jinja": "[[ _copier_answers|tojson ]]",
+                "copier.yml": f"""\
+                    _envops: {BRACKET_ENVOPS_JSON}
                     best_song: la vie en rose
                     """,
-                "songs.json.tmpl": "[ [[ best_song|tojson ]] ]",
+                "songs.json.jinja": "[ [[ best_song|tojson ]] ]",
             }
         )
         git("init")
@@ -107,7 +108,8 @@ def test_pre_migration_modifies_answers(tmp_path_factory):
             {
                 # v2 of template supports multiple songs, has a different default
                 # and includes a data format migration script
-                "copier.yml": """\
+                "copier.yml": f"""\
+                    _envops: {BRACKET_ENVOPS_JSON}
                     best_song_list:
                       default: [paranoid android]
                     _migrations:
@@ -124,7 +126,7 @@ def test_pre_migration_modifies_answers(tmp_path_factory):
                             - "[[ _copier_conf.dst_path ]]"
                             - "[[ _copier_conf.answers_file ]]"
                     """,
-                "songs.json.tmpl": "[[ best_song_list|tojson ]]",
+                "songs.json.jinja": "[[ best_song_list|tojson ]]",
             }
         )
         git("add", ".")
@@ -149,8 +151,9 @@ def test_prereleases(tmp_path: Path):
         build_file_tree(
             {
                 "version.txt": "v1.0.0",
-                "[[ _copier_conf.answers_file ]].tmpl": "[[_copier_answers|to_nice_yaml]]",
-                "copier.yaml": """
+                "[[ _copier_conf.answers_file ]].jinja": "[[_copier_answers|to_nice_yaml]]",
+                "copier.yaml": f"""
+                    _envops: {BRACKET_ENVOPS_JSON}
                     _migrations:
                       - version: v1.9
                         before:

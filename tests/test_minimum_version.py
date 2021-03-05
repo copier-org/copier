@@ -1,6 +1,7 @@
 import warnings
 
 import pytest
+from packaging.version import Version
 from plumbum import local
 from plumbum.cmd import git
 
@@ -72,7 +73,7 @@ def test_minimum_version_update(template_path, tmp_path, monkeypatch):
 
 
 def test_version_0_0_0_ignored(template_path, tmp_path, monkeypatch):
-    monkeypatch.setattr("copier.__version__", "0.0.0")
+    monkeypatch.setattr("copier.template.copier_version", lambda: Version("0.0.0"))
     # assert no error
     with warnings.catch_warnings():
         warnings.simplefilter("error")

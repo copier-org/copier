@@ -1,4 +1,5 @@
 import filecmp
+import json
 import os
 import sys
 import textwrap
@@ -36,6 +37,20 @@ COPIER_CMD = local.get(
     "copier",
 )
 COPIER_PATH = str(COPIER_CMD.executable)
+
+# Helpers to use with tests designed for old copier bracket envops defaults
+BRACKET_ENVOPS = {
+    "autoescape": False,
+    "block_end_string": "%]",
+    "block_start_string": "[%",
+    "comment_end_string": "#]",
+    "comment_start_string": "[#",
+    "keep_trailing_newline": True,
+    "variable_end_string": "]]",
+    "variable_start_string": "[[",
+}
+BRACKET_ENVOPS_JSON = json.dumps(BRACKET_ENVOPS)
+SUFFIX_TMPL = ".tmpl"
 
 # Helper to parse back an iso-formatted datetime; needed for py3.6, where
 # datetime.datetime.fromisoformat() doesn't exist

@@ -5,7 +5,7 @@ import pytest
 import copier
 from copier.user_data import load_answersfile_data
 
-from .helpers import build_file_tree
+from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree
 
 
 @pytest.fixture(scope="module")
@@ -19,8 +19,10 @@ def template_path(tmp_path_factory) -> str:
                 [[ _copier_answers|to_nice_yaml ]]
                 """,
             root
-            / "copier.yml": """\
+            / "copier.yml": f"""\
                 _answers_file: .answers-file-changed-in-template.yml
+                _templates_suffix: {SUFFIX_TMPL}
+                _envops: {BRACKET_ENVOPS_JSON}
 
                 round: 1st
 
