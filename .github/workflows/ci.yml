@@ -67,7 +67,7 @@ jobs:
             hashFiles('poetry.lock') }}|${{ hashFiles('.pre-commit-config.yaml') }}
       - name: Install dependencies
         run: |
-          python -m pip install poetry
+          python -m pip install poetry poetry-dynamic-versioning
           poetry install -E docs -v
       - name: Run pytest
         run: poetry run poe test --cov=./ --cov-report=xml -ra .
