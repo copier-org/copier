@@ -2,7 +2,7 @@ import pytest
 
 import copier
 
-from .helpers import build_file_tree
+from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree
 
 
 @pytest.fixture(scope="module")
@@ -11,7 +11,10 @@ def demo_template(tmp_path_factory):
     build_file_tree(
         {
             root
-            / "copier.yaml": """
+            / "copier.yaml": f"""
+                _templates_suffix: {SUFFIX_TMPL}
+                _envops: {BRACKET_ENVOPS_JSON}
+
                 other_file: bye
 
                 # This tests two things:

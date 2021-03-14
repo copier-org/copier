@@ -9,27 +9,132 @@ from plumbum.cmd import git
 from copier import Worker, copy
 from copier.cli import CopierApp
 
-from .helpers import PROJECT_TEMPLATE, build_file_tree
-
-REPO_BUNDLE_PATH = Path(f"{PROJECT_TEMPLATE}_updatediff_repo.bundle").absolute()
+from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree
 
 
-def test_updatediff(tmpdir):
-    tmp_path = Path(tmpdir)
-    target = tmp_path / "target"
+def test_updatediff(tmp_path_factory):
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    # Prepare repo bundle
+    repo = src / "repo"
+    bundle = src / "demo_updatediff_repo.bundle"
+    last_commit = ""
+    build_file_tree(
+        {
+            repo
+            / ".copier-answers.yml.jinja": """\
+                # Changes here will be overwritten by Copier
+                {{ _copier_answers|to_nice_yaml }}
+            """,
+            repo
+            / "copier.yml": """\
+                _envops:
+                    "keep_trailing_newline": True
+                project_name: to become a pirate
+                author_name: Guybrush
+            """,
+            repo
+            / "README.txt.jinja": """
+                Let me introduce myself.
+
+                My name is {{author_name}}, and my project is {{project_name}}.
+
+                Thanks for your attention.
+            """,
+        }
+    )
+    with local.cwd(repo):
+        git("init")
+        git("add", ".")
+        git("commit", "-m", "Guybrush wants to be a pirate")
+        git("tag", "v0.0.1")
+    build_file_tree(
+        {
+            repo
+            / "copier.yml": """\
+                _envops:
+                    "keep_trailing_newline": True
+                project_name: to become a pirate
+                author_name: Guybrush
+                _migrations:
+                    -   version: v0.0.1
+                        before:
+                            - touch before-v0.0.1
+                        after:
+                            - touch after-v0.0.1
+                    -   version: v0.0.2
+                        before:
+                            - touch before-v0.0.2
+                        after:
+                            - touch after-v0.0.2
+                    -   version: v1.0.0
+                        before:
+                            - touch before-v1.0.0
+                        after:
+                            - touch after-v1.0.0
+            """,
+        }
+    )
+    with local.cwd(repo):
+        git("init")
+        git("add", ".")
+        git("commit", "-m", "Add migrations")
+        git("tag", "v0.0.2")
+    build_file_tree(
+        {
+            repo
+            / "copier.yml": """\
+                _envops:
+                    "keep_trailing_newline": True
+                project_name: to rule
+                author_name: Elaine
+                _migrations:
+                    -   version: v0.0.1
+                        before:
+                            - touch before-v0.0.1
+                        after:
+                            - touch after-v0.0.1
+                    -   version: v0.0.2
+                        before:
+                            - touch before-v0.0.2
+                        after:
+                            - touch after-v0.0.2
+                    -   version: v1.0.0
+                        before:
+                            - touch before-v1.0.0
+                        after:
+                            - touch after-v1.0.0
+            """,
+            repo
+            / "README.txt.jinja": """
+                Let me introduce myself.
+
+                My name is {{author_name}}.
+
+                My project is {{project_name}}.
+
+                Thanks for your attention.
+            """,
+        }
+    )
+    with local.cwd(repo):
+        git("init")
+        git("add", ".")
+        git("commit", "-m", "Elaine wants to rule")
+        git("bundle", "create", bundle, "--all")
+        last_commit = git("describe", "--tags").strip()
+    # Generate repo bundle
+    target = dst / "target"
     readme = target / "README.txt"
     answers = target / ".copier-answers.yml"
     commit = git["commit", "--all"]
     # Run copier 1st time, with specific tag
-    CopierApp.invoke(
-        "copy", str(REPO_BUNDLE_PATH), str(target), force=True, vcs_ref="v0.0.1"
-    )
+    CopierApp.invoke("copy", str(bundle), str(target), force=True, vcs_ref="v0.0.1")
     # Check it's copied OK
     assert answers.read_text() == dedent(
-        f"""
+        f"""\
             # Changes here will be overwritten by Copier
             _commit: v0.0.1
-            _src_path: {REPO_BUNDLE_PATH}
+            _src_path: {bundle}
             author_name: Guybrush
             project_name: to become a pirate
         """
@@ -69,10 +174,10 @@ def test_updatediff(tmpdir):
         # Update target to latest tag and check it's updated in answers file
         CopierApp.invoke(force=True)
         assert answers.read_text() == dedent(
-            f"""
+            f"""\
                 # Changes here will be overwritten by Copier
                 _commit: v0.0.2
-                _src_path: {REPO_BUNDLE_PATH}
+                _src_path: {bundle}
                 author_name: Guybrush
                 project_name: to become a pirate
             """
@@ -98,10 +203,10 @@ def test_updatediff(tmpdir):
         assert not (target / "after-v1.0.0").is_file()
         # Check it's updated OK
         assert answers.read_text() == dedent(
-            f"""
+            f"""\
                 # Changes here will be overwritten by Copier
-                _commit: v0.0.2-1-g81c335d
-                _src_path: {REPO_BUNDLE_PATH}
+                _commit: {last_commit}
+                _src_path: {bundle}
                 author_name: Guybrush
                 project_name: to become a pirate
             """
@@ -117,7 +222,7 @@ def test_updatediff(tmpdir):
             Thanks for your grog.
             """
         )
-        commit("-m", "Update template to v0.0.2-1-g81c335d")
+        commit("-m", f"Update template to {last_commit}")
         assert not git("status", "--porcelain")
         # No more updates exist, so updating again should change nothing
         CopierApp.invoke(force=True, vcs_ref="HEAD")
@@ -173,7 +278,9 @@ def test_commit_hooks_respected(tmp_path_factory):
     with local.cwd(src):
         build_file_tree(
             {
-                "copier.yml": """
+                "copier.yml": f"""
+                _envops: {BRACKET_ENVOPS_JSON}
+                _templates_suffix: {SUFFIX_TMPL}
                 _tasks:
                   - git init
                   - pre-commit install

@@ -6,7 +6,13 @@ import pytest
 
 from copier import copy
 
-from .helpers import COPIER_PATH, Keyboard, build_file_tree
+from .helpers import (
+    BRACKET_ENVOPS_JSON,
+    COPIER_PATH,
+    SUFFIX_TMPL,
+    Keyboard,
+    build_file_tree,
+)
 
 
 @pytest.fixture(scope="module")
@@ -15,7 +21,9 @@ def template_path(tmp_path_factory) -> str:
     build_file_tree(
         {
             root
-            / "copier.yml": """\
+            / "copier.yml": f"""\
+                _templates_suffix: {SUFFIX_TMPL}
+                _envops: {BRACKET_ENVOPS_JSON}
                 love_me:
                     help: I need to know it. Do you love me?
                     type: bool

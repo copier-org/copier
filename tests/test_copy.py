@@ -9,7 +9,14 @@ from plumbum.cmd import git
 
 import copier
 
-from .helpers import PROJECT_TEMPLATE, assert_file, build_file_tree, filecmp, render
+from .helpers import (
+    BRACKET_ENVOPS_JSON,
+    PROJECT_TEMPLATE,
+    assert_file,
+    build_file_tree,
+    filecmp,
+    render,
+)
 
 
 def test_project_not_found(tmp_path):
@@ -120,7 +127,7 @@ def test_exclude_replaces(tmp_path: Path):
             src / "test.txt": "Test text",
             src / "test.json": '"test json"',
             src / "test.yaml": '"test yaml"',
-            src / "copier.yaml.tmpl": "purpose: template inception",
+            src / "copier.yaml.jinja": "purpose: template inception",
             src / "copier.yml": "_exclude: ['*.json']",
         }
     )
@@ -152,7 +159,7 @@ def test_skip_if_exists_rendered_patterns(tmp_path):
         "tests/demo_skip_src",
         tmp_path,
         data={"name": "meh"},
-        skip_if_exists=["[[ name ]]/c.noeof.txt"],
+        skip_if_exists=["{{ name }}/c.noeof.txt"],
         force=True,
     )
     assert (tmp_path / "a.noeof.txt").read_text() == "SKIPPED"
@@ -191,9 +198,10 @@ def test_empty_dir(tmp_path_factory, generate):
     build_file_tree(
         {
             src
-            / "copier.yaml": """
+            / "copier.yaml": f"""
                 _subdirectory: tpl
                 _templates_suffix: .jinja
+                _envops: {BRACKET_ENVOPS_JSON}
                 do_it:
                     type: bool
             """,

@@ -6,11 +6,20 @@ import yaml
 from plumbum import local
 from plumbum.cmd import git
 
-from .helpers import COPIER_PATH, Keyboard, build_file_tree
+from .helpers import (
+    BRACKET_ENVOPS,
+    BRACKET_ENVOPS_JSON,
+    COPIER_PATH,
+    SUFFIX_TMPL,
+    Keyboard,
+    build_file_tree,
+)
 
 DEFAULT = object()
 MARIO_TREE = {
-    "copier.yml": """\
+    "copier.yml": f"""\
+        _templates_suffix: {SUFFIX_TMPL}
+        _envops: {BRACKET_ENVOPS_JSON}
         in_love:
             type: bool
             default: yes
@@ -77,7 +86,7 @@ def test_copy_default_advertised(tmp_path_factory, spawn, name):
         git("add", ".")
         assert "_commit: v1" in Path(".copier-answers.yml").read_text()
         git("commit", "-m", "v1")
-        tui = spawn([COPIER_PATH], timeout=20)
+        tui = spawn([COPIER_PATH], timeout=30)
         # Check what was captured
         tui.expect_exact(["in_love?", "Format: bool", "(Y/n)"])
         tui.sendline()
@@ -147,6 +156,8 @@ def test_when(tmp_path_factory, question_1, question_2_when, spawn, asks):
         tmp_path_factory.mktemp("subproject"),
     )
     questions = {
+        "_envops": BRACKET_ENVOPS,
+        "_templates_suffix": SUFFIX_TMPL,
         "question_1": question_1,
         "question_2": {"default": "something", "when": question_2_when},
     }
@@ -182,6 +193,8 @@ def test_placeholder(tmp_path_factory, spawn):
             template
             / "copier.yml": yaml.dump(
                 {
+                    "_envops": BRACKET_ENVOPS,
+                    "_templates_suffix": SUFFIX_TMPL,
                     "question_1": "answer 1",
                     "question_2": {
                         "type": "str",
@@ -221,6 +234,8 @@ def test_multiline(tmp_path_factory, spawn, type_):
             template
             / "copier.yml": yaml.dump(
                 {
+                    "_envops": BRACKET_ENVOPS,
+                    "_templates_suffix": SUFFIX_TMPL,
                     "question_1": "answer 1",
                     "question_2": {"type": type_},
                     "question_3": {"type": type_, "multiline": True},
@@ -293,6 +308,8 @@ def test_update_choice(tmp_path_factory, spawn, choices):
         {
             template
             / "copier.yml": f"""
+                _templates_suffix: {SUFFIX_TMPL}
+                _envops: {BRACKET_ENVOPS_JSON}
                 pick_one:
                     type: float
                     default: 3

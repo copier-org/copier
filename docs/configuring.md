@@ -294,27 +294,37 @@ copier -fd 'user_name=Manuel Calavera' copy template destination
 
 -   Format: `dict`
 -   CLI flags: N/A
--   Default value:
+-   Default value: `{}`
 
-    ```yaml
-    {
-        "autoescape": False,
-        "block_end_string": "%]",
-        "block_start_string": "[%",
-        "comment_end_string": "#]",
-        "comment_start_string": "[#",
-        "keep_trailing_newline": True,
-        "variable_end_string": "]]",
-        "variable_start_string": "[[",
-    }
-    ```
-
-Configurations for the Jinja environment.
-
-These defaults are different from upstream Jinja's.
+Configurations for the Jinja environment. It's empty by default, to use the same
+defaults as upstream Jinja.
 
 See [upstream docs](https://jinja.palletsprojects.com/en/2.11.x/api/#jinja2.Environment)
 to know available options.
+
+!!! warning
+
+    Copier 5 and older had different, bracket-based defaults.
+
+    If your template was created for Copier 5, you need to add this configuration to
+    your `copier.yaml` to keep it working just like before:
+
+    ```yaml
+    _envops:
+        autoescape: false
+        block_end_string: "%]"
+        block_start_string: "[%"
+        comment_end_string: "#]"
+        comment_start_string: "[#"
+        keep_trailing_newline: true
+        variable_end_string: "]]"
+        variable_start_string: "[["
+    ```
+
+    By specifying this, your template will be compatible with both Copier 5 and 6.
+
+    Copier 6 will apply these older defaults if your [min_copier_version][] is older
+    than 6, but that will be removed later.
 
 ### `exclude`
 
@@ -424,6 +434,13 @@ template. The version must be follow the
 [PEP 440](https://www.python.org/dev/peps/pep-0440/) syntax. Upon generating or updating
 a project, if the installed version of Copier is less than the required one, the
 generation will be aborted and an error will be shown to the user.
+
+!!! info
+
+    If Copier detects that there is a major version difference, it will warn you about
+    possible incompatibilities. Remember that a new major release means that some
+    features can be dropped or changed, so it's probably a good idea to ask the
+    template maintainer to update it.
 
 Example `copier.yml`:
 
@@ -537,15 +554,23 @@ _tasks:
 
 -   Format: `str`
 -   CLI flags: N/A
--   Default value: `.tmpl`
+-   Default value: `.jinja`
 
 Suffix that instructs which files are to be processed by Jinja as templates.
 
 Example `copier.yml`:
 
 ```yaml
-_templates_suffix: .jinja
+_templates_suffix: .my-custom-suffix
 ```
+
+!!! warning
+
+    Copier 5 and older had a different default value: `.tmpl`. If you wish to keep it,
+    add it to your `copier.yml` to keep it future-proof.
+
+    Copier 6 will apply that old default if your [min_copier_version][] is older
+    than 6, but that will be removed later.
 
 ### `use_prereleases`
 

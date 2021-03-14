@@ -1,4 +1,0 @@
-A string: lorem ipsum
-A number: 12345
-A boolean: True
-A list: one, two, three

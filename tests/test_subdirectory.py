@@ -6,7 +6,7 @@ from plumbum.cmd import git
 
 import copier
 
-from .helpers import build_file_tree
+from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree
 
 
 def git_init(message="hello world"):
@@ -37,7 +37,9 @@ def demo_template(tmp_path_factory):
             / "conf_project"
             / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
             root
-            / "copier.yml": """\
+            / "copier.yml": f"""\
+                _templates_suffix: {SUFFIX_TMPL}
+                _envops: {BRACKET_ENVOPS_JSON}
                 choose_subdir:
                     type: str
                     default: conf_project
@@ -92,8 +94,8 @@ def test_new_version_uses_subdirectory(tmp_path_factory):
         with open("README.md", "w") as fd:
             fd.write("upstream version 1\n")
 
-        with open("[[_copier_conf.answers_file]].tmpl", "w") as fd:
-            fd.write("[[_copier_answers|to_nice_yaml]]\n")
+        with open("{{_copier_conf.answers_file}}.jinja", "w") as fd:
+            fd.write("{{_copier_answers|to_nice_yaml}}\n")
 
         git_init("hello template")
         git("tag", "v1")
@@ -123,8 +125,8 @@ def test_new_version_uses_subdirectory(tmp_path_factory):
         os.mkdir("subdir")
         os.rename("README.md", "subdir/README.md")
         os.rename(
-            "[[_copier_conf.answers_file]].tmpl",
-            "subdir/[[_copier_conf.answers_file]].tmpl",
+            "{{_copier_conf.answers_file}}.jinja",
+            "subdir/{{_copier_conf.answers_file}}.jinja",
         )
 
         # Add the subdirectory option to copier.yml
