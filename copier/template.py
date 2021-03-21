@@ -270,6 +270,14 @@ class Template:
         return tuple(self.config_data.get("exclude", DEFAULT_EXCLUDE))
 
     @cached_property
+    def extensions(self) -> Tuple[str, ...]:
+        """Get extensions specified in the template, or `()`.
+
+        See [extensions][].
+        """
+        return tuple(self.config_data.get("extensions", ()))
+
+    @cached_property
     def metadata(self) -> AnyByStrDict:
         """Get template metadata.
 

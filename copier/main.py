@@ -28,7 +28,7 @@ from questionary import unsafe_prompt
 from .errors import UserMessageError
 from .subproject import Subproject
 from .template import Template
-from .tools import Style, TemporaryDirectory, printf, to_nice_yaml
+from .tools import Style, TemporaryDirectory, printf
 from .types import (
     AnyByStrDict,
     JSONSerializable,
@@ -376,13 +376,21 @@ class Worker:
         """
         paths = [str(self.template.local_abspath)]
         loader = FileSystemLoader(paths)
+        default_extensions = [
+            "cookiecutter.extensions.JsonifyExtension",
+            "cookiecutter.extensions.RandomStringExtension",
+            "cookiecutter.extensions.SlugifyExtension",
+            "jinja2_time.TimeExtension",
+            "jinja2_ansible_filters.AnsibleCoreFiltersExtension",
+        ]
+        extensions = default_extensions + list(self.template.extensions)
         # We want to minimize the risk of hidden malware in the templates
         # so we use the SandboxedEnvironment instead of the regular one.
         # Of course we still have the post-copy tasks to worry about, but at least
         # they are more visible to the final user.
-        env = SandboxedEnvironment(loader=loader, **self.template.envops)
-        default_filters = {"to_nice_yaml": to_nice_yaml}
-        env.filters.update(default_filters)
+        env = SandboxedEnvironment(
+            loader=loader, extensions=extensions, **self.template.envops
+        )
         return env
 
     @cached_property
