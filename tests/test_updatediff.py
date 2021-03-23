@@ -132,11 +132,11 @@ def test_updatediff(tmp_path_factory):
     # Check it's copied OK
     assert answers.read_text() == dedent(
         f"""\
-        # Changes here will be overwritten by Copier
-        _commit: v0.0.1
-        _src_path: {bundle}
-        author_name: Guybrush
-        project_name: to become a pirate\n
+            # Changes here will be overwritten by Copier
+            _commit: v0.0.1
+            _src_path: {bundle}
+            author_name: Guybrush
+            project_name: to become a pirate\n
         """
     )
     assert readme.read_text() == dedent(
@@ -175,11 +175,11 @@ def test_updatediff(tmp_path_factory):
         CopierApp.invoke(force=True)
         assert answers.read_text() == dedent(
             f"""\
-            # Changes here will be overwritten by Copier
-            _commit: v0.0.2
-            _src_path: {bundle}
-            author_name: Guybrush
-            project_name: to become a pirate\n
+                # Changes here will be overwritten by Copier
+                _commit: v0.0.2
+                _src_path: {bundle}
+                author_name: Guybrush
+                project_name: to become a pirate\n
             """
         )
         # Check migrations were executed properly
@@ -204,11 +204,11 @@ def test_updatediff(tmp_path_factory):
         # Check it's updated OK
         assert answers.read_text() == dedent(
             f"""\
-            # Changes here will be overwritten by Copier
-            _commit: {last_commit}
-            _src_path: {bundle}
-            author_name: Guybrush
-            project_name: to become a pirate\n
+                # Changes here will be overwritten by Copier
+                _commit: {last_commit}
+                _src_path: {bundle}
+                author_name: Guybrush
+                project_name: to become a pirate\n
             """
         )
         assert readme.read_text() == dedent(

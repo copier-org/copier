@@ -377,13 +377,9 @@ class Worker:
         paths = [str(self.template.local_abspath)]
         loader = FileSystemLoader(paths)
         default_extensions = [
-            "cookiecutter.extensions.JsonifyExtension",
-            "cookiecutter.extensions.RandomStringExtension",
-            "cookiecutter.extensions.SlugifyExtension",
-            "jinja2_time.TimeExtension",
             "jinja2_ansible_filters.AnsibleCoreFiltersExtension",
         ]
-        extensions = default_extensions + list(self.template.extensions)
+        extensions = default_extensions + list(self.template.jinja_extensions)
         # We want to minimize the risk of hidden malware in the templates
         # so we use the SandboxedEnvironment instead of the regular one.
         # Of course we still have the post-copy tasks to worry about, but at least

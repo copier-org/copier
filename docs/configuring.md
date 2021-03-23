@@ -365,7 +365,7 @@ copier --exclude '*' --exclude '!file-i-want' copy template destination
 
     Instead, CLI/API definitions **will extend** those from `copier.yml`.
 
-### `extensions`
+### `jinja_extensions`
 
 -   Format: `List[str]`
 -   CLI flags: N/A
@@ -378,10 +378,6 @@ filters, global variables and functions, or tags to the environment.
 
     The following extensions are *always* loaded:
 
-    - [`cookiecutter.extensions.JsonifyExtension`](https://cookiecutter.readthedocs.io/en/latest/advanced/template_extensions.html#jsonify-extension)
-    - [`cookiecutter.extensions.RandomStringExtension`](https://cookiecutter.readthedocs.io/en/latest/advanced/template_extensions.html#random-string-extension)
-    - [`cookiecutter.extensions.SlugifyExtension`](https://cookiecutter.readthedocs.io/en/latest/advanced/template_extensions.html#slugify-extension)
-    - [`jinja2_time.TimeExtension`](https://pypi.org/project/jinja2-time/)
     - [`jinja2_ansible_filters.AnsibleCoreFiltersExtension`](https://pypi.org/project/jinja2-ansible-filters/)
 
 ### `force`

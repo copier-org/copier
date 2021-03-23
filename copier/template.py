@@ -270,12 +270,12 @@ class Template:
         return tuple(self.config_data.get("exclude", DEFAULT_EXCLUDE))
 
     @cached_property
-    def extensions(self) -> Tuple[str, ...]:
-        """Get extensions specified in the template, or `()`.
+    def jinja_extensions(self) -> Tuple[str, ...]:
+        """Get Jinja2 extensions specified in the template, or `()`.
 
-        See [extensions][].
+        See [jinja_extensions][].
         """
-        return tuple(self.config_data.get("extensions", ()))
+        return tuple(self.config_data.get("jinja_extensions", ()))
 
     @cached_property
     def metadata(self) -> AnyByStrDict:
