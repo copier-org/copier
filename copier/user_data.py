@@ -1,6 +1,7 @@
 """Functions used to load user data."""
 import datetime
 import json
+import warnings
 from collections import ChainMap
 from dataclasses import field
 from hashlib import sha512
@@ -37,9 +38,31 @@ except ImportError:
 if TYPE_CHECKING:
     pass
 
+
+# TODO: remove these two functionsas well as DEFAULT_DATA in a future release
+def _now(*args, **kwargs):
+    warnings.warn(
+        "'now' will be removed in a future release of Copier.\n"
+        "Please use this instead: {{ '%Y-%m-%d %H:%M:%S' | strftime }}\n"
+        "strftime format reference https://strftime.org/",
+        warnings.FutureWarning,
+    )
+    return datetime.datetime.utcnow(*args, **kwargs)
+
+
+def _make_secret():
+    warnings.warn(
+        "'make_secret' will be removed in a future release of Copier.\n"
+        "Please use this instead: {{ 999999999999999999999999999999999|ans_random|hash('sha512') }}\n"
+        "random and hash filters documentation: https://docs.ansible.com/ansible/2.3/playbooks_filters.html",
+        warnings.FutureWarning,
+    )
+    return sha512(urandom(48)).hexdigest()
+
+
 DEFAULT_DATA: AnyByStrDict = {
-    "now": datetime.datetime.utcnow,
-    "make_secret": lambda: sha512(urandom(48)).hexdigest(),
+    "now": _now,
+    "make_secret": _make_secret,
 }
 
 
