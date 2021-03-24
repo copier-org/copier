@@ -45,7 +45,7 @@ def _now(*args, **kwargs):
         "'now' will be removed in a future release of Copier.\n"
         "Please use this instead: {{ '%Y-%m-%d %H:%M:%S' | strftime }}\n"
         "strftime format reference https://strftime.org/",
-        warnings.FutureWarning,
+        FutureWarning,
     )
     return datetime.datetime.utcnow(*args, **kwargs)
 
@@ -55,7 +55,7 @@ def _make_secret():
         "'make_secret' will be removed in a future release of Copier.\n"
         "Please use this instead: {{ 999999999999999999999999999999999|ans_random|hash('sha512') }}\n"
         "random and hash filters documentation: https://docs.ansible.com/ansible/2.3/playbooks_filters.html",
-        warnings.FutureWarning,
+        FutureWarning,
     )
     return sha512(urandom(48)).hexdigest()
 

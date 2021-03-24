@@ -37,7 +37,7 @@ def test_default_jinja2_extensions(tmp_path):
     )
     super_file = tmp_path / "super_file.md"
     assert super_file.exists()
-    expected = "i-am-a-slug-now"
+    expected = "path"
     assert super_file.read_text() == expected
 
 
