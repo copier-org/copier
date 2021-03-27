@@ -136,7 +136,7 @@ def test_updatediff(tmp_path_factory):
             _commit: v0.0.1
             _src_path: {bundle}
             author_name: Guybrush
-            project_name: to become a pirate
+            project_name: to become a pirate\n
         """
     )
     assert readme.read_text() == dedent(
@@ -179,7 +179,7 @@ def test_updatediff(tmp_path_factory):
                 _commit: v0.0.2
                 _src_path: {bundle}
                 author_name: Guybrush
-                project_name: to become a pirate
+                project_name: to become a pirate\n
             """
         )
         # Check migrations were executed properly
@@ -208,7 +208,7 @@ def test_updatediff(tmp_path_factory):
                 _commit: {last_commit}
                 _src_path: {bundle}
                 author_name: Guybrush
-                project_name: to become a pirate
+                project_name: to become a pirate\n
             """
         )
         assert readme.read_text() == dedent(

@@ -380,6 +380,75 @@ Also don't ask questions to the user; just use default values
 
     It makes no sense to define this in `copier.yml`.
 
+### `jinja_extensions`
+
+-   Format: `List[str]`
+-   CLI flags: N/A
+-   Default value: []
+
+Additional Jinja2 extensions to load in the Jinja2 environment. Extensions can add
+filters, global variables and functions, or tags to the environment.
+
+Examples of extensions you can use:
+
+-   [`cookiecutter.extensions.JsonifyExtension`](https://cookiecutter.readthedocs.io/en/latest/advanced/template_extensions.html#jsonify-extension):
+    provides a `jsonify` filter, to format a dictionary as JSON. Note that Copier
+    natively provides a `to_nice_json` filter that can achieve the same thing.
+-   [`cookiecutter.extensions.RandomStringExtension`](https://cookiecutter.readthedocs.io/en/latest/advanced/template_extensions.html#random-string-extension):
+    provides a `random_ascii_string(length, punctuation=False)` global function. Note
+    that Copier natively provides the `ans_random` and `hash` filters that can be used to achieve the
+    same thing.
+-   [`cookiecutter.extensions.SlugifyExtension`](https://cookiecutter.readthedocs.io/en/latest/advanced/template_extensions.html#slugify-extension):
+    provides a `slugify` filter using
+    [python-slugify](https://github.com/un33k/python-slugify).
+-   [`jinja_markdown.MarkdownExtension`](https://github.com/jpsca/jinja-markdown):
+    provides a `markdown` tag that will render Markdown to HTML using
+    [PyMdown extensions](https://facelessuser.github.io/pymdown-extensions/).
+-   [`jinja2_slug.SlugExtension`](https://pypi.org/project/jinja2-slug/#files): provides
+    a `slug` filter using [unicode-slugify](https://github.com/mozilla/unicode-slugify).
+-   [`jinja2_time.TimeExtension`](https://github.com/hackebrot/jinja2-time): adds a
+    `now` tag that provides convenient access to the
+    [arrow.now()](http://crsmithdev.com/arrow/#arrow.factory.ArrowFactory.now) API.
+
+Search for more extensions on GitHub using the
+[jinja2-extension topic](https://github.com/topics/jinja2-extension),
+or [other Jinja2 topics](https://github.com/search?q=jinja&type=topics), or
+[on PyPI using the jinja + extension keywords](https://pypi.org/search/?q=jinja+extension).
+
+Example use in Copier configuration:
+
+```yaml
+_jinja_extensions:
+    - jinja_markdown.MarkdownExtension
+    - jinja2_slug.SlugExtension
+    - jinja2_time.TimeExtension
+```
+
+!!! important "Note to template writers"
+
+    You must inform your users that they need to install the extensions alongside Copier,
+    i.e. in the same virtualenv where Copier is installed.
+    For example, if your template uses `jinja2_time.TimeExtension`,
+    your users must install the `jinja2-time` Python package.
+
+    ```bash
+    # with pip, in the same virtualenv where Copier is installed
+    pip install jinja2-time
+
+    # if Copier was installed with pipx
+    pipx inject copier jinja2-time
+    ```
+
+    ---
+
+    The following extensions are *always* loaded:
+
+    - [`jinja2_ansible_filters.AnsibleCoreFiltersExtension`](https://gitlab.com/dreamer-labs/libraries/jinja2-ansible-filters/):
+      this extension adds most of the [Ansible filters](https://docs.ansible.com/ansible/2.3/playbooks_filters.html) to the environment.
+
+    You don't need to tell your template users to install these extensions:
+    Copier depends on them, so they are always installed when Copier is installed.
+
 ### `migrations`
 
 -   Format: `List[dict]`

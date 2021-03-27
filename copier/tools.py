@@ -14,7 +14,6 @@ from typing import Any, Callable, Optional, TextIO, Union
 import colorama
 from packaging.version import Version
 from pydantic import StrictBool
-from yaml import safe_dump
 
 from .types import ExcInfo, IntSeq
 
@@ -117,17 +116,6 @@ def cast_str_to_bool(value: Any) -> bool:
 
 def copy_file(src_path: Path, dst_path: Path, follow_symlinks: bool = True) -> None:
     shutil.copy2(src_path, dst_path, follow_symlinks=follow_symlinks)
-
-
-def to_nice_yaml(data: Any, **kwargs) -> str:
-    """Dump a string to pretty YAML."""
-    # Remove security-problematic kwargs
-    kwargs.pop("stream", None)
-    kwargs.pop("Dumper", None)
-    result = safe_dump(data, **kwargs)
-    if isinstance(result, str):
-        result = result.rstrip()
-    return result or ""
 
 
 def force_str_end(original_str: str, end: str = "\n") -> str:
