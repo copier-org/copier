@@ -61,6 +61,10 @@ class PathNotRelativeError(_PathValueError, CopierError):
     msg_template = '"{path}" is not a relative path'
 
 
+class ExtensionNotFoundError(UserMessageError, CopierError):
+    """Extensions listed in the configuration could not be loaded."""
+
+
 # Warnings
 class CopierWarning(Warning):
     """Base class for all other Copier warnings."""

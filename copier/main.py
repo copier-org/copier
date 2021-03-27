@@ -1,6 +1,5 @@
 """Main functions and classes, used to generate or update projects."""
 
-import os
 import json
 import platform
 import subprocess
@@ -26,7 +25,7 @@ from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
 from questionary import unsafe_prompt
 
-from .errors import UserMessageError
+from .errors import ExtensionNotFoundError, UserMessageError
 from .subproject import Subproject
 from .template import Template
 from .tools import Style, TemporaryDirectory, printf
@@ -390,7 +389,7 @@ class Worker:
                 loader=loader, extensions=extensions, **self.template.envops
             )
         except ModuleNotFoundError as error:
-            raise UserMessageError(
+            raise ExtensionNotFoundError(
                 f"Copier could not load some Jinja extensions:\n{error}\n"
                 "Make sure to install these extensions alongside Copier itself.\n"
                 "See the docs at https://copier.readthedocs.io/en/latest/configuring/extensions"
