@@ -559,7 +559,6 @@ class Worker:
 
         See [generating a project][generating-a-project].
         """
-        os.environ["COPIER_TEMPLATE_PATH"] = str(self.template.local_abspath)
         was_existing = self.subproject.local_abspath.exists()
         if not self.quiet:
             # TODO Unify printing tools
