@@ -39,7 +39,7 @@ if TYPE_CHECKING:
     pass
 
 
-# TODO: remove these two functionsas well as DEFAULT_DATA in a future release
+# TODO Remove these two functions as well as DEFAULT_DATA in a future release
 def _now(*args, **kwargs):
     warnings.warn(
         "'now' will be removed in a future release of Copier.\n"
