@@ -378,7 +378,7 @@ filters, global variables and functions, or tags to the environment.
 
     The following extensions are *always* loaded:
 
-    - [`jinja2_ansible_filters.AnsibleCoreFiltersExtension`](https://pypi.org/project/jinja2-ansible-filters/)
+    - [`jinja2_ansible_filters.AnsibleCoreFiltersExtension`](https://gitlab.com/dreamer-labs/libraries/jinja2-ansible-filters/)
 
 ### `force`
 
