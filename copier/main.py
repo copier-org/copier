@@ -1,5 +1,6 @@
 """Main functions and classes, used to generate or update projects."""
 
+import os
 import json
 import platform
 import subprocess
@@ -384,9 +385,16 @@ class Worker:
         # so we use the SandboxedEnvironment instead of the regular one.
         # Of course we still have the post-copy tasks to worry about, but at least
         # they are more visible to the final user.
-        env = SandboxedEnvironment(
-            loader=loader, extensions=extensions, **self.template.envops
-        )
+        try:
+            env = SandboxedEnvironment(
+                loader=loader, extensions=extensions, **self.template.envops
+            )
+        except ModuleNotFoundError as error:
+            raise UserMessageError(
+                f"Copier could not load some Jinja extensions:\n{error}\n"
+                "Make sure to install these extensions alongside Copier itself.\n"
+                "See the docs at https://copier.readthedocs.io/en/latest/configuring/extensions"
+            )
         return env
 
     @cached_property
@@ -551,6 +559,7 @@ class Worker:
 
         See [generating a project][generating-a-project].
         """
+        os.environ["COPIER_TEMPLATE_PATH"] = str(self.template.local_abspath)
         was_existing = self.subproject.local_abspath.exists()
         if not self.quiet:
             # TODO Unify printing tools
