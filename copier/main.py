@@ -392,7 +392,7 @@ class Worker:
             raise ExtensionNotFoundError(
                 f"Copier could not load some Jinja extensions:\n{error}\n"
                 "Make sure to install these extensions alongside Copier itself.\n"
-                "See the docs at https://copier.readthedocs.io/en/latest/configuring/extensions"
+                "See the docs at https://copier.readthedocs.io/en/latest/configuring/jinja_extensions"
             )
         return env
 
