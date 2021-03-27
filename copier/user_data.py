@@ -40,14 +40,14 @@ if TYPE_CHECKING:
 
 
 # TODO Remove these two functions as well as DEFAULT_DATA in a future release
-def _now(*args, **kwargs):
+def _now():
     warnings.warn(
         "'now' will be removed in a future release of Copier.\n"
         "Please use this instead: {{ '%Y-%m-%d %H:%M:%S' | strftime }}\n"
         "strftime format reference https://strftime.org/",
         FutureWarning,
     )
-    return datetime.datetime.utcnow(*args, **kwargs)
+    return datetime.datetime.utcnow()
 
 
 def _make_secret():
