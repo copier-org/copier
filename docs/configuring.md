@@ -421,7 +421,7 @@ _jinja_extensions:
     your users must install the `jinja2-time` Python package.
 
     ```bash
-    # with pip
+    # with pip, in the same virtualenv where Copier is installed
     pip install jinja2-time
 
     # if Copier was installed with pipx
@@ -435,7 +435,7 @@ _jinja_extensions:
     - [`jinja2_ansible_filters.AnsibleCoreFiltersExtension`](https://gitlab.com/dreamer-labs/libraries/jinja2-ansible-filters/):
       this extension adds most of the [Ansible filters](https://docs.ansible.com/ansible/2.3/playbooks_filters.html) to the environment.
 
-    You don't need to tell your templates users to install these extensions:
+    You don't need to tell your template users to install these extensions:
     Copier depends on them, so they are always installed when Copier is installed.
 
 ### `migrations`
