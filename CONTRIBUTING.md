@@ -52,6 +52,8 @@ your host environment:
 
 -   [poetry](https://python-poetry.org/) for packaging and dependency management
 -   [poethepoet](https://github.com/nat-n/poethepoet) for running development tasks
+-   [commitizen](https://commitizen-tools.github.io/commitizen/) for writing git commits
+    easily
 
 Or you can use
 [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/copier-org/copier)
@@ -64,44 +66,51 @@ Ready to contribute? Here's how to set up the project for local development.
 1.  Fork the copier repo on GitHub.
 2.  Clone your fork locally:
 
-```bash
-git clone git@github.com:copier-org/copier.git
-```
+    ```sh
+    git clone git@github.com:my-user/copier.git
+    cd copier
+    ```
 
-3.  Use poetry to setup a virtualenv to develop in
+3.  Use poetry to setup a development environment
 
-```bash
-poetry install -E docs # create's a virtualenv with all dependencies from pyproject.toml
-poetry shell   # creates a new shell with the virtualenv activated
-```
+    ```sh
+    # Create a virtualenv with all dependencies from pyproject.toml
+    poetry install -E docs
 
-5.  Create a branch for local development:
+    # Install development helper tools
+    poetry run pre-commit install -t pre-commit -t commit-msg
 
-```bash
-git checkout -b name-of-your-bugfix-or-feature
-```
+    # Create a new shell with the virtualenv activated
+    poetry shell
+    ```
 
-Now you can make your changes locally.
+4.  Create a branch for local development:
 
-6.  When you're done making changes, check that your changes pass all tests
+    ```sh
+    git checkout -b name-of-your-bugfix-or-feature
+    ```
 
-```bash
-poe test
-poe lint
-```
+    Now you can make your changes locally.
 
-To have multiple Python versions on the same machine for running `tox`, I recommend
-using [pyenv](https://github.com/pyenv/pyenv) (_do not_ confuse it with `pipenv`,).
+5.  When you're done making changes, check that your changes pass all tests
 
-7.  Commit your changes and push your branch to GitHub:
+    ```sh
+    poe test
+    poe lint
+    ```
 
-```
-git add .
-git commit -m "Detailed description of your changes."
-git push origin name-of-your-bugfix-or-feature
-```
+    To have multiple Python versions on the same machine for running `tox`, I recommend
+    using [pyenv](https://github.com/pyenv/pyenv) (_do not_ confuse it with `pipenv`,).
 
-8.  Submit a pull request through the GitHub website.
+6.  Commit your changes and push your branch to GitHub:
+
+    ```sh
+    git add .
+    cz commit  # use `git commit` if you prefer, but this helps
+    git push origin name-of-your-bugfix-or-feature
+    ```
+
+7.  Submit a pull request through the GitHub website.
 
 ## Pull Request Guidelines
 
@@ -114,4 +123,6 @@ Before you submit a pull request, check that it meets these guidelines:
 
 To run a subset of tests:
 
-    $  poe test tests/the-tests-file.py
+```sh
+poe test tests/the-tests-file.py
+```

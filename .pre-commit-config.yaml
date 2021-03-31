@@ -2,6 +2,13 @@ default_language_version:
   python: python3
 
 repos:
+  # commit messages
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v2.16.0
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+
   # checking our hooks themselves
   - repo: meta
     hooks:
