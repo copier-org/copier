@@ -401,6 +401,9 @@ Examples of extensions you can use:
 -   [`cookiecutter.extensions.SlugifyExtension`](https://cookiecutter.readthedocs.io/en/latest/advanced/template_extensions.html#slugify-extension):
     provides a `slugify` filter using
     [python-slugify](https://github.com/un33k/python-slugify).
+-   [`copier_templates_extensions.TemplateExtensionLoader`](https://github.com/pawamoy/copier-templates-extensions):
+    enhances the extension loading mecanism to allow templates writers to put their
+    extensions directly in their templates.
 -   [`jinja_markdown.MarkdownExtension`](https://github.com/jpsca/jinja-markdown):
     provides a `markdown` tag that will render Markdown to HTML using
     [PyMdown extensions](https://facelessuser.github.io/pymdown-extensions/).
