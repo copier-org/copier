@@ -396,8 +396,8 @@ Examples of extensions you can use:
     natively provides a `to_nice_json` filter that can achieve the same thing.
 -   [`cookiecutter.extensions.RandomStringExtension`](https://cookiecutter.readthedocs.io/en/latest/advanced/template_extensions.html#random-string-extension):
     provides a `random_ascii_string(length, punctuation=False)` global function. Note
-    that Copier natively provides the `ans_random` and `hash` filters that can be used to achieve the
-    same thing.
+    that Copier natively provides the `ans_random` and `hash` filters that can be used
+    to achieve the same thing.
 -   [`cookiecutter.extensions.SlugifyExtension`](https://cookiecutter.readthedocs.io/en/latest/advanced/template_extensions.html#slugify-extension):
     provides a `slugify` filter using
     [python-slugify](https://github.com/un33k/python-slugify).
@@ -414,8 +414,8 @@ Examples of extensions you can use:
     [arrow.now()](http://crsmithdev.com/arrow/#arrow.factory.ArrowFactory.now) API.
 
 Search for more extensions on GitHub using the
-[jinja2-extension topic](https://github.com/topics/jinja2-extension),
-or [other Jinja2 topics](https://github.com/search?q=jinja&type=topics), or
+[jinja2-extension topic](https://github.com/topics/jinja2-extension), or
+[other Jinja2 topics](https://github.com/search?q=jinja&type=topics), or
 [on PyPI using the jinja + extension keywords](https://pypi.org/search/?q=jinja+extension).
 
 Example use in Copier configuration:

@@ -75,6 +75,10 @@ help = "remove build/python artifacts"
 cmd = "pytest --cov-report html --cov copier copier tests"
 help = "generate an HTML report of the coverage"
 
+[tool.poe.tasks.dev-setup]
+script = "devtasks:dev_setup"
+help = "set up local development environment"
+
 [tool.poe.tasks.docs]
 cmd = "mkdocs serve"
 help = "start local docs server"

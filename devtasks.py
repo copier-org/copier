@@ -1,5 +1,7 @@
+import os
 import shutil
 from pathlib import Path
+from subprocess import check_call
 
 
 def clean():
@@ -28,3 +30,24 @@ def clean():
                 shutil.rmtree(matching_path)
             else:
                 matching_path.unlink()
+
+
+def dev_setup():
+    """Setup a development environment."""
+    # Gitpod sets PIP_USER=yes, which breaks poetry
+    env = dict(os.environ, PIP_USER="no")
+    check_call(["poetry", "install", "--extras", "docs"], env=env)
+    check_call(
+        [
+            "poetry",
+            "run",
+            "pre-commit",
+            "install",
+            "-t",
+            "pre-commit",
+            "-t",
+            "commit-msg",
+        ],
+        env=env,
+    )
+    check_call(["poetry", "run", "pre-commit", "install-hooks"], env=env)

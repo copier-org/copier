@@ -41,7 +41,12 @@ pip-wheel-metadata
 *.log
 
 # Editors
-.vscode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
 *.sublime-workspace
 *.sublime-project
 .idea/

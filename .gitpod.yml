@@ -1,11 +1,18 @@
+vscode:
+  extensions:
+    - editorconfig.editorconfig
+    - esbenp.prettier-vscode
+    - ms-python.python
+
 image:
   file: .gitpod.dockerfile
+
+ports:
+  # Mkdocs local server; start it with `poe docs`
+  - port: 8000
+    onOpen: notify
+
 tasks:
-  - init: |
-      export PIP_USER=no
-      pre-commit install
-      pre-commit install-hooks
-      exit
-  - init: |
-      export PIP_USER=no
-      poetry install -E docs
+  - init:
+      export PIP_USER=no && poetry install -E docs && poetry run pre-commit install -t
+      pre-commit -t commit-msg && poetry run pre-commit install-hooks
