@@ -1,3 +1,6 @@
+import subprocess
+import sys
+
 import pytest
 import yaml
 
@@ -38,3 +41,8 @@ def test_good_cli_run(tmp_path, template_path):
 
 def test_help():
     COPIER_CMD("--help-all")
+
+
+def test_python_run():
+    cmd = [sys.executable, "-m", "copier", "--help-all"]
+    assert subprocess.run(cmd, check=True).returncode == 0
