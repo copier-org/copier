@@ -45,17 +45,12 @@ number_of_eels: 1234
 your_email: ""
 ```
 
-Will result in these questions:
+Will result in a questionary similar to:
 
-<pre>
-  <b>name_of_the_project</b>? Format: yaml
-🎤 [My awesome project]:
-
-  <b>number_of_eels</b>? Format: yaml
-🎤 [1234]:
-
-  <b>your_email</b>? Format: yaml
-🎤 []:
+<pre style="font-weight: bold">
+🎤 name_of_the_project? Format: str <span style="color:orange">My awesome project</span>
+🎤 number_of_eels? Format: int <span style="color:orange">1234</span>
+🎤 your_email? Format: str
 </pre>
 
 #### Advanced prompt formatting
@@ -70,77 +65,98 @@ Supported keys:
 -   **help**: Additional text to help the user know what's this question for.
 -   **choices**: To restrict possible values.
 -   **default**: Leave empty to force the user to answer. Provide a default to save him
-    from typing it if it's quite common. When using **choices**, the default must be the
+    from typing it if it's quite common. When using `choices`, the default must be the
     choice _value_, not its _key_. If values are quite long, you can use
     [YAML anchors](https://confluence.atlassian.com/bitbucket/yaml-anchors-960154027.html).
+-   **secret**: When `true`, it hides the prompt displaying asterisks (`*****`) and
+    doesn't save the answer in [the answers file](#the-copier-answersyml-file)
+-   **placeholder**: To provide a visual example for what would be a good value. It is
+    only shown while the answer is empty, so maybe it doesn't make much sense to provide
+    both `default` and `placeholder`.
 
-```yaml
-love_copier:
-    type: bool # This makes Copier ask for y/n
-    help: Do you love Copier?
-    default: yes # Without a default, you force the user to answer
+    !!! warning
 
-project_name:
-    type: str # Any value will be treated raw as a string
-    help: An awesome project needs an awesome name. Tell me yours.
-    default: paradox-specifier
+        Multiline placeholders are not supported currently, due to
+        [this upstream bug](https://github.com/prompt-toolkit/python-prompt-toolkit/issues/1267).
 
-rocket_launch_password:
-    type: str
-    secret: true # This value will not be logged into .copier-answers.yml
-    default: my top secret password
+-   **multiline**: When set to `true`, it allows multiline input. This is especially
+    useful when `type` is `json` or `yaml`.
 
-# I'll avoid default and help here, but you can use them too
-age:
-    type: int
+-   **when**: Condition that, if `False`, skips the question. If it is a boolean, it is
+    used directly. If it is a str, it is converted to boolean using a parser similar to
+    YAML, but only for boolean values.
 
-height:
-    type: float
+!!! example
 
-any_json:
-    help: Tell me anything, but format it as a one-line JSON string
-    type: json
+    ```yaml
+    love_copier:
+        type: bool # This makes Copier ask for y/n
+        help: Do you love Copier?
+        default: yes # Without a default, you force the user to answer
 
-any_yaml:
-    help: Tell me anything, but format it as a one-line YAML string
-    type: yaml # This is the default type, also for short syntax questions
+    project_name:
+        type: str # Any value will be treated raw as a string
+        help: An awesome project needs an awesome name. Tell me yours.
+        default: paradox-specifier
 
-your_favorite_book:
-    # User will type 1 or 2, but your template will get the value
-    choices:
-        - The Bible
-        - The Hitchhiker's Guide to the Galaxy
+    rocket_launch_password:
+        type: str
+        secret: true # This value will not be logged into .copier-answers.yml
+        placeholder: my top secret password
 
-project_license:
-    # User will type 1 or 2 and will see only the dict key, but you will
-    # get the dict value in your template
-    choices:
-        MIT: &mit_text |
-            Here I can write the full text of the MIT license.
-            This will be a long text, shortened here for example purposes.
-        Apache2: |
-            Full text of Apache2 license.
-    # When using choices, the default value is the value, **not** the key;
-    # that's why I'm using the YAML anchor declared above to avoid retyping the
-    # whole license
-    default: *mit_text
-    # You can still define the type, to make sure answers that come from --data
-    # CLI argument match the type that your template expects
-    type: str
+    # I'll avoid default and help here, but you can use them too
+    age:
+        type: int
 
-close_to_work:
-    help: Do you live close to your work?
-    # This format works just like the dict one
-    choices:
-        - [at home, I work at home]
-        - [less than 10km, quite close]
-        - [more than 10km, not so close]
-        - [more than 100km, quite far away]
-```
+    height:
+        type: float
+
+    any_json:
+        help: Tell me anything, but format it as a one-line JSON string
+        type: json
+        multiline: true
+
+    any_yaml:
+        help: Tell me anything, but format it as a one-line YAML string
+        type: yaml # This is the default type, also for short syntax questions
+        multiline: true
+
+    your_favorite_book:
+        # User will type 1 or 2, but your template will get the value
+        choices:
+            - The Bible
+            - The Hitchhiker's Guide to the Galaxy
+
+    project_license:
+        # User will type 1 or 2 and will see only the dict key, but you will
+        # get the dict value in your template
+        choices:
+            MIT: &mit_text |
+                Here I can write the full text of the MIT license.
+                This will be a long text, shortened here for example purposes.
+            Apache2: |
+                Full text of Apache2 license.
+        # When using choices, the default value is the value, **not** the key;
+        # that's why I'm using the YAML anchor declared above to avoid retyping the
+        # whole license
+        default: *mit_text
+        # You can still define the type, to make sure answers that come from --data
+        # CLI argument match the type that your template expects
+        type: str
+
+    close_to_work:
+        help: Do you live close to your work?
+        # This format works just like the dict one
+        choices:
+            - [at home, I work at home]
+            - [less than 10km, quite close]
+            - [more than 10km, not so close]
+            - [more than 100km, quite far away]
+    ```
 
 #### Prompt templating
 
-Values of prompted keys can use Jinja templates.
+Most of those options can be templated using Jinja.
 
 Keep in mind that the configuration is loaded as **YAML**, so the contents must be
 **valid YAML** and respect **Copier's structure**. That is why we explicitly wrap some
@@ -149,46 +165,86 @@ strings in double-quotes in the following examples.
 Answers provided through interactive prompting will not be rendered with Jinja, so you
 cannot use Jinja templating in your answers.
 
-```yaml
-# default
-username:
-    type: str
+!!! example
 
-organization:
-    type: str
+    ```yaml
+    # default
+    username:
+        type: str
 
-email:
-    type: str
-    # Notice that both `username` and `organization` have been already asked
-    default: "[[ username ]]@[[ organization ]].com"
+    organization:
+        type: str
 
-# help
-copyright_holder:
-    type: str
-    help: The person or entity within [[ organization ]] that holds copyrights.
+    email:
+        type: str
+        # Notice that both `username` and `organization` have been already asked
+        default: "{{ username }}@{{ organization }}.com"
 
-# type
-target:
-    type: str
-    choices:
-        - humans
-        - machines
+    # help
+    copyright_holder:
+        type: str
+        when: "{% if organization != 'Public domain' %}true{% endif %}"
+        help: The person or entity within {{ organization }} that holds copyrights.
 
-user_config:
-    type: "[% if target == 'humans' %]yaml[% else %]json[% endif %]"
+    # type
+    target:
+        type: str
+        choices:
+            - humans
+            - machines
 
-# choices
-title:
-    type: str
-    help: Your title within [[ organization ]]
+    user_config:
+        type: "{% if target == 'humans' %}yaml{% else %}json{% endif %}"
 
-contact:
-    choices:
-        Copyright holder: "[[ copyright_holder ]]"
-        CEO: Alice Bob
-        CTO: Carl Dave
-        "[[ title ]]": "[[ username ]]"
-```
+    # choices
+    title:
+        type: str
+        help: Your title within {{ organization }}
+
+    contact:
+        choices:
+            Copyright holder: "{{ copyright_holder }}"
+            CEO: Alice Bob
+            CTO: Carl Dave
+            "{{ title }}": "{{ username }}"
+    ```
+
+!!! warning
+
+    Keep in mind that:
+
+    1. You can only template inside the value...
+    1. ... which must be a string to be templated.
+    1. Also you won't be able to use variables that aren't yet declared.
+
+    ```yaml
+    your_age:
+        type: int
+
+    # Valid
+    double_it:
+        type: int
+        default: "{{ type * 2}}"
+
+    # Invalid, the templating occurs outside of the parameter value
+    did_you_ask:
+        type: str
+        {% if your_age %}
+        default: "yes"
+        {% else %}
+        placeholder: "nope"
+        {% endif %}
+
+    # Invalid, `a_random_word` wasn't answered yet
+    other_random_word:
+        type: str
+        placeholder: "Something different to {{ a_random_word }}"
+
+    # Invalid, YAML interprets curly braces
+    a_random_word:
+        type: str
+        default: {{ 'hello' }}
+    ```
 
 ### Include other YAML files
 
