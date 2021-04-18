@@ -1,5 +1,6 @@
 vscode:
   extensions:
+    - bpruitt-goddard.mermaid-markdown-syntax-highlighting
     - editorconfig.editorconfig
     - esbenp.prettier-vscode
     - ms-python.python
