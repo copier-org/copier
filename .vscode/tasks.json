@@ -1,0 +1,14 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "local docs server",
+      "type": "process",
+      "command": "poetry",
+      "args": ["run", "poe", "docs"],
+      "problemMatcher": []
+    }
+  ]
+}
