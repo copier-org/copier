@@ -80,8 +80,7 @@ copier --force --data updated_question="my new answer" update
 
 To understand how the updating process works, take a look at this diagram:
 
-<!-- prettier-ignore-start -->
-<div class="mermaid">
+```mermaid
 graph TD
 
 %% nodes ----------------------------------------------------------
@@ -122,9 +121,7 @@ diff("diff")
 %% style ----------------------------------------------------------
 classDef grey fill:#e8e8e8;
 class compare,update,apply grey;
-</div>
-
-<!-- prettier-ignore-end -->
+```
 
 As you can see here, `copier` does several things:
 
