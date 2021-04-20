@@ -9,7 +9,7 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Documentation Status](https://readthedocs.org/projects/copier/badge/?version=latest)](https://copier.readthedocs.io/en/latest/?badge=latest)
 
-A library for rendering project templates.
+A library and CLI app for rendering project templates.
 
 -   Works with **local** paths and **git URLs**.
 -   Your project can include any file and `Copier` can dynamically replace values in any
@@ -31,19 +31,19 @@ A library for rendering project templates.
 -   Use it in your Python code:
 
     ```python
-    from copier import copy
+    from copier import run_auto
 
     # Create a project from a local path
-    copy("path/to/project/template", "path/to/destination")
+    run_auto("path/to/project/template", "path/to/destination")
 
     # Or from a git URL.
-    copy("https://github.com/copier-org/copier.git", "path/to/destination")
+    run_auto("https://github.com/copier-org/copier.git", "path/to/destination")
 
     # You can also use "gh:" as a shortcut of "https://github.com/"
-    copy("gh:copier-org/copier.git", "path/to/destination")
+    run_auto("gh:copier-org/copier.git", "path/to/destination")
 
     # Or "gl:" as a shortcut of "https://gitlab.com/"
-    copy("gl:copier-org/copier.git", "path/to/destination")
+    run_auto("gl:copier-org/copier.git", "path/to/destination")
     ```
 
 -   Or as a command-line tool:
@@ -51,6 +51,43 @@ A library for rendering project templates.
     ```bash
     copier path/to/project/template path/to/destination
     ```
+
+## Basic concepts
+
+Copier is composed of these main concepts:
+
+1. **Templates**. They lay out how to generate the subproject.
+1. **Questionaries**. They are configured in the template. Answers are used to generate
+   projects.
+1. **Projects**. This is where your real program lives. But it is usually generated
+   and/or updated from a template.
+
+Copier targets these main human audiences:
+
+1.  **Template creators**. Programmers that repeat code too much and prefer a tool to do
+    it for them.
+
+    !!! tip
+
+         Copier doesn't replace the DRY principle... but sometimes you simply can't be
+         DRY and you need a DRYing machine...
+
+1.  **Template consumers**. Programmers that want to start a new project quickly, or
+    that want to evolve it comfortably.
+
+Non-humans should be happy also by using copier's CLI or API, as long as their
+expectations are the same as for those humans... and as long as they have feelings.
+
+Templates have these goals:
+
+1. **[Code scaffolding](<https://en.wikipedia.org/wiki/Scaffold_(programming)>)**. Help
+   consumers have a working source code tree as quick as possible. All templates allow
+   scaffolding.
+1. **Code lifecycle management**. When the template evolves, let consumers update their
+   projects. Not all templates allow updating.
+
+Copier tries to have a smooth learning curve that lets you create simple templates that
+can evolve into complex ones as needed.
 
 ## Browse or tag public templates
 
