@@ -16,13 +16,19 @@ Copier reads **settings** from these sources, in this order of priority:
 1. [The `copier.yml` file](#the-copieryml-file). Settings here always start with an
    underscore (e.g. `_min_copier_version`).
 
+!!! info
+
+    Some settings are _only_ available as CLI arguments, and some others _only_ as
+    template configurations. Some behave differently depending on where they are
+    defined. [Check the docs for each specific setting](#available-settings).
+
 Copier obtains **answers** from these sources, in this order of priority:
 
 1. Command line or API arguments.
 1. Asking the user. Notice that Copier will not ask any questions answered in the
    previous source.
-1. The last answers file.
-1. [The `copier.yml` file](#the-copieryml-file), where default values are defined.
+1. [Answer from last execution](#the-copier-answersyml-file).
+1. Default values defined in [the `copier.yml` file](#the-copieryml-file).
 
 ## The `copier.yml` file
 
@@ -37,21 +43,25 @@ for two purposes:
 ### Questions
 
 For each key found, Copier will prompt the user to fill or confirm the values before
-they become available to the project template. For example, this:
+they become available to the project template.
 
-```yaml
-name_of_the_project: My awesome project
-number_of_eels: 1234
-your_email: ""
-```
+!!! example
 
-Will result in a questionary similar to:
+    This `copier.yml` file:
 
-<pre style="font-weight: bold">
-🎤 name_of_the_project? Format: str <span style="color:orange">My awesome project</span>
-🎤 number_of_eels? Format: int <span style="color:orange">1234</span>
-🎤 your_email? Format: str
-</pre>
+    ```yaml
+    name_of_the_project: My awesome project
+    number_of_eels: 1234
+    your_email: ""
+    ```
+
+    Will result in a questionary similar to:
+
+    <pre style="font-weight: bold">
+    🎤 name_of_the_project? Format: str <span style="color:orange">My awesome project</span>
+    🎤 number_of_eels? Format: int <span style="color:orange">1234</span>
+    🎤 your_email? Format: str
+    </pre>
 
 #### Advanced prompt formatting
 
@@ -82,9 +92,10 @@ Supported keys:
 -   **multiline**: When set to `true`, it allows multiline input. This is especially
     useful when `type` is `json` or `yaml`.
 
--   **when**: Condition that, if `False`, skips the question. If it is a boolean, it is
-    used directly. If it is a str, it is converted to boolean using a parser similar to
-    YAML, but only for boolean values.
+-   **when**: Condition that, if `false`, skips the question. If it is a boolean, it is
+    used directly (although it's a bit absurd in that case). If it is a string, it is
+    converted to boolean using a parser similar to YAML, but only for boolean values.
+    This is most useful when [templated](#prompt-templating).
 
 !!! example
 
@@ -299,16 +310,20 @@ Remember that **the key must be prefixed with an underscore if you use it in
 -   CLI flags: `-a`, `--answers-file`
 -   Default value: `.copier-answers.yml`
 
-File where answers will be recorded by default. Remember to add that file to your Git
-template if you want to support updates.
+File where answers will be recorded by default.
+
+!!! tip
+
+    Remember to add that file to your Git template if you want to support
+    [updates](updating.md).
 
 Don't forget to read [the docs about the answers file](#the-copier-answersyml-file).
 
-Example `copier.yml`:
+!!! example
 
-```yaml
-_answers_file: .my-custom-answers.yml
-```
+    ```yaml
+    _answers_file: .my-custom-answers.yml
+    ```
 
 ### `cleanup_on_error`
 
@@ -326,7 +341,7 @@ running `copier update`, this setting has no effect.
 
 !!! info
 
-    It makes no sense to define this in `copier.yml`.
+    Not supported in `copier.yml`.
 
 ### `data`
 
@@ -339,12 +354,14 @@ Give answers to questions through CLI/API.
 This cannot be defined in `copier.yml`, where its equivalent would be just normal
 questions with default answers.
 
-Example CLI usage to take all default answers from template, except the user name, which
-is overriden, and don't ask user anything else:
+!!! example
 
-```sh
-copier -fd 'user_name=Manuel Calavera' copy template destination
-```
+    Example CLI usage to take all default answers from template, except the user name,
+    which is overriden, and don't ask user anything else:
+
+    ```sh
+    copier -fd 'user_name=Manuel Calavera' copy template destination
+    ```
 
 ### `envops`
 
@@ -379,8 +396,8 @@ to know available options.
 
     By specifying this, your template will be compatible with both Copier 5 and 6.
 
-    Copier 6 will apply these older defaults if your [min_copier_version][] is older
-    than 6, but that will be removed later.
+    Copier 6 will apply these older defaults if your [min_copier_version][] is lower
+    than 6, but that will be removed in the future.
 
 ### `exclude`
 
@@ -393,26 +410,20 @@ to know available options.
 
 The CLI option can be passed several times to add several patterns.
 
-Example `copier.yml`:
-
-```yaml
-_exclude:
-    - "*.bar"
-    - ".git"
-```
-
 !!! info
 
     When you define this parameter in `copier.yml`, it will **replace** the default
     value.
 
-    In the above example, for instance, `"copier.yml"` will **not** be excluded.
+    In this example, for instance, `"copier.yml"` will **not** be excluded:
 
-Example CLI usage to copy only a single file from the template:
+    !!! example
 
-```sh
-copier --exclude '*' --exclude '!file-i-want' copy template destination
-```
+        ```yaml
+        _exclude:
+            - "*.bar"
+            - ".git"
+        ```
 
 !!! info
 
@@ -420,6 +431,13 @@ copier --exclude '*' --exclude '!file-i-want' copy template destination
     defined in `copier.yml` (or the defaults, if missing).
 
     Instead, CLI/API definitions **will extend** those from `copier.yml`.
+
+
+    !!! example Example CLI usage to copy only a single file from the template
+
+        ```sh
+        copier --exclude '*' --exclude '!file-i-want' copy ./template ./destination
+        ```
 
 ### `force`
 
@@ -434,56 +452,33 @@ Also don't ask questions to the user; just use default values
 
 !!! info
 
-    It makes no sense to define this in `copier.yml`.
+    Not supported in `copier.yml`.
 
 ### `jinja_extensions`
 
 -   Format: `List[str]`
 -   CLI flags: N/A
--   Default value: []
+-   Default value: `[]`
 
 Additional Jinja2 extensions to load in the Jinja2 environment. Extensions can add
 filters, global variables and functions, or tags to the environment.
 
-Examples of extensions you can use:
+The following extensions are _always_ loaded:
 
--   [`cookiecutter.extensions.JsonifyExtension`](https://cookiecutter.readthedocs.io/en/latest/advanced/template_extensions.html#jsonify-extension):
-    provides a `jsonify` filter, to format a dictionary as JSON. Note that Copier
-    natively provides a `to_nice_json` filter that can achieve the same thing.
--   [`cookiecutter.extensions.RandomStringExtension`](https://cookiecutter.readthedocs.io/en/latest/advanced/template_extensions.html#random-string-extension):
-    provides a `random_ascii_string(length, punctuation=False)` global function. Note
-    that Copier natively provides the `ans_random` and `hash` filters that can be used
-    to achieve the same thing.
--   [`cookiecutter.extensions.SlugifyExtension`](https://cookiecutter.readthedocs.io/en/latest/advanced/template_extensions.html#slugify-extension):
-    provides a `slugify` filter using
-    [python-slugify](https://github.com/un33k/python-slugify).
--   [`copier_templates_extensions.TemplateExtensionLoader`](https://github.com/pawamoy/copier-templates-extensions):
-    enhances the extension loading mecanism to allow templates writers to put their
-    extensions directly in their templates.
--   [`jinja_markdown.MarkdownExtension`](https://github.com/jpsca/jinja-markdown):
-    provides a `markdown` tag that will render Markdown to HTML using
-    [PyMdown extensions](https://facelessuser.github.io/pymdown-extensions/).
--   [`jinja2_slug.SlugExtension`](https://pypi.org/project/jinja2-slug/#files): provides
-    a `slug` filter using [unicode-slugify](https://github.com/mozilla/unicode-slugify).
--   [`jinja2_time.TimeExtension`](https://github.com/hackebrot/jinja2-time): adds a
-    `now` tag that provides convenient access to the
-    [arrow.now()](http://crsmithdev.com/arrow/#arrow.factory.ArrowFactory.now) API.
+-   [`jinja2_ansible_filters.AnsibleCoreFiltersExtension`](https://gitlab.com/dreamer-labs/libraries/jinja2-ansible-filters/):
+    this extension adds most of the
+    [Ansible filters](https://docs.ansible.com/ansible/2.3/playbooks_filters.html) to
+    the environment.
 
-Search for more extensions on GitHub using the
-[jinja2-extension topic](https://github.com/topics/jinja2-extension), or
-[other Jinja2 topics](https://github.com/search?q=jinja&type=topics), or
-[on PyPI using the jinja + extension keywords](https://pypi.org/search/?q=jinja+extension).
+You don't need to tell your template users to install these extensions: Copier depends
+on them, so they are always installed when Copier is installed.
 
-Example use in Copier configuration:
+!!! warning
 
-```yaml
-_jinja_extensions:
-    - jinja_markdown.MarkdownExtension
-    - jinja2_slug.SlugExtension
-    - jinja2_time.TimeExtension
-```
+    Including an extension allows Copier to execute uncontrolled code, thus making the
+    template potentially more dangerous. Be careful about what extensions you install.
 
-!!! important "Note to template writers"
+!!! info "Note to template writers"
 
     You must inform your users that they need to install the extensions alongside Copier,
     i.e. in the same virtualenv where Copier is installed.
@@ -498,15 +493,55 @@ _jinja_extensions:
     pipx inject copier jinja2-time
     ```
 
-    ---
+!!! example
 
-    The following extensions are *always* loaded:
+    ```yaml
+    _jinja_extensions:
+        - jinja_markdown.MarkdownExtension
+        - jinja2_slug.SlugExtension
+        - jinja2_time.TimeExtension
+    ```
 
-    - [`jinja2_ansible_filters.AnsibleCoreFiltersExtension`](https://gitlab.com/dreamer-labs/libraries/jinja2-ansible-filters/):
-      this extension adds most of the [Ansible filters](https://docs.ansible.com/ansible/2.3/playbooks_filters.html) to the environment.
+!!! hint
 
-    You don't need to tell your template users to install these extensions:
-    Copier depends on them, so they are always installed when Copier is installed.
+    Examples of extensions you can use:
+
+    -   From [cookiecutter](https://cookiecutter.readthedocs.io/en/1.7.2/):
+
+        -   [`cookiecutter.extensions.JsonifyExtension`](https://cookiecutter.readthedocs.io/en/latest/advanced/template_extensions.html#jsonify-extension):
+            provides a `jsonify` filter, to format a dictionary as JSON. Note that Copier
+            natively provides a `to_nice_json` filter that can achieve the same thing.
+        -   [`cookiecutter.extensions.RandomStringExtension`](https://cookiecutter.readthedocs.io/en/latest/advanced/template_extensions.html#random-string-extension):
+            provides a `random_ascii_string(length, punctuation=False)` global function.
+            Note that Copier natively provides the `ans_random` and `hash` filters that can
+            be used to achieve the same thing:
+
+            !!! example
+
+                ```jinja
+                {{ 999999999999999999999999999999999|ans_random|hash('sha512') }}
+                ```
+
+        -   [`cookiecutter.extensions.SlugifyExtension`](https://cookiecutter.readthedocs.io/en/latest/advanced/template_extensions.html#slugify-extension):
+            provides a `slugify` filter using
+            [python-slugify](https://github.com/un33k/python-slugify).
+
+    -   [`copier_templates_extensions.TemplateExtensionLoader`](https://github.com/pawamoy/copier-templates-extensions):
+        enhances the extension loading mecanism to allow templates writers to put their
+        extensions directly in their templates.
+    -   [`jinja_markdown.MarkdownExtension`](https://github.com/jpsca/jinja-markdown):
+        provides a `markdown` tag that will render Markdown to HTML using
+        [PyMdown extensions](https://facelessuser.github.io/pymdown-extensions/).
+    -   [`jinja2_slug.SlugExtension`](https://pypi.org/project/jinja2-slug/#files): provides
+        a `slug` filter using [unicode-slugify](https://github.com/mozilla/unicode-slugify).
+    -   [`jinja2_time.TimeExtension`](https://github.com/hackebrot/jinja2-time): adds a
+        `now` tag that provides convenient access to the
+        [arrow.now()](http://crsmithdev.com/arrow/#arrow.factory.ArrowFactory.now) API.
+
+    Search for more extensions on GitHub using the
+    [jinja2-extension topic](https://github.com/topics/jinja2-extension), or
+    [other Jinja2 topics](https://github.com/search?q=jinja&type=topics), or
+    [on PyPI using the jinja + extension keywords](https://pypi.org/search/?q=jinja+extension).
 
 ### `migrations`
 
@@ -529,7 +564,7 @@ Migrations will run in the same order as declared here (so you could even run a
 migration for a higher version before running a migration for a lower version if the
 higher one is declared before and the update passes through both).
 
-They will only run when new version >= declared version > old version. And only when
+They will only run when _new version >= declared version > old version_. And only when
 updating (not when copying for the 1st time).
 
 If the migrations definition contains Jinja code, it will be rendered with the same
@@ -538,18 +573,18 @@ context as the rest of the template.
 Migration processes will contain the `$VERSION_FROM`, `$VERSION_TO`, `$VERSION_CURRENT`
 and `$STAGE` (before/after) environment variables
 
-Example `copier.yml`:
+!!! example
 
-```yaml
-_migrations:
-    - version: v1.0.0
-      before:
-          - rm ./old-folder
-      after:
-          # [[ _copier_conf.src_path ]] points to the path where the template was
-          # cloned, so it can be helpful to run migration scripts stored there.
-          - invoke -r [[ _copier_conf.src_path ]] -c migrations migrate $VERSION_CURRENT
-```
+    ```yaml
+    _migrations:
+        - version: v1.0.0
+        before:
+            - rm ./old-folder
+        after:
+            # {{ _copier_conf.src_path }} points to the path where the template was
+            # cloned, so it can be helpful to run migration scripts stored there.
+            - invoke -r {{ _copier_conf.src_path }} -c migrations migrate $VERSION_CURRENT
+    ```
 
 ### `min_copier_version`
 
@@ -570,26 +605,11 @@ generation will be aborted and an error will be shown to the user.
     features can be dropped or changed, so it's probably a good idea to ask the
     template maintainer to update it.
 
-Example `copier.yml`:
+!!! example
 
-```yaml
-_min_copier_version: "4.1.0"
-```
-
-### `only_diff`
-
--   Format: `bool`
--   CLI flags: Just use `copier copy` to disable it, or `copier update` to enable it.
--   Default value: `True`
-
-When doing an update, by default Copier will do its best to understand how the template
-has evolved since the last time you updated it, and will try to apply only that diff to
-your subproject, respecting the subproject's own evolution as much as possible.
-
-Update with `only_diff=False` to avoid this behavior and let Copier override any changes
-in the subproject.
-
-It makes no sense to define this in `copier.yml`.
+    ```yaml
+    _min_copier_version: "4.1.0"
+    ```
 
 ### `pretend`
 
@@ -601,7 +621,7 @@ Run but do not make any changes.
 
 !!! info
 
-    It makes no sense to define this in `copier.yml`.
+    Not supported in `copier.yml`.
 
 ### `quiet`
 
@@ -613,7 +633,7 @@ Suppress status output.
 
 !!! info
 
-    It makes no sense to define this in `copier.yml`.
+    Not supported in `copier.yml`.
 
 ### `skip_if_exists`
 
@@ -624,18 +644,20 @@ Suppress status output.
 [Patterns](#patterns-syntax) for files/folders that must be skipped if they already
 exist.
 
-For example, it can be used if your project generates a password the 1st time and you
-don't want to override it next times:
+!!! example
 
-```yaml
-# copier.yml
-_skip_if_exists: .secret_password.yml
-```
+    For example, it can be used if your project generates a password the 1st time and
+    you don't want to override it next times:
 
-```yaml
-# .secret_password.yml.tmpl
-[[make_secret()|tojson]]
-```
+    ```yaml
+    # copier.yml
+    _skip_if_exists: .secret_password.yml
+    ```
+
+    ```yaml
+    # .secret_password.yml.tmpl
+    {{999999999999999999999999999999999|ans_random|hash('sha512')}}
+    ```
 
 ### `subdirectory`
 
@@ -646,11 +668,18 @@ _skip_if_exists: .secret_password.yml
 Subdirectory to use as the template root when generating a project. If not specified,
 the root of the template is used.
 
-Example `copier.yml`:
+This allows you to keep separate the template metadata and the template code.
 
-```yaml
-_subdirectory: src
-```
+!!! tip
+
+    If your template is meant to be applied to other templates (a.k.a. recursive
+    templates), use this option to be able to use [updates](updating.md).
+
+!!! example
+
+    ```yaml
+    _subdirectory: template
+    ```
 
 ### `tasks`
 
@@ -670,12 +699,12 @@ Example `copier.yml`:
 _tasks:
     # Strings get executed under system's default shell
     - "git init"
-    - "rm [[ name_of_the_project ]]/README.md"
+    - "rm {{ name_of_the_project }}/README.md"
     # Arrays are executed without shell, saving you the work of escaping arguments
-    - [invoke, "--search-root=[[ _copier_conf.src_path ]]", after-copy]
+    - [invoke, "--search-root={{ _copier_conf.src_path }}", after-copy]
     # You are able to output the full conf to JSON, to be parsed by your script,
     # but you cannot use the normal `|tojson` filter; instead, use `.json()`
-    - [invoke, end-process, "--full-conf=[[ _copier_conf.json() ]]"]
+    - [invoke, end-process, "--full-conf={{ _copier_conf.json() }}"]
 ```
 
 ### `templates_suffix`
@@ -686,19 +715,19 @@ _tasks:
 
 Suffix that instructs which files are to be processed by Jinja as templates.
 
-Example `copier.yml`:
+!!! example
 
-```yaml
-_templates_suffix: .my-custom-suffix
-```
+    ```yaml
+    _templates_suffix: .my-custom-suffix
+    ```
 
 !!! warning
 
     Copier 5 and older had a different default value: `.tmpl`. If you wish to keep it,
     add it to your `copier.yml` to keep it future-proof.
 
-    Copier 6 will apply that old default if your [min_copier_version][] is older
-    than 6, but that will be removed later.
+    Copier 6 will apply that old default if your [min_copier_version][] is lower
+    than 6, but that will be removed in the future.
 
 ### `use_prereleases`
 
@@ -721,7 +750,7 @@ the `v2.0.0a1` tag unless this flag is enabled.
 
 !!! info
 
-    It makes no sense to define this in `copier.yml`.
+    Not supported in `copier.yml`.
 
 ### `vcs_ref`
 
@@ -735,12 +764,12 @@ to copy.
 This is stored automatically in the answers file, like this:
 
 ```yaml
-_vcs_ref: v1.0.0
+_commit: v1.0.0
 ```
 
 !!! info
 
-    It makes no sense to define this in `copier.yml`.
+    Not supported in `copier.yml`.
 
 By default, copier will copy from the last release found in template git tags, sorted as
 [PEP 440](https://www.python.org/dev/peps/pep-0440/).
@@ -773,7 +802,7 @@ will be used to load the last user's answers to the questions made in
 This makes projects easier to update because when the user is asked, the default answers
 will be the last ones he used.
 
-The file **must be called exactly `[[ _copier_conf.answers_file ]].tmpl`** (or ended
+The file **must be called exactly `{{ _copier_conf.answers_file }}.jinja`** (or ended
 with [your chosen suffix](#templates_suffix)) in your template's root folder) to allow
 [applying multiple templates to the same subproject](#applying-multiple-templates-to-the-same-subproject).
 
@@ -784,10 +813,10 @@ The file must have this content:
 
 ```yaml
 # Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
-[[_copier_answers|to_nice_yaml]]
+{{_copier_answers|to_nice_yaml}}
 ```
 
-!!! info
+!!! important
 
     Did you notice that `NEVER EDIT MANUALLY` part?
     [It is important](updating.md#never-change-the-answers-file-manually).
@@ -822,7 +851,7 @@ All 3 templates are completely independent:
     matter their pre-commit configuration or the framework they rely on.
 
 Well, don't worry. Copier has you covered. You just need to use a different answers file
-for each one. All of them contain a `[[ _copier_conf.answers_file ]].tmpl` file
+for each one. All of them contain a `{{ _copier_conf.answers_file }}.jinja` file
 [as specified above](#the-copier-answersyml-file). Then you apply all the templates to
 the same project:
 
