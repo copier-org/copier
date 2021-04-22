@@ -23,8 +23,6 @@ except ImportError:
     # Python < 3.8
     from importlib_metadata import version
 
-__all__ = ("Style", "printf")
-
 colorama.init()
 
 
