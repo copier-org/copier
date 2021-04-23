@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from textwrap import dedent
 
@@ -334,3 +335,42 @@ def test_cli_interatively_with_flag_data_and_type_casts(
             optional_value: null
         """
     )
+
+
+def test_tui_inherited_default(tmp_path_factory, spawn):
+    """Make sure a template inherits default as expected."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src
+            / "copier.yaml": """\
+                owner1:
+                    type: str
+                has_2_owners:
+                    type: bool
+                    default: false
+                owner2:
+                    type: str
+                    default: "{{ owner1 }}"
+                    when: "{{ has_2_owners }}"
+            """,
+            src / "answers.json.jinja": "{{ _copier_answers|to_nice_json }}",
+        }
+    )
+    tui = spawn(
+        COPIER_PATH + ("copy", str(src), str(dst)),
+        timeout=10,
+    )
+    tui.expect_exact(["owner1?", "Format: str"])
+    tui.sendline("example")
+    tui.expect_exact(["has_2_owners?", "Format: bool", "(y/N)"])
+    tui.send("y")
+    tui.expect_exact(["owner2?", "Format: str", "example"])
+    tui.sendline("2")
+    tui.expect_exact(pexpect.EOF)
+    assert json.loads((dst / "answers.json").read_bytes()) == {
+        "_src_path": str(src),
+        "owner1": "example",
+        "has_2_owners": True,
+        "owner2": "example2",
+    }
