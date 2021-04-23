@@ -326,21 +326,18 @@ class Worker:
                     **details,
                 )
             )
-        if self.force:
-            # Avoid prompting to not requiring a TTy when --force
-            for question in questions:
-                new_answer = question.get_default()
-                previous_answer = result.combined.get(question.var_name)
-                if new_answer != previous_answer:
-                    result.user[question.var_name] = new_answer
-        else:
-            # Display TUI and ask user interactively
-            result.user.update(
-                unsafe_prompt(
-                    (question.get_questionary_structure() for question in questions),
-                    answers=result.combined,
-                )
+        for question in questions:
+            # Display TUI and ask user interactively only without --force
+            new_answer = (
+                question.get_default()
+                if self.force
+                else unsafe_prompt(
+                    question.get_questionary_structure(), answers=result.combined
+                )[question.var_name]
             )
+            previous_answer = result.combined.get(question.var_name)
+            if new_answer != previous_answer:
+                result.user[question.var_name] = new_answer
         return result
 
     @cached_property

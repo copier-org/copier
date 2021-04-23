@@ -363,6 +363,7 @@ class Question:
             # value was not a string
             return value
         try:
+            # TODO Aquí, answers.combined tiene owner1:None
             return template.render(**self.answers.combined)
         except UndefinedError as error:
             raise UserMessageError(str(error)) from error
