@@ -1,4 +1,5 @@
 import platform
+import sys
 
 import pytest
 from pexpect.popen_spawn import PopenSpawn
@@ -12,6 +13,12 @@ def spawn():
         # FIXME Use pexpect or wexpect somehow to fix this
         pytest.xfail(
             "pexpect fails on Windows",
+        )
+    # Disable subprocess timeout if debugging, for commodity
+    # See https://stackoverflow.com/a/67065084/1468388
+    if getattr(sys, "gettrace", lambda: False):
+        return lambda cmd, timeout=None, *args, **kwargs: PopenSpawn(
+            cmd, None, *args, **kwargs
         )
     # Using PopenSpawn, although probably it would be best to use pexpect.spawn
     # instead. However, it's working fine and it seems easier to fix in the
