@@ -36,7 +36,10 @@ COPIER_CMD = local.get(
     "copier.cmd",
     "copier",
 )
-COPIER_PATH = str(COPIER_CMD.executable)
+
+# Executing copier this way allows to debug subprocesses using debugpy
+# See https://github.com/microsoft/debugpy/issues/596#issuecomment-824643237
+COPIER_PATH = (sys.executable, "-m", "copier")
 
 # Helpers to use with tests designed for old copier bracket envops defaults
 BRACKET_ENVOPS = {

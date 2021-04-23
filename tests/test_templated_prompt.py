@@ -142,7 +142,7 @@ def test_templated_prompt(
             / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
         }
     )
-    tui = spawn([COPIER_PATH, str(template), str(subproject)], timeout=10)
+    tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
     tui.expect_exact(["main?", "Format: yaml", main_default])
     tui.sendline()
     tui.expect_exact([f"{question_name}?"] + expected_outputs)

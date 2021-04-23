@@ -138,7 +138,7 @@ def test_cli_interactive(tmp_path, spawn, template_path):
         "Invalid value",
         "please try again",
     ]
-    tui = spawn([COPIER_PATH, "copy", template_path, str(tmp_path)], timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", template_path, str(tmp_path)), timeout=10)
     tui.expect_exact(["I need to know it. Do you love me?", "love_me", "Format: bool"])
     tui.send("y")
     tui.expect_exact(["Please tell me your name.", "your_name", "Format: str"])
@@ -272,8 +272,8 @@ def test_cli_interatively_with_flag_data_and_type_casts(
         "please try again",
     ]
     tui = spawn(
-        [
-            COPIER_PATH,
+        COPIER_PATH
+        + (
             "--data=choose_list=second",
             "--data=choose_dict=first",
             "--data=choose_tuple=third",
@@ -281,7 +281,7 @@ def test_cli_interatively_with_flag_data_and_type_casts(
             "copy",
             template_path,
             str(tmp_path),
-        ],
+        ),
         timeout=10,
     )
     tui.expect_exact(["I need to know it. Do you love me?", "love_me", "Format: bool"])

@@ -57,14 +57,14 @@ def test_copy_default_advertised(tmp_path_factory, spawn, name):
         git("tag", "v2")
     with local.cwd(subproject):
         # Copy the v1 template
-        args = []
+        args = ()
         if name is not DEFAULT:
-            args.append(f"--data=your_name={name}")
+            args += (f"--data=your_name={name}",)
         else:
             name = "Mario"  # Default in the template
         name = str(name)
         tui = spawn(
-            [COPIER_PATH, str(template), ".", "--vcs-ref=v1"] + args, timeout=10
+            COPIER_PATH + (str(template), ".", "--vcs-ref=v1") + args, timeout=10
         )
         # Check what was captured
         tui.expect_exact(["in_love?", "Format: bool", "(Y/n)"])
@@ -86,7 +86,7 @@ def test_copy_default_advertised(tmp_path_factory, spawn, name):
         git("add", ".")
         assert "_commit: v1" in Path(".copier-answers.yml").read_text()
         git("commit", "-m", "v1")
-        tui = spawn([COPIER_PATH], timeout=30)
+        tui = spawn(COPIER_PATH, timeout=30)
         # Check what was captured
         tui.expect_exact(["in_love?", "Format: bool", "(Y/n)"])
         tui.sendline()
@@ -168,7 +168,7 @@ def test_when(tmp_path_factory, question_1, question_2_when, spawn, asks):
             / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
         }
     )
-    tui = spawn([COPIER_PATH, str(template), str(subproject)], timeout=10)
+    tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
     tui.expect_exact(["question_1?", f"Format: {type(question_1).__name__}", "(Y/n)"])
     tui.sendline()
     if asks:
@@ -207,7 +207,7 @@ def test_placeholder(tmp_path_factory, spawn):
             / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
         }
     )
-    tui = spawn([COPIER_PATH, str(template), str(subproject)], timeout=10)
+    tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
     tui.expect_exact(["question_1?", "Format: str", "answer 1"])
     tui.sendline()
     tui.expect_exact(
@@ -253,7 +253,7 @@ def test_multiline(tmp_path_factory, spawn, type_):
             / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
         }
     )
-    tui = spawn([COPIER_PATH, str(template), str(subproject)], timeout=10)
+    tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
     tui.expect_exact(["question_1?", "Format: str", "answer 1"])
     tui.sendline()
     tui.expect_exact(["question_2?", f"Format: {type_}"])
@@ -325,7 +325,7 @@ def test_update_choice(tmp_path_factory, spawn, choices):
         git("commit", "-m one")
         git("tag", "v1")
     # Copy
-    tui = spawn([COPIER_PATH, str(template), str(subproject)], timeout=10)
+    tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
     tui.expect_exact(["pick_one?"])
     tui.sendline(Keyboard.Up)
     tui.expect_exact(pexpect.EOF)
@@ -336,7 +336,7 @@ def test_update_choice(tmp_path_factory, spawn, choices):
         git("add", ".")
         git("commit", "-m1")
     # Update
-    tui = spawn([COPIER_PATH, str(subproject)], timeout=10)
+    tui = spawn(COPIER_PATH + (str(subproject),), timeout=10)
     tui.expect_exact(["pick_one?"])
     tui.sendline(Keyboard.Down)
     tui.expect_exact(["Overwrite", ".copier-answers.yml", "[Y/n]"])
