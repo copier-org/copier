@@ -97,7 +97,7 @@ help = "run the type (mypy) checker on the codebase"
 
 [tool.poetry-dynamic-versioning]
 enable = true
-style = "semver"
+style = "pep440"
 vcs = "git"
 
 [tool.black]
