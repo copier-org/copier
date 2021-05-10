@@ -667,7 +667,9 @@ class Worker:
         # Try to apply cached diff into final destination
         with local.cwd(self.subproject.local_abspath):
             apply_cmd = git["apply", "--reject", "--exclude", self.answers_relpath]
-            for skip_pattern in self.skip_if_exists:
+            for skip_pattern in chain(
+                self.skip_if_exists, self.template.skip_if_exists
+            ):
                 apply_cmd = apply_cmd["--exclude", skip_pattern]
             (apply_cmd << diff)(retcode=None)
         # Run post-migration tasks

@@ -3,11 +3,13 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
+import yaml
 from plumbum import local
 from plumbum.cmd import git
 
 from copier import Worker, copy
 from copier.cli import CopierApp
+from copier.main import run_copy, run_update
 
 from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree
 
@@ -411,3 +413,39 @@ def test_commit_hooks_respected(tmp_path_factory):
         )
         # This time a .rej file is unavoidable
         assert Path(f"{life}.rej").is_file()
+
+
+def test_skip_update(tmp_path_factory):
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yaml": "_skip_if_exists: [skip_me]",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "skip_me": "1",
+            }
+        )
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "1.0.0")
+    run_copy(str(src), dst, force=True)
+    skip_me: Path = dst / "skip_me"
+    answers_file = dst / ".copier-answers.yml"
+    answers = yaml.safe_load(answers_file.read_text())
+    assert skip_me.read_text() == "1"
+    assert answers["_commit"] == "1.0.0"
+    skip_me.write_text("2")
+    with local.cwd(dst):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+    with local.cwd(src):
+        build_file_tree({"skip_me": "3"})
+        git("commit", "-am2")
+        git("tag", "2.0.0")
+    run_update(dst, force=True)
+    answers = yaml.safe_load(answers_file.read_text())
+    assert skip_me.read_text() == "2"
+    assert answers["_commit"] == "2.0.0"
+    assert not (dst / "skip_me.rej").exists()
