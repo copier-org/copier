@@ -7,10 +7,11 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from shutil import copyfile
 from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
 from packaging.version import InvalidVersion, Version
-from plumbum import ProcessExecutionError, colors, local
+from plumbum import colors, local
 from plumbum.cli.terminal import ask
 from plumbum.cmd import git
 
@@ -246,9 +247,13 @@ def update_diff(conf: ConfigData) -> None:
                     "Downgrades are not supported."
                 )
     # Copy old template into a temporary destination
-    with tempfile.TemporaryDirectory(prefix=f"{__name__}.update_diff.") as dst_temp:
+    with tempfile.TemporaryDirectory(
+        prefix=f"{__name__}.update_diff.old."
+    ) as old_temp, tempfile.TemporaryDirectory(
+        prefix=f"{__name__}.update_diff.new."
+    ) as new_temp:
         copy(
-            dst_path=dst_temp,
+            dst_path=old_temp,
             data=last_answers,
             force=True,
             quiet=True,
@@ -256,48 +261,28 @@ def update_diff(conf: ConfigData) -> None:
             src_path=conf.original_src_path,
             vcs_ref=conf.old_commit,
         )
-        # Extract diff between temporary destination and real destination
-        with local.cwd(dst_temp):
-            git("init", retcode=None)
-            git("add", ".")
-            git("config", "user.name", "Copier")
-            git("config", "user.email", "copier@copier")
-            # 1st commit could fail if any pre-commit hook reformats code
-            git("commit", "--allow-empty", "-am", "dumb commit 1", retcode=None)
-            git("commit", "--allow-empty", "-am", "dumb commit 2")
-            git("config", "--unset", "user.name")
-            git("config", "--unset", "user.email")
-            git("remote", "add", "real_dst", conf.dst_path)
-            git("fetch", "--depth=1", "real_dst", "HEAD")
-            diff_cmd = git["diff-tree", "--unified=1", "HEAD...FETCH_HEAD"]
-            try:
-                diff = diff_cmd("--inter-hunk-context=-1")
-            except ProcessExecutionError:
-                print(
-                    colors.warn
-                    | "Make sure Git >= 2.24 is installed to improve updates.",
-                    file=sys.stderr,
-                )
-                diff = diff_cmd("--inter-hunk-context=0")
-    # Run pre-migration tasks
-    renderer = Renderer(conf)
-    run_tasks(conf, renderer, get_migration_tasks(conf, "before"))
-    # Import possible answers migration
-    conf = conf.copy(
-        update={
-            "data_from_answers_file": load_answersfile_data(
-                conf.dst_path, conf.answers_file
-            )
-        }
-    )
-    # Do a normal update in final destination
-    copy_local(conf)
-    # Try to apply cached diff into final destination
-    with local.cwd(conf.dst_path):
-        apply_cmd = git["apply", "--reject", "--exclude", conf.answers_file]
-        for skip_pattern in conf.skip_if_exists:
-            apply_cmd = apply_cmd["--exclude", skip_pattern]
-        (apply_cmd << diff)(retcode=None)
+
+        # Run pre-migration tasks
+        renderer = Renderer(conf)
+        run_tasks(conf, renderer, get_migration_tasks(conf, "before"))
+        # Import possible answers migration
+        new_conf = conf.copy(
+            update={
+                "dst_path": new_temp,
+                "data_from_answers_file": load_answersfile_data(
+                    conf.dst_path, conf.answers_file
+                ),
+            }
+        )
+        # Do a normal update in final destination
+        copy_local(new_conf)
+
+        merge(
+            modified_dir=conf.dst_path,
+            old_upstream_dir=old_temp,
+            new_upstream_dir=new_temp,
+        )
+
     # Run post-migration tasks
     run_tasks(conf, renderer, get_migration_tasks(conf, "after"))
 
@@ -341,6 +326,47 @@ def get_source_paths(
             continue
         source_paths.append((folder / src_name, rel_path))
     return source_paths
+
+
+def merge(modified_dir, old_upstream_dir, new_upstream_dir):
+    participating_files = set()
+    for src_dir in old_upstream_dir, new_upstream_dir:
+        for root, _, files in os.walk(src_dir):
+            root = Path(root).relative_to(src_dir)
+            participating_files.update(Path(root, f) for f in files)
+
+    with tempfile.TemporaryDirectory(
+        prefix=f"{__name__}.update_diff.merge."
+    ) as tmp_dir:
+        for basename in sorted(participating_files):
+            subfile_names = []
+            for subfile_kind, src_dir in [
+                ("modified", modified_dir),
+                ("old upstream", old_upstream_dir),
+                ("new upstream", new_upstream_dir),
+            ]:
+                path = Path(src_dir, basename)
+                if path.is_file():
+                    copyfile(path, Path(tmp_dir, subfile_kind))
+                else:
+                    subfile_kind = os.devnull
+                subfile_names.append(subfile_kind)
+
+            output = subprocess.run(
+                ["git", "merge-file", "--diff3", "-p", *subfile_names],
+                stdout=subprocess.PIPE,
+                cwd=tmp_dir,
+            ).stdout
+
+            dest_path = Path(modified_dir, basename)
+            if not output and "new upstream" not in subfile_names:
+                try:
+                    dest_path.unlink()
+                except FileNotFoundError:
+                    pass
+            else:
+                dest_path.parent.mkdir(parents=True, exist_ok=True)
+                dest_path.write_bytes(output)
 
 
 def render_folder(rel_folder: Path, conf: ConfigData) -> None:
@@ -460,7 +486,7 @@ def overwrite_file(conf: ConfigData, dst_path: Path, rel_path: Path) -> bool:
         return True
     if conf.skip:
         return False
-    return bool(ask(f" Overwrite {dst_path}?", default=True))
+    return True
 
 
 def run_tasks(conf: ConfigData, render: Renderer, tasks: Sequence[Dict]) -> None:
