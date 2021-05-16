@@ -463,7 +463,8 @@ class Worker:
         templated_sibling = (
             self.template.local_abspath / f"{relpath}{self.template.templates_suffix}"
         )
-        if templated_sibling.exists():
+        # With an empty suffix, the templated sibling always exists.
+        if templated_sibling.exists() and self.template.templates_suffix:
             return None
         rendered_parts = []
         for part in relpath.parts:
@@ -473,7 +474,9 @@ class Worker:
                 return None
             rendered_parts.append(part)
         with suppress(IndexError):
-            if is_template:
+            # With an empty suffix, the next instruction
+            # would erroneously empty the last rendered part
+            if is_template and self.template.templates_suffix:
                 rendered_parts[-1] = rendered_parts[-1][
                     : -len(self.template.templates_suffix)
                 ]
