@@ -17,7 +17,7 @@ class UserMessageError(CopierError):
     """Exit the program giving a message to the user."""
 
 
-class UnsupportedVersionError(UserMessageError, CopierError):
+class UnsupportedVersionError(UserMessageError):
     """Copier version does not support template version."""
 
 
@@ -25,7 +25,7 @@ class ConfigFileError(ValueError, CopierError):
     """Parent class defining problems with the config file."""
 
 
-class InvalidConfigFileError(ConfigFileError, CopierError):
+class InvalidConfigFileError(ConfigFileError):
     """Indicates that the config file is wrong."""
 
     def __init__(self, conf_path: Path, quiet: bool):
@@ -34,7 +34,7 @@ class InvalidConfigFileError(ConfigFileError, CopierError):
         super().__init__(msg)
 
 
-class MultipleConfigFilesError(ConfigFileError, CopierError):
+class MultipleConfigFilesError(ConfigFileError):
     """Both copier.yml and copier.yaml found, and that's an error."""
 
     def __init__(self, conf_paths: "PathSeq"):
@@ -61,7 +61,7 @@ class PathNotRelativeError(_PathValueError, CopierError):
     msg_template = '"{path}" is not a relative path'
 
 
-class ExtensionNotFoundError(UserMessageError, CopierError):
+class ExtensionNotFoundError(UserMessageError):
     """Extensions listed in the configuration could not be loaded."""
 
 
