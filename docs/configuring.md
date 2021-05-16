@@ -721,6 +721,15 @@ Suffix that instructs which files are to be processed by Jinja as templates.
     _templates_suffix: .my-custom-suffix
     ```
 
+An empty suffix is also valid, and will instruct Copier to copy
+and render _every file_, except those that are [excluded by default](#default).
+
+!!! example
+
+    ```yaml
+    _templates_suffix: ""
+    ```
+
 !!! warning
 
     Copier 5 and older had a different default value: `.tmpl`. If you wish to keep it,
