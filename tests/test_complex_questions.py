@@ -1,4 +1,5 @@
 import json
+from collections import deque
 from pathlib import Path
 from textwrap import dedent
 
@@ -140,9 +141,16 @@ def test_cli_interactive(tmp_path, spawn, template_path):
         "please try again",
     ]
     tui = spawn(COPIER_PATH + ("copy", template_path, str(tmp_path)), timeout=10)
-    tui.expect_exact(["I need to know it. Do you love me?", "love_me", "Format: bool"])
+    deque(
+        map(
+            tui.expect_exact,
+            ["I need to know it. Do you love me?", "love_me", "Format: bool"],
+        )
+    )
     tui.send("y")
-    tui.expect_exact(["Please tell me your name.", "your_name", "Format: str"])
+    deque(
+        map(tui.expect_exact, ["Please tell me your name.", "your_name", "Format: str"])
+    )
     tui.sendline("Guybrush Threpwood")
     q = ["How old are you?", "your_age", "Format: int"]
     tui.expect_exact(q)
@@ -168,43 +176,57 @@ def test_cli_interactive(tmp_path, spawn, template_path):
     tui.expect_exact(invalid + q)
     tui.sendline("- I'd love it")
     tui.send(Keyboard.Esc + Keyboard.Enter)
-    tui.expect_exact(
-        [
-            "You see the value of the list items",
-            "choose_list",
-            "Format: str",
-            "first",
-            "second",
-            "third",
-        ]
+    deque(
+        map(
+            tui.expect_exact,
+            [
+                "You see the value of the list items",
+                "choose_list",
+                "Format: str",
+                "first",
+                "second",
+                "third",
+            ],
+        )
     )
     tui.sendline()
-    tui.expect_exact(
-        [
-            "You see the 1st tuple item, but I get the 2nd item as a result",
-            "choose_tuple",
-            "one",
-            "two",
-            "three",
-        ]
+    deque(
+        map(
+            tui.expect_exact,
+            [
+                "You see the 1st tuple item, but I get the 2nd item as a result",
+                "choose_tuple",
+                "one",
+                "two",
+                "three",
+            ],
+        )
     )
     tui.sendline()
-    tui.expect_exact(
-        [
-            "You see the dict key, but I get the dict value",
-            "choose_dict",
-            "one",
-            "two",
-            "three",
-        ]
+    deque(
+        map(
+            tui.expect_exact,
+            [
+                "You see the dict key, but I get the dict value",
+                "choose_dict",
+                "one",
+                "two",
+                "three",
+            ],
+        )
     )
     tui.sendline()
-    tui.expect_exact(["This must be a number", "choose_number", "-1.1", "0", "1"])
+    deque(
+        map(
+            tui.expect_exact,
+            ["This must be a number", "choose_number", "-1.1", "0", "1"],
+        )
+    )
     tui.sendline()
-    tui.expect_exact(["minutes_under_water", "Format: int", "10"])
+    deque(map(tui.expect_exact, ["minutes_under_water", "Format: int", "10"]))
     tui.send(Keyboard.Backspace)
     tui.sendline()
-    tui.expect_exact(["optional_value", "Format: yaml"])
+    deque(map(tui.expect_exact, ["optional_value", "Format: yaml"]))
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
     results_file = tmp_path / "results.txt"
@@ -285,37 +307,47 @@ def test_cli_interatively_with_flag_data_and_type_casts(
         ),
         timeout=10,
     )
-    tui.expect_exact(["I need to know it. Do you love me?", "love_me", "Format: bool"])
+    deque(
+        map(
+            tui.expect_exact,
+            ["I need to know it. Do you love me?", "love_me", "Format: bool"],
+        )
+    )
     tui.send("y")
-    tui.expect_exact(["Please tell me your name.", "your_name", "Format: str"])
+    deque(
+        map(
+            tui.expect_exact,
+            ["Please tell me your name.", "your_name", "Format: str"],
+        )
+    )
     tui.sendline("Guybrush Threpwood")
     q = ["How old are you?", "your_age", "Format: int"]
-    tui.expect_exact(q)
+    deque(map(tui.expect_exact, q))
     tui.sendline("wrong your_age")
-    tui.expect_exact(invalid + q)
+    deque(map(tui.expect_exact, (invalid + q)))
     tui.send((Keyboard.Alt + Keyboard.Backspace) * 2)
     tui.sendline("22")
     q = ["What's your height?", "your_height", "Format: float"]
-    tui.expect_exact(q)
+    deque(map(tui.expect_exact, (q)))
     tui.sendline("wrong your_height")
-    tui.expect_exact(invalid + q)
+    deque(map(tui.expect_exact, (invalid + q)))
     tui.send((Keyboard.Alt + Keyboard.Backspace) * 2)
     tui.sendline("1.56")
     q = ["more_json_info", "Format: json"]
-    tui.expect_exact(q)
+    deque(map(tui.expect_exact, (q)))
     tui.sendline('{"objective":')
-    tui.expect_exact(invalid + q)
+    deque(map(tui.expect_exact, (invalid + q)))
     tui.sendline('"be a pirate"}')
     tui.send(Keyboard.Esc + Keyboard.Enter)
     q = ["Wanna give me any more info?", "anything_else", "Format: yaml"]
-    tui.expect_exact(q)
+    deque(map(tui.expect_exact, (q)))
     tui.sendline("- Want some grog?")
-    tui.expect_exact(invalid + q)
+    deque(map(tui.expect_exact, (invalid + q)))
     tui.sendline("- I'd love it")
     tui.send(Keyboard.Esc + Keyboard.Enter)
-    tui.expect_exact(["minutes_under_water", "Format: int", "10"])
+    deque(map(tui.expect_exact, ["minutes_under_water", "Format: int", "10"]))
     tui.sendline()
-    tui.expect_exact(["optional_value", "Format: yaml"])
+    deque(map(tui.expect_exact, ["optional_value", "Format: yaml"]))
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
     results_file = tmp_path / "results.txt"
@@ -361,11 +393,11 @@ def test_tui_inherited_default(tmp_path_factory, spawn):
         COPIER_PATH + ("copy", str(src), str(dst)),
         timeout=10,
     )
-    tui.expect_exact(["owner1?", "Format: str"])
+    deque(map(tui.expect_exact, ["owner1?", "Format: str"]))
     tui.sendline("example")
-    tui.expect_exact(["has_2_owners?", "Format: bool", "(y/N)"])
+    deque(map(tui.expect_exact, ["has_2_owners?", "Format: bool", "(y/N)"]))
     tui.send("y")
-    tui.expect_exact(["owner2?", "Format: str", "example"])
+    deque(map(tui.expect_exact, ["owner2?", "Format: str", "example"]))
     tui.sendline("2")
     tui.expect_exact(pexpect.EOF)
     assert json.loads((dst / "answers.json").read_bytes()) == {
