@@ -26,6 +26,11 @@ Summary:
 -   Running `copier copy` on a preexisting project now recopies the project instead of
     updating it. That means that it respects old answers, but ignores history diff.
 -   We use Jinja 2 defaults now. `{{ }}` instead of `[[ ]]` and similar.
+-   Multi-typed choices follow the same type-casting logic as any other question, so
+    it's easier to reason about them. However, if you were using this feature, you might
+    be surprised about its side effects if you don't specify the type explicitly. Just
+    add `type: yaml` to make it behave _mostly_ as before. Or just don't use that, it's
+    complicated anyway (warn added to docs).
 
 ### Deprecated
 
