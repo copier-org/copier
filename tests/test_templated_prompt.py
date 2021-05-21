@@ -1,3 +1,4 @@
+from collections import deque
 from datetime import datetime
 
 import pexpect
@@ -143,9 +144,9 @@ def test_templated_prompt(
         }
     )
     tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
-    tui.expect_exact(["main?", "Format: yaml", main_default])
+    deque(map(tui.expect_exact, ["main?", "Format: yaml", main_default]))
     tui.sendline()
-    tui.expect_exact([f"{question_name}?"] + expected_outputs)
+    deque(map(tui.expect_exact, [f"{question_name}?"] + expected_outputs))
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
     answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
