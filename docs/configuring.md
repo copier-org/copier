@@ -74,9 +74,49 @@ Supported keys:
     `json`, `str`, `yaml` (default).
 -   **help**: Additional text to help the user know what's this question for.
 -   **choices**: To restrict possible values.
+
+    !!! tip
+
+        A choice value of `null` makes it become the same as its key.
+
+    !!! warning
+
+        You are able to use different types for each choice value, but it is not
+        recommended because you can get to some weird scenarios.
+
+        For example, try to understand this 🥴
+
+        ```yaml
+        pick_one:
+            type: yaml # If you are mixing types, better be explicit
+            choices:
+                Nothing, thanks: "null" # Will be YAML-parsed and converted to null
+                Value is key: null # Value will be converted to "Value is key"
+                One and a half: 1.5
+                "Yes": true
+                Nope: no
+                Some array: "[yaml, converts, this]"
+        ```
+
+        It's better to stick with a simple type and reason about it later in
+        template code:
+
+        ```yaml
+        pick_one:
+            type: str
+            choices:
+                Nothing, thanks: ""
+                Value is key: null # Becomes "Value is key", which is a str
+                One and a half: "1.5"
+                "Yes": "true"
+                Nope: "no"
+                Some array: "[str, keeps, this, as, a, str]"
+        ```
+
 -   **default**: Leave empty to force the user to answer. Provide a default to save him
     from typing it if it's quite common. When using `choices`, the default must be the
-    choice _value_, not its _key_. If values are quite long, you can use
+    choice _value_, not its _key_, and it must match its _type_. If values are quite
+    long, you can use
     [YAML anchors](https://confluence.atlassian.com/bitbucket/yaml-anchors-960154027.html).
 -   **secret**: When `true`, it hides the prompt displaying asterisks (`*****`) and
     doesn't save the answer in [the answers file](#the-copier-answersyml-file)

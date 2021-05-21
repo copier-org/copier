@@ -374,3 +374,69 @@ def test_tui_inherited_default(tmp_path_factory, spawn):
         "has_2_owners": True,
         "owner2": "example2",
     }
+
+
+def test_selection_type_cast(tmp_path_factory, spawn):
+    """Selection question with different types, properly casted."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src
+            / "copier.yaml": """\
+                postgres1: &pg
+                    type: yaml
+                    default: 10
+                    help: Which PostgreSQL version do you want to deploy?
+                    choices:
+                        I will use an external PostgreSQL server: null
+                        "9.6": 9.6
+                        "10": 10
+                postgres2: *pg
+                postgres3: *pg
+                nulls1: &nulls
+                    type: yaml
+                    choices:
+                        - [same as key, null]
+                        - [yaml-casted to a real null, "null"]
+                        - [becomes array, "[one, 2, -3.0]"]
+                nulls2: *nulls
+                nulls3: *nulls
+            """,
+            src / "answers.json.jinja": "{{ _copier_answers|to_json }}",
+        }
+    )
+    tui = spawn(
+        COPIER_PATH + ("copy", str(src), str(dst)),
+        timeout=10,
+    )
+    tui.expect_exact("Which PostgreSQL version do you want to deploy?")
+    tui.expect_exact("postgres1?")
+    tui.expect_exact("Format: yaml")
+    tui.sendline(Keyboard.Down)
+    tui.expect_exact("Which PostgreSQL version do you want to deploy?")
+    tui.expect_exact("postgres2?")
+    tui.expect_exact("Format: yaml")
+    tui.sendline(Keyboard.Up)
+    tui.expect_exact("Which PostgreSQL version do you want to deploy?")
+    tui.expect_exact("postgres3?")
+    tui.expect_exact("Format: yaml")
+    tui.sendline()
+    tui.expect_exact("nulls1?")
+    tui.expect_exact("Format: yaml")
+    tui.sendline()
+    tui.expect_exact("nulls2?")
+    tui.expect_exact("Format: yaml")
+    tui.sendline(Keyboard.Down)
+    tui.expect_exact("nulls3?")
+    tui.expect_exact("Format: yaml")
+    tui.sendline(Keyboard.Down + Keyboard.Down)
+    tui.expect_exact(pexpect.EOF)
+    assert json.loads((dst / "answers.json").read_bytes()) == {
+        "_src_path": str(src),
+        "nulls1": "same as key",
+        "nulls2": None,
+        "nulls3": ["one", 2, -3.0],
+        "postgres1": "I will use an external PostgreSQL server",
+        "postgres2": 9.6,
+        "postgres3": 10,
+    }
