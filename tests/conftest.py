@@ -16,7 +16,7 @@ def spawn():
         )
     # Disable subprocess timeout if debugging, for commodity
     # See https://stackoverflow.com/a/67065084/1468388
-    if getattr(sys, "gettrace", lambda: False):
+    if getattr(sys, "gettrace", lambda: None)() is not None:
         return lambda cmd, timeout=None, *args, **kwargs: PopenSpawn(
             cmd, None, *args, **kwargs
         )
