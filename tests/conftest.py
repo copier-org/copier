@@ -2,6 +2,7 @@ import platform
 import sys
 
 import pytest
+from coverage.tracer import CTracer
 from pexpect.popen_spawn import PopenSpawn
 
 
@@ -14,9 +15,10 @@ def spawn():
         pytest.xfail(
             "pexpect fails on Windows",
         )
-    # Disable subprocess timeout if debugging, for commodity
+    # Disable subprocess timeout if debugging (except coverage), for commodity
     # See https://stackoverflow.com/a/67065084/1468388
-    if getattr(sys, "gettrace", lambda: None)() is not None:
+    tracer = getattr(sys, "gettrace", lambda: None)()
+    if not isinstance(tracer, (CTracer, type(None))):
         return lambda cmd, timeout=None, *args, **kwargs: PopenSpawn(
             cmd, None, *args, **kwargs
         )
