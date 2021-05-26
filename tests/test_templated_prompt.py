@@ -1,3 +1,4 @@
+import json
 from collections import deque
 from datetime import datetime
 
@@ -32,7 +33,7 @@ main_question = {
         (
             {"templated_default": {"default": "[[ main ]]default"}},
             "copierdefault",
-            ["[copierdefault]"],
+            ["Format: str", "copierdefault"],
         ),
         (
             {
@@ -42,7 +43,7 @@ main_question = {
                 },
             },
             0,
-            ["Format: int", "[0]"],
+            ["Format: int", "0"],
         ),
         (
             {
@@ -52,17 +53,25 @@ main_question = {
                 },
             },
             main_default,
-            ["THIS copier HELP IS TEMPLATED"],
+            [
+                "THIS copier HELP IS TEMPLATED",
+                "templated_help?",
+                "Format: str",
+                "copier",
+            ],
         ),
         (
             {
                 "templated_choices_dict_1": {
                     "default": "[[ main ]]",
-                    "choices": {"choice 1": "[[ main ]]", "[[ main ]]": "value 2"},
+                    "choices": {
+                        "choice 1": "[[ main ]]",
+                        "[[ main ]]": "value 2",
+                    },
                 },
             },
             main_default,
-            ["choice 1", "copier"],
+            ["(Use arrow keys)", "choice 1", "copier"],
         ),
         (
             {
@@ -72,7 +81,7 @@ main_question = {
                 },
             },
             "value 2",
-            ["(1) choice 1", "(2) copier", "Choice [2]"],
+            ["(Use arrow keys)", "choice 1", "copier"],
         ),
         (
             {
@@ -82,7 +91,7 @@ main_question = {
                 },
             },
             main_default,
-            ["(1) copier", "(2) choice 2", "Choice [1]"],
+            ["(Use arrow keys)", "copier", "choice 2"],
         ),
         (
             {
@@ -92,7 +101,7 @@ main_question = {
                 },
             },
             "choice 1",
-            ["(1) choice 1", "(2) copier", "Choice [1]"],
+            ["(Use arrow keys)", "choice 1", "copier"],
         ),
         (
             {
@@ -102,7 +111,7 @@ main_question = {
                 },
             },
             main_default,
-            ["(1) name 1", "(2) copier", "Choice [1]"],
+            ["(Use arrow keys)", "name 1", "copier"],
         ),
         (
             {
@@ -138,15 +147,15 @@ def test_templated_prompt(
     question_name = questions_data.copy().popitem()[0]
     build_file_tree(
         {
-            template / "copier.yml": yaml.dump(questions_combined),
+            template / "copier.yml": json.dumps(questions_combined),
             template
             / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
         }
     )
     tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
-    deque(map(tui.expect_exact, ["main?", "Format: yaml", main_default]))
+    deque(map(tui.expect_exact, ["main?", "Format: str", main_default]))
     tui.sendline()
-    deque(map(tui.expect_exact, [f"{question_name}?"] + expected_outputs))
+    deque(map(tui.expect_exact, expected_outputs))
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
     answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())

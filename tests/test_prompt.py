@@ -111,7 +111,7 @@ def test_copy_default_advertised(tmp_path_factory, spawn, name):
         deque(
             map(
                 tui.expect_exact,
-                ["Secret enemy name", "your_enemy?", "Format: str", "Bowser"],
+                ["Secret enemy name", "your_enemy?", "Format: str", "******"],
             )
         )
         tui.sendline()
@@ -183,7 +183,7 @@ def test_when(tmp_path_factory, question_1, question_2_when, spawn, asks):
         "_envops": BRACKET_ENVOPS,
         "_templates_suffix": SUFFIX_TMPL,
         "question_1": question_1,
-        "question_2": {"default": "something", "when": question_2_when},
+        "question_2": {"default": "something", "type": "yaml", "when": question_2_when},
     }
     build_file_tree(
         {
@@ -196,7 +196,7 @@ def test_when(tmp_path_factory, question_1, question_2_when, spawn, asks):
     deque(
         map(
             tui.expect_exact,
-            ["question_1?", f"Format: {type(question_1).__name__}", "(Y/n)"],
+            ["question_1?", f"Format: {type(question_1).__name__}"],
         )
     )
     tui.sendline()
@@ -244,7 +244,7 @@ def test_placeholder(tmp_path_factory, spawn):
             tui.expect_exact,
             [
                 "question_2?",
-                "Format: yaml",
+                "Format: str",
                 "Write something like answer 1, but better",
             ],
         )
