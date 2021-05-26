@@ -136,10 +136,7 @@ def test_api(tmp_path, template_path):
 
 def test_cli_interactive(tmp_path, spawn, template_path):
     """Test copier correctly processes advanced questions and answers through CLI."""
-    invalid = [
-        "Invalid value",
-        "please try again",
-    ]
+    invalid = ["Invalid input"]
     tui = spawn(COPIER_PATH + ("copy", template_path, str(tmp_path)), timeout=10)
     deque(
         map(
@@ -290,10 +287,7 @@ def test_cli_interatively_with_flag_data_and_type_casts(
     tmp_path: Path, spawn, template_path
 ):
     """Assert how choices work when copier is invoked with --data interactively."""
-    invalid = [
-        "Invalid value",
-        "please try again",
-    ]
+    invalid = "Invalid input"
     tui = spawn(
         COPIER_PATH
         + (
@@ -321,28 +315,31 @@ def test_cli_interatively_with_flag_data_and_type_casts(
         )
     )
     tui.sendline("Guybrush Threpwood")
-    q = ["How old are you?", "your_age", "Format: int"]
-    deque(map(tui.expect_exact, q))
-    tui.sendline("wrong your_age")
-    deque(map(tui.expect_exact, (invalid + q)))
+    deque(map(tui.expect_exact, ["How old are you?", "your_age", "Format: int"]))
+    tui.send("wrong your_age")
+    tui.expect_exact(invalid)
+    tui.sendline()  # Does nothing, "wrong your_age still on screen"
     tui.send((Keyboard.Alt + Keyboard.Backspace) * 2)
     tui.sendline("22")
-    q = ["What's your height?", "your_height", "Format: float"]
-    deque(map(tui.expect_exact, (q)))
-    tui.sendline("wrong your_height")
-    deque(map(tui.expect_exact, (invalid + q)))
+    deque(
+        map(tui.expect_exact, ["What's your height?", "your_height", "Format: float"])
+    )
+    tui.send("wrong your_height")
+    tui.expect_exact(invalid)
     tui.send((Keyboard.Alt + Keyboard.Backspace) * 2)
     tui.sendline("1.56")
-    q = ["more_json_info", "Format: json"]
-    deque(map(tui.expect_exact, (q)))
+    deque(map(tui.expect_exact, ["more_json_info", "Format: json"]))
     tui.sendline('{"objective":')
-    deque(map(tui.expect_exact, (invalid + q)))
+    tui.expect_exact(invalid)
     tui.sendline('"be a pirate"}')
     tui.send(Keyboard.Esc + Keyboard.Enter)
-    q = ["Wanna give me any more info?", "anything_else", "Format: yaml"]
-    deque(map(tui.expect_exact, (q)))
+    deque(
+        map(
+            tui.expect_exact,
+            ["Wanna give me any more info?", "anything_else", "Format: yaml"],
+        )
+    )
     tui.sendline("- Want some grog?")
-    deque(map(tui.expect_exact, (invalid + q)))
     tui.sendline("- I'd love it")
     tui.send(Keyboard.Esc + Keyboard.Enter)
     deque(map(tui.expect_exact, ["minutes_under_water", "Format: int", "10"]))
