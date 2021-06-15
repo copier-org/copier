@@ -346,7 +346,7 @@ class Question:
     def get_when(self, answers) -> bool:
         """Get skip condition for question."""
         if (
-            # Skip on --force
+            # Skip on --defaults
             not self.ask_user
             # Skip on --data=this_question=some_answer
             or self.var_name in self.answers.init
