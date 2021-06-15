@@ -107,10 +107,15 @@ class Worker:
 
             See [cleanup_on_error][].
 
-        force:
-            When `True`, disable all user interactions.
+        defaults:
+            When `True`, use default answers to questions, which might be null if not specified.
 
-            See [force][].
+            See [defaults][].
+
+        overwrite:
+            When `True`, Overwrite files that already exist, without asking.
+
+            See [overwrite][].
 
         pretend:
             When `True`, produce no real rendering.
@@ -132,7 +137,8 @@ class Worker:
     use_prereleases: bool = False
     skip_if_exists: StrSeq = ()
     cleanup_on_error: bool = True
-    force: bool = False
+    defaults: bool = False
+    overwrite: bool = False
     pretend: bool = False
     quiet: bool = False
 
@@ -230,9 +236,9 @@ class Worker:
                 file_=sys.stderr,
             )
             return False
-        if self.force:
+        if self.overwrite:
             printf(
-                "force",
+                "overwrite",
                 dst_relpath,
                 style=Style.WARNING,
                 quiet=self.quiet,
@@ -320,17 +326,17 @@ class Worker:
             questions.append(
                 Question(
                     answers=result,
-                    ask_user=not self.force,
+                    ask_user=not self.defaults,
                     jinja_env=self.jinja_env,
                     var_name=var_name,
                     **details,
                 )
             )
         for question in questions:
-            # Display TUI and ask user interactively only without --force
+            # Display TUI and ask user interactively only without --defaults
             new_answer = (
                 question.get_default()
-                if self.force
+                if self.defaults
                 else unsafe_prompt(
                     question.get_questionary_structure(), answers=result.combined
                 )[question.var_name]

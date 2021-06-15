@@ -494,6 +494,32 @@ Also don't ask questions to the user; just use default values
 
     Not supported in `copier.yml`.
 
+### `defaults`
+
+-   Format: `bool`
+-   CLI flags: `--defaults`
+-   Default value: `False`
+
+Use default answers to questions, which might be null if not specified.
+
+!!! info
+
+    Not supported in `copier.yml`.
+
+### `overwrite`
+
+-   Format: `bool`
+-   CLI flags: `--overwrite`
+-   Default value: `False`
+
+Overwrite files that already exist, without asking.
+
+[obtained from other sources](#configuration-sources).
+
+!!! info
+
+    Not supported in `copier.yml`.
+
 ### `jinja_extensions`
 
 -   Format: `List[str]`
@@ -761,8 +787,8 @@ Suffix that instructs which files are to be processed by Jinja as templates.
     _templates_suffix: .my-custom-suffix
     ```
 
-An empty suffix is also valid, and will instruct Copier to copy
-and render _every file_, except those that are [excluded by default](#default).
+An empty suffix is also valid, and will instruct Copier to copy and render _every file_,
+except those that are [excluded by default](#default).
 
 !!! example
 

@@ -56,6 +56,8 @@ class CopierApp(cli.Application):
         vcs_ref: Set [vcs_ref][] option.
         pretend: Set [pretend][] option.
         force: Set [force][] option.
+        defaults: Set [defaults][] option.
+        overwrite: Set [overwrite][] option.
         skip: Set [skip_if_exists][] option.
         prereleases: Set [use_prereleases][] option.
         quiet: Set [quiet][] option.
@@ -120,7 +122,16 @@ class CopierApp(cli.Application):
         ["-n", "--pretend"], help="Run but do not make any changes"
     )
     force: cli.Flag = cli.Flag(
-        ["-f", "--force"], help="Overwrite files that already exist, without asking"
+        ["-f", "--force"],
+        help="Same as `--defaults --overwrite`.",
+    )
+    defaults: cli.Flag = cli.Flag(
+        ["-l", "--defaults"],
+        help="Use default answers to questions, which might be null if not specified.",
+    )
+    overwrite: cli.Flag = cli.Flag(
+        ["-w", "--overwrite"],
+        help="Overwrite files that already exist, without asking.",
     )
     skip: cli.Flag = cli.SwitchAttr(
         ["-s", "--skip"],
@@ -167,7 +178,8 @@ class CopierApp(cli.Application):
             dst_path=dst_path,
             answers_file=self.answers_file,
             exclude=self.exclude,
-            force=self.force,
+            defaults=self.force or self.defaults,
+            overwrite=self.force or self.overwrite,
             pretend=self.pretend,
             quiet=self.quiet,
             src_path=src_path,
