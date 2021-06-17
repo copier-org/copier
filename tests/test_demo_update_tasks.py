@@ -57,7 +57,8 @@ def test_update_tasks(tmp_path_factory):
     copy(
         str(bundle),
         dst,
-        force=True,
+        defaults=True,
+        overwrite=True,
         vcs_ref="v1",
     )
     # Init destination as a new independent git repo
@@ -70,4 +71,4 @@ def test_update_tasks(tmp_path_factory):
         git("add", ".")
         git("commit", "-m", "hello world")
     # Update target to v2
-    copy(dst_path=str(dst), force=True)
+    copy(dst_path=str(dst), defaults=True, overwrite=True)

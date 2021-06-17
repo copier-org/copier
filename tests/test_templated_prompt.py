@@ -189,11 +189,13 @@ def test_templated_prompt_custom_envops(tmp_path_factory):
             src / "result.jinja": "<<sentence>>",
         }
     )
-    worker1 = Worker(str(src), dst, force=True)
+    worker1 = Worker(str(src), dst, defaults=True, overwrite=True)
     worker1.run_copy()
     assert (dst / "result").read_text() == "It's over 9000!"
 
-    worker2 = Worker(str(src), dst, data={"powerlevel": 1}, force=True)
+    worker2 = Worker(
+        str(src), dst, data={"powerlevel": 1}, defaults=True, overwrite=True
+    )
     worker2.run_copy()
     assert (dst / "result").read_text() == "It's only 1..."
 
@@ -215,7 +217,7 @@ def test_templated_prompt_builtins(tmp_path_factory):
             src / "make_secret.tmpl": "[[ question2 ]]",
         }
     )
-    Worker(str(src), dst, force=True).run_copy()
+    Worker(str(src), dst, defaults=True, overwrite=True).run_copy()
     that_now = datetime.strptime((dst / "now").read_text(), ISOFORMAT)
     assert that_now <= datetime.now()
     assert len((dst / "make_secret").read_text()) == 128
@@ -238,7 +240,7 @@ def test_templated_prompt_invalid(tmp_path_factory, questions, raises, returns):
             src / "result.jinja": "{{question}}",
         }
     )
-    worker = Worker(str(src), dst, force=True)
+    worker = Worker(str(src), dst, defaults=True, overwrite=True)
     if raises:
         with pytest.raises(raises):
             worker.run_copy()

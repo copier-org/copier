@@ -130,7 +130,14 @@ def test_updatediff(tmp_path_factory):
     answers = target / ".copier-answers.yml"
     commit = git["commit", "--all"]
     # Run copier 1st time, with specific tag
-    CopierApp.invoke("copy", str(bundle), str(target), force=True, vcs_ref="v0.0.1")
+    CopierApp.invoke(
+        "copy",
+        str(bundle),
+        str(target),
+        defaults=True,
+        overwrite=True,
+        vcs_ref="v0.0.1",
+    )
     # Check it's copied OK
     assert answers.read_text() == dedent(
         f"""\
@@ -174,7 +181,7 @@ def test_updatediff(tmp_path_factory):
             )
         commit("-m", "I prefer grog")
         # Update target to latest tag and check it's updated in answers file
-        CopierApp.invoke(force=True)
+        CopierApp.invoke(defaults=True, overwrite=True)
         assert answers.read_text() == dedent(
             f"""\
                 # Changes here will be overwritten by Copier
@@ -195,7 +202,7 @@ def test_updatediff(tmp_path_factory):
         assert not (target / "after-v1.0.0").is_file()
         commit("-m", "Update template to v0.0.2")
         # Update target to latest commit, which is still untagged
-        CopierApp.invoke(force=True, vcs_ref="HEAD")
+        CopierApp.invoke(defaults=True, overwrite=True, vcs_ref="HEAD")
         # Check no new migrations were executed
         assert not (target / "before-v0.0.1").is_file()
         assert not (target / "after-v0.0.1").is_file()
@@ -227,12 +234,13 @@ def test_updatediff(tmp_path_factory):
         commit("-m", f"Update template to {last_commit}")
         assert not git("status", "--porcelain")
         # No more updates exist, so updating again should change nothing
-        CopierApp.invoke(force=True, vcs_ref="HEAD")
+        CopierApp.invoke(defaults=True, overwrite=True, vcs_ref="HEAD")
         assert not git("status", "--porcelain")
         # If I change an option, it updates properly
         copy(
             data={"author_name": "Largo LaGrande", "project_name": "to steal a lot"},
-            force=True,
+            defaults=True,
+            overwrite=True,
             vcs_ref="HEAD",
         )
         assert readme.read_text() == dedent(
@@ -250,7 +258,8 @@ def test_updatediff(tmp_path_factory):
         # Reapply template ignoring subproject evolution
         Worker(
             data={"author_name": "Largo LaGrande", "project_name": "to steal a lot"},
-            force=True,
+            defaults=True,
+            overwrite=True,
             vcs_ref="HEAD",
         ).run_copy()
         assert readme.read_text() == dedent(
@@ -319,7 +328,7 @@ def test_commit_hooks_respected(tmp_path_factory):
         git("commit", "-m", "commit 1")
         git("tag", "v1")
     # Copy source template
-    copy(src_path=str(src), dst_path=dst1, force=True)
+    copy(src_path=str(src), dst_path=dst1, defaults=True, overwrite=True)
     with local.cwd(dst1):
         life = Path("life.yml")
         git("add", ".")
@@ -354,7 +363,7 @@ def test_commit_hooks_respected(tmp_path_factory):
         git("commit", "-m", "commit 2")
         git("tag", "v2")
     # Update subproject to v2
-    copy(dst_path=dst1, force=True)
+    copy(dst_path=dst1, defaults=True, overwrite=True)
     with local.cwd(dst1):
         git("commit", "-am", "copied v2")
         assert life.read_text() == dedent(
@@ -389,7 +398,7 @@ def test_commit_hooks_respected(tmp_path_factory):
     git("clone", "--depth=1", f"file://{dst1}", dst2)
     with local.cwd(dst2):
         # Subproject re-updates just to change some values
-        copy(data={"what": "study"}, force=True)
+        copy(data={"what": "study"}, defaults=True, overwrite=True)
         git("commit", "-am", "re-updated to change values after evolving")
         # Subproject evolution was respected up to sane possibilities.
         # In an ideal world, this file would be exactly the same as what's written
@@ -429,7 +438,7 @@ def test_skip_update(tmp_path_factory):
         git("add", ".")
         git("commit", "-m1")
         git("tag", "1.0.0")
-    run_copy(str(src), dst, force=True)
+    run_copy(str(src), dst, defaults=True, overwrite=True)
     skip_me: Path = dst / "skip_me"
     answers_file = dst / ".copier-answers.yml"
     answers = yaml.safe_load(answers_file.read_text())
@@ -444,7 +453,7 @@ def test_skip_update(tmp_path_factory):
         build_file_tree({"skip_me": "3"})
         git("commit", "-am2")
         git("tag", "2.0.0")
-    run_update(dst, force=True)
+    run_update(dst, defaults=True, overwrite=True)
     answers = yaml.safe_load(answers_file.read_text())
     assert skip_me.read_text() == "2"
     assert answers["_commit"] == "2.0.0"

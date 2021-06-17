@@ -56,7 +56,13 @@ def test_answersfile(template_path, tmp_path, answers_file):
     round_file = tmp_path / "round.txt"
 
     # Check 1st round is properly executed and remembered
-    copier.copy(template_path, tmp_path, answers_file=answers_file, force=True)
+    copier.copy(
+        template_path,
+        tmp_path,
+        answers_file=answers_file,
+        defaults=True,
+        overwrite=True,
+    )
     answers_file = answers_file or ".answers-file-changed-in-template.yml"
     assert (
         round_file.read_text()
@@ -76,7 +82,12 @@ def test_answersfile(template_path, tmp_path, answers_file):
 
     # Check 2nd round is properly executed and remembered
     copier.copy(
-        template_path, tmp_path, {"round": "2nd"}, answers_file=answers_file, force=True
+        template_path,
+        tmp_path,
+        {"round": "2nd"},
+        answers_file=answers_file,
+        defaults=True,
+        overwrite=True,
     )
     assert (
         round_file.read_text()
@@ -95,7 +106,13 @@ def test_answersfile(template_path, tmp_path, answers_file):
     assert "password_2" not in log
 
     # Check repeating 2nd is properly executed and remembered
-    copier.copy(template_path, tmp_path, answers_file=answers_file, force=True)
+    copier.copy(
+        template_path,
+        tmp_path,
+        answers_file=answers_file,
+        defaults=True,
+        overwrite=True,
+    )
     assert (
         round_file.read_text()
         == dedent(

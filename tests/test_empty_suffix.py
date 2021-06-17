@@ -20,7 +20,7 @@ def test_empty_suffix(tmp_path_factory):
         }
     )
     dest = tmp_path_factory.mktemp("dst")
-    copier.copy(str(root), dest, force=True)
+    copier.copy(str(root), dest, defaults=True, overwrite=True)
 
     assert not (dest / "copier.yaml").exists()
 

@@ -145,7 +145,8 @@ def test_skip_if_exists(tmp_path):
         "tests/demo_skip_src",
         tmp_path,
         skip_if_exists=["b.noeof.txt", "meh/c.noeof.txt"],
-        force=True,
+        defaults=True,
+        overwrite=True,
     )
 
     assert (tmp_path / "a.noeof.txt").read_text() == "SKIPPED"
@@ -160,7 +161,8 @@ def test_skip_if_exists_rendered_patterns(tmp_path):
         tmp_path,
         data={"name": "meh"},
         skip_if_exists=["{{ name }}/c.noeof.txt"],
-        force=True,
+        defaults=True,
+        overwrite=True,
     )
     assert (tmp_path / "a.noeof.txt").read_text() == "SKIPPED"
     assert (tmp_path / "b.noeof.txt").read_text() == "OVERWRITTEN"
@@ -181,7 +183,7 @@ def test_force_option(tmp_path):
     path = tmp_path / "pyproject.toml"
     content = "lorem ipsum"
     path.write_text(content)
-    render(tmp_path, force=True)
+    render(tmp_path, defaults=True, overwrite=True)
     assert path.read_text() != content
 
 
@@ -217,7 +219,7 @@ def test_empty_dir(tmp_path_factory, generate):
             / "[% if do_it %]five.txt[% endif %].jinja": "[[ do_it ]]",
         },
     )
-    copier.run_copy(str(src), dst, {"do_it": generate}, force=True)
+    copier.run_copy(str(src), dst, {"do_it": generate}, defaults=True, overwrite=True)
     assert (dst / "four").is_dir()
     assert (dst / "two.txt").read_text() == "[[ do_it ]]"
     assert (dst / "one_dir").exists() == generate
