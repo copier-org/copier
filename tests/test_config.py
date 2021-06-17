@@ -57,7 +57,7 @@ def test_read_data(tmp_path_factory, config_suffix):
             """,
         }
     )
-    copier.copy(str(src), dst, force=True)
+    copier.copy(str(src), dst, defaults=True, overwrite=True)
     gen_file = dst / "user_data.txt"
     result = gen_file.read_text()
     assert result == dedent(

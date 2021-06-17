@@ -36,7 +36,7 @@ def test_render_tasks(tmp_path, demo_template):
 
 
 def test_copy_tasks(tmp_path, demo_template):
-    copier.copy(demo_template, tmp_path, quiet=True, force=True)
+    copier.copy(demo_template, tmp_path, quiet=True, defaults=True, overwrite=True)
     assert (tmp_path / "hello").exists()
     assert (tmp_path / "hello").is_dir()
     assert (tmp_path / "hello" / "world").exists()

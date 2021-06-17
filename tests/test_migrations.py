@@ -60,7 +60,7 @@ def test_migrations_and_tasks(tmp_path: Path):
         git("config", "user.email", "test@copier")
         git("commit", "-m1")
     # Update it to v2
-    copy(dst_path=str(dst), force=True)
+    copy(dst_path=str(dst), defaults=True, overwrite=True)
     # Check update was OK
     assert (dst / "created-with-tasks.txt").read_text() == "task 1\ntask 2\n" * 2
     assert not (dst / "delete-in-tasks.txt").exists()
@@ -95,7 +95,7 @@ def test_pre_migration_modifies_answers(tmp_path_factory):
         git("tag", "v1")
     # User copies v1 template into subproject
     with local.cwd(subproject):
-        copy(src_path=str(template), force=True)
+        copy(src_path=str(template), defaults=True, overwrite=True)
         answers = json.loads(Path(".copier-answers.yml").read_text())
         assert answers["_commit"] == "v1"
         assert answers["best_song"] == "la vie en rose"
@@ -134,7 +134,7 @@ def test_pre_migration_modifies_answers(tmp_path_factory):
         git("tag", "v2")
     # User updates subproject to v2 template
     with local.cwd(subproject):
-        copy(force=True)
+        copy(defaults=True, overwrite=True)
         answers = json.loads(Path(".copier-answers.yml").read_text())
         assert answers["_commit"] == "v2"
         assert "best_song" not in answers
@@ -186,7 +186,7 @@ def test_prereleases(tmp_path: Path):
         git("commit", "-amv2a1")
         git("tag", "v2.0.0.alpha1")
     # Copying with use_prereleases=False copies v1
-    copy(src_path=str(src), dst_path=dst, force=True)
+    copy(src_path=str(src), dst_path=dst, defaults=True, overwrite=True)
     answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers["_commit"] == "v1.0.0"
     assert (dst / "version.txt").read_text() == "v1.0.0"
@@ -201,7 +201,7 @@ def test_prereleases(tmp_path: Path):
         git("add", ".")
         git("commit", "-mv1")
         # Update it without prereleases; nothing changes
-        copy(force=True)
+        copy(defaults=True, overwrite=True)
         assert not git("status", "--porcelain")
     assert not (dst / "v1.9").exists()
     assert not (dst / "v2.dev0").exists()
@@ -209,7 +209,7 @@ def test_prereleases(tmp_path: Path):
     assert not (dst / "v2.a1").exists()
     assert not (dst / "v2.a2").exists()
     # Update it with prereleases
-    copy(dst_path=dst, force=True, use_prereleases=True)
+    copy(dst_path=dst, defaults=True, overwrite=True, use_prereleases=True)
     answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers["_commit"] == "v2.0.0.alpha1"
     assert (dst / "version.txt").read_text() == "v2.0.0.alpha1"
@@ -220,4 +220,4 @@ def test_prereleases(tmp_path: Path):
     assert not (dst / "v2.a2").exists()
     # It should fail if downgrading
     with pytest.raises(UserMessageError):
-        copy(dst_path=dst, force=True)
+        copy(dst_path=dst, defaults=True, overwrite=True)

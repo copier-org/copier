@@ -22,7 +22,7 @@ def test_output_pretend(capsys, tmp_path):
 def test_output_force(capsys, tmp_path):
     render(tmp_path)
     capsys.readouterr()
-    render(tmp_path, quiet=False, force=True)
+    render(tmp_path, quiet=False, defaults=True, overwrite=True)
     _, err = capsys.readouterr()
     assert re.search(r"conflict[^\s]*  config\.py", err)
     assert re.search(r"force[^\s]*  config\.py", err)

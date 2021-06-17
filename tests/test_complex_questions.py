@@ -113,7 +113,8 @@ def test_api(tmp_path, template_path):
             "more_json_info": ["bad", "guy"],
             "anything_else": {"hates": "all"},
         },
-        force=True,
+        defaults=True,
+        overwrite=True,
     )
     results_file = tmp_path / "results.txt"
     assert results_file.read_text() == dedent(
@@ -262,7 +263,8 @@ def test_api_str_data(tmp_path, template_path):
             "anything_else": "{'hates': 'all'}",
             "choose_number": "0",
         },
-        force=True,
+        defaults=True,
+        overwrite=True,
     )
     results_file = tmp_path / "results.txt"
     assert results_file.read_text() == dedent(
