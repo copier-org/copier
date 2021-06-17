@@ -20,6 +20,9 @@ Summary:
 -   Interactive TUI for questionaries. Prompts are way cooler now. 😎
 -   Python 3.9 support.
 -   Support empty templates suffix, telling Copier to render every file.
+-   Added `--defaults` flag to use default answers to questions, which might be null if
+    not specified.
+-   Added `--overwrite` flag to overwrite files that already exist, without asking.
 
 ### Changed
 
@@ -32,6 +35,7 @@ Summary:
     be surprised about its side effects if you don't specify the type explicitly. Just
     add `type: yaml` to make it behave _mostly_ as before. Or just don't use that, it's
     complicated anyway (warn added to docs).
+-   Changed `--force` to be the same as `--defaults --overwrite`.
 
 ### Deprecated
 
