@@ -275,7 +275,7 @@ cannot use Jinja templating in your answers.
     # Valid
     double_it:
         type: int
-        default: "{{ type * 2}}"
+        default: "{{ your_age * 2}}"
 
     # Invalid, the templating occurs outside of the parameter value
     did_you_ask:
