@@ -25,7 +25,7 @@ def test_output_force(capsys, tmp_path):
     render(tmp_path, quiet=False, defaults=True, overwrite=True)
     _, err = capsys.readouterr()
     assert re.search(r"conflict[^\s]*  config\.py", err)
-    assert re.search(r"force[^\s]*  config\.py", err)
+    assert re.search(r"overwrite[^\s]*  config\.py", err)
     assert re.search(r"identical[^\s]*  pyproject\.toml", err)
     assert re.search(r"identical[^\s]*  doc[/\\]images[/\\]nslogo\.gif", err)
 
