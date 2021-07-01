@@ -626,7 +626,7 @@ class Worker:
                 self,
                 dst_path=dst_temp,
                 data=self.subproject.last_answers,
-                force=True,
+                defaults=True,
                 quiet=True,
                 src_path=self.subproject.template.url,
                 vcs_ref=self.subproject.template.commit,
