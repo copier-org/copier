@@ -236,7 +236,7 @@ class Worker:
                 file_=sys.stderr,
             )
             return False
-        if self.overwrite:
+        if self.overwrite or dst_relpath == self.answers_relpath:
             printf(
                 "overwrite",
                 dst_relpath,
