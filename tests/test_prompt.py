@@ -122,8 +122,6 @@ def test_copy_default_advertised(tmp_path_factory, spawn, name):
             )
         )
         tui.sendline()
-        deque(map(tui.expect_exact, ["Overwrite", ".copier-answers.yml", "[Y/n]"]))
-        tui.sendline()
         tui.expect_exact(pexpect.EOF)
         assert "_commit: v2" in Path(".copier-answers.yml").read_text()
 
@@ -375,8 +373,6 @@ def test_update_choice(tmp_path_factory, spawn, choices):
     tui = spawn(COPIER_PATH + (str(subproject),), timeout=10)
     tui.expect_exact("pick_one?")
     tui.sendline(Keyboard.Down)
-    deque(map(tui.expect_exact, ["Overwrite", ".copier-answers.yml", "[Y/n]"]))
-    tui.sendline("y")
     tui.expect_exact(pexpect.EOF)
     answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
     assert answers["pick_one"] == 3.0

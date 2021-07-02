@@ -1,6 +1,7 @@
 import platform
 from pathlib import Path
 from textwrap import dedent
+from typing import Optional
 
 import pytest
 import yaml
@@ -10,6 +11,7 @@ from plumbum.cmd import git
 from copier import Worker, copy
 from copier.cli import CopierApp
 from copier.main import run_copy, run_update
+from copier.types import RelativePath
 
 from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree
 
@@ -458,3 +460,43 @@ def test_skip_update(tmp_path_factory):
     assert skip_me.read_text() == "2"
     assert answers["_commit"] == "2.0.0"
     assert not (dst / "skip_me.rej").exists()
+
+
+@pytest.mark.timeout(20)
+@pytest.mark.parametrize(
+    "answers_file", (None, ".copier-answers.yml", ".custom.copier-answers.yaml")
+)
+def test_overwrite_answers_file_always(
+    tmp_path_factory, answers_file: Optional[RelativePath]
+):
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yaml": "question_1: true",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "answer_1.jinja": "{{ question_1 }}",
+            }
+        )
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "1")
+        build_file_tree({"copier.yaml": "question_1: false"})
+        git("commit", "-am2")
+        git("tag", "2")
+    # When copying, there's nothing to overwrite, overwrite=False shouldn't hang
+    run_copy(str(src), str(dst), vcs_ref="1", defaults=True, answers_file=answers_file)
+    with local.cwd(dst):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        # When updating, the only thing to overwrite is the copier answers file,
+        # which shouldn't ask, so also this shouldn't hang with overwrite=False
+        run_update(defaults=True, answers_file=answers_file)
+    answers = yaml.safe_load(
+        Path(dst, answers_file or ".copier-answers.yml").read_bytes()
+    )
+    assert answers["question_1"] is True
+    assert answers["_commit"] == "2"
+    assert (dst / "answer_1").read_text() == "True"
