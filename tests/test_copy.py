@@ -1,5 +1,6 @@
 import os
 import platform
+import stat
 import sys
 from pathlib import Path
 
@@ -230,3 +231,29 @@ def test_empty_dir(tmp_path_factory, generate):
         assert (dst / "one_dir" / "one.txt").read_text() == repr(generate)
         assert (dst / "three.txt").read_text() == repr(generate)
         assert (dst / "four" / "five.txt").read_text() == repr(generate)
+
+
+@pytest.mark.skipif(
+    condition=platform.system() == "Windows",
+    reason="Windows does not have UNIX-like permissions",
+)
+@pytest.mark.parametrize(
+    "permissions",
+    (
+        stat.S_IRUSR,
+        stat.S_IRWXU,
+        stat.S_IRWXU | stat.S_IRWXG,
+        stat.S_IRWXU | stat.S_IRWXO,
+        stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO,
+    ),
+)
+def test_preserved_permissions(
+    tmp_path_factory: pytest.TempPathFactory, permissions: int
+):
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    src_file = src / "the_file"
+    src_file.write_text("content")
+    src_file.chmod(permissions)
+    copier.run_copy(str(src), dst, defaults=True, overwrite=True)
+    dst_file = dst / "the_file"
+    assert (dst_file.stat().st_mode & permissions) == permissions

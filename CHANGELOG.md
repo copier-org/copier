@@ -36,6 +36,7 @@ Summary:
     add `type: yaml` to make it behave _mostly_ as before. Or just don't use that, it's
     complicated anyway (warn added to docs).
 -   Changed `--force` to be the same as `--defaults --overwrite`.
+-   Copied files will reflect permissions on the same files in the template.
 
 ### Deprecated
 
