@@ -248,7 +248,11 @@ class Worker:
         return bool(ask(f" Overwrite {dst_relpath}?", default=True))
 
     def _render_allowed(
-        self, dst_relpath: Path, is_dir: bool = False, expected_contents: bytes = b""
+        self,
+        dst_relpath: Path,
+        is_dir: bool = False,
+        expected_contents: bytes = b"",
+        expected_permissions=None,
     ) -> bool:
         """Determine if a file or directory can be rendered.
 
@@ -429,10 +433,16 @@ class Worker:
         dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
         if dst_abspath.is_dir():
             return
-        if not self._render_allowed(dst_relpath, expected_contents=new_content):
+        src_mode = src_abspath.stat().st_mode
+        if not self._render_allowed(
+            dst_relpath,
+            expected_contents=new_content,
+            expected_permissions=src_mode,
+        ):
             return
         if not self.pretend:
             dst_abspath.write_bytes(new_content)
+            dst_abspath.chmod(src_mode)
 
     def _render_folder(self, src_abspath: Path) -> None:
         """Recursively render a folder.
