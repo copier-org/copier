@@ -234,6 +234,13 @@ class Question:
         # Emptiness is expressed as an empty str
         if default is None:
             return ""
+        # JSON and YAML dumped depending on mutliline setting
+        if self.get_type_name() == "json":
+            return json.dumps(default, indent=2 if self.get_multiline() else None)
+        if self.get_type_name() == "yaml":
+            return yaml.safe_dump(
+                default, default_flow_style=not self.get_multiline(), width=float("inf")
+            ).strip()
         # All other data has to be str
         return str(default)
 
@@ -368,7 +375,6 @@ class Question:
             # value was not a string
             return value
         try:
-            # TODO Aquí, answers.combined tiene owner1:None
             return template.render(**self.answers.combined)
         except UndefinedError as error:
             raise UserMessageError(str(error)) from error
