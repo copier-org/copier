@@ -332,7 +332,6 @@ def test_multiline(tmp_path_factory, spawn, type_):
 )
 def test_update_choice(tmp_path_factory, spawn, choices):
     """Choices are properly remembered and selected in TUI when updating."""
-    print(choices)
     template, subproject = (
         tmp_path_factory.mktemp("template"),
         tmp_path_factory.mktemp("subproject"),
@@ -376,3 +375,69 @@ def test_update_choice(tmp_path_factory, spawn, choices):
     tui.expect_exact(pexpect.EOF)
     answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
     assert answers["pick_one"] == 3.0
+
+
+@pytest.mark.skip("TODO: fix this")
+def test_multiline_defaults(tmp_path_factory, spawn):
+    """Multiline questions with scalar defaults produce multiline defaults."""
+    template, subproject = (
+        tmp_path_factory.mktemp("template"),
+        tmp_path_factory.mktemp("subproject"),
+    )
+    # Create template
+    build_file_tree(
+        {
+            template
+            / "copier.yaml": """
+                yaml_single:
+                    type: yaml
+                    default: &default
+                        - one
+                        - two
+                        - three:
+                            - four
+                yaml_multi:
+                    type: yaml
+                    multiline: "{{ 'me' == ('m' + 'e') }}"
+                    default: *default
+                json_single:
+                    type: json
+                    default: *default
+                json_multi:
+                    type: json
+                    multiline: yes
+                    default: *default
+                """,
+            template
+            / "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+        }
+    )
+    # Copy
+    tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
+    tui.expect_exact("yaml_single? Format: yaml")
+    # This test will always fail here, because python prompt toolkit gives
+    # syntax highlighting to YAML and JSON outputs, encoded into terminal
+    # colors and all that stuff.
+    # TODO Fix this test some day.
+    tui.expect_exact("[one, two, {three: [four]}]")
+    tui.send(Keyboard.Enter)
+    tui.expect_exact("yaml_multi? Format: yaml")
+    tui.expect_exact("> - one\n  - two\n  - three:\n    - four")
+    tui.send(Keyboard.Alt + Keyboard.Enter)
+    tui.expect_exact("json_single? Format: json")
+    tui.expect_exact('["one", "two", {"three": ["four"]}]')
+    tui.send(Keyboard.Enter)
+    tui.expect_exact("json_multi? Format: json")
+    tui.expect_exact(
+        '> [\n    "one",\n    "two",\n    {\n      "three": [\n        "four"\n      ]\n    }\n  ]'
+    )
+    tui.send(Keyboard.Alt + Keyboard.Enter)
+    tui.expect_exact(pexpect.EOF)
+    answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
+    assert (
+        answers["yaml_single"]
+        == answers["yaml_multi"]
+        == answers["json_single"]
+        == answers["json_multi"]
+        == ["one", "two", {"three": ["four"]}]
+    )
