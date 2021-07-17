@@ -4,12 +4,42 @@ Command line entrypoint. This module declares the Copier CLI applications.
 
 Basically, there are 3 different commands you can run:
 
--   [`copier`][copier.cli.CopierApp], the main app, which includes shortcuts
-    for the `copy` and `update` subapps.
--   [`copier copy`][copier.cli.CopierApp], used to bootstrap a new project
-    from a template.
+-   [`copier`][copier.cli.CopierApp], the main app, which is a shortcut for the
+    `copy` and `update` subapps.
+
+    If the destination project is found and has [an answers
+    file][the-copier-answersyml-file] with enough information, it will become a
+    shortcut for `copier update`.
+
+    Otherwise it will be a shortcut for `copier copy`.
+
+    !!! example
+
+        ```sh
+        # Copy a new project
+        copier gh:copier-org/autopretty my-project
+        # Update it
+        cd my-project
+        copier
+        ```
+
+-   [`copier copy`][copier.cli.CopierApp], used to bootstrap a new project from
+    a template.
+
+    !!! example
+
+        ```sh
+        copier copy gh:copier-org/autopretty my-project
+        ```
+
 -   [`copier update`][copier.cli.CopierUpdateSubApp] to update a preexisting
     project to a newer version of its template.
+
+    !!! example
+
+        ```sh
+        copier update
+        ```
 
 Below are the docs of each one of those.
 """
