@@ -141,3 +141,26 @@ As you can see here, `copier` does several things:
     skip modifications, but in the end, it is possible that nothing has changed (except for
     the version in `.copier-answers.yml` of course). This is not a bug: although it can be
     quite surprising, this behavior is correct.
+
+## Migration across Copier major versions
+
+When there's a new major release of Copier (for example from Copier 5.x to 6.x), there
+are chances that there's something that changed. Maybe your template will not work as it
+did before.
+
+[As explained above][how-the-update-works], Copier needs to make a copy of the template
+in its old state with its old answers so it can actually produce a diff with the new
+state and answers and apply the smart update to the project. However, **how can I be
+sure that Copier will produce the same "old state" if I copied the template with an
+older Copier major release?**. Good question.
+
+We will do our best to respect older behaviors for at least one extra major release
+cycle, but the simpler answer is that you can't be sure of that.
+
+How to overcome that situation?
+
+1. You can write good [migrations][].
+1. Then you can test them on your template's CI on a matrix against several Copier
+   versions.
+1. Or you can just [recopy the project][regenerating-a-project] when you update to a
+   newer Copier major release.

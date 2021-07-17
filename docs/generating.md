@@ -30,4 +30,15 @@ the templates. The arguments can be any valid Python value, even a function.
 Use the `--vcs-ref` command-line argument to checkout a particular git ref before
 generating the project.
 
-All the available options are described with the `--help-all` option.
+[All the available options][copier.cli] are described with the `--help-all` option.
+
+## Regenerating a project
+
+When you execute `copier copy $template $project` again over a preexisting `$project`,
+Copier will just "recopy" it, ignoring previous history.
+
+!!! warning
+
+    This is not [the recommended approach for updating a project][updating-a-project],
+    where you usually want Copier to respect the project evolution wherever it doesn't
+    conflict with the template evolution.
