@@ -2,7 +2,7 @@
 name: Problem
 about: Create a report to help us improve
 title: 'bug: '
-labels: bug
+labels: [bug, triage]
 assignees: Yajo
 
 ---
@@ -20,11 +20,22 @@ assignees: Yajo
 3. Choose ...
 4. See error
 
+**Logs**
+
+<details>
+
+<!-- Paste the logs below, between those backticks. These will typically happen when getting to the latest step explained above if Copier produces an error. It helps too if you paste your copying session. -->
+```
+
+```
+
+</details>
+
 **Expected behavior**
 <!-- A clear and concise description of what you expected to happen. -->
 
-**Screenshots/screencasts**
-<!-- If applicable, add screenshots/screencasts to help explain your problem. -->
+**Screenshots/screencasts/logs**
+<!-- If applicable, add screenshots/screencasts/logs to help explain your problem. -->
 
 **Environment**
  - OS: <!-- Windows, Mac, Linux... Specify distro and version -->
