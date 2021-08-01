@@ -427,13 +427,18 @@ class Worker:
             return
         if src_abspath.name.endswith(self.template.templates_suffix):
             try:
-                tpl = self.jinja_env.get_template(str(src_relpath))
+                tpl = self.jinja_env.get_template(src_relpath)
             except UnicodeDecodeError:
                 if self.template.templates_suffix:
                     # suffix is not emtpy, re-raise
+                    print(
+                        colors.warn
+                        | f"{src_relpath} could not be read as a Jinja2 template, falling back to a simply copy",
+                        file=sys.stderr,
+                    )
                     raise
                 # suffix is empty, fallback to copy
-                new_content = src_relpath.read_bytes()
+                new_content = src_abspath.read_bytes()
             else:
                 new_content = tpl.render(**self._render_context()).encode()
         else:

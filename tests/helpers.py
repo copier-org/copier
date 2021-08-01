@@ -94,8 +94,10 @@ def build_file_tree(spec: Dict[StrOrPath, str], dedent: bool = True):
     """Builds a file tree based on the received spec."""
     for path, contents in spec.items():
         path = Path(path)
-        if dedent:
+        binary = isinstance(contents, bytes)
+        if not binary and dedent:
             contents = textwrap.dedent(contents)
         path.parent.mkdir(parents=True, exist_ok=True)
-        with path.open("w") as fd:
+        mode = "wb" if binary else "w"
+        with path.open(mode) as fd:
             fd.write(contents)
