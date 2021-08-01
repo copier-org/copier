@@ -74,6 +74,9 @@ Ready to contribute? Here's how to set up the project for local development.
 3.  Use poetry to setup a development environment
 
     ```sh
+    # Tell Poetry to create the virtualenv in the project directory
+    poetry config virtualenvs.in-project true --local
+
     # Create a virtualenv with all dependencies from pyproject.toml
     poetry install -E docs
 
