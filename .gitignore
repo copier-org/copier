@@ -26,6 +26,7 @@ MANIFEST
 # Environments
 __pypackages__
 .pdm.toml
+poetry.toml
 .env
 .venv
 covreport
