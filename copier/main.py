@@ -431,13 +431,13 @@ class Worker:
             except UnicodeDecodeError:
                 if self.template.templates_suffix:
                     # suffix is not emtpy, re-raise
-                    print(
-                        colors.warn
-                        | f"{src_relpath} could not be read as a Jinja2 template, falling back to a simply copy",
-                        file=sys.stderr,
-                    )
                     raise
                 # suffix is empty, fallback to copy
+                print(
+                    colors.warn
+                    | f"{src_relpath} could not be read as a Jinja2 template, falling back to a simple copy",
+                    file=sys.stderr,
+                )
                 new_content = src_abspath.read_bytes()
             else:
                 new_content = tpl.render(**self._render_context()).encode()
