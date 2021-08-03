@@ -433,11 +433,6 @@ class Worker:
                     # suffix is not emtpy, re-raise
                     raise
                 # suffix is empty, fallback to copy
-                print(
-                    colors.warn
-                    | f"{src_relpath} could not be read as a Jinja2 template, falling back to a simple copy",
-                    file=sys.stderr,
-                )
                 new_content = src_abspath.read_bytes()
             else:
                 new_content = tpl.render(**self._render_context()).encode()
