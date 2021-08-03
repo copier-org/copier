@@ -32,3 +32,27 @@ def test_empty_suffix(tmp_path_factory):
     assert (dest / "render_me").read_text() == expected
     assert (dest / "pingu.txt").read_text() == expected
     assert (dest / "pingu" / "render_me.txt").read_text() == expected
+
+
+def test_binary_file_fallback_to_copy(tmp_path_factory):
+    root = tmp_path_factory.mktemp("demo_empty_suffix_binary_file")
+    build_file_tree(
+        {
+            root
+            / "copier.yaml": """
+                _templates_suffix: ""
+                name:
+                    type: str
+                    default: pingu
+            """,
+            root
+            / "logo.png": b"\x89PNG\r\n\x1a\n\x00\rIHDR\x00\xec\n{{name}}\n\x00\xec",
+        }
+    )
+    dest = tmp_path_factory.mktemp("dst")
+    copier.copy(str(root), dest, defaults=True, overwrite=True)
+    logo = dest / "logo.png"
+    assert logo.exists()
+    logo_bytes = logo.read_bytes()
+    assert b"{{name}}" in logo_bytes
+    assert b"pingu" not in logo_bytes

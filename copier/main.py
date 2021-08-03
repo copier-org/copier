@@ -426,8 +426,16 @@ class Worker:
         if dst_relpath is None:
             return
         if src_abspath.name.endswith(self.template.templates_suffix):
-            tpl = self.jinja_env.get_template(str(src_relpath))
-            new_content = tpl.render(**self._render_context()).encode()
+            try:
+                tpl = self.jinja_env.get_template(src_relpath)
+            except UnicodeDecodeError:
+                if self.template.templates_suffix:
+                    # suffix is not emtpy, re-raise
+                    raise
+                # suffix is empty, fallback to copy
+                new_content = src_abspath.read_bytes()
+            else:
+                new_content = tpl.render(**self._render_context()).encode()
         else:
             new_content = src_abspath.read_bytes()
         dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
