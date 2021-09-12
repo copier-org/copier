@@ -38,6 +38,9 @@ Summary:
     complicated anyway (warn added to docs).
 -   Changed `--force` to be the same as `--defaults --overwrite`.
 -   Copied files will reflect permissions on the same files in the template.
+-   In migration scripts, environment variables `$VERSION_FROM`, `$VERSION_CURRENT` and
+    `$VERSION_TO` will always get a valid PEP440 version identifier, without the `v`
+    prefix, as opposed to the raw text of the git tag, as it was before.
 
 ### Deprecated
 

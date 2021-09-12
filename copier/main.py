@@ -16,7 +16,6 @@ from unicodedata import normalize
 import pathspec
 from jinja2.loaders import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
-from packaging.version import InvalidVersion, Version
 from plumbum import ProcessExecutionError, colors
 from plumbum.cli.terminal import ask
 from plumbum.cmd import git
@@ -622,20 +621,9 @@ class Worker:
             raise UserMessageError(
                 "Updating is only supported in git-tracked templates."
             )
-        downgrading = False
-        try:
-            downgrading = Version(self.subproject.template.ref) > Version(
-                self.template.commit
-            )
-        except InvalidVersion:
-            print(
-                colors.warn
-                | f"Either {self.subproject.template.ref} or {self.template.commit} is not a PEP 440 valid version.",
-                file=sys.stderr,
-            )
-        if downgrading:
+        if self.subproject.template.version > self.template.version:
             raise UserMessageError(
-                f"Your are downgrading from {self.subproject.template.ref} to {self.template.commit}. "
+                f"Your are downgrading from {self.subproject.template.version} to {self.template.version}. "
                 "Downgrades are not supported."
             )
         # Copy old template into a temporary destination
@@ -681,7 +669,7 @@ class Worker:
         # Run pre-migration tasks
         self._execute_tasks(
             self.template.migration_tasks(
-                "before", self.subproject.template.ref, self.template.commit
+                "before", self.subproject.template.version, self.template.version
             )
         )
         # Clear last answers cache to load possible answers migration
@@ -702,7 +690,7 @@ class Worker:
         # Run post-migration tasks
         self._execute_tasks(
             self.template.migration_tasks(
-                "after", self.subproject.template.ref, self.template.commit
+                "after", self.subproject.template.version, self.template.version
             )
         )
 

@@ -2,7 +2,6 @@ import json
 import platform
 from glob import glob
 from pathlib import Path
-from shutil import copytree
 
 import pytest
 import yaml
@@ -12,9 +11,98 @@ from plumbum.cmd import git
 from copier import copy
 from copier.errors import UserMessageError
 
-from .helpers import BRACKET_ENVOPS_JSON, PROJECT_TEMPLATE, build_file_tree
+from .helpers import BRACKET_ENVOPS_JSON, build_file_tree
 
-SRC = Path(f"{PROJECT_TEMPLATE}_migrations").absolute()
+
+@pytest.fixture(scope="module")
+def template_path(tmp_path_factory) -> str:
+    root = tmp_path_factory.mktemp("template")
+    build_file_tree(
+        {
+            root
+            / "[[ _copier_conf.answers_file ]].tmpl": """\
+                # Changes here will be overwritten by Copier
+                [[ _copier_answers|to_nice_yaml ]]
+            """,
+            root
+            / "copier.yaml": """\
+                _templates_suffix: .tmpl
+                _envops:
+                  autoescape: false
+                  block_end_string: "%]"
+                  block_start_string: "[%"
+                  comment_end_string: "#]"
+                  comment_start_string: "[#"
+                  keep_trailing_newline: true
+                  variable_end_string: "]]"
+                  variable_start_string: "[["
+
+                _exclude:
+                  - tasks.py
+                  - migrations.py
+                  - .git
+
+                _tasks:
+                  - "python [[ _copier_conf.src_path / 'tasks.py' ]] 1"
+                  - [python, "[[ _copier_conf.src_path / 'tasks.py' ]]", 2]
+
+                _migrations:
+                  # This migration is never executed because it's the 1st version copied, and
+                  # migrations are only executed when updating
+                  - version: v1.0.0
+                    before:
+                      - &mig
+                        - python
+                        - "[[ _copier_conf.src_path / 'migrations.py' ]]"
+                        - "[[ _copier_conf.json() ]]"
+                    after:
+                      - *mig
+                  - version: v2
+                    before: [*mig]
+                    after:
+                      - *mig
+                      - "rm delete-in-migration-v$VERSION_CURRENT.txt"
+            """,
+            root
+            / "delete-in-migration-v2.txt": """\
+                This file will be deleted after migrating to v2.
+            """,
+            root
+            / "delete-in-tasks.txt": """\
+                This file will be deleted in tasks.
+            """,
+            root
+            / "migrations.py": """\
+                #!/usr/bin/env python
+                import json
+                import os
+                import sys
+
+                NAME = "v{VERSION_FROM}-v{VERSION_CURRENT}-v{VERSION_TO}-{STAGE}.json"
+                expanded_name = NAME.format(**os.environ)
+                print(f"deleting {expanded_name}")
+
+                with open(expanded_name, "w") as fd:
+                    json.dump(sys.argv, fd)
+            """,
+            root
+            / "tasks.py": """\
+                #!/usr/bin/env python
+                import os
+                import os.path
+                import sys
+                from contextlib import suppress
+                from subprocess import check_call
+
+                with open("created-with-tasks.txt", "a", newline="\\n") as cwt:
+                    cwt.write(" ".join([os.environ["STAGE"]] + sys.argv[1:]) + "\\n")
+                    check_call(["git", "init"])
+                    with suppress(FileNotFoundError):
+                        os.unlink("delete-in-tasks.txt")
+            """,
+        }
+    )
+    return str(root)
 
 
 # This fails on windows CI because, when the test tries to execute
@@ -27,11 +115,10 @@ SRC = Path(f"{PROJECT_TEMPLATE}_migrations").absolute()
     reason="Windows ignores shebang?",
     strict=True,
 )
-def test_migrations_and_tasks(tmp_path: Path):
+def test_migrations_and_tasks(tmp_path: Path, template_path: str):
     """Check migrations and tasks are run properly."""
     # Convert demo_migrations in a git repository with 2 versions
-    git_src, dst = tmp_path / "src", tmp_path / "tmp_path"
-    copytree(SRC, git_src)
+    git_src, dst = template_path, tmp_path / "tmp_path"
     with local.cwd(git_src):
         git("init")
         git("config", "user.name", "Copier Test")

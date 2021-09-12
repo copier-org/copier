@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import List, Mapping, Optional, Sequence, Set, Tuple
 from warnings import warn
 
+import dunamai
 import yaml
 from iteration_utilities import deepflatten
 from packaging.specifiers import SpecifierSet
@@ -289,7 +290,9 @@ class Template:
             result["_commit"] = self.commit
         return result
 
-    def migration_tasks(self, stage: str, from_: str, to: str) -> Sequence[Mapping]:
+    def migration_tasks(
+        self, stage: str, from_: Version, to: Version
+    ) -> Sequence[Mapping]:
         """Get migration objects that match current version spec.
 
         Versions are compared using PEP 440.
@@ -297,19 +300,16 @@ class Template:
         See [migrations][].
         """
         result: List[dict] = []
-        if not from_ or not to:
-            return result
-        parsed_from = parse(from_)
-        parsed_to = parse(to)
         extra_env = {
             "STAGE": stage,
-            "VERSION_FROM": from_,
-            "VERSION_TO": to,
+            "VERSION_FROM": str(from_),
+            "VERSION_TO": str(to),
         }
         migration: dict
         for migration in self._raw_config.get("_migrations", []):
-            if parsed_to >= parse(migration["version"]) > parsed_from:
-                extra_env = dict(extra_env, VERSION_CURRENT=str(migration["version"]))
+            current = parse(migration["version"])
+            if to >= current > from_:
+                extra_env = dict(extra_env, VERSION_CURRENT=str(current))
                 result += [
                     {"task": task, "extra_env": extra_env}
                     for task in migration.get(stage, [])
@@ -427,6 +427,31 @@ class Template:
         property returns the expanded version, which should work properly.
         """
         return get_repo(self.url) or self.url
+
+    @cached_property
+    def version(self) -> Optional[Version]:
+        """PEP440-compliant version object."""
+        if self.vcs != "git" or not self.commit:
+            return None
+        # HACK https://github.com/mtkennerly/dunamai/issues/21
+
+        with local.cwd(self.local_abspath):
+            # Know if the commit string is just a hash or contains tag info
+            is_hash = git("rev-parse", self.commit).startswith(self.commit)
+            # If it's just a hash, the repo has no tags, so dunamai will get
+            # the best results to convert it to a valid PEP440 version
+            if is_hash:
+                return Version(
+                    dunamai.Version.from_git().serialize(style=dunamai.Style.Pep440)
+                )
+        # A fully descripted commit can be easily detected converted into a
+        # PEP440 version, because it has the format "<tag>-<count>-g<hash>"
+        if re.match(r"^.+-\d+-g\w+$", self.commit):
+            base, count, hash = self.commit.rsplit("-", 2)
+            return Version(f"{base}.dev{count}+{hash}")
+        # If we get here, the commit string is a tag, so we can safely expect
+        # it's a valid PEP440 version
+        return Version(self.commit)
 
     @cached_property
     def vcs(self) -> Optional[VCSTypes]:
