@@ -189,7 +189,7 @@ class Template:
         It reads [the `copier.yml` file][the-copieryml-file].
         """
         if self.config_file:
-            conf_paths = [self.config_file]
+            conf_paths = [Path(self.config_file)]
         else:
             conf_paths = [
                 p

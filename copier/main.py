@@ -83,6 +83,11 @@ class Worker:
             If it is `None`, the default value will be obtained from
             [copier.template.Template.answers_relpath][].
 
+        config_file:
+            Path to the config file.
+
+            If `None` copier.yml or copier.yaml in template directory will be used
+
         vcs_ref:
             Specify the VCS tag/commit to use in the template.
 
@@ -362,17 +367,6 @@ class Worker:
         3. Copier default.
         """
         return self.answers_file or self.template.answers_relpath
-
-    @cached_property
-    def config_file(self) -> Path:
-        """Obtain the proper path for the config file.
-
-        It comes from:
-
-        1. User choice.
-        2. Copier default.
-        """
-        return self.config_file
 
     @cached_property
     def all_exclusions(self) -> StrSeq:
