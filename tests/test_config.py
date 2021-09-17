@@ -70,6 +70,50 @@ def test_read_data(tmp_path_factory, config_suffix):
     )
 
 
+def test_read_data_with_config_file_option(tmp_path_factory):
+    src, dst, cfg = map(tmp_path_factory.mktemp, ("src", "dst", "cfg"))
+    build_file_tree(
+        {
+            cfg
+            / "copier-other.yaml": """\
+                # This is a comment
+                _envops: {BRACKET_ENVOPS_JSON}
+                a_string: lorem ipsum
+                a_number: 12345
+                a_boolean: true
+                a_list:
+                    - one
+                    - two
+                    - three
+            """,
+            src
+            / "user_data.txt.jinja": """\
+                A string: [[ a_string ]]
+                A number: [[ a_number ]]
+                A boolean: [[ a_boolean ]]
+                A list: [[ ", ".join(a_list) ]]
+            """,
+        }
+    )
+    copier.copy(
+        str(src),
+        dst,
+        defaults=True,
+        overwrite=True,
+        config_file="cfg/copier-other.yaml",
+    )
+    gen_file = dst / "user_data.txt"
+    result = gen_file.read_text()
+    assert result == dedent(
+        """\
+        A string: lorem ipsum
+        A number: 12345
+        A boolean: True
+        A list: one, two, three
+        """
+    )
+
+
 def test_invalid_yaml(capsys):
     conf_path = Path("tests", "demo_invalid", "copier.yml")
     with pytest.raises(InvalidConfigFileError):
