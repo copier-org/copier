@@ -170,11 +170,17 @@ class Template:
 
             Helpful if you want to test templates before doing a proper release, but you
             need some features that require a proper PEP440 version identifier.
+
+        config_file:
+            Path to the file to be used instead copier.y?ml
+
+            If `None` copier.yml or copier.yaml in template directory will be used
     """
 
     url: str
     ref: OptStr = None
     use_prereleases: bool = False
+    config_file: OptStr = None
 
     @cached_property
     def _raw_config(self) -> AnyByStrDict:
@@ -182,11 +188,14 @@ class Template:
 
         It reads [the `copier.yml` file][the-copieryml-file].
         """
-        conf_paths = [
-            p
-            for p in self.local_abspath.glob("copier.*")
-            if p.is_file() and re.match(r"\.ya?ml", p.suffix, re.I)
-        ]
+        if self.config_file:
+            conf_paths = [self.config_file]
+        else:
+            conf_paths = [
+                p
+                for p in self.local_abspath.glob("copier.*")
+                if p.is_file() and re.match(r"\.ya?ml", p.suffix, re.I)
+            ]
         if len(conf_paths) > 1:
             raise MultipleConfigFilesError(conf_paths)
         elif len(conf_paths) == 1:

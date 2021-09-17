@@ -365,6 +365,14 @@ Don't forget to read [the docs about the answers file](#the-copier-answersyml-fi
     _answers_file: .my-custom-answers.yml
     ```
 
+### `config_file`
+
+-   Format: `str`
+-   CLI flags: `-c`, `--config-file`
+-   Default value: `copier.y?ml`
+
+Config file path instead of default copier.yml/copier.yaml in template dir.
+
 ### `cleanup_on_error`
 
 -   Format: `bool`

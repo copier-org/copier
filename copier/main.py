@@ -131,6 +131,7 @@ class Worker:
     src_path: Optional[str] = None
     dst_path: Path = field(default=".")
     answers_file: Optional[RelativePath] = None
+    config_file: Optional[str] = None
     vcs_ref: OptStr = None
     data: AnyByStrDict = field(default_factory=dict)
     exclude: StrSeq = ()
@@ -363,6 +364,17 @@ class Worker:
         return self.answers_file or self.template.answers_relpath
 
     @cached_property
+    def config_file(self) -> Path:
+        """Obtain the proper path for the config file.
+
+        It comes from:
+
+        1. User choice.
+        2. Copier default.
+        """
+        return self.config_file
+
+    @cached_property
     def all_exclusions(self) -> StrSeq:
         """Combine default, template and user-chosen exclusions."""
         return self.template.exclude + tuple(self.exclude)
@@ -540,7 +552,12 @@ class Worker:
             if self.subproject.template is None:
                 raise TypeError("Template not found")
             url = self.subproject.template.url
-        return Template(url=url, ref=self.vcs_ref, use_prereleases=self.use_prereleases)
+        return Template(
+            url=url,
+            ref=self.vcs_ref,
+            use_prereleases=self.use_prereleases,
+            config_file=self.config_file,
+        )
 
     @cached_property
     def template_copy_root(self) -> Path:

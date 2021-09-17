@@ -82,6 +82,7 @@ class CopierApp(cli.Application):
 
     Attributes:
         answers_file: Set [answers_file][] option.
+        config_file: Set [config_file][] option.
         exclude: Set [exclude][] option.
         vcs_ref: Set [vcs_ref][] option.
         pretend: Set [pretend][] option.
@@ -127,6 +128,13 @@ class CopierApp(cli.Application):
         help=(
             "Update using this path (relative to `destination_path`) "
             "to find the answers file"
+        ),
+    )
+    config_file: cli.SwitchAttr = cli.SwitchAttr(
+        ["-c", "--config-file"],
+        default=None,
+        help=(
+            "Config file path instead of default copier.yml/copier.yaml in template dir"
         ),
     )
     exclude: cli.SwitchAttr = cli.SwitchAttr(
@@ -207,6 +215,7 @@ class CopierApp(cli.Application):
             data=self.data,
             dst_path=dst_path,
             answers_file=self.answers_file,
+            config_file=self.config_file,
             exclude=self.exclude,
             defaults=self.force or self.defaults,
             overwrite=self.force or self.overwrite,
