@@ -172,7 +172,7 @@ class Template:
             need some features that require a proper PEP440 version identifier.
 
         config_file:
-            Path to the file to be used instead copier.y?ml
+            Path to the config file.
 
             If `None` copier.yml or copier.yaml in template directory will be used
     """

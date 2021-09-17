@@ -369,9 +369,9 @@ Don't forget to read [the docs about the answers file](#the-copier-answersyml-fi
 
 -   Format: `str`
 -   CLI flags: `-c`, `--config-file`
--   Default value: `copier.y?ml`
+-   Default value: `copier.yml` or `copier.yaml`
 
-Config file path instead of default copier.yml/copier.yaml in template dir.
+Config file path instead of default `copier.yml` or `copier.yaml` in template dir.
 
 ### `cleanup_on_error`
 
