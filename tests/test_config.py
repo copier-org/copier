@@ -100,7 +100,7 @@ def test_read_data_with_config_file_option(tmp_path_factory):
         dst,
         defaults=True,
         overwrite=True,
-        config_file="cfg/copier-other.yaml",
+        config_file= cfg / "copier-other.yaml",
     )
     gen_file = dst / "user_data.txt"
     result = gen_file.read_text()
