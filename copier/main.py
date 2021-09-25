@@ -191,9 +191,15 @@ class Worker:
         # Backwards compatibility
         # FIXME Remove it?
         conf = asdict(self)
+
+        # During update, the destination _subdirectory is joined with the rendered answers_file value.
+        # To avoid including the same folders twice in the path, write to the config the
+        # answers filename (without the path).
+        answers_file = self.answers_relpath.name
+
         conf.update(
             {
-                "answers_file": self.answers_relpath,
+                "answers_file": answers_file,
                 "src_path": self.template.local_abspath,
             }
         )
