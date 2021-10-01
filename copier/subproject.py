@@ -13,7 +13,7 @@ from pydantic.dataclasses import dataclass
 
 from .template import Template
 from .types import AbsolutePath, AnyByStrDict, VCSTypes
-from .vcs import is_git_repo_root
+from .vcs import is_in_git_repo
 
 try:
     from functools import cached_property
@@ -76,5 +76,5 @@ class Subproject:
     @cached_property
     def vcs(self) -> Optional[VCSTypes]:
         """VCS type of the subproject."""
-        if is_git_repo_root(self.local_abspath):
+        if is_in_git_repo(self.local_abspath):
             return "git"
