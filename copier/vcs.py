@@ -5,7 +5,7 @@ import tempfile
 from pathlib import Path
 
 from packaging import version
-from plumbum import TF, colors, local
+from plumbum import TF, ProcessExecutionError, colors, local
 from plumbum.cmd import git
 
 from .tools import TemporaryDirectory
@@ -27,6 +27,15 @@ def is_git_repo_root(path: StrOrPath) -> bool:
         with local.cwd(Path(path, ".git")):
             return bool(git("rev-parse", "--is-inside-git-dir").strip() == "true")
     except OSError:
+        return False
+
+
+def is_in_git_repo(path: StrOrPath) -> bool:
+    """Indicate if a given path is in a git repo directory."""
+    try:
+        git("-C", path, "rev-parse", "--show-toplevel")
+        return True
+    except (OSError, ProcessExecutionError):
         return False
 
 

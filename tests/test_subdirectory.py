@@ -1,6 +1,8 @@
 import os
+from pathlib import Path
 
 import pytest
+import yaml
 from plumbum import local
 from plumbum.cmd import git
 
@@ -84,6 +86,68 @@ def test_update_subdirectory(demo_template, tmp_path):
     assert not (tmp_path / "api_project").exists()
     assert not (tmp_path / "api_readme.md").exists()
     assert (tmp_path / "conf_readme.md").exists()
+
+
+@pytest.mark.timeout(20)
+def test_update_subdirectory_from_root_path(tmp_path_factory):
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    answers_filename = ".copier-answers.component-type1.yaml"
+    answers_file_relpath = Path("group1/component-type1/component1", answers_filename)
+    component_reldir = answers_file_relpath.parent
+    component_type_reldir = component_reldir.parent
+
+    copier_yaml_contents = f"""\
+    _templates_suffix: ''
+    _subdirectory: '{{{{ template }}}}'
+    template:
+        type: str
+        choices:
+            - {component_type_reldir}
+    """
+
+    with local.cwd(src):
+        answers_file_tree_key = str(
+            component_type_reldir.joinpath("{{_copier_conf.answers_file}}")
+        )
+        test_file_tree_key = str(component_type_reldir.joinpath("test.txt"))
+        build_file_tree(
+            {
+                "copier.yaml": copier_yaml_contents,
+                answers_file_tree_key: "{{ _copier_answers|to_yaml }}",
+                test_file_tree_key: "True",
+            }
+        )
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "1")
+        build_file_tree(
+            {"copier.yaml": copier_yaml_contents, test_file_tree_key: "False"}
+        )
+        git("commit", "-am2")
+        git("tag", "2")
+    copier.run_copy(
+        str(src),
+        str(dst.joinpath(component_reldir)),
+        vcs_ref="1",
+        data={"template": str(component_type_reldir)},
+        defaults=True,
+        overwrite=True,
+        answers_file=answers_filename,
+    )
+    with local.cwd(dst):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        copier.run_update(
+            component_reldir,
+            defaults=True,
+            overwrite=True,
+            answers_file=answers_filename,
+        )
+    answers = yaml.safe_load(dst.joinpath(answers_file_relpath).read_bytes())
+    assert answers["_commit"] == "2"
+    assert dst.joinpath(component_reldir, "test.txt").read_text() == "False"
 
 
 def test_new_version_uses_subdirectory(tmp_path_factory):
