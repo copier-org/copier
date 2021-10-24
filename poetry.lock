@@ -650,7 +650,7 @@ ssh = ["paramiko"]
 
 [[package]]
 name = "poethepoet"
-version = "0.9.0"
+version = "0.10.0"
 description = "A task runner that works well with poetry."
 category = "dev"
 optional = false
@@ -1091,7 +1091,7 @@ docs = ["mkdocs-material", "mkdocs-mermaid2-plugin", "mkdocstrings"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.6.2,<3.10"
-content-hash = "54752ee6f5c0bc9f08dd71af796dcfd652d54dc002443087998ef77a84275025"
+content-hash = "ad216287ad7c6a8011b7694d7a0f859e476707c975065741e81835c61256dc81"
 
 [metadata.files]
 astunparse = [
@@ -1459,8 +1459,8 @@ plumbum = [
     {file = "plumbum-1.7.0.tar.gz", hash = "sha256:317744342c755319907c773cc87c3a30adaa3a41b0d34c0ce02d9d1904922dce"},
 ]
 poethepoet = [
-    {file = "poethepoet-0.9.0-py3-none-any.whl", hash = "sha256:6b1df9a755c297d5b10749cd4713924055b41edfa62055770c8bd6b5da8e2c69"},
-    {file = "poethepoet-0.9.0.tar.gz", hash = "sha256:ab2263fd7be81d16d38a4b4fe42a055d992d04421e61cad36498b1e4bd8ee2a6"},
+    {file = "poethepoet-0.10.0-py3-none-any.whl", hash = "sha256:6fb3021603d4421c6fcc40072bbcf150a6c52ef70ff4d3be089b8b04e015ef5a"},
+    {file = "poethepoet-0.10.0.tar.gz", hash = "sha256:70b97cb194b978dc464c70793e85e6f746cddf82b84a38bfb135946ad71ae19c"},
 ]
 pre-commit = [
     {file = "pre_commit-2.15.0-py2.py3-none-any.whl", hash = "sha256:a4ed01000afcb484d9eb8d504272e642c4c4099bbad3a6b27e519bd6a3e928a6"},
