@@ -2,7 +2,7 @@
 import re
 from contextlib import suppress
 from pathlib import Path
-from typing import List, Mapping, Optional, Sequence, Set, Tuple
+from typing import List, Literal, Mapping, Optional, Sequence, Set, Tuple
 from warnings import warn
 
 import dunamai
@@ -291,24 +291,32 @@ class Template:
         return result
 
     def migration_tasks(
-        self, stage: str, from_: Version, to: Version
+        self, stage: Literal["task", "before", "after"], from_template: "Template"
     ) -> Sequence[Mapping]:
         """Get migration objects that match current version spec.
 
         Versions are compared using PEP 440.
 
         See [migrations][].
+
+        Args:
+            stage: A valid stage name to find tasks for.
+            from_template: Original template, from which we are migrating.
         """
         result: List[dict] = []
+        if not (self.version and from_template.version):
+            return result
         extra_env = {
             "STAGE": stage,
-            "VERSION_FROM": str(from_),
-            "VERSION_TO": str(to),
+            "VERSION_FROM": str(from_template.ref),
+            "VERSION_TO": str(self.ref),
+            "VERSION_PEP440_FROM": str(from_template.version),
+            "VERSION_PEP440_TO": str(self.version),
         }
         migration: dict
         for migration in self._raw_config.get("_migrations", []):
             current = parse(migration["version"])
-            if to >= current > from_:
+            if from_template.version >= current > self.version:
                 extra_env = dict(extra_env, VERSION_CURRENT=str(current))
                 result += [
                     {"task": task, "extra_env": extra_env}
@@ -433,25 +441,10 @@ class Template:
         """PEP440-compliant version object."""
         if self.vcs != "git" or not self.commit:
             return None
-        # HACK https://github.com/mtkennerly/dunamai/issues/21
-
         with local.cwd(self.local_abspath):
-            # Know if the commit string is just a hash or contains tag info
-            is_hash = git("rev-parse", self.commit).startswith(self.commit)
-            # If it's just a hash, the repo has no tags, so dunamai will get
-            # the best results to convert it to a valid PEP440 version
-            if is_hash:
-                return Version(
-                    dunamai.Version.from_git().serialize(style=dunamai.Style.Pep440)
-                )
-        # A fully descripted commit can be easily detected converted into a
-        # PEP440 version, because it has the format "<tag>-<count>-g<hash>"
-        if re.match(r"^.+-\d+-g\w+$", self.commit):
-            base, count, hash = self.commit.rsplit("-", 2)
-            return Version(f"{base}.dev{count}+{hash}")
-        # If we get here, the commit string is a tag, so we can safely expect
-        # it's a valid PEP440 version
-        return Version(self.commit)
+            return Version(
+                dunamai.Version.from_git().serialize(style=dunamai.Style.Pep440)
+            )
 
     @cached_property
     def vcs(self) -> Optional[VCSTypes]:

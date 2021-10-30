@@ -23,6 +23,10 @@ Summary:
 -   Added `--defaults` flag to use default answers to questions, which might be null if
     not specified.
 -   Added `--overwrite` flag to overwrite files that already exist, without asking.
+-   In migration scripts, we have the new environment variables `$VERSION_PEP440_FROM`,
+    `$VERSION_PEP440_CURRENT` and `$VERSION_PEP440_TO`, which will always get a valid
+    PEP440 version identifier, without the `v` prefix, allowing your migration scripts
+    to have a valid standard where to base their logic.
 
 ### Changed
 
@@ -38,9 +42,6 @@ Summary:
     complicated anyway (warn added to docs).
 -   Changed `--force` to be the same as `--defaults --overwrite`.
 -   Copied files will reflect permissions on the same files in the template.
--   In migration scripts, environment variables `$VERSION_FROM`, `$VERSION_CURRENT` and
-    `$VERSION_TO` will always get a valid PEP440 version identifier, without the `v`
-    prefix, as opposed to the raw text of the git tag, as it was before.
 
 ### Deprecated
 

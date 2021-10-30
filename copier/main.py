@@ -668,9 +668,7 @@ class Worker:
                     diff = diff_cmd("--inter-hunk-context=0")
         # Run pre-migration tasks
         self._execute_tasks(
-            self.template.migration_tasks(
-                "before", self.subproject.template.version, self.template.version
-            )
+            self.template.migration_tasks("before", self.subproject.template)
         )
         # Clear last answers cache to load possible answers migration
         with suppress(AttributeError):
@@ -689,9 +687,7 @@ class Worker:
             (apply_cmd << diff)(retcode=None)
         # Run post-migration tasks
         self._execute_tasks(
-            self.template.migration_tasks(
-                "after", self.subproject.template.version, self.template.version
-            )
+            self.template.migration_tasks("after", self.subproject.template)
         )
 
 
