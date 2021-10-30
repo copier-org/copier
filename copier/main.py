@@ -468,7 +468,7 @@ class Worker:
             return
         dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
         if not self.pretend:
-            dst_abspath.mkdir(exist_ok=True)
+            dst_abspath.mkdir(parents=True, exist_ok=True)
         for file in src_abspath.iterdir():
             if file.is_dir():
                 self._render_folder(file)
@@ -640,6 +640,12 @@ class Worker:
             old_worker.run_copy()
             # Extract diff between temporary destination and real destination
             with local.cwd(dst_temp):
+                subproject_top = git(
+                    "-C",
+                    self.subproject.local_abspath.absolute(),
+                    "rev-parse",
+                    "--show-toplevel",
+                ).strip()
                 git("init", retcode=None)
                 git("add", ".")
                 git("config", "user.name", "Copier")
@@ -649,12 +655,7 @@ class Worker:
                 git("commit", "--allow-empty", "-am", "dumb commit 2")
                 git("config", "--unset", "user.name")
                 git("config", "--unset", "user.email")
-                git(
-                    "remote",
-                    "add",
-                    "real_dst",
-                    self.subproject.local_abspath.absolute(),
-                )
+                git("remote", "add", "real_dst", "file://" + subproject_top)
                 git("fetch", "--depth=1", "real_dst", "HEAD")
                 diff_cmd = git["diff-tree", "--unified=1", "HEAD...FETCH_HEAD"]
                 try:

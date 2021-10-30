@@ -19,6 +19,7 @@ Summary:
 -   Placeholders.
 -   Interactive TUI for questionaries. Prompts are way cooler now. 😎
 -   Python 3.9 support.
+-   Python 3.10 support.
 -   Support empty templates suffix, telling Copier to render every file.
 -   Added `--defaults` flag to use default answers to questions, which might be null if
     not specified.

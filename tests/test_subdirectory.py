@@ -1,6 +1,7 @@
 import os
 
 import pytest
+import yaml
 from plumbum import local
 from plumbum.cmd import git
 
@@ -84,6 +85,71 @@ def test_update_subdirectory(demo_template, tmp_path):
     assert not (tmp_path / "api_project").exists()
     assert not (tmp_path / "api_readme.md").exists()
     assert (tmp_path / "conf_readme.md").exists()
+
+
+def test_update_subdirectory_from_root_path(tmp_path_factory):
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yaml": """\
+                    q1:
+                        type: str
+                        default: a1
+                """,
+                "file1.jinja": """\
+                    version 1
+                    hello
+                    {{ q1 }}
+                    bye
+                """,
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+            }
+        )
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "1")
+        build_file_tree(
+            {
+                "file1.jinja": """\
+                    version 2
+                    hello
+                    {{ q1 }}
+                    bye
+                """,
+            }
+        )
+        git("commit", "-am2")
+        git("tag", "2")
+    with local.cwd(dst):
+        build_file_tree({"dst_top_file": "one"})
+        git("init")
+        git("add", ".")
+        git("commit", "-m0")
+    copier.run_copy(
+        str(src),
+        str(dst / "subfolder"),
+        vcs_ref="1",
+        defaults=True,
+        overwrite=True,
+        answers_file=".custom.copier-answers.yaml",
+    )
+    assert (dst / "subfolder" / "file1").read_text() == "version 1\nhello\na1\nbye"
+    with local.cwd(dst):
+        git("add", ".")
+        git("commit", "-m1")
+        copier.run_update(
+            "subfolder",
+            defaults=True,
+            overwrite=True,
+            answers_file=".custom.copier-answers.yaml",
+        )
+    answers = yaml.safe_load(
+        (dst / "subfolder" / ".custom.copier-answers.yaml").read_bytes()
+    )
+    assert answers["_commit"] == "2"
+    assert (dst / "subfolder" / "file1").read_text() == "version 2\nhello\na1\nbye"
 
 
 def test_new_version_uses_subdirectory(tmp_path_factory):
