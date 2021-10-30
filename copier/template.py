@@ -2,7 +2,7 @@
 import re
 from contextlib import suppress
 from pathlib import Path
-from typing import List, Literal, Mapping, Optional, Sequence, Set, Tuple
+from typing import List, Mapping, Optional, Sequence, Set, Tuple
 from warnings import warn
 
 import dunamai
@@ -30,6 +30,12 @@ try:
     from functools import cached_property
 except ImportError:
     from backports.cached_property import cached_property
+
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
+
 
 # Default list of files in the template to exclude from the rendered project
 DEFAULT_EXCLUDE: Tuple[str, ...] = (
@@ -308,16 +314,20 @@ class Template:
             return result
         extra_env = {
             "STAGE": stage,
-            "VERSION_FROM": str(from_template.ref),
-            "VERSION_TO": str(self.ref),
+            "VERSION_FROM": str(from_template.commit),
+            "VERSION_TO": str(self.commit),
             "VERSION_PEP440_FROM": str(from_template.version),
             "VERSION_PEP440_TO": str(self.version),
         }
         migration: dict
         for migration in self._raw_config.get("_migrations", []):
             current = parse(migration["version"])
-            if from_template.version >= current > self.version:
-                extra_env = dict(extra_env, VERSION_CURRENT=str(current))
+            if self.version >= current > from_template.version:
+                extra_env = dict(
+                    extra_env,
+                    VERSION_CURRENT=migration["version"],
+                    VERSION_PEP440_CURRENT=str(current),
+                )
                 result += [
                     {"task": task, "extra_env": extra_env}
                     for task in migration.get(stage, [])
@@ -441,10 +451,21 @@ class Template:
         """PEP440-compliant version object."""
         if self.vcs != "git" or not self.commit:
             return None
-        with local.cwd(self.local_abspath):
-            return Version(
-                dunamai.Version.from_git().serialize(style=dunamai.Style.Pep440)
-            )
+        try:
+            with local.cwd(self.local_abspath):
+                # Leverage dunamai by default; usually it gets best results
+                return Version(
+                    dunamai.Version.from_git().serialize(style=dunamai.Style.Pep440)
+                )
+        except ValueError:
+            # A fully descripted commit can be easily detected converted into a
+            # PEP440 version, because it has the format "<tag>-<count>-g<hash>"
+            if re.match(r"^.+-\d+-g\w+$", self.commit):
+                base, count, git_hash = self.commit.rsplit("-", 2)
+                return Version(f"{base}.dev{count}+{git_hash}")
+        # If we get here, the commit string is a tag, so we can safely expect
+        # it's a valid PEP440 version
+        return Version(self.commit)
 
     @cached_property
     def vcs(self) -> Optional[VCSTypes]:
