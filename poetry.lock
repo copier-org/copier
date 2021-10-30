@@ -317,7 +317,7 @@ python-versions = ">=3.5"
 
 [[package]]
 name = "importlib-metadata"
-version = "3.10.1"
+version = "4.2.0"
 description = "Read metadata from Python packages"
 category = "main"
 optional = false
@@ -1093,7 +1093,7 @@ docs = ["mkdocs-material", "mkdocs-mermaid2-plugin", "mkdocstrings"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.6.2,<3.11"
-content-hash = "6d7d77981e92c961f01bb4070b90fbd234b8d77518364fddd58647d559fcbd0e"
+content-hash = "df8ce9da5e04b20ee4daf4088dbd8d7f9942d5d88294cefe5d18d2e74b7e0b83"
 
 [metadata.files]
 astunparse = [
@@ -1235,8 +1235,8 @@ idna = [
     {file = "idna-3.3.tar.gz", hash = "sha256:9d643ff0a55b762d5cdb124b8eaa99c66322e2157b69160bc32796e824360e6d"},
 ]
 importlib-metadata = [
-    {file = "importlib_metadata-3.10.1-py3-none-any.whl", hash = "sha256:2ec0faae539743ae6aaa84b49a169670a465f7f5d64e6add98388cc29fd1f2f6"},
-    {file = "importlib_metadata-3.10.1.tar.gz", hash = "sha256:c9356b657de65c53744046fa8f7358afe0714a1af7d570c00c3835c2d724a7c1"},
+    {file = "importlib_metadata-4.2.0-py3-none-any.whl", hash = "sha256:057e92c15bc8d9e8109738a48db0ccb31b4d9d5cfbee5a8670879a30be66304b"},
+    {file = "importlib_metadata-4.2.0.tar.gz", hash = "sha256:b7e52a1f8dec14a75ea73e0891f3060099ca1d8e6a462a4dff11c3e119ea1b31"},
 ]
 importlib-resources = [
     {file = "importlib_resources-5.3.0-py3-none-any.whl", hash = "sha256:7a65eb0d8ee98eedab76e6deb51195c67f8e575959f6356a6e15fd7e1148f2a3"},
