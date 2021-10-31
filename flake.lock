@@ -1,0 +1,93 @@
+{
+  "nodes": {
+    "flake-utils": {
+      "locked": {
+        "lastModified": 1634851050,
+        "narHash": "sha256-N83GlSGPJJdcqhUxSCS/WwW5pksYf3VP1M13cDRTSVA=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "c91f3de5adaf1de973b797ef7485e441a65b8935",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "iteration-utilities": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1607362985,
+        "narHash": "sha256-1r9sCSV609hgQ0IDHnLL7ybeRLeZYMu5iXq3ipB8TdY=",
+        "owner": "MSeifert04",
+        "repo": "iteration_utilities",
+        "rev": "05e81f80026f2138952bd1a410bc715c89d7ab04",
+        "type": "github"
+      },
+      "original": {
+        "owner": "MSeifert04",
+        "repo": "iteration_utilities",
+        "type": "github"
+      }
+    },
+    "jinja2-ansible-filters": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1586868174,
+        "narHash": "sha256-ghQIgrGl8lolA5zdw2809f50OpMvOqOuNRH7kqBXND8=",
+        "ref": "master",
+        "rev": "9bc8fcc3950008bee9ebc06d0aae801f84437e2a",
+        "revCount": 39,
+        "type": "git",
+        "url": "https://gitlab.com/dreamer-labs/libraries/jinja2-ansible-filters"
+      },
+      "original": {
+        "type": "git",
+        "url": "https://gitlab.com/dreamer-labs/libraries/jinja2-ansible-filters"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1635712076,
+        "narHash": "sha256-RVKscZ1+lmImXo4TFLCDYLYCDH+5BSukS9ntBIiolBA=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "5e39406e007277fafc3c7fcbe3eae5d0490d6a25",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "poetry-dynamic-versioning": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1628535348,
+        "narHash": "sha256-xLodh4WTJjJPW75rWJ/CSybh85KEq0iLrB6wP3ya8g8=",
+        "owner": "mtkennerly",
+        "repo": "poetry-dynamic-versioning",
+        "rev": "652173383453ad9e15e270419ac0e63fcd221412",
+        "type": "github"
+      },
+      "original": {
+        "owner": "mtkennerly",
+        "repo": "poetry-dynamic-versioning",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "flake-utils": "flake-utils",
+        "iteration-utilities": "iteration-utilities",
+        "jinja2-ansible-filters": "jinja2-ansible-filters",
+        "nixpkgs": "nixpkgs",
+        "poetry-dynamic-versioning": "poetry-dynamic-versioning"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
