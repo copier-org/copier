@@ -82,3 +82,26 @@ def test_jinja_defaults_v6_min_version(tmp_path_factory):
         warnings.simplefilter("error")
         copier.run_copy(str(src), dst, defaults=True, overwrite=True)
     assert (dst / "result").read_text() == "a"
+
+
+def test_to_not_keep_trailing_newlines_in_jinja2(tmp_path_factory):
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src
+            / "copier.yml": """
+                _templates_suffix: .jinja
+                _envops:
+                    keep_trailing_newline: false
+                data: foo
+            """,
+            src / "data.txt.jinja": "This is {{ data }}.\n",
+        }
+    )
+    # No warnings, because template is explicit
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        copier.run_auto(str(src), dst, defaults=True, overwrite=True)
+    rendered = (dst / "data.txt").read_text()
+    expected = "This is foo."
+    assert rendered == expected

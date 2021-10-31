@@ -236,6 +236,12 @@ class Template:
         See [envops][].
         """
         result = self.config_data.get("envops", {})
+        if "keep_trailing_newline" not in result:
+            # NOTE: we want to keep trailing newlines in templates as this is what a
+            #       user will most likely expects as a default.
+            #       See https://github.com/copier-org/copier/issues/464
+            result["keep_trailing_newline"] = True
+
         # TODO Copier v7+ will not use any of these altered defaults
         old_defaults = {
             "autoescape": False,

@@ -135,7 +135,7 @@ def test_update_subdirectory_from_root_path(tmp_path_factory):
         overwrite=True,
         answers_file=".custom.copier-answers.yaml",
     )
-    assert (dst / "subfolder" / "file1").read_text() == "version 1\nhello\na1\nbye"
+    assert (dst / "subfolder" / "file1").read_text() == "version 1\nhello\na1\nbye\n"
     with local.cwd(dst):
         git("add", ".")
         git("commit", "-m1")
@@ -149,7 +149,7 @@ def test_update_subdirectory_from_root_path(tmp_path_factory):
         (dst / "subfolder" / ".custom.copier-answers.yaml").read_bytes()
     )
     assert answers["_commit"] == "2"
-    assert (dst / "subfolder" / "file1").read_text() == "version 2\nhello\na1\nbye"
+    assert (dst / "subfolder" / "file1").read_text() == "version 2\nhello\na1\nbye\n"
 
 
 def test_new_version_uses_subdirectory(tmp_path_factory):
