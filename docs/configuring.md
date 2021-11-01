@@ -619,8 +619,7 @@ Migrations are like [tasks](#tasks), but each item in the list is a `dict` with 
 keys:
 
 -   **version**: Indicates the version that the template update has to go through to
-    trigger this migration. It is evaluated using
-    [PEP 440](https://www.python.org/dev/peps/pep-0440/).
+    trigger this migration. It is evaluated using [PEP 440][].
 -   **before** (optional): Commands to execute before performing the update. The answers
     file is reloaded after running migrations in this stage, to let you migrate answer
     values.
@@ -636,8 +635,22 @@ updating (not when copying for the 1st time).
 If the migrations definition contains Jinja code, it will be rendered with the same
 context as the rest of the template.
 
-Migration processes will contain the `$VERSION_FROM`, `$VERSION_TO`, `$VERSION_CURRENT`
-and `$STAGE` (before/after) environment variables
+Migration processes will receive these environment variables:
+
+-   `$STAGE`: Either `before` or `after`.
+-   `$VERSION_FROM`: [Git commit description][git describe] of the template as it was
+    before updating.
+-   `$VERSION_TO`: [Git commit description][git describe] of the template as it will be
+    after updating.
+-   `$VERSION_CURRENT`: The `version` detector as you indicated it when describing
+    migration tasks.
+-   `$VERSION_PEP440_FROM`, `$VERSION_PEP440_TO`, `$VERSION_PEP440_CURRENT`: Same as the
+    above, but normalized into a standard [PEP 440][] version string indicator. If your
+    scripts use these environment variables to perform migrations, you probably will
+    prefer to use these variables.
+
+[git describe]: https://git-scm.com/docs/git-describe
+[pep 440]: https://www.python.org/dev/peps/pep-0440/
 
 !!! example
 
@@ -659,8 +672,7 @@ and `$STAGE` (before/after) environment variables
 -   Default value: N/A
 
 Specifies the minimum required version of Copier to generate a project from this
-template. The version must be follow the
-[PEP 440](https://www.python.org/dev/peps/pep-0440/) syntax. Upon generating or updating
+template. The version must be follow the [PEP 440][] syntax. Upon generating or updating
 a project, if the installed version of Copier is less than the required one, the
 generation will be aborted and an error will be shown to the user.
 
@@ -850,7 +862,7 @@ _commit: v1.0.0
     Not supported in `copier.yml`.
 
 By default, copier will copy from the last release found in template git tags, sorted as
-[PEP 440](https://www.python.org/dev/peps/pep-0440/).
+[PEP 440][].
 
 ## Patterns syntax
 

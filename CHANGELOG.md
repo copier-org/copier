@@ -66,6 +66,9 @@ Summary:
 
 -   A directory that gets an empty name works as expected: not copied (nor its
     contents).
+-   When comparing versions to update, PEP 440 is always used now. This way, we avoid
+    fake ordering when git commit descriptions happen to be ordered in a non-predictable
+    way.
 
 ### Security
 
