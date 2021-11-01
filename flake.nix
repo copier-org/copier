@@ -4,6 +4,10 @@
   inputs = {
     flake-utils.url = "github:numtide/flake-utils";
     nixpkgs.url = "github:NixOS/nixpkgs";
+
+    #
+    # Non-nix-provided dependencies
+    #
     poetry-dynamic-versioning = {
       url = "github:mtkennerly/poetry-dynamic-versioning";
       flake = false;
@@ -18,8 +22,21 @@
         "git+https://gitlab.com/dreamer-labs/libraries/jinja2-ansible-filters";
       flake = false;
     };
+    # python39Packages.jinja2 is at version 3.0.1, we need 3.0.2
+    jinja2 = {
+      url = "github:pallets/jinja2";
+      flake = false;
+    };
     dunamai = {
       url = "github:mtkennerly/dunamai";
+      flake = false;
+    };
+    pyyaml-include = {
+      url = "github:tanbro/pyyaml-include";
+      flake = false;
+    };
+    plumbum = {
+      url = "github:tomerfiliba/plumbum/v1.7.0";
       flake = false;
     };
   };
@@ -34,7 +51,7 @@
         version = "0.13.1";
         src = inputs.poetry-dynamic-versioning;
         format = "pyproject";
-        propagatedBuildInputs = with pkgs // pyPackages; [ poetry python jinja2 dunamai ];
+        propagatedBuildInputs = with pkgs // pyPackages; [ poetry python updatedJinja2 dunamai ];
       };
       iteration-utilities = pyBuild {
         pname = "iteration_utilities";
@@ -42,11 +59,17 @@
         src = inputs.iteration-utilities;
         doCheck = false; # Dies on setuptoolsCheckPhase, idk why sooo... /shrug
       };
+      updatedJinja2 = pyBuild {
+        pname = "Jinja2";
+        version = "3.0.2";
+        src = inputs.jinja2;
+        propagatedBuildInputs = with pyPackages; [ pyyaml markupsafe ];
+      };
       jinja2-ansible-filters = pyBuild {
         pname = "jinja2-ansible-filters";
         version = "1.3.0";
         src = inputs.jinja2-ansible-filters;
-        propagatedBuildInputs = with pyPackages; [ pyyaml jinja2 ];
+        propagatedBuildInputs = with pyPackages; [ pyyaml updatedJinja2 ];
       };
       dunamai = pyBuild {
         pname = "dunamai";
@@ -55,24 +78,45 @@
         format = "pyproject";
         propagatedBuildInputs = with pyPackages; [ poetry ];
       };
+      pyyaml-include = pyBuild {
+        pname = "pyyaml-include";
+        version = "1.2.post2";
+        src = inputs.pyyaml-include;
+        doCheck = false;
+        format = "pyproject";
+        propagatedBuildInputs = with pyPackages; [ poetry pyyaml ];
+      };
+      plumbum170 = pyBuild {
+        pname = "plumbum";
+        version = "1.7.0";
+        src = inputs.plumbum;
+        doCheck = false;
+        propagatedBuildInputs = with pyPackages; [ poetry ];
+      };
+
       copier = pyBuild rec {
         pname = "copier";
         version = "5.1.0";
         src = ./.;
         format = "pyproject";
         propagatedBuildInputs = with pyPackages; [
+          pyyaml-include
           poetry-core
           poetry-dynamic-versioning
-          #poetry-dyn-ver
           cached-property
           colorama
           importlib-metadata
           iteration-utilities
           pathspec
-          jinja2
+          updatedJinja2
           jinja2-ansible-filters
+          plumbum170
           pytest
+          pygments
+          questionary
           poetry
+          pydantic
+          markupsafe
         ];
         meta = with nixpkgs.lib; {
           description = ''

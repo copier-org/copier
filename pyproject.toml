@@ -41,7 +41,7 @@ plumbum = "^1.6.9"
 pydantic = "^1.7.2"
 Pygments = "^2.7.1"
 PyYAML = "^5.3.1"
-pyyaml-include = "^1.2"
+pyyaml-include = "=1.2.post2"
 questionary = "^1.8.1"
 typing-extensions = { version = "^3.7.4", python = "<3.8" }
 

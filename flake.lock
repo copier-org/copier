@@ -47,6 +47,22 @@
         "type": "github"
       }
     },
+    "jinja2": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1633395276,
+        "narHash": "sha256-wIP5GuLgrOIFCliOjTMSjU3HCSt6t+TBaxn/7x0rePM=",
+        "owner": "pallets",
+        "repo": "jinja2",
+        "rev": "f20a9c9ccbbfae312581ca9e740dcbecc218fad0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "pallets",
+        "repo": "jinja2",
+        "type": "github"
+      }
+    },
     "jinja2-ansible-filters": {
       "flake": false,
       "locked": {
@@ -65,16 +81,33 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1635712076,
-        "narHash": "sha256-RVKscZ1+lmImXo4TFLCDYLYCDH+5BSukS9ntBIiolBA=",
+        "lastModified": 1635776686,
+        "narHash": "sha256-NMN30hR7opRCGLI4NSuGSul4/ivZ3PoKDKhMSdLXdgQ=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "5e39406e007277fafc3c7fcbe3eae5d0490d6a25",
+        "rev": "edebe874a4f0a6ea0c6eb8e80e1e0e173f59e692",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
         "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "plumbum": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1612813564,
+        "narHash": "sha256-ATEInozJTmzNbLDDjiWMnA5IgVBG2hmKVyw/vsiPiu4=",
+        "owner": "tomerfiliba",
+        "repo": "plumbum",
+        "rev": "4ba32fef6a099c3c9655c3bbd96a43ffb964abb0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tomerfiliba",
+        "ref": "v1.7.0",
+        "repo": "plumbum",
         "type": "github"
       }
     },
@@ -94,14 +127,33 @@
         "type": "github"
       }
     },
+    "pyyaml-include": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1614417015,
+        "narHash": "sha256-YvX3eWytH0SLap1u2cnbq7C1FPWuBVsYnF4xL1s1ekA=",
+        "owner": "tanbro",
+        "repo": "pyyaml-include",
+        "rev": "f26308af5b6e2e14d39a72807ba4f14d7fad7964",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tanbro",
+        "repo": "pyyaml-include",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "dunamai": "dunamai",
         "flake-utils": "flake-utils",
         "iteration-utilities": "iteration-utilities",
+        "jinja2": "jinja2",
         "jinja2-ansible-filters": "jinja2-ansible-filters",
         "nixpkgs": "nixpkgs",
-        "poetry-dynamic-versioning": "poetry-dynamic-versioning"
+        "plumbum": "plumbum",
+        "poetry-dynamic-versioning": "poetry-dynamic-versioning",
+        "pyyaml-include": "pyyaml-include"
       }
     }
   },
