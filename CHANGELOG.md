@@ -24,6 +24,10 @@ Summary:
 -   Added `--defaults` flag to use default answers to questions, which might be null if
     not specified.
 -   Added `--overwrite` flag to overwrite files that already exist, without asking.
+-   In migration scripts, we have the new environment variables `$VERSION_PEP440_FROM`,
+    `$VERSION_PEP440_CURRENT` and `$VERSION_PEP440_TO`, which will always get a valid
+    PEP440 version identifier, without the `v` prefix, allowing your migration scripts
+    to have a valid standard where to base their logic.
 
 ### Changed
 
@@ -63,6 +67,9 @@ Summary:
 
 -   A directory that gets an empty name works as expected: not copied (nor its
     contents).
+-   When comparing versions to update, PEP 440 is always used now. This way, we avoid
+    fake ordering when git commit descriptions happen to be ordered in a non-predictable
+    way.
 
 ### Security
 
