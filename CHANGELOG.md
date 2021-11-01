@@ -24,6 +24,10 @@ Summary:
 -   Added `--defaults` flag to use default answers to questions, which might be null if
     not specified.
 -   Added `--overwrite` flag to overwrite files that already exist, without asking.
+-   In migration scripts, we have the new environment variables `$VERSION_PEP440_FROM`,
+    `$VERSION_PEP440_CURRENT` and `$VERSION_PEP440_TO`, which will always get a valid
+    PEP440 version identifier, without the `v` prefix, allowing your migration scripts
+    to have a valid standard where to base their logic.
 
 ### Changed
 
@@ -31,6 +35,7 @@ Summary:
 -   Running `copier copy` on a preexisting project now recopies the project instead of
     updating it. That means that it respects old answers, but ignores history diff.
 -   We use Jinja 2 defaults now. `{{ }}` instead of `[[ ]]` and similar.
+-   We keep trailing newlines by default for Jinja 2 templates.
 -   Copier will never ask for overwriting the answers file.
 -   Multi-typed choices follow the same type-casting logic as any other question, so
     it's easier to reason about them. However, if you were using this feature, you might
@@ -62,6 +67,9 @@ Summary:
 
 -   A directory that gets an empty name works as expected: not copied (nor its
     contents).
+-   When comparing versions to update, PEP 440 is always used now. This way, we avoid
+    fake ordering when git commit descriptions happen to be ordered in a non-predictable
+    way.
 
 ### Security
 

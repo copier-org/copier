@@ -37,7 +37,7 @@ def test_default_jinja2_extensions(tmp_path):
     )
     super_file = tmp_path / "super_file.md"
     assert super_file.exists()
-    expected = "path"
+    expected = "path\n"
     assert super_file.read_text() == expected
 
 
@@ -48,5 +48,5 @@ def test_additional_jinja2_extensions(tmp_path):
     )
     super_file = tmp_path / "super_file.md"
     assert super_file.exists()
-    expected = "super var! super func! super filter!"
+    expected = "super var! super func! super filter!\n"
     assert super_file.read_text() == expected
