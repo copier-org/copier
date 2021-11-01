@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "dunamai": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1635683579,
+        "narHash": "sha256-ocPkklKJTIT9YizQ4HwDv/r+9G+/XPxMYAgf9DuzDto=",
+        "owner": "mtkennerly",
+        "repo": "dunamai",
+        "rev": "3e2173eb42a5a342cb25276d81624fcd054d9d30",
+        "type": "github"
+      },
+      "original": {
+        "owner": "mtkennerly",
+        "repo": "dunamai",
+        "type": "github"
+      }
+    },
     "flake-utils": {
       "locked": {
         "lastModified": 1634851050,
@@ -80,6 +96,7 @@
     },
     "root": {
       "inputs": {
+        "dunamai": "dunamai",
         "flake-utils": "flake-utils",
         "iteration-utilities": "iteration-utilities",
         "jinja2-ansible-filters": "jinja2-ansible-filters",

@@ -13,12 +13,15 @@
       flake = false;
     };
     jinja2-ansible-filters = {
-      # Can't use typical gitlab access method cause subgroup :/
+      # Can't use typical gitlab access method 'cause subgroup :/
       url =
         "git+https://gitlab.com/dreamer-labs/libraries/jinja2-ansible-filters";
       flake = false;
     };
-
+    dunamai = {
+      url = "github:mtkennerly/dunamai";
+      flake = false;
+    };
   };
 
   outputs = { self, nixpkgs, flake-utils, ... }@inputs:
@@ -26,27 +29,31 @@
       pkgs = nixpkgs.legacyPackages."x86_64-linux";
       pyPackages = pkgs.python39Packages;
       pyBuild = pyPackages.buildPythonPackage;
-      poetry-dyn-ver = pkgs.poetry2nix.mkPoetryApplication rec {
-        src = pkgs.fetchFromGitHub {
-          owner = "mtkennerly";
-          repo = "poetry-dynamic-versioning";
-          rev = "v0.8.1";
-          sha256 = "sha256-YSdJ84ci3yd4P7q+Ux5bSafNXMmAh9/qgIUF6d8y8R8=";
-        };
-
-        pyproject = "${src}/pyproject.toml";
-        poetrylock = "${src}/poetry.lock";
+      poetry-dynamic-versioning = pyBuild {
+        pname = "poetry-dynamic-versioning";
+        version = "0.13.1";
+        src = inputs.poetry-dynamic-versioning;
+        format = "pyproject";
+        propagatedBuildInputs = with pkgs // pyPackages; [ poetry python jinja2 dunamai ];
       };
-      # poetry-dynamic-versioning = pyBuild {
-      #   pname = "poetry-dynamic-versioning";
-      #   version = "0.13.1";
-      #   src = poetry-dynamic-versioning;
-      #   format = "pyproject";
-      # };
       iteration-utilities = pyBuild {
         pname = "iteration_utilities";
         version = "0.11.0";
-        src = iteration-utilities;
+        src = inputs.iteration-utilities;
+        doCheck = false; # Dies on setuptoolsCheckPhase, idk why sooo... /shrug
+      };
+      jinja2-ansible-filters = pyBuild {
+        pname = "jinja2-ansible-filters";
+        version = "1.3.0";
+        src = inputs.jinja2-ansible-filters;
+        propagatedBuildInputs = with pyPackages; [ pyyaml jinja2 ];
+      };
+      dunamai = pyBuild {
+        pname = "dunamai";
+        version = "1.7.0";
+        src = inputs.dunamai;
+        format = "pyproject";
+        propagatedBuildInputs = with pyPackages; [ poetry ];
       };
       copier = pyBuild rec {
         pname = "copier";
@@ -55,8 +62,8 @@
         format = "pyproject";
         propagatedBuildInputs = with pyPackages; [
           poetry-core
-          #poetry-dynamic-versioning
-          poetry-dyn-ver
+          poetry-dynamic-versioning
+          #poetry-dyn-ver
           cached-property
           colorama
           importlib-metadata
@@ -64,6 +71,8 @@
           pathspec
           jinja2
           jinja2-ansible-filters
+          pytest
+          poetry
         ];
         meta = with nixpkgs.lib; {
           description = ''
