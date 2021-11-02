@@ -69,6 +69,8 @@ def test_migrations_and_tasks(tmp_path: Path):
     assert not (dst / "tasks.py").exists()
     assert (dst / "v1.0.0-v2-v2.0-before.json").is_file()
     assert (dst / "v1.0.0-v2-v2.0-after.json").is_file()
+    assert (dst / "PEP440-1.0.0-2-2.0-before.json").is_file()
+    assert (dst / "PEP440-1.0.0-2-2.0-after.json").is_file()
     answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers == {"_commit": "v2.0", "_src_path": str(git_src)}
 
