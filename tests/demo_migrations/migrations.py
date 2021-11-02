@@ -3,7 +3,11 @@ import json
 import os
 import sys
 
-NAME = "{VERSION_FROM}-{VERSION_CURRENT}-{VERSION_TO}-{STAGE}.json"
+NAMES = (
+    "{VERSION_FROM}-{VERSION_CURRENT}-{VERSION_TO}-{STAGE}.json",
+    "PEP440-{VERSION_PEP440_FROM}-{VERSION_PEP440_CURRENT}-{VERSION_PEP440_TO}-{STAGE}.json",
+)
 
-with open(NAME.format(**os.environ), "w") as fd:
-    json.dump(sys.argv, fd)
+for name in NAMES:
+    with open(name.format(**os.environ), "w") as fd:
+        json.dump(sys.argv, fd)
