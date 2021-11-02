@@ -4,6 +4,7 @@
   inputs = {
     flake-utils.url = "github:numtide/flake-utils";
     nixpkgs.url = "github:NixOS/nixpkgs";
+    poetry2nix.url = "github:nix-community/poetry2nix";
 
     #
     # Non-nix-provided dependencies
@@ -41,7 +42,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, flake-utils, ... }@inputs:
+  outputs = { self, nixpkgs, flake-utils, poetry2nix, ... }@inputs:
     let
       pkgs = nixpkgs.legacyPackages."x86_64-linux";
       pyPackages = pkgs.python39Packages;
@@ -51,7 +52,12 @@
         version = "0.13.1";
         src = inputs.poetry-dynamic-versioning;
         format = "pyproject";
-        propagatedBuildInputs = with pkgs // pyPackages; [ poetry python updatedJinja2 dunamai ];
+        propagatedBuildInputs = with pkgs // pyPackages; [
+          poetry
+          python
+          updatedJinja2
+          dunamai
+        ];
       };
       iteration-utilities = pyBuild {
         pname = "iteration_utilities";
@@ -93,6 +99,14 @@
         doCheck = false;
         propagatedBuildInputs = with pyPackages; [ poetry ];
       };
+      mkdocstrings = pyBuild {
+        pname = "mkdocstrings";
+        version = "1.7.0";
+        src = inputs.mkdocstrings;
+        doCheck = false;
+        format = "pyproject";
+        propagatedBuildInputs = with pkgs // pyPackages; [ mkdocs ];
+      };
 
       copier = pyBuild rec {
         pname = "copier";
@@ -126,9 +140,22 @@
           license = licenses.mit;
         };
       };
+
     in {
       # Nixpkgs overlay providing the application
-      overlay = (final: prev: { inherit copier; });
+      overlay = nixpkgs.lib.composeManyExtensions [
+        poetry2nix.overlay
+        (final: prev: {
+          copier = prev.poetry2nix.mkPoetryApplication {
+            projectDir = ./.;
+            overrides = prev.poetry2nix.overrides.withDefaults (final: prev: {
+              inherit poetry-dynamic-versioning;
+              poetry_core = pyPackages.poetry-core;
+              mkdocstrings = mkdocstrings;
+            });
+          };
+        })
+      ];
     } // (flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
