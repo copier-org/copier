@@ -33,7 +33,7 @@
       flake = false;
     };
     pyyaml-include = {
-      url = "github:tanbro/pyyaml-include";
+      url = "github:samuelludwig/pyyaml-include";
       flake = false;
     };
     plumbum = {
@@ -99,47 +99,14 @@
         doCheck = false;
         propagatedBuildInputs = with pyPackages; [ poetry ];
       };
-      mkdocstrings = pyBuild {
-        pname = "mkdocstrings";
-        version = "1.7.0";
-        src = inputs.mkdocstrings;
-        doCheck = false;
-        format = "pyproject";
-        propagatedBuildInputs = with pkgs // pyPackages; [ mkdocs ];
-      };
-
-      copier = pyBuild rec {
-        pname = "copier";
-        version = "5.1.0";
-        src = ./.;
-        format = "pyproject";
-        propagatedBuildInputs = with pyPackages; [
-          pyyaml-include
-          poetry-core
-          poetry-dynamic-versioning
-          cached-property
-          colorama
-          importlib-metadata
-          iteration-utilities
-          pathspec
-          updatedJinja2
-          jinja2-ansible-filters
-          plumbum170
-          pytest
-          pygments
-          questionary
-          poetry
-          pydantic
-          markupsafe
-        ];
-        meta = with nixpkgs.lib; {
-          description = ''
-            A library for rendering project templates.
-          '';
-          homepage = "https://github.com/copier-org/copier";
-          license = licenses.mit;
-        };
-      };
+      # mkdocstrings = pyBuild {
+      #   pname = "mkdocstrings";
+      #   version = "1.7.0";
+      #   src = inputs.mkdocstrings;
+      #   doCheck = false;
+      #   format = "pyproject";
+      #   propagatedBuildInputs = with pkgs // pyPackages; [ mkdocs ];
+      # };
 
     in {
       # Nixpkgs overlay providing the application
@@ -149,9 +116,24 @@
           copier = prev.poetry2nix.mkPoetryApplication {
             projectDir = ./.;
             overrides = prev.poetry2nix.overrides.withDefaults (final: prev: {
-              inherit poetry-dynamic-versioning;
+              inherit poetry-dynamic-versioning jinja2-ansible-filters
+                pyyaml-include;
               poetry_core = pyPackages.poetry-core;
-              mkdocstrings = mkdocstrings;
+              poetry-core = pyPackages.poetry-core;
+              dunamai = dunamai;
+              plumbum = pyPackages.plumbum;
+              virtualenv = pkgs.virtualenv;
+              jinja2 = updatedJinja2;
+              pyyaml = pyPackages.pyyaml;
+              packaging = pyPackages.packaging;
+              platformdirs = pyPackages.platformdirs;
+              toml = pyPackages.toml;
+              pastel = pyPackages.pastel;
+              tomlkit = pyPackages.tomlkit;
+              pexpect = pyPackages.pexpect;
+              ptyprocess = pyPackages.ptyprocess;
+              six = pyPackages.six;
+              #mkdocstrings = mkdocstrings;
             });
           };
         })

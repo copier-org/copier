@@ -179,15 +179,15 @@
     "pyyaml-include": {
       "flake": false,
       "locked": {
-        "lastModified": 1614417015,
-        "narHash": "sha256-YvX3eWytH0SLap1u2cnbq7C1FPWuBVsYnF4xL1s1ekA=",
-        "owner": "tanbro",
+        "lastModified": 1635870690,
+        "narHash": "sha256-ax3xdyDXeMeT34U1OiovGJg3Y8otJ7B9Blg9pD+e1yw=",
+        "owner": "samuelludwig",
         "repo": "pyyaml-include",
-        "rev": "f26308af5b6e2e14d39a72807ba4f14d7fad7964",
+        "rev": "0394534f483eb5f26b6c66c57ec41b8475070fdf",
         "type": "github"
       },
       "original": {
-        "owner": "tanbro",
+        "owner": "samuelludwig",
         "repo": "pyyaml-include",
         "type": "github"
       }

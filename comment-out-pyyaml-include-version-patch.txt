@@ -1,0 +1,10 @@
+diff --git a/src/yamlinclude/__init__.py b/src/yamlinclude/__init__.py
+index 443feff..f7397a6 100644
+--- a/src/yamlinclude/__init__.py
++++ b/src/yamlinclude/__init__.py
+@@ -6,4 +6,4 @@ Include YAML files within YAML
+ 
+ from .constructor import *  # noqa
+ from .readers import *  # noqa
+-from .version import version as __version__  # noqa
++#from .version import version as __version__  # noqa
