@@ -5,6 +5,7 @@ import tempfile
 from pathlib import Path
 
 from packaging import version
+from packaging.version import Version
 from plumbum import TF, ProcessExecutionError, colors, local
 from plumbum.cmd import git
 
@@ -13,6 +14,7 @@ from .types import OptBool, OptStr, StrOrPath
 
 GIT_PREFIX = ("git@", "git://", "git+")
 GIT_POSTFIX = (".git",)
+GIT_VERSION = Version(git("version").split()[-1].replace(".windows", "+windows"))
 REPLACEMENTS = (
     (re.compile(r"^gh:/?(.*\.git)$"), r"https://github.com/\1"),
     (re.compile(r"^gh:/?(.*)$"), r"https://github.com/\1.git"),
@@ -117,7 +119,11 @@ def clone(url: str, ref: OptStr = None) -> str:
             Reference to checkout. For Git repos, defaults to `HEAD`.
     """
     location = tempfile.mkdtemp(prefix=f"{__name__}.clone.")
-    git("clone", "--no-checkout", url, location)
+    _clone = git["clone", "--no-checkout", url, location]
+    # Faster clones if possible
+    if GIT_VERSION >= Version("2.27"):
+        _clone = _clone["--filter=blob:none"]
+    _clone()
     with local.cwd(location):
         git("checkout", ref or "HEAD")
         git("submodule", "update", "--checkout", "--init", "--recursive", "--force")
