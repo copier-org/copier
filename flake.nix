@@ -148,5 +148,6 @@
         apps = { copier = pkgs.copier; };
 
         defaultApp = apps.copier;
+        defaultPackage = apps.copier;
       }));
 }
