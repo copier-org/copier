@@ -14,7 +14,7 @@ from .types import OptBool, OptStr, StrOrPath
 
 GIT_PREFIX = ("git@", "git://", "git+")
 GIT_POSTFIX = (".git",)
-GIT_VERSION = Version(git("version").split()[-1].replace(".windows", "+windows"))
+GIT_VERSION = Version(re.findall(r".*(\d+\.\d+\.\d+)", git("version"))[0])
 REPLACEMENTS = (
     (re.compile(r"^gh:/?(.*\.git)$"), r"https://github.com/\1"),
     (re.compile(r"^gh:/?(.*)$"), r"https://github.com/\1.git"),
