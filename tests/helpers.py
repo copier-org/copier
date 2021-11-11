@@ -62,6 +62,7 @@ ISOFORMAT = "%Y-%m-%d %H:%M:%S.%f"
 
 class Keyboard(str, Enum):
     ControlH = REVERSE_ANSI_SEQUENCES[Keys.ControlH]
+    ControlC = REVERSE_ANSI_SEQUENCES[Keys.ControlC]
     Enter = "\r"
     Esc = REVERSE_ANSI_SEQUENCES[Keys.Escape]
 
