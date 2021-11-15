@@ -24,7 +24,7 @@ from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
 from questionary import unsafe_prompt
 
-from .errors import ExtensionNotFoundError, UserMessageError
+from .errors import CopierAnswersInterrupt, ExtensionNotFoundError, UserMessageError
 from .subproject import Subproject
 from .template import Template
 from .tools import Style, TemporaryDirectory, printf
@@ -337,13 +337,16 @@ class Worker:
             )
         for question in questions:
             # Display TUI and ask user interactively only without --defaults
-            new_answer = (
-                question.get_default()
-                if self.defaults
-                else unsafe_prompt(
-                    question.get_questionary_structure(), answers=result.combined
-                )[question.var_name]
-            )
+            try:
+                new_answer = (
+                    question.get_default()
+                    if self.defaults
+                    else unsafe_prompt(
+                        question.get_questionary_structure(), answers=result.combined
+                    )[question.var_name]
+                )
+            except KeyboardInterrupt as err:
+                raise CopierAnswersInterrupt(result, question, self.template) from err
             previous_answer = result.combined.get(question.var_name)
             if new_answer != previous_answer:
                 result.user[question.var_name] = new_answer

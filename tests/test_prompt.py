@@ -441,3 +441,33 @@ def test_multiline_defaults(tmp_path_factory, spawn):
         == answers["json_multi"]
         == ["one", "two", {"three": ["four"]}]
     )
+
+
+def test_partial_interrupt(tmp_path_factory, spawn):
+    template, subproject = (
+        tmp_path_factory.mktemp("template"),
+        tmp_path_factory.mktemp("subproject"),
+    )
+    build_file_tree(
+        {
+            template
+            / "copier.yml": yaml.safe_dump(
+                {
+                    "question_1": "answer 1",
+                    "question_2": "answer 2",
+                }
+            ),
+        }
+    )
+    tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
+    deque(map(tui.expect_exact, ["question_1?", "Format: str", "answer 1"]))
+    # Answer the first question using the default.
+    tui.sendline()
+    # Send a ctrl-c.
+    tui.send(Keyboard.ControlC + Keyboard.Enter)
+    # This string (or similar) should show in the output if we've gracefully caught the
+    # interrupt.
+    # We won't want our custom exception (CopierAnswersInterrupt) propagating
+    # to an uncaught stacktrace.
+    tui.expect_exact("Execution stopped by user\n")
+    tui.expect_exact(pexpect.EOF)
