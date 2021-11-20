@@ -344,9 +344,10 @@ def test_user_defaults(tmp_path_factory, user_defaults, data, expected):
 
 
 @pytest.mark.parametrize(
-    "user_defaults_initial, user_defaults_updated, data_initial, data_updated, expected",
+    "user_defaults_initial, user_defaults_updated, data_initial, data_updated, expected_initial, expected_updated",
     [
-        # User defaults + secondary defaults.
+        # Initial user defaults and updated used defaults. The output
+        # should remain unchanged following the update operation.
         (
             {
                 "a_string": "foo",
@@ -361,8 +362,38 @@ def test_user_defaults(tmp_path_factory, user_defaults, data, expected):
             A string: foo
             """
             ),
+            dedent(
+                """\
+            A string: foo
+            """
+            ),
         ),
-        # User defaults + data provided.
+        # User defaults + data provided. Provided data should take precedence
+        # and the resulting content unchanged post-update.
+        (
+            {
+                "a_string": "foo",
+            },
+            {
+                "a_string": "foobar",
+            },
+            {
+                "a_string": "yosemite",
+            },
+            {},
+            dedent(
+                """\
+            A string: yosemite
+            """
+            ),
+            dedent(
+                """\
+            A string: yosemite
+            """
+            ),
+        ),
+        # User defaults + secondary defaults + data overrides. `data_updated` should
+        # override user and template defaults.
         (
             {
                 "a_string": "foo",
@@ -381,6 +412,11 @@ def test_user_defaults(tmp_path_factory, user_defaults, data, expected):
             A string: yosemite
             """
             ),
+            dedent(
+                """\
+            A string: red rocks
+            """
+            ),
         ),
     ],
 )
@@ -390,7 +426,8 @@ def test_user_defaults_updated(
     user_defaults_updated,
     data_initial,
     data_updated,
-    expected,
+    expected_initial,
+    expected_updated,
 ):
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     with local.cwd(src):
@@ -425,7 +462,7 @@ def test_user_defaults_updated(
     )
     gen_file = dst / "user_data.txt"
     result = gen_file.read_text()
-    assert result == dedent(expected)
+    assert result == dedent(expected_initial)
 
     with local.cwd(dst):
         git_init()
@@ -439,4 +476,4 @@ def test_user_defaults_updated(
     )
     gen_file = dst / "user_data.txt"
     result = gen_file.read_text()
-    assert result == dedent(expected)
+    assert result == dedent(expected_updated)
