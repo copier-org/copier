@@ -111,6 +111,9 @@ class Worker:
 
             See [defaults][].
 
+        user_defaults:
+            Specify user defaults that may override a template's defaults during question prompts.
+
         overwrite:
             When `True`, Overwrite files that already exist, without asking.
 
@@ -137,6 +140,7 @@ class Worker:
     skip_if_exists: StrSeq = ()
     cleanup_on_error: bool = True
     defaults: bool = False
+    user_defaults: AnyByStrDict = field(default_factory=dict)
     overwrite: bool = False
     pretend: bool = False
     quiet: bool = False
@@ -317,6 +321,7 @@ class Worker:
         """
         result = AnswersMap(
             default=self.template.default_answers,
+            user_defaults=self.user_defaults,
             init=self.data,
             last=self.subproject.last_answers,
             metadata=self.template.metadata,

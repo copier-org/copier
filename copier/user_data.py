@@ -97,6 +97,11 @@ class AnswersMap:
             Default data from the template.
 
             See [copier.template.Template.default_answers][].
+
+        user_defaults:
+            Default data from the user e.g. previously completed and restored data.
+
+            See [copier.main.Worker][].
     """
 
     # Private
@@ -107,6 +112,7 @@ class AnswersMap:
     init: AnyByStrDict = field(default_factory=dict)
     metadata: AnyByStrDict = field(default_factory=dict)
     last: AnyByStrDict = field(default_factory=dict)
+    user_defaults: AnyByStrDict = field(default_factory=dict)
     default: AnyByStrDict = field(default_factory=dict)
 
     @cached_property
@@ -118,6 +124,7 @@ class AnswersMap:
             self.init,
             self.metadata,
             self.last,
+            self.user_defaults,
             self.default,
             DEFAULT_DATA,
         )
@@ -208,7 +215,10 @@ class Question:
             try:
                 result = self.answers.last[self.var_name]
             except KeyError:
-                result = self.render_value(self.default)
+                try:
+                    result = self.answers.user_defaults[self.var_name]
+                except KeyError:
+                    result = self.render_value(self.default)
         result = cast_answer_type(result, cast_fn)
         return result
 

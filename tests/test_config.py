@@ -3,6 +3,7 @@ from textwrap import dedent
 
 import pytest
 from plumbum import local
+from plumbum.cmd import git
 from pydantic import ValidationError
 
 import copier
@@ -22,6 +23,14 @@ GOOD_ENV_OPS = {
     "comment_end_string": "#>",
     "comment_start_string": "<#",
 }
+
+
+def git_init(message="hello world"):
+    git("init")
+    git("config", "user.name", "Copier Test")
+    git("config", "user.email", "test@copier")
+    git("add", ".")
+    git("commit", "-m", message)
 
 
 def test_config_data_is_loaded_from_file():
@@ -227,3 +236,244 @@ def test_worker_config_precedence(tmp_path, test_input, expected_exclusions):
 def test_config_data_transclusion():
     config = copier.Worker("tests/demo_transclude/demo")
     assert config.all_exclusions == ("exclude1", "exclude2")
+
+
+@pytest.mark.parametrize(
+    "user_defaults, data, expected",
+    [
+        # Nothing overridden.
+        (
+            {},
+            {},
+            dedent(
+                """\
+            A string: lorem ipsum
+            A number: 12345
+            A boolean: True
+            A list: one, two, three
+            """
+            ),
+        ),
+        # User defaults provided.
+        (
+            {
+                "a_string": "foo",
+                "a_number": 42,
+                "a_boolean": False,
+                "a_list": ["four", "five", "six"],
+            },
+            {},
+            dedent(
+                """\
+            A string: foo
+            A number: 42
+            A boolean: False
+            A list: four, five, six
+            """
+            ),
+        ),
+        # User defaults + data provided.
+        (
+            {
+                "a_string": "foo",
+                "a_number": 42,
+                "a_boolean": False,
+                "a_list": ["four", "five", "six"],
+            },
+            {
+                "a_string": "yosemite",
+            },
+            dedent(
+                """\
+            A string: yosemite
+            A number: 42
+            A boolean: False
+            A list: four, five, six
+            """
+            ),
+        ),
+    ],
+)
+def test_user_defaults(tmp_path_factory, user_defaults, data, expected):
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src
+            / "copier.yaml": """\
+                a_string:
+                    default: lorem ipsum
+                    type: str
+                a_number:
+                    default: 12345
+                    type: int
+                a_boolean:
+                    default: true
+                    type: bool
+                a_list:
+                    default:
+                        - one
+                        - two
+                        - three
+                    type: json
+            """,
+            src
+            / "user_data.txt.jinja": """\
+                A string: {{ a_string }}
+                A number: {{ a_number }}
+                A boolean: {{ a_boolean }}
+                A list: {{ ", ".join(a_list) }}
+            """,
+            src
+            / "{{ _copier_conf.answers_file }}.jinja": """\
+                # Changes here will be overwritten by Copier
+                {{ _copier_answers|to_nice_yaml }}
+            """,
+        }
+    )
+    copier.copy(
+        str(src),
+        dst,
+        defaults=True,
+        overwrite=True,
+        user_defaults=user_defaults,
+        data=data,
+    )
+    gen_file = dst / "user_data.txt"
+    result = gen_file.read_text()
+    assert result == dedent(expected)
+
+
+@pytest.mark.parametrize(
+    "user_defaults_initial, user_defaults_updated, data_initial, data_updated, expected_initial, expected_updated",
+    [
+        # Initial user defaults and updated used defaults. The output
+        # should remain unchanged following the update operation.
+        (
+            {
+                "a_string": "foo",
+            },
+            {
+                "a_string": "foobar",
+            },
+            {},
+            {},
+            dedent(
+                """\
+            A string: foo
+            """
+            ),
+            dedent(
+                """\
+            A string: foo
+            """
+            ),
+        ),
+        # User defaults + data provided. Provided data should take precedence
+        # and the resulting content unchanged post-update.
+        (
+            {
+                "a_string": "foo",
+            },
+            {
+                "a_string": "foobar",
+            },
+            {
+                "a_string": "yosemite",
+            },
+            {},
+            dedent(
+                """\
+            A string: yosemite
+            """
+            ),
+            dedent(
+                """\
+            A string: yosemite
+            """
+            ),
+        ),
+        # User defaults + secondary defaults + data overrides. `data_updated` should
+        # override user and template defaults.
+        (
+            {
+                "a_string": "foo",
+            },
+            {
+                "a_string": "foobar",
+            },
+            {
+                "a_string": "yosemite",
+            },
+            {
+                "a_string": "red rocks",
+            },
+            dedent(
+                """\
+            A string: yosemite
+            """
+            ),
+            dedent(
+                """\
+            A string: red rocks
+            """
+            ),
+        ),
+    ],
+)
+def test_user_defaults_updated(
+    tmp_path_factory,
+    user_defaults_initial,
+    user_defaults_updated,
+    data_initial,
+    data_updated,
+    expected_initial,
+    expected_updated,
+):
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(
+            {
+                src
+                / "copier.yaml": """\
+                    a_string:
+                        default: lorem ipsum
+                        type: str
+                """,
+                src
+                / "user_data.txt.jinja": """\
+                    A string: {{ a_string }}
+                """,
+                src
+                / "{{ _copier_conf.answers_file }}.jinja": """\
+                    # Changes here will be overwritten by Copier
+                    {{ _copier_answers|to_nice_yaml }}
+                """,
+            }
+        )
+        git_init()
+
+    copier.copy(
+        str(src),
+        dst,
+        defaults=True,
+        overwrite=True,
+        user_defaults=user_defaults_initial,
+        data=data_initial,
+    )
+    gen_file = dst / "user_data.txt"
+    result = gen_file.read_text()
+    assert result == dedent(expected_initial)
+
+    with local.cwd(dst):
+        git_init()
+
+    copier.run_update(
+        dst,
+        defaults=True,
+        overwrite=True,
+        user_defaults=user_defaults_updated,
+        data=data_updated,
+    )
+    gen_file = dst / "user_data.txt"
+    result = gen_file.read_text()
+    assert result == dedent(expected_updated)
