@@ -43,16 +43,18 @@ Basically, there are 3 different commands you can run:
 
 Below are the docs of each one of those.
 """
-
+import re
 import sys
 from functools import wraps
 from io import StringIO
+from pathlib import Path
 from textwrap import dedent
 from unittest.mock import patch
 
 import yaml
 from plumbum import cli, colors
 
+from copier.template import load_template_config
 from copier.tools import copier_version
 
 from .errors import UserMessageError
@@ -189,6 +191,17 @@ class CopierApp(cli.Application):
             values: The list of values to apply.
                 Each value in the list is of the following form: `NAME=VALUE`.
         """
+        files = [e for e in values if "=" not in e]
+        values = [e for e in values if "=" in e]
+        print(files)
+        print(values)
+        for file in files:
+            if not Path(file).exists():
+                print(colors.red | f"File: {file} doesn't exist", file=sys.stderr)
+            if not re.match(r".+\.ya?ml$", file, re.IGNORECASE):
+                print(colors.red | f"File: {file} isn't a yaml file", file=sys.stderr)
+            d = load_template_config(Path(file), True)
+            self.data.update(d)
         for arg in values:
             key, value = arg.split("=", 1)
             value = yaml.safe_load(value)
