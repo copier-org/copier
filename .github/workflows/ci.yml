@@ -55,7 +55,7 @@ jobs:
         run:
           echo "PY=$((python -VV; pip freeze) | sha256sum | cut -d' ' -f1)" >>
           $GITHUB_ENV
-      - uses: actions/cache@v2.1.6
+      - uses: actions/cache@v2.1.7
         with:
           path: |
             .cache
@@ -97,7 +97,7 @@ jobs:
         run:
           echo "PY=$((python -VV; pip freeze) | sha256sum | cut -d' ' -f1)" >>
           $GITHUB_ENV
-      - uses: actions/cache@v2.1.6
+      - uses: actions/cache@v2.1.7
         with:
           path: |
             .cache
