@@ -305,8 +305,8 @@ def test_commit_hooks_respected(tmp_path_factory):
                 """,
                 ".pre-commit-config.yaml": r"""
                 repos:
-                - repo: https://github.com/prettier/prettier
-                  rev: 2.0.4
+                - repo: https://github.com/pre-commit/mirrors-prettier
+                  rev: v2.0.4
                   hooks:
                     - id: prettier
                 - repo: local
