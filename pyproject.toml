@@ -68,7 +68,7 @@ poethepoet = "^0.11.0"
 pre-commit = "^2.16.0"
 pytest = "^6.1.1"
 pytest-cov = "^3.0.0"
-pytest-xdist = "^2.1.0"
+pytest-xdist = "^2.5.0"
 
 [tool.poe.tasks.clean]
 script = "devtasks:clean"
