@@ -28,6 +28,9 @@ def test_do_not_cleanup(tmp_path):
 
 def test_no_cleanup_when_folder_existed(tmp_path):
     """Copier will not delete a folder if it didn't create it."""
+    preexisting_file = tmp_path / "something"
+    preexisting_file.touch()
     with pytest.raises(CalledProcessError):
         copier.copy("./tests/demo_cleanup", tmp_path, quiet=True, cleanup_on_error=True)
-    assert (tmp_path).exists()
+    assert tmp_path.exists()
+    assert preexisting_file.exists()
