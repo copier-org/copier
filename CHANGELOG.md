@@ -64,6 +64,9 @@ Summary:
 
 ### Removed
 
+-   Removed the `json` method on `_copier_conf`. Where you would previously use
+    `_copier_conf.json()` in your templates, please now use `_copier_conf|to_json`
+    instead.
 -   `--subdirectory` flag, which was confusing... and probably useless.
 -   Lots of dead code.
 
