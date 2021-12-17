@@ -26,9 +26,51 @@ A library and CLI app for rendering project templates.
 1. To use as a CLI app: `pipx install copier`
 1. To use as a library: `pip install copier`
 
-## Quick usage
+## Quick start
 
--   Use it in your Python code:
+To create a template:
+
+```bash
+📁 my_copier_template ------------------------ # your template project
+├── 📄 copier.yml ---------------------------- # your template configuration
+├── 📁 .git ---------------------------------- # your template is a git repository
+├── 📁 {{project_name}} ---------------------- # a folder with a templated name
+│   └── 📄 {{module_name}}.py.jinja ---------- # a file with a templated name
+└── 📄 {{_copier_conf.answers_file}}.jinja --- # answers are written here
+```
+
+```yaml title="copier.yml"
+# configuration
+_templates_suffix: .jinja
+
+# questions
+project_name:
+  type: str
+  help: What is your project name?
+
+module_name:
+  type: str
+  help: What is your Python module name?
+```
+
+```python+jinja title="{{project_name}}/{{module_name}}.py.jinja"
+print("Hello from {{module_name}}!")
+```
+
+```yaml+jinja title="{{_copier_conf.answers_file}}.jinja"
+# Changes here will be overwritten by Copier
+{{_copier_answers|to_nice_yaml}}
+```
+
+To generate a project from the template:
+
+-   On the command-line:
+
+    ```bash
+    copier path/to/project/template path/to/destination
+    ```
+
+-   Or in Python code, programmatically:
 
     ```python
     from copier import run_auto
@@ -44,12 +86,6 @@ A library and CLI app for rendering project templates.
 
     # Or "gl:" as a shortcut of "https://gitlab.com/"
     run_auto("gl:copier-org/copier.git", "path/to/destination")
-    ```
-
--   Or as a command-line tool:
-
-    ```bash
-    copier path/to/project/template path/to/destination
     ```
 
 ## Basic concepts
