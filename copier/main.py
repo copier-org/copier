@@ -12,6 +12,7 @@ from pathlib import Path
 from shutil import rmtree
 from typing import Callable, List, Mapping, Optional, Sequence
 from unicodedata import normalize
+from warnings import warn
 
 import pathspec
 from jinja2.loaders import FileSystemLoader
@@ -201,7 +202,17 @@ class Worker:
             }
         )
         copied_conf = conf.copy()
-        conf["json"] = partial(json.dumps, copied_conf, default=pydantic_encoder)
+
+        def conf_to_json(*args, **kwargs):
+            warn(
+                f"The .json() method will be removed in a future version. "
+                "Please use the regular |to_json filter instead.",
+                DeprecationWarning,
+            )
+            return json.dumps(copied_conf, *args, **kwargs, default=pydantic_encoder)
+
+        conf["json"] = conf_to_json
+
         return dict(
             DEFAULT_DATA,
             **self.answers.combined,
@@ -400,6 +411,10 @@ class Worker:
                 "Make sure to install these extensions alongside Copier itself.\n"
                 "See the docs at https://copier.readthedocs.io/en/latest/configuring/#jinja_extensions"
             )
+        # patch the `to_json` filter to support Pydantic dataclasses
+        def to_json(value, *args, **kwargs):
+            return json.dumps(value, *args, **kwargs, default=pydantic_encoder)
+        env.filters["to_json"] = to_json
         return env
 
     @cached_property
