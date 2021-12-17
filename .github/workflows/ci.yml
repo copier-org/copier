@@ -31,7 +31,7 @@ jobs:
           - macos-latest
           - ubuntu-latest
           - windows-latest
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11-dev"]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11-dev"]
     runs-on: ${{ matrix.os }}
     steps:
       # HACK https://github.com/actions/cache/issues/315
