@@ -65,6 +65,7 @@ Summary:
 
 ### Removed
 
+-   Minimal supported Python version is now 3.7 (dropped Python 3.6 support).
 -   `--subdirectory` flag, which was confusing... and probably useless.
 -   Lots of dead code.
 
