@@ -1,17 +1,16 @@
 """Main functions and classes, used to generate or update projects."""
 
-import json
 import platform
 import subprocess
 import sys
 from contextlib import suppress
 from dataclasses import asdict, field, replace
+from functools import partial
 from itertools import chain
 from pathlib import Path
 from shutil import rmtree
 from typing import Callable, List, Mapping, Optional, Sequence
 from unicodedata import normalize
-from warnings import warn
 
 import pathspec
 from jinja2.loaders import FileSystemLoader
@@ -200,17 +199,6 @@ class Worker:
                 "src_path": self.template.local_abspath,
             }
         )
-        copied_conf = conf.copy()
-
-        def conf_to_json(*args, **kwargs):
-            warn(
-                f"The .json() method will be removed in a future version. "
-                "Please use the regular |to_json filter instead.",
-                DeprecationWarning,
-            )
-            return json.dumps(copied_conf, *args, **kwargs, default=pydantic_encoder)
-
-        conf["json"] = conf_to_json
 
         return dict(
             DEFAULT_DATA,
@@ -411,7 +399,9 @@ class Worker:
                 "See the docs at https://copier.readthedocs.io/en/latest/configuring/#jinja_extensions"
             )
         # patch the `to_json` filter to support Pydantic dataclasses
-        env.filters["to_json"] = partial(env.filters["to_json"], default=pydantic_encoder)
+        env.filters["to_json"] = partial(
+            env.filters["to_json"], default=pydantic_encoder
+        )
         return env
 
     @cached_property
