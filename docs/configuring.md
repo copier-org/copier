@@ -783,9 +783,8 @@ _tasks:
     - "rm {{ name_of_the_project }}/README.md"
     # Arrays are executed without shell, saving you the work of escaping arguments
     - [invoke, "--search-root={{ _copier_conf.src_path }}", after-copy]
-    # You are able to output the full conf to JSON, to be parsed by your script,
-    # but you cannot use the normal `|tojson` filter; instead, use `.json()`
-    - [invoke, end-process, "--full-conf={{ _copier_conf.json() }}"]
+    # You are able to output the full conf to JSON, to be parsed by your script
+    - [invoke, end-process, "--full-conf={{ _copier_conf|to_json }}"]
 ```
 
 ### `templates_suffix`

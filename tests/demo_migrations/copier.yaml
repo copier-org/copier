@@ -25,7 +25,7 @@ _migrations:
     before:
       - &mig
         - "[[ _copier_conf.src_path / 'migrations.py' ]]"
-        - "[[ _copier_conf.json() ]]"
+        - "[[ _copier_conf|to_json ]]"
     after:
       - *mig
   - version: v2
