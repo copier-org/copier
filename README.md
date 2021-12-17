@@ -40,9 +40,6 @@ To create a template:
 ```
 
 ```yaml title="copier.yml"
-# configuration
-_templates_suffix: .jinja
-
 # questions
 project_name:
   type: str
