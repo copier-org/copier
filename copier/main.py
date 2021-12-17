@@ -6,7 +6,6 @@ import subprocess
 import sys
 from contextlib import suppress
 from dataclasses import asdict, field, replace
-from functools import partial
 from itertools import chain
 from pathlib import Path
 from shutil import rmtree
@@ -414,6 +413,7 @@ class Worker:
         # patch the `to_json` filter to support Pydantic dataclasses
         def to_json(value, *args, **kwargs):
             return json.dumps(value, *args, **kwargs, default=pydantic_encoder)
+
         env.filters["to_json"] = to_json
         return env
 

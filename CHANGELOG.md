@@ -28,9 +28,8 @@ Summary:
     `$VERSION_PEP440_CURRENT` and `$VERSION_PEP440_TO`, which will always get a valid
     PEP440 version identifier, without the `v` prefix, allowing your migration scripts
     to have a valid standard where to base their logic.
--   Raise a CopierAnswersInterrupt instead of a bare KeyboardInterrupt to
-    provide callers with additional context - such as the partially completed
-    AnswersMap.
+-   Raise a CopierAnswersInterrupt instead of a bare KeyboardInterrupt to provide
+    callers with additional context - such as the partially completed AnswersMap.
 -   Support for `user_defaults`, which take precedence over template defaults.
 
 ### Changed
