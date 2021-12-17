@@ -1,8 +1,10 @@
+import json
+
 from jinja2.ext import Extension
 
 import copier
 
-from .helpers import PROJECT_TEMPLATE
+from .helpers import PROJECT_TEMPLATE, build_file_tree
 
 
 class FilterExtension(Extension):
@@ -50,3 +52,21 @@ def test_additional_jinja2_extensions(tmp_path):
     assert super_file.exists()
     expected = "super var! super func! super filter!\n"
     assert super_file.read_text() == expected
+
+
+def test_to_json_filter_with_conf(tmp_path_factory):
+    template = tmp_path_factory.mktemp("template")
+    project = tmp_path_factory.mktemp("project")
+    build_file_tree(
+        {
+            template / "conf.json.jinja": "{{ _copier_conf|to_json }}",
+        }
+    )
+    copier.copy(
+        str(template),
+        project,
+    )
+    conf_file = project / "conf.json"
+    assert conf_file.exists()
+    # must not raise an error
+    json.loads(conf_file.read_text())
