@@ -13,7 +13,6 @@ from .helpers import (
     BRACKET_ENVOPS,
     BRACKET_ENVOPS_JSON,
     COPIER_PATH,
-    ISOFORMAT,
     SUFFIX_TMPL,
     build_file_tree,
 )
@@ -218,7 +217,7 @@ def test_templated_prompt_builtins(tmp_path_factory):
         }
     )
     Worker(str(src), dst, defaults=True, overwrite=True).run_copy()
-    that_now = datetime.strptime((dst / "now").read_text(), ISOFORMAT)
+    that_now = datetime.fromisoformat((dst / "now").read_text())
     assert that_now <= datetime.now()
     assert len((dst / "make_secret").read_text()) == 128
 
