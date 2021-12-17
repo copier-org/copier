@@ -411,10 +411,7 @@ class Worker:
                 "See the docs at https://copier.readthedocs.io/en/latest/configuring/#jinja_extensions"
             )
         # patch the `to_json` filter to support Pydantic dataclasses
-        def to_json(value, *args, **kwargs):
-            return json.dumps(value, *args, **kwargs, default=pydantic_encoder)
-
-        env.filters["to_json"] = to_json
+        env.filters["to_json"] = partial(env.filters["to_json"], default=pydantic_encoder)
         return env
 
     @cached_property
