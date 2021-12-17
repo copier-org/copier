@@ -36,7 +36,7 @@ To create a template:
 ├── 📁 .git ---------------------------------- # your template is a git repository
 ├── 📁 {{project_name}} ---------------------- # a folder with a templated name
 │   └── 📄 {{module_name}}.py.jinja ---------- # a file with a templated name
-└── 📄 {{_copier_conf.answers_file}}.jinja --- # answers are written here
+└── 📄 {{_copier_conf.answers_file}}.jinja --- # answers are recorded here
 ```
 
 ```yaml title="copier.yml"
