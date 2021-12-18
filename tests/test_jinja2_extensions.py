@@ -69,4 +69,4 @@ def test_to_json_filter_with_conf(tmp_path_factory):
     conf_file = project / "conf.json"
     assert conf_file.exists()
     # must not raise an error
-    json.loads(conf_file.read_text())
+    assert json.loads(conf_file.read_text())
