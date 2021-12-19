@@ -9,7 +9,7 @@ from functools import partial
 from itertools import chain
 from pathlib import Path
 from shutil import rmtree
-from typing import Callable, List, Mapping, Optional, Sequence
+from typing import Callable, Iterable, List, Mapping, Optional, Sequence
 from unicodedata import normalize
 
 import pathspec
@@ -37,9 +37,10 @@ from .types import (
 )
 from .user_data import DEFAULT_DATA, AnswersMap, Question
 
-try:
+# HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
+if sys.version_info >= (3, 8):
     from functools import cached_property
-except ImportError:
+else:
     from backports.cached_property import cached_property
 
 
@@ -130,7 +131,7 @@ class Worker:
     """
 
     src_path: Optional[str] = None
-    dst_path: Path = field(default=".")
+    dst_path: Path = field(default=Path("."))
     answers_file: Optional[RelativePath] = None
     vcs_ref: OptStr = None
     data: AnyByStrDict = field(default_factory=dict)
@@ -155,7 +156,7 @@ class Worker:
                 answers[key] = value
         # Other data goes next
         answers.update(
-            (k, v)
+            (str(k), v)
             for (k, v) in self.answers.combined.items()
             if not k.startswith("_")
             and k not in self.template.secret_questions
@@ -208,7 +209,7 @@ class Worker:
             _folder_name=self.subproject.local_abspath.name,
         )
 
-    def _path_matcher(self, patterns: StrSeq) -> Callable[[Path], bool]:
+    def _path_matcher(self, patterns: Iterable[str]) -> Callable[[Path], bool]:
         """Produce a function that matches against specified patterns."""
         # TODO Is normalization really needed?
         normalized_patterns = (normalize("NFD", pattern) for pattern in patterns)
@@ -345,7 +346,7 @@ class Worker:
                     question.get_default()
                     if self.defaults
                     else unsafe_prompt(
-                        question.get_questionary_structure(), answers=result.combined
+                        [question.get_questionary_structure()], answers=result.combined
                     )[question.var_name]
                 )
             except KeyboardInterrupt as err:
@@ -538,7 +539,7 @@ class Worker:
         """Get related subproject."""
         return Subproject(
             local_abspath=self.dst_path.absolute(),
-            answers_relpath=self.answers_file or ".copier-answers.yml",
+            answers_relpath=self.answers_file or Path(".copier-answers.yml"),
         )
 
     @cached_property
@@ -548,7 +549,7 @@ class Worker:
         if not url:
             if self.subproject.template is None:
                 raise TypeError("Template not found")
-            url = self.subproject.template.url
+            url = str(self.subproject.template.url)
         return Template(url=url, ref=self.vcs_ref, use_prereleases=self.use_prereleases)
 
     @cached_property
@@ -631,6 +632,12 @@ class Worker:
             raise UserMessageError(
                 "Updating is only supported in git-tracked templates."
             )
+        if not self.subproject.template.version:
+            raise UserMessageError(
+                "Cannot update: version from last update not detected."
+            )
+        if not self.template.version:
+            raise UserMessageError("Cannot update: version from template not detected.")
         if self.subproject.template.version > self.template.version:
             raise UserMessageError(
                 f"Your are downgrading from {self.subproject.template.version} to {self.template.version}. "
@@ -716,7 +723,7 @@ def run_copy(
     """
     if data is not None:
         kwargs["data"] = data
-    worker = Worker(src_path=src_path, dst_path=dst_path, **kwargs)
+    worker = Worker(src_path=src_path, dst_path=Path(dst_path), **kwargs)
     worker.run_copy()
     return worker
 
@@ -734,7 +741,7 @@ def run_update(
     """
     if data is not None:
         kwargs["data"] = data
-    worker = Worker(dst_path=dst_path, **kwargs)
+    worker = Worker(dst_path=Path(dst_path), **kwargs)
     worker.run_update()
     return worker
 

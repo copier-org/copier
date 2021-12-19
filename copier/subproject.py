@@ -3,6 +3,7 @@
 A *subproject* is a project that gets rendered and/or updated with Copier.
 """
 
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -15,9 +16,10 @@ from .template import Template
 from .types import AbsolutePath, AnyByStrDict, VCSTypes
 from .vcs import is_in_git_repo
 
-try:
+# HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
+if sys.version_info >= (3, 8):
     from functools import cached_property
-except ImportError:
+else:
     from backports.cached_property import cached_property
 
 

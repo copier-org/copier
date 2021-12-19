@@ -47,6 +47,7 @@ Below are the docs of each one of those.
 import sys
 from functools import wraps
 from io import StringIO
+from pathlib import Path
 from textwrap import dedent
 from unittest.mock import patch
 
@@ -205,7 +206,7 @@ class CopierApp(cli.Application):
         """
         return Worker(
             data=self.data,
-            dst_path=dst_path,
+            dst_path=Path(dst_path),
             answers_file=self.answers_file,
             exclude=self.exclude,
             defaults=self.force or self.defaults,

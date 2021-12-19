@@ -1,5 +1,6 @@
 """Tools related to template management."""
 import re
+import sys
 from collections import ChainMap
 from contextlib import suppress
 from pathlib import Path
@@ -27,16 +28,13 @@ from .tools import copier_version
 from .types import AnyByStrDict, OptStr, StrSeq, VCSTypes
 from .vcs import checkout_latest_tag, clone, get_repo
 
-try:
+# HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
+if sys.version_info >= (3, 8):
     from functools import cached_property
-except ImportError:
+else:
     from backports.cached_property import cached_property
 
-try:
-    from typing import Literal
-except ImportError:
-    from typing_extensions import Literal
-
+from .types import Literal
 
 # Default list of files in the template to exclude from the rendered project
 DEFAULT_EXCLUDE: Tuple[str, ...] = (
@@ -102,7 +100,7 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
                 depth=2,
                 types=(list,),
             )
-            return ChainMap(*reversed(list(flattened_result)))
+            return dict(ChainMap(*reversed(list(flattened_result))))
     except yaml.parser.ParserError as e:
         raise InvalidConfigFileError(conf_path, quiet) from e
 
