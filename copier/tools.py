@@ -9,13 +9,14 @@ import tempfile
 import warnings
 from contextlib import suppress
 from pathlib import Path
-from typing import Any, Callable, Optional, TextIO, Union
+from types import TracebackType
+from typing import Any, Callable, Optional, TextIO, Tuple, Union
 
 import colorama
 from packaging.version import Version
 from pydantic import StrictBool
 
-from .types import ExcInfo, IntSeq
+from .types import IntSeq
 
 try:
     from importlib.metadata import version
@@ -128,7 +129,9 @@ def force_str_end(original_str: str, end: str = "\n") -> str:
     return original_str
 
 
-def handle_remove_readonly(func: Callable, path: str, exc: ExcInfo) -> None:
+def handle_remove_readonly(
+    func: Callable, path: str, exc: Tuple[BaseException, OSError, TracebackType]
+) -> None:
     """Handle errors when trying to remove read-only files through `shutil.rmtree`.
 
     This handler makes sure the given file is writable, then re-execute the given removal function.

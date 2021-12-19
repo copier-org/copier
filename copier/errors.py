@@ -9,7 +9,8 @@ from .tools import printf_exception
 from .types import PathSeq
 
 if TYPE_CHECKING:  # always false
-    from .user_data import AnswersMap, Question, Template
+    from .template import Template
+    from .user_data import AnswersMap, Question
 
 
 # Errors

@@ -1,7 +1,7 @@
 """Complex types, annotations, validators."""
 
+import sys
 from pathlib import Path
-from types import TracebackType
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -18,9 +18,10 @@ from typing import (
 
 from pydantic.validators import path_validator
 
-try:
+# HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
+if sys.version_info >= (3, 8):
     from typing import Literal
-except ImportError:
+else:
     from typing_extensions import Literal
 
 if TYPE_CHECKING:
@@ -54,7 +55,6 @@ JSONSerializable = (dict, list, str, int, float, bool, type(None))
 Filters = Dict[str, Callable]
 LoaderPaths = Union[str, Iterable[str]]
 VCSTypes = Literal["git"]
-ExcInfo = Tuple[BaseException, Exception, TracebackType]
 
 
 class AllowArbitraryTypes:
@@ -79,15 +79,19 @@ def path_is_relative(value: Path) -> Path:
 
 
 # Validated types
-class AbsolutePath(Path):
-    @classmethod
-    def __get_validators__(cls) -> "CallableGenerator":
-        yield path_validator
-        yield path_is_absolute
+if TYPE_CHECKING:
+    AbsolutePath = Path
+    RelativePath = Path
+else:
 
+    class AbsolutePath(Path):
+        @classmethod
+        def __get_validators__(cls) -> "CallableGenerator":
+            yield path_validator
+            yield path_is_absolute
 
-class RelativePath(Path):
-    @classmethod
-    def __get_validators__(cls) -> "CallableGenerator":
-        yield path_validator
-        yield path_is_relative
+    class RelativePath(Path):
+        @classmethod
+        def __get_validators__(cls) -> "CallableGenerator":
+            yield path_validator
+            yield path_is_relative

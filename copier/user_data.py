@@ -1,6 +1,7 @@
 """Functions used to load user data."""
 import datetime
 import json
+import sys
 import warnings
 from collections import ChainMap
 from dataclasses import field
@@ -30,9 +31,10 @@ from .errors import InvalidTypeError, UserMessageError
 from .tools import cast_str_to_bool, force_str_end
 from .types import AllowArbitraryTypes, AnyByStrDict, OptStr, OptStrOrPath, StrOrPath
 
-try:
+# HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
+if sys.version_info >= (3, 8):
     from functools import cached_property
-except ImportError:
+else:
     from backports.cached_property import cached_property
 
 if TYPE_CHECKING:
@@ -249,7 +251,7 @@ class Question:
             return json.dumps(default, indent=2 if self.get_multiline() else None)
         if self.get_type_name() == "yaml":
             return yaml.safe_dump(
-                default, default_flow_style=not self.get_multiline(), width=float("inf")
+                default, default_flow_style=not self.get_multiline(), width=2147483647
             ).strip()
         # All other data has to be str
         return str(default)
