@@ -1,6 +1,5 @@
 """Main functions and classes, used to generate or update projects."""
 
-import json
 import platform
 import subprocess
 import sys
@@ -200,8 +199,7 @@ class Worker:
                 "src_path": self.template.local_abspath,
             }
         )
-        copied_conf = conf.copy()
-        conf["json"] = partial(json.dumps, copied_conf, default=pydantic_encoder)
+
         return dict(
             DEFAULT_DATA,
             **self.answers.combined,
@@ -400,6 +398,10 @@ class Worker:
                 "Make sure to install these extensions alongside Copier itself.\n"
                 "See the docs at https://copier.readthedocs.io/en/latest/configuring/#jinja_extensions"
             )
+        # patch the `to_json` filter to support Pydantic dataclasses
+        env.filters["to_json"] = partial(
+            env.filters["to_json"], default=pydantic_encoder
+        )
         return env
 
     @cached_property

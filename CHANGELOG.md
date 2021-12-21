@@ -28,9 +28,8 @@ Summary:
     `$VERSION_PEP440_CURRENT` and `$VERSION_PEP440_TO`, which will always get a valid
     PEP440 version identifier, without the `v` prefix, allowing your migration scripts
     to have a valid standard where to base their logic.
--   Raise a CopierAnswersInterrupt instead of a bare KeyboardInterrupt to
-    provide callers with additional context - such as the partially completed
-    AnswersMap.
+-   Raise a CopierAnswersInterrupt instead of a bare KeyboardInterrupt to provide
+    callers with additional context - such as the partially completed AnswersMap.
 -   Support for `user_defaults`, which take precedence over template defaults.
 
 ### Changed
@@ -66,6 +65,9 @@ Summary:
 ### Removed
 
 -   Minimal supported Python version is now 3.7 (dropped Python 3.6 support).
+-   Removed the `json` method on `_copier_conf`. Where you would previously use
+    `_copier_conf.json()` in your templates, please now use `_copier_conf|to_json`
+    instead.
 -   `--subdirectory` flag, which was confusing... and probably useless.
 -   Lots of dead code.
 

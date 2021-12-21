@@ -35,7 +35,6 @@ Copier includes:
     <!-- prettier-ignore -->
     [Worker][copier.main.Worker] object, also slightly modified:
     -   It only contains JSON-serializable data.
-    -   But you have to serialize it with `{{ _copier_conf.json() }}` instead of
-        `{{ _copier_conf|to_json }}`.
+    -   You can serialize it with `{{ _copier_conf|to_json }}`.
     -   ⚠️ It contains secret answers inside its `.data` key.
     -   Modifying it doesn't alter the current rendering configuration.
