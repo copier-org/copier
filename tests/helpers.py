@@ -55,10 +55,6 @@ BRACKET_ENVOPS = {
 BRACKET_ENVOPS_JSON = json.dumps(BRACKET_ENVOPS)
 SUFFIX_TMPL = ".tmpl"
 
-# Helper to parse back an iso-formatted datetime; needed for py3.6, where
-# datetime.datetime.fromisoformat() doesn't exist
-ISOFORMAT = "%Y-%m-%d %H:%M:%S.%f"
-
 
 class Keyboard(str, Enum):
     ControlH = REVERSE_ANSI_SEQUENCES[Keys.ControlH]

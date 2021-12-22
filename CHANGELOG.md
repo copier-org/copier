@@ -64,6 +64,7 @@ Summary:
 
 ### Removed
 
+-   Minimal supported Python version is now 3.7 (dropped Python 3.6 support).
 -   Removed the `json` method on `_copier_conf`. Where you would previously use
     `_copier_conf.json()` in your templates, please now use `_copier_conf|to_json`
     instead.

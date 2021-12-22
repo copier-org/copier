@@ -1,5 +1,6 @@
 """Tools related to template management."""
 import re
+from collections import ChainMap
 from contextlib import suppress
 from pathlib import Path
 from typing import List, Mapping, Optional, Sequence, Set, Tuple
@@ -101,12 +102,7 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
                 depth=2,
                 types=(list,),
             )
-            # HACK https://bugs.python.org/issue32792#msg311822
-            # I'd use ChainMap, but it doesn't respect order in Python 3.6
-            result = {}
-            for part in flattened_result:
-                result.update(part)
-            return result
+            return ChainMap(*reversed(list(flattened_result)))
     except yaml.parser.ParserError as e:
         raise InvalidConfigFileError(conf_path, quiet) from e
 
