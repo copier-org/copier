@@ -111,6 +111,30 @@ def checkout_latest_tag(local_repo: StrOrPath, use_prereleases: OptBool = False)
         return latest_tag
 
 
+def _perform_clone(src: str, dst: str, ref: OptStr = None) -> str:
+    """Clone from src into dst.
+
+    Args:
+        src:
+            Git-parseable repo clone source.
+        dst:
+            Git-parseable repo clone destination.
+        ref:
+            Reference to checkout. For Git repos, defaults to `HEAD`
+    """
+    _clone = git["clone", "--no-checkout", src, dst]
+    # Faster clones if possible
+    if GIT_VERSION >= Version("2.27"):
+        _clone = _clone["--filter=blob:none"]
+    _clone()
+
+    with local.cwd(dst):
+        git("checkout", ref or "HEAD")
+        git("submodule", "update", "--checkout", "--init", "--recursive", "--force")
+
+    return dst
+
+
 def clone(url: str, ref: OptStr = None) -> str:
     """Clone repo into some temporary destination.
 
@@ -125,30 +149,23 @@ def clone(url: str, ref: OptStr = None) -> str:
             Reference to checkout. For Git repos, defaults to `HEAD`.
     """
 
-    src = url
-    if Path(src).is_dir():
+    location = tempfile.mkdtemp(prefix=f"{__name__}.clone.")
+
+    if Path(url).is_dir():
         is_dirty = False
         with local.cwd(url):
             is_dirty = bool(git("status", "--porcelain").strip())
         if is_dirty:
-            src = tempfile.mkdtemp(prefix=f"{__name__}.dirty.")
             url_abspath = Path(url).absolute()
-            with local.cwd(src):
-                copytree(url_abspath, src, dirs_exist_ok=True)
-                git("add", "-A")
-                git("commit", "-m", "wip", "--no-verify")
-                warn(
-                    "Dirty template changes included automatically.",
-                    DirtyLocalWarning,
-                )
+            with TemporaryDirectory(prefix=f"{__name__}.dirty.") as src:
+                with local.cwd(src):
+                    copytree(url_abspath, src, dirs_exist_ok=True)
+                    git("add", "-A")
+                    git("commit", "-m", "wip", "--no-verify")
+                    warn(
+                        "Dirty template changes included automatically.",
+                        DirtyLocalWarning,
+                    )
+                    return _perform_clone(src, location, ref)
 
-    location = tempfile.mkdtemp(prefix=f"{__name__}.clone.")
-    _clone = git["clone", "--no-checkout", src, location]
-    # Faster clones if possible
-    if GIT_VERSION >= Version("2.27"):
-        _clone = _clone["--filter=blob:none"]
-    _clone()
-    with local.cwd(location):
-        git("checkout", ref or "HEAD")
-        git("submodule", "update", "--checkout", "--init", "--recursive", "--force")
-    return location
+    return _perform_clone(url, location, ref)
