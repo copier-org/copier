@@ -431,12 +431,6 @@ class Template:
         """
         result = Path(self.url)
         if self.vcs == "git":
-            if result.is_dir():
-                with local.cwd(result):
-                    if bool(git("status", "--porcelain").strip()):
-                        git("add", ".")
-                        git("commit", "-am", "wip")
-                        # warning msg to user?!
             result = Path(clone(self.url_expanded, self.ref))
             if self.ref is None:
                 checkout_latest_tag(result, self.use_prereleases)

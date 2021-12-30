@@ -3,12 +3,15 @@ import re
 import sys
 import tempfile
 from pathlib import Path
+from shutil import copytree
+from warnings import warn
 
 from packaging import version
 from packaging.version import Version
 from plumbum import TF, ProcessExecutionError, colors, local
 from plumbum.cmd import git
 
+from .errors import DirtyLocalWarning
 from .tools import TemporaryDirectory
 from .types import OptBool, OptStr, StrOrPath
 
@@ -111,6 +114,9 @@ def checkout_latest_tag(local_repo: StrOrPath, use_prereleases: OptBool = False)
 def clone(url: str, ref: OptStr = None) -> str:
     """Clone repo into some temporary destination.
 
+    Includes dirty changes for local templates by copying into a temp
+    directory and applying a wip commit there.
+
     Args:
         url:
             Git-parseable URL of the repo. As returned by
@@ -118,8 +124,26 @@ def clone(url: str, ref: OptStr = None) -> str:
         ref:
             Reference to checkout. For Git repos, defaults to `HEAD`.
     """
+
+    src = url
+    if Path(src).is_dir():
+        is_dirty = False
+        with local.cwd(url):
+            is_dirty = bool(git("status", "--porcelain").strip())
+        if is_dirty:
+            src = tempfile.mkdtemp(prefix=f"{__name__}.dirty.")
+            url_abspath = Path(url).absolute()
+            with local.cwd(src):
+                copytree(url_abspath, src, dirs_exist_ok=True)
+                git("add", "-A")
+                git("commit", "-m", "wip", "--no-verify")
+                warn(
+                    "Dirty template changes included automatically.",
+                    DirtyLocalWarning,
+                )
+
     location = tempfile.mkdtemp(prefix=f"{__name__}.clone.")
-    _clone = git["clone", "--no-checkout", url, location]
+    _clone = git["clone", "--no-checkout", src, location]
     # Faster clones if possible
     if GIT_VERSION >= Version("2.27"):
         _clone = _clone["--filter=blob:none"]

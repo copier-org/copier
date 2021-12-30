@@ -2,15 +2,15 @@ import os
 from pathlib import Path
 from shutil import copytree
 
+import pytest
 from plumbum import local
 from plumbum.cmd import git
 
 import copier
+from copier.errors import DirtyLocalWarning
 from copier.main import run_copy, run_update
 
 from .helpers import DATA, PROJECT_TEMPLATE, build_file_tree, filecmp
-
-# def perform_copy():
 
 
 def test_copy(tmp_path_factory):
@@ -21,13 +21,19 @@ def test_copy(tmp_path_factory):
     with local.cwd(src):
         git("init")
 
-    copier.copy(str(src), str(dst), data=DATA, quiet=True)
+    with pytest.warns(DirtyLocalWarning):
+        copier.copy(str(src), str(dst), data=DATA, quiet=True)
 
     generated = (dst / "pyproject.toml").read_text()
     control = (Path(__file__).parent / "reference_files/pyproject.toml").read_text()
     assert generated == control
 
+    # assert template still dirty
+    assert bool(git("status", "--porcelain").strip())
 
+
+# Will fail due to lingering deleted file until #461 is fixed
+@pytest.mark.xfail
 def test_update(tmp_path_factory):
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
@@ -47,13 +53,17 @@ def test_update(tmp_path_factory):
             / "aaaa.txt": """
                 Lorem ipsum
             """,
+            src
+            / "to_delete.txt": """
+                delete me.
+            """,
         }
     )
 
     with local.cwd(src):
         git("init")
-        git("add", ".")
-        git("commit", "-am", "first commit on src")
+        git("add", "-A")
+        git("commit", "-m", "first commit on src")
 
     run_copy(str(src), dst, defaults=True, overwrite=True)
 
@@ -66,18 +76,32 @@ def test_update(tmp_path_factory):
         with open("aaaa.txt", "a") as f:
             f.write("dolor sit amet")
 
+        # test removing a file
+        os.remove("to_delete.txt")
+
     # dst must be vcs-tracked to use run_update
     with local.cwd(dst):
         git("init")
-        git("add", ".")
-        git("commit", "-am", "first commit on dst")
+        git("add", "-A")
+        git("commit", "-m", "first commit on dst")
 
+    # make sure changes have not yet propagated
     assert not os.path.exists(dst / "test_file.txt")
 
-    run_update(dst, defaults=True, overwrite=True)
+    p1 = str(src / "aaaa.txt")
+    p2 = str(dst / "aaaa.txt")
+    assert not filecmp.cmp(p1, p2)
 
+    assert os.path.exists(dst / "to_delete.txt")
+
+    with pytest.warns(DirtyLocalWarning):
+        run_update(dst, defaults=True, overwrite=True)
+
+    # make sure changes propagate after update
     assert os.path.exists(dst / "test_file.txt")
 
     p1 = str(src / "aaaa.txt")
     p2 = str(dst / "aaaa.txt")
     assert filecmp.cmp(p1, p2)
+
+    assert not os.path.exists(dst / "to_delete.txt")
