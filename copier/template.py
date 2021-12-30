@@ -17,7 +17,6 @@ from pydantic.dataclasses import dataclass
 from yamlinclude import YamlIncludeConstructor
 
 from .errors import (
-    DirtyLocalWarning,
     InvalidConfigFileError,
     MultipleConfigFilesError,
     OldTemplateWarning,
