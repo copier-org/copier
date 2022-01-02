@@ -42,12 +42,12 @@ To create a template:
 ```yaml title="copier.yml"
 # questions
 project_name:
-    type: str
-    help: What is your project name?
+  type: str
+  help: What is your project name?
 
 module_name:
-    type: str
-    help: What is your Python module name?
+  type: str
+  help: What is your Python module name?
 ```
 
 ```python+jinja title="{{project_name}}/{{module_name}}.py.jinja"

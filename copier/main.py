@@ -1,4 +1,5 @@
 """Main functions and classes, used to generate or update projects."""
+
 import platform
 import subprocess
 import sys
@@ -676,7 +677,6 @@ class Worker:
                         file=sys.stderr,
                     )
                     diff = diff_cmd("--inter-hunk-context=0")
-                print(diff)
         # Run pre-migration tasks
         self._execute_tasks(
             self.template.migration_tasks("before", self.subproject.template)

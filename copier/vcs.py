@@ -120,7 +120,7 @@ def _perform_clone(src: str, dst: str, ref: OptStr = None) -> str:
         dst:
             Git-parseable repo clone destination.
         ref:
-            Reference to checkout. For Git repos, defaults to `HEAD`
+            Reference to checkout. For Git repos, defaults to `HEAD`.
     """
     _clone = git["clone", "--no-checkout", src, dst]
     # Faster clones if possible
@@ -161,7 +161,12 @@ def clone(url: str, ref: OptStr = None) -> str:
                 with local.cwd(src):
                     copytree(url_abspath, src, dirs_exist_ok=True)
                     git("add", "-A")
-                    git("commit", "-m", "wip", "--no-verify")
+                    git(
+                        "commit",
+                        "-m",
+                        "Copier automated commit for draft changes",
+                        "--no-verify",
+                    )
                     warn(
                         "Dirty template changes included automatically.",
                         DirtyLocalWarning,
