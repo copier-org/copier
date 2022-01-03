@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from shutil import copytree
+from shutil import copy2, copytree
 
 import pytest
 from plumbum import local
@@ -16,7 +16,14 @@ from .helpers import DATA, PROJECT_TEMPLATE, build_file_tree, filecmp
 def test_copy(tmp_path_factory):
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
-    copytree(PROJECT_TEMPLATE, src, dirs_exist_ok=True)
+    # dirs_exist_ok not available in Python 3.7
+    for item in os.listdir(PROJECT_TEMPLATE):
+        s = os.path.join(PROJECT_TEMPLATE, item)
+        d = os.path.join(src, item)
+        if os.path.isdir(s):
+            copytree(s, d)
+        else:
+            copy2(s, d)
 
     with local.cwd(src):
         git("init")
@@ -29,7 +36,8 @@ def test_copy(tmp_path_factory):
     assert generated == control
 
     # assert template still dirty
-    assert bool(git("status", "--porcelain").strip())
+    with local.cwd(src):
+        assert bool(git("status", "--porcelain").strip())
 
 
 # Will fail due to lingering deleted file.

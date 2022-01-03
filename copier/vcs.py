@@ -1,9 +1,10 @@
 """Utilities related to VCS."""
+import os
 import re
 import sys
 import tempfile
 from pathlib import Path
-from shutil import copytree
+from shutil import copy2, copytree
 from warnings import warn
 
 from packaging import version
@@ -159,7 +160,14 @@ def clone(url: str, ref: OptStr = None) -> str:
             url_abspath = Path(url).absolute()
             with TemporaryDirectory(prefix=f"{__name__}.dirty.") as src:
                 with local.cwd(src):
-                    copytree(url_abspath, src, dirs_exist_ok=True)
+                    for item in os.listdir(url_abspath):
+                        s = os.path.join(url_abspath, item)
+                        d = os.path.join(src, item)
+                        if os.path.isdir(s):
+                            copytree(s, d)
+                        else:
+                            copy2(s, d)
+
                     git("add", "-A")
                     git(
                         "commit",
