@@ -43,7 +43,7 @@ def test_copy(tmp_path_factory):
 # Will fail due to lingering deleted file.
 # HACK https://github.com/copier-org/copier/issues/461
 # TODO Remove xfail decorator when fixed.
-@pytest.mark.xfail
+@pytest.mark.xfail(strict=True)
 def test_update(tmp_path_factory):
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
