@@ -18,12 +18,12 @@ def test_copy(tmp_path_factory):
 
     # dirs_exist_ok not available in Python 3.7
     for item in os.listdir(PROJECT_TEMPLATE):
-        s = os.path.join(PROJECT_TEMPLATE, item)
-        d = os.path.join(src, item)
-        if os.path.isdir(s):
-            copytree(s, d)
+        item_src_path = os.path.join(PROJECT_TEMPLATE, item)
+        item_dst_path = os.path.join(src, item)
+        if os.path.isdir(item_src_path):
+            copytree(item_src_path, item_dst_path)
         else:
-            copy2(s, d)
+            copy2(item_src_path, item_dst_path)
 
     with local.cwd(src):
         git("init")
