@@ -111,30 +111,6 @@ def checkout_latest_tag(local_repo: StrOrPath, use_prereleases: OptBool = False)
         return latest_tag
 
 
-def _perform_clone(src: str, dst: str, ref: OptStr = None) -> str:
-    """Clone from src into dst.
-
-    Args:
-        src:
-            Git-parseable repo clone source.
-        dst:
-            Git-parseable repo clone destination.
-        ref:
-            Reference to checkout. For Git repos, defaults to `HEAD`.
-    """
-    _clone = git["clone", "--no-checkout", src, dst]
-    # Faster clones if possible
-    if GIT_VERSION >= Version("2.27"):
-        _clone = _clone["--filter=blob:none"]
-    _clone()
-
-    with local.cwd(dst):
-        git("checkout", ref or "HEAD")
-        git("submodule", "update", "--checkout", "--init", "--recursive", "--force")
-
-    return dst
-
-
 def clone(url: str, ref: OptStr = None) -> str:
     """Clone repo into some temporary destination.
 
@@ -150,6 +126,11 @@ def clone(url: str, ref: OptStr = None) -> str:
     """
 
     location = tempfile.mkdtemp(prefix=f"{__name__}.clone.")
+    _clone = git["clone", "--no-checkout", url, location]
+    # Faster clones if possible
+    if GIT_VERSION >= Version("2.27"):
+        _clone = _clone["--filter=blob:none"]
+    _clone()
 
     if os.path.exists(url) and Path(url).is_dir():
         is_dirty = False
@@ -157,22 +138,24 @@ def clone(url: str, ref: OptStr = None) -> str:
             is_dirty = bool(git("status", "--porcelain").strip())
         if is_dirty:
             url_abspath = Path(url).absolute()
-            with TemporaryDirectory(prefix=f"{__name__}.dirty.") as src:
-                with local.cwd(src):
-                    git("--git-dir=.git", f"--work-tree={url_abspath}", "init")
-                    git("--git-dir=.git", f"--work-tree={url_abspath}", "add", "-A")
-                    git(
-                        "--git-dir=.git",
-                        f"--work-tree={url_abspath}",
-                        "commit",
-                        "-m",
-                        "Copier automated commit for draft changes",
-                        "--no-verify",
-                    )
-                    warn(
-                        "Dirty template changes included automatically.",
-                        DirtyLocalWarning,
-                    )
-                    return _perform_clone(src, location, ref)
+            with local.cwd(location):
+                # git("--git-dir=.git", f"--work-tree={url_abspath}", "init")
+                git("--git-dir=.git", f"--work-tree={url_abspath}", "add", "-A")
+                git(
+                    "--git-dir=.git",
+                    f"--work-tree={url_abspath}",
+                    "commit",
+                    "-m",
+                    "Copier automated commit for draft changes",
+                    "--no-verify",
+                )
+                warn(
+                    "Dirty template changes included automatically.",
+                    DirtyLocalWarning,
+                )
 
-    return _perform_clone(url, location, ref)
+    with local.cwd(location):
+        git("checkout", ref or "HEAD")
+        git("submodule", "update", "--checkout", "--init", "--recursive", "--force")
+
+    return location
