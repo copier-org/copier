@@ -31,7 +31,8 @@ Summary:
 -   Raise a CopierAnswersInterrupt instead of a bare KeyboardInterrupt to provide
     callers with additional context - such as the partially completed AnswersMap.
 -   Support for `user_defaults`, which take precedence over template defaults.
--   Copies dirty changes from template to subdirectory by default.
+-   Copy dirty changes from a git-tracked template to the project by default, to make
+    testing easier.
 
 ### Changed
 

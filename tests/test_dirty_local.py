@@ -32,7 +32,7 @@ def test_copy(tmp_path_factory):
         copier.copy(str(src), str(dst), data=DATA, quiet=True)
 
     generated = (dst / "pyproject.toml").read_text()
-    control = (Path(__file__).parent / "reference_files/pyproject.toml").read_text()
+    control = (Path(__file__).parent / "reference_files" / "pyproject.toml").read_text()
     assert generated == control
 
     # assert template still dirty
