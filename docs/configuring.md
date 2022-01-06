@@ -636,6 +636,14 @@ on them, so they are always installed when Copier is installed.
 
     Examples of extensions you can use:
 
+    -   [Native Jinja2 extensions](https://jinja.palletsprojects.com/en/3.0.x/extensions/):
+        -   [expression statement](https://jinja.palletsprojects.com/en/3.0.x/templates/#expression-statement),
+            which can be used to alter the Jinja context (answers, filters, etc.) or execute other operations, without outputting anything.
+        -   [loop controls](https://jinja.palletsprojects.com/en/3.0.x/extensions/#loop-controls), which adds the `break` and `continue`
+            keywords for Jinja loops.
+        -   [debug extension](https://jinja.palletsprojects.com/en/3.0.x/extensions/#debug-extension), which can dump the current context
+            thanks to the added `{% debug %}` tag.
+
     -   From [cookiecutter](https://cookiecutter.readthedocs.io/en/1.7.2/):
 
         -   [`cookiecutter.extensions.JsonifyExtension`](https://cookiecutter.readthedocs.io/en/latest/advanced/template_extensions.html#jsonify-extension):
