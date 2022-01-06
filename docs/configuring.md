@@ -336,6 +336,67 @@ templates.
     custom_question: default answer
     ```
 
+## Conditional files and directories
+
+You can take advantage of the ability to template file and directory names to make them
+"conditional", i.e. to only generate them based on the answers given by a user.
+
+For example, you can ask users if they want to use
+[pre-commit](https://pre-commit.com/):
+
+```yaml title="copier.yml"
+use_precommit:
+    type: bool
+    default: false
+    help: Do you want to use pre-commit?
+```
+
+And then, you can generate a `.pre-commit-config.yaml` file only if they answered "yes":
+
+```bash
+📁 your_template
+├── 📄 copier.yml
+└── 📄 {{ if use_precommit }}.pre-commit-config.yaml{{ endif }}.jinja
+```
+
+!!! important
+
+    Note that the chosen [template suffix](#templates_suffix)
+    **must** appear outside of the Jinja condition,
+    otherwise the whole file won't be considered a template and will
+    be copied as such in generated projects.
+
+You can even use the answers of questions with [choices](#advanced-prompt-formatting):
+
+```yaml title="copier.yml"
+ci:
+    type: str
+    help: What Continuous Integration service do you want to use?
+    choices:
+        GitHub CI: github
+        GitLab CI: gitlab
+    default: github
+```
+
+```bash
+📁 your_template
+├── 📄 copier.yml
+├── 📁 {{ if ci == 'github' }}.github{{ endif }}
+│   └── 📁 workflows
+│       └── 📄 ci.yml
+└────── 📄 {{ if ci == 'gitlab' }}.gitlab-ci.yml{{ endif }}.jinja
+
+```
+
+!!! important
+
+    Contrary to files, directories **must not** end with the [template suffix](#templates_suffix).
+
+!!! warning
+
+    On Windows, double-quotes are not valid characters in file and directory paths.
+    This is why we used **single-quotes** in the example above.
+
 ## Available settings
 
 Template settings alter how the template is rendered.
