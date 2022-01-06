@@ -32,8 +32,7 @@ recommended way to deal with them is to _not_ add them to add a
 [pre-commit](https://pre-commit.com/) (or equivalent) hook that forbids them, just like
 this:
 
-```yaml
-# .pre-commit-config.yaml
+```yaml title=".pre-commit-config.yaml"
 repos:
     - repo: local
       hooks:
