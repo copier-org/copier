@@ -86,7 +86,7 @@ Supported keys:
 
         For example, try to understand this 🥴
 
-        ```yaml
+        ```yaml title="copier.yml"
         pick_one:
             type: yaml # If you are mixing types, better be explicit
             choices:
@@ -101,7 +101,7 @@ Supported keys:
         It's better to stick with a simple type and reason about it later in
         template code:
 
-        ```yaml
+        ```yaml title="copier.yml"
         pick_one:
             type: str
             choices:
@@ -139,7 +139,7 @@ Supported keys:
 
 !!! example
 
-    ```yaml
+    ```yaml title="copier.yml"
     love_copier:
         type: bool # This makes Copier ask for y/n
         help: Do you love Copier?
@@ -218,7 +218,7 @@ cannot use Jinja templating in your answers.
 
 !!! example
 
-    ```yaml
+    ```yaml title="copier.yml"
     # default
     username:
         type: str
@@ -268,7 +268,7 @@ cannot use Jinja templating in your answers.
     1. ... which must be a string to be templated.
     1. Also you won't be able to use variables that aren't yet declared.
 
-    ```yaml
+    ```yaml title="copier.yml"
     your_age:
         type: int
 
@@ -422,7 +422,7 @@ Don't forget to read [the docs about the answers file](#the-copier-answersyml-fi
 
 !!! example
 
-    ```yaml
+    ```yaml title="copier.yml"
     _answers_file: .my-custom-answers.yml
     ```
 
@@ -625,7 +625,7 @@ on them, so they are always installed when Copier is installed.
 
 !!! example
 
-    ```yaml
+    ```yaml title="copier.yml"
     _jinja_extensions:
         - jinja_markdown.MarkdownExtension
         - jinja2_slug.SlugExtension
@@ -726,7 +726,7 @@ Migration processes will receive these environment variables:
 
 !!! example
 
-    ```yaml
+    ```yaml title="copier.yml"
     _migrations:
         - version: v1.0.0
         before:
@@ -757,7 +757,7 @@ generation will be aborted and an error will be shown to the user.
 
 !!! example
 
-    ```yaml
+    ```yaml title="copier.yml"
     _min_copier_version: "4.1.0"
     ```
 
@@ -799,13 +799,11 @@ exist.
     For example, it can be used if your project generates a password the 1st time and
     you don't want to override it next times:
 
-    ```yaml
-    # copier.yml
+    ```yaml title="copier.yml"
     _skip_if_exists: .secret_password.yml
     ```
 
-    ```yaml
-    # .secret_password.yml.tmpl
+    ```yaml title=".secret_password.yml.jinja"
     {{999999999999999999999999999999999|ans_random|hash('sha512')}}
     ```
 
@@ -827,7 +825,7 @@ This allows you to keep separate the template metadata and the template code.
 
 !!! example
 
-    ```yaml
+    ```yaml title="copier.yml"
     _subdirectory: template
     ```
 
@@ -866,7 +864,7 @@ Suffix that instructs which files are to be processed by Jinja as templates.
 
 !!! example
 
-    ```yaml
+    ```yaml title="copier.yml"
     _templates_suffix: .my-custom-suffix
     ```
 
@@ -878,7 +876,7 @@ templates suffix is _not_ empty, Copier will abort and print an error message.
 
 !!! example
 
-    ```yaml
+    ```yaml title="copier.yml"
     _templates_suffix: ""
     ```
 
