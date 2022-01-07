@@ -108,6 +108,7 @@ def test_update(tmp_path_factory):
 
     p1 = str(src / "aaaa.txt")
     p2 = str(dst / "aaaa.txt")
+    filecmp.clear_cache()
     assert filecmp.cmp(p1, p2)
 
     # HACK https://github.com/copier-org/copier/issues/461

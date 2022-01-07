@@ -132,14 +132,13 @@ def clone(url: str, ref: OptStr = None) -> str:
         _clone = _clone["--filter=blob:none"]
     _clone()
 
-    if os.path.exists(url) and Path(url).is_dir():
+    if not ref and os.path.exists(url) and Path(url).is_dir():
         is_dirty = False
         with local.cwd(url):
             is_dirty = bool(git("status", "--porcelain").strip())
         if is_dirty:
             url_abspath = Path(url).absolute()
             with local.cwd(location):
-                # git("--git-dir=.git", f"--work-tree={url_abspath}", "init")
                 git("--git-dir=.git", f"--work-tree={url_abspath}", "add", "-A")
                 git(
                     "--git-dir=.git",
