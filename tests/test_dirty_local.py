@@ -10,7 +10,7 @@ import copier
 from copier.errors import DirtyLocalWarning
 from copier.main import run_copy, run_update
 
-from .helpers import DATA, PROJECT_TEMPLATE, build_file_tree, filecmp
+from .helpers import DATA, PROJECT_TEMPLATE, build_file_tree
 
 
 def test_copy(tmp_path_factory):
@@ -94,9 +94,9 @@ def test_update(tmp_path_factory):
     # make sure changes have not yet propagated
     assert not os.path.exists(dst / "test_file.txt")
 
-    p1 = str(src / "aaaa.txt")
-    p2 = str(dst / "aaaa.txt")
-    assert not filecmp.cmp(p1, p2)
+    p1 = src / "aaaa.txt"
+    p2 = dst / "aaaa.txt"
+    assert p1.read_text() != p2.read_text()
 
     assert os.path.exists(dst / "to_delete.txt")
 
@@ -106,10 +106,9 @@ def test_update(tmp_path_factory):
     # make sure changes propagate after update
     assert os.path.exists(dst / "test_file.txt")
 
-    p1 = str(src / "aaaa.txt")
-    p2 = str(dst / "aaaa.txt")
-    filecmp.clear_cache()
-    assert filecmp.cmp(p1, p2)
+    p1 = src / "aaaa.txt"
+    p2 = dst / "aaaa.txt"
+    assert p1.read_text() == p2.read_text()
 
     # HACK https://github.com/copier-org/copier/issues/461
     # TODO test file deletion on update
