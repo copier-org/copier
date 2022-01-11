@@ -424,8 +424,8 @@ class Template:
     def local_abspath(self) -> Path:
         """Get the absolute path to the template on disk.
 
-        This may clone it if `url` points to a
-        VCS-tracked template.
+        This may clone it if `url` points to a VCS-tracked template.
+        Dirty changes for local VCS-tracked templates will be copied.
         """
         result = Path(self.url)
         if self.vcs == "git":
