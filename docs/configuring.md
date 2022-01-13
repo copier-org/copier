@@ -384,7 +384,7 @@ ci:
 ├── 📁 {{ if ci == 'github' }}.github{{ endif }}
 │   └── 📁 workflows
 │       └── 📄 ci.yml
-└────── 📄 {{ if ci == 'gitlab' }}.gitlab-ci.yml{{ endif }}.jinja
+└── 📄 {{ if ci == 'gitlab' }}.gitlab-ci.yml{{ endif }}.jinja
 
 ```
 
