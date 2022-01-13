@@ -24,7 +24,7 @@ docs! We don't want to be biased, but it's easy that we tend to be:
 | Requires handwriting JSON                | No                                       | Yes                             | Yes           |
 | Requires installing templates separately | No                                       | No                              | Yes           |
 | Requires programming                     | No                                       | No                              | Yes, JS       |
-| Requires templates to have a suffix      | Yes<sup>3</sup>                          | No, not configurable            | You choose    |
+| Requires templates to have a suffix      | Yes by default, configurable<sup>3</sup> | No, not configurable            | You choose    |
 | Task hooks                               | Yes                                      | Yes                             | Yes           |
 | Template in a subfolder                  | Not required, but you choose             | Yes, required                   | Yes, required |
 | Template package format                  | Git repo<sup>2</sup>, Git bundle, folder | Git or Mercurial repo, Zip file | NPM package   |
@@ -42,7 +42,8 @@ docs! We don't want to be biased, but it's easy that we tend to be:
 <sup>2</sup> Git repo is recommended to be able to use advanced features such as
 template tagging and smart updates.
 
-<sup>3</sup> A suffix is required. Defaults to `.tmpl`, but can be configured.
+<sup>3</sup> A suffix is required by default. Defaults to `.jinja`, but can be
+configured to use a different suffix, or to use none.
 
 <sup>4</sup> Only for git templates, because Copier uses git tags to obtain available
 versions and extract smart diffs between them.

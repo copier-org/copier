@@ -31,15 +31,15 @@ theme:
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: indigo
-      accent: teal
+      primary: deep orange
+      accent: amber
       toggle:
         icon: material/weather-sunny
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: indigo
-      accent: teal
+      primary: amber
+      accent: orange
       toggle:
         icon: material/weather-night
         name: Switch to light mode
