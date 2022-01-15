@@ -28,6 +28,7 @@ theme:
   name: material
   features:
     - navigation.top
+    - navigation.tracking
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
@@ -60,6 +61,7 @@ markdown_extensions:
   - pymdownx.magiclink
   - toc:
       permalink: true
+  - footnotes
 
 plugins:
   - autorefs

@@ -15,35 +15,37 @@ docs! We don't want to be biased, but it's easy that we tend to be:
 
 <!-- Use https://www.tablesgenerator.com/markdown_tables to maintain this table -->
 
-| Feature                                  | Copier                                   | Cookiecutter                    | Yeoman        |
-| ---------------------------------------- | ---------------------------------------- | ------------------------------- | ------------- |
-| Can template file names                  | Yes                                      | Yes                             | Yes           |
-| Configuration                            | Single YAML file<sup>1</sup>             | Single JSON file                | JS module     |
-| Migrations                               | Yes                                      | No                              | No            |
-| Programmed in                            | Python                                   | Python                          | NodeJS        |
-| Requires handwriting JSON                | No                                       | Yes                             | Yes           |
-| Requires installing templates separately | No                                       | No                              | Yes           |
-| Requires programming                     | No                                       | No                              | Yes, JS       |
-| Requires templates to have a suffix      | Yes by default, configurable<sup>3</sup> | No, not configurable            | You choose    |
-| Task hooks                               | Yes                                      | Yes                             | Yes           |
-| Template in a subfolder                  | Not required, but you choose             | Yes, required                   | Yes, required |
-| Template package format                  | Git repo<sup>2</sup>, Git bundle, folder | Git or Mercurial repo, Zip file | NPM package   |
-| Template updates                         | **Yes**<sup>4</sup>                      | No                              | No            |
-| Templating engine                        | [Jinja][]                                | [Jinja][]                       | [EJS][]       |
+| Feature                                  | Copier                           | Cookiecutter                    | Yeoman        |
+| ---------------------------------------- | -------------------------------- | ------------------------------- | ------------- |
+| Can template file names                  | Yes                              | Yes                             | Yes           |
+| Configuration                            | Single YAML file[^1]             | Single JSON file                | JS module     |
+| Migrations                               | Yes                              | No                              | No            |
+| Programmed in                            | Python                           | Python                          | NodeJS        |
+| Requires handwriting JSON                | No                               | Yes                             | Yes           |
+| Requires installing templates separately | No                               | No                              | Yes           |
+| Requires programming                     | No                               | No                              | Yes, JS       |
+| Requires templates to have a suffix      | Yes by default, configurable[^3] | No, not configurable            | You choose    |
+| Task hooks                               | Yes                              | Yes                             | Yes           |
+| Template in a subfolder                  | Not required, but you choose     | Yes, required                   | Yes, required |
+| Template package format                  | Git repo[^2], Git bundle, folder | Git or Mercurial repo, Zip file | NPM package   |
+| Template updates                         | **Yes**[^4]                      | No                              | No            |
+| Templating engine                        | [Jinja][]                        | [Jinja][]                       | [EJS][]       |
 
 [jinja]: https://jinja.palletsprojects.com/
 [ejs]: https://ejs.co/
 
----
+[^1]:
+    The file itself can
+    [include other YAML files](configuring.md#include-other-yaml-files).
 
-<sup>1</sup> The file itself can
-[include other YAML files](configuring.md#include-other-yaml-files).
+[^2]:
+    Git repo is recommended to be able to use advanced features such as template tagging
+    and smart updates.
 
-<sup>2</sup> Git repo is recommended to be able to use advanced features such as
-template tagging and smart updates.
+[^3]:
+    A suffix is required by default. Defaults to `.jinja`, but can be configured to use
+    a different suffix, or to use none.
 
-<sup>3</sup> A suffix is required by default. Defaults to `.jinja`, but can be
-configured to use a different suffix, or to use none.
-
-<sup>4</sup> Only for git templates, because Copier uses git tags to obtain available
-versions and extract smart diffs between them.
+[^4]:
+    Only for git templates, because Copier uses git tags to obtain available versions
+    and extract smart diffs between them.
