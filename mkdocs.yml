@@ -48,6 +48,9 @@ theme:
 extra_css:
   - css/mkdocstrings.css
 
+extra_javascript:
+  - js/refresh_on_theme_switch.js
+
 markdown_extensions:
   - admonition
   - codehilite:
@@ -68,6 +71,8 @@ plugins:
   - search
   - mermaid2:
       arguments:
+        theme: |
+          ^(JSON.parse(__md_get("__palette").index == 1)) ? 'dark' : 'light'
         flowchart:
           curve: basis
   - mkdocstrings:
