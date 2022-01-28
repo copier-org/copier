@@ -356,7 +356,7 @@ And then, you can generate a `.pre-commit-config.yaml` file only if they answere
 ```bash
 📁 your_template
 ├── 📄 copier.yml
-└── 📄 {{ if use_precommit }}.pre-commit-config.yaml{{ endif }}.jinja
+└── 📄 {% if use_precommit %}.pre-commit-config.yaml{% endif %}.jinja
 ```
 
 !!! important
@@ -381,10 +381,10 @@ ci:
 ```bash
 📁 your_template
 ├── 📄 copier.yml
-├── 📁 {{ if ci == 'github' }}.github{{ endif }}
+├── 📁 {% if ci == 'github' %}.github{% endif %}
 │   └── 📁 workflows
 │       └── 📄 ci.yml
-└── 📄 {{ if ci == 'gitlab' }}.gitlab-ci.yml{{ endif }}.jinja
+└── 📄 {% if ci == 'gitlab' %}.gitlab-ci.yml{% endif %}.jinja
 
 ```
 
