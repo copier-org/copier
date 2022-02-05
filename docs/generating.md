@@ -32,6 +32,32 @@ generating the project.
 
 [All the available options][copier.cli] are described with the `--help-all` option.
 
+## Templates versions
+
+By default, copier will copy from the last release found in template git tags, sorted as
+[PEP 440][], regardless of whether the template is from a URL or a local clone of a git
+repository.
+
+The exception to this is if you use a local clone of a template repository that has had
+any modifications made, in this case Copier will use this modified working copy of the
+template to aid development of new template features.
+
+If you would like to override the version of template being installed, the
+[`--vcs-ref`](../configuring/#vcs_ref) argument can be used to specify a branch, tag or
+other reference to use.
+
+For example to use the latest master branch from a public repository:
+
+```
+copier --vcs-ref master https://github.com/foo/copier-template.git ./path/to/destination
+```
+
+Or to work from the current checked out revision of a local template:
+
+```
+copier --vcs-ref HEAD path/to/project/template path/to/destination
+```
+
 ## Regenerating a project
 
 When you execute `copier copy $template $project` again over a preexisting `$project`,
