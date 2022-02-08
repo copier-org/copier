@@ -8,6 +8,7 @@ import sys
 import tempfile
 import warnings
 from contextlib import suppress
+from difflib import unified_diff
 from pathlib import Path
 from types import TracebackType
 from typing import Any, Callable, Optional, TextIO, Tuple, Union
@@ -16,7 +17,7 @@ import colorama
 from packaging.version import Version
 from pydantic import StrictBool
 
-from .types import IntSeq
+from .types import IntSeq, StrSeq
 
 try:
     from importlib.metadata import version
@@ -172,3 +173,56 @@ class TemporaryDirectory(tempfile.TemporaryDirectory):
     @staticmethod
     def _robust_cleanup(name):
         shutil.rmtree(name, ignore_errors=False, onerror=handle_remove_readonly)
+
+
+def get_lines(content: bytes) -> StrSeq:
+    # Assume UTF-8 encoding for text files. Since Jinja2 is already doing this
+    # for templates, there  probably isn't much harm in also doing it for all
+    # text files. The worst case should be a failure to show the diffs. An
+    # alternative is to add chardet support.
+    return content.decode("utf-8").split(os.linesep)
+
+
+def is_binary(content: bytes) -> bool:
+    """Return a boolean indicating if the content is a binary file."""
+    return b"\x00" in content or b"\xff" in content
+
+
+def color_print(color: int, msg: str):
+    print(f"{color}{msg}{colorama.Fore.RESET}")
+
+
+def print_diff(dst_relpath: Path, original_content: bytes, new_content: bytes):
+    try:
+        original_lines = get_lines(original_content)
+    except Exception:
+        color_print(
+            colorama.Fore.YELLOW, "diff unavailable: unable to determine encoding"
+        )
+        return
+    try:
+        new_lines = get_lines(new_content)
+    except Exception:
+        color_print(
+            colorama.Fore.YELLOW, "diff unavailable: unable to determine encoding"
+        )
+        return
+
+    indent = " " * 6
+    for line in unified_diff(
+        original_lines,
+        new_lines,
+        f"old/{dst_relpath}",
+        f"new/{dst_relpath}",
+        lineterm="",
+    ):
+        if line.startswith("---") or line.startswith("+++"):
+            color_print(colorama.Fore.YELLOW, f"{indent}{line}")
+        elif line.startswith("@@"):
+            color_print(colorama.Fore.MAGENTA, f"{indent}{line}")
+        elif line.startswith("-"):
+            color_print(colorama.Fore.RED, f"{indent}{line}")
+        elif line.startswith("+"):
+            color_print(colorama.Fore.GREEN, f"{indent}{line}")
+        else:
+            print(f"{indent}{line}")

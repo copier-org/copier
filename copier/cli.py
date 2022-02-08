@@ -92,6 +92,7 @@ class CopierApp(cli.Application):
         skip: Set [skip_if_exists][] option.
         prereleases: Set [use_prereleases][] option.
         quiet: Set [quiet][] option.
+        diff: Set [diff][] option.
     """
 
     DESCRIPTION = "Create a new project from a template."
@@ -175,6 +176,10 @@ class CopierApp(cli.Application):
         ["-g", "--prereleases"],
         help="Use prereleases to compare template VCS tags.",
     )
+    diff: cli.Flag = cli.Flag(
+        ["-D", "--diff"],
+        help="Show diff when updating files",
+    )
 
     @cli.switch(
         ["-d", "--data"],
@@ -216,6 +221,7 @@ class CopierApp(cli.Application):
             src_path=src_path,
             vcs_ref=self.vcs_ref,
             use_prereleases=self.prereleases,
+            diff=self.diff,
             **kwargs,
         )
 
