@@ -5,8 +5,9 @@ from textwrap import dedent
 
 import pexpect
 import pytest
+from plumbum.cmd import git
 
-from copier import copy
+from copier import copy, run_update
 
 from .helpers import (
     BRACKET_ENVOPS_JSON,
@@ -368,7 +369,10 @@ def test_cli_interatively_with_flag_data_and_type_casts(
     )
 
 
-def test_tui_inherited_default(tmp_path_factory, spawn):
+@pytest.mark.parametrize(
+    "has_2_owners, owner2", ((True, "example2"), (False, "example"))
+)
+def test_tui_inherited_default(tmp_path_factory, spawn, has_2_owners, owner2):
     """Make sure a template inherits default as expected."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
@@ -385,9 +389,16 @@ def test_tui_inherited_default(tmp_path_factory, spawn):
                     default: "{{ owner1 }}"
                     when: "{{ has_2_owners }}"
             """,
+            src
+            / "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
             src / "answers.json.jinja": "{{ _copier_answers|to_nice_json }}",
         }
     )
+    _git = git["-C", src]
+    _git("init")
+    _git("add", "--all")
+    _git("commit", "--message", "init template")
+    _git("tag", "1")
     tui = spawn(
         COPIER_PATH + ("copy", str(src), str(dst)),
         timeout=10,
@@ -395,16 +406,26 @@ def test_tui_inherited_default(tmp_path_factory, spawn):
     deque(map(tui.expect_exact, ["owner1?", "Format: str"]))
     tui.sendline("example")
     deque(map(tui.expect_exact, ["has_2_owners?", "Format: bool", "(y/N)"]))
-    tui.send("y")
-    deque(map(tui.expect_exact, ["owner2?", "Format: str", "example"]))
-    tui.sendline("2")
+    tui.send("y" if has_2_owners else "n")
+    if has_2_owners:
+        deque(map(tui.expect_exact, ["owner2?", "Format: str", "example"]))
+        tui.sendline("2")
     tui.expect_exact(pexpect.EOF)
-    assert json.loads((dst / "answers.json").read_bytes()) == {
+    result = {
+        "_commit": "1",
         "_src_path": str(src),
+        "has_2_owners": has_2_owners,
         "owner1": "example",
-        "has_2_owners": True,
-        "owner2": "example2",
+        "owner2": owner2,
     }
+    assert json.load((dst / "answers.json").open()) == result
+    _git = git["-C", dst]
+    _git("init")
+    _git("add", "--all")
+    _git("commit", "--message", "init project")
+    # After a forced update, answers stay the same
+    run_update(dst, defaults=True, overwrite=True)
+    assert json.load((dst / "answers.json").open()) == result
 
 
 def test_selection_type_cast(tmp_path_factory, spawn):
