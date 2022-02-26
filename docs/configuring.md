@@ -132,10 +132,44 @@ Supported keys:
 -   **multiline**: When set to `true`, it allows multiline input. This is especially
     useful when `type` is `json` or `yaml`.
 
--   **when**: Condition that, if `false`, skips the question. If it is a boolean, it is
-    used directly (although it's a bit absurd in that case). If it is a string, it is
-    converted to boolean using a parser similar to YAML, but only for boolean values.
+-   **when**: Condition that, if `false`, skips the question.
+
+    If it is a boolean, it is used directly, but it's a bit absurd in that case.
+
+    If it is a string, it is converted to boolean using a parser similar to YAML, but
+    only for boolean values.
+
     This is most useful when [templated](#prompt-templating).
+
+    If a question is skipped, its answer will be:
+
+    -   The default value, if you're generating the project for the 1st time.
+    -   The last answer recorded, if you're updating the project.
+
+    !!! example
+
+        ```yaml title="copier.yaml"
+        project_creator:
+            type: str
+
+        project_license:
+            type: str
+            choices:
+                - GPLv3
+                - Public domain
+
+        copyright_holder:
+            type: str
+            default: |-
+                {% if project_license == 'Public domain' -%}
+                    {#- Nobody owns public projects -#}
+                    nobody
+                {%- else -%}
+                    {#- By default, project creator is the owner -#}
+                    {{ project_creator }}
+                {%- endif %}
+            # Only ask for copyright if project is not in the public domain
+            when: "{{ project_license != 'Public domain' }}"
 
 !!! example
 

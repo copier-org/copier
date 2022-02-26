@@ -352,6 +352,11 @@ class Worker:
             except KeyboardInterrupt as err:
                 raise CopierAnswersInterrupt(result, question, self.template) from err
             previous_answer = result.combined.get(question.var_name)
+            # If question was skipped and it's the 1st
+            # run, you could be getting a raw templated value
+            default_answer = result.default.get(question.var_name)
+            if new_answer == default_answer:
+                new_answer = question.render_value(default_answer)
             if new_answer != previous_answer:
                 result.user[question.var_name] = new_answer
         return result
