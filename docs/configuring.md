@@ -445,7 +445,8 @@ Remember that **the key must be prefixed with an underscore if you use it in
 -   CLI flags: `-a`, `--answers-file`
 -   Default value: `.copier-answers.yml`
 
-File where answers will be recorded by default.
+Path to a file where answers will be recorded by default. The path must be relative to
+the project root.
 
 !!! tip
 
@@ -1021,6 +1022,12 @@ declared as user questions in [the `copier.yml` file](#the-copieryml-file).
 As you can see, you also have the power to customize what will be logged here. Keys that
 start with an underscore (`_`) are specific to Copier. Other keys should match questions
 in `copier.yml`.
+
+The path to the answers file must be expressed relative to the project root, because:
+
+-   Its value must be available at render time.
+-   It is used to update projects, and for that a project must be git-tracked. So, the
+    file must be in the repo anyway.
 
 ### Applying multiple templates to the same subproject
 
