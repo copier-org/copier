@@ -45,7 +45,7 @@ jobs:
       - run: git config --global user.name copier-ci
       - run: git config --global user.email copier@copier
       - run: git config --global core.autocrlf input
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0 # Needs all tags to compute dynamic version
       - name: Set up Python ${{ matrix.python-version }}
@@ -88,7 +88,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0 # Needs all tags to compute dynamic version
       - name: Set up Python 3.10
