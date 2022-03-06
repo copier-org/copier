@@ -27,6 +27,7 @@ nav:
 theme:
   name: material
   features:
+    - content.code.annotate
     - navigation.top
     - navigation.tracking
   palette:

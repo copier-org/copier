@@ -572,7 +572,7 @@ The CLI option can be passed several times to add several patterns.
     Instead, CLI/API definitions **will extend** those from `copier.yml`.
 
 
-    !!! example Example CLI usage to copy only a single file from the template
+    !!! example "Example CLI usage to copy only a single file from the template"
 
         ```sh
         copier --exclude '*' --exclude '!file-i-want' copy ./template ./destination
@@ -863,6 +863,71 @@ This allows you to keep separate the template metadata and the template code.
     ```yaml title="copier.yml"
     _subdirectory: template
     ```
+
+!!! question "Can I have multiple templates in a single repo using this option?"
+
+    The Copier recommendation is: **1 template = 1 git repository**.
+
+    Why? Unlike almost all other templating engines, Copier supports
+    [smart project updates](updating.md). For that, Copier needs to know in which version it
+    was copied last time, and to which version you are evolving. Copier gets that
+    information from git tags. Git tags are shared across the whole git repository. Using a
+    repository to host multiple templates would lead to many corner case situations that we
+    don't want to support.
+
+    So, in Copier, the subdirectory option is just there to let template owners separate
+    templates metadata from template source code. This way, for example, you can have
+    different dotfiles for you template and for the projects it generates.
+
+    !!! example "Example project with different `.gitignore` files"
+
+
+        ```bash title="Project layout"
+        📁 my_copier_template
+        ├── 📄 copier.yml       # (1)
+        ├── 📄 .gitignore       # (2)
+        └── 📁 template         # (3)
+            └── 📄 .gitignore   # (4)
+        ```
+
+        1.  Same contents as the example above.
+        2.  Ignore instructions for the template repo.
+        3.  The configured template subdirectory.
+        4.  Ignore instructions for projects generated with the template.
+
+    However, it is true that the value of this option can itself be templated. This would
+    let you have different templates that all use the same questionary, and the used
+    template would be saved as an answer. It would let the user update safely and change
+    that option in the future.
+
+    !!! example
+
+        With this questions file and this directory structure, the user will be prompted which
+        python engine to use, and the project will be generated using the subdirectory whose
+        name matches the answer from the user:
+
+        ```yaml title="copier.yaml"
+        _subdirectory: "{{ python_engine }}"
+        python_engine:
+            type: str
+            choices:
+                - poetry
+                - pipenv
+        ```
+
+        ```bash title="Project layout"
+        📁 my_copier_template
+        ├── 📄 copier.yaml # (1)
+        ├── 📁 poetry
+        │   ├── 📄 {{ _copier_conf.answers_file }}.jinja # (2)
+        │   └── 📄 pyproject.toml.jinja
+        └── 📁 pipenv
+        │   ├── 📄 {{ _copier_conf.answers_file }}.jinja
+            └── 📄 Pipfile.jinja
+        ```
+
+        1.  The configuration from the previous example snippet.
+        2.  See [the answers file docs][the-copier-answersyml-file] to understand.
 
 ### `tasks`
 
