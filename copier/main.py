@@ -207,6 +207,7 @@ class Worker:
             _copier_answers=self._answers_to_remember(),
             _copier_conf=conf,
             _folder_name=self.subproject.local_abspath.name,
+            _copier_python=sys.executable,
         )
 
     def _path_matcher(self, patterns: Iterable[str]) -> Callable[[Path], bool]:

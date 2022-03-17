@@ -952,6 +952,8 @@ _tasks:
     - [invoke, "--search-root={{ _copier_conf.src_path }}", after-copy]
     # You are able to output the full conf to JSON, to be parsed by your script
     - [invoke, end-process, "--full-conf={{ _copier_conf|to_json }}"]
+    # Your script can be run by the same python environment used to run copier
+    - ["{{ _copier_python }}", task.py]
 ```
 
 ### `templates_suffix`

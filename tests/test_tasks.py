@@ -24,6 +24,7 @@ def demo_template(tmp_path_factory):
                     - mkdir hello
                     - cd hello && touch world
                     - touch [[ other_file ]]
+                    - ["[[ _copier_python ]]", "-c", "open('pyfile', 'w').close()"]
             """
         }
     )
@@ -41,3 +42,4 @@ def test_copy_tasks(tmp_path, demo_template):
     assert (tmp_path / "hello").is_dir()
     assert (tmp_path / "hello" / "world").exists()
     assert (tmp_path / "bye").is_file()
+    assert (tmp_path / "pyfile").is_file()
