@@ -284,11 +284,11 @@ test = ["pytest"]
 
 [[package]]
 name = "jinja2"
-version = "3.0.3"
+version = "3.1.0"
 description = "A very fast and expressive template engine."
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
 MarkupSafe = ">=2.0"
@@ -1127,8 +1127,8 @@ iteration-utilities = [
     {file = "iteration_utilities-0.11.0.tar.gz", hash = "sha256:f91f41a2549e9a7e40ff5460fdf9033b6ee5b305d9be77943b63a554534c2a77"},
 ]
 jinja2 = [
-    {file = "Jinja2-3.0.3-py3-none-any.whl", hash = "sha256:077ce6014f7b40d03b47d1f1ca4b0fc8328a692bd284016f806ed0eaca390ad8"},
-    {file = "Jinja2-3.0.3.tar.gz", hash = "sha256:611bb273cd68f3b993fabdc4064fc858c5b47a973cb5aa7999ec1ba405c87cd7"},
+    {file = "Jinja2-3.1.0-py3-none-any.whl", hash = "sha256:da424924c069a4013730d8dd010cbecac7e7bb752be388db3741688bffb48dc6"},
+    {file = "Jinja2-3.1.0.tar.gz", hash = "sha256:a2f09a92f358b96b5f6ca6ecb4502669c4acb55d8733bbb2b2c9c4af5564c605"},
 ]
 jinja2-ansible-filters = [
     {file = "jinja2-ansible-filters-1.3.0.tar.gz", hash = "sha256:7a4e6f86ffa814841e72d0c3c22c7e727bcb8387d7b85e4224a1181634a361b4"},
