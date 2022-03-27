@@ -212,10 +212,13 @@ def test_new_version_uses_subdirectory(tmp_path_factory):
     copier.copy(dst_path=project_path, defaults=True, overwrite=True)
     assert "_commit: v2" in (project_path / ".copier-answers.yml").read_text()
 
-    # Assert that the README still exists, and was force updated to "upstream version 2"
+    # Assert that the README still exists with conflicts to solve
     assert (project_path / "README.md").exists()
     with (project_path / "README.md").open() as fd:
-        assert fd.read() == "upstream version 2\n"
+        assert fd.read() == (
+            "<<<<<<< modified\ndownstream version 1\n"
+            "=======\nupstream version 2\n>>>>>>> new upstream\n"
+        )
 
     # Also assert the subdirectory itself was not rendered
     assert not (project_path / "subdir").exists()

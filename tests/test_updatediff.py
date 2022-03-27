@@ -5,7 +5,7 @@ from typing import Optional
 
 import pytest
 import yaml
-from plumbum import local
+from plumbum import ProcessExecutionError, local
 from plumbum.cmd import git
 
 from copier import Worker, copy
@@ -305,17 +305,15 @@ def test_commit_hooks_respected(tmp_path_factory):
                 """,
                 ".pre-commit-config.yaml": r"""
                 repos:
+                - repo: https://github.com/pre-commit/pre-commit-hooks
+                  rev: v4.0.1
+                  hooks:
+                    - id: check-merge-conflict
+                      args: [--assume-in-merge]
                 - repo: https://github.com/pre-commit/mirrors-prettier
                   rev: v2.0.4
                   hooks:
                     - id: prettier
-                - repo: local
-                  hooks:
-                    - id: forbidden-files
-                      name: forbidden files
-                      entry: found forbidden files; remove them
-                      language: fail
-                      files: "\\.rej$"
                 """,
                 "life.yml.tmpl": """
                 # Following code should be reformatted by pre-commit after copying
@@ -401,7 +399,7 @@ def test_commit_hooks_respected(tmp_path_factory):
     with local.cwd(dst2):
         # Subproject re-updates just to change some values
         copy(data={"what": "study"}, defaults=True, overwrite=True)
-        git("commit", "-am", "re-updated to change values after evolving")
+
         # Subproject evolution was respected up to sane possibilities.
         # In an ideal world, this file would be exactly the same as what's written
         # a few lines above, just changing "grog" for "study". However, that's nearly
@@ -416,14 +414,22 @@ def test_commit_hooks_respected(tmp_path_factory):
             """\
             Line 1: hello world
             Line 2: grow up
+            <<<<<<< modified
+            Line 2.5: make friends
+            Line 3: grog
+            =======
             Line 3: study
+            >>>>>>> new upstream
             Line 4: grow old
             Line 4.5: no more work
             Line 5: bye bye world
             """
         )
-        # This time a .rej file is unavoidable
-        assert Path(f"{life}.rej").is_file()
+
+        # Assert the conflict is detected by precommit
+        with pytest.raises(ProcessExecutionError) as execution_error:
+            git("commit", "-am", "re-updated to change values after evolving")
+        assert 'Merge conflict string "<<<<<<< "' in execution_error.value.stderr
 
 
 def test_skip_update(tmp_path_factory):

@@ -22,25 +22,18 @@ other git ref you want.
 
 When updating, Copier will do its best to respect your project evolution by using the
 answers you provided when copied last time. However, sometimes it's impossible for
-Copier to know what to do with a diff code hunk. In those cases, you will find `*.rej`
-files that contain the unresolved diffs. _You should review those manually_ before
-committing.
-
-You probably don't want `*.rej` files in your git history, but if you add them to
-`.gitignore`, some important changes could pass unnoticed to you. That's why the
-recommended way to deal with them is to _not_ add them to add a
-[pre-commit](https://pre-commit.com/) (or equivalent) hook that forbids them, just like
-this:
+Copier to know what to do with a diff code hunk. In those cases, each conflicted files
+will contain the unresolved diffs. _Those conflicts must be reviewed before committing_.
+That's why we recommand to add them to add a [pre-commit](https://pre-commit.com/) (or
+equivalent) hook that detects them, just like this:
 
 ```yaml title=".pre-commit-config.yaml"
 repos:
-    - repo: local
-      hooks:
-          - id: forbidden-files
-            name: forbidden files
-            entry: found copier update rejection files; review them and remove them
-            language: fail
-            files: "\\.rej$"
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+        rev: v4.0.1
+        hooks:
+        - id: check-merge-conflict
+            args: [--assume-in-merge]
 ```
 
 ## Never change the answers file manually

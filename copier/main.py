@@ -1,5 +1,6 @@
 """Main functions and classes, used to generate or update projects."""
 
+import os
 import platform
 import subprocess
 import sys
@@ -8,15 +9,14 @@ from dataclasses import asdict, field, replace
 from functools import partial
 from itertools import chain
 from pathlib import Path
-from shutil import rmtree
+from shutil import copyfile, copytree, rmtree
 from typing import Callable, Iterable, List, Mapping, Optional, Sequence
 from unicodedata import normalize
 
 import pathspec
 from jinja2.loaders import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
-from plumbum import ProcessExecutionError, colors
-from plumbum.cli.terminal import ask
+from plumbum import colors
 from plumbum.cmd import git
 from plumbum.machines import local
 from pydantic.dataclasses import dataclass
@@ -218,10 +218,7 @@ class Worker:
         return spec.match_file
 
     def _solve_render_conflict(self, dst_relpath: Path):
-        """Properly solve render conflicts.
-
-        It can ask the user if running in interactive mode.
-        """
+        """Properly solve render conflicts."""
         assert not dst_relpath.is_absolute()
         printf(
             "conflict",
@@ -239,16 +236,8 @@ class Worker:
                 file_=sys.stderr,
             )
             return False
-        if self.overwrite or dst_relpath == self.answers_relpath:
-            printf(
-                "overwrite",
-                dst_relpath,
-                style=Style.WARNING,
-                quiet=self.quiet,
-                file_=sys.stderr,
-            )
-            return True
-        return bool(ask(f" Overwrite {dst_relpath}?", default=True))
+
+        return True
 
     def _render_allowed(
         self,
@@ -657,26 +646,31 @@ class Worker:
             print(
                 f"Updating to template version {self.template.version}", file=sys.stderr
             )
+
         # Copy old template into a temporary destination
-        with TemporaryDirectory(prefix=f"{__name__}.update_diff.") as dst_temp:
-            old_worker = replace(
+        with TemporaryDirectory(
+            prefix=f"{__name__}.update_diff.reference."
+        ) as reference_dst_temp, TemporaryDirectory(
+            prefix=f"{__name__}.update_diff.original."
+        ) as original_dst_temp, TemporaryDirectory(
+            prefix=f"{__name__}.update_diff.merge."
+        ) as merge_dst_temp:
+            # Copy reference to be used as base by merge-file
+            copytree(self.dst_path, reference_dst_temp, dirs_exist_ok=True)
+
+            # Compute modification from the original template to be used as other by merge-file
+            original_worker = replace(
                 self,
-                dst_path=dst_temp,
+                dst_path=original_dst_temp,
                 data=self.subproject.last_answers,
                 defaults=True,
                 quiet=True,
                 src_path=self.subproject.template.url,
                 vcs_ref=self.subproject.template.commit,
             )
-            old_worker.run_copy()
-            # Extract diff between temporary destination and real destination
-            with local.cwd(dst_temp):
-                subproject_top = git(
-                    "-C",
-                    self.subproject.local_abspath.absolute(),
-                    "rev-parse",
-                    "--show-toplevel",
-                ).strip()
+            original_worker.run_copy()
+            # Apply pre-commit hooks if provided by .git
+            with local.cwd(original_dst_temp):
                 git("init", retcode=None)
                 git("add", ".")
                 git("config", "user.name", "Copier")
@@ -686,37 +680,57 @@ class Worker:
                 git("commit", "--allow-empty", "-am", "dumb commit 2")
                 git("config", "--unset", "user.name")
                 git("config", "--unset", "user.email")
-                git("remote", "add", "real_dst", "file://" + subproject_top)
-                git("fetch", "--depth=1", "real_dst", "HEAD")
-                diff_cmd = git["diff-tree", "--unified=1", "HEAD...FETCH_HEAD"]
-                try:
-                    diff = diff_cmd("--inter-hunk-context=-1")
-                except ProcessExecutionError:
-                    print(
-                        colors.warn
-                        | "Make sure Git >= 2.24 is installed to improve updates.",
-                        file=sys.stderr,
-                    )
-                    diff = diff_cmd("--inter-hunk-context=0")
-        # Run pre-migration tasks
-        self._execute_tasks(
-            self.template.migration_tasks("before", self.subproject.template)
-        )
-        # Clear last answers cache to load possible answers migration
-        with suppress(AttributeError):
-            del self.answers
-        with suppress(AttributeError):
-            del self.subproject.last_answers
-        # Do a normal update in final destination
-        self.run_copy()
-        # Try to apply cached diff into final destination
-        with local.cwd(self.subproject.local_abspath):
-            apply_cmd = git["apply", "--reject", "--exclude", self.answers_relpath]
-            for skip_pattern in chain(
-                self.skip_if_exists, self.template.skip_if_exists
-            ):
-                apply_cmd = apply_cmd["--exclude", skip_pattern]
-            (apply_cmd << diff)(retcode=None)
+
+            # Run pre-migration tasks
+            self._execute_tasks(
+                self.template.migration_tasks("before", self.subproject.template)
+            )
+            # Clear last answers cache to load possible answers migration
+            with suppress(AttributeError):
+                del self.answers
+            with suppress(AttributeError):
+                del self.subproject.last_answers
+            # Do a normal update in final destination
+            self.run_copy()
+
+            # Extract the list of files to merge
+            participating_files: set[Path] = set()
+            for src_dir in (original_dst_temp, reference_dst_temp):
+                for root, dirs, files in os.walk(src_dir, topdown=True):
+                    if root == src_dir and ".git" in dirs:
+                        dirs.remove(".git")
+                    root = Path(root).relative_to(src_dir)
+                    participating_files.update(Path(root, f) for f in files)
+
+            # Merging files
+            for basename in sorted(participating_files):
+                subfile_names = []
+                for subfile_kind, src_dir in [
+                    ("modified", reference_dst_temp),
+                    ("old upstream", original_dst_temp),
+                    ("new upstream", self.dst_path),
+                ]:
+                    path = Path(src_dir, basename)
+                    if path.is_file():
+                        copyfile(path, Path(merge_dst_temp, subfile_kind))
+                    else:
+                        subfile_kind = os.devnull
+                    subfile_names.append(subfile_kind)
+
+                with local.cwd(merge_dst_temp):
+                    output = git("merge-file", "-p", *subfile_names, retcode=None)
+
+                dest_path = Path(self.dst_path, basename)
+                # Remove the file if it was already removed in the project
+                if not output and "modified" not in subfile_names:
+                    try:
+                        dest_path.unlink()
+                    except FileNotFoundError:
+                        pass
+                else:
+                    dest_path.parent.mkdir(parents=True, exist_ok=True)
+                    dest_path.write_text(output)
+
         # Run post-migration tasks
         self._execute_tasks(
             self.template.migration_tasks("after", self.subproject.template)
