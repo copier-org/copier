@@ -937,7 +937,7 @@ docs = ["mkdocs-material", "mkdocstrings"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7,<4.0"
-content-hash = "df26970f5d1d74f8d744c1e392e4f1027505cdd115036e27596a235c03a68147"
+content-hash = "d5cd087af9dbcc862de7dc7651fc3ae3dc3f1434607b1c4817fdb500cb38f4b3"
 
 [metadata.files]
 astunparse = [
