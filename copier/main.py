@@ -6,11 +6,12 @@ import subprocess
 import sys
 from contextlib import suppress
 from dataclasses import asdict, field, replace
+from distutils.dir_util import copy_tree
 from functools import partial
 from itertools import chain
 from pathlib import Path
-from shutil import copyfile, copytree, rmtree
-from typing import Callable, Iterable, List, Mapping, Optional, Sequence
+from shutil import copyfile, rmtree
+from typing import Callable, Iterable, List, Mapping, Optional, Sequence, Set
 from unicodedata import normalize
 
 import pathspec
@@ -40,8 +41,22 @@ from .user_data import DEFAULT_DATA, AnswersMap, Question
 # HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
 if sys.version_info >= (3, 8):
     from functools import cached_property
+
 else:
     from backports.cached_property import cached_property
+
+# Backport of `shutil.copytree` for python 3.7 to accept `dirs_exist_ok` argument
+if sys.version_info <= (3, 8):
+    from shutil import copytree
+else:
+    from distutils.dir_util import copy_tree
+
+    def copytree(src: Path, dst: Path, dirs_exist_ok: bool = False):
+        """Backport of `shutil.copytree` with `dirs_exist_ok` argument.
+
+        Can be remove once python 3.7 dropped.
+        """
+        copy_tree(str(src), str(dst))
 
 
 @dataclass
@@ -694,7 +709,7 @@ class Worker:
             self.run_copy()
 
             # Extract the list of files to merge
-            participating_files: set[Path] = set()
+            participating_files: Set[Path] = set()
             for src_dir in (original_dst_temp, reference_dst_temp):
                 for root, dirs, files in os.walk(src_dir, topdown=True):
                     if root == src_dir and ".git" in dirs:

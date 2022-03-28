@@ -30,9 +30,9 @@ equivalent) hook that detects them, just like this:
 ```yaml title=".pre-commit-config.yaml"
 repos:
     - repo: https://github.com/pre-commit/pre-commit-hooks
-        rev: v4.0.1
-        hooks:
-        - id: check-merge-conflict
+      rev: v4.0.1
+      hooks:
+          - id: check-merge-conflict
             args: [--assume-in-merge]
 ```
 
