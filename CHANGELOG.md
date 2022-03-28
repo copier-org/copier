@@ -52,6 +52,8 @@ Summary:
 -   Changed `--force` to be the same as `--defaults --overwrite`.
 -   Copied files will reflect permissions on the same files in the template.
 -   Copier now uses `git clone --filter=blob:none` when cloning, to be faster.
+-   Improved `copier update` conficts resolution by replacing the `.rej` files by merge
+    markers put in the destination file directly.
 
 ### Deprecated
 
