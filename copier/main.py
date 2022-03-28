@@ -6,7 +6,6 @@ import subprocess
 import sys
 from contextlib import suppress
 from dataclasses import asdict, field, replace
-from distutils.dir_util import copy_tree
 from functools import partial
 from itertools import chain
 from pathlib import Path
