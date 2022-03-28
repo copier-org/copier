@@ -220,7 +220,6 @@ def test_updatediff(tmp_path_factory):
                 _src_path: {bundle}
                 author_name: Guybrush
                 project_name: to become a pirate\n
-                >>>>>>> new upstream
             """
         )
         assert readme.read_text() == dedent(
