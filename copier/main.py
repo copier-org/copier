@@ -45,7 +45,7 @@ else:
     from backports.cached_property import cached_property
 
 # Backport of `shutil.copytree` for python 3.7 to accept `dirs_exist_ok` argument
-if sys.version_info <= (3, 8):
+if sys.version_info >= (3, 8):
     from shutil import copytree
 else:
     from distutils.dir_util import copy_tree
