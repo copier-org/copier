@@ -72,7 +72,7 @@ jobs:
       - name: Run pytest
         run: poetry run poe test --cov=./ --cov-report=xml -ra .
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2.1.0
+        uses: codecov/codecov-action@v3
         env:
           OS: ${{ matrix.os }}
           PYTHON: ${{ matrix.python-version }}
