@@ -15,6 +15,7 @@ from typing import Any, Callable, Optional, TextIO, Tuple, Union
 
 import colorama
 from packaging.version import Version
+from plumbum import colors
 from pydantic import StrictBool
 
 from .types import IntSeq, StrSeq
@@ -188,23 +189,21 @@ def is_binary(content: bytes) -> bool:
     return b"\x00" in content or b"\xff" in content
 
 
-def color_print(color: int, msg: str):
-    print(f"{color}{msg}{colorama.Fore.RESET}")
-
-
 def print_diff(dst_relpath: Path, original_content: bytes, new_content: bytes):
     try:
         original_lines = get_lines(original_content)
     except Exception:
-        color_print(
-            colorama.Fore.YELLOW, "diff unavailable: unable to determine encoding"
+        print(
+            colors.warn
+            | f"diff unavailable: unable to determine encoding of {dst_relpath}"
         )
         return
     try:
         new_lines = get_lines(new_content)
     except Exception:
-        color_print(
-            colorama.Fore.YELLOW, "diff unavailable: unable to determine encoding"
+        print(
+            colors.warn
+            | f"diff unavailable: unable to determine encoding of {dst_relpath}"
         )
         return
 
@@ -217,12 +216,13 @@ def print_diff(dst_relpath: Path, original_content: bytes, new_content: bytes):
         lineterm="",
     ):
         if line.startswith("---") or line.startswith("+++"):
-            color_print(colorama.Fore.YELLOW, f"{indent}{line}")
+            color = colors.yellow
         elif line.startswith("@@"):
-            color_print(colorama.Fore.MAGENTA, f"{indent}{line}")
+            color = colors.magenta
         elif line.startswith("-"):
-            color_print(colorama.Fore.RED, f"{indent}{line}")
+            color = colors.red
         elif line.startswith("+"):
-            color_print(colorama.Fore.GREEN, f"{indent}{line}")
+            color = colors.green
         else:
-            print(f"{indent}{line}")
+            color = colors.do_nothing
+        print(color | f"{indent}{line}")

@@ -12,7 +12,6 @@ from shutil import rmtree
 from typing import Callable, Iterable, List, Mapping, Optional, Sequence
 from unicodedata import normalize
 
-import colorama
 import pathspec
 from jinja2.loaders import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
@@ -27,7 +26,7 @@ from questionary import unsafe_prompt
 from .errors import CopierAnswersInterrupt, ExtensionNotFoundError, UserMessageError
 from .subproject import Subproject
 from .template import Template
-from .tools import Style, TemporaryDirectory, color_print, is_binary, print_diff, printf
+from .tools import Style, TemporaryDirectory, is_binary, print_diff, printf
 from .types import (
     AnyByStrDict,
     JSONSerializable,
@@ -263,7 +262,7 @@ class Worker:
             return True
         if self.diff and original_content and new_content:
             if is_binary(original_content) or is_binary(new_content):
-                color_print(colorama.Fore.YELLOW, "    diff not availalbe for binaries")
+                print(colors.warn | "    diff not availalbe for binaries")
             else:
                 print_diff(dst_relpath, original_content, new_content)
         return bool(ask(f" Overwrite {dst_relpath}?", default=True))
