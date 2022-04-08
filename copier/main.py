@@ -215,6 +215,7 @@ class Worker:
             _copier_answers=self._answers_to_remember(),
             _copier_conf=conf,
             _folder_name=self.subproject.local_abspath.name,
+            _copier_python=sys.executable,
         )
 
     def _path_matcher(self, patterns: Iterable[str]) -> Callable[[Path], bool]:
@@ -372,6 +373,11 @@ class Worker:
             except KeyboardInterrupt as err:
                 raise CopierAnswersInterrupt(result, question, self.template) from err
             previous_answer = result.combined.get(question.var_name)
+            # If question was skipped and it's the 1st
+            # run, you could be getting a raw templated value
+            default_answer = result.default.get(question.var_name)
+            if new_answer == default_answer:
+                new_answer = question.render_value(default_answer)
             if new_answer != previous_answer:
                 result.user[question.var_name] = new_answer
         return result
@@ -605,11 +611,14 @@ class Worker:
         See [generating a project][generating-a-project].
         """
         was_existing = self.subproject.local_abspath.exists()
-        if not self.quiet:
-            # TODO Unify printing tools
-            print("")  # padding space
         src_abspath = self.template_copy_root
         try:
+            if not self.quiet:
+                # TODO Unify printing tools
+                print(
+                    f"\nCopying from template version {self.template.version}",
+                    file=sys.stderr,
+                )
             self._render_folder(src_abspath)
             if not self.quiet:
                 # TODO Unify printing tools
@@ -662,6 +671,11 @@ class Worker:
             raise UserMessageError(
                 f"Your are downgrading from {self.subproject.template.version} to {self.template.version}. "
                 "Downgrades are not supported."
+            )
+        if not self.quiet:
+            # TODO Unify printing tools
+            print(
+                f"Updating to template version {self.template.version}", file=sys.stderr
             )
         # Copy old template into a temporary destination
         with TemporaryDirectory(prefix=f"{__name__}.update_diff.") as dst_temp:

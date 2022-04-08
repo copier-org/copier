@@ -27,6 +27,7 @@ nav:
 theme:
   name: material
   features:
+    - content.code.annotate
     - navigation.top
     - navigation.tracking
   palette:
@@ -48,9 +49,6 @@ theme:
 extra_css:
   - css/mkdocstrings.css
 
-extra_javascript:
-  - js/refresh_on_theme_switch.js
-
 markdown_extensions:
   - admonition
   - codehilite:
@@ -59,7 +57,7 @@ markdown_extensions:
       custom_fences:
         - name: mermaid
           class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_div_format
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.emoji
   - pymdownx.magiclink
   - toc:
@@ -69,12 +67,6 @@ markdown_extensions:
 plugins:
   - autorefs
   - search
-  - mermaid2:
-      arguments:
-        theme: |
-          ^(JSON.parse(__md_get("__palette").index == 1)) ? 'dark' : 'light'
-        flowchart:
-          curve: basis
   - mkdocstrings:
       watch:
         - copier

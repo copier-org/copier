@@ -132,10 +132,44 @@ Supported keys:
 -   **multiline**: When set to `true`, it allows multiline input. This is especially
     useful when `type` is `json` or `yaml`.
 
--   **when**: Condition that, if `false`, skips the question. If it is a boolean, it is
-    used directly (although it's a bit absurd in that case). If it is a string, it is
-    converted to boolean using a parser similar to YAML, but only for boolean values.
+-   **when**: Condition that, if `false`, skips the question.
+
+    If it is a boolean, it is used directly, but it's a bit absurd in that case.
+
+    If it is a string, it is converted to boolean using a parser similar to YAML, but
+    only for boolean values.
+
     This is most useful when [templated](#prompt-templating).
+
+    If a question is skipped, its answer will be:
+
+    -   The default value, if you're generating the project for the 1st time.
+    -   The last answer recorded, if you're updating the project.
+
+    !!! example
+
+        ```yaml title="copier.yaml"
+        project_creator:
+            type: str
+
+        project_license:
+            type: str
+            choices:
+                - GPLv3
+                - Public domain
+
+        copyright_holder:
+            type: str
+            default: |-
+                {% if project_license == 'Public domain' -%}
+                    {#- Nobody owns public projects -#}
+                    nobody
+                {%- else -%}
+                    {#- By default, project creator is the owner -#}
+                    {{ project_creator }}
+                {%- endif %}
+            # Only ask for copyright if project is not in the public domain
+            when: "{{ project_license != 'Public domain' }}"
 
 !!! example
 
@@ -411,7 +445,8 @@ Remember that **the key must be prefixed with an underscore if you use it in
 -   CLI flags: `-a`, `--answers-file`
 -   Default value: `.copier-answers.yml`
 
-File where answers will be recorded by default.
+Path to a file where answers will be recorded by default. The path must be relative to
+the project root.
 
 !!! tip
 
@@ -537,7 +572,7 @@ The CLI option can be passed several times to add several patterns.
     Instead, CLI/API definitions **will extend** those from `copier.yml`.
 
 
-    !!! example Example CLI usage to copy only a single file from the template
+    !!! example "Example CLI usage to copy only a single file from the template"
 
         ```sh
         copier --exclude '*' --exclude '!file-i-want' copy ./template ./destination
@@ -829,6 +864,71 @@ This allows you to keep separate the template metadata and the template code.
     _subdirectory: template
     ```
 
+!!! question "Can I have multiple templates in a single repo using this option?"
+
+    The Copier recommendation is: **1 template = 1 git repository**.
+
+    Why? Unlike almost all other templating engines, Copier supports
+    [smart project updates](updating.md). For that, Copier needs to know in which version it
+    was copied last time, and to which version you are evolving. Copier gets that
+    information from git tags. Git tags are shared across the whole git repository. Using a
+    repository to host multiple templates would lead to many corner case situations that we
+    don't want to support.
+
+    So, in Copier, the subdirectory option is just there to let template owners separate
+    templates metadata from template source code. This way, for example, you can have
+    different dotfiles for you template and for the projects it generates.
+
+    !!! example "Example project with different `.gitignore` files"
+
+
+        ```bash title="Project layout"
+        📁 my_copier_template
+        ├── 📄 copier.yml       # (1)
+        ├── 📄 .gitignore       # (2)
+        └── 📁 template         # (3)
+            └── 📄 .gitignore   # (4)
+        ```
+
+        1.  Same contents as the example above.
+        2.  Ignore instructions for the template repo.
+        3.  The configured template subdirectory.
+        4.  Ignore instructions for projects generated with the template.
+
+    However, it is true that the value of this option can itself be templated. This would
+    let you have different templates that all use the same questionary, and the used
+    template would be saved as an answer. It would let the user update safely and change
+    that option in the future.
+
+    !!! example
+
+        With this questions file and this directory structure, the user will be prompted which
+        python engine to use, and the project will be generated using the subdirectory whose
+        name matches the answer from the user:
+
+        ```yaml title="copier.yaml"
+        _subdirectory: "{{ python_engine }}"
+        python_engine:
+            type: str
+            choices:
+                - poetry
+                - pipenv
+        ```
+
+        ```bash title="Project layout"
+        📁 my_copier_template
+        ├── 📄 copier.yaml # (1)
+        ├── 📁 poetry
+        │   ├── 📄 {{ _copier_conf.answers_file }}.jinja # (2)
+        │   └── 📄 pyproject.toml.jinja
+        └── 📁 pipenv
+        │   ├── 📄 {{ _copier_conf.answers_file }}.jinja
+            └── 📄 Pipfile.jinja
+        ```
+
+        1.  The configuration from the previous example snippet.
+        2.  See [the answers file docs][the-copier-answersyml-file] to understand.
+
 ### `tasks`
 
 -   Format: `List[str|List[str]]`
@@ -852,6 +952,8 @@ _tasks:
     - [invoke, "--search-root={{ _copier_conf.src_path }}", after-copy]
     # You are able to output the full conf to JSON, to be parsed by your script
     - [invoke, end-process, "--full-conf={{ _copier_conf|to_json }}"]
+    # Your script can be run by the same python environment used to run copier
+    - ["{{ _copier_python }}", task.py]
 ```
 
 ### `templates_suffix`
@@ -987,6 +1089,12 @@ declared as user questions in [the `copier.yml` file](#the-copieryml-file).
 As you can see, you also have the power to customize what will be logged here. Keys that
 start with an underscore (`_`) are specific to Copier. Other keys should match questions
 in `copier.yml`.
+
+The path to the answers file must be expressed relative to the project root, because:
+
+-   Its value must be available at render time.
+-   It is used to update projects, and for that a project must be git-tracked. So, the
+    file must be in the repo anyway.
 
 ### Applying multiple templates to the same subproject
 

@@ -33,6 +33,8 @@ Summary:
 -   Support for `user_defaults`, which take precedence over template defaults.
 -   Copy dirty changes from a git-tracked template to the project by default, to make
     testing easier.
+-   Advertise clearly which version is being copied or updated in the CLI.
+-   Add jinja variable `_copier_python` to provide python `sys.executable`.
 
 ### Changed
 
