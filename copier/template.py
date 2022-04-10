@@ -462,7 +462,7 @@ class Template:
             # PEP440 version, because it has the format "<tag>-<count>-g<hash>"
             if re.match(r"^.+-\d+-g\w+$", self.commit):
                 base, count, git_hash = self.commit.rsplit("-", 2)
-                return Version(f"{base}.dev{count}+{git_hash}")
+                return Version(f"{base}.post{count}+{git_hash}")
         # If we get here, the commit string is a tag, so we can safely expect
         # it's a valid PEP440 version
         return Version(self.commit)

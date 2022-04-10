@@ -427,6 +427,40 @@ def test_commit_hooks_respected(tmp_path_factory):
         assert Path(f"{life}.rej").is_file()
 
 
+def test_update_from_tagged_to_head(src_repo, tmp_path):
+    # Build a template
+    with local.cwd(src_repo):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+                "example": "1",
+            }
+        )
+        git("add", "-A")
+        git("commit", "-m1")
+        # Publish v1 release
+        git("tag", "v1")
+        # New commit, no release
+        build_file_tree({"example": "2"})
+        git("commit", "-am2")
+        sha = git("rev-parse", "--short", "HEAD").strip()
+    # Copy it without specifying version
+    run_copy(src_path=str(src_repo), dst_path=tmp_path)
+    example = tmp_path / "example"
+    answers_file = tmp_path / ".copier-answers.yml"
+    assert example.read_text() == "1"
+    assert yaml.safe_load(answers_file.read_text())["_commit"] == "v1"
+    # Build repo on copy
+    with local.cwd(tmp_path):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m3")
+    # Update project, it must let us do it
+    run_update(tmp_path, vcs_ref="HEAD", defaults=True, overwrite=True)
+    assert example.read_text() == "2"
+    assert yaml.safe_load(answers_file.read_text())["_commit"] == f"v1-1-g{sha}"
+
+
 def test_skip_update(tmp_path_factory):
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     with local.cwd(src):
