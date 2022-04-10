@@ -1,5 +1,6 @@
 import platform
 from pathlib import Path
+from shutil import rmtree
 from textwrap import dedent
 from typing import Optional
 
@@ -500,3 +501,74 @@ def test_overwrite_answers_file_always(
     assert answers["question_1"] is True
     assert answers["_commit"] == "2"
     assert (dst / "answer_1").read_text() == "True"
+
+
+def test_file_removed(src_repo, tmp_path):
+    # Add a file in the template repo
+    with local.cwd(src_repo):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "1.txt": "content 1",
+                Path("dir 2", "2.txt"): "content 2",
+                Path("dir 3", "subdir 3", "3.txt"): "content 3",
+                Path("dir 4", "subdir 4", "4.txt"): "content 4",
+                Path("dir 5", "subdir 5", "5.txt"): "content 5",
+            }
+        )
+        git("add", "-A")
+        git("commit", "-m1")
+        git("tag", "1")
+    # Copy in subproject
+    with local.cwd(tmp_path):
+        git("init")
+        run_copy(str(src_repo))
+        # Subproject has an extra file
+        build_file_tree(
+            {
+                "I.txt": "content I",
+                Path("dir II", "II.txt"): "content II",
+                Path("dir 3", "subdir III", "III.txt"): "content III",
+                Path("dir 4", "subdir 4", "IV.txt"): "content IV",
+            }
+        )
+        git("add", "-A")
+        git("commit", "-m2")
+    # All files exist
+    assert tmp_path.joinpath(".copier-answers.yml").is_file()
+    assert tmp_path.joinpath("1.txt").is_file()
+    assert tmp_path.joinpath("dir 2", "2.txt").is_file()
+    assert tmp_path.joinpath("dir 3", "subdir 3", "3.txt").is_file()
+    assert tmp_path.joinpath("dir 4", "subdir 4", "4.txt").is_file()
+    assert tmp_path.joinpath("dir 5", "subdir 5", "5.txt").is_file()
+    assert tmp_path.joinpath("I.txt").is_file()
+    assert tmp_path.joinpath("dir II", "II.txt").is_file()
+    assert tmp_path.joinpath("dir 3", "subdir III", "III.txt").is_file()
+    assert tmp_path.joinpath("dir 4", "subdir 4", "IV.txt").is_file()
+    # Template removes file 1
+    with local.cwd(src_repo):
+        Path("1.txt").unlink()
+        rmtree("dir 2")
+        rmtree("dir 3")
+        rmtree("dir 4")
+        rmtree("dir 5")
+        build_file_tree({"6.txt": "content 6"})
+        git("add", "-A")
+        git("commit", "-m3")
+        git("tag", "2")
+    # Subproject updates
+    with local.cwd(tmp_path):
+        run_update()
+    # Check what must still exist
+    assert tmp_path.joinpath(".copier-answers.yml").is_file()
+    assert tmp_path.joinpath("I.txt").is_file()
+    assert tmp_path.joinpath("dir II", "II.txt").is_file()
+    assert tmp_path.joinpath("dir 3", "subdir III", "III.txt").is_file()
+    assert tmp_path.joinpath("dir 4", "subdir 4", "IV.txt").is_file()
+    assert tmp_path.joinpath("6.txt").is_file()
+    # Check what must not exist
+    assert not tmp_path.joinpath("1.txt").exists()
+    assert not tmp_path.joinpath("dir 2").exists()
+    assert not tmp_path.joinpath("dir 3", "subdir 3").exists()
+    assert not tmp_path.joinpath("dir 4", "subdir 4", "4.txt").exists()
+    assert not tmp_path.joinpath("dir 5").exists()
