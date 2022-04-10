@@ -1,9 +1,19 @@
 import platform
 import sys
+from pathlib import Path
 
 import pytest
 from coverage.tracer import CTracer
 from pexpect.popen_spawn import PopenSpawn
+from plumbum.cmd import git
+
+
+@pytest.fixture
+def src_repo(tmp_path_factory) -> Path:
+    """Quick helper to avoid creating template repo constantly."""
+    result = tmp_path_factory.mktemp("src_repo")
+    git("-C", result, "init")
+    return result
 
 
 @pytest.fixture

@@ -5,6 +5,7 @@ import subprocess
 import sys
 from contextlib import suppress
 from dataclasses import asdict, field, replace
+from filecmp import dircmp
 from functools import partial
 from itertools import chain
 from pathlib import Path
@@ -658,19 +659,33 @@ class Worker:
                 f"Updating to template version {self.template.version}", file=sys.stderr
             )
         # Copy old template into a temporary destination
-        with TemporaryDirectory(prefix=f"{__name__}.update_diff.") as dst_temp:
+        with TemporaryDirectory(
+            prefix=f"{__name__}.update_diff."
+        ) as old_copy, TemporaryDirectory(
+            prefix=f"{__name__}.recopy_diff."
+        ) as new_copy:
             old_worker = replace(
                 self,
-                dst_path=dst_temp,
+                dst_path=old_copy,
                 data=self.subproject.last_answers,
                 defaults=True,
                 quiet=True,
                 src_path=self.subproject.template.url,
                 vcs_ref=self.subproject.template.commit,
             )
+            recopy_worker = replace(
+                self,
+                dst_path=new_copy,
+                data=self.subproject.last_answers,
+                defaults=True,
+                quiet=True,
+                src_path=self.subproject.template.url,
+            )
             old_worker.run_copy()
+            recopy_worker.run_copy()
+            compared = dircmp(old_copy, new_copy)
             # Extract diff between temporary destination and real destination
-            with local.cwd(dst_temp):
+            with local.cwd(old_copy):
                 subproject_top = git(
                     "-C",
                     self.subproject.local_abspath.absolute(),
@@ -698,25 +713,29 @@ class Worker:
                         file=sys.stderr,
                     )
                     diff = diff_cmd("--inter-hunk-context=0")
-        # Run pre-migration tasks
-        self._execute_tasks(
-            self.template.migration_tasks("before", self.subproject.template)
-        )
-        # Clear last answers cache to load possible answers migration
-        with suppress(AttributeError):
-            del self.answers
-        with suppress(AttributeError):
-            del self.subproject.last_answers
-        # Do a normal update in final destination
-        self.run_copy()
-        # Try to apply cached diff into final destination
-        with local.cwd(self.subproject.local_abspath):
-            apply_cmd = git["apply", "--reject", "--exclude", self.answers_relpath]
-            for skip_pattern in chain(
-                self.skip_if_exists, self.template.skip_if_exists
-            ):
-                apply_cmd = apply_cmd["--exclude", skip_pattern]
-            (apply_cmd << diff)(retcode=None)
+            # Run pre-migration tasks
+            self._execute_tasks(
+                self.template.migration_tasks("before", self.subproject.template)
+            )
+            # Clear last answers cache to load possible answers migration
+            with suppress(AttributeError):
+                del self.answers
+            with suppress(AttributeError):
+                del self.subproject.last_answers
+            # Do a normal update in final destination
+            self.run_copy()
+            # Try to apply cached diff into final destination
+            with local.cwd(self.subproject.local_abspath):
+                apply_cmd = git["apply", "--reject", "--exclude", self.answers_relpath]
+                for skip_pattern in chain(
+                    self.skip_if_exists, self.template.skip_if_exists
+                ):
+                    apply_cmd = apply_cmd["--exclude", skip_pattern]
+                (apply_cmd << diff)(retcode=None)
+
+            # Trigger recursive removal of deleted files in last template version
+            _remove_old_files(self.subproject.local_abspath, compared)
+
         # Run post-migration tasks
         self._execute_tasks(
             self.template.migration_tasks("after", self.subproject.template)
@@ -775,3 +794,50 @@ def run_auto(
     if src_path is None:
         return run_update(dst_path, data, **kwargs)
     return run_copy(src_path, dst_path, data, **kwargs)
+
+
+def _remove_old_files(prefix: Path, cmp: dircmp, rm_common: bool = False):
+    """Remove files and directories only found in "old" template.
+
+    This is an internal helper method used to process a comparison of 2
+    directories, where the left one is considered the "old" one, and the
+    right one is the "new" one.
+
+    Then, it will recursively try to remove anything that is only in the old
+    directory.
+
+    Args:
+        prefix:
+            Where we start removing. It can be different from the directories
+            being compared.
+        cmp:
+            The comparison result.
+        rm_common:
+            Should we remove common files and directories?
+    """
+    # Gather files and dirs to remove
+    to_rm = []
+    subdirs = {}
+    with suppress(NotADirectoryError, FileNotFoundError):
+        to_rm = cmp.left_only
+        if rm_common:
+            to_rm += cmp.common_files + cmp.common_dirs
+        subdirs = cmp.subdirs
+    # Remove files found only in old template copy
+    for name in to_rm:
+        target = prefix / name
+        if target.is_file():
+            target.unlink()
+        else:
+            # Recurse in dirs totally removed in latest template
+            _remove_old_files(target, dircmp(Path(cmp.left, name), target), True)
+            # Remove subdir if it ends empty
+            with suppress(OSError):
+                target.rmdir()  # Raises if dir not empty
+    # Recurse
+    for key, value in subdirs.items():
+        subdir = prefix / key
+        _remove_old_files(subdir, value)
+        # Remove subdir if it ends empty
+        with suppress(OSError):
+            subdir.rmdir()  # Raises if dir not empty
