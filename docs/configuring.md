@@ -1149,7 +1149,7 @@ class ContextUpdater(ContextHook):
 ```
 
 Before rendering each templated file/folder, the context will be updated with this
-`new_context` object that you return from the hook. If you wish to update the context
+new context object that you return from the hook. If you wish to update the context
 in-place rather than update it, set the `update` class attribute to false:
 
 ```python title="extensions/context.py"
@@ -1160,18 +1160,21 @@ class ContextUpdater(ContextHook):
     update = False
 
     def hook(self, context):
-        context["isDocker"] = context["flavor"] == "docker"
-        context["isK8s"] = context["flavor"] == "kubernetes"
-        context["isInstances"] = context["flavor"] == "instances"
-        context["isLite"] = context["flavor"] == "none"
+        flavor = context["flavor"]
 
-        context["isNotDocker"] = context["flavor"] != "docker"
-        context["isNotK8s"] = context["flavor"] != "kubernetes"
-        context["isNotInstances"] = context["flavor"] != "instances"
-        context["isNotLite"] = context["flavor"] != "none"
+        context["isDocker"] = flavor == "docker"
+        context["isK8s"] = flavor == "kubernetes"
+        context["isInstances"] = flavor == "instances"
+        context["isLite"] = flavor == "none"
+
+        context["isNotDocker"] = flavor != "docker"
+        context["isNotK8s"] = flavor != "kubernetes"
+        context["isNotInstances"] = flavor != "instances"
+        context["isNotLite"] = flavor != "none"
 
         context["hasContainers"] = context["isDocker"] or context["isK8s"]
 
+        # you can now actually remove items from the context
         del context["flavor"]
 ```
 
