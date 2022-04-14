@@ -1128,7 +1128,7 @@ _jinja_extensions:
 Following this example, you are supposed to provide a `context.py` file in the
 `extensions` folder at the root of your template. This file contains your context hook:
 
-```python
+```python title="extensions/context.py"
 from copier_templates_extensions import ContextHook
 
 
@@ -1152,7 +1152,7 @@ Before rendering each templated file/folder, the context will be updated with th
 `new_context` object that you return from the hook. If you wish to update the context
 in-place rather than update it, set the `update` class attribute to false:
 
-```python
+```python title="extensions/context.py"
 from copier_templates_extensions import ContextHook
 
 
