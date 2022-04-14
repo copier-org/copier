@@ -699,7 +699,7 @@ on them, so they are always installed when Copier is installed.
             provides a `slugify` filter using
             [python-slugify](https://github.com/un33k/python-slugify).
 
-    -   [`copier_templates_extensions.TemplateExtensionLoader`](https://github.com/pawamoy/copier-templates-extensions):
+    -   [`copier_templates_extensions.TemplateExtensionLoader`](https://github.com/copier-org/copier-templates-extensions):
         enhances the extension loading mecanism to allow templates writers to put their
         extensions directly in their templates. It also allows to modify the context before
         rendering templates, see [using a context hook](#using-a-context-hook).
