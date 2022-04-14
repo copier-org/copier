@@ -701,7 +701,8 @@ on them, so they are always installed when Copier is installed.
 
     -   [`copier_templates_extensions.TemplateExtensionLoader`](https://github.com/pawamoy/copier-templates-extensions):
         enhances the extension loading mecanism to allow templates writers to put their
-        extensions directly in their templates.
+        extensions directly in their templates. It also allows to modify the context before
+        rendering templates, see [using a context hook](#using-a-context-hook).
     -   [`jinja_markdown.MarkdownExtension`](https://github.com/jpsca/jinja-markdown):
         provides a `markdown` tag that will render Markdown to HTML using
         [PyMdown extensions](https://facelessuser.github.io/pymdown-extensions/).
@@ -1034,6 +1035,148 @@ _commit: v1.0.0
 
 By default, copier will copy from the last release found in template git tags, sorted as
 [PEP 440][].
+
+## Augmenting Copier's context before rendering
+
+[TL;DR: Using a context hook](#using-a-context-hook)
+
+Most of the time, only a few questions/answers are needed to render simple templates.
+But as your template grows, both in complexity and functionality, you may find yourself
+in a situation where you need to ask more and more questions to users, and to use more
+and more Jinja conditions in your templated files, making them hard to read and
+maintain.
+
+As it happens, you find that to simplify your template, you would like to be able to add
+or change variables of the Jinja context used to render templated files and folders, as
+it would allow to get rid of some questions that would then become redundant, and would
+not need to be asked to the users anymore.
+
+An example was brought up by a Copier user. Let say you support multiple flavors of
+containerization for Terraform projects generated with your template:
+
+```yaml title="copier.yaml"
+flavor:
+    type: str
+    choices:
+        - Docker
+        - Instances
+        - Kubernetes
+        - None
+```
+
+You generate different files depending on users answers:
+
+```
+.
+├── {% if flavor == 'docker' %}ecs{% endif %}
+├── {% if flavor == 'kubernetes' %}eks{% endif %}
+├── {% if flavor == 'instance' %}bastion{% endif %}
+├── {% if flavor == 'docker' or flavor == 'kubernetes' %}portainer{% endif %}
+└── {% if flavor != 'none' %}vpc{% endif %}
+```
+
+Each of these folders then have multiple templated files that must also repeat again and
+again these Jinja conditions to render the contents correctly.
+
+You can reduce repetitions with
+[macros](https://jinja.palletsprojects.com/en/2.10.x/templates/#macros) or updated
+context objects that you can import from special templated files
+([see issue #229](https://github.com/copier-org/copier/issues/229#issuecomment-661686740)).
+
+It would be easier if you could add variables to the context, like `isDocker`, or
+`hasContainers` when either Docker or Kubernetes was selected. It would make it easier
+to write your templated files and folders since you would just have to use the added
+variables instead of potentially complex Jinja conditions:
+
+```
+.
+├── {% if isDocker %}ecs{% endif %}
+├── {% if isKubernetes %}eks{% endif %}
+├── {% if isInstance %}bastion{% endif %}
+├── {% if hasContainers %}portainer{% endif %}
+└── {% if isLite %}vpc{% endif %}
+```
+
+We have good news for you: this is possible. A Copier/Jinja extension was written
+specially for this use-case:
+[copier-templates-extensions](https://github.com/copier-org/copier-templates-extensions)
+and its
+[`ContextHook` extension](https://github.com/copier-org/copier-templates-extensions#context-hook-extension).
+
+### Using a context hook
+
+The
+[`ContextHook` extension](https://github.com/copier-org/copier-templates-extensions#context-hook-extension)
+lets you modify the context used to render templates, so that you can add, change or
+remove variables.
+
+In order for Copier to be able to load and use the extension when generating a project,
+it must be installed alongside Copier itself. If Copier was installed with pip in a
+virtualenv, just `pip install copier-templates-extensions` as well, and tell your users
+to do the same. If Copier was installed with
+[pipx](https://github.com/pipx-project/pipx), inject it with
+`pipx inject copier copier-templates-extensions`, and tell your users to do the same.
+
+You can then configure your Jinja extensions in Copier's configuration file:
+
+```yaml title="copier.yaml"
+_jinja_extensions:
+    - copier_templates_extensions.TemplateExtensionLoader
+    - extensions/context.py:ContextUpdater
+```
+
+Following this example, you are supposed to provide a `context.py` file in the
+`extensions` folder at the root of your template. This file contains your context hook:
+
+```python
+from copier_templates_extensions import ContextHook
+
+
+class ContextUpdater(ContextHook):
+    def hook(self, context):
+        flavor = context["flavor"]
+        return {
+            "isDocker": flavor == "docker"
+            "isK8s": flavor == "kubernetes"
+            "isInstances": flavor == "instances"
+            "isLite": flavor == "none"
+            "isNotDocker": flavor != "docker"
+            "isNotK8s": flavor != "kubernetes"
+            "isNotInstances": flavor != "instances"
+            "isNotLite": flavor != "none"
+            "hasContainers": flavor in {"docker", "kubernetes"}
+        }
+```
+
+Before rendering each templated file/folder, the context will be updated with this
+`new_context` object that you return from the hook. If you wish to update the context
+in-place rather than update it, set the `update` class attribute to false:
+
+```python
+from copier_templates_extensions import ContextHook
+
+
+class ContextUpdater(ContextHook):
+    update = False
+
+    def hook(self, context):
+        context["isDocker"] = context["flavor"] == "docker"
+        context["isK8s"] = context["flavor"] == "kubernetes"
+        context["isInstances"] = context["flavor"] == "instances"
+        context["isLite"] = context["flavor"] == "none"
+
+        context["isNotDocker"] = context["flavor"] != "docker"
+        context["isNotK8s"] = context["flavor"] != "kubernetes"
+        context["isNotInstances"] = context["flavor"] != "instances"
+        context["isNotLite"] = context["flavor"] != "none"
+
+        context["hasContainers"] = context["isDocker"] or context["isK8s"]
+
+        del context["flavor"]
+```
+
+Now you can use these added variables in your Jinja templates, and in files and folders
+names!
 
 ## Patterns syntax
 
