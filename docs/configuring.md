@@ -1079,7 +1079,7 @@ Each of these folders then have multiple templated files that must also repeat a
 again these Jinja conditions to render the contents correctly.
 
 You can reduce repetitions with
-[macros](https://jinja.palletsprojects.com/en/2.10.x/templates/#macros) or updated
+[macros](https://jinja.palletsprojects.com/en/3.0.x/templates/#macros) or updated
 context objects that you can import from special templated files
 ([see issue #229](https://github.com/copier-org/copier/issues/229#issuecomment-661686740)).
 
@@ -1111,11 +1111,7 @@ lets you modify the context used to render templates, so that you can add, chang
 remove variables.
 
 In order for Copier to be able to load and use the extension when generating a project,
-it must be installed alongside Copier itself. If Copier was installed with pip in a
-virtualenv, just `pip install copier-templates-extensions` as well, and tell your users
-to do the same. If Copier was installed with
-[pipx](https://github.com/pipx-project/pipx), inject it with
-`pipx inject copier copier-templates-extensions`, and tell your users to do the same.
+it must be installed alongside Copier itself. More details in the [`jinja_extensions` docs](#jinja_extensions).
 
 You can then configure your Jinja extensions in Copier's configuration file:
 
@@ -1148,9 +1144,9 @@ class ContextUpdater(ContextHook):
         }
 ```
 
-Before rendering each templated file/folder, the context will be updated with this
-new context object that you return from the hook. If you wish to update the context
-in-place rather than update it, set the `update` class attribute to false:
+Before rendering each templated file/folder, the context will be updated with this new
+context object that you return from the hook. If you wish to update the context in-place
+rather than update it, set the `update` class attribute to false:
 
 ```python title="extensions/context.py"
 from copier_templates_extensions import ContextHook
