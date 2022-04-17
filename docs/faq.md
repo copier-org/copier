@@ -4,18 +4,19 @@
 
 Similar questions:
 
-- **How can I add/remove variables to/from the rendering context?**
-- **How to infer context variables based on the users answers, without prompting users?**
+-   **How can I add/remove variables to/from the rendering context?**
+-   **How to infer context variables based on the users answers, without prompting
+    users?**
 
 Answer:
 
 **Use the [`ContextHook` extension][context-hook].**
 
-The [`ContextHook` extension][context-hook]
-lets you modify the context used to render templates, so that you can add, change or
-remove variables.
+The [`ContextHook` extension][context-hook] lets you modify the context used to render
+templates, so that you can add, change or remove variables.
 
-[context-hook]: https://github.com/copier-org/copier-templates-extensions#context-hook-extension
+[context-hook]:
+    https://github.com/copier-org/copier-templates-extensions#context-hook-extension
 
 In order for Copier to be able to load and use the extension when generating a project,
 it must be installed alongside Copier itself. More details in the
