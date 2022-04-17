@@ -21,6 +21,7 @@ nav:
       - user_data.py: "reference/user_data.md"
       - vcs.py: "reference/vcs.md"
   - Comparisons: comparisons.md
+  - Frequently Asked Questions: faq.md
   - Contributing: "contributing.md"
   - Changelog: "changelog.md"
 
