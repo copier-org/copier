@@ -284,11 +284,11 @@ test = ["pytest"]
 
 [[package]]
 name = "jinja2"
-version = "3.0.3"
+version = "3.1.1"
 description = "A very fast and expressive template engine."
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
 MarkupSafe = ">=2.0"
@@ -298,7 +298,7 @@ i18n = ["Babel (>=2.7)"]
 
 [[package]]
 name = "jinja2-ansible-filters"
-version = "1.3.0"
+version = "1.3.1"
 description = "A port of Ansible's jinja2 filters without requiring ansible core."
 category = "main"
 optional = false
@@ -383,14 +383,14 @@ mkdocs = ">=1.1"
 
 [[package]]
 name = "mkdocs-material"
-version = "8.2.7"
+version = "8.2.6"
 description = "A Material Design theme for MkDocs"
 category = "main"
 optional = true
 python-versions = ">=3.6"
 
 [package.dependencies]
-jinja2 = ">=2.11.1,<3.1"
+jinja2 = ">=2.11.1"
 markdown = ">=3.2"
 mkdocs = ">=1.2.3"
 mkdocs-material-extensions = ">=1.0"
@@ -937,7 +937,7 @@ docs = ["mkdocs-material", "mkdocstrings"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7,<4.0"
-content-hash = "d5cd087af9dbcc862de7dc7651fc3ae3dc3f1434607b1c4817fdb500cb38f4b3"
+content-hash = "7f62d08bee0d2d45c84bee8a8979041b0376fd7716795be8d8919f25bf3b9f4e"
 
 [metadata.files]
 astunparse = [
@@ -1127,12 +1127,12 @@ iteration-utilities = [
     {file = "iteration_utilities-0.11.0.tar.gz", hash = "sha256:f91f41a2549e9a7e40ff5460fdf9033b6ee5b305d9be77943b63a554534c2a77"},
 ]
 jinja2 = [
-    {file = "Jinja2-3.0.3-py3-none-any.whl", hash = "sha256:077ce6014f7b40d03b47d1f1ca4b0fc8328a692bd284016f806ed0eaca390ad8"},
-    {file = "Jinja2-3.0.3.tar.gz", hash = "sha256:611bb273cd68f3b993fabdc4064fc858c5b47a973cb5aa7999ec1ba405c87cd7"},
+    {file = "Jinja2-3.1.1-py3-none-any.whl", hash = "sha256:539835f51a74a69f41b848a9645dbdc35b4f20a3b601e2d9a7e22947b15ff119"},
+    {file = "Jinja2-3.1.1.tar.gz", hash = "sha256:640bed4bb501cbd17194b3cace1dc2126f5b619cf068a726b98192a0fde74ae9"},
 ]
 jinja2-ansible-filters = [
-    {file = "jinja2-ansible-filters-1.3.0.tar.gz", hash = "sha256:7a4e6f86ffa814841e72d0c3c22c7e727bcb8387d7b85e4224a1181634a361b4"},
-    {file = "jinja2_ansible_filters-1.3.0-py3-none-any.whl", hash = "sha256:afdc47e84c46c2229abdebce670e43762196abfe0f717bcb8cd15656f72297f9"},
+    {file = "jinja2-ansible-filters-1.3.1.tar.gz", hash = "sha256:baa04873c2d31a82df67f5a313988630fb713c625d858226314d283f0b12879a"},
+    {file = "jinja2_ansible_filters-1.3.1-py3-none-any.whl", hash = "sha256:b86419b22199d0d0ab310dd2f19cf4cea094f919444e1d07bd8b6ca3d2283603"},
 ]
 markdown = [
     {file = "Markdown-3.3.5-py3-none-any.whl", hash = "sha256:0d2d09f75cb8d1ffc6770c65c61770b23a61708101f47bda416a002a0edbc480"},
@@ -1197,8 +1197,8 @@ mkdocs-autorefs = [
     {file = "mkdocs_autorefs-0.4.1-py3-none-any.whl", hash = "sha256:a2248a9501b29dc0cc8ba4c09f4f47ff121945f6ce33d760f145d6f89d313f5b"},
 ]
 mkdocs-material = [
-    {file = "mkdocs-material-8.2.7.tar.gz", hash = "sha256:3314d94ccc11481b1a3aa4f7babb4fb2bc47daa2fa8ace2463665952116f409b"},
-    {file = "mkdocs_material-8.2.7-py2.py3-none-any.whl", hash = "sha256:20c13aa0a54841e1f1c080edb0e3573407884e4abea51ee25573061189bec83e"},
+    {file = "mkdocs-material-8.2.6.tar.gz", hash = "sha256:be76ba3e0c0d4482159fc2c00d060dbf22cfb29f25276ebd0db9a0eaf6a18712"},
+    {file = "mkdocs_material-8.2.6-py2.py3-none-any.whl", hash = "sha256:b30b4cfe5b0a74cccf2c75b7127c22cd8d816e6260c9a8708c3baf08c59e6714"},
 ]
 mkdocs-material-extensions = [
     {file = "mkdocs-material-extensions-1.0.3.tar.gz", hash = "sha256:bfd24dfdef7b41c312ede42648f9eb83476ea168ec163b613f9abd12bbfddba2"},
