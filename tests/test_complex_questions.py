@@ -5,9 +5,11 @@ from textwrap import dedent
 
 import pexpect
 import pytest
+import yaml
+from plumbum import local
 from plumbum.cmd import git
 
-from copier import copy, run_update
+from copier import copy, run_auto, run_update
 
 from .helpers import (
     BRACKET_ENVOPS_JSON,
@@ -492,3 +494,43 @@ def test_selection_type_cast(tmp_path_factory, spawn):
         "postgres2": 9.6,
         "postgres3": 10,
     }
+
+
+def test_multi_template_answers(tmp_path_factory):
+    tpl1, tpl2, dst = map(tmp_path_factory.mktemp, map(str, range(3)))
+    # Build 2 templates with different questions and answers file defaults
+    build_file_tree(
+        {
+            tpl1 / "copier.yml": "q1: a1",
+            tpl1
+            / "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+            tpl2 / "copier.yml": "{_answers_file: two.yml, q2: a2}",
+            tpl2
+            / "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+        }
+    )
+    # Make them git-tracked
+    for tpl in (tpl1, tpl2):
+        git("-C", tpl, "init")
+        git("-C", tpl, "add", "-A")
+        git("-C", tpl, "commit", "-m1")
+    with local.cwd(dst):
+        # Apply template 1
+        run_auto(str(tpl1), overwrite=True, defaults=True)
+        git("init")
+        git("add", "-A")
+        git("commit", "-m1")
+        # Apply template 2
+        run_auto(str(tpl2), overwrite=True, defaults=True)
+        git("init")
+        git("add", "-A")
+        git("commit", "-m2")
+        # Check contents
+        answers1 = yaml.safe_load(Path(".copier-answers.yml").open())
+        assert answers1["_src_path"] == str(tpl1)
+        assert answers1["q1"] == "a1"
+        assert "q2" not in answers1
+        answers2 = yaml.safe_load(Path("two.yml").open())
+        assert answers2["_src_path"] == str(tpl2)
+        assert answers2["q2"] == "a2"
+        assert "q1" not in answers2

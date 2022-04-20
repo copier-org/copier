@@ -84,6 +84,7 @@ Summary:
 -   When comparing versions to update, PEP 440 is always used now. This way, we avoid
     fake ordering when git commit descriptions happen to be ordered in a non-predictable
     way.
+-   Answers file will only remember answers to questions specified in the questionary.
 
 ### Security
 
