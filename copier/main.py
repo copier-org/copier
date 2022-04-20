@@ -161,6 +161,7 @@ class Worker:
             for (k, v) in self.answers.combined.items()
             if not k.startswith("_")
             and k not in self.template.secret_questions
+            and k in self.template.questions_data
             and isinstance(k, JSONSerializable)
             and isinstance(v, JSONSerializable)
         )
