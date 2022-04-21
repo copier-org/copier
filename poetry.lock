@@ -867,7 +867,7 @@ python-versions = "*"
 
 [[package]]
 name = "types-pyyaml"
-version = "6.0.6"
+version = "6.0.7"
 description = "Typing stubs for PyYAML"
 category = "dev"
 optional = false
@@ -937,7 +937,7 @@ docs = ["mkdocs-material", "mkdocstrings"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7,<4.0"
-content-hash = "7f62d08bee0d2d45c84bee8a8979041b0376fd7716795be8d8919f25bf3b9f4e"
+content-hash = "f0815d6f2c033911b4fbccb1fd7b401059384231d8188829ade0a8b39c302132"
 
 [metadata.files]
 astunparse = [
@@ -1474,8 +1474,8 @@ types-backports = [
     {file = "types_backports-0.1.3-py2.py3-none-any.whl", hash = "sha256:dafcd61848081503e738a7768872d1dd6c018401b4d2a1cfb608ea87ec9864b9"},
 ]
 types-pyyaml = [
-    {file = "types-PyYAML-6.0.6.tar.gz", hash = "sha256:53c4379c7c8199d4fc5098060c51d58d38283e93d7f27bb80c8abe663456317d"},
-    {file = "types_PyYAML-6.0.6-py3-none-any.whl", hash = "sha256:d3d99e0a37a2fd37f35a9e4b4f794034192dac2aea2efc84c1bcde00ed66e150"},
+    {file = "types-PyYAML-6.0.7.tar.gz", hash = "sha256:59480cf44595d836aaae050f35e3c39f197f3a833679ef3978d97aa9f2fb7def"},
+    {file = "types_PyYAML-6.0.7-py3-none-any.whl", hash = "sha256:7b273a34f32af9910cf9405728c9d2ad3afc4be63e4048091a1a73d76681fe67"},
 ]
 typing-extensions = [
     {file = "typing_extensions-4.2.0-py3-none-any.whl", hash = "sha256:6657594ee297170d19f67d55c05852a874e7eb634f4f753dbd667855e07c1708"},
