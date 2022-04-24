@@ -26,6 +26,7 @@ docs! We don't want to be biased, but it's easy that we tend to be:
 | Requires programming                     | No                               | No                              | Yes, JS       |
 | Requires templates to have a suffix      | Yes by default, configurable[^3] | No, not configurable            | You choose    |
 | Task hooks                               | Yes                              | Yes                             | Yes           |
+| Context hooks                            | Yes[^5]                          | Yes                             | ?             |
 | Template in a subfolder                  | Not required, but you choose     | Yes, required                   | Yes, required |
 | Template package format                  | Git repo[^2], Git bundle, folder | Git or Mercurial repo, Zip file | NPM package   |
 | Template updates                         | **Yes**[^4]                      | No                              | No            |
@@ -49,3 +50,8 @@ docs! We don't want to be biased, but it's easy that we tend to be:
 [^4]:
     Only for git templates, because Copier uses git tags to obtain available versions
     and extract smart diffs between them.
+
+[^5]: Context hooks are provided through the [`ContextHook` extension][context-hook].
+
+[context-hook]:
+    https://github.com/copier-org/copier-templates-extensions#context-hook-extension
