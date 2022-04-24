@@ -31,17 +31,17 @@ _jinja_extensions:
 ```
 
 Following this example, you are supposed to provide a `context.py` file in the
-`extensions` folder at the root of your template to modify the context. If for
-example your `copier.yaml` contains a multiple-choice variable like this:
+`extensions` folder at the root of your template to modify the context. If for example
+your `copier.yaml` contains a multiple-choice variable like this:
 
 ```yaml title="copier.yaml"
 flavor:
-  type: str
-  choices:
-    - Docker
-    - Instances
-    - Kubernetes
-    - None
+    type: str
+    choices:
+        - Docker
+        - Instances
+        - Kubernetes
+        - None
 ```
 
 The `context.py` file contains your context hook which could look like:
