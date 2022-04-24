@@ -78,7 +78,7 @@ class ContextUpdater(ContextHook):
     update = False
 
     def hook(self, context):
-        flavor = context["flavor"]
+        flavor = context["flavor"]  # user's answer to the "flavor" question
 
         context["isDocker"] = flavor == "docker"
         context["isK8s"] = flavor == "kubernetes"
