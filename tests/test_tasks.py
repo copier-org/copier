@@ -18,7 +18,7 @@ def demo_template(tmp_path_factory):
                 other_file: bye
 
                 # This tests two things:
-                # 1. That the tasks are being executed in the destiantion folder; and
+                # 1. That the tasks are being executed in the destination folder; and
                 # 2. That the tasks are being executed in order, one after another
                 _tasks:
                     - mkdir hello

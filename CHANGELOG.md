@@ -206,7 +206,7 @@ received a lot of love and hardening.
 
 -   Empty folders are now copied. The folders are also displayed in the console output
     instead of just the files.
--   `prompt_bool` can now have an undefined default (ans answer is mandatory in that
+-   `prompt_bool` can now have an undefined default (and answer is mandatory in that
     case).
 -   Reactivates the `copier.yml` and `copier.yaml` as configuration files.
 -   The new `extra_paths` argument specifies additional paths to find templates to
@@ -214,7 +214,7 @@ received a lot of love and hardening.
 
 ### [2.3.0] - 2019-04-17
 
--   Back to using a setup.py intead of a pyproject.toml.
+-   Back to using a setup.py instead of a pyproject.toml.
 -   The recommended configuration file is now `copier.toml`.
 
 ### [2.2.3] - 2019-04-13
