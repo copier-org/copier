@@ -448,7 +448,7 @@ class Worker:
                 tpl = self.jinja_env.get_template(src_relpath)
             except UnicodeDecodeError:
                 if self.template.templates_suffix:
-                    # suffix is not emtpy, re-raise
+                    # suffix is not empty, re-raise
                     raise
                 # suffix is empty, fallback to copy
                 new_content = src_abspath.read_bytes()

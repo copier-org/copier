@@ -17,7 +17,7 @@ from .helpers import build_file_tree
                 "question": {"type": "str"},
             },
             # We override the prompt method from questionary to raise this
-            # expection and expect our surrounding machinery to re-raise
+            # exception and expect our surrounding machinery to re-raise
             # it as a CopierAnswersInterrupt.
             KeyboardInterrupt,
             CopierAnswersInterrupt,

@@ -94,7 +94,7 @@ project_updated("updated project")
 project_applied("updated project<br>(diff applied)")
 project_full("fully updated<br>and migrated project")
 
-update["upate current<br>project in-place<br>(prompting)<br>+ run tasks again"]
+update["update current<br>project in-place<br>(prompting)<br>+ run tasks again"]
 compare["compare to get diff"]
 apply["apply diff"]
 

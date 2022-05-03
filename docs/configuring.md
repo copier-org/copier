@@ -493,7 +493,7 @@ questions with default answers.
 !!! example
 
     Example CLI usage to take all default answers from template, except the user name,
-    which is overriden, and don't ask user anything else:
+    which is overridden, and don't ask user anything else:
 
     ```sh
     copier -fd 'user_name=Manuel Calavera' copy template destination
@@ -700,7 +700,7 @@ on them, so they are always installed when Copier is installed.
             [python-slugify](https://github.com/un33k/python-slugify).
 
     -   [`copier_templates_extensions.TemplateExtensionLoader`](https://github.com/copier-org/copier-templates-extensions):
-        enhances the extension loading mecanism to allow templates writers to put their
+        enhances the extension loading mechanism to allow templates writers to put their
         extensions directly in their templates. It also allows to modify the rendering context
         (the Jinja variables that you can use in your templates) before
         rendering templates, see [using a context hook](../faq#how-can-i-alter-the-context-before-rendering-the-project).
@@ -1041,7 +1041,7 @@ By default, copier will copy from the last release found in template git tags, s
 
 Copier supports matching names against patterns in a gitignore style fashion. This works
 for the options `exclude` and `skip`. This means you can write patterns as you would for
-any `.gitignore` file. The full range of the gitignore syntax ist supported via
+any `.gitignore` file. The full range of the gitignore syntax is supported via
 [pathspec](https://github.com/cpburnz/python-path-specification).
 
 For example, with the following settings in your `copier.yml` file would exclude all
