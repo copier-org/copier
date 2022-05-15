@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
-## [Unreleased]
+## [6.0.0] - 2020-05-15
 
 [All changes here](https://github.com/copier-org/copier/issues?q=milestone%3Av6.0.0).
 Summary:
@@ -85,8 +85,6 @@ Summary:
     fake ordering when git commit descriptions happen to be ordered in a non-predictable
     way.
 -   Answers file will only remember answers to questions specified in the questionary.
-
-### Security
 
 ## [5.1.0] - 2020-08-17
 
