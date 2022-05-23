@@ -64,6 +64,41 @@ def test_copy_with_non_version_tags(tmp_path_factory):
     )
 
 
+def test_copy_with_non_version_tags_and_vcs_ref(tmp_path_factory):
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    # Prepare repo bundle
+    repo = src / "repo"
+    repo.mkdir()
+    build_file_tree(
+        {
+            repo
+            / ".copier-answers.yml.jinja": """\
+                # Changes here will be overwritten by Copier
+                {{ _copier_answers|to_nice_yaml }}
+            """,
+            repo
+            / "copier.yaml": """\
+                _tasks:
+                    - cat v1.txt
+            """,
+            repo / "v1.txt": "file only in v1",
+        }
+    )
+    with local.cwd(repo):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "test_tag.post23+deadbeef")
+
+    copy(
+        str(repo),
+        dst,
+        defaults=True,
+        overwrite=True,
+        vcs_ref="test_tag.post23+deadbeef",
+    )
+
+
 def test_copy(tmp_path):
     render(tmp_path)
 
