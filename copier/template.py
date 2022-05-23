@@ -8,6 +8,7 @@ from typing import List, Mapping, Optional, Sequence, Set, Tuple
 from warnings import warn
 
 import dunamai
+import packaging.version
 import yaml
 from iteration_utilities import deepflatten
 from packaging.specifiers import SpecifierSet
@@ -463,9 +464,12 @@ class Template:
             if re.match(r"^.+-\d+-g\w+$", self.commit):
                 base, count, git_hash = self.commit.rsplit("-", 2)
                 return Version(f"{base}.post{count}+{git_hash}")
-        # If we get here, the commit string is a tag, so we can safely expect
-        # it's a valid PEP440 version
-        return Version(self.commit)
+        # If we get here, the commit string is a tag
+        try:
+            return Version(self.commit)
+        except packaging.version.InvalidVersion:
+            # appears to not be a version
+            return None
 
     @cached_property
     def vcs(self) -> Optional[VCSTypes]:
