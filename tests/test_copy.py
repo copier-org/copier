@@ -29,7 +29,7 @@ def test_project_not_found(tmp_path):
         copier.copy(__file__, tmp_path)
 
 
-def test_copy_with_invalid_tags(tmp_path_factory):
+def test_copy_with_non_version_tags(tmp_path_factory):
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     # Prepare repo bundle
     repo = src / "repo"
