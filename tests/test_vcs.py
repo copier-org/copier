@@ -16,9 +16,9 @@ def test_get_repo():
         == "https://github.com/jpscaletti/copier.git"
     )
 
-    assert( get("https://github.com/jpscaletti/copier") == "https://github.com/jpscaletti/copier")
+    assert( get("https://github.com/jpscaletti/copier") == "https://github.com/jpscaletti/copier.git")
 
-    assert( get("https://gitlab.com/gitlab-org/gitlab") == "https://gitlab.com/gitlab-org/gitlab")
+    assert( get("https://gitlab.com/gitlab-org/gitlab") == "https://gitlab.com/gitlab-org/gitlab.git")
 
     assert (
         get("gh:/jpscaletti/copier.git") == "https://github.com/jpscaletti/copier.git"
