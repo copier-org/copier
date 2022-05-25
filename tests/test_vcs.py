@@ -16,6 +16,10 @@ def test_get_repo():
         == "https://github.com/jpscaletti/copier.git"
     )
 
+    assert( get("https://github.com/jpscaletti/copier") == "https://github.com/jpscaletti/copier")
+
+    assert( get("https://gitlab.com/gitlab-org/gitlab") == "https://gitlab.com/gitlab-org/gitlab")
+
     assert (
         get("gh:/jpscaletti/copier.git") == "https://github.com/jpscaletti/copier.git"
     )
@@ -39,6 +43,7 @@ def test_get_repo():
 
     assert get("http://google.com") is None
     assert get("git.myproject.org/MyProject") is None
+    assert get("https://google.com") is None
 
 
 def test_clone():
