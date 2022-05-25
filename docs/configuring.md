@@ -837,7 +837,8 @@ exist.
     you don't want to override it next times:
 
     ```yaml title="copier.yml"
-    _skip_if_exists: .secret_password.yml
+    _skip_if_exists:
+      - .secret_password.yml
     ```
 
     ```yaml title=".secret_password.yml.jinja"
