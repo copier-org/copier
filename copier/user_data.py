@@ -154,6 +154,9 @@ class Question:
             Additional text printed to the user, explaining the purpose of
             this question. Can be templated.
 
+        prompt:
+            The prompt used when asking the question. Can be templated.
+
         multiline:
             Indicates if the question should allow multiline input. Defaults
             to `True` for JSON and YAML questions, and to `False` otherwise.
@@ -188,6 +191,7 @@ class Question:
     choices: Union[Dict[Any, Any], List[Any]] = field(default_factory=list)
     default: Any = None
     help: str = ""
+    prompt: str = ""
     ask_user: bool = False
     multiline: Union[str, bool] = False
     placeholder: str = ""
@@ -293,7 +297,10 @@ class Question:
         if self.help:
             rendered_help = self.render_value(self.help)
             message = force_str_end(rendered_help)
-        message += f"{self.var_name}? Format: {self.get_type_name()}"
+        if self.prompt:
+            message += self.render_value(self.prompt)
+        else:
+            message += f"{self.var_name}? Format: {self.get_type_name()}"
         return message
 
     def get_placeholder(self) -> str:
