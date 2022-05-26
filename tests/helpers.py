@@ -98,3 +98,11 @@ def build_file_tree(spec: Dict[StrOrPath, str], dedent: bool = True):
         mode = "wb" if binary else "w"
         with path.open(mode) as fd:
             fd.write(contents)
+
+
+def expect_prompt(tui, name, expected_type, help=None):
+    """Check that we get a prompt in the standard form"""
+    if help:
+        tui.expect_exact(help)
+    tui.expect_exact(f"{name}?")
+    tui.expect_exact(f"Format: {expected_type}")

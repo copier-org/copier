@@ -17,6 +17,7 @@ from .helpers import (
     SUFFIX_TMPL,
     Keyboard,
     build_file_tree,
+    expect_prompt,
 )
 
 
@@ -140,50 +141,39 @@ def test_api(tmp_path, template_path):
 
 def test_cli_interactive(tmp_path, spawn, template_path):
     """Test copier correctly processes advanced questions and answers through CLI."""
-    invalid = ["Invalid input"]
+
+    def check_invalid(tui, name, format, invalid, help=None):
+        """Check that invalid input is reported correctly"""
+        expect_prompt(tui, name, format, help)
+        tui.sendline(invalid)
+        tui.expect_exact("Invalid input")
+
     tui = spawn(COPIER_PATH + ("copy", template_path, str(tmp_path)), timeout=10)
-    deque(
-        map(
-            tui.expect_exact,
-            ["I need to know it. Do you love me?", "love_me", "Format: bool"],
-        )
-    )
+    expect_prompt(tui, "love_me", "bool", help="I need to know it. Do you love me?")
     tui.send("y")
-    deque(
-        map(tui.expect_exact, ["Please tell me your name.", "your_name", "Format: str"])
-    )
+    expect_prompt(tui, "your_name", "str", help="Please tell me your name.")
     tui.sendline("Guybrush Threpwood")
-    q = ["How old are you?", "your_age", "Format: int"]
-    tui.expect_exact(q)
-    tui.sendline("wrong your_age")
-    tui.expect_exact(invalid + q)
+    check_invalid(tui, "your_age", "int", "wrong your_age", help="How old are you?")
     tui.send((Keyboard.Alt + Keyboard.Backspace) * 2)
     tui.sendline("22")
-    q = ["What's your height?", "your_height", "Format: float"]
-    tui.expect_exact(q)
-    tui.sendline("wrong your_height")
-    tui.expect_exact(invalid + q)
+    check_invalid(
+        tui, "your_height", "float", "wrong your_height", help="What's your height?"
+    )
     tui.send((Keyboard.Alt + Keyboard.Backspace) * 2)
     tui.sendline("1.56")
-    q = ["more_json_info", "Format: json"]
-    tui.expect_exact(q)
-    tui.sendline('{"objective":')
-    tui.expect_exact(invalid + q)
+    check_invalid(tui, "more_json_info", "json", '{"objective":')
     tui.sendline('"be a pirate"}')
     tui.send(Keyboard.Esc + Keyboard.Enter)
-    q = ["Wanna give me any more info?", "anything_else", "Format: yaml"]
-    tui.expect_exact(q)
+    expect_prompt(tui, "anything_else", "yaml", help="Wanna give me any more info?")
     tui.sendline("- Want some grog?")
-    tui.expect_exact(invalid + q)
     tui.sendline("- I'd love it")
     tui.send(Keyboard.Esc + Keyboard.Enter)
+    tui.expect_exact("You see the value of the list items")
+    expect_prompt(tui, "choose_list", "str")
     deque(
         map(
             tui.expect_exact,
             [
-                "You see the value of the list items",
-                "choose_list",
-                "Format: str",
                 "first",
                 "second",
                 "third",
@@ -224,10 +214,11 @@ def test_cli_interactive(tmp_path, spawn, template_path):
         )
     )
     tui.sendline()
-    deque(map(tui.expect_exact, ["minutes_under_water", "Format: int", "10"]))
+    expect_prompt(tui, "minutes_under_water", "int")
+    tui.expect_exact("10")
     tui.send(Keyboard.Backspace)
     tui.sendline()
-    deque(map(tui.expect_exact, ["optional_value", "Format: yaml"]))
+    expect_prompt(tui, "optional_value", "yaml")
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
     results_file = tmp_path / "results.txt"
@@ -306,50 +297,34 @@ def test_cli_interatively_with_flag_data_and_type_casts(
         ),
         timeout=10,
     )
-    deque(
-        map(
-            tui.expect_exact,
-            ["I need to know it. Do you love me?", "love_me", "Format: bool"],
-        )
-    )
+    expect_prompt(tui, "love_me", "bool", help="I need to know it. Do you love me?")
     tui.send("y")
-    deque(
-        map(
-            tui.expect_exact,
-            ["Please tell me your name.", "your_name", "Format: str"],
-        )
-    )
+    expect_prompt(tui, "your_name", "str", help="Please tell me your name.")
     tui.sendline("Guybrush Threpwood")
-    deque(map(tui.expect_exact, ["How old are you?", "your_age", "Format: int"]))
+    expect_prompt(tui, "your_age", "int", help="How old are you?")
     tui.send("wrong your_age")
     tui.expect_exact(invalid)
     tui.sendline()  # Does nothing, "wrong your_age still on screen"
     tui.send((Keyboard.Alt + Keyboard.Backspace) * 2)
     tui.sendline("22")
-    deque(
-        map(tui.expect_exact, ["What's your height?", "your_height", "Format: float"])
-    )
+    expect_prompt(tui, "your_height", "float", help="What's your height?")
     tui.send("wrong your_height")
     tui.expect_exact(invalid)
     tui.send((Keyboard.Alt + Keyboard.Backspace) * 2)
     tui.sendline("1.56")
-    deque(map(tui.expect_exact, ["more_json_info", "Format: json"]))
+    expect_prompt(tui, "more_json_info", "json")
     tui.sendline('{"objective":')
     tui.expect_exact(invalid)
     tui.sendline('"be a pirate"}')
     tui.send(Keyboard.Esc + Keyboard.Enter)
-    deque(
-        map(
-            tui.expect_exact,
-            ["Wanna give me any more info?", "anything_else", "Format: yaml"],
-        )
-    )
+    expect_prompt(tui, "anything_else", "yaml", help="Wanna give me any more info?")
     tui.sendline("- Want some grog?")
     tui.sendline("- I'd love it")
     tui.send(Keyboard.Esc + Keyboard.Enter)
-    deque(map(tui.expect_exact, ["minutes_under_water", "Format: int", "10"]))
+    expect_prompt(tui, "minutes_under_water", "int")
+    tui.expect_exact("10")
     tui.sendline()
-    deque(map(tui.expect_exact, ["optional_value", "Format: yaml"]))
+    expect_prompt(tui, "optional_value", "yaml")
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
     results_file = tmp_path / "results.txt"
@@ -405,12 +380,14 @@ def test_tui_inherited_default(tmp_path_factory, spawn, has_2_owners, owner2):
         COPIER_PATH + ("copy", str(src), str(dst)),
         timeout=10,
     )
-    deque(map(tui.expect_exact, ["owner1?", "Format: str"]))
+    expect_prompt(tui, "owner1", "str")
     tui.sendline("example")
-    deque(map(tui.expect_exact, ["has_2_owners?", "Format: bool", "(y/N)"]))
+    expect_prompt(tui, "has_2_owners", "bool")
+    tui.expect_exact("(y/N)")
     tui.send("y" if has_2_owners else "n")
     if has_2_owners:
-        deque(map(tui.expect_exact, ["owner2?", "Format: str", "example"]))
+        expect_prompt(tui, "owner2", "str")
+        tui.expect_exact("example")
         tui.sendline("2")
     tui.expect_exact(pexpect.EOF)
     result = {
@@ -463,26 +440,23 @@ def test_selection_type_cast(tmp_path_factory, spawn):
         COPIER_PATH + ("copy", str(src), str(dst)),
         timeout=10,
     )
-    tui.expect_exact("Which PostgreSQL version do you want to deploy?")
-    tui.expect_exact("postgres1?")
-    tui.expect_exact("Format: yaml")
+    expect_prompt(
+        tui, "postgres1", "yaml", help="Which PostgreSQL version do you want to deploy?"
+    )
     tui.sendline(Keyboard.Down)
-    tui.expect_exact("Which PostgreSQL version do you want to deploy?")
-    tui.expect_exact("postgres2?")
-    tui.expect_exact("Format: yaml")
+    expect_prompt(
+        tui, "postgres2", "yaml", help="Which PostgreSQL version do you want to deploy?"
+    )
     tui.sendline(Keyboard.Up)
-    tui.expect_exact("Which PostgreSQL version do you want to deploy?")
-    tui.expect_exact("postgres3?")
-    tui.expect_exact("Format: yaml")
+    expect_prompt(
+        tui, "postgres3", "yaml", help="Which PostgreSQL version do you want to deploy?"
+    )
     tui.sendline()
-    tui.expect_exact("nulls1?")
-    tui.expect_exact("Format: yaml")
+    expect_prompt(tui, "nulls1", "yaml")
     tui.sendline()
-    tui.expect_exact("nulls2?")
-    tui.expect_exact("Format: yaml")
+    expect_prompt(tui, "nulls2", "yaml")
     tui.sendline(Keyboard.Down)
-    tui.expect_exact("nulls3?")
-    tui.expect_exact("Format: yaml")
+    expect_prompt(tui, "nulls3", "yaml")
     tui.sendline(Keyboard.Down + Keyboard.Down)
     tui.expect_exact(pexpect.EOF)
     assert json.loads((dst / "answers.json").read_bytes()) == {

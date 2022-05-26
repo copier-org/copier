@@ -1,5 +1,4 @@
 import json
-from collections import deque
 from datetime import datetime
 
 import pexpect
@@ -15,6 +14,7 @@ from .helpers import (
     COPIER_PATH,
     SUFFIX_TMPL,
     build_file_tree,
+    expect_prompt,
 )
 
 main_default = "copier"
@@ -25,13 +25,23 @@ main_question = {
 }
 
 
+class Prompt:
+    def __init__(self, name, format, help=None):
+        self.name = name
+        self.format = format
+        self.help = help
+
+    def expect(self, tui):
+        expect_prompt(tui, self.name, self.format, self.help)
+
+
 @pytest.mark.parametrize(
     "questions_data, expected_value, expected_outputs",
     [
         (
             {"templated_default": {"default": "[[ main ]]default"}},
             "copierdefault",
-            ["Format: str", "copierdefault"],
+            [Prompt("templated_default", "str"), "copierdefault"],
         ),
         (
             {
@@ -41,7 +51,7 @@ main_question = {
                 },
             },
             0,
-            ["Format: int", "0"],
+            [Prompt("templated_type", "int"), "0"],
         ),
         (
             {
@@ -52,9 +62,7 @@ main_question = {
             },
             main_default,
             [
-                "THIS copier HELP IS TEMPLATED",
-                "templated_help?",
-                "Format: str",
+                Prompt("templated_help", "str", "THIS copier HELP IS TEMPLATED"),
                 "copier",
             ],
         ),
@@ -151,9 +159,14 @@ def test_templated_prompt(
         }
     )
     tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
-    deque(map(tui.expect_exact, ["main?", "Format: str", main_default]))
+    expect_prompt(tui, "main", "str")
+    tui.expect_exact(main_default)
     tui.sendline()
-    deque(map(tui.expect_exact, expected_outputs))
+    for output in expected_outputs:
+        if isinstance(output, Prompt):
+            output.expect(tui)
+        else:
+            tui.expect_exact(output)
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
     answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())

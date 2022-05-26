@@ -1,4 +1,3 @@
-from collections import deque
 from pathlib import Path
 
 import pexpect
@@ -14,6 +13,7 @@ from .helpers import (
     SUFFIX_TMPL,
     Keyboard,
     build_file_tree,
+    expect_prompt,
 )
 
 DEFAULT = object()
@@ -68,27 +68,21 @@ def test_copy_default_advertised(tmp_path_factory, spawn, name):
             COPIER_PATH + (str(template), ".", "--vcs-ref=v1") + args, timeout=10
         )
         # Check what was captured
-        deque(map(tui.expect_exact, ["in_love?", "Format: bool", "(Y/n)"]))
+        expect_prompt(tui, "in_love", "bool")
+        tui.expect_exact("(Y/n)")
         tui.sendline()
         tui.expect_exact("Yes")
         if not args:
-            tui.expect_exact(
-                ["If you have a name, tell me now.", "your_name?", "Format: str", name]
-            )
+            tui.expect_exact("If you have a name, tell me now.")
+            expect_prompt(tui, "your_name", "str")
+            tui.expect_exact(name)
             tui.sendline()
-        deque(
-            map(
-                tui.expect_exact,
-                ["Secret enemy name", "your_enemy?", "Format: str", "******"],
-            )
-        )
+        tui.expect_exact("Secret enemy name")
+        expect_prompt(tui, "your_enemy", "str")
+        tui.expect_exact("******")
         tui.sendline()
-        deque(
-            map(
-                tui.expect_exact,
-                ["what_enemy_does?", "Format: str", f"Bowser hates {name}"],
-            )
-        )
+        expect_prompt(tui, "what_enemy_does", "str")
+        tui.expect_exact(f"Bowser hates {name}")
         tui.sendline()
         tui.expect_exact(pexpect.EOF)
         assert "_commit: v1" in Path(".copier-answers.yml").read_text()
@@ -99,28 +93,19 @@ def test_copy_default_advertised(tmp_path_factory, spawn, name):
         git("commit", "-m", "v1")
         tui = spawn(COPIER_PATH, timeout=30)
         # Check what was captured
-        deque(map(tui.expect_exact, ["in_love?", "Format: bool", "(Y/n)"]))
+        expect_prompt(tui, "in_love", "bool")
+        tui.expect_exact("(Y/n)")
         tui.sendline()
-        deque(
-            map(
-                tui.expect_exact,
-                ["If you have a name, tell me now.", "your_name?", "Format: str", name],
-            )
-        )
+        tui.expect_exact("If you have a name, tell me now.")
+        expect_prompt(tui, "your_name", "str")
+        tui.expect_exact(name)
         tui.sendline()
-        deque(
-            map(
-                tui.expect_exact,
-                ["Secret enemy name", "your_enemy?", "Format: str", "******"],
-            )
-        )
+        tui.expect_exact("Secret enemy name")
+        expect_prompt(tui, "your_enemy", "str")
+        tui.expect_exact("******")
         tui.sendline()
-        deque(
-            map(
-                tui.expect_exact,
-                ["what_enemy_does?", "Format: str", f"Bowser hates {name}"],
-            )
-        )
+        expect_prompt(tui, "what_enemy_does", "str")
+        tui.expect_exact(f"Bowser hates {name}")
         tui.sendline()
         tui.expect_exact(pexpect.EOF)
         assert "_commit: v2" in Path(".copier-answers.yml").read_text()
@@ -191,15 +176,10 @@ def test_when(tmp_path_factory, question_1, question_2_when, spawn, asks):
         }
     )
     tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
-    deque(
-        map(
-            tui.expect_exact,
-            ["question_1?", f"Format: {type(question_1).__name__}"],
-        )
-    )
+    expect_prompt(tui, "question_1", type(question_1).__name__)
     tui.sendline()
     if asks:
-        deque(map(tui.expect_exact, ["question_2?", "Format: yaml"]))
+        expect_prompt(tui, "question_2", "yaml")
         tui.sendline()
     tui.expect_exact(pexpect.EOF)
     answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
@@ -235,18 +215,11 @@ def test_placeholder(tmp_path_factory, spawn):
         }
     )
     tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
-    deque(map(tui.expect_exact, ["question_1?", "Format: str", "answer 1"]))
+    expect_prompt(tui, "question_1", "str")
+    tui.expect_exact("answer 1")
     tui.sendline()
-    deque(
-        map(
-            tui.expect_exact,
-            [
-                "question_2?",
-                "Format: str",
-                "Write something like answer 1, but better",
-            ],
-        )
-    )
+    expect_prompt(tui, "question_2", "str")
+    tui.expect_exact("Write something like answer 1, but better")
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
     answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
@@ -288,17 +261,18 @@ def test_multiline(tmp_path_factory, spawn, type_):
         }
     )
     tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
-    deque(map(tui.expect_exact, ["question_1?", "Format: str", "answer 1"]))
+    expect_prompt(tui, "question_1", "str")
+    tui.expect_exact("answer 1")
     tui.sendline()
-    deque(map(tui.expect_exact, ["question_2?", f"Format: {type_}"]))
+    expect_prompt(tui, "question_2", type_)
     tui.sendline('"answer 2"')
-    deque(map(tui.expect_exact, ["question_3?", f"Format: {type_}"]))
+    expect_prompt(tui, "question_3", type_)
     tui.sendline('"answer 3"')
     tui.send(Keyboard.Alt + Keyboard.Enter)
-    deque(map(tui.expect_exact, ["question_4?", f"Format: {type_}"]))
+    expect_prompt(tui, "question_4", type_)
     tui.sendline('"answer 4"')
     tui.send(Keyboard.Alt + Keyboard.Enter)
-    deque(map(tui.expect_exact, ["question_5?", f"Format: {type_}"]))
+    expect_prompt(tui, "question_5", type_)
     tui.sendline('"answer 5"')
     tui.expect_exact(pexpect.EOF)
     answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
@@ -359,7 +333,7 @@ def test_update_choice(tmp_path_factory, spawn, choices):
         git("tag", "v1")
     # Copy
     tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
-    tui.expect_exact("pick_one?")
+    expect_prompt(tui, "pick_one", "float")
     tui.sendline(Keyboard.Up)
     tui.expect_exact(pexpect.EOF)
     answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
@@ -370,7 +344,7 @@ def test_update_choice(tmp_path_factory, spawn, choices):
         git("commit", "-m1")
     # Update
     tui = spawn(COPIER_PATH + (str(subproject),), timeout=10)
-    tui.expect_exact("pick_one?")
+    expect_prompt(tui, "pick_one", "float")
     tui.sendline(Keyboard.Down)
     tui.expect_exact(pexpect.EOF)
     answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
@@ -414,20 +388,20 @@ def test_multiline_defaults(tmp_path_factory, spawn):
     )
     # Copy
     tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
-    tui.expect_exact("yaml_single? Format: yaml")
+    expect_prompt(tui, "yaml_single", "yaml")
     # This test will always fail here, because python prompt toolkit gives
     # syntax highlighting to YAML and JSON outputs, encoded into terminal
     # colors and all that stuff.
     # TODO Fix this test some day.
     tui.expect_exact("[one, two, {three: [four]}]")
     tui.send(Keyboard.Enter)
-    tui.expect_exact("yaml_multi? Format: yaml")
+    expect_prompt(tui, "yaml_multi", "yaml")
     tui.expect_exact("> - one\n  - two\n  - three:\n    - four")
     tui.send(Keyboard.Alt + Keyboard.Enter)
-    tui.expect_exact("json_single? Format: json")
+    expect_prompt(tui, "json_single", "json")
     tui.expect_exact('["one", "two", {"three": ["four"]}]')
     tui.send(Keyboard.Enter)
-    tui.expect_exact("json_multi? Format: json")
+    expect_prompt(tui, "json_multi", "json")
     tui.expect_exact(
         '> [\n    "one",\n    "two",\n    {\n      "three": [\n        "four"\n      ]\n    }\n  ]'
     )
@@ -460,7 +434,8 @@ def test_partial_interrupt(tmp_path_factory, spawn):
         }
     )
     tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
-    deque(map(tui.expect_exact, ["question_1?", "Format: str", "answer 1"]))
+    expect_prompt(tui, "question_1", "str")
+    tui.expect_exact("answer 1")
     # Answer the first question using the default.
     tui.sendline()
     # Send a ctrl-c.
