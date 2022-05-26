@@ -80,7 +80,7 @@ def get_repo(url: str) -> OptStr:
     if url.startswith("git+"):
         url = url[4:]
     elif url.startswith("https://") and not url.endswith(GIT_POSTFIX):
-        url = "".join(url, GIT_POSTFIX)
+        url = "".join((url, GIT_POSTFIX))
     return url
 
 
