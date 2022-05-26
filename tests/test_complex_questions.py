@@ -142,10 +142,11 @@ def test_api(tmp_path, template_path):
 def test_cli_interactive(tmp_path, spawn, template_path):
     """Test copier correctly processes advanced questions and answers through CLI."""
 
-    def check_invalid(tui, name, format, invalid, help=None):
+    def check_invalid(tui, name, format, invalid_value, help=None):
         """Check that invalid input is reported correctly"""
         expect_prompt(tui, name, format, help)
-        tui.sendline(invalid)
+        tui.sendline(invalid_value)
+        tui.expect_exact(invalid_value)
         tui.expect_exact("Invalid input")
 
     tui = spawn(COPIER_PATH + ("copy", template_path, str(tmp_path)), timeout=10)
