@@ -58,6 +58,10 @@ your host environment:
 Or you can use
 [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/copier-org/copier)
 to start hacking with one click!
+1.  Fork the copier repo on GitHub.
+2.  Copy the URL of your forked repository (e.g. https://github.com/forked-user/copier)
+3.  In the browser address bar enter https://gitpod.io/#https://github.com/forked-user/copier where the URL after `https://gitpod.io/#` is the forked repository address.  
+Note: If it is your first time using Gitpod, you will be redirected to their sign in/sign up flow
 
 ## Get Started!
 
