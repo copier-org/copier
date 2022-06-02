@@ -289,12 +289,16 @@ class Question:
 
     def get_message(self) -> str:
         """Get the message that will be printed to the user."""
-        message = ""
         if self.help:
             rendered_help = self.render_value(self.help)
-            message = force_str_end(rendered_help)
-        message += f"{self.var_name}? Format: {self.get_type_name()}"
-        return message
+            if rendered_help:
+                return force_str_end(rendered_help) + "  "
+        # Otherwise, there's no help message defined.
+        message = self.var_name
+        answer_type = self.get_type_name()
+        if answer_type != "str":
+            message += f" ({answer_type})"
+        return message + "\n  "
 
     def get_placeholder(self) -> str:
         """Render and obtain the placeholder."""
