@@ -58,9 +58,11 @@ they become available to the project template.
     Will result in a questionary similar to:
 
     <pre style="font-weight: bold">
-    🎤 name_of_the_project? Format: str <span style="color:orange">My awesome project</span>
-    🎤 number_of_eels? Format: int <span style="color:orange">1234</span>
-    🎤 your_email? Format: str
+    🎤 name_of_the_project
+      <span style="color:orange">My awesome project</span>
+    🎤 number_of_eels (int)
+      <span style="color:orange">1234</span>
+    🎤 your_email
     </pre>
 
 #### Advanced prompt formatting

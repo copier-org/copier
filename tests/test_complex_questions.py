@@ -169,8 +169,7 @@ def test_cli_interactive(tmp_path, spawn, template_path):
     tui.sendline("- Want some grog?")
     tui.sendline("- I'd love it")
     tui.send(Keyboard.Esc + Keyboard.Enter)
-    tui.expect_exact("You see the value of the list items")
-    expect_prompt(tui, "choose_list", "str")
+    expect_prompt(tui, "choose_list", "str", help="You see the value of the list items")
     deque(
         map(
             tui.expect_exact,
@@ -182,12 +181,16 @@ def test_cli_interactive(tmp_path, spawn, template_path):
         )
     )
     tui.sendline()
+    expect_prompt(
+        tui,
+        "choose_tuple",
+        "str",
+        help="You see the 1st tuple item, but I get the 2nd item as a result",
+    )
     deque(
         map(
             tui.expect_exact,
             [
-                "You see the 1st tuple item, but I get the 2nd item as a result",
-                "choose_tuple",
                 "one",
                 "two",
                 "three",
@@ -195,12 +198,13 @@ def test_cli_interactive(tmp_path, spawn, template_path):
         )
     )
     tui.sendline()
+    expect_prompt(
+        tui, "choose_dict", "str", help="You see the dict key, but I get the dict value"
+    )
     deque(
         map(
             tui.expect_exact,
             [
-                "You see the dict key, but I get the dict value",
-                "choose_dict",
                 "one",
                 "two",
                 "three",
@@ -208,10 +212,11 @@ def test_cli_interactive(tmp_path, spawn, template_path):
         )
     )
     tui.sendline()
+    expect_prompt(tui, "choose_number", "float", help="This must be a number")
     deque(
         map(
             tui.expect_exact,
-            ["This must be a number", "choose_number", "-1.1", "0", "1"],
+            ["-1.1", "0", "1"],
         )
     )
     tui.sendline()

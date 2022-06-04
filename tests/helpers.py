@@ -104,5 +104,7 @@ def expect_prompt(tui, name, expected_type, help=None):
     """Check that we get a prompt in the standard form"""
     if help:
         tui.expect_exact(help)
-    tui.expect_exact(f"{name}?")
-    tui.expect_exact(f"Format: {expected_type}")
+    else:
+        tui.expect_exact(name)
+        if expected_type != "str":
+            tui.expect_exact(f"({expected_type})")
