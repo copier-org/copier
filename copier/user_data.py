@@ -1,6 +1,7 @@
 """Functions used to load user data."""
 import datetime
 import json
+import re
 import sys
 import warnings
 from collections import ChainMap
@@ -15,6 +16,7 @@ from typing import (
     ChainMap as t_ChainMap,
     Dict,
     List,
+    Optional,
     Union,
 )
 
@@ -154,6 +156,9 @@ class Question:
             Additional text printed to the user, explaining the purpose of
             this question. Can be templated.
 
+        regex:
+            Regular expression for validating user input.
+
         multiline:
             Indicates if the question should allow multiline input. Defaults
             to `True` for JSON and YAML questions, and to `False` otherwise.
@@ -189,6 +194,7 @@ class Question:
     default: Any = None
     help: str = ""
     ask_user: bool = False
+    regex: Optional[str] = None
     multiline: Union[str, bool] = False
     placeholder: str = ""
     secret: bool = False
@@ -323,6 +329,8 @@ class Question:
         if self.choices:
             questionary_type = "select"
             result["choices"] = self._formatted_choices
+        if self.regex is not None:
+            self._re = re.compile(self.regex)
         if questionary_type == "input":
             if self.secret:
                 questionary_type = "password"
@@ -359,6 +367,11 @@ class Question:
 
     def validate_answer(self, answer) -> bool:
         """Validate user answer."""
+        if self.regex is not None:
+            return (
+                self._re.match(answer) is not None
+                or f'Does not match regex: `{self.regex}`'
+            )
         cast_fn = self.get_cast_fn()
         try:
             cast_fn(answer)
