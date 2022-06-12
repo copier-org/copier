@@ -209,13 +209,13 @@ Supported keys:
         multiline: true
 
     your_favorite_book:
-        # User will type 1 or 2, but your template will get the value
+        # User will choose one of these and your template will get the value
         choices:
             - The Bible
             - The Hitchhiker's Guide to the Galaxy
 
     project_license:
-        # User will type 1 or 2 and will see only the dict key, but you will
+        # User will see only the dict key and choose one, but you will
         # get the dict value in your template
         choices:
             MIT: &mit_text |
