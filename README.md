@@ -5,7 +5,7 @@
 [![CI](https://github.com/copier-org/copier/workflows/CI/badge.svg)](https://github.com/copier-org/copier/actions?query=branch%3Amaster)
 [![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
 ![](https://img.shields.io/pypi/pyversions/copier)
-![](https://img.shields.io/pypi/v/copier)
+[![](https://img.shields.io/pypi/v/copier)](https://pypi.org/project/copier/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Documentation Status](https://readthedocs.org/projects/copier/badge/?version=latest)](https://copier.readthedocs.io/en/latest/?badge=latest)
 
