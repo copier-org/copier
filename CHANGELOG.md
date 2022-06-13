@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v6.1.0 (2022-06-13)
+
+### Feat
+
+-   support getting template commit hash with `{{ _copier_conf.vcs_ref_hash }}`
+-   simplify the format of the question prompt (#689)
+
+### Fix
+
+-   ignore non-PEP-440-compliant tags (#676)
+
 ## [6.0.0] - 2022-05-15
 
 [All changes here](https://github.com/copier-org/copier/issues?q=milestone%3Av6.0.0).
