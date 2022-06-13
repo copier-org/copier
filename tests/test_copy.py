@@ -328,3 +328,20 @@ def test_preserved_permissions(
     copier.run_copy(str(src), dst, defaults=True, overwrite=True)
     dst_file = dst / "the_file"
     assert (dst_file.stat().st_mode & permissions) == permissions
+
+
+def test_commit_hash(src_repo, tmp_path):
+    build_file_tree(
+        {
+            src_repo / "commit.jinja": "{{_copier_conf.vcs_ref_hash}}",
+            src_repo / "tag.jinja": "{{_copier_answers._commit}}",
+        }
+    )
+    src_git = git["-C", src_repo]
+    src_git("add", "-A")
+    src_git("commit", "-m1")
+    src_git("tag", "1.0")
+    commit = src_git("rev-parse", "HEAD").strip()
+    copier.run_copy(str(src_repo), tmp_path)
+    assert tmp_path.joinpath("tag").read_text() == "1.0"
+    assert tmp_path.joinpath("commit").read_text() == commit
