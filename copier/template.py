@@ -215,6 +215,12 @@ class Template:
                 return git("describe", "--tags", "--always").strip()
 
     @cached_property
+    def commit_hash(self) -> OptStr:
+        """If the template is VCS-tracked, get its commit full hash."""
+        if self.vcs == "git":
+            return git("-C", self.local_abspath, "rev-parse", "HEAD").strip()
+
+    @cached_property
     def config_data(self) -> AnyByStrDict:
         """Get config from the template.
 

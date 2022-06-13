@@ -96,3 +96,5 @@ Copier includes:
     -   You can serialize it with `{{ _copier_conf|to_json }}`.
     -   ⚠️ It contains secret answers inside its `.data` key.
     -   Modifying it doesn't alter the current rendering configuration.
+    -   It contains the current commit hash from the template in
+        `{{ _copier_conf.vcs_ref_hash }}`.

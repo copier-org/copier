@@ -200,6 +200,7 @@ class Worker:
             {
                 "answers_file": self.answers_relpath,
                 "src_path": self.template.local_abspath,
+                "vcs_ref_hash": self.template.commit_hash,
             }
         )
 
