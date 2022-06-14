@@ -104,6 +104,44 @@ def template_path(tmp_path_factory) -> str:
     return str(root)
 
 
+@pytest.fixture(scope="module")
+def validation_template_path(tmp_path_factory) -> str:
+    root = tmp_path_factory.mktemp("template")
+    build_file_tree(
+        {
+            root
+            / "copier.yml": f"""\
+                _templates_suffix: {SUFFIX_TMPL}
+                _envops: {BRACKET_ENVOPS_JSON}
+                description_l:
+                    type: str
+                    help: describe
+                    validation: |-
+                        [% if description_l|length > 7 %]
+                            LINELENGTH
+                        [% elif not description_l.endswith(".") %]
+                            PUNCTUATION
+                        [% endif %]
+                description_p:
+                    type: str
+                    help: describe
+                    validation: |-
+                        [% if description_p|length > 7 %]
+                            LINELENGTH
+                        [% elif not description_p.endswith(".") %]
+                            PUNCTUATION
+                        [% endif %]
+            """,
+            root
+            / "results.txt.tmpl": """\
+                description_l: [[description_l]]
+                description_p: [[description_p]]
+            """,
+        }
+    )
+    return str(root)
+
+
 def test_api(tmp_path, template_path):
     """Test copier correctly processes advanced questions and answers through API."""
     copy(
@@ -242,6 +280,36 @@ def test_cli_interactive(tmp_path, spawn, template_path):
             choose_number: -1.1
             minutes_under_water: 1
             optional_value: null
+        """
+    )
+
+
+def test_interactive_validation(tmp_path, spawn, validation_template_path):
+    """Ensure validation works for interactive prompts."""
+
+    def check_invalid(tui, name, format, invalid_value, prompt, error):
+        """Check that invalid input is reported correctly"""
+        expect_prompt(tui, name, format, prompt)
+        tui.sendline(invalid_value)
+        tui.expect_exact(invalid_value)
+        tui.expect_exact(error)
+
+    tui = spawn(COPIER_PATH + ("copy", validation_template_path, str(tmp_path)), timeout=10)
+
+    with open('/tmp/pexpect.txt', 'wb') as f:
+        tui.logfile = f
+        check_invalid(tui, "description_l", "str", "foobarbaz", "describe", "LINELENGTH")
+        tui.send(Keyboard.Backspace * 3)
+        tui.sendline(".")
+        check_invalid(tui, "description_p", "str", "foobar", "describe", "PUNCTUATION")
+        tui.sendline(".")
+        tui.expect_exact(pexpect.EOF)
+
+    results_file = tmp_path / "results.txt"
+    assert results_file.read_text() == dedent(
+        """\
+            description_l: foobar.
+            description_p: foobar.
         """
     )
 

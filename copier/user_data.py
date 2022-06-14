@@ -15,6 +15,7 @@ from typing import (
     ChainMap as t_ChainMap,
     Dict,
     List,
+    Optional,
     Union,
 )
 
@@ -172,6 +173,10 @@ class Question:
             The type of question. Affects the rendering, validation and filtering.
             Can be templated.
 
+        validation:
+            Inline template evaluating to empty string if valid or non-empty
+            string used as the error messige if invalid.
+
         var_name:
             Question name in the answers dict.
 
@@ -193,6 +198,7 @@ class Question:
     placeholder: str = ""
     secret: bool = False
     type: str = ""
+    validation: Optional[str] = None
     when: Union[str, bool] = True
 
     @validator("var_name")
@@ -357,14 +363,19 @@ class Question:
         multiline = cast_answer_type(multiline, cast_str_to_bool)
         return bool(multiline)
 
-    def validate_answer(self, answer) -> bool:
+    def validate_answer(self, answer) -> Union[bool, str]:
         """Validate user answer."""
         cast_fn = self.get_cast_fn()
         try:
             cast_fn(answer)
-            return True
         except Exception:
             return False
+        else:
+            if self.validation is None:
+                return True
+
+        validation = self.render_validation(self.validation, answer)
+        return validation == '' or validation
 
     def get_when(self, answers) -> bool:
         """Get skip condition for question."""
@@ -394,6 +405,24 @@ class Question:
             return template.render(**self.answers.combined)
         except UndefinedError as error:
             raise UserMessageError(str(error)) from error
+
+    def render_validation(self, template_string: str, value: str) -> str:
+        """Render a single jinja validation template value.
+
+        Validation templates will return an empty string on success and a
+        non-empty string as the error message. The error message defined in a
+        template might contain indents, which will be stripped from the returned
+        error message.
+        """
+        template = self.jinja_env.from_string(template_string)
+        answers = {**self.answers.combined, **{self.var_name: value}}
+        try:
+            # strip whitespace from indented multiline template text
+            result = template.render(**answers).strip()
+        except UndefinedError as error:
+            raise UserMessageError(str(error)) from error
+
+        return result
 
 
 def parse_yaml_string(string: str) -> Any:
