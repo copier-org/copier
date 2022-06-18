@@ -15,8 +15,8 @@ from .errors import DirtyLocalWarning
 from .tools import TemporaryDirectory
 from .types import OptBool, OptStr, StrOrPath
 
-GIT_PREFIX = ("git@", "git://", "git+")
-GIT_POSTFIX = (".git",)
+GIT_PREFIX = ("git@", "git://", "git+", "https://github.com/", "https://gitlab.com/")
+GIT_POSTFIX = ".git"
 GIT_VERSION = Version(re.findall(r"\d+\.\d+\.\d+", git("version"))[0])
 REPLACEMENTS = (
     (re.compile(r"^gh:/?(.*\.git)$"), r"https://github.com/\1"),
@@ -79,6 +79,8 @@ def get_repo(url: str) -> OptStr:
 
     if url.startswith("git+"):
         url = url[4:]
+    elif url.startswith("https://") and not url.endswith(GIT_POSTFIX):
+        url = "".join((url, GIT_POSTFIX))
     return url
 
 
