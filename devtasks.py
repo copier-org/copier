@@ -6,7 +6,7 @@ from subprocess import check_call
 
 def clean():
     """
-    Clean build, test or other process artefacrts from the project workspace
+    Clean build, test or other process artefacts from the project workspace
     """
     build_artefacts = (
         "build/",
