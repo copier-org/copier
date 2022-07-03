@@ -246,7 +246,7 @@ class Question:
         # Emptiness is expressed as an empty str
         if default is None:
             return ""
-        # JSON and YAML dumped depending on mutliline setting
+        # JSON and YAML dumped depending on multiline setting
         if self.get_type_name() == "json":
             return json.dumps(default, indent=2 if self.get_multiline() else None)
         if self.get_type_name() == "yaml":

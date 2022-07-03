@@ -465,7 +465,7 @@ class Template:
                     dunamai.Version.from_git().serialize(style=dunamai.Style.Pep440)
                 )
         except ValueError:
-            # A fully descripted commit can be easily detected converted into a
+            # A fully descriptive commit can be easily detected converted into a
             # PEP440 version, because it has the format "<tag>-<count>-g<hash>"
             if re.match(r"^.+-\d+-g\w+$", self.commit):
                 base, count, git_hash = self.commit.rsplit("-", 2)
