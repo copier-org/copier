@@ -150,12 +150,12 @@ def test_api(tmp_path, template_path):
 def test_cli_interactive(tmp_path, spawn, template_path):
     """Test copier correctly processes advanced questions and answers through CLI."""
 
-    def check_invalid(tui, name, format, invalid_value, help=None):
+    def check_invalid(tui, name, format, invalid_value, help=None, err="Invalid input"):
         """Check that invalid input is reported correctly"""
         expect_prompt(tui, name, format, help)
         tui.sendline(invalid_value)
         tui.expect_exact(invalid_value)
-        tui.expect_exact("Invalid input")
+        tui.expect_exact(err)
 
     tui = spawn(COPIER_PATH + ("copy", template_path, str(tmp_path)), timeout=10)
     expect_prompt(tui, "love_me", "bool", help="I need to know it. Do you love me?")
@@ -164,9 +164,9 @@ def test_cli_interactive(tmp_path, spawn, template_path):
     tui.sendline("Guybrush Threpwood")
     check_invalid(tui, "your_age", "int", "wrong your_age", help="How old are you?")
     # tui.send((Keyboard.Alt + Keyboard.Backspace) * 2)
-    # tui.sendline("-22")
-    # tui.expect_exact("-22")
-    # tui.expect_exact("Must be positive")
+    # check_invalid(
+    #     tui, "your_age", "int", "-1", help="How old are you?", err="Must be positive"
+    # )
     tui.send((Keyboard.Alt + Keyboard.Backspace) * 2)
     tui.sendline("22")
     check_invalid(
