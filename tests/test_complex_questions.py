@@ -12,6 +12,7 @@ from plumbum.cmd import git
 from copier import copy, run_auto, run_update
 
 from .helpers import (
+    BRACKET_ENVOPS,
     BRACKET_ENVOPS_JSON,
     COPIER_PATH,
     SUFFIX_TMPL,
@@ -19,6 +20,9 @@ from .helpers import (
     build_file_tree,
     expect_prompt,
 )
+
+BLK_START = BRACKET_ENVOPS["block_start_string"]
+BLK_END = BRACKET_ENVOPS["block_end_string"]
 
 
 @pytest.fixture(scope="module")
@@ -39,6 +43,10 @@ def template_path(tmp_path_factory) -> str:
                 your_age:
                     help: How old are you?
                     type: int
+                    validator: |-
+                        {BLK_START} if your_age <= 0 {BLK_END}
+                            Must be positive
+                        {BLK_START} endif {BLK_END}
                 your_height:
                     help: What's your height?
                     type: float
@@ -155,6 +163,10 @@ def test_cli_interactive(tmp_path, spawn, template_path):
     expect_prompt(tui, "your_name", "str", help="Please tell me your name.")
     tui.sendline("Guybrush Threpwood")
     check_invalid(tui, "your_age", "int", "wrong your_age", help="How old are you?")
+    # tui.send((Keyboard.Alt + Keyboard.Backspace) * 2)
+    # tui.sendline("-22")
+    # tui.expect_exact("-22")
+    # tui.expect_exact("Must be positive")
     tui.send((Keyboard.Alt + Keyboard.Backspace) * 2)
     tui.sendline("22")
     check_invalid(
