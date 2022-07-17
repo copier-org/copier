@@ -15,6 +15,8 @@ from typing import (
     ChainMap as t_ChainMap,
     Dict,
     List,
+    Mapping,
+    Optional,
     Union,
 )
 
@@ -22,7 +24,8 @@ import yaml
 from jinja2 import UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
 from prompt_toolkit.lexers import PygmentsLexer
-from pydantic import validator
+from prompt_toolkit.validation import ValidationError
+from pydantic import validator as pydantic_validator
 from pydantic.dataclasses import dataclass
 from pygments.lexers.data import JsonLexer, YamlLexer
 from questionary.prompts.common import Choice
@@ -193,15 +196,16 @@ class Question:
     placeholder: str = ""
     secret: bool = False
     type: str = ""
+    validator: str = ""
     when: Union[str, bool] = True
 
-    @validator("var_name")
+    @pydantic_validator("var_name")
     def _check_var_name(cls, v):
         if v in DEFAULT_DATA:
             raise ValueError("Invalid question name")
         return v
 
-    @validator("type", always=True)
+    @pydantic_validator("type", always=True)
     def _check_type(cls, v, values):
         if v == "":
             default_type_name = type(values.get("default")).__name__
@@ -361,10 +365,17 @@ class Question:
         """Validate user answer."""
         cast_fn = self.get_cast_fn()
         try:
-            cast_fn(answer)
-            return True
+            ans = cast_fn(answer)
         except Exception:
             return False
+
+        try:
+            validation = self.render_value(self.validator, {self.var_name: ans}).strip()
+        except UserMessageError as error:
+            raise ValidationError(message=str(error)) from UserMessageError
+        if validation:
+            raise ValidationError(message=validation)
+        return True
 
     def get_when(self, answers) -> bool:
         """Get skip condition for question."""
@@ -380,7 +391,9 @@ class Question:
         when = cast_answer_type(when, cast_str_to_bool)
         return bool(when)
 
-    def render_value(self, value: Any) -> str:
+    def render_value(
+        self, value: Any, answers: Optional[Mapping[str, Any]] = None
+    ) -> str:
         """Render a single templated value using Jinja.
 
         If the value cannot be used as a template, it will be returned as is.
@@ -391,7 +404,7 @@ class Question:
             # value was not a string
             return value
         try:
-            return template.render(**self.answers.combined)
+            return template.render(**(answers or self.answers.combined))
         except UndefinedError as error:
             raise UserMessageError(str(error)) from error
 
