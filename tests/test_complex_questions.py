@@ -44,9 +44,9 @@ def template_path(tmp_path_factory) -> str:
                     help: How old are you?
                     type: int
                     validator: |-
-                        {BLK_START} if your_age <= 0 {BLK_END}
+                        [% if your_age <= 0 %]
                             Must be positive
-                        {BLK_START} endif {BLK_END}
+                        [% endif %]
                 your_height:
                     help: What's your height?
                     type: float
