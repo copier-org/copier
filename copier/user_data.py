@@ -404,7 +404,7 @@ class Question:
             # value was not a string
             return value
         try:
-            return template.render(**{**self.answers.combined, **(answers or {})})
+            return template.render(**dict(self.answers.combined, **extra_answers))
         except UndefinedError as error:
             raise UserMessageError(str(error)) from error
 
