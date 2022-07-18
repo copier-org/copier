@@ -392,7 +392,7 @@ class Question:
         return bool(when)
 
     def render_value(
-        self, value: Any, answers: Optional[Mapping[str, Any]] = None
+        self, value: Any, **extra_answers: Any
     ) -> str:
         """Render a single templated value using Jinja.
 
