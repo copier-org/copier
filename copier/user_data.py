@@ -376,7 +376,7 @@ class Question:
         try:
             validation = self.render_value(self.validator, {self.var_name: ans}).strip()
         except Exception as error:
-            raise ValidationError(message=str(error)) from UserMessageError
+            raise ValidationError(message=str(error)) from error
         if validation:
             raise ValidationError(message=validation)
         return True
