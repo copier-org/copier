@@ -399,6 +399,8 @@ class Question:
         """Render a single templated value using Jinja.
 
         If the value cannot be used as a template, it will be returned as is.
+        `extra_answers` are combined self `self.answers.combined` when rendering
+        the template.
         """
         try:
             template = self.jinja_env.from_string(value)
