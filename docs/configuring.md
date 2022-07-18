@@ -134,6 +134,10 @@ Supported keys:
 -   **multiline**: When set to `true`, it allows multiline input. This is especially
     useful when `type` is `json` or `yaml`.
 
+    **validator**: Jinja template with which to validate the user input. This template
+    will be rendered with the combined answers as variables; it should render _nothing_
+    if the value is valid, and an error message to show to the user otherwise.
+
 -   **when**: Condition that, if `false`, skips the question.
 
     If it is a boolean, it is used directly, but it's a bit absurd in that case.
@@ -194,6 +198,7 @@ Supported keys:
     # I'll avoid default and help here, but you can use them too
     age:
         type: int
+        validator: "{% if age <= 0 %}Must be positive{% endif %}"
 
     height:
         type: float

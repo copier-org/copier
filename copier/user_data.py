@@ -15,8 +15,6 @@ from typing import (
     ChainMap as t_ChainMap,
     Dict,
     List,
-    Mapping,
-    Optional,
     Union,
 )
 
@@ -177,6 +175,12 @@ class Question:
 
         var_name:
             Question name in the answers dict.
+
+        validator:
+            Jinja template with which to validate the user input. This template
+            will be rendered with the combined answers as variables; it should
+            render *nothing* if the value is valid, and an error message to show
+            to the user otherwise.
 
         when:
             Condition that, if `False`, skips the question. Can be templated.
@@ -391,9 +395,7 @@ class Question:
         when = cast_answer_type(when, cast_str_to_bool)
         return bool(when)
 
-    def render_value(
-        self, value: Any, **extra_answers: Any
-    ) -> str:
+    def render_value(self, value: Any, **extra_answers: Any) -> str:
         """Render a single templated value using Jinja.
 
         If the value cannot be used as a template, it will be returned as is.
