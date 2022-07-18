@@ -374,11 +374,11 @@ class Question:
             return False
 
         try:
-            validation = self.render_value(self.validator, {self.var_name: ans}).strip()
+            err_msg = self.render_value(self.validator, **{self.var_name: ans}).strip()
         except Exception as error:
             raise ValidationError(message=str(error)) from error
-        if validation:
-            raise ValidationError(message=validation)
+        if err_msg:
+            raise ValidationError(message=err_msg)
         return True
 
     def get_when(self, answers) -> bool:
