@@ -35,8 +35,8 @@ generating the project.
 ## Templates versions
 
 By default, copier will copy from the last release found in template git tags, sorted as
-[PEP 440][], regardless of whether the template is from a URL or a local clone of a git
-repository.
+[PEP 440](https://peps.python.org/pep-0440/), regardless of whether the template is from
+a URL or a local clone of a git repository.
 
 The exception to this is if you use a local clone of a template repository that has had
 any modifications made, in this case Copier will use this modified working copy of the
