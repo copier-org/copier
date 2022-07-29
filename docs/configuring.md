@@ -115,7 +115,7 @@ Supported keys:
                 Some array: "[str, keeps, this, as, a, str]"
         ```
 
--   **default**: Leave empty to force the user to answer. Provide a default to save him
+-   **default**: Leave empty to force the user to answer. Provide a default to save them
     from typing it if it's quite common. When using `choices`, the default must be the
     choice _value_, not its _key_, and it must match its _type_. If values are quite
     long, you can use
@@ -1066,7 +1066,7 @@ will be used to load the last user's answers to the questions made in
 [the `copier.yml` file](#the-copieryml-file).
 
 This makes projects easier to update because when the user is asked, the default answers
-will be the last ones he used.
+will be the last ones they used.
 
 The file **must be called exactly `{{ _copier_conf.answers_file }}.jinja`** (or ended
 with [your chosen suffix](#templates_suffix)) in your template's root folder) to allow
