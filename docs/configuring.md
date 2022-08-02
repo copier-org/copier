@@ -172,6 +172,7 @@ Supported keys:
                 {%- endif %}
             # Only ask for copyright if project is not in the public domain
             when: "{{ project_license != 'Public domain' }}"
+        ```
 
 !!! example
 
