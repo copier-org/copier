@@ -45,7 +45,7 @@ def template_path(tmp_path_factory) -> str:
                     type: int
                     validator: |-
                         [% if your_age <= 0 %]
-                            Must be positive
+                            Must be +
                         [% endif %]
                 your_height:
                     help: What's your height?
@@ -163,11 +163,10 @@ def test_cli_interactive(tmp_path, spawn, template_path):
     expect_prompt(tui, "your_name", "str", help="Please tell me your name.")
     tui.sendline("Guybrush Threpwood")
     check_invalid(tui, "your_age", "int", "wrong your_age", help="How old are you?")
-    # tui.send((Keyboard.Alt + Keyboard.Backspace) * 2)
-    # check_invalid(
-    #     tui, "your_age", "int", "-1", help="How old are you?", err="Must be positive"
-    # )
     tui.send((Keyboard.Alt + Keyboard.Backspace) * 2)
+    tui.send("-1")
+    tui.expect_exact("Must be +")
+    tui.send(Keyboard.Backspace * 2)
     tui.sendline("22")
     check_invalid(
         tui, "your_height", "float", "wrong your_height", help="What's your height?"
