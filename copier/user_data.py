@@ -22,7 +22,8 @@ import yaml
 from jinja2 import UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
 from prompt_toolkit.lexers import PygmentsLexer
-from pydantic import validator
+from prompt_toolkit.validation import ValidationError
+from pydantic import validator as pydantic_validator
 from pydantic.dataclasses import dataclass
 from pygments.lexers.data import JsonLexer, YamlLexer
 from questionary.prompts.common import Choice
@@ -175,6 +176,12 @@ class Question:
         var_name:
             Question name in the answers dict.
 
+        validator:
+            Jinja template with which to validate the user input. This template
+            will be rendered with the combined answers as variables; it should
+            render *nothing* if the value is valid, and an error message to show
+            to the user otherwise.
+
         when:
             Condition that, if `False`, skips the question. Can be templated.
             If it is a boolean, it is used directly. If it is a str, it is
@@ -193,15 +200,16 @@ class Question:
     placeholder: str = ""
     secret: bool = False
     type: str = ""
+    validator: str = ""
     when: Union[str, bool] = True
 
-    @validator("var_name")
+    @pydantic_validator("var_name")
     def _check_var_name(cls, v):
         if v in DEFAULT_DATA:
             raise ValueError("Invalid question name")
         return v
 
-    @validator("type", always=True)
+    @pydantic_validator("type", always=True)
     def _check_type(cls, v, values):
         if v == "":
             default_type_name = type(values.get("default")).__name__
@@ -361,10 +369,17 @@ class Question:
         """Validate user answer."""
         cast_fn = self.get_cast_fn()
         try:
-            cast_fn(answer)
-            return True
+            ans = cast_fn(answer)
         except Exception:
             return False
+
+        try:
+            err_msg = self.render_value(self.validator, **{self.var_name: ans}).strip()
+        except Exception as error:
+            raise ValidationError(message=str(error)) from error
+        if err_msg:
+            raise ValidationError(message=err_msg)
+        return True
 
     def get_when(self, answers) -> bool:
         """Get skip condition for question."""
@@ -380,10 +395,12 @@ class Question:
         when = cast_answer_type(when, cast_str_to_bool)
         return bool(when)
 
-    def render_value(self, value: Any) -> str:
+    def render_value(self, value: Any, **extra_answers: Any) -> str:
         """Render a single templated value using Jinja.
 
         If the value cannot be used as a template, it will be returned as is.
+        `extra_answers` are combined self `self.answers.combined` when rendering
+        the template.
         """
         try:
             template = self.jinja_env.from_string(value)
@@ -391,7 +408,7 @@ class Question:
             # value was not a string
             return value
         try:
-            return template.render(**self.answers.combined)
+            return template.render(**dict(self.answers.combined, **extra_answers))
         except UndefinedError as error:
             raise UserMessageError(str(error)) from error
 

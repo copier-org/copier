@@ -12,6 +12,7 @@ from plumbum.cmd import git
 from copier import copy, run_auto, run_update
 
 from .helpers import (
+    BRACKET_ENVOPS,
     BRACKET_ENVOPS_JSON,
     COPIER_PATH,
     SUFFIX_TMPL,
@@ -19,6 +20,9 @@ from .helpers import (
     build_file_tree,
     expect_prompt,
 )
+
+BLK_START = BRACKET_ENVOPS["block_start_string"]
+BLK_END = BRACKET_ENVOPS["block_end_string"]
 
 
 @pytest.fixture(scope="module")
@@ -39,6 +43,10 @@ def template_path(tmp_path_factory) -> str:
                 your_age:
                     help: How old are you?
                     type: int
+                    validator: |-
+                        [% if your_age <= 0 %]
+                            Must be +
+                        [% endif %]
                 your_height:
                     help: What's your height?
                     type: float
@@ -142,12 +150,12 @@ def test_api(tmp_path, template_path):
 def test_cli_interactive(tmp_path, spawn, template_path):
     """Test copier correctly processes advanced questions and answers through CLI."""
 
-    def check_invalid(tui, name, format, invalid_value, help=None):
+    def check_invalid(tui, name, format, invalid_value, help=None, err="Invalid input"):
         """Check that invalid input is reported correctly"""
         expect_prompt(tui, name, format, help)
         tui.sendline(invalid_value)
         tui.expect_exact(invalid_value)
-        tui.expect_exact("Invalid input")
+        tui.expect_exact(err)
 
     tui = spawn(COPIER_PATH + ("copy", template_path, str(tmp_path)), timeout=10)
     expect_prompt(tui, "love_me", "bool", help="I need to know it. Do you love me?")
@@ -156,6 +164,9 @@ def test_cli_interactive(tmp_path, spawn, template_path):
     tui.sendline("Guybrush Threpwood")
     check_invalid(tui, "your_age", "int", "wrong your_age", help="How old are you?")
     tui.send((Keyboard.Alt + Keyboard.Backspace) * 2)
+    tui.send("-1")
+    tui.expect_exact("Must be +")
+    tui.send(Keyboard.Backspace * 2)
     tui.sendline("22")
     check_invalid(
         tui, "your_height", "float", "wrong your_height", help="What's your height?"
