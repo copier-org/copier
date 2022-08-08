@@ -102,6 +102,11 @@ class Worker:
         skip_if_exists:
             User-chosen additional [file skip patterns][skip_if_exists].
 
+        force_overwrite:
+            Specific files to force-overwrite. Allows more granularity than the `overwrite` option.
+
+            See [force_overwrite][].
+
         cleanup_on_error:
             Delete `dst_path` if there's an error?
 
@@ -139,6 +144,7 @@ class Worker:
     exclude: StrSeq = ()
     use_prereleases: bool = False
     skip_if_exists: StrSeq = ()
+    force_overwrite: StrSeq = ()
     cleanup_on_error: bool = True
     defaults: bool = False
     user_defaults: AnyByStrDict = field(default_factory=dict)
@@ -245,6 +251,15 @@ class Worker:
         if self.overwrite or dst_relpath == self.answers_relpath:
             printf(
                 "overwrite",
+                dst_relpath,
+                style=Style.WARNING,
+                quiet=self.quiet,
+                file_=sys.stderr,
+            )
+            return True
+        if self.match_force_overwrite(dst_relpath):
+            printf(
+                "forced overwrite",
                 dst_relpath,
                 style=Style.WARNING,
                 quiet=self.quiet,
@@ -383,6 +398,11 @@ class Worker:
         return self.template.exclude + tuple(self.exclude)
 
     @cached_property
+    def force_overwrites(self) -> StrSeq:
+        """Template forced overwrites"""
+        return tuple(self.template.force_overwrite)
+
+    @cached_property
     def jinja_env(self) -> SandboxedEnvironment:
         """Return a pre-configured Jinja environment.
 
@@ -418,6 +438,10 @@ class Worker:
     def match_exclude(self) -> Callable[[Path], bool]:
         """Get a callable to match paths against all exclusions."""
         return self._path_matcher(self.all_exclusions)
+
+    @cached_property
+    def match_force_overwrite(self) -> Callable[[Path], bool]:
+        return self._path_matcher(self.force_overwrites)
 
     @cached_property
     def match_skip(self) -> Callable[[Path], bool]:
@@ -730,7 +754,10 @@ class Worker:
             with local.cwd(self.subproject.local_abspath):
                 apply_cmd = git["apply", "--reject", "--exclude", self.answers_relpath]
                 for skip_pattern in chain(
-                    self.skip_if_exists, self.template.skip_if_exists
+                    self.skip_if_exists,
+                    self.template.skip_if_exists,
+                    self.force_overwrite,
+                    self.template.force_overwrite,
                 ):
                     apply_cmd = apply_cmd["--exclude", skip_pattern]
                 (apply_cmd << diff)(retcode=None)

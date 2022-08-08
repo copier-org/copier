@@ -383,6 +383,15 @@ class Template:
         return self.config_data.get("skip_if_exists", ())
 
     @cached_property
+    def force_overwrite(self) -> StrSeq:
+        """
+        Get patterns to always force-overwrite from upstream template.
+
+        See [force_overwrite][].
+        """
+        return self.config_data.get("force_overwrite", ())
+
+    @cached_property
     def subdirectory(self) -> str:
         """Get the subdirectory as specified in the template.
 
