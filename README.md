@@ -132,8 +132,8 @@ If you want your template to appear in that list, just add the topic to it! 🏷
 
 ## Credits
 
-Special thanks go to [jpscaletti](https://github.com/jpscaletti) for originally creating
-`Copier`. This project would not be a thing without him.
+Special thanks go to [jpsca](https://github.com/jpsca) for originally creating `Copier`.
+This project would not be a thing without him.
 
 Many thanks to [pykong](https://github.com/pykong) who took over maintainership on the
 project, promoted it, and laid out the bases of what the project is today.
