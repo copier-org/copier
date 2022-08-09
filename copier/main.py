@@ -215,10 +215,28 @@ class Worker:
 
     def _path_matcher(self, patterns: Iterable[str]) -> Callable[[Path], bool]:
         """Produce a function that matches against specified patterns."""
+        patterns = self._sort_patterns(patterns)
         # TODO Is normalization really needed?
         normalized_patterns = (normalize("NFD", pattern) for pattern in patterns)
         spec = pathspec.PathSpec.from_lines("gitwildmatch", normalized_patterns)
         return spec.match_file
+
+    def _sort_patterns(self, patterns: Iterable[str]) -> Iterable[str]:
+        # See https://github.com/copier-org/copier/issues/735
+        """
+        Properly sort patterns so that wildcards are first and negation patterns are last.
+        """
+
+        def _sort(i1, i2):
+            if (("!" in i1) and ("!" in i2)) or (("*" in i1) and ("*" in i2)):
+                return 0
+            if ("!" in i1) or ("*" in i2):
+                return 1
+            if ("*" in i1) or ("!" in i2):
+                return -1
+            return 0
+
+        return sorted(patterns, key=cmp_to_key(_sort))
 
     def _solve_render_conflict(self, dst_relpath: Path):
         """Properly solve render conflicts.
