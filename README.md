@@ -24,7 +24,7 @@ A library and CLI app for rendering project templates.
 1. Install Python 3.7 or newer (3.8 or newer if you're on Windows).
 1. Install Git 2.27 or newer.
 1. To use as a CLI app: `pipx install copier`
-1. To use as a library: `pip install copier`
+1. To use as a library: `pip install copier` or `conda install -c conda-forge copier`
 
 ## Quick start
 
