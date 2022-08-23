@@ -50,9 +50,9 @@ Feel free to discuss with our community through
 We use some tools as part of our development workflow which you'll need to install into
 your host environment:
 
--   [poetry](https://python-poetry.org/) for packaging and dependency management
+-   [Poetry](https://python-poetry.org/) for packaging and dependency management
 -   [poethepoet](https://github.com/nat-n/poethepoet) for running development tasks
--   [commitizen](https://commitizen-tools.github.io/commitizen/) for writing git commits
+-   [commitizen](https://commitizen-tools.github.io/commitizen/) for writing Git commits
     easily
 
 Or you can use
@@ -63,7 +63,7 @@ to start hacking with one click!
 
 Ready to contribute? Here's how to set up the project for local development.
 
-1.  Fork the copier repo on GitHub.
+1.  Fork the Copier repo on GitHub.
 2.  Clone your fork locally:
 
     ```sh
@@ -71,7 +71,7 @@ Ready to contribute? Here's how to set up the project for local development.
     cd copier
     ```
 
-3.  Use poetry to setup a development environment
+3.  Use Poetry to set up a development environment:
 
     ```sh
     # Tell Poetry to create the virtualenv in the project directory
@@ -95,7 +95,7 @@ Ready to contribute? Here's how to set up the project for local development.
 
     Now you can make your changes locally.
 
-5.  When you're done making changes, check that your changes pass all tests
+5.  When you're done making changes, check that your changes pass all tests:
 
     ```sh
     poe test

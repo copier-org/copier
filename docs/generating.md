@@ -27,16 +27,16 @@ Use the `--data` command-line argument or the `data` parameter of the
 `copier.run_auto()` function to pass whatever extra context you want to be available in
 the templates. The arguments can be any valid Python value, even a function.
 
-Use the `--vcs-ref` command-line argument to checkout a particular git ref before
+Use the `--vcs-ref` command-line argument to checkout a particular Git ref before
 generating the project.
 
 [All the available options][copier.cli] are described with the `--help-all` option.
 
 ## Templates versions
 
-By default, copier will copy from the last release found in template git tags, sorted as
+By default, Copier will copy from the last release found in template Git tags, sorted as
 [PEP 440](https://peps.python.org/pep-0440/), regardless of whether the template is from
-a URL or a local clone of a git repository.
+a URL or a local clone of a Git repository.
 
 The exception to this is if you use a local clone of a template repository that has had
 any modifications made, in this case Copier will use this modified working copy of the
