@@ -11,8 +11,8 @@
 
 A library and CLI app for rendering project templates.
 
--   Works with **local** paths and **git URLs**.
--   Your project can include any file and `Copier` can dynamically replace values in any
+-   Works with **local** paths and **Git URLs**.
+-   Your project can include any file and Copier can dynamically replace values in any
     kind of text file.
 -   It generates a beautiful output and takes care of not overwrite existing files
     unless instructed to do so.
@@ -33,7 +33,7 @@ To create a template:
 ```bash
 📁 my_copier_template ------------------------ # your template project
 ├── 📄 copier.yml ---------------------------- # your template configuration
-├── 📁 .git ---------------------------------- # your template is a git repository
+├── 📁 .git ---------------------------------- # your template is a Git repository
 ├── 📁 {{project_name}} ---------------------- # a folder with a templated name
 │   └── 📄 {{module_name}}.py.jinja ---------- # a file with a templated name
 └── 📄 {{_copier_conf.answers_file}}.jinja --- # answers are recorded here
@@ -75,7 +75,7 @@ To generate a project from the template:
     # Create a project from a local path
     run_auto("path/to/project/template", "path/to/destination")
 
-    # Or from a git URL.
+    # Or from a Git URL.
     run_auto("https://github.com/copier-org/copier.git", "path/to/destination")
 
     # You can also use "gh:" as a shortcut of "https://github.com/"
@@ -108,7 +108,7 @@ Copier targets these main human audiences:
 1.  **Template consumers**. Programmers that want to start a new project quickly, or
     that want to evolve it comfortably.
 
-Non-humans should be happy also by using copier's CLI or API, as long as their
+Non-humans should be happy also by using Copier's CLI or API, as long as their
 expectations are the same as for those humans... and as long as they have feelings.
 
 Templates have these goals:
@@ -124,7 +124,7 @@ can evolve into complex ones as needed.
 
 ## Browse or tag public templates
 
-You can browse public copier templates in GitHub using
+You can browse public Copier templates on GitHub using
 [the `copier-template` topic](https://github.com/topics/copier-template). Use them as
 inspiration!
 

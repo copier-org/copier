@@ -4,7 +4,7 @@
 
 It is important that you understand how Copier works. It has 2 kinds of configurations:
 
-1. **Settings** for Copier itself. This includes things as minimal copier version
+1. **Settings** for Copier itself. This includes things as minimal Copier version
    required, which subdirectory to render, tasks to run, etc.
 1. **Answers**. This is customized per template. The user answers template questions,
    and those answers are stored as variables available for the template at rendering
@@ -352,7 +352,7 @@ templates.
 
 !!! hint
 
-    You can use [git submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
+    You can use [Git submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
     to sanely include shared code into templates.
 
 !!! example
@@ -877,12 +877,12 @@ This allows you to keep separate the template metadata and the template code.
 
 !!! question "Can I have multiple templates in a single repo using this option?"
 
-    The Copier recommendation is: **1 template = 1 git repository**.
+    The Copier recommendation is: **1 template = 1 Git repository**.
 
     Why? Unlike almost all other templating engines, Copier supports
     [smart project updates](updating.md). For that, Copier needs to know in which version it
     was copied last time, and to which version you are evolving. Copier gets that
-    information from git tags. Git tags are shared across the whole git repository. Using a
+    information from Git tags. Git tags are shared across the whole Git repository. Using a
     repository to host multiple templates would lead to many corner case situations that we
     don't want to support.
 
@@ -914,7 +914,7 @@ This allows you to keep separate the template metadata and the template code.
     !!! example
 
         With this questions file and this directory structure, the user will be prompted which
-        python engine to use, and the project will be generated using the subdirectory whose
+        Python engine to use, and the project will be generated using the subdirectory whose
         name matches the answer from the user:
 
         ```yaml title="copier.yaml"
@@ -963,7 +963,7 @@ _tasks:
     - [invoke, "--search-root={{ _copier_conf.src_path }}", after-copy]
     # You are able to output the full conf to JSON, to be parsed by your script
     - [invoke, end-process, "--full-conf={{ _copier_conf|to_json }}"]
-    # Your script can be run by the same python environment used to run copier
+    # Your script can be run by the same Python environment used to run Copier
     - ["{{ _copier_python }}", task.py]
 ```
 
@@ -1007,7 +1007,7 @@ templates suffix is _not_ empty, Copier will abort and print an error message.
 -   CLI flags: `g`, `--prereleases`
 -   Default value: `False`
 
-Imagine that the template supports updates and contains these 2 git tags: `v1.0.0` and
+Imagine that the template supports updates and contains these 2 Git tags: `v1.0.0` and
 `v2.0.0a1`. Copier will copy by default `v1.0.0` unless you add `--prereleases`.
 
 <!-- prettier-ignore-start -->
@@ -1030,7 +1030,7 @@ the `v2.0.0a1` tag unless this flag is enabled.
 -   CLI flags: `-r`, `-vcs-ref`
 -   Default value: N/A (use latest release)
 
-When copying or updating from a git-versioned template, indicate which template version
+When copying or updating from a Git-versioned template, indicate which template version
 to copy.
 
 This is stored automatically in the answers file, like this:
@@ -1043,7 +1043,7 @@ _commit: v1.0.0
 
     Not supported in `copier.yml`.
 
-By default, copier will copy from the last release found in template git tags, sorted as
+By default, Copier will copy from the last release found in template Git tags, sorted as
 [PEP 440][].
 
 ## Patterns syntax

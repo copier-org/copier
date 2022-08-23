@@ -1,6 +1,6 @@
 # Creating a template
 
-A template is a directory: usually the root folder of a git repository.
+A template is a directory: usually the root folder of a Git repository.
 
 The content of the files inside the project template is copied to the destination
 without changes, **unless they end with `.jinja`** (or
@@ -18,7 +18,7 @@ project, the user will be prompted to fill in or confirm the default values.
 ```bash
 📁 my_copier_template ------------------------ # your template project
 ├── 📄 copier.yml ---------------------------- # your template configuration
-├── 📁 .git ---------------------------------- # your template is a git repository
+├── 📁 .git ---------------------------------- # your template is a Git repository
 ├── 📁 {{project_name}} ---------------------- # a folder with a templated name
 │   └── 📄 {{module_name}}.py.jinja ---------- # a file with a templated name
 └── 📄 {{_copier_conf.answers_file}}.jinja --- # answers are recorded here
@@ -89,7 +89,7 @@ Copier includes:
     -   It doesn't contain any data that is not easy to render to JSON or YAML.
     -   It contains special keys like `_commit` and `_src_path`, indicating how the last
         template update was done.
--   `_copier_conf` includes a representation of the current copier
+-   `_copier_conf` includes a representation of the current Copier
     <!-- prettier-ignore -->
     [Worker][copier.main.Worker] object, also slightly modified:
     -   It only contains JSON-serializable data.

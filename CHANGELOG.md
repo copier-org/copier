@@ -42,10 +42,10 @@ Summary:
 -   Raise a CopierAnswersInterrupt instead of a bare KeyboardInterrupt to provide
     callers with additional context - such as the partially completed AnswersMap.
 -   Support for `user_defaults`, which take precedence over template defaults.
--   Copy dirty changes from a git-tracked template to the project by default, to make
+-   Copy dirty changes from a Git-tracked template to the project by default, to make
     testing easier.
 -   Advertise clearly which version is being copied or updated in the CLI.
--   Add jinja variable `_copier_python` to provide python `sys.executable`.
+-   Add jinja variable `_copier_python` to provide Python `sys.executable`.
 
 ### Changed
 
@@ -93,7 +93,7 @@ Summary:
 -   A directory that gets an empty name works as expected: not copied (nor its
     contents).
 -   When comparing versions to update, PEP 440 is always used now. This way, we avoid
-    fake ordering when git commit descriptions happen to be ordered in a non-predictable
+    fake ordering when Git commit descriptions happen to be ordered in a non-predictable
     way.
 -   Answers file will only remember answers to questions specified in the questionary.
 
@@ -117,7 +117,7 @@ Summary:
 
 [All changes here](https://github.com/copier-org/copier/milestone/12?closed=1). Summary:
 
--   Make copier work fine with Git 2.28.
+-   Make Copier work fine with Git 2.28.
 -   We have [docs](https://copier.readthedocs.io/)!
 -   Polish docs a little bit.
 -   We now run tests on macOS and Windows!
@@ -156,7 +156,7 @@ Summary:
 
 [All changes here](https://github.com/pykong/copier/milestone/7?closed=1). Summary:
 
--   Assert minimum copier version.
+-   Assert minimum Copier version.
 -   Prettier prompts.
 -   Prompt self-templating.
 -   Better README.

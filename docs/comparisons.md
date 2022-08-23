@@ -48,7 +48,7 @@ docs! We don't want to be biased, but it's easy that we tend to be:
     a different suffix, or to use none.
 
 [^4]:
-    Only for git templates, because Copier uses git tags to obtain available versions
+    Only for Git templates, because Copier uses Git tags to obtain available versions
     and extract smart diffs between them.
 
 [^5]: Context hooks are provided through the [`ContextHook` extension][context-hook].
