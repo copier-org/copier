@@ -104,7 +104,7 @@ vcs = "git"
 
 [tool.black]
 line-length = 88
-target-version = ['py36']
+target-version = ["py37"]
 
 [tool.isort]
 combine_as_imports = true
