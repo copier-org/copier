@@ -103,7 +103,7 @@ style = "pep440"
 vcs = "git"
 
 [tool.black]
-target-version = ['py36']
+target-version = ["py37"]
 
 [tool.isort]
 profile = "black"
