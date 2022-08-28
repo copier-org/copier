@@ -50,7 +50,7 @@ repos:
         name: isort
         entry: isort
         require_serial: true
-        language: python
+        language: system
         types_or: [cython, pyi, python]
         args: ["--filter-files"]
 
