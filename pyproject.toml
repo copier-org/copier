@@ -26,7 +26,7 @@ copier = "copier.cli:CopierApp.run"
 "Bug Tracker" = "https://github.com/copier-org/copier/issues"
 
 [tool.poetry.dependencies]
-python = ">=3.7,<4.0"
+python = ">=3.7"
 "backports.cached-property" = { version = ">=1.0.0", python = "<3.8" }
 colorama = ">=0.4.3"
 dunamai = ">=1.7.0"
@@ -103,18 +103,12 @@ style = "pep440"
 vcs = "git"
 
 [tool.black]
-line-length = 88
 target-version = ['py36']
 
 [tool.isort]
+profile = "black"
 combine_as_imports = true
-default_section = "THIRDPARTY"
-force_grid_wrap = 0
-include_trailing_comma = true
 known_first_party = ["copier"]
-line_length = 88
-multi_line_output = 3 # black interop
-use_parentheses = true
 
 [tool.mypy]
 ignore_missing_imports = true

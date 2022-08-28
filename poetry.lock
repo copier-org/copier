@@ -925,8 +925,8 @@ docs = ["mkdocs-material", "mkdocstrings"]
 
 [metadata]
 lock-version = "1.1"
-python-versions = ">=3.7,<4.0"
-content-hash = "d1392257d73dbde79c03990de14be646a24846daccd684c26d1e0a468eb44630"
+python-versions = ">=3.7"
+content-hash = "8dbe09874ec37b7a6eb77cc1503d5d98696eba3dd93eddcde17c3e806dea6312"
 
 [metadata.files]
 atomicwrites = [
