@@ -46,12 +46,13 @@ repos:
         language: system
         pass_filenames: false
         require_serial: true
-
-  # isorting our imports
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.10.1
-    hooks:
-      - id: isort
+      - id: poetry_isort
+        name: isort
+        entry: isort
+        require_serial: true
+        language: python
+        types_or: [cython, pyi, python]
+        args: ["--filter-files"]
 
   # prettier to format our many yaml files
   - repo: https://github.com/pre-commit/mirrors-prettier
