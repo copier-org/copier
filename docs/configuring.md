@@ -519,7 +519,7 @@ possible. The only exception at the moment is that
 end of a template file. If you want to remove those, either remove them from the
 template or set `keep_trailing_newline` to `false`.
 
-See [upstream docs](https://jinja.palletsprojects.com/en/2.11.x/api/#jinja2.Environment)
+See [upstream docs](https://jinja.palletsprojects.com/en/3.1.x/api/#jinja2.Environment)
 to know available options.
 
 !!! warning
@@ -679,12 +679,12 @@ on them, so they are always installed when Copier is installed.
 
     Examples of extensions you can use:
 
-    -   [Native Jinja2 extensions](https://jinja.palletsprojects.com/en/3.0.x/extensions/):
-        -   [expression statement](https://jinja.palletsprojects.com/en/3.0.x/templates/#expression-statement),
+    -   [Native Jinja2 extensions](https://jinja.palletsprojects.com/en/3.1.x/extensions/):
+        -   [expression statement](https://jinja.palletsprojects.com/en/3.1.x/templates/#expression-statement),
             which can be used to alter the Jinja context (answers, filters, etc.) or execute other operations, without outputting anything.
-        -   [loop controls](https://jinja.palletsprojects.com/en/3.0.x/extensions/#loop-controls), which adds the `break` and `continue`
+        -   [loop controls](https://jinja.palletsprojects.com/en/3.1.x/extensions/#loop-controls), which adds the `break` and `continue`
             keywords for Jinja loops.
-        -   [debug extension](https://jinja.palletsprojects.com/en/3.0.x/extensions/#debug-extension), which can dump the current context
+        -   [debug extension](https://jinja.palletsprojects.com/en/3.1.x/extensions/#debug-extension), which can dump the current context
             thanks to the added `{% debug %}` tag.
 
     -   From [cookiecutter](https://cookiecutter.readthedocs.io/en/1.7.2/):
