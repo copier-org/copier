@@ -74,7 +74,7 @@ their usage.
 ## Template helpers
 
 In addition to
-[all the features Jinja supports](https://jinja.palletsprojects.com/en/2.11.x/templates/),
+[all the features Jinja supports](https://jinja.palletsprojects.com/en/3.1.x/templates/),
 Copier includes:
 
 -   All functions and filters from
