@@ -116,6 +116,13 @@ ignore_missing_imports = true
 plugins = ["pydantic.mypy"]
 warn_no_return = false
 
+[tool.commitizen]
+annotated_tag = true
+changelog_incremental = true
+tag_format = "v$version"
+update_changelog_on_bump = true
+version = "6.1.0"
+
 [build-system]
 requires = ["poetry_core>=1.0.0", "poetry-dynamic-versioning"]
 build-backend = "poetry.core.masonry.api"
