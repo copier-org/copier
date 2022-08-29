@@ -48,7 +48,7 @@ repos:
         require_serial: true
       - id: poetry_isort
         name: isort
-        entry: isort
+        entry: poetry run isort
         require_serial: true
         language: system
         types_or: [cython, pyi, python]
