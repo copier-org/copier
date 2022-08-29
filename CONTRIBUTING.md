@@ -51,7 +51,6 @@ We use some tools as part of our development workflow which you'll need to insta
 your host environment:
 
 -   [Poetry](https://python-poetry.org/) for packaging and dependency management
--   [poethepoet](https://github.com/nat-n/poethepoet) for running development tasks
 -   [commitizen](https://commitizen-tools.github.io/commitizen/) for writing Git commits
     easily
 
