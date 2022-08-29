@@ -54,6 +54,12 @@ repos:
         types_or: [cython, pyi, python]
         args: ["--filter-files"]
 
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v2.37.3
+    hooks:
+      - id: pyupgrade
+        args: [--py37-plus]
+
   # prettier to format our many yaml files
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v2.5.1
