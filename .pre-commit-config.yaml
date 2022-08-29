@@ -46,7 +46,7 @@ repos:
         language: system
         pass_filenames: false
         require_serial: true
-      - id: poetry_isort
+      - id: isort
         name: isort
         entry: poetry run isort
         require_serial: true
