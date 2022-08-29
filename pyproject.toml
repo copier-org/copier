@@ -116,6 +116,9 @@ ignore_missing_imports = true
 plugins = ["pydantic.mypy"]
 warn_no_return = false
 
+[tool.pytest.ini_options]
+addopts = "-n auto -ra"
+
 [build-system]
 requires = ["poetry_core>=1.0.0", "poetry-dynamic-versioning"]
 build-backend = "poetry.core.masonry.api"
