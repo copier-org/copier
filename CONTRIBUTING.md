@@ -45,7 +45,7 @@ If you are proposing a feature:
 Feel free to discuss with our community through
 [our discussions channel](https://github.com/copier-org/copier/discussions). Be polite!
 
-## Dev environment setup
+## Dev Environment Setup
 
 We use some tools as part of our development workflow which you'll need to install into
 your host environment:
