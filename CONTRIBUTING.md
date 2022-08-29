@@ -37,8 +37,8 @@ If you are proposing a feature:
 
 -   Explain in detail how it would work.
 -   Keep the scope as narrow as possible, to make it easier to implement.
--   Remember that this is a volunteer-driven project, and that contributions are welcome
-    :)
+-   Remember that this is a volunteer-driven project, and that contributions are
+    welcome. :)
 
 ## Discuss
 
@@ -120,7 +120,7 @@ Ready to contribute? Here's how to set up the project for local development.
 Before you submit a pull request, check that it meets these guidelines:
 
 1.  The pull request has code, it should include tests.
-2.  Check that all checks pass on GitHub CI
+2.  Check that all checks pass on GitHub CI.
 
 ## Tips
 
