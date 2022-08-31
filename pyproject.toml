@@ -39,6 +39,7 @@ mkdocstrings = {extras = ["python"], version = ">=0.19.0", optional = true}
 packaging = ">=21.0" # packaging is needed when installing from PyPI
 pathspec = ">=0.9.0"
 plumbum = ">=1.6.9"
+prompt-toolkit = ">=3.0.30"
 pydantic = ">=1.9.0"
 pygments = ">=2.7.1"
 pyyaml = ">=5.3.1"

@@ -939,8 +939,8 @@ docs = ["mkdocs-material", "mkdocstrings"]
 
 [metadata]
 lock-version = "1.1"
-python-versions = ">=3.7,<4.0"
-content-hash = "d66345caa28fcca0f7c4407e43ce674fb633adfc70f70c20e76c8bb45b04a4fc"
+python-versions = ">=3.7,<4.0" # HACK https://github.com/PyCQA/isort/issues/1945
+content-hash = "c27772c42806af6d81307f237489eb5fb583ac7e597c7469b46fb185600e3f42"
 
 [metadata.files]
 atomicwrites = [
