@@ -116,6 +116,9 @@ ignore_missing_imports = true
 plugins = ["pydantic.mypy"]
 warn_no_return = false
 
+[tool.pytest.ini_options]
+addopts = "-n auto -ra"
+
 [tool.commitizen]
 annotated_tag = true
 changelog_incremental = true
