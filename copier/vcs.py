@@ -30,7 +30,7 @@ def is_git_repo_root(path: StrOrPath) -> bool:
     """Indicate if a given path is a git repo root directory."""
     try:
         with local.cwd(Path(path, ".git")):
-            return bool(git("rev-parse", "--is-inside-git-dir").strip() == "true")
+            return git("rev-parse", "--is-inside-git-dir").strip() == "true"
     except OSError:
         return False
 
