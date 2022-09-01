@@ -275,9 +275,8 @@ class Worker:
         assert not dst_relpath.is_absolute()
         assert not expected_contents or not is_dir, "Dirs cannot have expected content"
         dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
-        if dst_relpath != Path("."):
-            if self.match_exclude(dst_relpath):
-                return False
+        if dst_relpath != Path(".") and self.match_exclude(dst_relpath):
+            return False
         try:
             previous_content = dst_abspath.read_bytes()
         except FileNotFoundError:
@@ -291,9 +290,10 @@ class Worker:
             return True
         except (IsADirectoryError, PermissionError) as error:
             # HACK https://bugs.python.org/issue43095
-            if isinstance(error, PermissionError):
-                if not (error.errno == 13 and platform.system() == "Windows"):
-                    raise
+            if isinstance(error, PermissionError) and not (
+                error.errno == 13 and platform.system() == "Windows"
+            ):
+                raise
             if is_dir:
                 printf(
                     "identical",
