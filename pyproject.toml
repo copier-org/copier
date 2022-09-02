@@ -55,6 +55,7 @@ docs = [
 [tool.poetry.dev-dependencies]
 autoflake = ">=1.4"
 black = ">=22.1"
+commitizen = ">=2.32.2"
 flake8 = ">=4.0.1"
 flake8-bugbear = ">=22.1.11"
 flake8-comprehensions = ">=3.8.0"

@@ -51,8 +51,6 @@ We use some tools as part of our development workflow which you'll need to insta
 your host environment:
 
 -   [Poetry](https://python-poetry.org/) for packaging and dependency management
--   [commitizen](https://commitizen-tools.github.io/commitizen/) for writing Git commits
-    easily
 
 Or you can use
 [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/copier-org/copier)

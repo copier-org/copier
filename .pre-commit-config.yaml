@@ -5,13 +5,6 @@ default_stages:
   - commit
 
 repos:
-  # commit messages
-  - repo: https://github.com/commitizen-tools/commitizen
-    rev: v2.20.5
-    hooks:
-      - id: commitizen
-        stages: [commit-msg]
-
   # checking our hooks themselves
   - repo: meta
     hooks:
@@ -53,6 +46,12 @@ repos:
         language: system
         types_or: [cython, pyi, python]
         args: ["--filter-files"]
+      - id: commitizen
+        name: commitizen
+        entry: poetry run cz check
+        args: [--allow-abort, --commit-msg-file]
+        language: system
+        stages: [commit-msg]
 
   - repo: https://github.com/asottile/pyupgrade
     rev: v2.37.3
