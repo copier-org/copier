@@ -444,3 +444,36 @@ def test_partial_interrupt(tmp_path_factory, spawn):
     # to an uncaught stacktrace.
     tui.expect_exact("Execution stopped by user\n")
     tui.expect_exact(pexpect.EOF)
+
+
+def test_var_name_value_allowed(tmp_path_factory, spawn):
+    """Test that a question var name "value" causes no name collision.
+
+    See https://github.com/copier-org/copier/pull/780 for more details.
+    """
+    template, subproject = (
+        tmp_path_factory.mktemp("template"),
+        tmp_path_factory.mktemp("subproject"),
+    )
+    # Create template
+    build_file_tree(
+        {
+            template
+            / "copier.yaml": """
+                value:
+                    type: str
+                    default: string
+                """,
+            template
+            / "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+        }
+    )
+    # Copy
+    tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
+    expect_prompt(tui, "value", "str")
+    tui.expect_exact("string")
+    tui.send(Keyboard.Alt + Keyboard.Enter)
+    tui.expect_exact(pexpect.EOF)
+    # Check answers file
+    answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
+    assert answers["value"] == "string"
