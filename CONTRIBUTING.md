@@ -106,7 +106,7 @@ Ready to contribute? Here's how to set up the project for local development.
 
     ```sh
     git add .
-    poetry run cz commit  # use `git commit` if you prefer, but this helps
+    cz commit  # use `git commit` if you prefer, but this helps
     git push origin name-of-your-bugfix-or-feature
     ```
 
