@@ -15,6 +15,7 @@ from typing import (
     ChainMap as t_ChainMap,
     Dict,
     List,
+    Optional,
     Union,
 )
 
@@ -374,7 +375,7 @@ class Question:
             return False
 
         try:
-            err_msg = self.render_value(self.validator, **{self.var_name: ans}).strip()
+            err_msg = self.render_value(self.validator, {self.var_name: ans}).strip()
         except Exception as error:
             raise ValidationError(message=str(error)) from error
         if err_msg:
@@ -395,7 +396,9 @@ class Question:
         when = cast_answer_type(when, cast_str_to_bool)
         return bool(when)
 
-    def render_value(self, value: Any, **extra_answers: Any) -> str:
+    def render_value(
+        self, value: Any, extra_answers: Optional[AnyByStrDict] = None
+    ) -> str:
         """Render a single templated value using Jinja.
 
         If the value cannot be used as a template, it will be returned as is.
@@ -408,7 +411,7 @@ class Question:
             # value was not a string
             return value
         try:
-            return template.render(**dict(self.answers.combined, **extra_answers))
+            return template.render({**self.answers.combined, **(extra_answers or {})})
         except UndefinedError as error:
             raise UserMessageError(str(error)) from error
 
