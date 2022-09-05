@@ -38,10 +38,10 @@ your `copier.yaml` contains a multiple-choice variable like this:
 flavor:
     type: str
     choices:
-        - Docker
-        - Instances
-        - Kubernetes
-        - None
+        - docker
+        - instances
+        - kubernetes
+        - none
 ```
 
 The `context.py` file contains your context hook which could look like:
