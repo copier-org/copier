@@ -126,7 +126,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
 name = "commitizen"
-version = "2.32.3"
+version = "2.32.4"
 description = "Python commitizen client tool"
 category = "dev"
 optional = false
@@ -1107,8 +1107,8 @@ colorama = [
     {file = "colorama-0.4.5.tar.gz", hash = "sha256:e6c6b4334fc50988a639d9b98aa429a0b57da6e17b9a44f0451f930b6967b7a4"},
 ]
 commitizen = [
-    {file = "commitizen-2.32.3-py3-none-any.whl", hash = "sha256:33ceda27f1369e9385345c4b0cc3a3691faef8794e61d25b20c029987260ab94"},
-    {file = "commitizen-2.32.3.tar.gz", hash = "sha256:6f1aa9b8eab335fb34c678f05fea2e54d6fcaca75d20ace01773ee8d4cfd515e"},
+    {file = "commitizen-2.32.4-py3-none-any.whl", hash = "sha256:3113a4d807cea74c2f2e5bcd96c46a111c2ce87114c7411b17688aa0bbe6e738"},
+    {file = "commitizen-2.32.4.tar.gz", hash = "sha256:49966db4fed8840b424198019b83e38cf45c8d8727afcfc04ae8f174bfdb0e73"},
 ]
 coverage = [
     {file = "coverage-6.4.4-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:e7b4da9bafad21ea45a714d3ea6f3e1679099e420c8741c74905b92ee9bfa7cc"},
