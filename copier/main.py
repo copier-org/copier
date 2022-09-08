@@ -361,6 +361,7 @@ class Worker:
             default_answer = result.default.get(question.var_name)
             if new_answer == default_answer:
                 new_answer = question.render_value(default_answer)
+                new_answer = question.filter_answer(new_answer)
             if new_answer != previous_answer:
                 result.user[question.var_name] = new_answer
         return result
