@@ -424,6 +424,40 @@ def test_tui_inherited_default(tmp_path_factory, spawn, has_2_owners, owner2):
     assert json.load((dst / "answers.json").open()) == result
 
 
+def test_tui_typed_default(tmp_path_factory, spawn):
+    """Make sure a template defaults are typed as expected."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src
+            / "copier.yaml": """\
+                test1:
+                    type: bool
+                    default: false
+                    when: false
+                test2:
+                    type: bool
+                    default: "{{ 'a' == 'b' }}"
+                    when: false
+            """,
+            src
+            / "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+            src / "answers.json.jinja": "{{ _copier_answers|to_nice_json }}",
+        }
+    )
+    tui = spawn(
+        COPIER_PATH + ("copy", str(src), str(dst)),
+        timeout=10,
+    )
+    tui.expect_exact(pexpect.EOF)
+    result = {
+        "_src_path": str(src),
+        "test1": False,
+        "test2": False,
+    }
+    assert json.load((dst / "answers.json").open()) == result
+
+
 def test_selection_type_cast(tmp_path_factory, spawn):
     """Selection question with different types, properly casted."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
