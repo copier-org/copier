@@ -48,13 +48,13 @@ other reference to use.
 
 For example to use the latest master branch from a public repository:
 
-```
+```bash
 copier --vcs-ref master https://github.com/foo/copier-template.git ./path/to/destination
 ```
 
 Or to work from the current checked out revision of a local template:
 
-```
+```bash
 copier --vcs-ref HEAD path/to/project/template path/to/destination
 ```
 
