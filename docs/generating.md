@@ -58,6 +58,11 @@ Or to work from the current checked out revision of a local template:
 copier --vcs-ref HEAD path/to/project/template path/to/destination
 ```
 
+!!! tip
+
+    If there are uncommited changes in the local template, they will be included in the `HEAD`
+    ref
+
 ## Regenerating a project
 
 When you execute `copier copy $template $project` again over a preexisting `$project`,
