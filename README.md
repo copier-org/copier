@@ -30,7 +30,7 @@ A library and CLI app for rendering project templates.
 
 To create a template:
 
-```bash
+```shell
 📁 my_copier_template ------------------------ # your template project
 ├── 📄 copier.yml ---------------------------- # your template configuration
 ├── 📁 .git ---------------------------------- # your template is a Git repository
@@ -63,7 +63,7 @@ To generate a project from the template:
 
 -   On the command-line:
 
-    ```bash
+    ```shell
     copier path/to/project/template path/to/destination
     ```
 

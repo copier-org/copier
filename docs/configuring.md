@@ -395,7 +395,7 @@ use_precommit:
 
 And then, you can generate a `.pre-commit-config.yaml` file only if they answered "yes":
 
-```bash
+```shell
 📁 your_template
 ├── 📄 copier.yml
 └── 📄 {% if use_precommit %}.pre-commit-config.yaml{% endif %}.jinja
@@ -420,7 +420,7 @@ ci:
     default: github
 ```
 
-```bash
+```shell
 📁 your_template
 ├── 📄 copier.yml
 ├── 📁 {% if ci == 'github' %}.github{% endif %}
@@ -503,7 +503,7 @@ questions with default answers.
     Example CLI usage to take all default answers from template, except the user name,
     which is overridden, and don't ask user anything else:
 
-    ```sh
+    ```shell
     copier -fd 'user_name=Manuel Calavera' copy template destination
     ```
 
@@ -582,7 +582,7 @@ The CLI option can be passed several times to add several patterns.
 
     !!! example "Example CLI usage to copy only a single file from the template"
 
-        ```sh
+        ```shell
         copier --exclude '*' --exclude '!file-i-want' copy ./template ./destination
         ```
 
@@ -658,7 +658,7 @@ on them, so they are always installed when Copier is installed.
     For example, if your template uses `jinja2_time.TimeExtension`,
     your users must install the `jinja2-time` Python package.
 
-    ```bash
+    ```shell
     # with pip, in the same virtualenv where Copier is installed
     pip install jinja2-time
 
@@ -893,7 +893,7 @@ This allows you to keep separate the template metadata and the template code.
     !!! example "Example project with different `.gitignore` files"
 
 
-        ```bash title="Project layout"
+        ```shell title="Project layout"
         📁 my_copier_template
         ├── 📄 copier.yml       # (1)
         ├── 📄 .gitignore       # (2)
@@ -926,7 +926,7 @@ This allows you to keep separate the template metadata and the template code.
                 - pipenv
         ```
 
-        ```bash title="Project layout"
+        ```shell title="Project layout"
         📁 my_copier_template
         ├── 📄 copier.yaml # (1)
         ├── 📁 poetry
@@ -1133,7 +1133,7 @@ for each one. All of them contain a `{{ _copier_conf.answers_file }}.jinja` file
 [as specified above](#the-copier-answersyml-file). Then you apply all the templates to
 the same project:
 
-```bash
+```shell
 mkdir my-project
 cd my-project
 git init
@@ -1157,7 +1157,7 @@ Done!
 After a while, when templates get new releases, updates are handled separately for each
 template:
 
-```bash
+```shell
 copier -a .copier-answers.main.yml update
 copier -a .copier-answers.pre-commit.yml update
 copier -a .copier-answers.ci.yml update

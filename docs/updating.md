@@ -11,7 +11,7 @@ true:
 If that's your case, then just enter the destination folder, make sure `git status`
 shows it clean, and run:
 
-```bash
+```shell
 copier update
 ```
 
@@ -64,14 +64,14 @@ repos:
 
 If you want to just reuse all previous answers:
 
-```sh
+```shell
 copier --force update
 ```
 
 If you want to change just one question, and leave all others untouched, and don't want
 to go through the whole questionary again:
 
-```sh
+```shell
 copier --force --data updated_question="my new answer" update
 ```
 

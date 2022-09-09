@@ -63,14 +63,14 @@ Ready to contribute? Here's how to set up the project for local development.
 1.  Fork the Copier repo on GitHub.
 1.  Clone your fork locally:
 
-    ```sh
+    ```shell
     git clone git@github.com:my-user/copier.git
     cd copier
     ```
 
 1.  Use Poetry to set up a development environment:
 
-    ```sh
+    ```shell
     # Tell Poetry to create the virtualenv in the project directory
     poetry config virtualenvs.in-project true --local
 
@@ -86,7 +86,7 @@ Ready to contribute? Here's how to set up the project for local development.
 
 1.  Create a branch for local development:
 
-    ```sh
+    ```shell
     git checkout -b name-of-your-bugfix-or-feature
     ```
 
@@ -94,7 +94,7 @@ Ready to contribute? Here's how to set up the project for local development.
 
 1.  When you're done making changes, check that your changes pass all tests:
 
-    ```sh
+    ```shell
     poe test
     poe lint
     ```
@@ -104,7 +104,7 @@ Ready to contribute? Here's how to set up the project for local development.
 
 1.  Commit your changes and push your branch to GitHub:
 
-    ```sh
+    ```shell
     git add .
     cz commit  # use `git commit` if you prefer, but this helps
     git push origin name-of-your-bugfix-or-feature
@@ -123,6 +123,6 @@ Before you submit a pull request, check that it meets these guidelines:
 
 To run a subset of tests:
 
-```sh
+```shell
 poe test tests/the-tests-file.py
 ```
