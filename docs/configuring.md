@@ -902,9 +902,9 @@ This allows you to keep separate the template metadata and the template code.
         ```
 
         1.  Same contents as the example above.
-        2.  Ignore instructions for the template repo.
-        3.  The configured template subdirectory.
-        4.  Ignore instructions for projects generated with the template.
+        1.  Ignore instructions for the template repo.
+        1.  The configured template subdirectory.
+        1.  Ignore instructions for projects generated with the template.
 
     However, it is true that the value of this option can itself be templated. This would
     let you have different templates that all use the same questionary, and the used
@@ -938,7 +938,7 @@ This allows you to keep separate the template metadata and the template code.
         ```
 
         1.  The configuration from the previous example snippet.
-        2.  See [the answers file docs][the-copier-answersyml-file] to understand.
+        1.  See [the answers file docs][the-copier-answersyml-file] to understand.
 
 ### `tasks`
 

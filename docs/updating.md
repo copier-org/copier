@@ -5,8 +5,8 @@ true:
 
 1. The template includes
    [a valid `.copier-answers.yml` file](configuring.md#the-copier-answersyml-file).
-2. The template is versioned with Git (with tags).
-3. The destination folder is versioned with Git.
+1. The template is versioned with Git (with tags).
+1. The destination folder is versioned with Git.
 
 If that's your case, then just enter the destination folder, make sure `git status`
 shows it clean, and run:
