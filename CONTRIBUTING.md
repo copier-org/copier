@@ -61,14 +61,14 @@ to start hacking with one click!
 Ready to contribute? Here's how to set up the project for local development.
 
 1.  Fork the Copier repo on GitHub.
-2.  Clone your fork locally:
+1.  Clone your fork locally:
 
     ```sh
     git clone git@github.com:my-user/copier.git
     cd copier
     ```
 
-3.  Use Poetry to set up a development environment:
+1.  Use Poetry to set up a development environment:
 
     ```sh
     # Tell Poetry to create the virtualenv in the project directory
@@ -84,7 +84,7 @@ Ready to contribute? Here's how to set up the project for local development.
     poetry shell
     ```
 
-4.  Create a branch for local development:
+1.  Create a branch for local development:
 
     ```sh
     git checkout -b name-of-your-bugfix-or-feature
@@ -92,7 +92,7 @@ Ready to contribute? Here's how to set up the project for local development.
 
     Now you can make your changes locally.
 
-5.  When you're done making changes, check that your changes pass all tests:
+1.  When you're done making changes, check that your changes pass all tests:
 
     ```sh
     poe test
@@ -102,7 +102,7 @@ Ready to contribute? Here's how to set up the project for local development.
     To have multiple Python versions on the same machine for running `tox`, I recommend
     using [pyenv](https://github.com/pyenv/pyenv) (_do not_ confuse it with `pipenv`,).
 
-6.  Commit your changes and push your branch to GitHub:
+1.  Commit your changes and push your branch to GitHub:
 
     ```sh
     git add .
@@ -110,14 +110,14 @@ Ready to contribute? Here's how to set up the project for local development.
     git push origin name-of-your-bugfix-or-feature
     ```
 
-7.  Submit a pull request through the GitHub website.
+1.  Submit a pull request through the GitHub website.
 
 ## Pull Request Guidelines
 
 Before you submit a pull request, check that it meets these guidelines:
 
 1.  The pull request has code, it should include tests.
-2.  Check that all checks pass on GitHub CI.
+1.  Check that all checks pass on GitHub CI.
 
 ## Tips
 
