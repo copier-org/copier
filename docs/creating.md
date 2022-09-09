@@ -15,7 +15,7 @@ project, the user will be prompted to fill in or confirm the default values.
 
 ## Minimal example
 
-```bash
+```shell
 📁 my_copier_template ------------------------ # your template project
 ├── 📄 copier.yml ---------------------------- # your template configuration
 ├── 📁 .git ---------------------------------- # your template is a Git repository
@@ -48,7 +48,7 @@ Generating a project from this template with `super_project` and `world` as answ
 the `project_name` and `module_name` questions respectively would create in the
 following directory and files:
 
-```bash
+```shell
 📁 generated_project
 ├── 📁 super_project
 │   └── 📄 world.py

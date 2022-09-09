@@ -8,7 +8,7 @@
 As seen in the quick usage section, you can generate a project from a template using the
 `copier` command-line tool:
 
-```bash
+```shell
 copier path/to/project/template path/to/destination
 ```
 
@@ -48,13 +48,13 @@ other reference to use.
 
 For example to use the latest master branch from a public repository:
 
-```bash
+```shell
 copier --vcs-ref master https://github.com/foo/copier-template.git ./path/to/destination
 ```
 
 Or to work from the current checked out revision of a local template:
 
-```bash
+```shell
 copier --vcs-ref HEAD path/to/project/template path/to/destination
 ```
 
