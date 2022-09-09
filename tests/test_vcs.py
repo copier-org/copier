@@ -50,6 +50,10 @@ def test_get_repo():
     assert get("git.myproject.org/MyProject") is None
     assert get("https://google.com") is None
 
+    assert (
+        get("tests/demo_updatediff_repo.bundle") == "tests/demo_updatediff_repo.bundle"
+    )
+
 
 def test_clone():
     tmp = vcs.clone("https://github.com/copier-org/copier.git")
