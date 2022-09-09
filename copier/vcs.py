@@ -3,6 +3,7 @@ import os
 import re
 import sys
 import tempfile
+from contextlib import suppress
 from pathlib import Path
 from warnings import warn
 
@@ -46,6 +47,8 @@ def is_in_git_repo(path: StrOrPath) -> bool:
 
 def is_git_bundle(path: Path) -> bool:
     """Indicate if a path is a valid git bundle."""
+    with suppress(OSError):
+        path = path.resolve()
     with TemporaryDirectory(prefix=f"{__name__}.is_git_bundle.") as dirname:
         with local.cwd(dirname):
             git("init")
