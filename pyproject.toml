@@ -69,8 +69,8 @@ pre-commit = ">=2.17.0"
 pytest = ">=7.0.1"
 pytest-cov = ">=3.0.0"
 pytest-xdist = ">=2.5.0"
-types-pyyaml = ">=6.0.4"
 types-backports = ">=0.1.3"
+types-pyyaml = ">=6.0.4"
 
 [tool.poe.tasks.clean]
 script = "devtasks:clean"
