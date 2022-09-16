@@ -198,6 +198,8 @@ class Worker(BaseModel):
         # Backwards compatibility
         # FIXME Remove it?
         conf = dict(self)
+        # Delete this because it's not JSON serializable.
+        del conf["jinja_env"]
         conf.update(
             {
                 "answers_file": self.answers_relpath,
