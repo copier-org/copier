@@ -14,7 +14,7 @@ A library and CLI app for rendering project templates.
 -   Works with **local** paths and **Git URLs**.
 -   Your project can include any file and Copier can dynamically replace values in any
     kind of text file.
--   It generates a beautiful output and takes care of not overwrite existing files
+-   It generates a beautiful output and takes care of not overwriting existing files
     unless instructed to do so.
 
 ![Sample output](https://github.com/copier-org/copier/raw/master/img/copier-output.png)
@@ -114,7 +114,7 @@ expectations are the same as for those humans... and as long as they have feelin
 Templates have these goals:
 
 1. **[Code scaffolding](<https://en.wikipedia.org/wiki/Scaffold_(programming)>)**. Help
-   consumers have a working source code tree as quick as possible. All templates allow
+   consumers have a working source code tree as quickly as possible. All templates allow
    scaffolding.
 1. **Code lifecycle management**. When the template evolves, let consumers update their
    projects. Not all templates allow updating.
