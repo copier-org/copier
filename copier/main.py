@@ -4,7 +4,7 @@ import platform
 import subprocess
 import sys
 from contextlib import suppress
-from dataclasses import asdict, replace
+from dataclasses import replace
 from filecmp import dircmp
 from functools import partial
 from itertools import chain
@@ -21,7 +21,6 @@ from plumbum.cli.terminal import ask
 from plumbum.cmd import git
 from plumbum.machines import local
 from pydantic import BaseModel, Extra, Field
-from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
 from questionary import unsafe_prompt
 
@@ -197,7 +196,7 @@ class Worker(BaseModel):
         """Produce render context for Jinja."""
         # Backwards compatibility
         # FIXME Remove it?
-        conf = asdict(self)
+        conf = dict(self)
         conf.update(
             {
                 "answers_file": self.answers_relpath,
