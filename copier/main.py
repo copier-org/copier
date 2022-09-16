@@ -9,7 +9,7 @@ from functools import partial
 from itertools import chain
 from pathlib import Path
 from shutil import rmtree
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence
+from typing import Callable, Iterable, List, Mapping, Optional, Sequence
 from unicodedata import normalize
 
 import pathspec
@@ -131,6 +131,8 @@ class Worker(BaseModel):
 
     class Config:
         extra = Extra.forbid
+        # Workaround for an issue described here:
+        # https://github.com/pydantic/pydantic/issues/1241
         keep_untouched = (cached_property,)
 
     src_path: Optional[str] = None
@@ -148,8 +150,12 @@ class Worker(BaseModel):
     pretend: bool = False
     quiet: bool = False
 
-    def _asdict(self) -> Dict[str, Any]:
-        return {k: getattr(self, k) for k in self.__fields__}
+    def _asdict(self, **overrides) -> Mapping:
+        """Return a dictionary with our Pydantic field values."""
+        result = {k: getattr(self, k) for k in self.__fields__}
+        for k, v in overrides.items():
+            result[k] = v
+        return result
 
     def _answers_to_remember(self) -> Mapping:
         """Get only answers that will be remembered in the copier answers file."""
@@ -200,15 +206,11 @@ class Worker(BaseModel):
         """Produce render context for Jinja."""
         # Backwards compatibility
         # FIXME Remove it?
-        conf = self._asdict()
-        conf.update(
-            {
-                "answers_file": self.answers_relpath,
-                "src_path": self.template.local_abspath,
-                "vcs_ref_hash": self.template.commit_hash,
-            }
+        conf = self._asdict(
+            answers_file=self.answers_relpath,
+            src_path=self.template.local_abspath,
+            vcs_ref_hash=self.template.commit_hash,
         )
-
         return dict(
             DEFAULT_DATA,
             **self.answers.combined,
@@ -671,27 +673,21 @@ class Worker(BaseModel):
         ) as old_copy, TemporaryDirectory(
             prefix=f"{__name__}.recopy_diff."
         ) as new_copy:
-            params = self._asdict()
-            params.update(
-                {
-                    "dst_path": old_copy,
-                    "data": self.subproject.last_answers,
-                    "defaults": True,
-                    "quiet": True,
-                    "src_path": self.subproject.template.url,
-                    "vcs_ref": self.subproject.template.commit,
-                }
+            params = self._asdict(
+                dst_path=old_copy,
+                data=self.subproject.last_answers,
+                defaults=True,
+                quiet=True,
+                src_path=self.subproject.template.url,
+                vcs_ref=self.subproject.template.commit,
             )
             old_worker = Worker(**params)
-            params = self._asdict()
-            params.update(
-                {
-                    "dst_path": new_copy,
-                    "data": self.subproject.last_answers,
-                    "defaults": True,
-                    "quiet": True,
-                    "src_path": self.subproject.template.url,
-                }
+            params = self._asdict(
+                dst_path=new_copy,
+                data=self.subproject.last_answers,
+                defaults=True,
+                quiet=True,
+                src_path=self.subproject.template.url,
             )
             recopy_worker = Worker(**params)
             old_worker.run_copy()
