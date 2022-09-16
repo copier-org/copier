@@ -38,7 +38,7 @@ def test_keyboard_interrupt(tmp_path_factory, questions, side_effect, raises):
             src / "copier.yml": yaml.safe_dump(questions),
         }
     )
-    worker = Worker(str(src), dst, defaults=False)
+    worker = Worker(src_path=str(src), dst_path=dst, defaults=False)
 
     with patch("copier.main.unsafe_prompt", side_effect=side_effect):
         with pytest.raises(raises):
@@ -75,7 +75,7 @@ def test_multiple_questions_interrupt(
             src / "copier.yml": yaml.safe_dump(questions),
         }
     )
-    worker = Worker(str(src), dst, defaults=False)
+    worker = Worker(src_path=str(src), dst_path=dst, defaults=False)
 
     with patch("copier.main.unsafe_prompt", side_effect=side_effects):
         with pytest.raises(CopierAnswersInterrupt) as err:
