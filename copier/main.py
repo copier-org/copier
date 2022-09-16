@@ -9,7 +9,7 @@ from functools import partial
 from itertools import chain
 from pathlib import Path
 from shutil import rmtree
-from typing import Callable, Iterable, List, Mapping, Optional, Sequence
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence
 from unicodedata import normalize
 
 import pathspec
@@ -148,6 +148,9 @@ class Worker(BaseModel):
     pretend: bool = False
     quiet: bool = False
 
+    def _asdict(self) -> Dict[str, Any]:
+        return {k: getattr(self, k) for k in self.__fields__}
+
     def _answers_to_remember(self) -> Mapping:
         """Get only answers that will be remembered in the copier answers file."""
         # All internal values must appear first
@@ -197,9 +200,7 @@ class Worker(BaseModel):
         """Produce render context for Jinja."""
         # Backwards compatibility
         # FIXME Remove it?
-        conf = dict(self)
-        # Delete this because it's not JSON serializable.
-        conf.pop("jinja_env", None)
+        conf = self._asdict()
         conf.update(
             {
                 "answers_file": self.answers_relpath,
@@ -670,7 +671,7 @@ class Worker(BaseModel):
         ) as old_copy, TemporaryDirectory(
             prefix=f"{__name__}.recopy_diff."
         ) as new_copy:
-            params = {k: getattr(self, k) for k in self.__fields__}
+            params = self._asdict()
             params.update(
                 {
                     "dst_path": old_copy,
@@ -682,7 +683,7 @@ class Worker(BaseModel):
                 }
             )
             old_worker = Worker(**params)
-            params = {k: getattr(self, k) for k in self.__fields__}
+            params = self._asdict()
             params.update(
                 {
                     "dst_path": new_copy,
