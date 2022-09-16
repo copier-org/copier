@@ -9,7 +9,7 @@ from functools import partial
 from itertools import chain
 from pathlib import Path
 from shutil import rmtree
-from typing import Callable, Iterable, List, Mapping, Optional, Sequence
+from typing import Callable, Dict, Iterable, List, Mapping, Optional, Sequence
 from unicodedata import normalize
 
 import pathspec
@@ -150,7 +150,7 @@ class Worker(BaseModel):
     pretend: bool = False
     quiet: bool = False
 
-    def _asdict(self, **overrides) -> Mapping:
+    def _asdict(self, **overrides) -> Dict:
         """Return a dictionary with our Pydantic field values."""
         result = {k: getattr(self, k) for k in self.__fields__}
         for k, v in overrides.items():
@@ -206,7 +206,8 @@ class Worker(BaseModel):
         """Produce render context for Jinja."""
         # Backwards compatibility
         # FIXME Remove it?
-        conf = self._asdict(
+        conf = self._asdict()
+        conf.update(
             answers_file=self.answers_relpath,
             src_path=self.template.local_abspath,
             vcs_ref_hash=self.template.commit_hash,
