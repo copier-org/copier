@@ -199,7 +199,7 @@ class Worker(BaseModel):
         # FIXME Remove it?
         conf = dict(self)
         # Delete this because it's not JSON serializable.
-        del conf["jinja_env"]
+        conf.pop("jinja_env", None)
         conf.update(
             {
                 "answers_file": self.answers_relpath,
