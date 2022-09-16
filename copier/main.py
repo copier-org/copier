@@ -4,7 +4,6 @@ import platform
 import subprocess
 import sys
 from contextlib import suppress
-from dataclasses import replace
 from filecmp import dircmp
 from functools import partial
 from itertools import chain
@@ -43,6 +42,7 @@ if sys.version_info >= (3, 8):
     from functools import cached_property
 else:
     from backports.cached_property import cached_property
+
 
 class Worker(BaseModel):
     """Copier process state manager.
@@ -128,6 +128,7 @@ class Worker(BaseModel):
 
             See [quiet][].
     """
+
     class Config:
         extra = Extra.forbid
         keep_untouched = (cached_property,)
@@ -667,22 +668,24 @@ class Worker(BaseModel):
         ) as old_copy, TemporaryDirectory(
             prefix=f"{__name__}.recopy_diff."
         ) as new_copy:
-            old_worker = replace(
-                self,
-                dst_path=old_copy,
-                data=self.subproject.last_answers,
-                defaults=True,
-                quiet=True,
-                src_path=self.subproject.template.url,
-                vcs_ref=self.subproject.template.commit,
+            old_worker = self.copy(
+                update={
+                    "dst_path": old_copy,
+                    "dat": self.subproject.last_answers,
+                    "defaults": True,
+                    "quiet": True,
+                    "src_path": self.subproject.template.url,
+                    "vcs_ref": self.subproject.template.commit,
+                }
             )
-            recopy_worker = replace(
-                self,
-                dst_path=new_copy,
-                data=self.subproject.last_answers,
-                defaults=True,
-                quiet=True,
-                src_path=self.subproject.template.url,
+            recopy_worker = self.copy(
+                update={
+                    "dst_path": new_copy,
+                    "data": self.subproject.last_answers,
+                    "defaults": True,
+                    "quiet": True,
+                    "src_path": self.subproject.template.url,
+                }
             )
             old_worker.run_copy()
             recopy_worker.run_copy()

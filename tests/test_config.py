@@ -206,7 +206,7 @@ def is_subdict(small, big):
 
 def test_worker_good_data(tmp_path):
     # This test is probably useless, as it tests the what and not the how
-    conf = copier.Worker("./tests/demo_data", tmp_path)
+    conf = copier.Worker(src_path="./tests/demo_data", dst_path=tmp_path)
     assert conf._render_context()["_folder_name"] == tmp_path.name
     assert conf.all_exclusions == ("exclude1", "exclude2")
     assert conf.template.skip_if_exists == ["skip_if_exists1", "skip_if_exists2"]
@@ -234,7 +234,7 @@ def test_worker_config_precedence(tmp_path, test_input, expected_exclusions):
 
 
 def test_config_data_transclusion():
-    config = copier.Worker("tests/demo_transclude/demo")
+    config = copier.Worker(src_path="tests/demo_transclude/demo")
     assert config.all_exclusions == ("exclude1", "exclude2")
 
 
