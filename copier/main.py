@@ -208,9 +208,11 @@ class Worker(BaseModel):
         # FIXME Remove it?
         conf = self._asdict()
         conf.update(
-            answers_file=self.answers_relpath,
-            src_path=self.template.local_abspath,
-            vcs_ref_hash=self.template.commit_hash,
+            {
+                "answers_file": self.answers_relpath,
+                "src_path": self.template.local_abspath,
+                "vcs_ref_hash": self.template.commit_hash,
+            }
         )
         return dict(
             DEFAULT_DATA,
