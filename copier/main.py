@@ -670,18 +670,21 @@ class Worker(BaseModel):
         ) as old_copy, TemporaryDirectory(
             prefix=f"{__name__}.recopy_diff."
         ) as new_copy:
-            old_worker = self.copy(
-                update={
+            params = {k: getattr(self, k) for k in self.__fields__}
+            params.update(
+                {
                     "dst_path": old_copy,
-                    "dat": self.subproject.last_answers,
+                    "data": self.subproject.last_answers,
                     "defaults": True,
                     "quiet": True,
                     "src_path": self.subproject.template.url,
                     "vcs_ref": self.subproject.template.commit,
                 }
             )
-            recopy_worker = self.copy(
-                update={
+            old_worker = Worker(**params)
+            params = {k: getattr(self, k) for k in self.__fields__}
+            params.update(
+                {
                     "dst_path": new_copy,
                     "data": self.subproject.last_answers,
                     "defaults": True,
@@ -689,6 +692,7 @@ class Worker(BaseModel):
                     "src_path": self.subproject.template.url,
                 }
             )
+            recopy_worker = Worker(**params)
             old_worker.run_copy()
             recopy_worker.run_copy()
             compared = dircmp(old_copy, new_copy)
