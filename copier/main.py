@@ -4,7 +4,7 @@ import platform
 import subprocess
 import sys
 from contextlib import suppress
-from dataclasses import asdict, field, replace
+from dataclasses import asdict, replace
 from filecmp import dircmp
 from functools import partial
 from itertools import chain
@@ -20,6 +20,7 @@ from plumbum import ProcessExecutionError, colors
 from plumbum.cli.terminal import ask
 from plumbum.cmd import git
 from plumbum.machines import local
+from pydantic import BaseModel, Extra, Field
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
 from questionary import unsafe_prompt
@@ -44,9 +45,7 @@ if sys.version_info >= (3, 8):
 else:
     from backports.cached_property import cached_property
 
-
-@dataclass
-class Worker:
+class Worker(BaseModel):
     """Copier process state manager.
 
     This class represents the state of a copier work, and contains methods to
@@ -130,18 +129,21 @@ class Worker:
 
             See [quiet][].
     """
+    class Config:
+        extra = Extra.forbid
+        keep_untouched = (cached_property,)
 
     src_path: Optional[str] = None
-    dst_path: Path = field(default=Path("."))
+    dst_path: Path = Field(default=Path("."))
     answers_file: Optional[RelativePath] = None
     vcs_ref: OptStr = None
-    data: AnyByStrDict = field(default_factory=dict)
+    data: AnyByStrDict = Field(default_factory=dict)
     exclude: StrSeq = ()
     use_prereleases: bool = False
     skip_if_exists: StrSeq = ()
     cleanup_on_error: bool = True
     defaults: bool = False
-    user_defaults: AnyByStrDict = field(default_factory=dict)
+    user_defaults: AnyByStrDict = Field(default_factory=dict)
     overwrite: bool = False
     pretend: bool = False
     quiet: bool = False

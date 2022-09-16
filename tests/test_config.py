@@ -191,7 +191,7 @@ def test_flags_bad_data(data):
 def test_flags_extra_fails():
     key = "i_am_not_a_member"
     conf_data = {"src_path": "..", "dst_path": ".", key: "and_i_do_not_belong_here"}
-    with pytest.raises(TypeError):
+    with pytest.raises(ValidationError):
         copier.Worker(**conf_data)
 
 
