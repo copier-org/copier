@@ -28,7 +28,7 @@ from questionary import unsafe_prompt
 from .errors import CopierAnswersInterrupt, ExtensionNotFoundError, UserMessageError
 from .subproject import Subproject
 from .template import Template
-from .tools import Style, TemporaryDirectory, printf
+from .tools import Style, TemporaryDirectory, is_binary, print_diff, printf
 from .types import (
     AnyByStrDict,
     JSONSerializable,
@@ -130,6 +130,12 @@ class Worker:
             When `True`, disable all output.
 
             See [quiet][].
+
+        diff:
+            When `True` show a unified diff for changed files.
+
+            See [diff][].
+
     """
 
     src_path: Optional[str] = None
@@ -146,6 +152,7 @@ class Worker:
     overwrite: bool = False
     pretend: bool = False
     quiet: bool = False
+    diff: bool = False
 
     def _answers_to_remember(self) -> Mapping:
         """Get only answers that will be remembered in the copier answers file."""
@@ -221,7 +228,12 @@ class Worker:
         spec = pathspec.PathSpec.from_lines("gitwildmatch", normalized_patterns)
         return spec.match_file
 
-    def _solve_render_conflict(self, dst_relpath: Path):
+    def _solve_render_conflict(
+        self,
+        dst_relpath: Path,
+        original_content: Optional[bytes] = None,
+        new_content: Optional[bytes] = None,
+    ):
         """Properly solve render conflicts.
 
         It can ask the user if running in interactive mode.
@@ -252,6 +264,11 @@ class Worker:
                 file_=sys.stderr,
             )
             return True
+        if self.diff and original_content and new_content:
+            if is_binary(original_content) or is_binary(new_content):
+                print(colors.warn | "    diff not availalbe for binaries")
+            else:
+                print_diff(dst_relpath, original_content, new_content)
         return bool(ask(f" Overwrite {dst_relpath}?", default=True))
 
     def _render_allowed(
@@ -315,7 +332,9 @@ class Worker:
                     file_=sys.stderr,
                 )
                 return True
-            return self._solve_render_conflict(dst_relpath)
+            return self._solve_render_conflict(
+                dst_relpath, previous_content, expected_contents
+            )
 
     @cached_property
     def answers(self) -> AnswersMap:
