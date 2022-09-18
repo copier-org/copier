@@ -130,6 +130,14 @@ class CopierApp(cli.Application):
             "to find the answers file"
         ),
     )
+    conflict: cli.SwitchAttr = cli.SwitchAttr(
+        ["-o", "--conflict"],
+        str,
+        help=(
+            "Behavior on conflict: rej=Create .rej file , inline2=2-way merge "
+            "with inline conflict markers"
+        ),
+    )
     exclude: cli.SwitchAttr = cli.SwitchAttr(
         ["-x", "--exclude"],
         str,
@@ -216,6 +224,7 @@ class CopierApp(cli.Application):
             src_path=src_path,
             vcs_ref=self.vcs_ref,
             use_prereleases=self.prereleases,
+            conflict=self.conflict,
             **kwargs,
         )
 
