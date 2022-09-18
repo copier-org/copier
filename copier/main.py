@@ -20,6 +20,7 @@ from plumbum import ProcessExecutionError, colors
 from plumbum.cli.terminal import ask
 from plumbum.cmd import git
 from plumbum.machines import local
+from pydantic import ConfigDict, Extra
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
 from questionary import unsafe_prompt
@@ -45,7 +46,7 @@ else:
     from backports.cached_property import cached_property
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra=Extra.forbid))
 class Worker:
     """Copier process state manager.
 
