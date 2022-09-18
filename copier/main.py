@@ -152,6 +152,9 @@ class Worker:
             When `True`, disable all output.
 
             See [quiet][].
+
+        conflict:
+            One of "rej", "inline2", "inline3"
     """
 
     src_path: Optional[str] = None
@@ -168,7 +171,7 @@ class Worker:
     overwrite: bool = False
     pretend: bool = False
     quiet: bool = False
-    conflict: Optional[str] = None
+    conflict: str = "rej"
 
     def __enter__(self):
         return self
