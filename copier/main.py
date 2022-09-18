@@ -599,9 +599,14 @@ class Worker:
         return self.template.local_abspath / subdir
 
     def conflict_method(self, method_name: str):
+        """Returns function related to conflict processing.
+
+        This could be replaced by inheritance. Implemented this way temporarily
+        to minimize code changes and likelihood of merge conflicts.
+        """
         class_: Optional[Type] = None
         if self.conflict == "inline":
-            class_ = Merge2Way
+            class_ = InlineConflict
         if class_ is not None:
             return getattr(class_, method_name, None)
         else:
@@ -790,7 +795,9 @@ class Worker:
         )
 
 
-class Merge2Way:
+class InlineConflict:
+    """Overrides "rej" conflict behavior to use inline conflict markers."""
+
     @classmethod
     def _solve_render_conflict(cls, worker: Worker, dst_relpath: Path):
         """Properly solve render conflicts."""
