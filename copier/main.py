@@ -849,7 +849,7 @@ class Merge2Way:
                     file_=sys.stderr,
                 )
                 return True
-            return cls._solve_render_conflict(dst_relpath)
+            return cls._solve_render_conflict(worker, dst_relpath)
         else:
             if previous_content == expected_contents:
                 printf(
@@ -876,6 +876,8 @@ class Merge2Way:
             copytree(worker.dst_path, reference_dst_temp, dirs_exist_ok=True)
 
             # Compute modification from the original template to be used as other by merge-file
+            assert worker.subproject
+            assert worker.subproject.template
             original_worker = replace(
                 worker,
                 dst_path=original_dst_temp,
