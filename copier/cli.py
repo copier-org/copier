@@ -132,9 +132,11 @@ class CopierApp(cli.Application):
     )
     conflict: cli.SwitchAttr = cli.SwitchAttr(
         ["-o", "--conflict"],
-        str,
+        cli.Set("rej", "inline2", "inline3"),
+        default="rej",
         help=(
-            "Behavior on conflict: rej=Create .rej file , inline2=2-way merge "
+            "Behavior on conflict: rej=Create .rej file, inline2=2-way merge "
+            "with inline conflict markers, inline3=3-way merge "
             "with inline conflict markers"
         ),
     )
