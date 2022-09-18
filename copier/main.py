@@ -5,7 +5,6 @@ import os
 import platform
 import subprocess
 import sys
-import tempfile
 from contextlib import suppress
 from dataclasses import asdict, field, replace
 from filecmp import dircmp
@@ -154,7 +153,7 @@ class Worker:
             See [quiet][].
 
         conflict:
-            One of "rej", "inline2", "inline3"
+            One of "rej", "inline"
     """
 
     src_path: Optional[str] = None
@@ -622,12 +621,10 @@ class Worker:
 
     def conflict_method(self, method_name: str):
         class_: Optional[Type] = None
-        if self.conflict == "inline2":
+        if self.conflict == "inline":
             class_ = Merge2Way
-        elif self.conflict == "inline3":
-            class_ = Merge3Way
         if class_ is not None:
-            return getattr(class_, method_name)
+            return getattr(class_, method_name, None)
         else:
             return None
 
@@ -988,92 +985,6 @@ class Merge2Way:
         worker._execute_tasks(
             worker.template.migration_tasks("after", worker.subproject.template)
         )
-
-
-class Merge3Way:
-    @classmethod
-    def apply_update(cls, worker: Worker):
-        # Copy old template into a temporary destination
-        with tempfile.TemporaryDirectory(
-            prefix=f"{__name__}.update_diff.old."
-        ) as old_temp, tempfile.TemporaryDirectory(
-            prefix=f"{__name__}.update_diff.new."
-        ) as new_temp:
-            assert worker.subproject
-            assert worker.subproject.template
-            old_worker = replace(
-                worker,
-                dst_path=old_temp,
-                data=worker.subproject.last_answers,
-                force=True,
-                quiet=True,
-                skip=False,
-                src_path=worker.subproject.template.url,
-                vcs_ref=worker.subproject.template.commit,
-            )
-            old_worker.run_copy()
-
-            # Run pre-migration tasks
-            worker._execute_tasks(
-                worker.template.migration_tasks("before", worker.subproject.template)
-            )
-            # Clear last answers cache to load possible answers migration
-            with suppress(AttributeError):
-                del worker.answers
-            with suppress(AttributeError):
-                del worker.subproject.last_answers
-            # Do a normal update in final destination
-            worker.run_copy()
-            cls.merge(
-                modified_dir=worker.dst_path,
-                old_upstream_dir=old_temp,
-                new_upstream_dir=new_temp,
-            )
-
-        # Run post-migration tasks
-        worker._execute_tasks(
-            worker.template.migration_tasks("after", worker.subproject.template)
-        )
-
-    @classmethod
-    def merge(cls, modified_dir, old_upstream_dir, new_upstream_dir):
-        participating_files = set()
-        for src_dir in old_upstream_dir, new_upstream_dir:
-            for root, _, files in os.walk(src_dir):
-                root = Path(root).relative_to(src_dir)
-                participating_files.update(Path(root, f) for f in files)
-
-        with tempfile.TemporaryDirectory(
-            prefix=f"{__name__}.update_diff.merge."
-        ) as tmp_dir:
-            for basename in sorted(participating_files):
-                subfile_names = []
-                for subfile_kind, src_dir in [
-                    ("modified", modified_dir),
-                    ("old upstream", old_upstream_dir),
-                    ("new upstream", new_upstream_dir),
-                ]:
-                    path = Path(src_dir, basename)
-                    if path.is_file():
-                        copyfile(path, Path(tmp_dir, subfile_kind))
-                    else:
-                        subfile_kind = os.devnull
-                    subfile_names.append(subfile_kind)
-
-                # TODO: Modify to use git["merge-file", ...] notation
-                output = subprocess.run(
-                    ["git", "merge-file", "--diff3", "-p", *subfile_names],
-                    stdout=subprocess.PIPE,
-                    cwd=tmp_dir,
-                ).stdout
-
-                dest_path = Path(modified_dir, basename)
-                if not output and "new upstream" not in subfile_names:
-                    with contextlib.suppress(FileNotFoundError):
-                        dest_path.unlink()
-                else:
-                    dest_path.parent.mkdir(parents=True, exist_ok=True)
-                    dest_path.write_bytes(output)
 
 
 def run_copy(
