@@ -1,5 +1,7 @@
 """Main functions and classes, used to generate or update projects."""
 
+import contextlib
+import os
 import platform
 import subprocess
 import sys
@@ -9,8 +11,8 @@ from filecmp import dircmp
 from functools import partial
 from itertools import chain
 from pathlib import Path
-from shutil import rmtree
-from typing import Callable, Iterable, List, Mapping, Optional, Sequence
+from shutil import copyfile, rmtree
+from typing import Callable, Iterable, List, Mapping, Optional, Sequence, Set
 from unicodedata import normalize
 
 import pathspec
@@ -44,6 +46,19 @@ if sys.version_info >= (3, 8):
     from functools import cached_property
 else:
     from backports.cached_property import cached_property
+
+# Backport of `shutil.copytree` for python 3.7 to accept `dirs_exist_ok` argument
+if sys.version_info >= (3, 8):
+    from shutil import copytree
+else:
+    from distutils.dir_util import copy_tree
+
+    def copytree(src: Path, dst: Path, dirs_exist_ok: bool = False):
+        """Backport of `shutil.copytree` with `dirs_exist_ok` argument.
+
+        Can be remove once python 3.7 dropped.
+        """
+        copy_tree(str(src), str(dst))
 
 
 @dataclass(config=ConfigDict(extra=Extra.forbid))
@@ -146,6 +161,7 @@ class Worker:
     overwrite: bool = False
     pretend: bool = False
     quiet: bool = False
+    conflict: Optional[str] = None
 
     def _answers_to_remember(self) -> Mapping:
         """Get only answers that will be remembered in the copier answers file."""
@@ -273,6 +289,10 @@ class Worker:
                 Used to compare existing file contents with them. Allows to know if
                 rendering is needed.
         """
+        if self.conflict == "inline2":
+            return Merge2Way._render_allowed(
+                self, dst_relpath, is_dir, expected_contents, expected_permissions
+            )
         assert not dst_relpath.is_absolute()
         assert not expected_contents or not is_dir, "Dirs cannot have expected content"
         dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
@@ -662,6 +682,13 @@ class Worker:
             print(
                 f"Updating to template version {self.template.version}", file=sys.stderr
             )
+        self.apply_update()
+
+    def apply_update(self):
+        if self.conflict == "inline2":
+            Merge2Way.apply_update(self)
+            return
+
         # Copy old template into a temporary destination
         with TemporaryDirectory(
             prefix=f"{__name__}.update_diff."
@@ -743,6 +770,185 @@ class Worker:
         # Run post-migration tasks
         self._execute_tasks(
             self.template.migration_tasks("after", self.subproject.template)
+        )
+
+
+class Merge2Way:
+    @classmethod
+    def _solve_render_conflict(cls, worker: Worker, dst_relpath: Path):
+        """Properly solve render conflicts."""
+        assert not dst_relpath.is_absolute()
+        printf(
+            "conflict",
+            dst_relpath,
+            style=Style.DANGER,
+            quiet=worker.quiet,
+            file_=sys.stderr,
+        )
+        if worker.match_skip(dst_relpath):
+            printf(
+                "skip",
+                dst_relpath,
+                style=Style.OK,
+                quiet=worker.quiet,
+                file_=sys.stderr,
+            )
+            return False
+
+        return True
+
+    @classmethod
+    def _render_allowed(
+        cls,
+        worker: Worker,
+        dst_relpath: Path,
+        is_dir: bool = False,
+        expected_contents: bytes = b"",
+        expected_permissions=None,
+    ) -> bool:
+        """Determine if a file or directory can be rendered.
+
+        Args:
+
+            dst_relpath:
+                Relative path to destination.
+            is_dir:
+                Indicate if the path must be treated as a directory or not.
+            expected_contents:
+                Used to compare existing file contents with them. Allows to know if
+                rendering is needed.
+        """
+        assert not dst_relpath.is_absolute()
+        assert not expected_contents or not is_dir, "Dirs cannot have expected content"
+        dst_abspath = Path(worker.subproject.local_abspath, dst_relpath)
+        if dst_relpath != Path(".") and worker.match_exclude(dst_relpath):
+            return False
+        try:
+            previous_content = dst_abspath.read_bytes()
+        except FileNotFoundError:
+            printf(
+                "create",
+                dst_relpath,
+                style=Style.OK,
+                quiet=worker.quiet,
+                file_=sys.stderr,
+            )
+            return True
+        except (IsADirectoryError, PermissionError) as error:
+            # HACK https://bugs.python.org/issue43095
+            if isinstance(error, PermissionError) and not (
+                error.errno == 13 and platform.system() == "Windows"
+            ):
+                raise
+            if is_dir:
+                printf(
+                    "identical",
+                    dst_relpath,
+                    style=Style.IGNORE,
+                    quiet=worker.quiet,
+                    file_=sys.stderr,
+                )
+                return True
+            return cls._solve_render_conflict(dst_relpath)
+        else:
+            if previous_content == expected_contents:
+                printf(
+                    "identical",
+                    dst_relpath,
+                    style=Style.IGNORE,
+                    quiet=worker.quiet,
+                    file_=sys.stderr,
+                )
+                return True
+            return worker._solve_render_conflict(dst_relpath)
+
+    @classmethod
+    def apply_update(cls, worker: Worker):
+        # Copy old template into a temporary destination
+        with TemporaryDirectory(
+            prefix=f"{__name__}.update_diff.reference."
+        ) as reference_dst_temp, TemporaryDirectory(
+            prefix=f"{__name__}.update_diff.original."
+        ) as original_dst_temp, TemporaryDirectory(
+            prefix=f"{__name__}.update_diff.merge."
+        ) as merge_dst_temp:
+            # Copy reference to be used as base by merge-file
+            copytree(worker.dst_path, reference_dst_temp, dirs_exist_ok=True)
+
+            # Compute modification from the original template to be used as other by merge-file
+            original_worker = replace(
+                worker,
+                dst_path=original_dst_temp,
+                data=worker.subproject.last_answers,
+                defaults=True,
+                quiet=True,
+                src_path=worker.subproject.template.url,
+                vcs_ref=worker.subproject.template.commit,
+            )
+            original_worker.run_copy()
+            # Apply pre-commit hooks if provided by .git
+            with local.cwd(original_dst_temp):
+                git("init", retcode=None)
+                git("add", ".")
+                git("config", "user.name", "Copier")
+                git("config", "user.email", "copier@copier")
+                # 1st commit could fail if any pre-commit hook reformats code
+                git("commit", "--allow-empty", "-am", "dumb commit 1", retcode=None)
+                git("commit", "--allow-empty", "-am", "dumb commit 2")
+                git("config", "--unset", "user.name")
+                git("config", "--unset", "user.email")
+
+            # Run pre-migration tasks
+            worker._execute_tasks(
+                worker.template.migration_tasks("before", worker.subproject.template)
+            )
+            # Clear last answers cache to load possible answers migration
+            with suppress(AttributeError):
+                del worker.answers
+            with suppress(AttributeError):
+                del worker.subproject.last_answers
+            # Do a normal update in final destination
+            worker.run_copy()
+
+            # Extract the list of files to merge
+            participating_files: Set[Path] = set()
+            for src_dir in (original_dst_temp, reference_dst_temp):
+                for root, dirs, files in os.walk(src_dir, topdown=True):
+                    if root == src_dir and ".git" in dirs:
+                        dirs.remove(".git")
+                    root = Path(root).relative_to(src_dir)
+                    participating_files.update(Path(root, f) for f in files)
+
+            # Merging files
+            for basename in sorted(participating_files):
+                subfile_names = []
+                for subfile_kind, src_dir in [
+                    ("modified", reference_dst_temp),
+                    ("old upstream", original_dst_temp),
+                    ("new upstream", worker.dst_path),
+                ]:
+                    path = Path(src_dir, basename)
+                    if path.is_file():
+                        copyfile(path, Path(merge_dst_temp, subfile_kind))
+                    else:
+                        subfile_kind = os.devnull
+                    subfile_names.append(subfile_kind)
+
+                with local.cwd(merge_dst_temp):
+                    output = git("merge-file", "-p", *subfile_names, retcode=None)
+
+                dest_path = Path(worker.dst_path, basename)
+                # Remove the file if it was already removed in the project
+                if not output and "modified" not in subfile_names:
+                    with contextlib.suppress(FileNotFoundError):
+                        dest_path.unlink()
+                else:
+                    dest_path.parent.mkdir(parents=True, exist_ok=True)
+                    dest_path.write_text(output)
+
+        # Run post-migration tasks
+        worker._execute_tasks(
+            worker.template.migration_tasks("after", worker.subproject.template)
         )
 
 
