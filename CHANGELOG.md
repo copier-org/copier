@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v6.2.0 (2022-09-18)
+
+### Feat
+
+-   add validator field to Question (#719)
+-   support passing github or gitlab urls without the .git suffix (#677)
+
+### Fix
+
+-   compatibility with pydantic 1.10
+-   git bundle support breaks with relative paths
+-   prevent name collision for question var name "value"
+
+### Refactor
+
+-   add "flake8-simplify" plugin and simplify code
+
 ## v6.1.0 (2022-06-13)
 
 ### Feat
