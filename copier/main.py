@@ -27,7 +27,7 @@ from questionary import unsafe_prompt
 
 from .errors import CopierAnswersInterrupt, ExtensionNotFoundError, UserMessageError
 from .subproject import Subproject
-from .template import Template
+from .template import Task, Template
 from .tools import Style, TemporaryDirectory, printf
 from .types import (
     AnyByStrDict,
@@ -168,28 +168,27 @@ class Worker:
         )
         return answers
 
-    def _execute_tasks(self, tasks: Sequence[Mapping]) -> None:
+    def _execute_tasks(self, tasks: Sequence[Task]) -> None:
         """Run the given tasks.
 
         Arguments:
             tasks: The list of tasks to run.
         """
         for i, task in enumerate(tasks):
-            task_cmd = task["task"]
-            use_shell = isinstance(task_cmd, str)
-            if use_shell:
+            task_cmd = task.cmd
+            if isinstance(task_cmd, str):
                 task_cmd = self._render_string(task_cmd)
+                use_shell = True
             else:
                 task_cmd = [self._render_string(str(part)) for part in task_cmd]
+                use_shell = False
             if not self.quiet:
                 print(
                     colors.info
                     | f" > Running task {i + 1} of {len(tasks)}: {task_cmd}",
                     file=sys.stderr,
                 )
-            with local.cwd(self.subproject.local_abspath), local.env(
-                **task.get("extra_env", {})
-            ):
+            with local.cwd(self.subproject.local_abspath), local.env(**task.extra_env):
                 subprocess.run(task_cmd, shell=use_shell, check=True, env=local.env)
 
     def _render_context(self) -> Mapping:
@@ -608,12 +607,7 @@ class Worker:
             if not self.quiet:
                 # TODO Unify printing tools
                 print("")  # padding space
-            self._execute_tasks(
-                [
-                    {"task": t, "extra_env": {"STAGE": "task"}}
-                    for t in self.template.tasks
-                ],
-            )
+            self._execute_tasks(self.template.tasks)
         except Exception:
             if not was_existing and self.cleanup_on_error:
                 rmtree(self.subproject.local_abspath)

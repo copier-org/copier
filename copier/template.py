@@ -3,6 +3,7 @@ import re
 import sys
 from collections import ChainMap
 from contextlib import suppress
+from dataclasses import field
 from pathlib import Path
 from typing import List, Mapping, Optional, Sequence, Set, Tuple
 from warnings import warn
@@ -26,7 +27,7 @@ from .errors import (
     UnsupportedVersionError,
 )
 from .tools import copier_version
-from .types import AnyByStrDict, OptStr, StrSeq, VCSTypes
+from .types import AnyByStrDict, Env, OptStr, StrSeq, Union, VCSTypes
 from .vcs import checkout_latest_tag, clone, get_repo
 
 # HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
@@ -135,6 +136,22 @@ def verify_copier_version(version_str: str) -> None:
             f"You could find some incompatibilities.",
             OldTemplateWarning,
         )
+
+
+@dataclass
+class Task:
+    """Object that represents a task to execute.
+
+    Attributes:
+        cmd:
+            Command to execute.
+
+        extra_env:
+            Additional environment variables to set while executing the command.
+    """
+
+    cmd: Union[str, Sequence[str]]
+    extra_env: Env = field(default_factory=lambda: {})
 
 
 @dataclass
@@ -305,7 +322,7 @@ class Template:
 
     def migration_tasks(
         self, stage: Literal["task", "before", "after"], from_template: "Template"
-    ) -> Sequence[Mapping]:
+    ) -> Sequence[Task]:
         """Get migration objects that match current version spec.
 
         Versions are compared using PEP 440.
@@ -316,10 +333,10 @@ class Template:
             stage: A valid stage name to find tasks for.
             from_template: Original template, from which we are migrating.
         """
-        result: List[dict] = []
+        result: List[Task] = []
         if not (self.version and from_template.version):
             return result
-        extra_env = {
+        extra_env: Env = {
             "STAGE": stage,
             "VERSION_FROM": str(from_template.commit),
             "VERSION_TO": str(self.commit),
@@ -330,15 +347,13 @@ class Template:
         for migration in self._raw_config.get("_migrations", []):
             current = parse(migration["version"])
             if self.version >= current > from_template.version:
-                extra_env = dict(
-                    extra_env,
-                    VERSION_CURRENT=migration["version"],
-                    VERSION_PEP440_CURRENT=str(current),
-                )
-                result += [
-                    {"task": task, "extra_env": extra_env}
-                    for task in migration.get(stage, [])
-                ]
+                extra_env = {
+                    **extra_env,
+                    "VERSION_CURRENT": migration["version"],
+                    "VERSION_PEP440_CURRENT": str(current),
+                }
+                for cmd in migration.get(stage, []):
+                    result.append(Task(cmd=cmd, extra_env=extra_env))
         return result
 
     @cached_property
@@ -395,12 +410,15 @@ class Template:
         return self.config_data.get("subdirectory", "")
 
     @cached_property
-    def tasks(self) -> Sequence:
+    def tasks(self) -> Sequence[Task]:
         """Get tasks defined in the template.
 
         See [tasks][].
         """
-        return self.config_data.get("tasks", [])
+        return [
+            Task(cmd=cmd, extra_env={"STAGE": "task"})
+            for cmd in self.config_data.get("tasks", [])
+        ]
 
     @cached_property
     def templates_suffix(self) -> str:
