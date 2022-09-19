@@ -321,7 +321,7 @@ class Template:
         return result
 
     def migration_tasks(
-        self, stage: Literal["task", "before", "after"], from_template: "Template"
+        self, stage: Literal["before", "after"], from_template: "Template"
     ) -> Sequence[Task]:
         """Get migration objects that match current version spec.
 
