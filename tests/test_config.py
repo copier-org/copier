@@ -8,7 +8,7 @@ from pydantic import ValidationError
 
 import copier
 from copier.errors import InvalidConfigFileError, MultipleConfigFilesError
-from copier.template import DEFAULT_EXCLUDE, Template, load_template_config
+from copier.template import DEFAULT_EXCLUDE, Task, Template, load_template_config
 
 from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree
 
@@ -37,7 +37,10 @@ def test_config_data_is_loaded_from_file():
     tpl = Template("tests/demo_data")
     assert tpl.exclude == ("exclude1", "exclude2")
     assert tpl.skip_if_exists == ["skip_if_exists1", "skip_if_exists2"]
-    assert tpl.tasks == ["touch 1", "touch 2"]
+    assert tpl.tasks == [
+        Task(cmd="touch 1", extra_env={"STAGE": "task"}),
+        Task(cmd="touch 2", extra_env={"STAGE": "task"}),
+    ]
 
 
 @pytest.mark.parametrize("config_suffix", ["yaml", "yml"])
@@ -210,7 +213,10 @@ def test_worker_good_data(tmp_path):
     assert conf._render_context()["_folder_name"] == tmp_path.name
     assert conf.all_exclusions == ("exclude1", "exclude2")
     assert conf.template.skip_if_exists == ["skip_if_exists1", "skip_if_exists2"]
-    assert conf.template.tasks == ["touch 1", "touch 2"]
+    assert conf.template.tasks == [
+        Task(cmd="touch 1", extra_env={"STAGE": "task"}),
+        Task(cmd="touch 2", extra_env={"STAGE": "task"}),
+    ]
 
 
 @pytest.mark.parametrize(
