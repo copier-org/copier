@@ -773,13 +773,13 @@ Migration processes will receive these environment variables:
 
     ```yaml title="copier.yml"
     _migrations:
-      - version: v1.0.0
-        before:
-          - rm ./old-folder
-        after:
-          # {{ _copier_conf.src_path }} points to the path where the template was
-          # cloned, so it can be helpful to run migration scripts stored there.
-          - invoke -r {{ _copier_conf.src_path }} -c migrations migrate $VERSION_CURRENT
+        - version: v1.0.0
+          before:
+              - rm ./old-folder
+          after:
+              # {{ _copier_conf.src_path }} points to the path where the template was
+              # cloned, so it can be helpful to run migration scripts stored there.
+              - invoke -r {{ _copier_conf.src_path }} -c migrations migrate $VERSION_CURRENT
     ```
 
 ### `min_copier_version`
@@ -846,7 +846,7 @@ exist.
 
     ```yaml title="copier.yml"
     _skip_if_exists:
-      - .secret_password.yml
+        - .secret_password.yml
     ```
 
     ```yaml title=".secret_password.yml.jinja"
