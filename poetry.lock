@@ -126,14 +126,14 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
 name = "commitizen"
-version = "2.33.1"
+version = "2.34.0"
 description = "Python commitizen client tool"
 category = "dev"
 optional = false
 python-versions = ">=3.6.2,<4.0.0"
 
 [package.dependencies]
-argcomplete = ">=1.12.1,<2.0.0"
+argcomplete = ">=1.12.1,<2.1"
 charset-normalizer = ">=2.1.0,<3.0.0"
 colorama = ">=0.4.1,<0.5.0"
 decli = ">=0.5.2,<0.6.0"
@@ -141,7 +141,7 @@ jinja2 = ">=2.10.3"
 packaging = ">=19,<22"
 pyyaml = ">=3.08"
 questionary = ">=1.4.0,<2.0.0"
-termcolor = ">=1.1,<2.0"
+termcolor = {version = ">=1.1,<3", markers = "python_version >= \"3.7\""}
 tomlkit = ">=0.5.3,<1.0.0"
 typing-extensions = ">=4.0.1,<5.0.0"
 
@@ -1037,7 +1037,7 @@ docs = ["mkdocs-material", "mkdocstrings"]
 
 [metadata]
 lock-version = "1.1"
-python-versions = ">=3.7,<4.0" # HACK https://github.com/PyCQA/isort/issues/1945
+python-versions = ">=3.7,<4.0"
 content-hash = "25fa60d0d30c77c5ce0f0a86f6df5bf8e60e8788808586a1b53e32b0c7ff2403"
 
 [metadata.files]
@@ -1107,8 +1107,8 @@ colorama = [
     {file = "colorama-0.4.5.tar.gz", hash = "sha256:e6c6b4334fc50988a639d9b98aa429a0b57da6e17b9a44f0451f930b6967b7a4"},
 ]
 commitizen = [
-    {file = "commitizen-2.33.1-py3-none-any.whl", hash = "sha256:d2b61023954446ae6829378422e68f46f82b6d52689b3dc3942c193c3d31bee5"},
-    {file = "commitizen-2.33.1.tar.gz", hash = "sha256:b4c032516bd4afc446af5a15bb8a1d5ac1011af4314e3f3ffc5f0fe0363249e4"},
+    {file = "commitizen-2.34.0-py3-none-any.whl", hash = "sha256:fce12b1e775d991cfe269180c919f73ccc3769360acd3f4b19c2848ceb8afeca"},
+    {file = "commitizen-2.34.0.tar.gz", hash = "sha256:03a27229fa22ae745aee12e6156a8bf0ec40bbad74906f150c6ee523e661c479"},
 ]
 coverage = [
     {file = "coverage-6.4.4-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:e7b4da9bafad21ea45a714d3ea6f3e1679099e420c8741c74905b92ee9bfa7cc"},
