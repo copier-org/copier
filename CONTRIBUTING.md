@@ -50,7 +50,7 @@ Feel free to discuss with our community through
 We use some tools as part of our development workflow which you'll need to install into
 your host environment:
 
--   [Poetry](https://python-poetry.org/) for packaging and dependency management
+-   [Poetry](https://python-poetry.org/) v1.2+ for packaging and dependency management
 
 Or you can use
 [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/copier-org/copier)
