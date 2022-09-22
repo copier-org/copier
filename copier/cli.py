@@ -135,7 +135,7 @@ class CopierApp(cli.Application):
         cli.Set("rej", "inline"),
         default="rej",
         help=(
-            "Behavior on conflict: rej=Create .rej file, inline=inline conflict"
+            "Behavior on conflict: rej=Create .rej file, inline=inline conflict "
             "markers"
         ),
     )
