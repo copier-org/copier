@@ -1,10 +1,10 @@
 """Functions used to load user data."""
-import datetime
 import json
 import sys
 import warnings
 from collections import ChainMap
 from dataclasses import field
+from datetime import datetime
 from hashlib import sha512
 from os import urandom
 from pathlib import Path
@@ -51,7 +51,7 @@ def _now():
         "strftime format reference https://strftime.org/",
         FutureWarning,
     )
-    return datetime.datetime.utcnow()
+    return datetime.utcnow()
 
 
 def _make_secret():

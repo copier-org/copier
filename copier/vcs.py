@@ -2,9 +2,9 @@
 import os
 import re
 import sys
-import tempfile
 from contextlib import suppress
 from pathlib import Path
+from tempfile import mkdtemp
 from warnings import warn
 
 from packaging import version
@@ -130,7 +130,7 @@ def clone(url: str, ref: OptStr = None) -> str:
             Reference to checkout. For Git repos, defaults to `HEAD`.
     """
 
-    location = tempfile.mkdtemp(prefix=f"{__name__}.clone.")
+    location = mkdtemp(prefix=f"{__name__}.clone.")
     _clone = git["clone", "--no-checkout", url, location]
     # Faster clones if possible
     if GIT_VERSION >= Version("2.27"):
