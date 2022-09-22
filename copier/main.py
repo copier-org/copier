@@ -13,9 +13,9 @@ from shutil import rmtree
 from typing import Callable, Iterable, List, Mapping, Optional, Sequence
 from unicodedata import normalize
 
-import pathspec
 from jinja2.loaders import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
+from pathspec import PathSpec
 from plumbum import ProcessExecutionError, colors
 from plumbum.cli.terminal import ask
 from plumbum.cmd import git
@@ -218,7 +218,7 @@ class Worker:
         """Produce a function that matches against specified patterns."""
         # TODO Is normalization really needed?
         normalized_patterns = (normalize("NFD", pattern) for pattern in patterns)
-        spec = pathspec.PathSpec.from_lines("gitwildmatch", normalized_patterns)
+        spec = PathSpec.from_lines("gitwildmatch", normalized_patterns)
         return spec.match_file
 
     def _solve_render_conflict(self, dst_relpath: Path):
