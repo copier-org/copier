@@ -710,15 +710,8 @@ class Worker:
         ) as old_copy, TemporaryDirectory(
             prefix=f"{__name__}.recopy_diff."
         ) as new_copy:
-            old_worker = replace(
-                self,
-                dst_path=old_copy,
-                data=self.subproject.last_answers,
-                defaults=True,
-                quiet=True,
-                src_path=self.subproject.template.url,
-                vcs_ref=self.subproject.template.commit,
-            )
+            old_worker = self._make_old_worker(old_copy)
+            old_worker.run_copy()
             recopy_worker = replace(
                 self,
                 dst_path=new_copy,
@@ -727,7 +720,6 @@ class Worker:
                 quiet=True,
                 src_path=self.subproject.template.url,
             )
-            old_worker.run_copy()
             recopy_worker.run_copy()
             compared = dircmp(old_copy, new_copy)
             # Extract diff between temporary destination and real destination
@@ -738,15 +730,7 @@ class Worker:
                     "rev-parse",
                     "--show-toplevel",
                 ).strip()
-                git("init", retcode=None)
-                git("add", ".")
-                git("config", "user.name", "Copier")
-                git("config", "user.email", "copier@copier")
-                # 1st commit could fail if any pre-commit hook reformats code
-                git("commit", "--allow-empty", "-am", "dumb commit 1", retcode=None)
-                git("commit", "--allow-empty", "-am", "dumb commit 2")
-                git("config", "--unset", "user.name")
-                git("config", "--unset", "user.email")
+                self._git_initialize_repo()
                 git("remote", "add", "real_dst", "file://" + subproject_top)
                 git("fetch", "--depth=1", "real_dst", "HEAD")
                 diff_cmd = git["diff-tree", "--unified=1", "HEAD...FETCH_HEAD"]
@@ -763,13 +747,7 @@ class Worker:
             self._execute_tasks(
                 self.template.migration_tasks("before", self.subproject.template)
             )
-            # Clear last answers cache to load possible answers migration
-            with suppress(AttributeError):
-                del self.answers
-            with suppress(AttributeError):
-                del self.subproject.last_answers
-            # Do a normal update in final destination
-            self.run_copy()
+            self._do_copy()
             # Try to apply cached diff into final destination
             with local.cwd(self.subproject.local_abspath):
                 apply_cmd = git["apply", "--reject", "--exclude", self.answers_relpath]
@@ -786,6 +764,38 @@ class Worker:
         self._execute_tasks(
             self.template.migration_tasks("after", self.subproject.template)
         )
+
+    def _do_copy(self):
+        # Clear last answers cache to load possible answers migration
+        with suppress(AttributeError):
+            del self.answers
+        with suppress(AttributeError):
+            del self.subproject.last_answers
+        # Do a normal update in final destination
+        self.run_copy()
+
+    def _make_old_worker(self, old_copy):
+        old_worker = replace(
+            self,
+            dst_path=old_copy,
+            data=self.subproject.last_answers,
+            defaults=True,
+            quiet=True,
+            src_path=self.subproject.template.url,
+            vcs_ref=self.subproject.template.commit,
+        )
+        return old_worker
+
+    def _git_initialize_repo(self):
+        git("init", retcode=None)
+        git("add", ".")
+        git("config", "user.name", "Copier")
+        git("config", "user.email", "copier@copier")
+        # 1st commit could fail if any pre-commit hook reformats code
+        git("commit", "--allow-empty", "-am", "dumb commit 1", retcode=None)
+        git("commit", "--allow-empty", "-am", "dumb commit 2")
+        git("config", "--unset", "user.name")
+        git("config", "--unset", "user.email")
 
 
 class InlineConflict:
@@ -821,7 +831,7 @@ class InlineConflict:
             prefix=f"{__name__}.update_diff.reference."
         ) as reference_dst_temp, TemporaryDirectory(
             prefix=f"{__name__}.update_diff.original."
-        ) as original_dst_temp, TemporaryDirectory(
+        ) as old_copy, TemporaryDirectory(
             prefix=f"{__name__}.update_diff.merge."
         ) as merge_dst_temp:
             # Copy reference to be used as base by merge-file
@@ -830,43 +840,20 @@ class InlineConflict:
             # Compute modification from the original template to be used as other by merge-file
             assert worker.subproject
             assert worker.subproject.template
-            original_worker = replace(
-                worker,
-                dst_path=original_dst_temp,
-                data=worker.subproject.last_answers,
-                defaults=True,
-                quiet=True,
-                src_path=worker.subproject.template.url,
-                vcs_ref=worker.subproject.template.commit,
-            )
-            original_worker.run_copy()
-            # Apply pre-commit hooks if provided by .git
-            with local.cwd(original_dst_temp):
-                git("init", retcode=None)
-                git("add", ".")
-                git("config", "user.name", "Copier")
-                git("config", "user.email", "copier@copier")
-                # 1st commit could fail if any pre-commit hook reformats code
-                git("commit", "--allow-empty", "-am", "dumb commit 1", retcode=None)
-                git("commit", "--allow-empty", "-am", "dumb commit 2")
-                git("config", "--unset", "user.name")
-                git("config", "--unset", "user.email")
+            old_worker = worker._make_old_worker(old_copy)
+            old_worker.run_copy()
+            with local.cwd(old_copy):
+                worker._git_initialize_repo()
 
             # Run pre-migration tasks
             worker._execute_tasks(
                 worker.template.migration_tasks("before", worker.subproject.template)
             )
-            # Clear last answers cache to load possible answers migration
-            with suppress(AttributeError):
-                del worker.answers
-            with suppress(AttributeError):
-                del worker.subproject.last_answers
-            # Do a normal update in final destination
-            worker.run_copy()
+            worker._do_copy()
 
             # Extract the list of files to merge
             participating_files: Set[Path] = set()
-            for src_dir in (original_dst_temp, reference_dst_temp):
+            for src_dir in (old_copy, reference_dst_temp):
                 for root, dirs, files in os.walk(src_dir, topdown=True):
                     if root == src_dir and ".git" in dirs:
                         dirs.remove(".git")
@@ -878,7 +865,7 @@ class InlineConflict:
                 subfile_names = []
                 for subfile_kind, src_dir in [
                     ("modified", reference_dst_temp),
-                    ("old upstream", original_dst_temp),
+                    ("old upstream", old_copy),
                     ("new upstream", worker.dst_path),
                 ]:
                     path = Path(src_dir, basename)
