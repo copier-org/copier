@@ -292,12 +292,6 @@ class Worker:
                 Used to compare existing file contents with them. Allows to know if
                 rendering is needed.
         """
-        conflict_method = self.conflict_method("_render_allowed")
-        if conflict_method:
-            return conflict_method(
-                self, dst_relpath, is_dir, expected_contents, expected_permissions
-            )
-
         # Default implementation
         assert not dst_relpath.is_absolute()
         assert not expected_contents or not is_dir, "Dirs cannot have expected content"
@@ -820,71 +814,6 @@ class InlineConflict:
             return False
 
         return True
-
-    @classmethod
-    def _render_allowed(
-        cls,
-        worker: Worker,
-        dst_relpath: Path,
-        is_dir: bool = False,
-        expected_contents: bytes = b"",
-        expected_permissions=None,
-    ) -> bool:
-        """Determine if a file or directory can be rendered.
-
-        Args:
-
-            dst_relpath:
-                Relative path to destination.
-            is_dir:
-                Indicate if the path must be treated as a directory or not.
-            expected_contents:
-                Used to compare existing file contents with them. Allows to know if
-                rendering is needed.
-        """
-        assert not dst_relpath.is_absolute()
-        assert not expected_contents or not is_dir, "Dirs cannot have expected content"
-        dst_abspath = Path(worker.subproject.local_abspath, dst_relpath)
-        if dst_relpath != Path(".") and worker.match_exclude(dst_relpath):
-            return False
-        try:
-            previous_content = dst_abspath.read_bytes()
-        except FileNotFoundError:
-            printf(
-                "create",
-                dst_relpath,
-                style=Style.OK,
-                quiet=worker.quiet,
-                file_=sys.stderr,
-            )
-            return True
-        except (IsADirectoryError, PermissionError) as error:
-            # HACK https://bugs.python.org/issue43095
-            if isinstance(error, PermissionError) and not (
-                error.errno == 13 and platform.system() == "Windows"
-            ):
-                raise
-            if is_dir:
-                printf(
-                    "identical",
-                    dst_relpath,
-                    style=Style.IGNORE,
-                    quiet=worker.quiet,
-                    file_=sys.stderr,
-                )
-                return True
-            return cls._solve_render_conflict(worker, dst_relpath)
-        else:
-            if previous_content == expected_contents:
-                printf(
-                    "identical",
-                    dst_relpath,
-                    style=Style.IGNORE,
-                    quiet=worker.quiet,
-                    file_=sys.stderr,
-                )
-                return True
-            return worker._solve_render_conflict(dst_relpath)
 
     @classmethod
     def apply_update(cls, worker: Worker):
