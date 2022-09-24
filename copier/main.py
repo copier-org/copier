@@ -28,7 +28,7 @@ from questionary import unsafe_prompt
 from .errors import CopierAnswersInterrupt, ExtensionNotFoundError, UserMessageError
 from .subproject import Subproject
 from .template import Task, Template
-from .tools import Style, TemporaryDirectory, printf, handle_remove_readonly
+from .tools import Style, TemporaryDirectory, printf
 from .types import (
     AnyByStrDict,
     JSONSerializable,
@@ -153,13 +153,8 @@ class Worker:
     def __exit__(self, type, value, traceback):
         self._cleanup()
 
-    def _cleanup(self) -> None:
-        if self.template.is_temp_clone:
-            rmtree(
-                self.template.local_abspath,
-                ignore_errors=False,
-                onerror=handle_remove_readonly,
-            )
+    def _cleanup(self):
+        self.template._cleanup()
 
     def _answers_to_remember(self) -> Mapping:
         """Get only answers that will be remembered in the copier answers file."""

@@ -5,6 +5,7 @@ from collections import ChainMap
 from contextlib import suppress
 from dataclasses import field
 from pathlib import Path
+from shutil import rmtree
 from typing import List, Mapping, Optional, Sequence, Set, Tuple
 from warnings import warn
 
@@ -26,7 +27,7 @@ from .errors import (
     UnknownCopierVersionWarning,
     UnsupportedVersionError,
 )
-from .tools import copier_version
+from .tools import copier_version, handle_remove_readonly
 from .types import AnyByStrDict, Env, OptStr, StrSeq, Union, VCSTypes
 from .vcs import checkout_latest_tag, clone, get_repo
 
@@ -194,6 +195,21 @@ class Template:
     url: str
     ref: OptStr = None
     use_prereleases: bool = False
+
+    def _cleanup(self) -> None:
+        temp_clone = self._temp_clone
+        if temp_clone:
+            rmtree(
+                temp_clone,
+                ignore_errors=False,
+                onerror=handle_remove_readonly,
+            )
+
+    @property
+    def _temp_clone(self) -> bool:
+        if self.local_abspath != Path(self.url).absolute():
+            return self.local_abspath
+        return None
 
     @cached_property
     def _raw_config(self) -> AnyByStrDict:
@@ -460,10 +476,6 @@ class Template:
         if not result.is_dir():
             raise ValueError("Local template must be a directory.")
         return result.absolute()
-
-    @cached_property
-    def is_temp_clone(self) -> bool:
-        return self.local_abspath != Path(self.url).absolute()
 
     @cached_property
     def url_expanded(self) -> str:
