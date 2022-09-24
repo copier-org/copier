@@ -830,6 +830,26 @@ Suppress status output.
 
     Not supported in `copier.yml`.
 
+### `secret_questions`
+
+-   Format: `List[str]`
+-   CLI flags: N/A
+-   Default value: N/A
+
+Question variables to mark as secret questions. This is especially useful when questions
+are provided in the [simplified prompt format](#questions). It's equivalent to
+configuring `secret: true` in the [advanced prompt format](#advanced-prompt-formatting).
+
+!!! example
+
+    ```yaml title="copier.yml"
+    _secret_questions:
+        - password
+
+    user: johndoe
+    password: s3cr3t
+    ```
+
 ### `skip_if_exists`
 
 -   Format: `List[str]`
