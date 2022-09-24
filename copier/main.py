@@ -12,7 +12,7 @@ from functools import partial
 from itertools import chain
 from pathlib import Path
 from shutil import copyfile, rmtree
-from typing import Callable, Iterable, List, Mapping, Optional, Sequence, Set, Type
+from typing import Callable, Iterable, List, Mapping, Optional, Sequence, Set
 from unicodedata import normalize
 
 from jinja2.loaders import FileSystemLoader
@@ -612,20 +612,6 @@ class Worker:
         subdir = self._render_string(self.template.subdirectory) or ""
         return self.template.local_abspath / subdir
 
-    def conflict_method(self, method_name: str):
-        """Returns function related to conflict processing.
-
-        This could be replaced by inheritance. Implemented this way temporarily
-        to minimize code changes and likelihood of merge conflicts.
-        """
-        class_: Optional[Type] = None
-        if self.conflict == "inline":
-            class_ = InlineConflict
-        if class_ is not None:
-            return getattr(class_, method_name, None)
-        else:
-            return None
-
     # Main operations
     def run_auto(self) -> None:
         """Copy or update automatically.
@@ -714,12 +700,12 @@ class Worker:
         self.apply_update()
 
     def apply_update(self):
-        conflict_method = self.conflict_method("apply_update")
-        if conflict_method:
-            conflict_method(self)
+        if self.conflict == "inline":
+            # New implementation.
+            self._apply_update_inline_conflict_markers()
             return
 
-        # Default implementation.
+        # Old implementation.
         # Copy old template into a temporary destination
         with TemporaryDirectory(
             prefix=f"{__name__}.update_diff."
@@ -781,6 +767,73 @@ class Worker:
             self.template.migration_tasks("after", self.subproject.template)
         )
 
+    def _apply_update_inline_conflict_markers(self):
+        # Copy old template into a temporary destination
+        with TemporaryDirectory(
+            prefix=f"{__name__}.update_diff.reference."
+        ) as reference_dst_temp, TemporaryDirectory(
+            prefix=f"{__name__}.update_diff.original."
+        ) as old_copy, TemporaryDirectory(
+            prefix=f"{__name__}.update_diff.merge."
+        ) as merge_dst_temp:
+            # Copy reference to be used as base by merge-file
+            copytree(self.dst_path, reference_dst_temp, dirs_exist_ok=True)
+
+            # Compute modification from the original template to be used as other by merge-file
+            assert self.subproject
+            assert self.subproject.template
+            old_worker = self._make_old_worker(old_copy)
+            old_worker.run_copy()
+            with local.cwd(old_copy):
+                self._git_initialize_repo()
+
+            # Run pre-migration tasks
+            self._execute_tasks(
+                self.template.migration_tasks("before", self.subproject.template)
+            )
+            self._do_copy()
+
+            # Extract the list of files to merge
+            participating_files: Set[Path] = set()
+            for src_dir in (old_copy, reference_dst_temp):
+                for root, dirs, files in os.walk(src_dir, topdown=True):
+                    if root == src_dir and ".git" in dirs:
+                        dirs.remove(".git")
+                    root = Path(root).relative_to(src_dir)
+                    participating_files.update(Path(root, f) for f in files)
+
+            # Merging files
+            for basename in sorted(participating_files):
+                subfile_names = []
+                for subfile_kind, src_dir in [
+                    ("modified", reference_dst_temp),
+                    ("old upstream", old_copy),
+                    ("new upstream", self.dst_path),
+                ]:
+                    path = Path(src_dir, basename)
+                    if path.is_file():
+                        copyfile(path, Path(merge_dst_temp, subfile_kind))
+                    else:
+                        subfile_kind = os.devnull
+                    subfile_names.append(subfile_kind)
+
+                with local.cwd(merge_dst_temp):
+                    output = git("merge-file", "-p", *subfile_names, retcode=None)
+
+                dest_path = Path(self.dst_path, basename)
+                # Remove the file if it was already removed in the project
+                if not output and "modified" not in subfile_names:
+                    with contextlib.suppress(FileNotFoundError):
+                        dest_path.unlink()
+                else:
+                    dest_path.parent.mkdir(parents=True, exist_ok=True)
+                    dest_path.write_text(output)
+
+        # Run post-migration tasks
+        self._execute_tasks(
+            self.template.migration_tasks("after", self.subproject.template)
+        )
+
     def _do_copy(self):
         # Clear last answers cache to load possible answers migration
         with suppress(AttributeError):
@@ -812,78 +865,6 @@ class Worker:
         git("commit", "--allow-empty", "-am", "dumb commit 2")
         git("config", "--unset", "user.name")
         git("config", "--unset", "user.email")
-
-
-class InlineConflict:
-    """Overrides "rej" conflict behavior to use inline conflict markers."""
-
-    @classmethod
-    def apply_update(cls, worker: Worker):
-        # Copy old template into a temporary destination
-        with TemporaryDirectory(
-            prefix=f"{__name__}.update_diff.reference."
-        ) as reference_dst_temp, TemporaryDirectory(
-            prefix=f"{__name__}.update_diff.original."
-        ) as old_copy, TemporaryDirectory(
-            prefix=f"{__name__}.update_diff.merge."
-        ) as merge_dst_temp:
-            # Copy reference to be used as base by merge-file
-            copytree(worker.dst_path, reference_dst_temp, dirs_exist_ok=True)
-
-            # Compute modification from the original template to be used as other by merge-file
-            assert worker.subproject
-            assert worker.subproject.template
-            old_worker = worker._make_old_worker(old_copy)
-            old_worker.run_copy()
-            with local.cwd(old_copy):
-                worker._git_initialize_repo()
-
-            # Run pre-migration tasks
-            worker._execute_tasks(
-                worker.template.migration_tasks("before", worker.subproject.template)
-            )
-            worker._do_copy()
-
-            # Extract the list of files to merge
-            participating_files: Set[Path] = set()
-            for src_dir in (old_copy, reference_dst_temp):
-                for root, dirs, files in os.walk(src_dir, topdown=True):
-                    if root == src_dir and ".git" in dirs:
-                        dirs.remove(".git")
-                    root = Path(root).relative_to(src_dir)
-                    participating_files.update(Path(root, f) for f in files)
-
-            # Merging files
-            for basename in sorted(participating_files):
-                subfile_names = []
-                for subfile_kind, src_dir in [
-                    ("modified", reference_dst_temp),
-                    ("old upstream", old_copy),
-                    ("new upstream", worker.dst_path),
-                ]:
-                    path = Path(src_dir, basename)
-                    if path.is_file():
-                        copyfile(path, Path(merge_dst_temp, subfile_kind))
-                    else:
-                        subfile_kind = os.devnull
-                    subfile_names.append(subfile_kind)
-
-                with local.cwd(merge_dst_temp):
-                    output = git("merge-file", "-p", *subfile_names, retcode=None)
-
-                dest_path = Path(worker.dst_path, basename)
-                # Remove the file if it was already removed in the project
-                if not output and "modified" not in subfile_names:
-                    with contextlib.suppress(FileNotFoundError):
-                        dest_path.unlink()
-                else:
-                    dest_path.parent.mkdir(parents=True, exist_ok=True)
-                    dest_path.write_text(output)
-
-        # Run post-migration tasks
-        worker._execute_tasks(
-            worker.template.migration_tasks("after", worker.subproject.template)
-        )
 
 
 def run_copy(
