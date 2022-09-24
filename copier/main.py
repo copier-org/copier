@@ -292,7 +292,6 @@ class Worker:
                 Used to compare existing file contents with them. Allows to know if
                 rendering is needed.
         """
-        # Default implementation
         assert not dst_relpath.is_absolute()
         assert not expected_contents or not is_dir, "Dirs cannot have expected content"
         dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
