@@ -28,7 +28,7 @@ from questionary import unsafe_prompt
 from .errors import CopierAnswersInterrupt, ExtensionNotFoundError, UserMessageError
 from .subproject import Subproject
 from .template import Task, Template
-from .tools import Style, TemporaryDirectory, printf
+from .tools import Style, TemporaryDirectory, printf, handle_remove_readonly
 from .types import (
     AnyByStrDict,
     JSONSerializable,
@@ -146,6 +146,20 @@ class Worker:
     overwrite: bool = False
     pretend: bool = False
     quiet: bool = False
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self._cleanup()
+
+    def _cleanup(self) -> None:
+        if self.template.is_temp_clone:
+            rmtree(
+                self.template.local_abspath,
+                ignore_errors=False,
+                onerror=handle_remove_readonly,
+            )
 
     def _answers_to_remember(self) -> Mapping:
         """Get only answers that will be remembered in the copier answers file."""
@@ -754,8 +768,8 @@ def run_copy(
     """
     if data is not None:
         kwargs["data"] = data
-    worker = Worker(src_path=src_path, dst_path=Path(dst_path), **kwargs)
-    worker.run_copy()
+    with Worker(src_path=src_path, dst_path=Path(dst_path), **kwargs) as worker:
+        worker.run_copy()
     return worker
 
 
@@ -772,8 +786,8 @@ def run_update(
     """
     if data is not None:
         kwargs["data"] = data
-    worker = Worker(dst_path=Path(dst_path), **kwargs)
-    worker.run_update()
+    with Worker(dst_path=Path(dst_path), **kwargs) as worker:
+        worker.run_update()
     return worker
 
 

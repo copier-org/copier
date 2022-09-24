@@ -462,6 +462,10 @@ class Template:
         return result.absolute()
 
     @cached_property
+    def is_temp_clone(self) -> bool:
+        return self.local_abspath != Path(self.url).absolute()
+
+    @cached_property
     def url_expanded(self) -> str:
         """Get usable URL.
 
