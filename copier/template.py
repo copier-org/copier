@@ -206,7 +206,7 @@ class Template:
             )
 
     @property
-    def _temp_clone(self) -> bool:
+    def _temp_clone(self) -> Path | None:
         if self.local_abspath != Path(self.url).absolute():
             return self.local_abspath
         return None

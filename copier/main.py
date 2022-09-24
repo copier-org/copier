@@ -53,7 +53,7 @@ class Worker:
     This class represents the state of a copier work, and contains methods to
     actually produce the desired work.
 
-    To use it properly, instantiate it by filling properly all dataclass fields.
+    To use it properly, use it as a context manager and fill all dataclass fields.
 
     Then, execute one of its main methods, which are prefixed with `run_`:
 
@@ -61,6 +61,12 @@ class Worker:
     -   [run_update][copier.main.Worker.run_update] to update a subproject.
     -   [run_auto][copier.main.Worker.run_auto] to let it choose whether you
         want to copy or update the subproject.
+
+    Example:
+        ```python
+        with Worker(src_path="https://github.com/copier-org/autopretty.git", "output") as worker:
+            worker.run_copy()
+        ```
 
     Attributes:
         src_path:
