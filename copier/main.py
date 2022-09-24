@@ -802,29 +802,6 @@ class InlineConflict:
     """Overrides "rej" conflict behavior to use inline conflict markers."""
 
     @classmethod
-    def _solve_render_conflict(cls, worker: Worker, dst_relpath: Path):
-        """Properly solve render conflicts."""
-        assert not dst_relpath.is_absolute()
-        printf(
-            "conflict",
-            dst_relpath,
-            style=Style.DANGER,
-            quiet=worker.quiet,
-            file_=sys.stderr,
-        )
-        if worker.match_skip(dst_relpath):
-            printf(
-                "skip",
-                dst_relpath,
-                style=Style.OK,
-                quiet=worker.quiet,
-                file_=sys.stderr,
-            )
-            return False
-
-        return True
-
-    @classmethod
     def apply_update(cls, worker: Worker):
         # Copy old template into a temporary destination
         with TemporaryDirectory(
