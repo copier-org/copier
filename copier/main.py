@@ -802,6 +802,7 @@ class Worker:
                     subfile_names.append(subfile_kind)
 
                 with local.cwd(merge_dst_temp):
+                    # https://git-scm.com/docs/git-merge-file
                     output = git("merge-file", "-p", *subfile_names, retcode=None)
 
                 dest_path = Path(self.dst_path, basename)
