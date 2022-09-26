@@ -177,7 +177,7 @@ python-versions = "*"
 
 [[package]]
 name = "dunamai"
-version = "1.13.0"
+version = "1.13.1"
 description = "Dynamic version generation"
 category = "main"
 optional = false
@@ -1171,8 +1171,8 @@ distlib = [
     {file = "distlib-0.3.6.tar.gz", hash = "sha256:14bad2d9b04d3a36127ac97f30b12a19268f211063d8f8ee4f47108896e11b46"},
 ]
 dunamai = [
-    {file = "dunamai-1.13.0-py3-none-any.whl", hash = "sha256:9bc19b8c53c62f922f2835e210f2295089669ab18222601cef44eb8c3a51929e"},
-    {file = "dunamai-1.13.0.tar.gz", hash = "sha256:5bf9e5baaa673b692a9613e4961b18b6d2d9743412f7bbcf4a39c84a979f47e2"},
+    {file = "dunamai-1.13.1-py3-none-any.whl", hash = "sha256:f23d31fd3e7df1c16f018f4f0c408df7feda8cba9516f7c9822a29fa3ed665cd"},
+    {file = "dunamai-1.13.1.tar.gz", hash = "sha256:49597bdf653bdacdeb51ec6e0f1d4d2327309376fc83e6f1d42af6e29600515f"},
 ]
 execnet = [
     {file = "execnet-1.9.0-py2.py3-none-any.whl", hash = "sha256:a295f7cc774947aac58dde7fdc85f4aa00c42adf5d8f5468fc630c1acf30a142"},
