@@ -834,7 +834,7 @@ Suppress status output.
 
 -   Format: `List[str]`
 -   CLI flags: N/A
--   Default value: N/A
+-   Default value: `[]`
 
 Question variables to mark as secret questions. This is especially useful when questions
 are provided in the [simplified prompt format](#questions). It's equivalent to
