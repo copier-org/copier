@@ -1,7 +1,7 @@
 import shutil
 from os.path import exists, join
 
-from copier import vcs
+from copier import Worker, vcs
 
 
 def test_get_repo():
@@ -60,3 +60,18 @@ def test_clone():
     assert tmp
     assert exists(join(tmp, "README.md"))
     shutil.rmtree(tmp, ignore_errors=True)
+
+
+def test_removes_temporary_clone(tmp_path):
+    src_path = "https://github.com/copier-org/autopretty.git"
+    with Worker(src_path=src_path, dst_path=tmp_path, defaults=True) as worker:
+        worker.run_copy()
+        temp_clone = worker.template.local_abspath
+    assert not temp_clone.exists()
+
+
+def test_dont_remove_local_clone(tmp_path):
+    src_path = vcs.clone("https://github.com/copier-org/autopretty.git")
+    with Worker(src_path=src_path, dst_path=tmp_path, defaults=True) as worker:
+        worker.run_copy()
+    assert exists(src_path)
