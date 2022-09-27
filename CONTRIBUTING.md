@@ -75,7 +75,7 @@ Ready to contribute? Here's how to set up the project for local development.
     poetry config virtualenvs.in-project true --local
 
     # Create a virtualenv with all dependencies from pyproject.toml
-    poetry install -E docs
+    poetry install --with docs
 
     # Install development helper tools
     poetry run pre-commit install -t pre-commit -t commit-msg
