@@ -157,6 +157,10 @@ class Worker:
         return self
 
     def __exit__(self, type, value, traceback):
+        if value is not None:
+            with suppress(Exception):
+                self._cleanup()
+            raise value
         self._cleanup()
 
     def _cleanup(self):

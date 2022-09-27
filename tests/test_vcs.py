@@ -1,7 +1,11 @@
 import shutil
 from os.path import exists, join
+from pathlib import Path
 
-from copier import Worker, vcs
+from plumbum import local
+from plumbum.cmd import git
+
+from copier import Worker, run_copy, run_update, vcs
 
 
 def test_get_repo():
@@ -75,3 +79,21 @@ def test_dont_remove_local_clone(tmp_path):
     with Worker(src_path=src_path, dst_path=tmp_path, defaults=True) as worker:
         worker.run_copy()
     assert exists(src_path)
+
+
+def test_update_using_local_source_path_with_tilde(tmp_path):
+    src_path = vcs.clone("https://github.com/copier-org/autopretty.git")
+    fake_user_path = f"~/{'/'.join(['..'] * len(Path.home().parts))}{src_path}"
+    worker = run_copy(src_path=fake_user_path, dst_path=tmp_path, defaults=True)
+    assert worker.answers.combined["_src_path"] == fake_user_path
+    with local.cwd(tmp_path):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m", "init")
+    worker = run_update(
+        dst_path=tmp_path,
+        defaults=True,
+        overwrite=True,
+        answers_file=".copier-answers.autopretty.yml",
+    )
+    assert worker.answers.combined["_src_path"] == fake_user_path
