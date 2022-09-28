@@ -53,7 +53,7 @@ class Worker:
     This class represents the state of a copier work, and contains methods to
     actually produce the desired work.
 
-    To use it properly, instantiate it by filling properly all dataclass fields.
+    To use it properly, use it as a context manager and fill all dataclass fields.
 
     Then, execute one of its main methods, which are prefixed with `run_`:
 
@@ -61,6 +61,12 @@ class Worker:
     -   [run_update][copier.main.Worker.run_update] to update a subproject.
     -   [run_auto][copier.main.Worker.run_auto] to let it choose whether you
         want to copy or update the subproject.
+
+    Example:
+        ```python
+        with Worker(src_path="https://github.com/copier-org/autopretty.git", "output") as worker:
+            worker.run_copy()
+        ```
 
     Attributes:
         src_path:
@@ -146,6 +152,15 @@ class Worker:
     overwrite: bool = False
     pretend: bool = False
     quiet: bool = False
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self._cleanup()
+
+    def _cleanup(self):
+        self.template._cleanup()
 
     def _answers_to_remember(self) -> Mapping:
         """Get only answers that will be remembered in the copier answers file."""
@@ -754,8 +769,8 @@ def run_copy(
     """
     if data is not None:
         kwargs["data"] = data
-    worker = Worker(src_path=src_path, dst_path=Path(dst_path), **kwargs)
-    worker.run_copy()
+    with Worker(src_path=src_path, dst_path=Path(dst_path), **kwargs) as worker:
+        worker.run_copy()
     return worker
 
 
@@ -772,8 +787,8 @@ def run_update(
     """
     if data is not None:
         kwargs["data"] = data
-    worker = Worker(dst_path=Path(dst_path), **kwargs)
-    worker.run_update()
+    with Worker(dst_path=Path(dst_path), **kwargs) as worker:
+        worker.run_update()
     return worker
 
 
