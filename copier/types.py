@@ -9,6 +9,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Mapping,
     Optional,
     Sequence,
     Tuple,
@@ -55,7 +56,7 @@ JSONSerializable = (dict, list, str, int, float, bool, type(None))
 Filters = Dict[str, Callable]
 LoaderPaths = Union[str, Iterable[str]]
 VCSTypes = Literal["git"]
-Env = Dict[str, str]
+Env = Mapping[str, str]
 
 
 class AllowArbitraryTypes:
