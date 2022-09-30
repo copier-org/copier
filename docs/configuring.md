@@ -730,7 +730,7 @@ on them, so they are always installed when Copier is installed.
 
 -   Format: `List[dict]`
 -   CLI flags: N/A
--   Default value: N/A
+-   Default value: `[]`
 
 Migrations are like [tasks](#tasks), but each item in the list is a `dict` with these
 keys:
@@ -854,7 +854,7 @@ configuring `secret: true` in the [advanced prompt format](#advanced-prompt-form
 
 -   Format: `List[str]`
 -   CLI flags: `-s`, `--skip`
--   Default value: N/A
+-   Default value: `[]`
 
 [Patterns](#patterns-syntax) for files/folders that must be skipped if they already
 exist.
@@ -964,7 +964,7 @@ This allows you to keep separate the template metadata and the template code.
 
 -   Format: `List[str|List[str]]`
 -   CLI flags: N/A
--   Default value: N/A
+-   Default value: `[]`
 
 Commands to execute after generating or updating a project from your template.
 
