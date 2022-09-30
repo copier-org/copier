@@ -49,6 +49,7 @@ from functools import wraps
 from io import StringIO
 from pathlib import Path
 from textwrap import dedent
+from typing import List
 from unittest.mock import patch
 
 import yaml
@@ -58,7 +59,7 @@ from copier.tools import copier_version
 
 from .errors import UserMessageError
 from .main import Worker
-from .types import AnyByStrDict, List, OptStr
+from .types import AnyByStrDict, OptStr
 
 
 def handle_exceptions(method):
