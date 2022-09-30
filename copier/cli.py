@@ -58,7 +58,7 @@ from copier.tools import copier_version
 
 from .errors import UserMessageError
 from .main import Worker
-from .types import AnyByStrDict, List, OptStr
+from .types import AnyByStrDict, OptStr, StrSeq
 
 
 def handle_exceptions(method):
@@ -183,7 +183,7 @@ class CopierApp(cli.Application):
         list=True,
         help="Make VARIABLE available as VALUE when rendering the template",
     )
-    def data_switch(self, values: List[str]) -> None:
+    def data_switch(self, values: StrSeq) -> None:
         """Update [data][] with provided values.
 
         Arguments:

@@ -6,7 +6,7 @@ import textwrap
 from enum import Enum
 from hashlib import sha1
 from pathlib import Path
-from typing import Dict
+from typing import Mapping
 
 from plumbum import local
 from prompt_toolkit.input.ansi_escape_sequences import REVERSE_ANSI_SEQUENCES
@@ -87,7 +87,7 @@ def assert_file(tmp_path, *path):
     assert filecmp.cmp(p1, p2)
 
 
-def build_file_tree(spec: Dict[StrOrPath, str], dedent: bool = True):
+def build_file_tree(spec: Mapping[StrOrPath, str], dedent: bool = True):
     """Builds a file tree based on the received spec."""
     for path, contents in spec.items():
         path = Path(path)
