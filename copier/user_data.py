@@ -273,14 +273,10 @@ class Question:
         if isinstance(self.choices, dict):
             choices = list(self.choices.items())
         for choice in choices:
-            # If a choice is a dict, it can be used raw
-            if isinstance(choice, dict):
-                name = choice["name"]
-                value = choice["value"]
-            # ... or a value pair
-            elif isinstance(choice, (tuple, list)):
+            # If a choice is a value pair
+            if isinstance(choice, (tuple, list)):
                 name, value = choice
-            # However, a choice can also be a single value...
+            # If a choice is a single value
             else:
                 name = value = choice
             # The name must always be a str
