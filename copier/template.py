@@ -207,8 +207,9 @@ class Template:
 
     @property
     def _temp_clone(self) -> Optional[Path]:
-        if self.local_abspath != Path(self.url).expanduser().resolve():
-            return self.local_abspath
+        with suppress(OSError):
+            if self.local_abspath != Path(self.url).expanduser().resolve():
+                return self.local_abspath
         return None
 
     @cached_property
