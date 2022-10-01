@@ -73,21 +73,24 @@ def get_repo(url: str) -> OptStr:
     """
     for pattern, replacement in REPLACEMENTS:
         url = re.sub(pattern, replacement, url)
+
     url_path = Path(url)
     if url.startswith("~"):
         url_path = url_path.expanduser()
-    if not (
-        url.endswith(GIT_POSTFIX)
-        or url.startswith(GIT_PREFIX)
-        or is_git_repo_root(url_path)
-        or is_git_bundle(url_path)
-    ):
+
+    is_git_url = url.endswith(GIT_POSTFIX) or url.startswith(GIT_PREFIX)
+    is_local_path = is_git_repo_root(url_path) or is_git_bundle(url_path)
+
+    if not is_git_url and not is_local_path:
         return None
 
-    if url.startswith("git+"):
-        return url[4:]
-    elif url.startswith("https://") and not url.endswith(GIT_POSTFIX):
-        return "".join((url, GIT_POSTFIX))
+    if is_git_url:
+        if url.startswith("git+"):
+            url = url[4:]
+        elif url.startswith("https://") and not url.endswith(GIT_POSTFIX):
+            url = "".join((url, GIT_POSTFIX))
+        return url
+
     return url_path.as_posix()
 
 
