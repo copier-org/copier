@@ -1,3 +1,4 @@
+import os
 import shutil
 from os.path import exists, join
 from pathlib import Path
@@ -82,9 +83,11 @@ def test_dont_remove_local_clone(tmp_path):
 
 
 def test_update_using_local_source_path_with_tilde(tmp_path):
-    # leading slash on Linux (/tmp/...) but not on Windows (C:/...): normalize it
-    src_path = vcs.clone("https://github.com/copier-org/autopretty.git").lstrip("/")
-    fake_user_path = f"~/{'/'.join(['..'] * len(Path.home().parts))}/{src_path}"
+    src_path = vcs.clone("https://github.com/copier-org/autopretty.git")
+    if os.name == "nt":
+        fake_user_path = Path("~") / src_path.relative_to(Path.home())
+    else:
+        fake_user_path = f"~/{'/'.join(['..'] * len(Path.home().parts))}{src_path}"
     worker = run_copy(src_path=fake_user_path, dst_path=tmp_path, defaults=True)
     assert worker.answers.combined["_src_path"] == fake_user_path
     with local.cwd(tmp_path):
