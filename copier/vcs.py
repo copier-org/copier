@@ -91,7 +91,7 @@ def get_repo(url: str) -> OptStr:
             url = "".join((url, GIT_POSTFIX))
         return url
 
-    return url_path.as_posix()
+    return str(url_path)
 
 
 def checkout_latest_tag(local_repo: StrOrPath, use_prereleases: OptBool = False) -> str:
