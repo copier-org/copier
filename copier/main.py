@@ -158,9 +158,12 @@ class Worker:
 
     def __exit__(self, type, value, traceback):
         if value is not None:
+            # exception was raised from code inside context manager:
+            # try to clean up, ignoring any exception, then re-raise
             with suppress(Exception):
                 self._cleanup()
             raise value
+        # otherwise clean up and let any exception bubble up
         self._cleanup()
 
     def _cleanup(self):

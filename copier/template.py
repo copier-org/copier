@@ -209,7 +209,7 @@ class Template:
     def _temp_clone(self) -> Optional[Path]:
         clone_path = self.local_abspath
         original_path = Path(self.url).expanduser()
-        with suppress(OSError):
+        with suppress(OSError):  # triggered for URLs on Windows
             original_path = original_path.resolve()
         if clone_path != original_path:
             return clone_path
