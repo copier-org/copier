@@ -86,12 +86,12 @@ def test_update_using_local_source_path_with_tilde(tmp_path):
     src_path = vcs.clone("https://github.com/copier-org/autopretty.git")
     if os.name == "nt":
         src_path = Path(src_path)
-        src_path_user = src_path.parts[2]  # ["C:\\", "Users", "RUNNER~X"] on GitHub CI
-        fake_user_path = str(Path("~", "..", src_path_user, *src_path.parts[3:]))
+        user = src_path.parts[2]  # ["C:\\", "Users", "RUNNER~X"] on GitHub CI
+        user_src_path = str(Path("~", "..", user, *src_path.parts[3:]))
     else:
-        fake_user_path = f"~/{'/'.join(['..'] * len(Path.home().parts))}{src_path}"
-    worker = run_copy(src_path=fake_user_path, dst_path=tmp_path, defaults=True)
-    assert worker.answers.combined["_src_path"] == fake_user_path
+        user_src_path = f"~/{'/'.join(['..'] * len(Path.home().parts))}{src_path}"
+    worker = run_copy(src_path=user_src_path, dst_path=tmp_path, defaults=True)
+    assert worker.answers.combined["_src_path"] == user_src_path
     with local.cwd(tmp_path):
         git("init")
         git("add", "-A")
@@ -102,4 +102,4 @@ def test_update_using_local_source_path_with_tilde(tmp_path):
         overwrite=True,
         answers_file=".copier-answers.autopretty.yml",
     )
-    assert worker.answers.combined["_src_path"] == fake_user_path
+    assert worker.answers.combined["_src_path"] == user_src_path
