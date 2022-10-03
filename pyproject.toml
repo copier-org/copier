@@ -96,7 +96,7 @@ cmd = "pytest --color=yes"
 help = "run tests"
 
 [tool.poe.tasks.types]
-cmd = "mypy --ignore-missing-imports ."
+cmd = "mypy ."
 help = "run the type (mypy) checker on the codebase"
 
 [tool.poetry-dynamic-versioning]
