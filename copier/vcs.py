@@ -68,23 +68,27 @@ def get_repo(url: str) -> OptStr:
             - git+https://mywebsiteisagitrepo.example.com/
             - /local/path/to/git/repo
             - /local/path/to/git/bundle/file.bundle
+            - ~/path/to/git/repo
+            - ~/path/to/git/repo.bundle
     """
     for pattern, replacement in REPLACEMENTS:
         url = re.sub(pattern, replacement, url)
-    url_path = Path(url)
-    if not (
-        url.endswith(GIT_POSTFIX)
-        or url.startswith(GIT_PREFIX)
-        or is_git_repo_root(url_path)
-        or is_git_bundle(url_path)
-    ):
-        return None
 
-    if url.startswith("git+"):
-        url = url[4:]
-    elif url.startswith("https://") and not url.endswith(GIT_POSTFIX):
-        url = "".join((url, GIT_POSTFIX))
-    return url
+    if url.endswith(GIT_POSTFIX) or url.startswith(GIT_PREFIX):
+        if url.startswith("git+"):
+            url = url[4:]
+        elif url.startswith("https://") and not url.endswith(GIT_POSTFIX):
+            url = "".join((url, GIT_POSTFIX))
+        return url
+
+    url_path = Path(url)
+    if url.startswith("~"):
+        url_path = url_path.expanduser()
+
+    if is_git_repo_root(url_path) or is_git_bundle(url_path):
+        return url_path.as_posix()
+
+    return None
 
 
 def checkout_latest_tag(local_repo: StrOrPath, use_prereleases: OptBool = False) -> str:
