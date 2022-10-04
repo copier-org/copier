@@ -13,6 +13,7 @@ from typing import (
     Any,
     Callable,
     ChainMap as t_ChainMap,
+    Dict,
     Mapping,
     Optional,
     Sequence,
@@ -193,7 +194,7 @@ class Question:
     var_name: str
     answers: AnswersMap
     jinja_env: SandboxedEnvironment
-    choices: Union[Mapping[Any, Any], Sequence[Any]] = field(default_factory=list)
+    choices: Union[Dict[Any, Any], Sequence[Any]] = field(default_factory=list)
     default: Any = None
     help: str = ""
     ask_user: bool = False
