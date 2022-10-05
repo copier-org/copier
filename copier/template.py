@@ -152,7 +152,7 @@ class Task:
     """
 
     cmd: Union[str, Sequence[str]]
-    extra_env: Env = field(default_factory=lambda: {})
+    extra_env: Env = field(default_factory=dict)
 
 
 @dataclass
