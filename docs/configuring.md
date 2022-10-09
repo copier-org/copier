@@ -970,8 +970,6 @@ Commands to execute after generating or updating a project from your template.
 
 They run ordered, and with the `$STAGE=task` variable in their environment.
 
-Can be overridden with the `tasks` API option, but not from CLI.
-
 Example `copier.yml`:
 
 ```yaml
