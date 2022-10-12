@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v7.0.0 (2022-10-12)
+
+### Feat
+
+-   expand tilde in template source path (#835)
+
+### Fix
+
+-   delete temporary clones after execution automatically (#802)
+-   **typing**: remove invalid migration task stage "task"
+
+### Refactor
+
+-   **typing**: use abstract container types where possible (#832)
+-   use `dict` constructor as default factory
+-   **typing**: remove unused types
+-   remove unreachable code (#826)
+-   model a task to execute using a dataclass
+-   reduce module imports
+
 ## v6.2.0 (2022-09-18)
 
 ### Feat
