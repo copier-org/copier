@@ -32,7 +32,7 @@ python-versions = ">=3.5"
 dev = ["cloudpickle", "coverage[toml] (>=5.0.2)", "furo", "hypothesis", "mypy (>=0.900,!=0.940)", "pre-commit", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins", "sphinx", "sphinx-notfound-page", "zope.interface"]
 docs = ["furo", "sphinx", "sphinx-notfound-page", "zope.interface"]
 tests = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "mypy (>=0.900,!=0.940)", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins", "zope.interface"]
-tests_no_zope = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "mypy (>=0.900,!=0.940)", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins"]
+tests-no-zope = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "mypy (>=0.900,!=0.940)", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins"]
 
 [[package]]
 name = "autoflake"
@@ -102,7 +102,7 @@ optional = false
 python-versions = ">=3.6.0"
 
 [package.extras]
-unicode_backport = ["unicodedata2"]
+unicode-backport = ["unicodedata2"]
 
 [[package]]
 name = "click"
@@ -177,7 +177,7 @@ python-versions = "*"
 
 [[package]]
 name = "dunamai"
-version = "1.13.1"
+version = "1.13.2"
 description = "Dynamic version generation"
 category = "main"
 optional = false
@@ -349,9 +349,9 @@ python-versions = ">=3.6.1,<4.0"
 
 [package.extras]
 colors = ["colorama (>=0.4.3,<0.5.0)"]
-pipfile_deprecated_finder = ["pipreqs", "requirementslib"]
+pipfile-deprecated-finder = ["pipreqs", "requirementslib"]
 plugins = ["setuptools"]
-requirements_deprecated_finder = ["pip-api", "pipreqs"]
+requirements-deprecated-finder = ["pip-api", "pipreqs"]
 
 [[package]]
 name = "iteration-utilities"
@@ -655,7 +655,7 @@ pastel = ">=0.2.1,<0.3.0"
 tomli = ">=1.2.2"
 
 [package.extras]
-poetry_plugin = ["poetry (>=1.0,<2.0)"]
+poetry-plugin = ["poetry (>=1.0,<2.0)"]
 
 [[package]]
 name = "pre-commit"
@@ -1168,8 +1168,8 @@ distlib = [
     {file = "distlib-0.3.6.tar.gz", hash = "sha256:14bad2d9b04d3a36127ac97f30b12a19268f211063d8f8ee4f47108896e11b46"},
 ]
 dunamai = [
-    {file = "dunamai-1.13.1-py3-none-any.whl", hash = "sha256:f23d31fd3e7df1c16f018f4f0c408df7feda8cba9516f7c9822a29fa3ed665cd"},
-    {file = "dunamai-1.13.1.tar.gz", hash = "sha256:49597bdf653bdacdeb51ec6e0f1d4d2327309376fc83e6f1d42af6e29600515f"},
+    {file = "dunamai-1.13.2-py3-none-any.whl", hash = "sha256:d64974271c32d40ad097dceac43e411c87ca9f74d22ce55e03b358fa1adf624d"},
+    {file = "dunamai-1.13.2.tar.gz", hash = "sha256:3bb079c1a84b3dd04a20071e6c914308caba125af98bcef537cabed1a628d989"},
 ]
 execnet = [
     {file = "execnet-1.9.0-py2.py3-none-any.whl", hash = "sha256:a295f7cc774947aac58dde7fdc85f4aa00c42adf5d8f5468fc630c1acf30a142"},
