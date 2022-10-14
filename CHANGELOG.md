@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v7.0.1 (2022-10-14)
+
+### Fix
+
+-   remove deprecated code scheduled for removal in Copier v7 (#843)
+
 ## v7.0.0 (2022-10-12)
 
 ### Feat
