@@ -43,6 +43,18 @@ def test_config_data_is_loaded_from_file():
     ]
 
 
+def test_config_data_is_merged_from_files():
+    tpl = Template("tests/demo_merge_options_from_answerfiles")
+    assert list(tpl.skip_if_exists) == [
+        "skip_if_exists0",
+        "skip_if_exists1",
+        "skip_if_exists2",
+    ]
+    assert list(tpl.exclude) == ["exclude1", "exclude21", "exclude22"]
+    assert list(tpl.jinja_extensions) == ["jinja2.ext.0", "jinja2.ext.2"]
+    assert list(tpl.secret_questions) == ["question1"]
+
+
 @pytest.mark.parametrize("config_suffix", ["yaml", "yml"])
 def test_read_data(tmp_path_factory, config_suffix):
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
