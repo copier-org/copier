@@ -1,0 +1,10 @@
+_skip_if_exists:
+  - skip_if_exists0
+
+_jinja_extensions:
+  - jinja2.ext.0
+
+---
+!include ./include1.yml
+---
+!include ./include2.yml
