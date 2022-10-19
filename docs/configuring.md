@@ -341,14 +341,17 @@ cannot use Jinja templating in your answers.
 
 ### Include other YAML files
 
-The `copier.yml` file supports multiple documents. When found, they are merged (**not**
-deeply merged; just merged) and the latest one defined has priority.
+The `copier.yml` file supports multiple documents as well as using the `!include` tag to
+include settings and questions from other yaml files. This allows you to split up a
+larger `copier.yml` and enables you to reuse common partial sections from your
+templates. When multiple documents are used, care has to be taken with question and
+settings that are defined in more than one document:
 
-It also supports using the `!include` tag to include other configurations from
-elsewhere.
-
-These two features, combined, allow you to reuse common partial sections from your
-templates.
+-   a question with the same name overwrites definitions from an earlier document
+-   settings given in multiple documents for `exclude`, `skip_if_exists`,
+    `jinja_extensions` and `secret_questions` are concatenated
+-   other settings (such as `tasks` or `migrations`) overwrite previous defintions for
+    these settings
 
 !!! hint
 
@@ -376,6 +379,19 @@ templates.
     _skip_if_exists:
         - .password.txt
     custom_question: default answer
+    ```
+
+    that includes questions and settings from:
+
+    ```yaml
+    # common-questions/python-project.yml
+    version:
+        type: str
+        help: What is the version of your python project?
+
+    # settings like `_skip_if_exists` are merged
+    _skip_if_exists:
+        - "pyproject.toml"
     ```
 
 ## Conditional files and directories
