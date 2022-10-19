@@ -1,7 +1,7 @@
 """Tools related to template management."""
 import re
 import sys
-from collections import ChainMap
+from collections import ChainMap, defaultdict
 from contextlib import suppress
 from dataclasses import field
 from pathlib import Path
@@ -94,12 +94,28 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
 
     try:
         with open(conf_path) as f:
-            flattened_result = deepflatten(
-                yaml.load_all(f, Loader=yaml.FullLoader),
-                depth=2,
-                types=(list,),
+            flattened_result = list(
+                deepflatten(
+                    yaml.load_all(f, Loader=yaml.FullLoader),
+                    depth=2,
+                    types=(list,),
+                )
             )
-            return dict(ChainMap(*reversed(list(flattened_result))))
+            merged_options = defaultdict(list)
+            for option in (
+                "_exclude",
+                "_jinja_extensions",
+                "_secret_questions",
+                "_skip_if_exists",
+            ):
+                for result in flattened_result:
+                    try:
+                        values = result[option]
+                    except KeyError:
+                        pass
+                    else:
+                        merged_options[option].extend(values)
+            return dict(ChainMap(dict(merged_options), *reversed(flattened_result)))
     except yaml.parser.ParserError as e:
         raise InvalidConfigFileError(conf_path, quiet) from e
 
