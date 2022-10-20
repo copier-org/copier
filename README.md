@@ -67,6 +67,18 @@ To generate a project from the template:
     copier path/to/project/template path/to/destination
     ```
 
+-   Using Docker:
+
+    ```shell
+    docker run -it --rm -v path/to/destination:/copier ghcr.io/copier-org/copier path/to/project/template /copier
+    ```
+
+    e.g. to generate in current directory as destination:
+
+    ```shell
+    docker run -it --rm -v $PWD:/copier ghcr.io/copier-org/copier path/to/project/template /copier
+    ```
+
 -   Or in Python code, programmatically:
 
     ```python
