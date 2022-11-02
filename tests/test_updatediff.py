@@ -49,6 +49,7 @@ def test_updatediff(tmp_path_factory):
     )
     with local.cwd(repo):
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         git("commit", "-m", "Guybrush wants to be a pirate")
         git("tag", "v0.0.1")
@@ -81,6 +82,7 @@ def test_updatediff(tmp_path_factory):
     )
     with local.cwd(repo):
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         git("commit", "-m", "Add migrations")
         git("tag", "v0.0.2")
@@ -123,6 +125,7 @@ def test_updatediff(tmp_path_factory):
     )
     with local.cwd(repo):
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         git("commit", "-m", "Elaine wants to rule")
         git("bundle", "create", bundle, "--all")
@@ -166,6 +169,7 @@ def test_updatediff(tmp_path_factory):
         # Configure git in case you're running in CI
         git("config", "user.name", "Copier Test")
         git("config", "user.email", "test@copier")
+        git("config", "commit.gpgsign", "False")
         # Commit changes
         git("add", ".")
         commit("-m", "hello world")
@@ -327,6 +331,7 @@ def test_commit_hooks_respected(tmp_path_factory):
             }
         )
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         git("commit", "-m", "commit 1")
         git("tag", "v1")
@@ -334,6 +339,7 @@ def test_commit_hooks_respected(tmp_path_factory):
     copy(src_path=str(src), dst_path=dst1, defaults=True, overwrite=True)
     with local.cwd(dst1):
         life = Path("life.yml")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         # 1st commit fails because pre-commit reformats life.yml
         git("commit", "-am", "failed commit", retcode=1)
@@ -362,6 +368,7 @@ def test_commit_hooks_respected(tmp_path_factory):
             }
         )
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         git("commit", "-m", "commit 2")
         git("tag", "v2")
@@ -400,6 +407,7 @@ def test_commit_hooks_respected(tmp_path_factory):
     # Using file:// prefix to allow local shallow clones.
     git("clone", "--depth=1", f"file://{dst1}", dst2)
     with local.cwd(dst2):
+        git("config", "commit.gpgsign", "False")
         # Subproject re-updates just to change some values
         copy(data={"what": "study"}, defaults=True, overwrite=True)
         git("commit", "-am", "re-updated to change values after evolving")
@@ -453,6 +461,7 @@ def test_update_from_tagged_to_head(src_repo, tmp_path):
     # Build repo on copy
     with local.cwd(tmp_path):
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", "-A")
         git("commit", "-m3")
     # Update project, it must let us do it
@@ -472,6 +481,7 @@ def test_skip_update(tmp_path_factory):
             }
         )
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         git("commit", "-m1")
         git("tag", "1.0.0")
@@ -484,6 +494,7 @@ def test_skip_update(tmp_path_factory):
     skip_me.write_text("2")
     with local.cwd(dst):
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         git("commit", "-m1")
     with local.cwd(src):
@@ -514,6 +525,7 @@ def test_overwrite_answers_file_always(
             }
         )
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         git("commit", "-m1")
         git("tag", "1")
@@ -524,6 +536,7 @@ def test_overwrite_answers_file_always(
     run_copy(str(src), str(dst), vcs_ref="1", defaults=True, answers_file=answers_file)
     with local.cwd(dst):
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         git("commit", "-m1")
         # When updating, the only thing to overwrite is the copier answers file,
@@ -556,6 +569,7 @@ def test_file_removed(src_repo, tmp_path):
     # Copy in subproject
     with local.cwd(tmp_path):
         git("init")
+        git("config", "commit.gpgsign", "False")
         run_copy(str(src_repo))
         # Subproject has an extra file
         build_file_tree(

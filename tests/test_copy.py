@@ -51,6 +51,7 @@ def test_copy_with_non_version_tags(tmp_path_factory):
     )
     with local.cwd(repo):
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         git("commit", "-m1")
         git("tag", "test_tag.post23+deadbeef")
@@ -86,6 +87,7 @@ def test_copy_with_non_version_tags_and_vcs_ref(tmp_path_factory):
     )
     with local.cwd(repo):
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         git("commit", "-m1")
         git("tag", "test_tag.post23+deadbeef")
@@ -182,6 +184,7 @@ def test_exclude_extends(tmp_path: Path):
     # Convert to git repo
     with local.cwd(src):
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         git("commit", "-m", "hello world")
     copier.copy(str(src), str(dst), exclude=["*.txt"])
@@ -339,6 +342,7 @@ def test_commit_hash(src_repo, tmp_path):
     )
     src_git = git["-C", src_repo]
     src_git("add", "-A")
+    src_git("config", "commit.gpgsign", "False")
     src_git("commit", "-m1")
     src_git("tag", "1.0")
     commit = src_git("rev-parse", "HEAD").strip()

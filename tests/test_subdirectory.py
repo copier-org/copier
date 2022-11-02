@@ -14,6 +14,7 @@ def git_init(message="hello world"):
     git("init")
     git("config", "user.name", "Copier Test")
     git("config", "user.email", "test@copier")
+    git("config", "commit.gpgsign", "False")
     git("add", ".")
     git("commit", "-m", message)
 
@@ -107,6 +108,7 @@ def test_update_subdirectory_from_root_path(tmp_path_factory):
             }
         )
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         git("commit", "-m1")
         git("tag", "1")
@@ -125,6 +127,7 @@ def test_update_subdirectory_from_root_path(tmp_path_factory):
     with local.cwd(dst):
         build_file_tree({"dst_top_file": "one"})
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         git("commit", "-m0")
     copier.run_copy(

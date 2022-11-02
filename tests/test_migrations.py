@@ -36,6 +36,7 @@ def test_migrations_and_tasks(tmp_path: Path):
         git("init")
         git("config", "user.name", "Copier Test")
         git("config", "user.email", "test@copier")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         git("commit", "-m1")
         git("tag", "v1.0.0")
@@ -58,6 +59,7 @@ def test_migrations_and_tasks(tmp_path: Path):
         git("add", ".")
         git("config", "user.name", "Copier Test")
         git("config", "user.email", "test@copier")
+        git("config", "commit.gpgsign", "False")
         git("commit", "-m1")
     # Update it to v2
     copy(dst_path=str(dst), defaults=True, overwrite=True)
@@ -92,6 +94,7 @@ def test_pre_migration_modifies_answers(tmp_path_factory):
             }
         )
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         git("commit", "-m1")
         git("tag", "v1")
@@ -103,6 +106,7 @@ def test_pre_migration_modifies_answers(tmp_path_factory):
         assert answers["best_song"] == "la vie en rose"
         assert json.loads(Path("songs.json").read_text()) == ["la vie en rose"]
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         git("commit", "-m1")
     with local.cwd(template):
@@ -176,6 +180,7 @@ def test_prereleases(tmp_path: Path):
             }
         )
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         git("commit", "-mv1")
         git("tag", "v1.0.0")
@@ -200,6 +205,7 @@ def test_prereleases(tmp_path: Path):
     with local.cwd(dst):
         # Commit subproject
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         git("commit", "-mv1")
         # Update it without prereleases; nothing changes

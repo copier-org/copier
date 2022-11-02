@@ -390,6 +390,7 @@ def test_tui_inherited_default(tmp_path_factory, spawn, has_2_owners, owner2):
     )
     _git = git["-C", src]
     _git("init")
+    _git("config", "commit.gpgsign", "False")
     _git("add", "--all")
     _git("commit", "--message", "init template")
     _git("tag", "1")
@@ -417,6 +418,7 @@ def test_tui_inherited_default(tmp_path_factory, spawn, has_2_owners, owner2):
     assert json.load((dst / "answers.json").open()) == result
     _git = git["-C", dst]
     _git("init")
+    _git("config", "commit.gpgsign", "False")
     _git("add", "--all")
     _git("commit", "--message", "init project")
     # After a forced update, answers stay the same
@@ -537,17 +539,20 @@ def test_multi_template_answers(tmp_path_factory):
     # Make them git-tracked
     for tpl in (tpl1, tpl2):
         git("-C", tpl, "init")
+        git("-C", tpl, "config", "commit.gpgsign", "False")
         git("-C", tpl, "add", "-A")
         git("-C", tpl, "commit", "-m1")
     with local.cwd(dst):
         # Apply template 1
         run_auto(str(tpl1), overwrite=True, defaults=True)
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", "-A")
         git("commit", "-m1")
         # Apply template 2
         run_auto(str(tpl2), overwrite=True, defaults=True)
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", "-A")
         git("commit", "-m2")
         # Check contents

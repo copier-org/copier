@@ -716,6 +716,7 @@ class Worker:
                 git("add", ".")
                 git("config", "user.name", "Copier")
                 git("config", "user.email", "copier@copier")
+                git("config", "commit.gpgsign", "False")
                 # 1st commit could fail if any pre-commit hook reformats code
                 git("commit", "--allow-empty", "-am", "dumb commit 1", retcode=None)
                 git("commit", "--allow-empty", "-am", "dumb commit 2")

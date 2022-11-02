@@ -56,6 +56,7 @@ def test_minimum_version_update(template_path, tmp_path, monkeypatch):
         git("init")
         git("config", "user.name", "Copier Test")
         git("config", "user.email", "test@copier")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         git("commit", "-m", "hello world")
 

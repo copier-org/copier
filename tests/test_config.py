@@ -29,6 +29,7 @@ def git_init(message="hello world"):
     git("init")
     git("config", "user.name", "Copier Test")
     git("config", "user.email", "test@copier")
+    git("config", "commit.gpgsign", "False")
     git("add", ".")
     git("commit", "-m", message)
 

@@ -27,6 +27,7 @@ def test_copy(tmp_path_factory):
 
     with local.cwd(src):
         git("init")
+        git("config", "commit.gpgsign", "False")
 
     with pytest.warns(DirtyLocalWarning):
         copier.copy(str(src), str(dst), data=DATA, quiet=True)
@@ -68,6 +69,7 @@ def test_update(tmp_path_factory):
 
     with local.cwd(src):
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", "-A")
         git("commit", "-m", "first commit on src")
 
@@ -88,6 +90,7 @@ def test_update(tmp_path_factory):
     # dst must be vcs-tracked to use run_update
     with local.cwd(dst):
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", "-A")
         git("commit", "-m", "first commit on dst")
 

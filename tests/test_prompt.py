@@ -51,6 +51,7 @@ def test_copy_default_advertised(tmp_path_factory, spawn, name):
     with local.cwd(template):
         build_file_tree(MARIO_TREE)
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         git("commit", "-m", "v1")
         git("tag", "v1")
@@ -88,6 +89,7 @@ def test_copy_default_advertised(tmp_path_factory, spawn, name):
         assert "_commit: v1" in Path(".copier-answers.yml").read_text()
         # Update subproject
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         assert "_commit: v1" in Path(".copier-answers.yml").read_text()
         git("commit", "-m", "v1")
@@ -326,6 +328,7 @@ def test_update_choice(tmp_path_factory, spawn, choices):
     )
     with local.cwd(template):
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         git("commit", "-m one")
         git("tag", "v1")
@@ -338,6 +341,7 @@ def test_update_choice(tmp_path_factory, spawn, choices):
     assert answers["pick_one"] == 2.0
     with local.cwd(subproject):
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         git("commit", "-m1")
     # Update

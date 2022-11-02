@@ -152,6 +152,13 @@ def clone(url: str, ref: OptStr = None) -> str:
                 git(
                     "--git-dir=.git",
                     f"--work-tree={url_abspath}",
+                    "config",
+                    "commit.gpgsign",
+                    "False",
+                )
+                git(
+                    "--git-dir=.git",
+                    f"--work-tree={url_abspath}",
                     "commit",
                     "-m",
                     "Copier automated commit for draft changes",

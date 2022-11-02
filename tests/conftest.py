@@ -13,6 +13,7 @@ def src_repo(tmp_path_factory) -> Path:
     """Quick helper to avoid creating template repo constantly."""
     result = tmp_path_factory.mktemp("src_repo")
     git("-C", result, "init")
+    git("-C", result, "config", "commit.gpgsign", "False")
     return result
 
 

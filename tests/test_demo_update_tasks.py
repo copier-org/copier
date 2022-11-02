@@ -33,6 +33,7 @@ def test_update_tasks(tmp_path_factory):
     )
     with local.cwd(repo):
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         git("commit", "-m1")
         git("tag", "v1")
@@ -49,6 +50,7 @@ def test_update_tasks(tmp_path_factory):
     (repo / "v1.txt").unlink()
     with local.cwd(repo):
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", ".")
         git("commit", "-m2")
         git("tag", "v2")
@@ -64,6 +66,7 @@ def test_update_tasks(tmp_path_factory):
     # Init destination as a new independent git repo
     with local.cwd(dst):
         git("init")
+        git("config", "commit.gpgsign", "False")
         # Configure git in case you're running in CI
         git("config", "user.name", "Copier Test")
         git("config", "user.email", "test@copier")

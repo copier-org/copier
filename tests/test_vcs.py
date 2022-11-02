@@ -104,6 +104,7 @@ def test_update_using_local_source_path_with_tilde(tmp_path):
     # assert project update works and correct path again
     with local.cwd(tmp_path):
         git("init")
+        git("config", "commit.gpgsign", "False")
         git("add", "-A")
         git("commit", "-m", "init")
     worker = run_update(
