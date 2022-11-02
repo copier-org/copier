@@ -1060,7 +1060,7 @@ the `v2.0.0a1` tag unless this flag is enabled.
 ### `vcs_ref`
 
 -   Format: `str`
--   CLI flags: `-r`, `-vcs-ref`
+-   CLI flags: `-r`, `--vcs-ref`
 -   Default value: N/A (use latest release)
 
 When copying or updating from a Git-versioned template, indicate which template version
