@@ -502,6 +502,21 @@ running `copier update`, this setting has no effect.
 
     Not supported in `copier.yml`.
 
+### `conflict`
+
+-   Format: `Literal["rej", "inline"]`
+-   CLI flags: `-o`, `--conflict`
+-   Default value: `rej`
+
+When updating a project, sometimes Copier doesn't know what to do with a diff code hunk.
+This option controls the output format if this happens. The default, `rej`, creates
+`*.rej` files that contain the unresolved diffs. The `inline` option includes the diff
+code hunk in the file itself, similar to the behavior of `git merge`.
+
+!!! info
+
+    Not supported in `copier.yml`.
+
 ### `data`
 
 -   Format: `dict|List[str=str]`
