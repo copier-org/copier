@@ -147,7 +147,7 @@ class Worker:
             See [quiet][].
 
         conflict:
-            One of "rej", "inline"
+            One of "rej" (default), "inline" (still experimental).
     """
 
     src_path: Optional[str] = None
