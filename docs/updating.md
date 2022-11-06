@@ -25,11 +25,11 @@ answers you provided when copied last time. However, sometimes it's impossible f
 Copier to know what to do with a diff code hunk. In those cases, copier handles the
 conflict one of two ways, controlled with the `--conflict` option:
 
--   `--conflict rej` (default): Creates a separate `.rej` file for each file with conflicts. These
-    files contain the unresolved diffs.
--   `--conflict inline`: Updates the file with conflict markers. This is quite similar
-    to the conflict markers created when a `git merge` command encounters a conflict.
-    For more information, see the "Checking Out Conflicts" section of the
+-   `--conflict rej` (default): Creates a separate `.rej` file for each file with
+    conflicts. These files contain the unresolved diffs.
+-   `--conflict inline` (experimental): Updates the file with conflict markers. This is
+    quite similar to the conflict markers created when a `git merge` command encounters
+    a conflict. For more information, see the "Checking Out Conflicts" section of the
     [`git` documentation](https://git-scm.com/book/en/v2/Git-Tools-Advanced-Merging).
 
 If the update results in conflicts, _you should review those manually_ before
@@ -43,7 +43,7 @@ That's why the recommended way to prevent these mistakes is to add a
 conflict files or markers. The recommended hook configuration depends on the `conflict`
 setting you use.
 
-## Preventing Commit of `.rej` Files
+## Preventing Commit of Merge Conflicts
 
 If you use `--conflict rej` (the default):
 
@@ -51,22 +51,16 @@ If you use `--conflict rej` (the default):
 repos:
     - repo: local
       hooks:
+          # Prevent committing .rej files
           - id: forbidden-files
             name: forbidden files
             entry: found Copier update rejection files; review them and remove them
             language: fail
             files: "\\.rej$"
-```
-
-## Preventing Commit of Files with Inline Conflicts
-
-If you use `--conflict inline`:
-
-```yaml title=".pre-commit-config.yaml"
-repos:
     - repo: https://github.com/pre-commit/pre-commit-hooks
       rev: v4.3.0
       hooks:
+          # Prevent committing inline conflict markers
           - id: check-merge-conflict
             args: [--assume-in-merge]
 ```
