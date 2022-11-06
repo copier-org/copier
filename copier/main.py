@@ -153,7 +153,7 @@ class Worker:
             See [quiet][].
 
         conflict:
-            One of "rej", "inline"
+            One of "rej" (default), "inline" (still experimental).
     """
 
     src_path: Optional[str] = None
@@ -819,6 +819,7 @@ class Worker:
                     subfile_names.append(subfile_kind)
 
                 with local.cwd(merge_dst_temp):
+                    # https://git-scm.com/docs/git-merge-file
                     output = git("merge-file", "-p", *subfile_names, retcode=None)
 
                 dest_path = Path(self.dst_path, basename)
