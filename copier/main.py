@@ -697,9 +697,9 @@ class Worker:
             print(
                 f"Updating to template version {self.template.version}", file=sys.stderr
             )
-        self.apply_update()
+        self._apply_update()
 
-    def apply_update(self):
+    def _apply_update(self):
         if self.conflict == "inline":
             # New implementation.
             self._apply_update_inline_conflict_markers()
@@ -749,7 +749,7 @@ class Worker:
             self._execute_tasks(
                 self.template.migration_tasks("before", self.subproject.template)
             )
-            self._do_copy()
+            self._uncached_copy()
             # Try to apply cached diff into final destination
             with local.cwd(self.subproject.local_abspath):
                 apply_cmd = git["apply", "--reject", "--exclude", self.answers_relpath]
@@ -768,6 +768,7 @@ class Worker:
         )
 
     def _apply_update_inline_conflict_markers(self):
+        """Implements the apply_update() method using inline conflict markers."""
         # Copy old template into a temporary destination
         with TemporaryDirectory(
             prefix=f"{__name__}.update_diff.reference."
@@ -791,7 +792,7 @@ class Worker:
             self._execute_tasks(
                 self.template.migration_tasks("before", self.subproject.template)
             )
-            self._do_copy()
+            self._uncached_copy()
 
             # Extract the list of files to merge
             participating_files: Set[Path] = set()
@@ -834,7 +835,8 @@ class Worker:
             self.template.migration_tasks("after", self.subproject.template)
         )
 
-    def _do_copy(self):
+    def _uncached_copy(self):
+        """Copy template to destination without using answer cache."""
         # Clear last answers cache to load possible answers migration
         with suppress(AttributeError):
             del self.answers
@@ -844,6 +846,7 @@ class Worker:
         self.run_copy()
 
     def _make_old_worker(self, old_copy):
+        """Create a worker to copy the old template into a temporary destination."""
         old_worker = replace(
             self,
             dst_path=old_copy,
@@ -856,6 +859,7 @@ class Worker:
         return old_worker
 
     def _git_initialize_repo(self):
+        """Initialize a git repository in the current directory."""
         git("init", retcode=None)
         git("add", ".")
         git("config", "user.name", "Copier")

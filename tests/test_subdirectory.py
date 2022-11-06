@@ -153,17 +153,20 @@ def test_update_subdirectory_from_root_path(tmp_path_factory):
 
 
 @pytest.mark.parametrize(
-    "conflict, readme",
+    "conflict, readme, expect_reject",
     [
-        ("rej", "upstream version 2\n"),
+        ("rej", "upstream version 2\n", True),
         (
             "inline",
             "<<<<<<< modified\ndownstream version 1\n"
             "=======\nupstream version 2\n>>>>>>> new upstream\n",
+            False,
         ),
     ],
 )
-def test_new_version_uses_subdirectory(conflict, tmp_path_factory, readme):
+def test_new_version_uses_subdirectory(
+    conflict, tmp_path_factory, readme, expect_reject
+):
     # Template in v1 doesn't have a _subdirectory;
     # in v2 it moves all things into a subdir and adds that key to copier.yml.
     # Some files change. Downstream project has evolved too. Does that work as expected?
@@ -228,6 +231,8 @@ def test_new_version_uses_subdirectory(conflict, tmp_path_factory, readme):
     assert (project_path / "README.md").exists()
     with (project_path / "README.md").open() as fd:
         assert fd.read() == readme
+    reject_path = project_path / "README.md.rej"
+    assert reject_path.exists() == expect_reject
 
     # Also assert the subdirectory itself was not rendered
     assert not (project_path / "subdir").exists()
