@@ -1,10 +1,10 @@
 """Functions used to load user data."""
-import datetime
 import json
 import sys
 import warnings
 from collections import ChainMap
 from dataclasses import field
+from datetime import datetime
 from hashlib import sha512
 from os import urandom
 from pathlib import Path
@@ -14,8 +14,9 @@ from typing import (
     Callable,
     ChainMap as t_ChainMap,
     Dict,
-    List,
+    Mapping,
     Optional,
+    Sequence,
     Union,
 )
 
@@ -51,7 +52,7 @@ def _now():
         "strftime format reference https://strftime.org/",
         FutureWarning,
     )
-    return datetime.datetime.utcnow()
+    return datetime.utcnow()
 
 
 def _make_secret():
@@ -193,7 +194,7 @@ class Question:
     var_name: str
     answers: AnswersMap
     jinja_env: SandboxedEnvironment
-    choices: Union[Dict[Any, Any], List[Any]] = field(default_factory=list)
+    choices: Union[Dict[Any, Any], Sequence[Any]] = field(default_factory=list)
     default: Any = None
     help: str = ""
     ask_user: bool = False
@@ -266,21 +267,17 @@ class Question:
         return str(default)
 
     @cached_property
-    def _formatted_choices(self) -> List[Choice]:
+    def _formatted_choices(self) -> Sequence[Choice]:
         """Obtain choices rendered and properly formatted."""
         result = []
         choices = self.choices
         if isinstance(self.choices, dict):
             choices = list(self.choices.items())
         for choice in choices:
-            # If a choice is a dict, it can be used raw
-            if isinstance(choice, dict):
-                name = choice["name"]
-                value = choice["value"]
-            # ... or a value pair
-            elif isinstance(choice, (tuple, list)):
+            # If a choice is a value pair
+            if isinstance(choice, (tuple, list)):
                 name, value = choice
-            # However, a choice can also be a single value...
+            # If a choice is a single value
             else:
                 name = value = choice
             # The name must always be a str
@@ -452,7 +449,7 @@ def cast_answer_type(answer: Any, type_fn: Callable) -> Any:
         return answer
 
 
-CAST_STR_TO_NATIVE: Dict[str, Callable] = {
+CAST_STR_TO_NATIVE: Mapping[str, Callable] = {
     "bool": cast_str_to_bool,
     "float": float,
     "int": int,

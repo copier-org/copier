@@ -15,9 +15,9 @@ from shutil import copyfile, rmtree
 from typing import Callable, Iterable, List, Mapping, Optional, Sequence, Set
 from unicodedata import normalize
 
-import pathspec
 from jinja2.loaders import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
+from pathspec import PathSpec
 from plumbum import ProcessExecutionError, colors
 from plumbum.cli.terminal import ask
 from plumbum.cmd import git
@@ -29,7 +29,7 @@ from questionary import unsafe_prompt
 
 from .errors import CopierAnswersInterrupt, ExtensionNotFoundError, UserMessageError
 from .subproject import Subproject
-from .template import Template
+from .template import Task, Template
 from .tools import Style, TemporaryDirectory, printf
 from .types import (
     AnyByStrDict,
@@ -68,7 +68,7 @@ class Worker:
     This class represents the state of a copier work, and contains methods to
     actually produce the desired work.
 
-    To use it properly, instantiate it by filling properly all dataclass fields.
+    To use it properly, use it as a context manager and fill all dataclass fields.
 
     Then, execute one of its main methods, which are prefixed with `run_`:
 
@@ -76,6 +76,12 @@ class Worker:
     -   [run_update][copier.main.Worker.run_update] to update a subproject.
     -   [run_auto][copier.main.Worker.run_auto] to let it choose whether you
         want to copy or update the subproject.
+
+    Example:
+        ```python
+        with Worker(src_path="https://github.com/copier-org/autopretty.git", "output") as worker:
+            worker.run_copy()
+        ```
 
     Attributes:
         src_path:
@@ -166,6 +172,22 @@ class Worker:
     quiet: bool = False
     conflict: str = "rej"
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        if value is not None:
+            # exception was raised from code inside context manager:
+            # try to clean up, ignoring any exception, then re-raise
+            with suppress(Exception):
+                self._cleanup()
+            raise value
+        # otherwise clean up and let any exception bubble up
+        self._cleanup()
+
+    def _cleanup(self):
+        self.template._cleanup()
+
     def _answers_to_remember(self) -> Mapping:
         """Get only answers that will be remembered in the copier answers file."""
         # All internal values must appear first
@@ -187,28 +209,27 @@ class Worker:
         )
         return answers
 
-    def _execute_tasks(self, tasks: Sequence[Mapping]) -> None:
+    def _execute_tasks(self, tasks: Sequence[Task]) -> None:
         """Run the given tasks.
 
         Arguments:
             tasks: The list of tasks to run.
         """
         for i, task in enumerate(tasks):
-            task_cmd = task["task"]
-            use_shell = isinstance(task_cmd, str)
-            if use_shell:
+            task_cmd = task.cmd
+            if isinstance(task_cmd, str):
                 task_cmd = self._render_string(task_cmd)
+                use_shell = True
             else:
                 task_cmd = [self._render_string(str(part)) for part in task_cmd]
+                use_shell = False
             if not self.quiet:
                 print(
                     colors.info
                     | f" > Running task {i + 1} of {len(tasks)}: {task_cmd}",
                     file=sys.stderr,
                 )
-            with local.cwd(self.subproject.local_abspath), local.env(
-                **task.get("extra_env", {})
-            ):
+            with local.cwd(self.subproject.local_abspath), local.env(**task.extra_env):
                 subprocess.run(task_cmd, shell=use_shell, check=True, env=local.env)
 
     def _render_context(self) -> Mapping:
@@ -237,7 +258,7 @@ class Worker:
         """Produce a function that matches against specified patterns."""
         # TODO Is normalization really needed?
         normalized_patterns = (normalize("NFD", pattern) for pattern in patterns)
-        spec = pathspec.PathSpec.from_lines("gitwildmatch", normalized_patterns)
+        spec = PathSpec.from_lines("gitwildmatch", normalized_patterns)
         return spec.match_file
 
     def _solve_render_conflict(self, dst_relpath: Path):
@@ -627,12 +648,7 @@ class Worker:
             if not self.quiet:
                 # TODO Unify printing tools
                 print("")  # padding space
-            self._execute_tasks(
-                [
-                    {"task": t, "extra_env": {"STAGE": "task"}}
-                    for t in self.template.tasks
-                ],
-            )
+            self._execute_tasks(self.template.tasks)
         except Exception:
             if not was_existing and self.cleanup_on_error:
                 rmtree(self.subproject.local_abspath)
@@ -869,8 +885,8 @@ def run_copy(
     """
     if data is not None:
         kwargs["data"] = data
-    worker = Worker(src_path=src_path, dst_path=Path(dst_path), **kwargs)
-    worker.run_copy()
+    with Worker(src_path=src_path, dst_path=Path(dst_path), **kwargs) as worker:
+        worker.run_copy()
     return worker
 
 
@@ -887,8 +903,8 @@ def run_update(
     """
     if data is not None:
         kwargs["data"] = data
-    worker = Worker(dst_path=Path(dst_path), **kwargs)
-    worker.run_update()
+    with Worker(dst_path=Path(dst_path), **kwargs) as worker:
+        worker.run_update()
     return worker
 
 

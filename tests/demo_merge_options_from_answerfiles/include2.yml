@@ -1,0 +1,9 @@
+_skip_if_exists:
+  - skip_if_exists2
+
+_jinja_extensions:
+  - jinja2.ext.2
+
+_exclude:
+  - exclude21
+  - exclude22

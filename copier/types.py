@@ -2,19 +2,7 @@
 
 import sys
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    TypeVar,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Dict, Mapping, Optional, Sequence, TypeVar, Union
 
 from pydantic.validators import path_validator
 
@@ -31,7 +19,6 @@ if TYPE_CHECKING:
 # simple types
 StrOrPath = Union[str, Path]
 AnyByStrDict = Dict[str, Any]
-AnyByStrDictOrTuple = Union[AnyByStrDict, Tuple[str, Any]]
 
 # sequences
 IntSeq = Sequence[int]
@@ -44,17 +31,12 @@ OptBool = Optional[bool]
 OptStrOrPath = Optional[StrOrPath]
 OptStrOrPathSeq = Optional[StrOrPathSeq]
 OptStr = Optional[str]
-OptStrSeq = Optional[StrSeq]
-OptAnyByStrDict = Optional[AnyByStrDict]
 
 # miscellaneous
-CheckPathFunc = Callable[[StrOrPath], bool]
-Choices = Union[List[Any], Dict[Any, Any]]
 T = TypeVar("T")
 JSONSerializable = (dict, list, str, int, float, bool, type(None))
-Filters = Dict[str, Callable]
-LoaderPaths = Union[str, Iterable[str]]
 VCSTypes = Literal["git"]
+Env = Mapping[str, str]
 
 
 class AllowArbitraryTypes:

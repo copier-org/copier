@@ -36,7 +36,7 @@ def dev_setup():
     """Setup a development environment."""
     # Gitpod sets PIP_USER=yes, which breaks poetry
     env = dict(os.environ, PIP_USER="no")
-    check_call(["poetry", "install", "--extras", "docs"], env=env)
+    check_call(["poetry", "install", "--with", "docs"], env=env)
     check_call(
         [
             "poetry",

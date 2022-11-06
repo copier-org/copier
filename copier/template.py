@@ -1,9 +1,11 @@
 """Tools related to template management."""
 import re
 import sys
-from collections import ChainMap
+from collections import ChainMap, defaultdict
 from contextlib import suppress
+from dataclasses import field
 from pathlib import Path
+from shutil import rmtree
 from typing import List, Mapping, Optional, Sequence, Set, Tuple
 from warnings import warn
 
@@ -11,7 +13,6 @@ import dunamai
 import packaging.version
 import yaml
 from iteration_utilities import deepflatten
-from packaging.specifiers import SpecifierSet
 from packaging.version import Version, parse
 from plumbum.cmd import git
 from plumbum.machines import local
@@ -25,8 +26,8 @@ from .errors import (
     UnknownCopierVersionWarning,
     UnsupportedVersionError,
 )
-from .tools import copier_version
-from .types import AnyByStrDict, OptStr, StrSeq, VCSTypes
+from .tools import copier_version, handle_remove_readonly
+from .types import AnyByStrDict, Env, OptStr, StrSeq, Union, VCSTypes
 from .vcs import checkout_latest_tag, clone, get_repo
 
 # HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
@@ -50,9 +51,6 @@ DEFAULT_EXCLUDE: Tuple[str, ...] = (
 )
 
 DEFAULT_TEMPLATES_SUFFIX = ".jinja"
-
-# TODO Remove usage of this on Copier v7
-COPIER_JINJA_BREAK = SpecifierSet("<=6.0.0a5", prereleases=True)
 
 
 def filter_config(data: AnyByStrDict) -> Tuple[AnyByStrDict, AnyByStrDict]:
@@ -96,12 +94,28 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
 
     try:
         with open(conf_path) as f:
-            flattened_result = deepflatten(
-                yaml.load_all(f, Loader=yaml.FullLoader),
-                depth=2,
-                types=(list,),
+            flattened_result = list(
+                deepflatten(
+                    yaml.load_all(f, Loader=yaml.FullLoader),
+                    depth=2,
+                    types=(list,),
+                )
             )
-            return dict(ChainMap(*reversed(list(flattened_result))))
+            merged_options = defaultdict(list)
+            for option in (
+                "_exclude",
+                "_jinja_extensions",
+                "_secret_questions",
+                "_skip_if_exists",
+            ):
+                for result in flattened_result:
+                    try:
+                        values = result[option]
+                    except KeyError:
+                        pass
+                    else:
+                        merged_options[option].extend(values)
+            return dict(ChainMap(dict(merged_options), *reversed(flattened_result)))
     except yaml.parser.ParserError as e:
         raise InvalidConfigFileError(conf_path, quiet) from e
 
@@ -135,6 +149,22 @@ def verify_copier_version(version_str: str) -> None:
             f"You could find some incompatibilities.",
             OldTemplateWarning,
         )
+
+
+@dataclass
+class Task:
+    """Object that represents a task to execute.
+
+    Attributes:
+        cmd:
+            Command to execute.
+
+        extra_env:
+            Additional environment variables to set while executing the command.
+    """
+
+    cmd: Union[str, Sequence[str]]
+    extra_env: Env = field(default_factory=dict)
 
 
 @dataclass
@@ -177,6 +207,25 @@ class Template:
     url: str
     ref: OptStr = None
     use_prereleases: bool = False
+
+    def _cleanup(self) -> None:
+        temp_clone = self._temp_clone
+        if temp_clone:
+            rmtree(
+                temp_clone,
+                ignore_errors=False,
+                onerror=handle_remove_readonly,
+            )
+
+    @property
+    def _temp_clone(self) -> Optional[Path]:
+        clone_path = self.local_abspath
+        original_path = Path(self.url).expanduser()
+        with suppress(OSError):  # triggered for URLs on Windows
+            original_path = original_path.resolve()
+        if clone_path != original_path:
+            return clone_path
+        return None
 
     @cached_property
     def _raw_config(self) -> AnyByStrDict:
@@ -249,30 +298,6 @@ class Template:
             #       user will most likely expects as a default.
             #       See https://github.com/copier-org/copier/issues/464
             result["keep_trailing_newline"] = True
-
-        # TODO Copier v7+ will not use any of these altered defaults
-        old_defaults = {
-            "autoescape": False,
-            "block_end_string": "%]",
-            "block_start_string": "[%",
-            "comment_end_string": "#]",
-            "comment_start_string": "[#",
-            "keep_trailing_newline": True,
-            "variable_end_string": "]]",
-            "variable_start_string": "[[",
-        }
-        if self.min_copier_version and self.min_copier_version in COPIER_JINJA_BREAK:
-            warned = False
-            for key, value in old_defaults.items():
-                if key not in result:
-                    if not warned:
-                        warn(
-                            "On future releases, Copier will switch to standard Jinja "
-                            "defaults and this template will not work unless updated.",
-                            FutureWarning,
-                        )
-                        warned = True
-                    result[key] = value
         return result
 
     @cached_property
@@ -304,8 +329,8 @@ class Template:
         return result
 
     def migration_tasks(
-        self, stage: Literal["task", "before", "after"], from_template: "Template"
-    ) -> Sequence[Mapping]:
+        self, stage: Literal["before", "after"], from_template: "Template"
+    ) -> Sequence[Task]:
         """Get migration objects that match current version spec.
 
         Versions are compared using PEP 440.
@@ -316,10 +341,10 @@ class Template:
             stage: A valid stage name to find tasks for.
             from_template: Original template, from which we are migrating.
         """
-        result: List[dict] = []
+        result: List[Task] = []
         if not (self.version and from_template.version):
             return result
-        extra_env = {
+        extra_env: Env = {
             "STAGE": stage,
             "VERSION_FROM": str(from_template.commit),
             "VERSION_TO": str(self.commit),
@@ -330,15 +355,13 @@ class Template:
         for migration in self._raw_config.get("_migrations", []):
             current = parse(migration["version"])
             if self.version >= current > from_template.version:
-                extra_env = dict(
-                    extra_env,
-                    VERSION_CURRENT=migration["version"],
-                    VERSION_PEP440_CURRENT=str(current),
-                )
-                result += [
-                    {"task": task, "extra_env": extra_env}
-                    for task in migration.get(stage, [])
-                ]
+                extra_env = {
+                    **extra_env,
+                    "VERSION_CURRENT": migration["version"],
+                    "VERSION_PEP440_CURRENT": str(current),
+                }
+                for cmd in migration.get(stage, []):
+                    result.append(Task(cmd=cmd, extra_env=extra_env))
         return result
 
     @cached_property
@@ -395,12 +418,15 @@ class Template:
         return self.config_data.get("subdirectory", "")
 
     @cached_property
-    def tasks(self) -> Sequence:
+    def tasks(self) -> Sequence[Task]:
         """Get tasks defined in the template.
 
         See [tasks][].
         """
-        return self.config_data.get("tasks", [])
+        return [
+            Task(cmd=cmd, extra_env={"STAGE": "task"})
+            for cmd in self.config_data.get("tasks", [])
+        ]
 
     @cached_property
     def templates_suffix(self) -> str:
@@ -412,18 +438,6 @@ class Template:
         """
         result = self.config_data.get("templates_suffix")
         if result is None:
-            # TODO Delete support for .tmpl default in Copier 7
-            if (
-                self.min_copier_version
-                and self.min_copier_version in COPIER_JINJA_BREAK
-            ):
-                warn(
-                    "In future Copier releases, the default value for template suffix "
-                    "will change from .tmpl to .jinja, and this template will "
-                    "fail unless updated.",
-                    FutureWarning,
-                )
-                return ".tmpl"
             return DEFAULT_TEMPLATES_SUFFIX
         return result
 

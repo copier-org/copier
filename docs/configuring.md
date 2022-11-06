@@ -341,14 +341,17 @@ cannot use Jinja templating in your answers.
 
 ### Include other YAML files
 
-The `copier.yml` file supports multiple documents. When found, they are merged (**not**
-deeply merged; just merged) and the latest one defined has priority.
+The `copier.yml` file supports multiple documents as well as using the `!include` tag to
+include settings and questions from other YAML files. This allows you to split up a
+larger `copier.yml` and enables you to reuse common partial sections from your
+templates. When multiple documents are used, care has to be taken with question and
+settings that are defined in more than one document:
 
-It also supports using the `!include` tag to include other configurations from
-elsewhere.
-
-These two features, combined, allow you to reuse common partial sections from your
-templates.
+-   A question with the same name overwrites definitions from an earlier document.
+-   Settings given in multiple documents for `exclude`, `skip_if_exists`,
+    `jinja_extensions` and `secret_questions` are concatenated.
+-   Other settings (such as `tasks` or `migrations`) overwrite previous definitions for
+    these settings.
 
 !!! hint
 
@@ -359,7 +362,7 @@ templates.
 
     This would be a valid `copier.yml` file:
 
-    ```yaml
+    ```yaml title="copier.yml"
     ---
     # Copier will load all these files
     !include shared-conf/common.*.yml
@@ -367,15 +370,27 @@ templates.
     # These 3 lines split the several YAML documents
     ---
     # These two documents include common questions for these kind of projects
-    !include common-questions/web_app.yml
+    !include common-questions/web-app.yml
     ---
     !include common-questions/python-project.yml
     ---
 
-    # Here you can specify any settings or questions specific for your template,
+    # Here you can specify any settings or questions specific for your template
     _skip_if_exists:
         - .password.txt
     custom_question: default answer
+    ```
+
+    that includes questions and settings from:
+
+    ```yaml title="common-questions/python-project.yml"
+    version:
+        type: str
+        help: What is the version of your Python project?
+
+    # Settings like `_skip_if_exists` are merged
+    _skip_if_exists:
+        - "pyproject.toml"
     ```
 
 ## Conditional files and directories
@@ -730,7 +745,7 @@ on them, so they are always installed when Copier is installed.
 
 -   Format: `List[dict]`
 -   CLI flags: N/A
--   Default value: N/A
+-   Default value: `[]`
 
 Migrations are like [tasks](#tasks), but each item in the list is a `dict` with these
 keys:
@@ -773,13 +788,13 @@ Migration processes will receive these environment variables:
 
     ```yaml title="copier.yml"
     _migrations:
-      - version: v1.0.0
-        before:
-          - rm ./old-folder
-        after:
-          # {{ _copier_conf.src_path }} points to the path where the template was
-          # cloned, so it can be helpful to run migration scripts stored there.
-          - invoke -r {{ _copier_conf.src_path }} -c migrations migrate $VERSION_CURRENT
+        - version: v1.0.0
+          before:
+              - rm ./old-folder
+          after:
+              # {{ _copier_conf.src_path }} points to the path where the template was
+              # cloned, so it can be helpful to run migration scripts stored there.
+              - invoke -r {{ _copier_conf.src_path }} -c migrations migrate $VERSION_CURRENT
     ```
 
 ### `min_copier_version`
@@ -830,11 +845,31 @@ Suppress status output.
 
     Not supported in `copier.yml`.
 
+### `secret_questions`
+
+-   Format: `List[str]`
+-   CLI flags: N/A
+-   Default value: `[]`
+
+Question variables to mark as secret questions. This is especially useful when questions
+are provided in the [simplified prompt format](#questions). It's equivalent to
+configuring `secret: true` in the [advanced prompt format](#advanced-prompt-formatting).
+
+!!! example
+
+    ```yaml title="copier.yml"
+    _secret_questions:
+        - password
+
+    user: johndoe
+    password: s3cr3t
+    ```
+
 ### `skip_if_exists`
 
 -   Format: `List[str]`
 -   CLI flags: `-s`, `--skip`
--   Default value: N/A
+-   Default value: `[]`
 
 [Patterns](#patterns-syntax) for files/folders that must be skipped if they already
 exist.
@@ -846,7 +881,7 @@ exist.
 
     ```yaml title="copier.yml"
     _skip_if_exists:
-      - .secret_password.yml
+        - .secret_password.yml
     ```
 
     ```yaml title=".secret_password.yml.jinja"
@@ -944,13 +979,11 @@ This allows you to keep separate the template metadata and the template code.
 
 -   Format: `List[str|List[str]]`
 -   CLI flags: N/A
--   Default value: N/A
+-   Default value: `[]`
 
 Commands to execute after generating or updating a project from your template.
 
 They run ordered, and with the `$STAGE=task` variable in their environment.
-
-Can be overridden with the `tasks` API option, but not from CLI.
 
 Example `copier.yml`:
 

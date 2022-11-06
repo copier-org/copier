@@ -1,7 +1,12 @@
+import os
 import shutil
 from os.path import exists, join
+from pathlib import Path
 
-from copier import vcs
+from plumbum import local
+from plumbum.cmd import git
+
+from copier import Worker, run_copy, run_update, vcs
 
 
 def test_get_repo():
@@ -60,3 +65,51 @@ def test_clone():
     assert tmp
     assert exists(join(tmp, "README.md"))
     shutil.rmtree(tmp, ignore_errors=True)
+
+
+def test_removes_temporary_clone(tmp_path):
+    src_path = "https://github.com/copier-org/autopretty.git"
+    with Worker(src_path=src_path, dst_path=tmp_path, defaults=True) as worker:
+        worker.run_copy()
+        temp_clone = worker.template.local_abspath
+    assert not temp_clone.exists()
+
+
+def test_dont_remove_local_clone(tmp_path):
+    src_path = vcs.clone("https://github.com/copier-org/autopretty.git")
+    with Worker(src_path=src_path, dst_path=tmp_path, defaults=True) as worker:
+        worker.run_copy()
+    assert exists(src_path)
+
+
+def test_update_using_local_source_path_with_tilde(tmp_path):
+    # first, get a local repository clone
+    src_path = vcs.clone("https://github.com/copier-org/autopretty.git")
+
+    # then prepare the user path to this clone (starting with ~)
+    if os.name == "nt":
+        src_path = Path(src_path)
+        # in GitHub CI, the user in the temporary path is not the same as the current user:
+        # ["C:\\", "Users", "RUNNER~X"] vs. runneradmin
+        user = src_path.parts[2]
+        user_src_path = str(Path("~", "..", user, *src_path.parts[3:]))
+    else:
+        # temporary path is in /tmp, so climb back up from ~ using ../
+        user_src_path = f"~/{'/'.join(['..'] * len(Path.home().parts))}{src_path}"
+
+    # generate project and assert correct path in answers
+    worker = run_copy(src_path=user_src_path, dst_path=tmp_path, defaults=True)
+    assert worker.answers.combined["_src_path"] == user_src_path
+
+    # assert project update works and correct path again
+    with local.cwd(tmp_path):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m", "init")
+    worker = run_update(
+        dst_path=tmp_path,
+        defaults=True,
+        overwrite=True,
+        answers_file=".copier-answers.autopretty.yml",
+    )
+    assert worker.answers.combined["_src_path"] == user_src_path
