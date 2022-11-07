@@ -64,7 +64,9 @@ class Worker:
 
     Example:
         ```python
-        with Worker(src_path="https://github.com/copier-org/autopretty.git", "output") as worker:
+        with Worker(
+            src_path="https://github.com/copier-org/autopretty.git", "output"
+        ) as worker:
             worker.run_copy()
         ```
 
@@ -154,9 +156,11 @@ class Worker:
     quiet: bool = False
 
     def __enter__(self):
+        """Allow using worker as a context manager."""
         return self
 
     def __exit__(self, type, value, traceback):
+        """Clean up garbage files after worker usage ends."""
         if value is not None:
             # exception was raised from code inside context manager:
             # try to clean up, ignoring any exception, then re-raise
@@ -285,7 +289,6 @@ class Worker:
         """Determine if a file or directory can be rendered.
 
         Args:
-
             dst_relpath:
                 Relative path to destination.
             is_dir:
@@ -456,7 +459,6 @@ class Worker:
         """Render one file.
 
         Args:
-
             src_abspath:
                 The absolute path to the file that will be rendered.
         """

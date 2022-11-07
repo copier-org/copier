@@ -8,17 +8,9 @@ from datetime import datetime
 from hashlib import sha512
 from os import urandom
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    ChainMap as t_ChainMap,
-    Dict,
-    Mapping,
-    Optional,
-    Sequence,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Callable
+from typing import ChainMap as t_ChainMap
+from typing import Dict, Mapping, Optional, Sequence, Union
 
 import yaml
 from jinja2 import UndefinedError
@@ -135,6 +127,7 @@ class AnswersMap:
         )
 
     def old_commit(self) -> OptStr:
+        """Commit when the project was updated from this template the last time."""
         return self.last.get("_commit")
 
 

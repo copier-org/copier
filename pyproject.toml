@@ -112,6 +112,10 @@ ignore_missing_imports = true
 plugins = ["pydantic.mypy"]
 warn_no_return = false
 
+[tool.pydocstyle]
+match_dir = "^copier"
+add_ignore = ["D105", "D107"]
+
 [tool.pytest.ini_options]
 addopts = "-n auto -ra"
 

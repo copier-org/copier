@@ -56,7 +56,7 @@ def is_git_bundle(path: Path) -> bool:
 
 
 def get_repo(url: str) -> OptStr:
-    """Transforms `url` into a git-parseable origin URL.
+    """Transform `url` into a git-parseable origin URL.
 
     Args:
         url:
@@ -133,7 +133,6 @@ def clone(url: str, ref: OptStr = None) -> str:
         ref:
             Reference to checkout. For Git repos, defaults to `HEAD`.
     """
-
     location = mkdtemp(prefix=f"{__name__}.clone.")
     _clone = git["clone", "--no-checkout", url, location]
     # Faster clones if possible

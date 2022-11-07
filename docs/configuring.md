@@ -1118,7 +1118,7 @@ The file must have this content:
 
 ```yaml
 # Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
-{{_copier_answers|to_nice_yaml}}
+{ { _copier_answers|to_nice_yaml } }
 ```
 
 !!! important

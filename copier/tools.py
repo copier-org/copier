@@ -28,6 +28,8 @@ colorama.init()
 
 
 class Style:
+    """Common color styles."""
+
     OK: IntSeq = [colorama.Fore.GREEN, colorama.Style.BRIGHT]
     WARNING: IntSeq = [colorama.Fore.YELLOW, colorama.Style.BRIGHT]
     IGNORE: IntSeq = [colorama.Fore.CYAN]
@@ -63,6 +65,7 @@ def printf(
     quiet: Union[bool, StrictBool] = False,
     file_: TextIO = sys.stdout,
 ) -> Optional[str]:
+    """Print string with common format."""
     if quiet:
         return None  # HACK: Satisfy MyPy
     _msg = str(msg)
@@ -78,6 +81,7 @@ def printf(
 def printf_exception(
     e: Exception, action: str, msg: str = "", indent: int = 0, quiet: bool = False
 ) -> None:
+    """Print exception with common format."""
     if not quiet:
         print("", file=sys.stderr)
         printf(action, msg=msg, style=Style.DANGER, indent=indent, file_=sys.stderr)
@@ -114,6 +118,7 @@ def cast_str_to_bool(value: Any) -> bool:
 
 
 def copy_file(src_path: Path, dst_path: Path, follow_symlinks: bool = True) -> None:
+    """Copy one file to another place."""
     shutil.copy2(src_path, dst_path, follow_symlinks=follow_symlinks)
 
 
@@ -166,6 +171,7 @@ class TemporaryDirectory(tempfile.TemporaryDirectory):
         warnings.warn(warn_message, ResourceWarning)
 
     def cleanup(self):
+        """Remove directory safely."""
         if self._finalizer.detach():
             self._robust_cleanup(self.name)
 

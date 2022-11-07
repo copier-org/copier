@@ -366,7 +366,7 @@ class Template:
 
     @cached_property
     def min_copier_version(self) -> Optional[Version]:
-        """Gets minimal copier version for the template and validates it.
+        """Get minimal copier version for the template and validates it.
 
         See [min_copier_version][].
         """

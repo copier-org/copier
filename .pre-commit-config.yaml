@@ -43,6 +43,7 @@ repos:
       - id: isort
       - id: flake8
       - id: pydocstyle
+        pass_filenames: false # HACK https://github.com/PyCQA/pydocstyle/pull/610
       - id: poetry-check
       - id: check-ast
       - id: check-builtin-literals
@@ -50,6 +51,11 @@ repos:
       - id: debug-statements
       - id: fix-encoding-pragma
       - id: name-tests-test
+        args: [--pytest-test-first]
+        exclude: |
+          (?x)
+          ^tests/.*/
+          |^tests/helpers.py$
       - id: requirements-txt-fixer
       # PO translations
       - id: obsolete-messages
