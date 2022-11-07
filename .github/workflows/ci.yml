@@ -82,6 +82,7 @@ jobs:
           file: ./coverage.xml
           flags: unittests
           name: copier
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   publish:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
