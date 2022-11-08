@@ -152,6 +152,10 @@ def test_update_subdirectory_from_root_path(tmp_path_factory):
     assert (dst / "subfolder" / "file1").read_text() == "version 2\nhello\na1\nbye\n"
 
 
+def _normalize_line_endings(text):
+    return text.replace("\r\n", "\n").replace("\r", "\n")
+
+
 @pytest.mark.parametrize(
     "conflict, readme, expect_reject",
     [
@@ -229,8 +233,8 @@ def test_new_version_uses_subdirectory(
     # Assert that the README still exists, and the conflicts were handled
     # correctly.
     assert (project_path / "README.md").exists()
-    # Verify file contents match readme, ignoring line endings.
-    assert (project_path / "README.md").read_text().splitlines() == readme.splitlines()
+    with (project_path / "README.md").open() as fd:
+        assert _normalize_line_endings(fd.read()) == _normalize_line_endings(readme)
     reject_path = project_path / "README.md.rej"
     assert reject_path.exists() == expect_reject
 
