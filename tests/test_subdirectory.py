@@ -158,7 +158,7 @@ def test_update_subdirectory_from_root_path(tmp_path_factory):
         ("rej", "upstream version 2\n", True),
         (
             "inline",
-            f"<<<<<<< modified\ndownstream version 1{os.linesep}"
+            "<<<<<<< modified\ndownstream version 1\n"
             "=======\nupstream version 2\n>>>>>>> new upstream\n",
             False,
         ),
@@ -229,8 +229,8 @@ def test_new_version_uses_subdirectory(
     # Assert that the README still exists, and the conflicts were handled
     # correctly.
     assert (project_path / "README.md").exists()
-    with (project_path / "README.md").open() as fd:
-        assert fd.read() == readme
+    # Verify file contents match readme, ignoring line endings.
+    assert (project_path / "README.md").read_text().splitlines() == readme.splitlines()
     reject_path = project_path / "README.md.rej"
     assert reject_path.exists() == expect_reject
 
