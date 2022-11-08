@@ -4,7 +4,7 @@ exclude: |
   .*\.(diff|patch)$
 repos:
   - repo: https://gitlab.com/moduon/precommix
-    rev: "v0.7.0"
+    rev: "v0.8.1"
     hooks:
       # Commit messages
       - id: commitizen
@@ -24,6 +24,7 @@ repos:
       - id: check-shebang-scripts-are-executable
       - id: check-merge-conflict
       - id: check-symlinks
+      - id: check-toml
       - id: check-vcs-permalinks
       - id: destroyed-symlinks
       - id: detect-private-key

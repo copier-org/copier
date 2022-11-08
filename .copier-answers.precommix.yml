@@ -1,5 +1,5 @@
 # Changes here will be overwritten by Copier; do NOT edit manually
-_commit: v0.7.0
+_commit: v0.8.1
 _src_path: https://gitlab.com/moduon/precommix.git
 ansible: false
 gitlab_ci: none
