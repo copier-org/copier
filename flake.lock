@@ -65,6 +65,21 @@
         "type": "github"
       }
     },
+    "flake-utils_3": {
+      "locked": {
+        "lastModified": 1667395993,
+        "narHash": "sha256-nuEHfE/LcWyuSWnS8t12N1wc105Qtau+/OdUAjtQ0rA=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "5aed5285a952e0b949eb3ba02c12fa4fcfef535f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1643381941,
@@ -83,16 +98,53 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1667669848,
-        "narHash": "sha256-nD2dk2A+1zUlUT18ppDFVWwimi26+ultc2QRsulQwQ8=",
+        "lastModified": 1667923340,
+        "narHash": "sha256-k2KzxoscC7eA4wuu/c50DlaC5fNJNFZ817h5fe7EmEY=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "1f3ebb2bd1a353a42e8f833895c26d8415c7b791",
+        "rev": "3e00081b10c1b18ce9abf78c37426936b3f0c576",
         "type": "github"
       },
       "original": {
-        "id": "nixpkgs",
-        "type": "indirect"
+        "owner": "NixOS",
+        "ref": "refs/pull/200205/merge",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_3": {
+      "locked": {
+        "lastModified": 1667925509,
+        "narHash": "sha256-o6hILl3mbAaM9cgVzz4ZA8XAjTzCcjiy8y9WMM4rOnU=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "6b572437c0fbf95a9f29581dd2d97008b126a95c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "poetry2nix": {
+      "inputs": {
+        "flake-utils": "flake-utils_3",
+        "nixpkgs": "nixpkgs_3"
+      },
+      "locked": {
+        "lastModified": 1667914561,
+        "narHash": "sha256-W6J9PCsuNTwIjIBJAd1iKXv85kiKkXQb0Ln9fpB3Qbo=",
+        "owner": "nix-community",
+        "repo": "poetry2nix",
+        "rev": "ab707c6a700de75099226610161aeade2fff75b1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "ref": "refs/pull/807/merge",
+        "repo": "poetry2nix",
+        "type": "github"
       }
     },
     "root": {
@@ -100,7 +152,8 @@
         "devshell": "devshell",
         "flake-compat": "flake-compat",
         "flake-utils": "flake-utils_2",
-        "nixpkgs": "nixpkgs_2"
+        "nixpkgs": "nixpkgs_2",
+        "poetry2nix": "poetry2nix"
       }
     }
   },
