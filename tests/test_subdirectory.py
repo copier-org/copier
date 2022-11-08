@@ -158,7 +158,7 @@ def test_update_subdirectory_from_root_path(tmp_path_factory):
         ("rej", "upstream version 2\n", True),
         (
             "inline",
-            "<<<<<<< modified\ndownstream version 1\n"
+            f"<<<<<<< modified\ndownstream version 1{os.linesep}"
             "=======\nupstream version 2\n>>>>>>> new upstream\n",
             False,
         ),
