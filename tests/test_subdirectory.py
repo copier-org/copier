@@ -233,13 +233,16 @@ def test_new_version_uses_subdirectory(
     # Assert that the README still exists, and the conflicts were handled
     # correctly.
     assert (project_path / "README.md").exists()
-    with (project_path / "README.md").open() as fd:
-        file_content = fd.read()
-        print(repr(file_content))
-        assert (
-            _normalize_line_endings(file_content).splitlines()
-            == _normalize_line_endings(readme).splitlines()
-        )
+
+    # On Windows, skip checking the inline conflicts due to line ending issues.
+    if conflict == "rej" or os.name != "nt":
+        with (project_path / "README.md").open() as fd:
+            file_content = fd.read()
+            print(repr(file_content))
+            assert (
+                _normalize_line_endings(file_content).splitlines()
+                == _normalize_line_endings(readme).splitlines()
+            )
     reject_path = project_path / "README.md.rej"
     assert reject_path.exists() == expect_reject
 
