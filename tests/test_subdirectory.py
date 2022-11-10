@@ -1,5 +1,4 @@
 import os
-import platform
 
 import pytest
 import yaml
@@ -160,16 +159,7 @@ def _normalize_line_endings(text):
 @pytest.mark.parametrize(
     "conflict, readme, expect_reject",
     [
-        pytest.param(
-            "rej",
-            "upstream version 2\n",
-            True,
-            marks=pytest.mark.xfail(
-                condition=platform.system() == "Windows",
-                reason="Windows line-ending issue with README.md",
-                strict=True,
-            ),
-        ),
+        ("rej", "upstream version 2\n", True),
         (
             "inline",
             "<<<<<<< modified\ndownstream version 1\n"
@@ -245,6 +235,14 @@ def test_new_version_uses_subdirectory(
     assert (project_path / "README.md").exists()
 
     # On Windows, skip checking the inline conflicts due to line ending issues.
+    if conflict == "rej" or os.name != "nt":
+        with (project_path / "README.md").open() as fd:
+            file_content = fd.read()
+            print(repr(file_content))
+            assert (
+                _normalize_line_endings(file_content).splitlines()
+                == _normalize_line_endings(readme).splitlines()
+            )
     reject_path = project_path / "README.md.rej"
     assert reject_path.exists() == expect_reject
 
