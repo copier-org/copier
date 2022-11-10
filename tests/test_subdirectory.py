@@ -164,17 +164,17 @@ def _normalize_line_endings(text):
             "rej",
             "upstream version 2\n",
             True,
+        ),
+        pytest.param(
+            "inline",
+            "<<<<<<< modified\ndownstream version 1\n"
+            "=======\nupstream version 2\n>>>>>>> new upstream\n",
+            False,
             marks=pytest.mark.xfail(
                 condition=platform.system() == "Windows",
                 reason="Windows line-ending issue with README.md",
                 strict=True,
             ),
-        ),
-        (
-            "inline",
-            "<<<<<<< modified\ndownstream version 1\n"
-            "=======\nupstream version 2\n>>>>>>> new upstream\n",
-            False,
         ),
     ],
 )
