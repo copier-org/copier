@@ -153,10 +153,6 @@ def test_update_subdirectory_from_root_path(tmp_path_factory):
     assert (dst / "subfolder" / "file1").read_text() == "version 2\nhello\na1\nbye\n"
 
 
-def _normalize_line_endings(text):
-    return text.replace("\r\n", "\n").replace("\r", "\n")
-
-
 @pytest.mark.parametrize(
     "conflict, readme, expect_reject",
     [
@@ -170,10 +166,6 @@ def _normalize_line_endings(text):
             "<<<<<<< modified\ndownstream version 1\n"
             "=======\nupstream version 2\n>>>>>>> new upstream\n",
             False,
-            marks=pytest.mark.xfail(
-                condition=platform.system() == "Windows",
-                reason="Windows line-ending issue with README.md"
-            ),
         ),
     ],
 )
@@ -188,11 +180,17 @@ def test_new_version_uses_subdirectory(
 
     # First, create the template with an initial README
     with local.cwd(template_path):
-        with open("README.md", "w") as fd:
-            fd.write("upstream version 1\n")
+        with open("README.md", "wb") as fd:
+            fd.write(b"upstream version 1\n")
 
         with open("{{_copier_conf.answers_file}}.jinja", "w") as fd:
             fd.write("{{_copier_answers|to_nice_yaml}}\n")
+
+        if conflict == "inline" and platform.system() == "Windows":
+            # Workaround for odd behavior in Windows git. Without this, inline
+            # conflict markers result in doubled CR and/or LF characters.
+            with open(".gitattributes", "w") as fd:
+                fd.write("*.md binary\n")
 
         git_init("hello template")
         git("tag", "v1")
@@ -207,16 +205,16 @@ def test_new_version_uses_subdirectory(
         git_init("hello project")
 
         # After first commit, change the README, commit again
-        with open("README.md", "w") as fd:
-            fd.write("downstream version 1\n")
+        with open("README.md", "wb") as fd:
+            fd.write(b"downstream version 1\n")
         git("commit", "-am", "updated readme")
 
     # Now change the template
     with local.cwd(template_path):
 
         # Update the README
-        with open("README.md", "w") as fd:
-            fd.write("upstream version 2\n")
+        with open("README.md", "wb") as fd:
+            fd.write(b"upstream version 2\n")
 
         # Create a subdirectory, move files into it
         os.mkdir("subdir")
@@ -243,13 +241,9 @@ def test_new_version_uses_subdirectory(
     # correctly.
     assert (project_path / "README.md").exists()
 
-    with (project_path / "README.md").open() as fd:
+    with (project_path / "README.md").open("rb") as fd:
         file_content = fd.read()
-        print(repr(file_content))
-        assert (
-            _normalize_line_endings(file_content).splitlines()
-            == _normalize_line_endings(readme).splitlines()
-        )
+        assert [s.decode("utf-8") for s in file_content.splitlines()] == readme.splitlines()
     reject_path = project_path / "README.md.rej"
     assert reject_path.exists() == expect_reject
 
