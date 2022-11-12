@@ -170,8 +170,8 @@ def _normalize_line_endings(text):
             "<<<<<<< modified\ndownstream version 1\n"
             "=======\nupstream version 2\n>>>>>>> new upstream\n",
             False,
-            marks=pytest.mark.skipif(
-                platform.system() == "Windows",
+            marks=pytest.mark.xfail(
+                condition=platform.system() == "Windows",
                 reason="Windows line-ending issue with README.md"
             ),
         ),
