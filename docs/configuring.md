@@ -1015,7 +1015,7 @@ Suffix that instructs which files are to be processed by Jinja as templates.
     ```
 
 An empty suffix is also valid, and will instruct Copier to copy and render _every file_,
-except those that are [excluded by default](#default). If an error happens while trying
+except those that are [excluded by default](#exclude). If an error happens while trying
 to read a file as a template, it will fallback to a simple copy (it will typically
 happen for binary files like images). At the contrary, if such an error happens and the
 templates suffix is _not_ empty, Copier will abort and print an error message.
