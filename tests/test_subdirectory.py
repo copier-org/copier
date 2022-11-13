@@ -243,7 +243,9 @@ def test_new_version_uses_subdirectory(
 
     with (project_path / "README.md").open("rb") as fd:
         file_content = fd.read()
-        assert [s.decode("utf-8") for s in file_content.splitlines()] == readme.splitlines()
+        assert [
+            s.decode("utf-8") for s in file_content.splitlines()
+        ] == readme.splitlines()
     reject_path = project_path / "README.md.rej"
     assert reject_path.exists() == expect_reject
 
