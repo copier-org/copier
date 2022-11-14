@@ -136,6 +136,11 @@ class Worker:
             When `True`, disable all output.
 
             See [quiet][].
+
+        update_context:
+            When `True`, ignores answers file directory when updating.
+
+            See [update_context][].
     """
 
     src_path: Optional[str] = None
@@ -152,6 +157,7 @@ class Worker:
     overwrite: bool = False
     pretend: bool = False
     quiet: bool = False
+    update_context: bool = False
 
     def __enter__(self):
         return self
@@ -503,6 +509,7 @@ class Worker:
                 the template.
         """
         assert src_abspath.is_absolute()
+
         src_relpath = src_abspath.relative_to(self.template_copy_root)
         dst_relpath = self._render_path(src_relpath)
         if dst_relpath is None:
@@ -525,6 +532,7 @@ class Worker:
             relpath:
                 The relative path to be rendered. Obviously, it can be templated.
         """
+        answers_file_template = "{{ _copier_conf.answers_file }}.jinja" in str(relpath)
         is_template = relpath.name.endswith(self.template.templates_suffix)
         templated_sibling = (
             self.template.local_abspath / f"{relpath}{self.template.templates_suffix}"
@@ -546,7 +554,11 @@ class Worker:
                 rendered_parts[-1] = rendered_parts[-1][
                     : -len(self.template.templates_suffix)
                 ]
-        result = Path(*rendered_parts)
+        if answers_file_template and self.update_context:
+            if len(rendered_parts) > 1:
+                result = Path(*rendered_parts[1:])
+        else:
+            result = Path(*rendered_parts)
         if not is_template:
             templated_sibling = (
                 self.template.local_abspath
@@ -590,6 +602,7 @@ class Worker:
 
         It points to the cloned template local abspath + the rendered subdir, if any.
         """
+
         subdir = self._render_string(self.template.subdirectory) or ""
         return self.template.local_abspath / subdir
 
@@ -643,7 +656,7 @@ class Worker:
 
         See [updating a project][updating-a-project].
         """
-        # Check all you need is there
+
         if self.subproject.vcs != "git":
             raise UserMessageError(
                 "Updating is only supported in git-tracked subprojects."
@@ -692,6 +705,7 @@ class Worker:
                 quiet=True,
                 src_path=self.subproject.template.url,
                 vcs_ref=self.subproject.template.commit,
+                update_context=True,
             )
             recopy_worker = replace(
                 self,
@@ -700,6 +714,7 @@ class Worker:
                 defaults=True,
                 quiet=True,
                 src_path=self.subproject.template.url,
+                update_context=True,
             )
             old_worker.run_copy()
             recopy_worker.run_copy()
@@ -743,6 +758,7 @@ class Worker:
             with suppress(AttributeError):
                 del self.subproject.last_answers
             # Do a normal update in final destination
+            self.update_context = True
             self.run_copy()
             # Try to apply cached diff into final destination
             with local.cwd(self.subproject.local_abspath):
@@ -792,6 +808,7 @@ def run_update(
 
     See [Worker][copier.main.Worker] fields to understand this function's args.
     """
+
     if data is not None:
         kwargs["data"] = data
     with Worker(dst_path=Path(dst_path), **kwargs) as worker:
