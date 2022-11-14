@@ -1,5 +1,7 @@
 """Main functions and classes, used to generate or update projects."""
 
+import contextlib
+import os
 import platform
 import subprocess
 import sys
@@ -9,8 +11,8 @@ from filecmp import dircmp
 from functools import partial
 from itertools import chain
 from pathlib import Path
-from shutil import rmtree
-from typing import Callable, Iterable, List, Mapping, Optional, Sequence
+from shutil import copyfile, rmtree
+from typing import Callable, Iterable, List, Mapping, Optional, Sequence, Set
 from unicodedata import normalize
 
 from jinja2.loaders import FileSystemLoader
@@ -44,6 +46,19 @@ if sys.version_info >= (3, 8):
     from functools import cached_property
 else:
     from backports.cached_property import cached_property
+
+# Backport of `shutil.copytree` for python 3.7 to accept `dirs_exist_ok` argument
+if sys.version_info >= (3, 8):
+    from shutil import copytree
+else:
+    from distutils.dir_util import copy_tree
+
+    def copytree(src: Path, dst: Path, dirs_exist_ok: bool = False):
+        """Backport of `shutil.copytree` with `dirs_exist_ok` argument.
+
+        Can be remove once python 3.7 dropped.
+        """
+        copy_tree(str(src), str(dst))
 
 
 @dataclass(config=ConfigDict(extra=Extra.forbid))
@@ -136,6 +151,9 @@ class Worker:
             When `True`, disable all output.
 
             See [quiet][].
+
+        conflict:
+            One of "rej" (default), "inline" (still experimental).
     """
 
     src_path: Optional[str] = None
@@ -152,6 +170,7 @@ class Worker:
     overwrite: bool = False
     pretend: bool = False
     quiet: bool = False
+    conflict: str = "rej"
 
     def __enter__(self):
         return self
@@ -678,21 +697,23 @@ class Worker:
             print(
                 f"Updating to template version {self.template.version}", file=sys.stderr
             )
+        self._apply_update()
+
+    def _apply_update(self):
+        if self.conflict == "inline":
+            # New implementation.
+            self._apply_update_inline_conflict_markers()
+            return
+
+        # Old implementation.
         # Copy old template into a temporary destination
         with TemporaryDirectory(
             prefix=f"{__name__}.update_diff."
         ) as old_copy, TemporaryDirectory(
             prefix=f"{__name__}.recopy_diff."
         ) as new_copy:
-            old_worker = replace(
-                self,
-                dst_path=old_copy,
-                data=self.subproject.last_answers,
-                defaults=True,
-                quiet=True,
-                src_path=self.subproject.template.url,
-                vcs_ref=self.subproject.template.commit,
-            )
+            old_worker = self._make_old_worker(old_copy)
+            old_worker.run_copy()
             recopy_worker = replace(
                 self,
                 dst_path=new_copy,
@@ -701,7 +722,6 @@ class Worker:
                 quiet=True,
                 src_path=self.subproject.template.url,
             )
-            old_worker.run_copy()
             recopy_worker.run_copy()
             compared = dircmp(old_copy, new_copy)
             # Extract diff between temporary destination and real destination
@@ -712,15 +732,7 @@ class Worker:
                     "rev-parse",
                     "--show-toplevel",
                 ).strip()
-                git("init", retcode=None)
-                git("add", ".")
-                git("config", "user.name", "Copier")
-                git("config", "user.email", "copier@copier")
-                # 1st commit could fail if any pre-commit hook reformats code
-                git("commit", "--allow-empty", "-am", "dumb commit 1", retcode=None)
-                git("commit", "--allow-empty", "-am", "dumb commit 2")
-                git("config", "--unset", "user.name")
-                git("config", "--unset", "user.email")
+                self._git_initialize_repo()
                 git("remote", "add", "real_dst", "file://" + subproject_top)
                 git("fetch", "--depth=1", "real_dst", "HEAD")
                 diff_cmd = git["diff-tree", "--unified=1", "HEAD...FETCH_HEAD"]
@@ -737,13 +749,7 @@ class Worker:
             self._execute_tasks(
                 self.template.migration_tasks("before", self.subproject.template)
             )
-            # Clear last answers cache to load possible answers migration
-            with suppress(AttributeError):
-                del self.answers
-            with suppress(AttributeError):
-                del self.subproject.last_answers
-            # Do a normal update in final destination
-            self.run_copy()
+            self._uncached_copy()
             # Try to apply cached diff into final destination
             with local.cwd(self.subproject.local_abspath):
                 apply_cmd = git["apply", "--reject", "--exclude", self.answers_relpath]
@@ -760,6 +766,110 @@ class Worker:
         self._execute_tasks(
             self.template.migration_tasks("after", self.subproject.template)
         )
+
+    def _apply_update_inline_conflict_markers(self):
+        """Implements the apply_update() method using inline conflict markers."""
+        # Copy old template into a temporary destination
+        with TemporaryDirectory(
+            prefix=f"{__name__}.update_diff.reference."
+        ) as reference_dst_temp, TemporaryDirectory(
+            prefix=f"{__name__}.update_diff.original."
+        ) as old_copy, TemporaryDirectory(
+            prefix=f"{__name__}.update_diff.merge."
+        ) as merge_dst_temp:
+            # Copy reference to be used as base by merge-file
+            copytree(self.dst_path, reference_dst_temp, dirs_exist_ok=True)
+
+            # Compute modification from the original template to be used as other by merge-file
+            assert self.subproject
+            assert self.subproject.template
+            old_worker = self._make_old_worker(old_copy)
+            old_worker.run_copy()
+            with local.cwd(old_copy):
+                self._git_initialize_repo()
+
+            # Run pre-migration tasks
+            self._execute_tasks(
+                self.template.migration_tasks("before", self.subproject.template)
+            )
+            self._uncached_copy()
+
+            # Extract the list of files to merge
+            participating_files: Set[Path] = set()
+            for src_dir in (old_copy, reference_dst_temp):
+                for root, dirs, files in os.walk(src_dir, topdown=True):
+                    if root == src_dir and ".git" in dirs:
+                        dirs.remove(".git")
+                    root = Path(root).relative_to(src_dir)
+                    participating_files.update(Path(root, f) for f in files)
+
+            # Merging files
+            for basename in sorted(participating_files):
+                subfile_names = []
+                for subfile_kind, src_dir in [
+                    ("modified", reference_dst_temp),
+                    ("old upstream", old_copy),
+                    ("new upstream", self.dst_path),
+                ]:
+                    path = Path(src_dir, basename)
+                    if path.is_file():
+                        copyfile(path, Path(merge_dst_temp, subfile_kind))
+                    else:
+                        subfile_kind = os.devnull
+                    subfile_names.append(subfile_kind)
+
+                with local.cwd(merge_dst_temp):
+                    # https://git-scm.com/docs/git-merge-file
+                    output = git("merge-file", "-p", *subfile_names, retcode=None)
+
+                dest_path = Path(self.dst_path, basename)
+                # Remove the file if it was already removed in the project
+                if not output and "modified" not in subfile_names:
+                    with contextlib.suppress(FileNotFoundError):
+                        dest_path.unlink()
+                else:
+                    dest_path.parent.mkdir(parents=True, exist_ok=True)
+                    dest_path.write_text(output)
+
+        # Run post-migration tasks
+        self._execute_tasks(
+            self.template.migration_tasks("after", self.subproject.template)
+        )
+
+    def _uncached_copy(self):
+        """Copy template to destination without using answer cache."""
+        # Clear last answers cache to load possible answers migration
+        with suppress(AttributeError):
+            del self.answers
+        with suppress(AttributeError):
+            del self.subproject.last_answers
+        # Do a normal update in final destination
+        self.run_copy()
+
+    def _make_old_worker(self, old_copy):
+        """Create a worker to copy the old template into a temporary destination."""
+        old_worker = replace(
+            self,
+            dst_path=old_copy,
+            data=self.subproject.last_answers,
+            defaults=True,
+            quiet=True,
+            src_path=self.subproject.template.url,
+            vcs_ref=self.subproject.template.commit,
+        )
+        return old_worker
+
+    def _git_initialize_repo(self):
+        """Initialize a git repository in the current directory."""
+        git("init", retcode=None)
+        git("add", ".")
+        git("config", "user.name", "Copier")
+        git("config", "user.email", "copier@copier")
+        # 1st commit could fail if any pre-commit hook reformats code
+        git("commit", "--allow-empty", "-am", "dumb commit 1", retcode=None)
+        git("commit", "--allow-empty", "-am", "dumb commit 2")
+        git("config", "--unset", "user.name")
+        git("config", "--unset", "user.email")
 
 
 def run_copy(

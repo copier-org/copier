@@ -366,7 +366,7 @@ def test_commit_hooks_respected(tmp_path_factory):
         git("commit", "-m", "commit 2")
         git("tag", "v2")
     # Update subproject to v2
-    copy(dst_path=dst1, defaults=True, overwrite=True)
+    copy(dst_path=dst1, defaults=True, overwrite=True, conflict="rej")
     with local.cwd(dst1):
         git("commit", "-am", "copied v2")
         assert life.read_text() == dedent(
@@ -401,7 +401,7 @@ def test_commit_hooks_respected(tmp_path_factory):
     git("clone", "--depth=1", f"file://{dst1}", dst2)
     with local.cwd(dst2):
         # Subproject re-updates just to change some values
-        copy(data={"what": "study"}, defaults=True, overwrite=True)
+        copy(data={"what": "study"}, defaults=True, overwrite=True, conflict="rej")
         git("commit", "-am", "re-updated to change values after evolving")
         # Subproject evolution was respected up to sane possibilities.
         # In an ideal world, this file would be exactly the same as what's written
@@ -592,7 +592,7 @@ def test_file_removed(src_repo, tmp_path):
         git("tag", "2")
     # Subproject updates
     with local.cwd(tmp_path):
-        run_update()
+        run_update(conflict="rej")
     # Check what must still exist
     assert tmp_path.joinpath(".copier-answers.yml").is_file()
     assert tmp_path.joinpath("I.txt").is_file()
