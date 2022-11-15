@@ -54,6 +54,7 @@ BRACKET_ENVOPS = {
 }
 BRACKET_ENVOPS_JSON = json.dumps(BRACKET_ENVOPS)
 SUFFIX_TMPL = ".tmpl"
+CONFIG_DIR = ".config"
 
 
 class Keyboard(str, Enum):
