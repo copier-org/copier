@@ -554,9 +554,8 @@ class Worker:
                 rendered_parts[-1] = rendered_parts[-1][
                     : -len(self.template.templates_suffix)
                 ]
-        if answers_file_template and self.update_context:
-            if len(rendered_parts) > 1:
-                result = Path(*rendered_parts[1:])
+        if answers_file_template and self.update_context and len(rendered_parts) > 1:
+            result = Path(*rendered_parts[1:])
         else:
             result = Path(*rendered_parts)
         if not is_template:
