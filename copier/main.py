@@ -532,7 +532,7 @@ class Worker:
             relpath:
                 The relative path to be rendered. Obviously, it can be templated.
         """
-        answers_file_template = "{{ _copier_conf.answers_file }}.jinja" in str(relpath)
+        answers_file_template = "_copier_conf.answers_file" in str(relpath)
         is_template = relpath.name.endswith(self.template.templates_suffix)
         templated_sibling = (
             self.template.local_abspath / f"{relpath}{self.template.templates_suffix}"
