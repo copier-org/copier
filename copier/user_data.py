@@ -428,9 +428,12 @@ def parse_yaml_string(string: str) -> Any:
 def load_answersfile_data(
     dst_path: StrOrPath,
     answers_file: OptStrOrPath = None,
+    answers_file_folder: OptStrOrPath = None,
 ) -> AnyByStrDict:
     """Load answers data from a `$dst_path/$answers_file` file if it exists."""
     try:
+        if answers_file_folder and answers_file_folder not in answers_file:
+            dst_path = Path(dst_path) / answers_file_folder
         with open(Path(dst_path) / (answers_file or ".copier-answers.yml")) as fd:
             return yaml.safe_load(fd)
     except FileNotFoundError:
