@@ -22,25 +22,47 @@ other Git ref you want.
 
 When updating, Copier will do its best to respect your project evolution by using the
 answers you provided when copied last time. However, sometimes it's impossible for
-Copier to know what to do with a diff code hunk. In those cases, you will find `*.rej`
-files that contain the unresolved diffs. _You should review those manually_ before
+Copier to know what to do with a diff code hunk. In those cases, copier handles the
+conflict one of two ways, controlled with the `--conflict` option:
+
+-   `--conflict rej` (default): Creates a separate `.rej` file for each file with
+    conflicts. These files contain the unresolved diffs.
+-   `--conflict inline` (experimental): Updates the file with conflict markers. This is
+    quite similar to the conflict markers created when a `git merge` command encounters
+    a conflict. For more information, see the "Checking Out Conflicts" section of the
+    [`git` documentation](https://git-scm.com/book/en/v2/Git-Tools-Advanced-Merging).
+
+If the update results in conflicts, _you should review those manually_ before
 committing.
 
-You probably don't want `*.rej` files in your Git history, but if you add them to
-`.gitignore`, some important changes could pass unnoticed to you. That's why the
-recommended way to deal with them is to _not_ add them to add a
-[pre-commit](https://pre-commit.com/) (or equivalent) hook that forbids them, just like
-this:
+You probably don't want to lose important changes or to include merge conflicts in your
+Git history, but if you aren't careful, it's easy to make mistakes.
+
+That's why the recommended way to prevent these mistakes is to add a
+[pre-commit](https://pre-commit.com/) (or equivalent) hook that forbids committing
+conflict files or markers. The recommended hook configuration depends on the `conflict`
+setting you use.
+
+## Preventing Commit of Merge Conflicts
+
+If you use `--conflict rej` (the default):
 
 ```yaml title=".pre-commit-config.yaml"
 repos:
     - repo: local
       hooks:
+          # Prevent committing .rej files
           - id: forbidden-files
             name: forbidden files
             entry: found Copier update rejection files; review them and remove them
             language: fail
             files: "\\.rej$"
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v4.3.0
+      hooks:
+          # Prevent committing inline conflict markers
+          - id: check-merge-conflict
+            args: [--assume-in-merge]
 ```
 
 ## Never change the answers file manually

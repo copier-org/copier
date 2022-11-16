@@ -1,4 +1,5 @@
 import os
+import platform
 
 import pytest
 import yaml
@@ -152,7 +153,25 @@ def test_update_subdirectory_from_root_path(tmp_path_factory):
     assert (dst / "subfolder" / "file1").read_text() == "version 2\nhello\na1\nbye\n"
 
 
-def test_new_version_uses_subdirectory(tmp_path_factory):
+@pytest.mark.parametrize(
+    "conflict, readme, expect_reject",
+    [
+        pytest.param(
+            "rej",
+            "upstream version 2\n",
+            True,
+        ),
+        pytest.param(
+            "inline",
+            "<<<<<<< modified\ndownstream version 1\n"
+            "=======\nupstream version 2\n>>>>>>> new upstream\n",
+            False,
+        ),
+    ],
+)
+def test_new_version_uses_subdirectory(
+    conflict, tmp_path_factory, readme, expect_reject
+):
     # Template in v1 doesn't have a _subdirectory;
     # in v2 it moves all things into a subdir and adds that key to copier.yml.
     # Some files change. Downstream project has evolved too. Does that work as expected?
@@ -161,11 +180,17 @@ def test_new_version_uses_subdirectory(tmp_path_factory):
 
     # First, create the template with an initial README
     with local.cwd(template_path):
-        with open("README.md", "w") as fd:
-            fd.write("upstream version 1\n")
+        with open("README.md", "wb") as fd:
+            fd.write(b"upstream version 1\n")
 
         with open("{{_copier_conf.answers_file}}.jinja", "w") as fd:
             fd.write("{{_copier_answers|to_nice_yaml}}\n")
+
+        if conflict == "inline" and platform.system() == "Windows":
+            # Workaround for odd behavior in Windows git. Without this, inline
+            # conflict markers result in doubled CR and/or LF characters.
+            with open(".gitattributes", "w") as fd:
+                fd.write("*.md binary\n")
 
         git_init("hello template")
         git("tag", "v1")
@@ -180,16 +205,16 @@ def test_new_version_uses_subdirectory(tmp_path_factory):
         git_init("hello project")
 
         # After first commit, change the README, commit again
-        with open("README.md", "w") as fd:
-            fd.write("downstream version 1\n")
+        with open("README.md", "wb") as fd:
+            fd.write(b"downstream version 1\n")
         git("commit", "-am", "updated readme")
 
     # Now change the template
     with local.cwd(template_path):
 
         # Update the README
-        with open("README.md", "w") as fd:
-            fd.write("upstream version 2\n")
+        with open("README.md", "wb") as fd:
+            fd.write(b"upstream version 2\n")
 
         # Create a subdirectory, move files into it
         os.mkdir("subdir")
@@ -209,13 +234,20 @@ def test_new_version_uses_subdirectory(tmp_path_factory):
         git("tag", "v2")
 
     # Finally, update the generated project
-    copier.copy(dst_path=project_path, defaults=True, overwrite=True)
+    copier.copy(dst_path=project_path, defaults=True, overwrite=True, conflict=conflict)
     assert "_commit: v2" in (project_path / ".copier-answers.yml").read_text()
 
-    # Assert that the README still exists, and was force updated to "upstream version 2"
+    # Assert that the README still exists, and the conflicts were handled
+    # correctly.
     assert (project_path / "README.md").exists()
-    with (project_path / "README.md").open() as fd:
-        assert fd.read() == "upstream version 2\n"
+
+    with (project_path / "README.md").open("rb") as fd:
+        file_content = fd.read()
+        assert [
+            s.decode("utf-8") for s in file_content.splitlines()
+        ] == readme.splitlines()
+    reject_path = project_path / "README.md.rej"
+    assert reject_path.exists() == expect_reject
 
     # Also assert the subdirectory itself was not rendered
     assert not (project_path / "subdir").exists()
