@@ -725,6 +725,7 @@ class Worker:
             prefix=f"{__name__}.recopy_diff."
         ) as new_copy:
             old_worker = self._make_old_worker(old_copy)
+            old_worker.update_context = True
             old_worker.run_copy()
             recopy_worker = replace(
                 self,
@@ -762,6 +763,7 @@ class Worker:
             self._execute_tasks(
                 self.template.migration_tasks("before", self.subproject.template)
             )
+            self.update_context = True
             self._uncached_copy()
             # Try to apply cached diff into final destination
             with local.cwd(self.subproject.local_abspath):
@@ -797,6 +799,7 @@ class Worker:
             assert self.subproject
             assert self.subproject.template
             old_worker = self._make_old_worker(old_copy)
+            old_worker.update_context = True
             old_worker.run_copy()
             with local.cwd(old_copy):
                 self._git_initialize_repo()
