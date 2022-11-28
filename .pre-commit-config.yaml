@@ -4,7 +4,7 @@ exclude: |
   .*\.(diff|patch)$
 repos:
   - repo: https://gitlab.com/moduon/precommix
-    rev: "v0.8.1"
+    rev: "v0.10.0-4-gd1054f6"
     hooks:
       # Commit messages
       - id: commitizen
