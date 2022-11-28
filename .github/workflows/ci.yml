@@ -59,15 +59,15 @@ jobs:
         with:
           fetch-depth: 0 # Needs all tags to compute dynamic version
       - name: Set up Python ${{ matrix.python-version }}
-        if: ${{ matrix.python-version != "direnv" }}
+        if: ${{ matrix.python-version != 'direnv' }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Load dev env with direnv
         uses: JRMurr/direnv-nix-action@v2
-        if: ${{ matrix.python-version == "direnv" }}
+        if: ${{ matrix.python-version == 'direnv' }}
       - name: generate cache key PY
-        if: ${{ matrix.python-version != "direnv" }}
+        if: ${{ matrix.python-version != 'direnv' }}
         shell: bash
         run:
           echo "PY=$((python -VV; pip freeze) | sha256sum | cut -d' ' -f1)" >>
@@ -81,7 +81,7 @@ jobs:
             cache|${{ runner.os }}|${{ env.PY }}|${{ hashFiles('pyproject.toml') }}|${{
             hashFiles('poetry.lock') }}|${{ hashFiles('.pre-commit-config.yaml') }}
       - name: Install base dependencies
-        if: ${{ matrix.python-version != "direnv" }}
+        if: ${{ matrix.python-version != 'direnv' }}
         run: |
           python -m pip install poetry poetry-dynamic-versioning
           poetry install --with docs --with dev -v
