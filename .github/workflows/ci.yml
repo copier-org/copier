@@ -32,9 +32,19 @@ jobs:
           - macos-latest
           - ubuntu-latest
           - windows-latest
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11-dev"]
+        python-version:
+          - direnv
+          - "3.7"
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12-dev"
+        exclude:
+          - os: windows-latest
+            python-version: direnv
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.python-version == '3.11-dev' }}
+    continue-on-error: ${{ matrix.python-version == '3.12-dev' }}
     steps:
       # HACK https://github.com/actions/cache/issues/315
       - name: Enable msys binaries
@@ -49,10 +59,15 @@ jobs:
         with:
           fetch-depth: 0 # Needs all tags to compute dynamic version
       - name: Set up Python ${{ matrix.python-version }}
+        if: ${{ matrix.python-version != "direnv" }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Load dev env with direnv
+        uses: JRMurr/direnv-nix-action@v2
+        if: ${{ matrix.python-version == "direnv" }}
       - name: generate cache key PY
+        if: ${{ matrix.python-version != "direnv" }}
         shell: bash
         run:
           echo "PY=$((python -VV; pip freeze) | sha256sum | cut -d' ' -f1)" >>
@@ -65,7 +80,8 @@ jobs:
           key:
             cache|${{ runner.os }}|${{ env.PY }}|${{ hashFiles('pyproject.toml') }}|${{
             hashFiles('poetry.lock') }}|${{ hashFiles('.pre-commit-config.yaml') }}
-      - name: Install dependencies
+      - name: Install base dependencies
+        if: ${{ matrix.python-version != "direnv" }}
         run: |
           python -m pip install poetry poetry-dynamic-versioning
           poetry install --with docs -v
