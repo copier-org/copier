@@ -84,7 +84,7 @@ jobs:
         if: ${{ matrix.python-version != "direnv" }}
         run: |
           python -m pip install poetry poetry-dynamic-versioning
-          poetry install --with docs -v
+          poetry install --with docs --with dev -v
       - name: Run pytest
         run: poetry run poe test --cov=./ --cov-report=xml -ra .
       - name: Upload coverage to Codecov
