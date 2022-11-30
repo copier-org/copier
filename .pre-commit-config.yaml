@@ -39,6 +39,12 @@ repos:
         language: system
         pass_filenames: false
         require_serial: true
+      - id: poetry-lock-check
+        name: poetry-lock-check
+        entry: poetry lock
+        args: ["--check"]
+        language: system
+        pass_filenames: false
       - id: isort
         name: isort
         entry: poetry run isort
