@@ -770,7 +770,7 @@ class Worker:
         )
 
     def _apply_update_inline_conflict_markers(self):
-        """Implements the apply_update() method using inline conflict markers."""
+        """Implement the apply_update() method using inline conflict markers."""
         # Copy old template into a temporary destination
         with TemporaryDirectory(
             prefix=f"{__name__}.update_diff.reference."
@@ -877,7 +877,7 @@ class Worker:
 def run_copy(
     src_path: str,
     dst_path: StrOrPath = ".",
-    data: AnyByStrDict = None,
+    data: Optional[AnyByStrDict] = None,
     **kwargs,
 ) -> Worker:
     """Copy a template to a destination, from zero.
@@ -895,7 +895,7 @@ def run_copy(
 
 def run_update(
     dst_path: StrOrPath = ".",
-    data: AnyByStrDict = None,
+    data: Optional[AnyByStrDict] = None,
     **kwargs,
 ) -> Worker:
     """Update a subproject, from its template.
@@ -914,7 +914,7 @@ def run_update(
 def run_auto(
     src_path: OptStr = None,
     dst_path: StrOrPath = ".",
-    data: AnyByStrDict = None,
+    data: Optional[AnyByStrDict] = None,
     **kwargs,
 ) -> Worker:
     """Generate or update a subproject.
