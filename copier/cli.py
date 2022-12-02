@@ -82,6 +82,7 @@ class CopierApp(cli.Application):
 
     Attributes:
         answers_file: Set [answers_file][] option.
+        conflict: Set [conflict][] option.
         exclude: Set [exclude][] option.
         vcs_ref: Set [vcs_ref][] option.
         pretend: Set [pretend][] option.
