@@ -80,11 +80,11 @@ jobs:
           key:
             cache|${{ runner.os }}|${{ env.PY }}|${{ hashFiles('pyproject.toml') }}|${{
             hashFiles('poetry.lock') }}|${{ hashFiles('.pre-commit-config.yaml') }}
-      - name: Install base dependencies
+      - name: Install dev env with pip
         if: ${{ matrix.python-version != 'direnv' }}
-        run: |
-          python -m pip install poetry poetry-dynamic-versioning
-          poetry install --with docs --with dev -v
+        run: python -m pip install poetry poetry-dynamic-versioning
+      - name: Install base dependencies
+        run: poetry install --with docs --with dev -v
       - name: Run pytest
         run: poetry run poe test --cov=./ --cov-report=xml -ra .
       - name: Upload coverage to Codecov
