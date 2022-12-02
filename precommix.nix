@@ -2,5 +2,5 @@
 import (builtins.fetchGit {
   url = "https://gitlab.com/moduon/precommix.git";
   ref = "main";
-  rev = "d1054f605511a2fc78783671783fa8c33f7b2416";
+  rev = "432dbb601d62ce741672e5f8cb1c4d67327a54b5";
 })

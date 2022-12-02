@@ -4,7 +4,7 @@ exclude: |
   .*\.(diff|patch)$
 repos:
   - repo: https://gitlab.com/moduon/precommix
-    rev: "v0.10.0-4-gd1054f6"
+    rev: "v0.10.0-5-g432dbb6"
     hooks:
       # Commit messages
       - id: commitizen
@@ -46,6 +46,7 @@ repos:
       - id: pydocstyle
         pass_filenames: false # HACK https://github.com/PyCQA/pydocstyle/pull/610
       - id: poetry-check
+      - id: poetry-lock
       - id: check-ast
       - id: check-builtin-literals
       - id: check-docstring-first
