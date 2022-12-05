@@ -12,7 +12,6 @@ from warnings import warn
 import dunamai
 import packaging.version
 import yaml
-from iteration_utilities import deepflatten
 from packaging.version import Version, parse
 from plumbum.cmd import git
 from plumbum.machines import local
@@ -26,7 +25,7 @@ from .errors import (
     UnknownCopierVersionWarning,
     UnsupportedVersionError,
 )
-from .tools import copier_version, handle_remove_readonly
+from .tools import copier_version, deepflatten, handle_remove_readonly
 from .types import AnyByStrDict, Env, OptStr, StrSeq, Union, VCSTypes
 from .vcs import checkout_latest_tag, clone, get_repo
 
@@ -96,7 +95,7 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
         with open(conf_path) as f:
             flattened_result = list(
                 deepflatten(
-                    yaml.load_all(f, Loader=yaml.FullLoader),
+                    list(yaml.load_all(f, Loader=yaml.FullLoader)),
                     depth=2,
                     types=(list,),
                 )
