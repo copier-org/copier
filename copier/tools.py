@@ -10,7 +10,7 @@ import warnings
 from contextlib import suppress
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Callable, Optional, TextIO, Tuple, Union
+from typing import Any, Callable, Iterable, Optional, TextIO, Tuple, Union
 
 import colorama
 from packaging.version import Version
@@ -151,22 +151,22 @@ def handle_remove_readonly(
 
 # Replaces https://github.com/MSeifert04/iteration_utilities deepflatten
 # See https://stackoverflow.com/questions/2158395/flatten-an-irregular-arbitrarily-nested-list-of-lists
-def deepflatten(input_list: list, depth: int, types: tuple):
-    """Flatten nested list items in a list
-
-    Params:
-        input_list: The list, including sub lists to be flattened.
-        depth: Maximum level to flatten. Sub lists at a deeper level will remain
-               nested
-        types: Item types to flatten. Items of other types will remain"""
-    if depth <= 0:
-        return input_list
-
-    for item in input_list:
-        if isinstance(item, types) and not isinstance(item, (str, bytes)):
-            yield from deepflatten(item, depth - 1)
-        else:
-            yield item
+def deepflatten(
+    iterable: Iterable[Any],
+    depth: int,
+    types: Union[type, Tuple[type, ...]],
+) -> Iterable[Any]:
+    """
+    Flatten arbitrarily nested items of selected type(s) up to a maximum depth.
+    """
+    if depth == -1:
+        yield iterable
+    else:
+        for item in iterable:
+            if isinstance(item, types):
+                yield from deepflatten(item, depth - 1, types)
+            else:
+                yield item
 
 
 # See https://github.com/copier-org/copier/issues/345

@@ -95,7 +95,7 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
         with open(conf_path) as f:
             flattened_result = list(
                 deepflatten(
-                    list(yaml.load_all(f, Loader=yaml.FullLoader)),
+                    yaml.load_all(f, Loader=yaml.FullLoader),
                     depth=2,
                     types=(list,),
                 )
