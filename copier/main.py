@@ -866,8 +866,9 @@ class Worker:
         git("config", "user.name", "Copier")
         git("config", "user.email", "copier@copier")
         # 1st commit could fail if any pre-commit hook reformats code
+        # 2nd commit uses --no-verify to disable pre-commit-like checks
         git("commit", "--allow-empty", "-am", "dumb commit 1", retcode=None)
-        git("commit", "--allow-empty", "-am", "dumb commit 2")
+        git("commit", "--allow-empty", "--no-verify", "-am", "dumb commit 2")
         git("config", "--unset", "user.name")
         git("config", "--unset", "user.email")
 
