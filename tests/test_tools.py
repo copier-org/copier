@@ -6,7 +6,7 @@ import pytest
 from plumbum.cmd import git
 from poethepoet.app import PoeThePoet
 
-from copier.tools import TemporaryDirectory
+from copier.tools import TemporaryDirectory, deepflatten
 
 
 @pytest.mark.skipif(
@@ -40,3 +40,21 @@ def test_temporary_directory_with_git_repo_deletion():
     with TemporaryDirectory() as tmp_dir:
         git("clone", "--depth=1", ".", Path(tmp_dir) / "repo")
     assert not Path(tmp_dir).exists()
+
+
+def test_deepflatten():
+    """Ensure deepflatten works in simple usage"""
+    result = deepflatten([1, [2, 3], 4], 1, (list,))
+    assert list(result) == [1, 2, 3, 4]
+
+
+def test_deepflatten_depth():
+    """Ensure deepflatten depth works"""
+    result = deepflatten([1, [2, [3, 4]], 5], 1, (list,))
+    assert list(result) == [1, 2, [3, 4], 5]
+
+
+def test_deepflatten_types():
+    """Ensure deepflatten types filter works"""
+    result = deepflatten([1, [2, 3], 4, {"key": ["val1", "val2"]}], 1, (list,))
+    assert list(result) == [1, 2, 3, 4, {"key": ["val1", "val2"]}]
