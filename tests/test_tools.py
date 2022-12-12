@@ -44,17 +44,19 @@ def test_temporary_directory_with_git_repo_deletion():
 
 def test_deepflatten():
     """Ensure deepflatten works in simple usage"""
-    result = deepflatten([1, [2, 3], 4], 1, (list,))
+    result = deepflatten([1, [2, 3], 4], depth=1, types=(list,))
     assert list(result) == [1, 2, 3, 4]
 
 
 def test_deepflatten_depth():
     """Ensure deepflatten depth works"""
-    result = deepflatten([1, [2, [3, 4]], 5], 1, (list,))
+    result = deepflatten([1, [2, [3, 4]], 5], depth=1, types=(list,))
     assert list(result) == [1, 2, [3, 4], 5]
 
 
 def test_deepflatten_types():
     """Ensure deepflatten types filter works"""
-    result = deepflatten([1, [2, 3], 4, {"key": ["val1", "val2"]}], 1, (list,))
+    result = deepflatten(
+        [1, [2, 3], 4, {"key": ["val1", "val2"]}], depth=1, types=(list,)
+    )
     assert list(result) == [1, 2, 3, 4, {"key": ["val1", "val2"]}]
