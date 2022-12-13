@@ -6,8 +6,8 @@
       flake = false;
     };
     flake-utils.url = github:numtide/flake-utils;
-    nixpkgs.url = "github:NixOS/nixpkgs/refs/pull/200205/merge"; # HACK
-    poetry2nix.url = github:nix-community/poetry2nix/refs/pull/807/merge; # HACK
+    nixpkgs.url = "github:NixOS/nixpkgs/refs/pull/200205/head"; # HACK
+    poetry2nix.url = github:nix-community/poetry2nix;
   };
 
   outputs = inputs:

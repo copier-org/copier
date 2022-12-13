@@ -22,11 +22,11 @@
     "flake-compat": {
       "flake": false,
       "locked": {
-        "lastModified": 1650374568,
-        "narHash": "sha256-Z+s0J8/r907g149rllvwhb4pKi8Wam5ij0st8PwAh+E=",
+        "lastModified": 1668681692,
+        "narHash": "sha256-Ht91NGdewz8IQLtWZ9LCeNXMSXHUss+9COoqu6JLmXU=",
         "owner": "edolstra",
         "repo": "flake-compat",
-        "rev": "b4a34015c698c7793d592d66adbab377907a2be8",
+        "rev": "009399224d5e398d03b22badca40a37ac85412a1",
         "type": "github"
       },
       "original": {
@@ -98,27 +98,27 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1667923340,
-        "narHash": "sha256-k2KzxoscC7eA4wuu/c50DlaC5fNJNFZ817h5fe7EmEY=",
+        "lastModified": 1668779866,
+        "narHash": "sha256-cOvjvqYJDZHB3mUl7/Yv13g3Y/AfV5ihb3YPq4VSV+8=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "3e00081b10c1b18ce9abf78c37426936b3f0c576",
+        "rev": "334c000bbbc51894a3b02e05375eae36ac03e137",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
-        "ref": "refs/pull/200205/merge",
+        "ref": "refs/pull/200205/head",
         "repo": "nixpkgs",
         "type": "github"
       }
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1667925509,
-        "narHash": "sha256-o6hILl3mbAaM9cgVzz4ZA8XAjTzCcjiy8y9WMM4rOnU=",
+        "lastModified": 1670918062,
+        "narHash": "sha256-iOhkyBYUU9Jfkk0lvI4ahpjyrTsLXj9uyJWwmjKg+gg=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "6b572437c0fbf95a9f29581dd2d97008b126a95c",
+        "rev": "84575b0bd882be979516f4fecfe4d7c8de8f6a92",
         "type": "github"
       },
       "original": {
@@ -133,16 +133,15 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1667914561,
-        "narHash": "sha256-W6J9PCsuNTwIjIBJAd1iKXv85kiKkXQb0Ln9fpB3Qbo=",
+        "lastModified": 1670851076,
+        "narHash": "sha256-WBej3iRutHvXKdVgeun4px1w1+kYrBQtKwTs7XKUJ00=",
         "owner": "nix-community",
         "repo": "poetry2nix",
-        "rev": "ab707c6a700de75099226610161aeade2fff75b1",
+        "rev": "20999380a3a2371bf35c37d7cb5ac35c941075aa",
         "type": "github"
       },
       "original": {
         "owner": "nix-community",
-        "ref": "refs/pull/807/merge",
         "repo": "poetry2nix",
         "type": "github"
       }
