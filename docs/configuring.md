@@ -190,6 +190,10 @@ Supported keys:
         type: str # Any value will be treated raw as a string
         help: An awesome project needs an awesome name. Tell me yours.
         default: paradox-specifier
+        validator: >-
+            {% if not (project_name | regex_search('^[a-z][a-z0-9\-]+$')) %}
+            project_name must start with a letter, followed one or more letters, digits or dashes all lowercase.
+            {% endif %}
 
     rocket_launch_password:
         type: str
