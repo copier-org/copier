@@ -134,7 +134,7 @@ Supported keys:
 -   **multiline**: When set to `true`, it allows multiline input. This is especially
     useful when `type` is `json` or `yaml`.
 
-    **validator**: Jinja template with which to validate the user input. This template
+-   **validator**: Jinja template with which to validate the user input. This template
     will be rendered with the combined answers as variables; it should render _nothing_
     if the value is valid, and an error message to show to the user otherwise.
 
