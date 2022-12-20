@@ -12,7 +12,7 @@ from warnings import warn
 import dunamai
 import packaging.version
 import yaml
-from iteration_utilities import deepflatten
+from funcy import lflatten
 from packaging.version import Version, parse
 from plumbum.cmd import git
 from plumbum.machines import local
@@ -94,13 +94,7 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
 
     try:
         with open(conf_path) as f:
-            flattened_result = list(
-                deepflatten(
-                    yaml.load_all(f, Loader=yaml.FullLoader),
-                    depth=2,
-                    types=(list,),
-                )
-            )
+            flattened_result = lflatten(yaml.load_all(f, Loader=yaml.FullLoader))
             merged_options = defaultdict(list)
             for option in (
                 "_exclude",
