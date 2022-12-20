@@ -41,7 +41,7 @@ print("Hello from {{module_name}}!")
 
 ```yaml+jinja title="{{_copier_conf.answers_file}}.jinja"
 # Changes here will be overwritten by Copier
-{{_copier_answers|to_nice_yaml}}
+{{ _copier_answers|to_nice_yaml -}}
 ```
 
 Generating a project from this template with `super_project` and `world` as answers for

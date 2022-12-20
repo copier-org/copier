@@ -1135,9 +1135,9 @@ The default name will be `.copier-answers.yml`, but
 
 The file must have this content:
 
-```yaml
+```yaml+jinja
 # Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
-{{_copier_answers|to_nice_yaml}}
+{{ _copier_answers|to_nice_yaml -}}
 ```
 
 !!! important
