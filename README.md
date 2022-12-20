@@ -56,7 +56,7 @@ print("Hello from {{module_name}}!")
 
 ```yaml+jinja title="{{_copier_conf.answers_file}}.jinja"
 # Changes here will be overwritten by Copier
-{{_copier_answers|to_nice_yaml}}
+{{ _copier_answers|to_nice_yaml -}}
 ```
 
 To generate a project from the template:
