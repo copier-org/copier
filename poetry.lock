@@ -177,7 +177,7 @@ python-versions = "*"
 
 [[package]]
 name = "dunamai"
-version = "1.14.1"
+version = "1.15.0"
 description = "Dynamic version generation"
 category = "main"
 optional = false
@@ -1029,7 +1029,7 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=
 
 [metadata]
 lock-version = "1.1"
-python-versions = ">=3.7,<4.0" # HACK https://github.com/PyCQA/isort/issues/1945
+python-versions = ">=3.7,<4.0"
 content-hash = "eae517c93329374caecdedf4ac78b2568316123b45eba33c9ad0de144db7aa3c"
 
 [metadata.files]
@@ -1163,8 +1163,8 @@ distlib = [
     {file = "distlib-0.3.6.tar.gz", hash = "sha256:14bad2d9b04d3a36127ac97f30b12a19268f211063d8f8ee4f47108896e11b46"},
 ]
 dunamai = [
-    {file = "dunamai-1.14.1-py3-none-any.whl", hash = "sha256:6486738116c7c8db8f23b9f166ff2f7b0846a3f577fde2616e91bb62dc9686c4"},
-    {file = "dunamai-1.14.1.tar.gz", hash = "sha256:fc3dc52c69eb14c5374e3ce9cb68413e143f7e5983ab0b55f0c099cd36572482"},
+    {file = "dunamai-1.15.0-py3-none-any.whl", hash = "sha256:646d7a6c07d0ec8412ac43c1a3546f1d1b52f3ed918f4bfbefe32439b49dec7e"},
+    {file = "dunamai-1.15.0.tar.gz", hash = "sha256:d6088922df3226a8234c228803bb01902a83766d04c2cddb33d4dd3bf85ec9a5"},
 ]
 execnet = [
     {file = "execnet-1.9.0-py2.py3-none-any.whl", hash = "sha256:a295f7cc774947aac58dde7fdc85f4aa00c42adf5d8f5468fc630c1acf30a142"},
