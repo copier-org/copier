@@ -1030,7 +1030,7 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7,<4.0" # HACK https://github.com/PyCQA/isort/issues/1945
-content-hash = "76f033e5473ea6c0ebffd8a3deccf5ca6ffefc864a2a6f2ae7e08e2e5be60fb3"
+content-hash = "eae517c93329374caecdedf4ac78b2568316123b45eba33c9ad0de144db7aa3c"
 
 [metadata.files]
 argcomplete = [
