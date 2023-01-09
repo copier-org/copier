@@ -136,7 +136,11 @@ def clone(url: str, ref: OptStr = None) -> str:
     location = mkdtemp(prefix=f"{__name__}.clone.")
     _clone = git["clone", "--no-checkout", url, location]
     # Faster clones if possible
-    if GIT_VERSION >= Version("2.27"):
+    if (
+        GIT_VERSION >= Version("2.27")
+        and not url.startswith("file://")
+        and not Path(url).exists()
+    ):
         _clone = _clone["--filter=blob:none"]
     _clone()
 
