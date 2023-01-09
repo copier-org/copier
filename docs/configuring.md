@@ -578,7 +578,9 @@ to know available options.
     By specifying this, your template will be compatible with both Copier 5 and 6.
 
     Copier 6 will apply these older defaults if your [min_copier_version][] is lower
-    than 6, but that will be removed in the future.
+    than 6.
+
+    Copier 7+ no longer uses the old defaults independent of [min_copier_version][].
 
 ### `exclude`
 
@@ -1051,7 +1053,9 @@ templates suffix is _not_ empty, Copier will abort and print an error message.
     add it to your `copier.yml` to keep it future-proof.
 
     Copier 6 will apply that old default if your [min_copier_version][] is lower
-    than 6, but that will be removed in the future.
+    than 6.
+
+    Copier 7+ no longer uses the old default independent of [min_copier_version][].
 
 ### `use_prereleases`
 
