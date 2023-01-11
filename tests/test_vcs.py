@@ -92,7 +92,8 @@ def test_removes_temporary_clone(tmp_path):
 
 @pytest.mark.impure
 def test_dont_remove_local_clone(tmp_path):
-    src_path = vcs.clone("https://github.com/copier-org/autopretty.git")
+    src_path = str(tmp_path / "autopretty")
+    git("clone", "https://github.com/copier-org/autopretty.git", src_path)
     with Worker(src_path=src_path, dst_path=tmp_path, defaults=True) as worker:
         worker.run_copy()
     assert exists(src_path)
@@ -101,7 +102,8 @@ def test_dont_remove_local_clone(tmp_path):
 @pytest.mark.impure
 def test_update_using_local_source_path_with_tilde(tmp_path):
     # first, get a local repository clone
-    src_path = vcs.clone("https://github.com/copier-org/autopretty.git")
+    src_path = str(tmp_path / "autopretty")
+    git("clone", "https://github.com/copier-org/autopretty.git", src_path)
 
     # then prepare the user path to this clone (starting with ~)
     if os.name == "nt":
