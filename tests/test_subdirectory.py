@@ -1,5 +1,4 @@
 import os
-import platform
 
 import pytest
 import yaml
@@ -163,8 +162,8 @@ def test_update_subdirectory_from_root_path(tmp_path_factory):
         ),
         pytest.param(
             "inline",
-            "<<<<<<< modified\ndownstream version 1\n"
-            "=======\nupstream version 2\n>>>>>>> new upstream\n",
+            "<<<<<<< before updating\ndownstream version 1\n"
+            "=======\nupstream version 2\n>>>>>>> after updating\n",
             False,
         ),
     ],
@@ -185,12 +184,6 @@ def test_new_version_uses_subdirectory(
 
         with open("{{_copier_conf.answers_file}}.jinja", "w") as fd:
             fd.write("{{_copier_answers|to_nice_yaml}}\n")
-
-        if conflict == "inline" and platform.system() == "Windows":
-            # Workaround for odd behavior in Windows git. Without this, inline
-            # conflict markers result in doubled CR and/or LF characters.
-            with open(".gitattributes", "w") as fd:
-                fd.write("*.md binary\n")
 
         git_init("hello template")
         git("tag", "v1")

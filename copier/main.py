@@ -1,7 +1,5 @@
 """Main functions and classes, used to generate or update projects."""
 
-import contextlib
-import os
 import platform
 import subprocess
 import sys
@@ -11,8 +9,8 @@ from filecmp import dircmp
 from functools import partial
 from itertools import chain
 from pathlib import Path
-from shutil import copyfile, rmtree
-from typing import Callable, Iterable, List, Mapping, Optional, Sequence, Set
+from shutil import rmtree
+from typing import Callable, Iterable, List, Mapping, Optional, Sequence
 from unicodedata import normalize
 
 from jinja2.loaders import FileSystemLoader
@@ -700,12 +698,6 @@ class Worker:
         self._apply_update()
 
     def _apply_update(self):
-        if self.conflict == "inline":
-            # New implementation.
-            self._apply_update_inline_conflict_markers()
-            return
-
-        # Old implementation.
         # Copy old template into a temporary destination
         with TemporaryDirectory(
             prefix=f"{__name__}.update_diff."
@@ -758,78 +750,35 @@ class Worker:
                 ):
                     apply_cmd = apply_cmd["--exclude", skip_pattern]
                 (apply_cmd << diff)(retcode=None)
-
+                # TODO Test more, remove from experimental, make default
+                if self.conflict == "inline":
+                    status = git("status", "--porcelain").strip().splitlines()
+                    for line in status:
+                        # Find merge rejections
+                        if not (line.startswith("?? ") and line.endswith(".rej")):
+                            continue
+                        # FIXME Test with a file named '`â ñ"', see it fail, fix it
+                        fname = line[3:-4]
+                        # Undo possible non-rejected chunks
+                        git("checkout", "--", fname)
+                        # 3-way-merge the file directly
+                        git(
+                            "merge-file",
+                            "-L",
+                            "before updating",
+                            "-L",
+                            "last update",
+                            "-L",
+                            "after updating",
+                            fname,
+                            old_worker.subproject.local_abspath / fname,
+                            recopy_worker.subproject.local_abspath / fname,
+                            retcode=None,
+                        )
+                        # Remove rejection witness
+                        Path(f"{fname}.rej").unlink()
             # Trigger recursive removal of deleted files in last template version
             _remove_old_files(self.subproject.local_abspath, compared)
-
-        # Run post-migration tasks
-        self._execute_tasks(
-            self.template.migration_tasks("after", self.subproject.template)
-        )
-
-    def _apply_update_inline_conflict_markers(self):
-        """Implements the apply_update() method using inline conflict markers."""
-        # Copy old template into a temporary destination
-        with TemporaryDirectory(
-            prefix=f"{__name__}.update_diff.reference."
-        ) as reference_dst_temp, TemporaryDirectory(
-            prefix=f"{__name__}.update_diff.original."
-        ) as old_copy, TemporaryDirectory(
-            prefix=f"{__name__}.update_diff.merge."
-        ) as merge_dst_temp:
-            # Copy reference to be used as base by merge-file
-            copytree(self.dst_path, reference_dst_temp, dirs_exist_ok=True)
-
-            # Compute modification from the original template to be used as other by merge-file
-            assert self.subproject
-            assert self.subproject.template
-            old_worker = self._make_old_worker(old_copy)
-            old_worker.run_copy()
-            with local.cwd(old_copy):
-                self._git_initialize_repo()
-
-            # Run pre-migration tasks
-            self._execute_tasks(
-                self.template.migration_tasks("before", self.subproject.template)
-            )
-            self._uncached_copy()
-
-            # Extract the list of files to merge
-            participating_files: Set[Path] = set()
-            for src_dir in (old_copy, reference_dst_temp):
-                for root, dirs, files in os.walk(src_dir, topdown=True):
-                    if root == src_dir and ".git" in dirs:
-                        dirs.remove(".git")
-                    root = Path(root).relative_to(src_dir)
-                    participating_files.update(Path(root, f) for f in files)
-
-            # Merging files
-            for basename in sorted(participating_files):
-                subfile_names = []
-                for subfile_kind, src_dir in [
-                    ("modified", reference_dst_temp),
-                    ("old upstream", old_copy),
-                    ("new upstream", self.dst_path),
-                ]:
-                    path = Path(src_dir, basename)
-                    if path.is_file():
-                        copyfile(path, Path(merge_dst_temp, subfile_kind))
-                    else:
-                        subfile_kind = os.devnull
-                    subfile_names.append(subfile_kind)
-
-                with local.cwd(merge_dst_temp):
-                    # https://git-scm.com/docs/git-merge-file
-                    output = git("merge-file", "-p", *subfile_names, retcode=None)
-
-                dest_path = Path(self.dst_path, basename)
-                # Remove the file if it was already removed in the project
-                if not output and "modified" not in subfile_names:
-                    with contextlib.suppress(FileNotFoundError):
-                        dest_path.unlink()
-                else:
-                    dest_path.parent.mkdir(parents=True, exist_ok=True)
-                    dest_path.write_text(output)
 
         # Run post-migration tasks
         self._execute_tasks(
