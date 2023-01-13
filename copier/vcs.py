@@ -139,7 +139,7 @@ def clone(url: str, ref: OptStr = None) -> str:
     if (
         GIT_VERSION >= Version("2.27")
         and not url.startswith("file://")
-        and not Path(url).exists()
+        and not os.path.exists(url)
     ):
         _clone = _clone["--filter=blob:none"]
     _clone()
