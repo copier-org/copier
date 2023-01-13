@@ -6,11 +6,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1667210711,
-        "narHash": "sha256-IoErjXZAkzYWHEpQqwu/DeRNJGFdR7X2OGbkhMqMrpw=",
+        "lastModified": 1671489820,
+        "narHash": "sha256-qoei5HDJ8psd1YUPD7DhbHdhLIT9L2nadscp4Qk37uk=",
         "owner": "numtide",
         "repo": "devshell",
-        "rev": "96a9dd12b8a447840cc246e17a47b81a4268bba7",
+        "rev": "5aa3a8039c68b4bf869327446590f4cdf90bb634",
         "type": "github"
       },
       "original": {
@@ -98,27 +98,26 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1670930383,
-        "narHash": "sha256-HX1oKrvo0Bj01rFAnav7UxMg4/X4cxu9YkCoJ+PbY5k=",
+        "lastModified": 1673606955,
+        "narHash": "sha256-7Q8AvBTGQvR8ybsVtLc1bSOb4eS/w0l9CEt8vVZqL2c=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "eada27b4028b2d8a332b3f5c4e2502f422ffbab9",
+        "rev": "360f23d41e1be5192621ab56f0acfeaf0dcc1286",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
-        "ref": "refs/pull/200205/head",
         "repo": "nixpkgs",
         "type": "github"
       }
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1670929434,
-        "narHash": "sha256-n5UBO6XBV4h3TB7FYu2yAuNQMEYOrQyKeODUwKe06ow=",
+        "lastModified": 1673606955,
+        "narHash": "sha256-7Q8AvBTGQvR8ybsVtLc1bSOb4eS/w0l9CEt8vVZqL2c=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "1710ed1f6f8ceb75cf7d1cf55ee0cc21760e1c7a",
+        "rev": "360f23d41e1be5192621ab56f0acfeaf0dcc1286",
         "type": "github"
       },
       "original": {
@@ -133,11 +132,11 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1670851076,
-        "narHash": "sha256-WBej3iRutHvXKdVgeun4px1w1+kYrBQtKwTs7XKUJ00=",
+        "lastModified": 1673530743,
+        "narHash": "sha256-z+s/1ZXLlqW7BsPcUua7c2o6ff53jnAlKZOjeHw3H7Q=",
         "owner": "nix-community",
         "repo": "poetry2nix",
-        "rev": "20999380a3a2371bf35c37d7cb5ac35c941075aa",
+        "rev": "9b55d925f5526b50ffbe23f484b81a4d88dbefb7",
         "type": "github"
       },
       "original": {

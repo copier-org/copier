@@ -51,7 +51,7 @@ optional = true
 mypy = ">=0.931"
 pexpect = ">=4.8.0"
 poethepoet = ">=0.12.3"
-pytest = ">=7.0.1"
+pytest = ">=7.2.0"
 pytest-cov = ">=3.0.0"
 pytest-xdist = ">=2.5.0"
 types-backports = ">=0.1.3"
