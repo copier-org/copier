@@ -1,5 +1,6 @@
 """Main functions and classes, used to generate or update projects."""
 
+import collections.abc
 import os
 import platform
 import subprocess
@@ -11,10 +12,12 @@ from functools import partial
 from itertools import chain
 from pathlib import Path
 from shutil import rmtree
-from typing import Callable, Iterable, List, Mapping, Optional, Sequence
+from typing import Callable, Iterable, List, Mapping, Optional, Sequence, Type, cast
 from unicodedata import normalize
 
+from jinja2 import Environment
 from jinja2.loaders import FileSystemLoader
+from jinja2.nativetypes import NativeEnvironment
 from jinja2.sandbox import SandboxedEnvironment
 from pathspec import PathSpec
 from plumbum import ProcessExecutionError, colors
@@ -422,6 +425,13 @@ class Worker:
 
     @cached_property
     def jinja_env(self) -> SandboxedEnvironment:
+        return cast(SandboxedEnvironment, self.abstract_jinja_env(SandboxedEnvironment))
+
+    @cached_property
+    def native_jinja_env(self) -> NativeEnvironment:
+        return cast(NativeEnvironment, self.abstract_jinja_env(NativeEnvironment))
+
+    def abstract_jinja_env(self, env_cls: Type) -> Environment:
         """Return a pre-configured Jinja environment.
 
         Respects template settings.
@@ -437,7 +447,7 @@ class Worker:
         # Of course we still have the post-copy tasks to worry about, but at least
         # they are more visible to the final user.
         try:
-            env = SandboxedEnvironment(
+            env = env_cls(
                 loader=loader, extensions=extensions, **self.template.envops
             )
         except ModuleNotFoundError as error:
@@ -516,7 +526,7 @@ class Worker:
                     f"\nCopying from template version {self.template.version}",
                     file=sys.stderr,
                 )
-            self._default_renderer.render()
+            self._render_with_items()
             if not self.quiet:
                 # TODO Unify printing tools
                 print("")  # padding space
@@ -528,6 +538,13 @@ class Worker:
         if not self.quiet:
             # TODO Unify printing tools
             print("")  # padding space
+
+    def _render_with_items(self):
+        self._default_renderer.render()
+
+        for items_key in self.project_mode_keys:
+            for project_mode_item in self.answers.combined[items_key]:
+                self._default_renderer.with_item(items_key, project_mode_item).render()
 
     def run_update(self) -> None:
         """Update a subproject that was already generated.
@@ -704,10 +721,22 @@ class Worker:
             jinja_env=self.jinja_env,
             answers_relpath=self.answers_relpath,
             _render_context=self._render_context(),
+            _items_keys=self.project_mode_keys,
         )
 
     def _render_string(self, string: str) -> str:
         return self._default_renderer.render_string(string)
+
+    @cached_property
+    def project_mode_keys(self) -> Iterable[str]:
+        raw_items = self.template.config_data.get("items")
+        if not raw_items:
+            return ()
+        return (
+            [raw_items]
+            if isinstance(raw_items, str)
+            else cast(collections.abc.Iterable, raw_items)
+        )
 
 
 def run_copy(

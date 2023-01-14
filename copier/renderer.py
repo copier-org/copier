@@ -1,7 +1,8 @@
-from dataclasses import dataclass
+from collections import ChainMap
+from dataclasses import dataclass, field
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Callable, Mapping, Optional
+from typing import Any, Callable, Iterable, Mapping, Optional
 
 from jinja2 import Environment
 
@@ -18,9 +19,21 @@ class Renderer:
     jinja_env: Environment
     answers_relpath: Path
     _render_context: Mapping[str, Any]
+    _items_key: Optional[str] = None
+    _items_keys: Iterable[str] = field(default_factory=list)
 
     def render(self):
-        self._render_folder(self.template.local_abspath)
+        dst_abspath = Path(self.subproject.local_abspath)
+        if not self.pretend:
+            dst_abspath.mkdir(parents=True, exist_ok=True)
+
+        for file in self.template_copy_root.iterdir():
+            if file.name in self._items_keys:
+                continue
+            if file.is_dir():
+                self._render_folder(file)
+            else:
+                self._render_file(file)
 
     def _render_folder(self, src_abspath: Path) -> None:
         """Recursively render a folder.
@@ -135,5 +148,27 @@ class Renderer:
 
         It points to the cloned template local abspath + the rendered subdir, if any.
         """
-        subdir = self.render_string(self.template.subdirectory) or ""
-        return self.template.local_abspath / subdir
+        parts = [
+            self.template.local_abspath,
+        ]
+        subdir = self.render_string(self.template.subdirectory)
+        if subdir:
+            parts.append(subdir)
+
+        if self._items_key:
+            parts.append(self._items_key)
+
+        return Path(*parts)
+
+    def with_item(self, items_key: str, items_value: Any) -> "Renderer":
+        return Renderer(
+            self.template,
+            self.subproject,
+            self._render_allowed,
+            self.pretend,
+            self.jinja_env,
+            self.answers_relpath,
+            ChainMap({"_item": items_value}, self._render_context),
+            items_key,
+            [],
+        )
