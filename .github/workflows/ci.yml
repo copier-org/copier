@@ -60,9 +60,8 @@ jobs:
       - name: configure direnv
         if: ${{ runner.os != 'Windows' }}
         run:
-          echo "DIRENV_NIX_ARGS=-A $(nix-instantiate --eval --expr
-          'builtins.currentSystem').python$(echo ${{ matrix.python-version }} | tr -d
-          '.')" >> $GITHUB_ENV
+          echo "DIRENV_SHELL=python$(echo ${{ matrix.python-version }} | tr -d '.')" >>
+          $GITHUB_ENV
       - name: Load dev env with direnv
         uses: JRMurr/direnv-nix-action@v2
         if: ${{ runner.os != 'Windows' }}
