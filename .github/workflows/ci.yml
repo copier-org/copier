@@ -57,22 +57,17 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - name: configure direnv
+      - name: configure direnv and cache
         if: ${{ runner.os != 'Windows' }}
         run:
           echo "DIRENV_SHELL=python$(echo ${{ matrix.python-version }} | tr -d '.')" >>
-          $GITHUB_ENV
+          $GITHUB_ENV echo "PY=$((which python; python -VV; pip freeze) | sha256sum |
+          cut -d' ' -f1)" >> $GITHUB_ENV
       - name: Load dev env with direnv
         uses: JRMurr/direnv-nix-action@v2
         if: ${{ runner.os != 'Windows' }}
         with:
           nix-cache-prefix: ${{ runner.os }}-python${{ matrix.python-version }}
-      - name: generate cache key PY
-        if: ${{ runner.os == 'Windows' }}
-        shell: bash
-        run:
-          echo "PY=$((python -VV; pip freeze) | sha256sum | cut -d' ' -f1)" >>
-          $GITHUB_ENV
       - uses: actions/cache@v3
         with:
           path: |
