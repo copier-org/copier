@@ -136,7 +136,7 @@ class CopierApp(cli.Application):
         default="rej",
         help=(
             "Behavior on conflict: rej=Create .rej file, inline=inline conflict "
-            "markers"
+            "markers (inline is still experimental)"
         ),
     )
     exclude: cli.SwitchAttr = cli.SwitchAttr(

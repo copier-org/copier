@@ -134,7 +134,7 @@ Supported keys:
 -   **multiline**: When set to `true`, it allows multiline input. This is especially
     useful when `type` is `json` or `yaml`.
 
-    **validator**: Jinja template with which to validate the user input. This template
+-   **validator**: Jinja template with which to validate the user input. This template
     will be rendered with the combined answers as variables; it should render _nothing_
     if the value is valid, and an error message to show to the user otherwise.
 
@@ -190,6 +190,10 @@ Supported keys:
         type: str # Any value will be treated raw as a string
         help: An awesome project needs an awesome name. Tell me yours.
         default: paradox-specifier
+        validator: >-
+            {% if not (project_name | regex_search('^[a-z][a-z0-9\-]+$')) %}
+            project_name must start with a letter, followed one or more letters, digits or dashes all lowercase.
+            {% endif %}
 
     rocket_launch_password:
         type: str
@@ -574,7 +578,9 @@ to know available options.
     By specifying this, your template will be compatible with both Copier 5 and 6.
 
     Copier 6 will apply these older defaults if your [min_copier_version][] is lower
-    than 6, but that will be removed in the future.
+    than 6.
+
+    Copier 7+ no longer uses the old defaults independent of [min_copier_version][].
 
 ### `exclude`
 
@@ -1047,7 +1053,9 @@ templates suffix is _not_ empty, Copier will abort and print an error message.
     add it to your `copier.yml` to keep it future-proof.
 
     Copier 6 will apply that old default if your [min_copier_version][] is lower
-    than 6, but that will be removed in the future.
+    than 6.
+
+    Copier 7+ no longer uses the old default independent of [min_copier_version][].
 
 ### `use_prereleases`
 
@@ -1131,9 +1139,9 @@ The default name will be `.copier-answers.yml`, but
 
 The file must have this content:
 
-```yaml
+```yaml+jinja
 # Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
-{ { _copier_answers|to_nice_yaml } }
+{{ _copier_answers|to_nice_yaml -}}
 ```
 
 !!! important

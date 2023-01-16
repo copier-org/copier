@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v7.1.0a0 (2022-12-29)
+
+### Feat
+
+-   experimental inline conflict markers when updating
+-   merge copier settings from multiple documents
+
+### Fix
+
+-   remove dependency on iteration_utilities
+
 ## v7.0.1 (2022-10-14)
 
 ### Fix
