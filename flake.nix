@@ -23,7 +23,7 @@
           "python38"
           "python39"
           "python310"
-          # "python311" # FIXME Make it work and enable it
+          "python311"
         ];
         pythonLast = pkgs.lib.last pythons;
         lastRelease = (pkgs.lib.importTOML ./.cz.toml).tool.commitizen.version;
@@ -56,6 +56,7 @@
           // {default = devShells.${pythonLast};};
         packages =
           pkgs.lib.genAttrs pythons mkCopierModule
-          // {default = packages.${pythonLast};};
+          # FIXME Fix python 3.11 build and make it default (using pythonLast)
+          // {default = packages.python310;};
       });
 }
