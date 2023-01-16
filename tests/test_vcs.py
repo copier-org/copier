@@ -82,6 +82,20 @@ def test_local_clone():
 
 
 @pytest.mark.impure
+def test_shallow_clone(tmp_path):
+    # This test should always work but should be much slower if `is_git_shallow_repo()` is not
+    # checked in `vcs.clone()`.
+    src_path = str(tmp_path / "autopretty")
+    git("clone", "--depth=2", "https://github.com/copier-org/autopretty.git", src_path)
+    assert exists(join(src_path, "README.md"))
+
+    local_tmp = vcs.clone(str(src_path))
+    assert local_tmp
+    assert exists(join(local_tmp, "README.md"))
+    shutil.rmtree(local_tmp, ignore_errors=True)
+
+
+@pytest.mark.impure
 def test_removes_temporary_clone(tmp_path):
     src_path = "https://github.com/copier-org/autopretty.git"
     with Worker(src_path=src_path, dst_path=tmp_path, defaults=True) as worker:

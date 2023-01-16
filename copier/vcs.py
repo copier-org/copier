@@ -45,6 +45,15 @@ def is_in_git_repo(path: StrOrPath) -> bool:
         return False
 
 
+def is_git_shallow_repo(path: StrOrPath) -> bool:
+    """Indicate if a given path is a git shallow repo directory."""
+    try:
+        git("-C", path, "rev-parse", "--is-shallow-repository")
+        return True
+    except (OSError, ProcessExecutionError):
+        return False
+
+
 def is_git_bundle(path: Path) -> bool:
     """Indicate if a path is a valid git bundle."""
     with suppress(OSError):
@@ -136,12 +145,10 @@ def clone(url: str, ref: OptStr = None) -> str:
     location = mkdtemp(prefix=f"{__name__}.clone.")
     _clone = git["clone", "--no-checkout", url, location]
     # Faster clones if possible
-    if (
-        GIT_VERSION >= Version("2.27")
-        and not url.startswith("file://")
-        and not os.path.exists(url)
-    ):
-        _clone = _clone["--filter=blob:none"]
+    if GIT_VERSION >= Version("2.27"):
+        file_url = re.match("(file://)?(.*)", url).groups()[-1]
+        if not is_git_shallow_repo(file_url):
+            _clone = _clone["--filter=blob:none"]
     _clone()
 
     if not ref and os.path.exists(url) and Path(url).is_dir():
