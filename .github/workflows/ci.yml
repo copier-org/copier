@@ -67,6 +67,11 @@ jobs:
         if: ${{ runner.os != 'Windows' }}
         with:
           nix-cache-prefix: ${{ runner.os }}-python${{ matrix.python-version }}
+      - uses: cachix/cachix-action@v11
+        if: ${{ runner.os != 'Windows' }}
+        with:
+          name: copier
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
       - uses: actions/cache@v3
         with:
           path: |
@@ -94,6 +99,11 @@ jobs:
           flags: unittests
           name: copier
           token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Build Copier with Nix and test it works
+        if: ${{ runner.os != 'Windows' }}
+        run: |
+          nix-build -A packages.$(nix-instantiate --eval --expr 'builtins.currentSystem').${DIRENV_SHELL:-default}
+          ./result/bin/copier --version
 
   publish:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
