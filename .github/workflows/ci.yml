@@ -65,6 +65,8 @@ jobs:
       - name: Load dev env with direnv
         uses: JRMurr/direnv-nix-action@v2
         if: ${{ runner.os != 'Windows' }}
+        with:
+          nix-cache-prefix: ${{ runner.os }}-python${{ matrix.python-version }}
       - name: generate cache key PY
         if: ${{ runner.os == 'Windows' }}
         shell: bash
