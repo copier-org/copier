@@ -1,6 +1,6 @@
 {
   inputs = {
-    devshell.url = github:numtide/devshell;
+    devenv.url = "github:cachix/devenv";
     flake-compat = {
       url = github:edolstra/flake-compat;
       flake = false;
@@ -15,9 +15,8 @@
       flake-utils.lib.eachDefaultSystem (system: let
         pkgs = import nixpkgs {
           inherit system;
-          overlays = [devshell.overlay poetry2nix.overlay];
+          overlays = [poetry2nix.overlay];
         };
-        precommix = import ./precommix.nix;
         pythons = [
           "python37"
           "python38"
@@ -49,9 +48,31 @@
       in rec {
         devShells =
           pkgs.lib.genAttrs pythons (py:
-            pkgs.devshell.mkShell {
-              imports = [precommix.devshellModules.${system}.default];
-              commands = [{package = py;}];
+            devenv.lib.mkShell {
+              inherit inputs pkgs;
+              modules = [
+                {
+                  # Essential dev tools
+                  packages = [
+                    (pkgs.${py}.withPackages (ps:
+                      with ps; [
+                        poetry
+                        poetry-dynamic-versioning
+                      ]))
+                  ];
+                  difftastic.enable = true;
+                  devcontainer.enable = true;
+                  pre-commit.hooks = {
+                    alejandra.enable = true;
+                    black.enable = true;
+                    commitizen.enable = true;
+                    editorconfig-checker.enable = true;
+                    flake8.enable = true;
+                    isort.enable = true;
+                    prettier.enable = true;
+                  };
+                }
+              ];
             })
           // {default = devShells.${pythonLast};};
         packages =

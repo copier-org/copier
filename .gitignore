@@ -60,5 +60,6 @@ htmlcov/
 .DS_Store
 
 # Nix
+/.direnv
+/.pre-commit-config.yaml
 /result*
-.direnv
