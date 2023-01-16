@@ -1,12 +1,12 @@
 {
   inputs = {
-    devenv.url = "github:cachix/devenv";
+    devenv.url = "github:cachix/devenv/v0.5";
     flake-compat = {
       url = github:edolstra/flake-compat;
       flake = false;
     };
     flake-utils.url = github:numtide/flake-utils;
-    nixpkgs.url = github:NixOS/nixpkgs;
+    nixpkgs.url = github:NixOS/nixpkgs/nixos-22.11;
     poetry2nix.url = github:nix-community/poetry2nix;
   };
 
@@ -52,7 +52,6 @@
               inherit inputs pkgs;
               modules = [
                 {
-                  # Essential dev tools
                   packages = [
                     (pkgs.${py}.withPackages (ps:
                       with ps; [
@@ -61,7 +60,6 @@
                       ]))
                   ];
                   difftastic.enable = true;
-                  devcontainer.enable = true;
                   pre-commit.hooks = {
                     alejandra.enable = true;
                     black.enable = true;

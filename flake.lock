@@ -8,15 +8,16 @@
         "pre-commit-hooks": "pre-commit-hooks"
       },
       "locked": {
-        "lastModified": 1673799378,
-        "narHash": "sha256-3mYFhXvznPr8K3fjrJnzti+pzmUrA5zFyb5UKFgNJbw=",
+        "lastModified": 1671716968,
+        "narHash": "sha256-LThNtwAXH/0KVMgyTFBwl93ktuWpWTZhCh6NBlydBbQ=",
         "owner": "cachix",
         "repo": "devenv",
-        "rev": "818abeae2dd2f4911839a079e5c8934fee160a60",
+        "rev": "ba6818f4c39fd95aebdb6dc441401f2b60484652",
         "type": "github"
       },
       "original": {
         "owner": "cachix",
+        "ref": "v0.5",
         "repo": "devenv",
         "type": "github"
       }
@@ -210,26 +211,27 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1673606955,
-        "narHash": "sha256-7Q8AvBTGQvR8ybsVtLc1bSOb4eS/w0l9CEt8vVZqL2c=",
+        "lastModified": 1673704454,
+        "narHash": "sha256-5Wdj1MgdOgn3+dMFIBtg+IAYZApjF8JzwLWDPieg0C4=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "360f23d41e1be5192621ab56f0acfeaf0dcc1286",
+        "rev": "a83ed85c14fcf242653df6f4b0974b7e1c73c6c6",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
+        "ref": "nixos-22.11",
         "repo": "nixpkgs",
         "type": "github"
       }
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1673606955,
-        "narHash": "sha256-7Q8AvBTGQvR8ybsVtLc1bSOb4eS/w0l9CEt8vVZqL2c=",
+        "lastModified": 1673871132,
+        "narHash": "sha256-ickbliHfmj3lkXdZq36OGjz8nRJcCuxnnuSRGh8tjPI=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "360f23d41e1be5192621ab56f0acfeaf0dcc1286",
+        "rev": "4dbc2fe873f24222304a620764bcc2e7bb56f3ff",
         "type": "github"
       },
       "original": {
@@ -244,11 +246,11 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1673530743,
-        "narHash": "sha256-z+s/1ZXLlqW7BsPcUua7c2o6ff53jnAlKZOjeHw3H7Q=",
+        "lastModified": 1673700304,
+        "narHash": "sha256-1boTl8769EDlo+7cHpQ+gqbfqY4xlndAAelKebRF1ck=",
         "owner": "nix-community",
         "repo": "poetry2nix",
-        "rev": "9b55d925f5526b50ffbe23f484b81a4d88dbefb7",
+        "rev": "c3f200c05580b22417a228979b3e082a11c71c0d",
         "type": "github"
       },
       "original": {
