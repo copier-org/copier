@@ -86,9 +86,21 @@
                     black.enable = true;
                     commitizen.enable = true;
                     editorconfig-checker.enable = true;
+                    editorconfig-checker.excludes = [
+                      "\.md$"
+                      "\.noeof\."
+                      "\.bundle$"
+                    ];
                     flake8.enable = true;
                     isort.enable = true;
                     prettier.enable = true;
+                    prettier.excludes = [
+                      # Those files have wrong syntax and would fail
+                      "^tests/demo_invalid/copier.yml$"
+                      "^tests/demo_transclude_invalid(_multi)?/demo/copier.yml$"
+                      # HACK https://github.com/prettier/prettier/issues/9430
+                      "^tests/demo"
+                    ];
                   };
                 }
               ];
