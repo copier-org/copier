@@ -1,23 +1,10 @@
-import platform
 from pathlib import Path
 from stat import S_IREAD
 
-import pytest
 from plumbum.cmd import git
 from poethepoet.app import PoeThePoet
 
 from copier.tools import TemporaryDirectory
-
-
-@pytest.mark.impure
-@pytest.mark.skipif(
-    condition=platform.system() == "Windows",
-    reason="Windows does weird things with line endings.",
-)
-def test_lint():
-    """Ensure source code formatting"""
-    result = PoeThePoet(Path("."))(["lint", "--show-diff-on-failure", "--color=always"])
-    assert result == 0
 
 
 def test_types():

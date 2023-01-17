@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "copier"
 # This version is a placeholder autoupdated by poetry-dynamic-versioning
-version = "0.0.0"
+version = "7.1.0a0.post49.dev0+84690b8"
 description = "A library for rendering project templates."
 license = "MIT"
 classifiers = [

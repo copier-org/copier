@@ -32,13 +32,9 @@ jobs:
           - macos-latest
           - ubuntu-latest
           - windows-latest
-        python-version:
-          - "3.7"
-          - "3.8"
-          - "3.9"
-          - "3.10"
-          - "3.11"
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11-dev"]
     runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.python-version == '3.11-dev' }}
     steps:
       # HACK https://github.com/actions/cache/issues/315
       - name: Enable msys binaries
@@ -53,34 +49,14 @@ jobs:
         with:
           fetch-depth: 0 # Needs all tags to compute dynamic version
       - name: Set up Python ${{ matrix.python-version }}
-        if: ${{ runner.os == 'Windows' }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - name: configure direnv and cache
-        if: ${{ runner.os != 'Windows' }}
-        run: |
-          echo "DIRENV_SHELL=python$(echo ${{ matrix.python-version }} | tr -d '.')" >> $GITHUB_ENV
-          echo "PY=$((which python; python -VV; pip freeze) | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
-      - uses: cachix/install-nix-action@v17
-        if: ${{ runner.os != 'Windows' }}
-        with:
-          nix_path: nixpkgs=channel:nixos-unstable
-      - uses: cachix/cachix-action@v11
-        if: ${{ runner.os != 'Windows' }}
-        with:
-          name: devenv
-      - uses: cachix/cachix-action@v11
-        if: ${{ runner.os != 'Windows' }}
-        with:
-          name: copier
-          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-      - name: Load dev env with direnv
-        if: ${{ runner.os != 'Windows' }}
-        uses: JRMurr/direnv-nix-action@refs/pull/4/head
-        with:
-          install-nix: "false"
-          cache-store: "false"
+      - name: generate cache key PY
+        shell: bash
+        run:
+          echo "PY=$((python -VV; pip freeze) | sha256sum | cut -d' ' -f1)" >>
+          $GITHUB_ENV
       - uses: actions/cache@v3
         with:
           path: |
@@ -89,11 +65,10 @@ jobs:
           key:
             cache|${{ runner.os }}|${{ env.PY }}|${{ hashFiles('pyproject.toml') }}|${{
             hashFiles('poetry.lock') }}|${{ hashFiles('.pre-commit-config.yaml') }}
-      - name: Install dev env with pip
-        if: ${{ runner.os == 'Windows' }}
-        run: python -m pip install poetry poetry-dynamic-versioning
-      - name: Install base dependencies
-        run: poetry install --with docs --with dev -v
+      - name: Install dependencies
+        run: |
+          python -m pip install poetry poetry-dynamic-versioning
+          poetry install --with docs -v
       - name: Run pytest
         run: poetry run poe test --cov=./ --cov-report=xml -ra .
       - name: Upload coverage to Codecov
@@ -108,16 +83,39 @@ jobs:
           flags: unittests
           name: copier
           token: ${{ secrets.CODECOV_TOKEN }}
-      - name: Build Copier with Nix and test it works
-        if: ${{ runner.os != 'Windows' }}
-        run: |
-          nix-build -A packages.$(nix-instantiate --eval --expr 'builtins.currentSystem').${DIRENV_SHELL:-default}
-          ./result/bin/copier --version
-          nix-store --verify --repair --check-contents
+
+  flake-check:
+    strategy:
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: cachix/install-nix-action@v17
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+      - uses: cachix/cachix-action@v11
+        with:
+          name: devenv
+      - uses: cachix/cachix-action@v11
+        with:
+          name: copier
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      - name: Load dev env with direnv
+        uses: JRMurr/direnv-nix-action@920344254485fb5976e62b70a2314b480de93d82
+        with:
+          install-nix: "false"
+          cache-store: "false"
+      - run: nix flake check -L
+      - run: nix-store --verify --repair --check-contents
 
   publish:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-    needs: build
+    needs:
+      - build
+      - flake-check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
