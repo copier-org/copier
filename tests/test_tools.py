@@ -9,6 +9,7 @@ from poethepoet.app import PoeThePoet
 from copier.tools import TemporaryDirectory
 
 
+@pytest.mark.impure
 @pytest.mark.skipif(
     condition=platform.system() == "Windows",
     reason="Windows does weird things with line endings.",
@@ -38,5 +39,5 @@ def test_temporary_directory_with_readonly_files_deletion():
 def test_temporary_directory_with_git_repo_deletion():
     """Ensure temporary directories containing git repositories are properly deleted, whatever the OS."""
     with TemporaryDirectory() as tmp_dir:
-        git("clone", "--depth=1", ".", Path(tmp_dir) / "repo")
+        git("init")
     assert not Path(tmp_dir).exists()

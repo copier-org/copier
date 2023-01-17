@@ -36,13 +36,22 @@
             POETRY_DYNAMIC_VERSIONING_BYPASS = version;
             projectDir = ./.;
             python = pkgs.${py};
-            extras = [];
-            overrides = pkgs.poetry2nix.overrides.withDefaults (final: prev: {
-              # HACK https://github.com/nix-community/poetry2nix/pull/943
-              plumbum = prev.plumbum.overrideAttrs (old: {
-                buildInputs = old.buildInputs ++ [final.hatchling final.hatch-vcs];
-              });
-            });
+
+            # Test configuration
+            checkInputs = [pkgs.git];
+            pythonImportsCheck = ["copier"];
+            doCheck = true;
+            installCheckPhase = ''
+              patchShebangs tests
+              env \
+                POETRY_VIRTUALENVS_PATH=$NIX_BUILD_TOP/virtualenvs \
+                PATH=$out/bin:$PATH \
+                GIT_AUTHOR_NAME=copier \
+                GIT_AUTHOR_EMAIL=copier@example.com \
+                GIT_COMMITTER_NAME=copier \
+                GIT_COMMITTER_EMAIL=copier@example.com \
+                pytest -m 'not impure'
+            '';
           };
         mkCopierModule = py: pkgs.${py}.pkgs.toPythonModule (mkCopierApp py);
       in rec {
@@ -51,13 +60,25 @@
             devenv.lib.mkShell {
               inherit inputs pkgs;
               modules = [
+                # Python version-specific interpreter
+                {packages = [pkgs.${py}];}
+                # Extra tools, always the same
                 {
-                  packages = [
-                    (pkgs.${py}.withPackages (ps:
+                  packages = with pkgs; [
+                    # Essential dev tools
+                    (pkgs.python3.withPackages (ps:
                       with ps; [
                         poetry
                         poetry-dynamic-versioning
                       ]))
+
+                    # IDE integration tools
+                    alejandra
+                    black
+                    commitizen
+                    isort
+                    mypy
+                    nodePackages.prettier
                   ];
                   difftastic.enable = true;
                   pre-commit.hooks = {
@@ -77,5 +98,9 @@
           pkgs.lib.genAttrs pythons mkCopierModule
           # FIXME Fix python 3.11 build and make it default (using pythonLast)
           // {default = packages.python310;};
+        apps =
+          builtins.mapAttrs
+          (name: value: flake-utils.lib.mkApp {drv = value;})
+          packages;
       });
 }

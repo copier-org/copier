@@ -18,11 +18,11 @@ from pydantic import StrictBool
 
 from .types import IntSeq
 
-try:
-    from importlib.metadata import version
-except ImportError:
-    # Python < 3.8
+# TODO Remove condition when dropping python 3.8 support
+if sys.version_info < (3, 8):
     from importlib_metadata import version
+else:
+    from importlib.metadata import version
 
 colorama.init()
 

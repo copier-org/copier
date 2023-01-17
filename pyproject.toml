@@ -112,6 +112,9 @@ add_ignore = ["D105", "D107"]
 
 [tool.pytest.ini_options]
 addopts = "-n auto -ra"
+markers = [
+    "impure: needs network or is not 100% reproducible"
+]
 
 [build-system]
 requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning"]

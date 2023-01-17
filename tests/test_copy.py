@@ -134,6 +134,7 @@ def test_copy(tmp_path):
     assert os.path.exists(tmp_path / "py3_folder" / "thing.py")
 
 
+@pytest.mark.impure
 def test_copy_repo(tmp_path):
     copier.copy(
         "gh:copier-org/copier.git",
