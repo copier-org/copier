@@ -1,6 +1,0 @@
-[tool.commitizen]
-annotated_tag = true
-changelog_incremental = true
-tag_format = "v$version"
-update_changelog_on_bump = true
-version = "7.1.0a0"

@@ -17,7 +17,7 @@
           inherit system;
           overlays = [poetry2nix.overlay];
         };
-        lastRelease = (pkgs.lib.importTOML ./.cz.toml).tool.commitizen.version;
+        lastRelease = (pkgs.lib.importTOML ./pyproject.toml).tool.commitizen.version;
         version = "${lastRelease}.dev${self.sourceInfo.lastModifiedDate}+nix-git-${self.sourceInfo.shortRev or "dirty"}";
 
         # Builders
