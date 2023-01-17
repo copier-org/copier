@@ -103,11 +103,6 @@ jobs:
         with:
           name: copier
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-      - name: Load dev env with direnv
-        uses: JRMurr/direnv-nix-action@920344254485fb5976e62b70a2314b480de93d82
-        with:
-          install-nix: "false"
-          cache-store: "false"
       - run: nix flake check -L
       - run: nix-store --verify --repair --check-contents
 
