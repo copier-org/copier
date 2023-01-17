@@ -69,6 +69,10 @@ jobs:
       - uses: cachix/cachix-action@v11
         if: ${{ runner.os != 'Windows' }}
         with:
+          name: devenv
+      - uses: cachix/cachix-action@v11
+        if: ${{ runner.os != 'Windows' }}
+        with:
           name: copier
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
       - name: Load dev env with direnv
