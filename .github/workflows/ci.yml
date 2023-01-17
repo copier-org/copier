@@ -86,6 +86,7 @@ jobs:
 
   flake-check:
     strategy:
+      fail-fast: false
       matrix:
         os:
           - macos-latest
