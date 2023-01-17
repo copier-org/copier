@@ -39,12 +39,13 @@
           installCheckPhase = ''
             patchShebangs tests
             env \
-              POETRY_VIRTUALENVS_PATH=$NIX_BUILD_TOP/virtualenvs \
-              PATH=$out/bin:$PATH \
-              GIT_AUTHOR_NAME=copier \
               GIT_AUTHOR_EMAIL=copier@example.com \
-              GIT_COMMITTER_NAME=copier \
+              GIT_AUTHOR_NAME=copier \
               GIT_COMMITTER_EMAIL=copier@example.com \
+              GIT_COMMITTER_NAME=copier \
+              PATH=$out/bin:$PATH \
+              POETRY_VIRTUALENVS_PATH=$NIX_BUILD_TOP/virtualenvs \
+              PYTHONOPTIMIZE= \
               pytest -m 'not impure'
           '';
         };
