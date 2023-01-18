@@ -47,9 +47,12 @@ Feel free to discuss with our community through
 
 ## Dev Environment Setup
 
-The recommended way is to use
-[![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/copier-org/copier)
-to start hacking with one click!
+The recommended way is:
+
+1. Click on
+   [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/copier-org/copier)
+1. Wait until the terminal that pops up is ready.
+1. Accept the direnv and nix pop-ups that appear.
 
 For local or more complex setups, continue reading.
 
