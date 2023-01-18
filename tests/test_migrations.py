@@ -113,11 +113,11 @@ def test_pre_migration_modifies_answers(tmp_path_factory):
                 "copier.yml": f"""\
                     _envops: {BRACKET_ENVOPS_JSON}
                     best_song_list:
-                      default: [paranoid android]
+                        default: [paranoid android]
                     _migrations:
-                      - version: v2
+                    -   version: v2
                         before:
-                          - - python
+                        -   - python
                             - -c
                             - |
                                 import sys, json, pathlib
@@ -157,21 +157,21 @@ def test_prereleases(tmp_path: Path):
                 "copier.yaml": f"""
                     _envops: {BRACKET_ENVOPS_JSON}
                     _migrations:
-                      - version: v1.9
+                    -   version: v1.9
                         before:
-                          - [python, -c, "import pathlib; pathlib.Path('v1.9').touch()"]
-                      - version: v2.dev0
+                        - [python, -c, "import pathlib; pathlib.Path('v1.9').touch()"]
+                    -   version: v2.dev0
                         before:
-                          - [python, -c, "import pathlib; pathlib.Path('v2.dev0').touch()"]
-                      - version: v2.dev2
+                        - [python, -c, "import pathlib; pathlib.Path('v2.dev0').touch()"]
+                    -   version: v2.dev2
                         before:
-                          - [python, -c, "import pathlib; pathlib.Path('v2.dev2').touch()"]
-                      - version: v2.a1
+                        - [python, -c, "import pathlib; pathlib.Path('v2.dev2').touch()"]
+                    -   version: v2.a1
                         before:
-                          - [python, -c, "import pathlib; pathlib.Path('v2.a1').touch()"]
-                      - version: v2.a2
+                        - [python, -c, "import pathlib; pathlib.Path('v2.a1').touch()"]
+                    -   version: v2.a2
                         before:
-                          - [python, -c, "import pathlib; pathlib.Path('v2.a2').touch()"]
+                        - [python, -c, "import pathlib; pathlib.Path('v2.a2').touch()"]
                 """,
             }
         )

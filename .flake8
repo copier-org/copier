@@ -1,4 +1,6 @@
 [flake8]
-extend-ignore = W503,E203,E501,D100,D101,D102,D103,D104,D105,D107,SIM117
-max-complexity = 20
+ignore = E203, E501, W503, B950
 max-line-length = 88
+select = C,E,F,W,B
+per-file-ignores=
+    __init__.py:F401

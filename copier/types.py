@@ -40,11 +40,14 @@ Env = Mapping[str, str]
 
 
 class AllowArbitraryTypes:
+    """Allow any type for this class."""
+
     arbitrary_types_allowed = True
 
 
 # Validators
 def path_is_absolute(value: Path) -> Path:
+    """Require absolute paths in an argument."""
     if not value.is_absolute():
         from .errors import PathNotAbsoluteError
 
@@ -53,6 +56,7 @@ def path_is_absolute(value: Path) -> Path:
 
 
 def path_is_relative(value: Path) -> Path:
+    """Require relative paths in an argument."""
     if value.is_absolute():
         from .errors import PathNotRelativeError
 
@@ -67,12 +71,16 @@ if TYPE_CHECKING:
 else:
 
     class AbsolutePath(Path):
+        """Require absolute paths in an argument."""
+
         @classmethod
         def __get_validators__(cls) -> "CallableGenerator":
             yield path_validator
             yield path_is_absolute
 
     class RelativePath(Path):
+        """Require relative paths in an argument."""
+
         @classmethod
         def __get_validators__(cls) -> "CallableGenerator":
             yield path_validator

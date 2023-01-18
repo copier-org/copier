@@ -17,6 +17,7 @@ from copier.types import RelativePath
 from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree
 
 
+@pytest.mark.impure
 def test_updatediff(tmp_path_factory):
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     # Prepare repo bundle
@@ -285,6 +286,7 @@ def test_updatediff(tmp_path_factory):
 @pytest.mark.xfail(
     condition=platform.system() == "Windows", reason="Git broken on Windows?"
 )
+@pytest.mark.impure
 def test_commit_hooks_respected(tmp_path_factory):
     """Commit hooks are taken into account when producing the update diff."""
     # Prepare source template v1
@@ -296,9 +298,9 @@ def test_commit_hooks_respected(tmp_path_factory):
                 _envops: {BRACKET_ENVOPS_JSON}
                 _templates_suffix: {SUFFIX_TMPL}
                 _tasks:
-                  - git init
-                  - pre-commit install
-                  - pre-commit run -a || true
+                    - git init
+                    - pre-commit install
+                    - pre-commit run -a || true
                 what: grog
                 """,
                 "[[ _copier_conf.answers_file ]].tmpl": """
@@ -306,17 +308,17 @@ def test_commit_hooks_respected(tmp_path_factory):
                 """,
                 ".pre-commit-config.yaml": r"""
                 repos:
-                - repo: https://github.com/pre-commit/mirrors-prettier
-                  rev: v2.0.4
-                  hooks:
-                    - id: prettier
-                - repo: local
-                  hooks:
-                    - id: forbidden-files
-                      name: forbidden files
-                      entry: found forbidden files; remove them
-                      language: fail
-                      files: "\\.rej$"
+                -   repo: https://github.com/pre-commit/mirrors-prettier
+                    rev: v2.0.4
+                    hooks:
+                    -   id: prettier
+                -   repo: local
+                    hooks:
+                    -   id: forbidden-files
+                        name: forbidden files
+                        entry: found forbidden files; remove them
+                        language: fail
+                        files: "\\.rej$"
                 """,
                 "life.yml.tmpl": """
                 # Following code should be reformatted by pre-commit after copying
@@ -476,7 +478,7 @@ def test_skip_update(tmp_path_factory):
         git("commit", "-m1")
         git("tag", "1.0.0")
     run_copy(str(src), dst, defaults=True, overwrite=True)
-    skip_me: Path = dst / "skip_me"
+    skip_me = dst / "skip_me"
     answers_file = dst / ".copier-answers.yml"
     answers = yaml.safe_load(answers_file.read_text())
     assert skip_me.read_text() == "1"

@@ -1,5 +1,2 @@
-# Defaults for all prettier-supported languages
-bracketSpacing: false
-endOfLine: lf
 printWidth: 88
 proseWrap: always

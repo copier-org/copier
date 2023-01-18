@@ -77,7 +77,9 @@ class Worker:
 
     Example:
         ```python
-        with Worker(src_path="https://github.com/copier-org/autopretty.git", "output") as worker:
+        with Worker(
+            src_path="https://github.com/copier-org/autopretty.git", "output"
+        ) as worker:
             worker.run_copy()
         ```
 
@@ -171,9 +173,11 @@ class Worker:
     conflict: str = "rej"
 
     def __enter__(self):
+        """Allow using worker as a context manager."""
         return self
 
     def __exit__(self, type, value, traceback):
+        """Clean up garbage files after worker usage ends."""
         if value is not None:
             # exception was raised from code inside context manager:
             # try to clean up, ignoring any exception, then re-raise
@@ -302,7 +306,6 @@ class Worker:
         """Determine if a file or directory can be rendered.
 
         Args:
-
             dst_relpath:
                 Relative path to destination.
             is_dir:
@@ -473,7 +476,6 @@ class Worker:
         """Render one file.
 
         Args:
-
             src_abspath:
                 The absolute path to the file that will be rendered.
         """
@@ -824,7 +826,7 @@ class Worker:
 def run_copy(
     src_path: str,
     dst_path: StrOrPath = ".",
-    data: AnyByStrDict = None,
+    data: Optional[AnyByStrDict] = None,
     **kwargs,
 ) -> Worker:
     """Copy a template to a destination, from zero.
@@ -842,7 +844,7 @@ def run_copy(
 
 def run_update(
     dst_path: StrOrPath = ".",
-    data: AnyByStrDict = None,
+    data: Optional[AnyByStrDict] = None,
     **kwargs,
 ) -> Worker:
     """Update a subproject, from its template.
@@ -861,7 +863,7 @@ def run_update(
 def run_auto(
     src_path: OptStr = None,
     dst_path: StrOrPath = ".",
-    data: AnyByStrDict = None,
+    data: Optional[AnyByStrDict] = None,
     **kwargs,
 ) -> Worker:
     """Generate or update a subproject.

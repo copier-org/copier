@@ -3,6 +3,7 @@ import shutil
 from os.path import exists, join
 from pathlib import Path
 
+import pytest
 from plumbum import local
 from plumbum.cmd import git
 
@@ -60,6 +61,7 @@ def test_get_repo():
     )
 
 
+@pytest.mark.impure
 def test_clone():
     tmp = vcs.clone("https://github.com/copier-org/copier.git")
     assert tmp
@@ -67,6 +69,7 @@ def test_clone():
     shutil.rmtree(tmp, ignore_errors=True)
 
 
+@pytest.mark.impure
 def test_removes_temporary_clone(tmp_path):
     src_path = "https://github.com/copier-org/autopretty.git"
     with Worker(src_path=src_path, dst_path=tmp_path, defaults=True) as worker:
@@ -75,6 +78,7 @@ def test_removes_temporary_clone(tmp_path):
     assert not temp_clone.exists()
 
 
+@pytest.mark.impure
 def test_dont_remove_local_clone(tmp_path):
     src_path = vcs.clone("https://github.com/copier-org/autopretty.git")
     with Worker(src_path=src_path, dst_path=tmp_path, defaults=True) as worker:
@@ -82,6 +86,7 @@ def test_dont_remove_local_clone(tmp_path):
     assert exists(src_path)
 
 
+@pytest.mark.impure
 def test_update_using_local_source_path_with_tilde(tmp_path):
     # first, get a local repository clone
     src_path = vcs.clone("https://github.com/copier-org/autopretty.git")
