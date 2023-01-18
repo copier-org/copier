@@ -1,12 +1,16 @@
+github:
+  prebuilds:
+    addBadge: true
+    addCheck: prevent-merge-on-error
+    master: true
+    pullRequests: true
+
 vscode:
   extensions:
     - bpruitt-goddard.mermaid-markdown-syntax-highlighting
     - editorconfig.editorconfig
     - esbenp.prettier-vscode
     - ms-python.python
-
-image:
-  file: .gitpod.dockerfile
 
 ports:
   # Mkdocs local server; start it with `poe docs`
