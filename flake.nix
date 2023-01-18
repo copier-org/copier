@@ -46,7 +46,7 @@
               PATH=$out/bin:$PATH \
               POETRY_VIRTUALENVS_PATH=$NIX_BUILD_TOP/virtualenvs \
               PYTHONOPTIMIZE= \
-              pytest -m 'not impure'
+              pytest --color=yes -m 'not impure'
           '';
         };
         copierModule = pkgs.python3.pkgs.toPythonModule copierApp;
