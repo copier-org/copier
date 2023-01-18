@@ -94,6 +94,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
+
+      # Install Nix and set up Cachix
       - uses: cachix/install-nix-action@v17
         with:
           nix_path: nixpkgs=channel:nixos-unstable
@@ -103,8 +105,28 @@ jobs:
           extraPullNames: devenv
           name: copier
           pushFilter: (-source$|nixpkgs\.tar\.gz$)
+
+      # Cache for poetry venv when using direnv
+      - uses: actions/cache@v3
+        with:
+          path: |
+            .cache
+            .devenv
+            .direnv
+            .venv
+          key:
+            direnv|${{ runner.os }}|${{ hashFiles('pyproject.toml', '*.lock', '*.nix')
+            }}
+
+      # Check direnv works as expected
+      - uses: JRMurr/direnv-nix-action@v2
+        with:
+          install-nix: "false"
+          cache-store: "false"
+      - run: copier --version
+
+      # Run nix checks
       - run: nix flake check -L
-      - run: nix-store --verify --repair --check-contents
 
   publish:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
