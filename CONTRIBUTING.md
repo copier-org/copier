@@ -47,16 +47,18 @@ Feel free to discuss with our community through
 
 ## Dev Environment Setup
 
+The recommended way is to use
+[![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/copier-org/copier)
+to start hacking with one click!
+
+For local or more complex setups, continue reading.
+
 We use some tools as part of our development workflow which you'll need to install into
 your host environment:
 
 -   [Nix](https://nixos.org/download.html) to provide a reproducible development
     environment.
 -   [Direnv](https://direnv.net/) to load that environment automatically in your shell.
-
-Or you can use
-[![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/copier-org/copier)
-to start hacking with one click!
 
 ## Get Started!
 
@@ -121,4 +123,14 @@ To run a subset of tests:
 
 ```shell
 poe test tests/the-tests-file.py
+```
+
+### Nix binary cache
+
+Our direnv configuration is configured to use binary caches by default.
+
+However, to add our binary caches permanently:
+
+```shell
+nix-shell -p cachix --run 'cachix use copier && cachix use devenv'
 ```
