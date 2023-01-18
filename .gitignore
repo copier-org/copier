@@ -58,3 +58,9 @@ htmlcov/
 
 # macOS
 .DS_Store
+
+# Nix
+/.devenv
+/.direnv
+/.pre-commit-config.yaml
+/result*

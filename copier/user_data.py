@@ -135,6 +135,7 @@ class AnswersMap:
         )
 
     def old_commit(self) -> OptStr:
+        """Commit when the project was updated from this template the last time."""
         return self.last.get("_commit")
 
 

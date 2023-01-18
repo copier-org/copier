@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Command line entrypoint. This module declares the Copier CLI applications.
 
@@ -83,6 +82,7 @@ class CopierApp(cli.Application):
 
     Attributes:
         answers_file: Set [answers_file][] option.
+        conflict: Set [conflict][] option.
         exclude: Set [exclude][] option.
         vcs_ref: Set [vcs_ref][] option.
         pretend: Set [pretend][] option.
@@ -356,6 +356,3 @@ if __doc__:
         CopierApp.run(["copier", "--help-all"], exit=False)
     help_io.seek(0)
     __doc__ += f"\n\nCLI help generated from `copier --help-all`:\n\n```\n{help_io.read()}\n```"
-
-if __name__ == "__main__":
-    CopierApp.run()
