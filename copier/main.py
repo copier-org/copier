@@ -551,6 +551,11 @@ class Worker:
         # With an empty suffix, the templated sibling always exists.
         if templated_sibling.exists() and self.template.templates_suffix:
             return None
+        if (
+            self.template.templates_suffix
+            and str(relpath).endswith(self.template.templates_suffix)
+        ):
+            relpath = relpath.with_suffix('')
         rendered_parts = []
         for part in relpath.parts:
             # Skip folder if any part is rendered as an empty string
@@ -558,13 +563,6 @@ class Worker:
             if not part:
                 return None
             rendered_parts.append(part)
-        with suppress(IndexError):
-            # With an empty suffix, the next instruction
-            # would erroneously empty the last rendered part
-            if is_template and self.template.templates_suffix:
-                rendered_parts[-1] = rendered_parts[-1][
-                    : -len(self.template.templates_suffix)
-                ]
         result = Path(*rendered_parts)
         if not is_template:
             templated_sibling = (
