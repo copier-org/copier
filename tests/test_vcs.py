@@ -4,6 +4,7 @@ from os.path import exists, join
 from pathlib import Path
 
 import pytest
+from packaging.version import Version
 from plumbum import local
 from plumbum.cmd import git
 
@@ -82,14 +83,26 @@ def test_local_clone():
 
 
 @pytest.mark.impure
-def test_shallow_clone(tmp_path):
+def test_shallow_clone(tmp_path, recwarn):
     # This test should always work but should be much slower if `is_git_shallow_repo()` is not
     # checked in `vcs.clone()`.
     src_path = str(tmp_path / "autopretty")
     git("clone", "--depth=2", "https://github.com/copier-org/autopretty.git", src_path)
     assert exists(join(src_path, "README.md"))
 
-    local_tmp = vcs.clone(str(src_path))
+    if vcs.GIT_VERSION >= Version("2.27"):
+        with pytest.warns(
+            UserWarning,
+            match=(
+                f"The repository '{src_path}' is a shallow clone, this might lead to unexpected "
+                "failure or unusually high resource consumption."
+            ),
+        ):
+            local_tmp = vcs.clone(str(src_path))
+    else:
+        assert len(recwarn) == 0
+        local_tmp = vcs.clone(str(src_path))
+        assert len(recwarn) == 0
     assert local_tmp
     assert exists(join(local_tmp, "README.md"))
     shutil.rmtree(local_tmp, ignore_errors=True)

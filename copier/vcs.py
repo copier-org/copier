@@ -147,7 +147,12 @@ def clone(url: str, ref: OptStr = None) -> str:
     # Faster clones if possible
     if GIT_VERSION >= Version("2.27"):
         file_url = re.match("(file://)?(.*)", url).groups()[-1]
-        if not is_git_shallow_repo(file_url):
+        if is_git_shallow_repo(file_url):
+            warn(
+                f"The repository '{url}' is a shallow clone, this might lead to unexpected "
+                "failure or unusually high resource consumption."
+            )
+        else:
             _clone = _clone["--filter=blob:none"]
     _clone()
 
