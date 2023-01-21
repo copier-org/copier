@@ -510,6 +510,7 @@ class Worker:
         ):
             return
         if not self.pretend:
+            dst_abspath.parent.mkdir(parents=True, exist_ok=True)
             dst_abspath.write_bytes(new_content)
             dst_abspath.chmod(src_mode)
 
