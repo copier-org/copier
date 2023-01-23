@@ -8,7 +8,7 @@ from packaging.version import Version
 from plumbum import local
 from plumbum.cmd import git
 
-from copier import Worker, run_copy, run_update, vcs
+from copier import Worker, errors, run_copy, run_update, vcs
 
 
 def test_get_repo():
@@ -91,13 +91,7 @@ def test_shallow_clone(tmp_path, recwarn):
     assert exists(join(src_path, "README.md"))
 
     if vcs.GIT_VERSION >= Version("2.27"):
-        with pytest.warns(
-            UserWarning,
-            match=(
-                f"The repository '{src_path}' is a shallow clone, this might lead to unexpected "
-                "failure or unusually high resource consumption."
-            ),
-        ):
+        with pytest.warns(errors.ShallowCloneWarning):
             local_tmp = vcs.clone(str(src_path))
     else:
         assert len(recwarn) == 0

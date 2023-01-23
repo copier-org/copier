@@ -12,7 +12,7 @@ from packaging.version import Version
 from plumbum import TF, ProcessExecutionError, colors, local
 from plumbum.cmd import git
 
-from .errors import DirtyLocalWarning
+from .errors import DirtyLocalWarning, ShallowCloneWarning
 from .tools import TemporaryDirectory
 from .types import OptBool, OptStr, StrOrPath
 
@@ -150,7 +150,8 @@ def clone(url: str, ref: OptStr = None) -> str:
         if is_git_shallow_repo(file_url):
             warn(
                 f"The repository '{url}' is a shallow clone, this might lead to unexpected "
-                "failure or unusually high resource consumption."
+                "failure or unusually high resource consumption.",
+                ShallowCloneWarning,
             )
         else:
             _clone = _clone["--filter=blob:none"]
