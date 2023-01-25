@@ -70,7 +70,13 @@ def test_good_cli_run_dot_config(tmp_path, template_path_with_dot_config):
         git_commands()
 
     run_result = CopierApp.run(
-        ["--quiet", "-a", ".config/altered-answers.yml", str(template_path_with_dot_config), str(tmp_path)],
+        [
+            "--quiet",
+            "-a",
+            ".config/altered-answers.yml",
+            str(template_path_with_dot_config),
+            str(tmp_path),
+        ],
         exit=False,
     )
     a_txt = tmp_path / "a.txt"
