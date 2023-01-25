@@ -23,7 +23,7 @@ other Git ref you want.
 When updating, Copier will do its best to respect your project evolution by using the
 answers you provided when copied last time. However, sometimes it's impossible for
 Copier to know what to do with a diff code hunk. In those cases, copier handles the
-conflict one of two ways, controlled with the `--conflict` option:
+conflict in one of two ways, controlled with the `--conflict` option:
 
 -   `--conflict rej` (default): Creates a separate `.rej` file for each file with
     conflicts. These files contain the unresolved diffs.
@@ -82,7 +82,7 @@ repos:
 **The correct process to update a subproject** is:
 
 1. Run `copier update`.
-1. Answer to the questions. They'll default to your answers on your last update.
+1. Answer the questions. They'll default to your answers on your last update.
 
 If you want to just reuse all previous answers:
 
@@ -146,22 +146,22 @@ class compare,update,apply blackborder;
 
 As you can see here, `copier` does several things:
 
--   it regenerates a fresh project from the current template version
--   then it compares both version, to get the diff from "fresh project" to "current
-    project"
--   now it applies pre-migrations to your project, and updates the current project with
-    the latest template changes (asking confirmation)
--   finally, it re-applies the previously obtained diff, and then run the
-    post-migrations
+-   It regenerates a fresh project from the current template version.
+-   Then, it compares both version to get the diff from "fresh project" to "current
+    project".
+-   Now, it applies pre-migrations to your project, and updates the current project with
+    the latest template changes (asking for confirmation).
+-   Finally, it re-applies the previously obtained diff and then runs the
+    post-migrations.
 
 !!! important
 
     The diff obtained by comparing the fresh, regenerated project to your
     current project can cancel the modifications applied by the update from the latest
-    template version. During the process, `copier` will ask you confirmation to overwrite or
-    skip modifications, but in the end, it is possible that nothing has changed (except for
-    the version in `.copier-answers.yml` of course). This is not a bug: although it can be
-    quite surprising, this behavior is correct.
+    template version. During the process, `copier` will ask for your confirmation to
+    overwrite or skip modifications, but in the end, it is possible that nothing has
+    changed (except for the version in `.copier-answers.yml` of course). This is not a
+    bug: although it can be quite surprising, this behavior is correct.
 
 ## Migration across Copier major versions
 
@@ -173,7 +173,7 @@ did before.
 in its old state with its old answers so it can actually produce a diff with the new
 state and answers and apply the smart update to the project. However, **how can I be
 sure that Copier will produce the same "old state" if I copied the template with an
-older Copier major release?**. Good question.
+older Copier major release?** Good question.
 
 We will do our best to respect older behaviors for at least one extra major release
 cycle, but the simpler answer is that you can't be sure of that.
