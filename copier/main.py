@@ -558,6 +558,11 @@ class Worker:
             if not part:
                 return None
             rendered_parts.append(part)
+
+        # The following logic was added based on the discussion: https://github.com/copier-org/copier/discussions/859
+        if len(rendered_parts) > 1 and str(self.answers_relpath).startswith(rendered_parts[0]):
+            rendered_parts.pop(0)
+
         with suppress(IndexError):
             # With an empty suffix, the next instruction
             # would erroneously empty the last rendered part
