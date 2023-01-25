@@ -62,6 +62,10 @@ def test_good_cli_run(tmp_path, template_path):
 
 
 def test_good_cli_run_dot_config(tmp_path, template_path_with_dot_config):
+    """Function to test different locations of the answersfile.
+
+    Added based on the discussion: https://github.com/copier-org/copier/discussions/859
+    """
     with local.cwd(str(template_path_with_dot_config)):
         git_commands()
 
@@ -87,7 +91,6 @@ def test_good_cli_run_dot_config(tmp_path, template_path_with_dot_config):
     assert answers["_src_path"] == str(template_path_with_dot_config)
 
 
-# TODO Rename this here and in `test_good_cli_run_dot_config`
 def git_commands():
     git("init")
     git("add", "-A")
