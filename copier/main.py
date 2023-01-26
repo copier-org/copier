@@ -552,7 +552,7 @@ class Worker:
         if templated_sibling.exists() and self.template.templates_suffix:
             return None
         if self.template.templates_suffix and is_template:
-            relpath = relpath.with_suffix('')
+            relpath = relpath.with_suffix("")
         rendered_parts = []
         for part in relpath.parts:
             # Skip folder if any part is rendered as an empty string
