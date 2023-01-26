@@ -447,6 +447,14 @@ class Template:
         return result
 
     @cached_property
+    def preserve_symlinks(self) -> bool:
+        """Know if Copier should preserve symlinks when rendering the template.
+
+        See [preserve_symlinks][].
+        """
+        return bool(self.config_data.get("preserve_symlinks", False))
+
+    @cached_property
     def local_abspath(self) -> Path:
         """Get the absolute path to the template on disk.
 

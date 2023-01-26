@@ -11,7 +11,7 @@ from functools import partial
 from itertools import chain
 from pathlib import Path
 from shutil import rmtree
-from typing import Callable, Iterable, Mapping, Optional, Sequence
+from typing import Callable, Iterable, Mapping, Optional, Sequence, Union
 from unicodedata import normalize
 
 from jinja2.loaders import FileSystemLoader
@@ -29,7 +29,7 @@ from questionary import unsafe_prompt
 from .errors import CopierAnswersInterrupt, ExtensionNotFoundError, UserMessageError
 from .subproject import Subproject
 from .template import Task, Template
-from .tools import Style, TemporaryDirectory, printf
+from .tools import Style, TemporaryDirectory, printf, readlink
 from .types import (
     AnyByStrDict,
     JSONSerializable,
@@ -302,7 +302,11 @@ class Worker:
         return bool(ask(f" Overwrite {dst_relpath}?", default=True))
 
     def _render_allowed(
-        self, dst_relpath: Path, is_dir: bool = False, expected_contents: bytes = b""
+        self,
+        dst_relpath: Path,
+        is_dir: bool = False,
+        is_symlink: bool = False,
+        expected_contents: Union[bytes, Path] = b"",
     ) -> bool:
         """Determine if a file or directory can be rendered.
 
@@ -311,6 +315,8 @@ class Worker:
                 Relative path to destination.
             is_dir:
                 Indicate if the path must be treated as a directory or not.
+            is_symlink:
+                Indicate if the path must be treated as a symlink or not.
             expected_contents:
                 Used to compare existing file contents with them. Allows to know if
                 rendering is needed.
@@ -321,7 +327,11 @@ class Worker:
         if dst_relpath != Path(".") and self.match_exclude(dst_relpath):
             return False
         try:
-            previous_content = dst_abspath.read_bytes()
+            previous_content: Union[bytes, Path]
+            if is_symlink:
+                previous_content = readlink(dst_abspath)
+            else:
+                previous_content = dst_abspath.read_bytes()
         except FileNotFoundError:
             printf(
                 "create",
@@ -519,6 +529,45 @@ class Worker:
             dst_abspath.write_bytes(new_content)
             dst_abspath.chmod(src_mode)
 
+    def _render_symlink(self, src_abspath: Path) -> None:
+        """Render one symlink.
+
+        Args:
+            src_abspath:
+                Symlink to be rendered. It must be an absolute path within
+                the template.
+        """
+        assert src_abspath.is_absolute()
+        src_relpath = src_abspath.relative_to(self.template_copy_root)
+        dst_relpath = self._render_path(src_relpath)
+        if dst_relpath is None:
+            return
+        dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
+
+        src_target = readlink(src_abspath)
+        if src_abspath.name.endswith(self.template.templates_suffix):
+            dst_target = Path(self._render_string(str(src_target)))
+        else:
+            dst_target = src_target
+
+        if not self._render_allowed(
+            dst_relpath,
+            expected_contents=dst_target,
+            is_symlink=True,
+        ):
+            return
+
+        if not self.pretend:
+            # symlink_to doesn't overwrite existing files, so delete it first
+            if dst_abspath.is_symlink() or dst_abspath.exists():
+                dst_abspath.unlink()
+            dst_abspath.symlink_to(dst_target)
+            if sys.platform == "darwin":
+                # Only macOS supports permissions on symlinks.
+                # Other platforms just copy the permission of the target
+                src_mode = src_abspath.lstat().st_mode
+                dst_abspath.lchmod(src_mode)
+
     def _render_folder(self, src_abspath: Path) -> None:
         """Recursively render a folder.
 
@@ -540,6 +589,8 @@ class Worker:
         for file in src_abspath.iterdir():
             if file.is_dir():
                 self._render_folder(file)
+            elif file.is_symlink() and self.template.preserve_symlinks:
+                self._render_symlink(file)
             else:
                 self._render_file(file)
 
