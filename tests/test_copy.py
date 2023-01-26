@@ -352,15 +352,14 @@ def test_value_with_forward_slash(tmp_path_factory):
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
-            src / "{{ filename.replace('.', sep) }}.txt"
-            : "This is template.",
+            src
+            / "{{ filename.replace('.', _copier_conf.sep) }}.txt": "This is template.",
         }
     )
     copier.run_auto(
         str(src),
         dst,
         data={
-            "sep": "/",
             "filename": "a.b.c",
         },
     )

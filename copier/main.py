@@ -1,5 +1,6 @@
 """Main functions and classes, used to generate or update projects."""
 
+import os
 import platform
 import subprocess
 import sys
@@ -244,6 +245,7 @@ class Worker:
                 "answers_file": self.answers_relpath,
                 "src_path": self.template.local_abspath,
                 "vcs_ref_hash": self.template.commit_hash,
+                "sep": os.sep,
             }
         )
 
