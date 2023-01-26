@@ -551,10 +551,7 @@ class Worker:
         # With an empty suffix, the templated sibling always exists.
         if templated_sibling.exists() and self.template.templates_suffix:
             return None
-        if (
-            self.template.templates_suffix
-            and str(relpath).endswith(self.template.templates_suffix)
-        ):
+        if self.template.templates_suffix and is_template:
             relpath = relpath.with_suffix('')
         rendered_parts = []
         for part in relpath.parts:
