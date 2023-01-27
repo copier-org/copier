@@ -113,3 +113,7 @@ class OldTemplateWarning(UserWarning, CopierWarning):
 
 class DirtyLocalWarning(UserWarning, CopierWarning):
     """Changes and untracked files present in template."""
+
+
+class ShallowCloneWarning(UserWarning, CopierWarning):
+    """The template repository is a shallow clone."""
