@@ -1,5 +1,6 @@
 """Main functions and classes, used to generate or update projects."""
 
+import os
 import platform
 import subprocess
 import sys
@@ -244,6 +245,7 @@ class Worker:
                 "answers_file": self.answers_relpath,
                 "src_path": self.template.local_abspath,
                 "vcs_ref_hash": self.template.commit_hash,
+                "sep": os.sep,
             }
         )
 
@@ -510,6 +512,7 @@ class Worker:
         ):
             return
         if not self.pretend:
+            dst_abspath.parent.mkdir(parents=True, exist_ok=True)
             dst_abspath.write_bytes(new_content)
             dst_abspath.chmod(src_mode)
 
