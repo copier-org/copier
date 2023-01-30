@@ -135,6 +135,8 @@ def test_copy(tmp_path: Path) -> None:
     assert not (tmp_path / "py2_folder" / "thing.py").exists()
     assert (tmp_path / "py3_folder" / "thing.py").exists()
 
+    assert (tmp_path / "aaaa.txt").exists()
+
 
 @pytest.mark.impure
 def test_copy_repo(tmp_path: Path) -> None:
@@ -288,22 +290,28 @@ def test_empty_dir(tmp_path_factory: pytest.TempPathFactory, generate: bool) -> 
             ),
             (src / "tpl" / "two.txt"): "[[ do_it ]]",
             (src / "tpl" / "[% if do_it %]three.txt[% endif %].jinja"): "[[ do_it ]]",
-            (src / "tpl" / "four" / "[% if do_it %]five.txt[% endif %].jinja"): (
+            (src / "tpl" / "[% if do_it %]four.txt[% endif %].jinja"): Path(
+                "[% if do_it %]three.txt[% endif %].jinja"
+            ),
+            (src / "tpl" / "five" / "[% if do_it %]six.txt[% endif %].jinja"): (
                 "[[ do_it ]]"
             ),
         },
     )
     copier.run_copy(str(src), dst, {"do_it": generate}, defaults=True, overwrite=True)
-    assert (dst / "four").is_dir()
+    assert (dst / "five").is_dir()
     assert (dst / "two.txt").read_text() == "[[ do_it ]]"
     assert (dst / "one_dir").exists() == generate
     assert (dst / "three.txt").exists() == generate
+    assert (dst / "four.txt").exists() == generate
     assert (dst / "one_dir").is_dir() == generate
     assert (dst / "one_dir" / "one.txt").is_file() == generate
     if generate:
         assert (dst / "one_dir" / "one.txt").read_text() == repr(generate)
         assert (dst / "three.txt").read_text() == repr(generate)
-        assert (dst / "four" / "five.txt").read_text() == repr(generate)
+        assert not (dst / "four.txt").is_symlink()
+        assert (dst / "four.txt").read_text() == repr(generate)
+        assert (dst / "five" / "six.txt").read_text() == repr(generate)
 
 
 @pytest.mark.skipif(

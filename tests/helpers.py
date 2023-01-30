@@ -6,7 +6,7 @@ import textwrap
 from enum import Enum
 from hashlib import sha1
 from pathlib import Path
-from typing import Mapping, Optional, Tuple, Union, cast
+from typing import Mapping, Optional, Tuple, Union
 
 from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
@@ -100,18 +100,30 @@ def assert_file(tmp_path: Path, *path: str) -> None:
 
 
 def build_file_tree(
-    spec: Mapping[StrOrPath, Union[str, bytes]], dedent: bool = True
-) -> None:
-    """Builds a file tree based on the received spec."""
+    spec: Mapping[StrOrPath, Union[str, bytes, Path]], dedent: bool = True
+):
+    """Builds a file tree based on the received spec.
+
+    Params:
+        spec:
+            A mapping from filesystem paths to file contents. If the content is
+            a Path object a symlink to the path will be created instead.
+
+        dedent: Dedent file contents.
+    """
     for path, contents in spec.items():
         path = Path(path)
-        binary = isinstance(contents, bytes)
-        if not binary and dedent:
-            contents = textwrap.dedent(cast(str, contents))
         path.parent.mkdir(parents=True, exist_ok=True)
-        mode = "wb" if binary else "w"
-        with path.open(mode) as fd:
-            fd.write(contents)
+        if isinstance(contents, Path):
+            os.symlink(str(contents), path)
+        else:
+            binary = isinstance(contents, bytes)
+            if not binary and dedent:
+                assert isinstance(contents, str)
+                contents = textwrap.dedent(contents)
+            mode = "wb" if binary else "w"
+            with path.open(mode) as fd:
+                fd.write(contents)
 
 
 def expect_prompt(
