@@ -1,5 +1,6 @@
 import subprocess
 import sys
+from typing import Callable, Generator
 
 import pytest
 import yaml
@@ -28,23 +29,28 @@ def template_path(tmp_path_factory) -> str:
 
 
 @pytest.fixture(scope="module")
-def template_path_with_dot_config(tmp_path_factory) -> str:
-    root = tmp_path_factory.mktemp("template")
-    build_file_tree(
-        {
-            root
-            / ".config/{{ _copier_conf.answers_file }}.jinja": """\
-                # Changes here will be overwritten by Copier
-                {{ _copier_answers|to_nice_yaml }}
+def template_path_with_dot_config(
+    tmp_path_factory,
+) -> Generator[Callable[[str], str], str, None]:
+    def _template_path_with_dot_config(config_folder: str) -> str:
+        root = tmp_path_factory.mktemp("template")
+        build_file_tree(
+            {
+                root
+                / f"{config_folder}{{{{ _copier_conf.answers_file }}}}.jinja": """\
+                    # Changes here will be overwritten by Copier
+                    {{ _copier_answers|to_nice_yaml }}
+                    """,
+                root / "a.txt": "EXAMPLE_CONTENT",
+                root
+                / "copier.yaml": """\
+                _answers_file: altered-answers.yml
                 """,
-            root / "a.txt": "EXAMPLE_CONTENT",
-            root
-            / "copier.yaml": """\
-            _answers_file: altered-answers.yml
-            """,
-        }
-    )
-    return str(root)
+            }
+        )
+        return str(root)
+
+    yield _template_path_with_dot_config
 
 
 def test_good_cli_run(tmp_path, template_path):
@@ -61,20 +67,29 @@ def test_good_cli_run(tmp_path, template_path):
     assert answers["_src_path"] == str(template_path)
 
 
-def test_good_cli_run_dot_config(tmp_path, template_path_with_dot_config):
+@pytest.mark.parametrize(
+    "config_folder",
+    ["", ".config/", ".config/subconfig/", ".config/subconfig/deep_nested_config/"],
+)
+def test_good_cli_run_dot_config(
+    tmp_path, template_path_with_dot_config, config_folder
+):
     """Function to test different locations of the answersfile.
 
     Added based on the discussion: https://github.com/copier-org/copier/discussions/859
     """
-    with local.cwd(str(template_path_with_dot_config)):
+
+    config_path = template_path_with_dot_config(config_folder)
+
+    with local.cwd(config_path):
         git_commands()
 
     run_result = CopierApp.run(
         [
             "--quiet",
             "-a",
-            ".config/altered-answers.yml",
-            str(template_path_with_dot_config),
+            f"{config_folder}altered-answers.yml",
+            config_path,
             str(tmp_path),
         ],
         exit=False,
@@ -84,17 +99,19 @@ def test_good_cli_run_dot_config(tmp_path, template_path_with_dot_config):
     assert a_txt.exists()
     assert a_txt.is_file()
     assert a_txt.read_text() == "EXAMPLE_CONTENT"
-    answers = yaml.safe_load((tmp_path / ".config/altered-answers.yml").read_text())
-    assert answers["_src_path"] == str(template_path_with_dot_config)
+    answers = yaml.safe_load(
+        (tmp_path / f"{config_folder}altered-answers.yml").read_text()
+    )
+    assert answers["_src_path"] == config_path
 
     with local.cwd(str(tmp_path)):
         git_commands()
 
     run_update = CopierApp.invoke(
-        str(tmp_path), answers_file=".config/altered-answers.yml", quiet=True
+        str(tmp_path), answers_file=f"{config_folder}altered-answers.yml", quiet=True
     )
     assert run_update[1] == 0
-    assert answers["_src_path"] == str(template_path_with_dot_config)
+    assert answers["_src_path"] == config_path
 
 
 def git_commands():
