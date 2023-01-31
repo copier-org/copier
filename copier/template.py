@@ -303,7 +303,7 @@ class Template:
         return tuple(
             self.config_data.get(
                 "exclude",
-                [] if Path(self.subdirectory) != Path(".") else DEFAULT_EXCLUDE,
+                DEFAULT_EXCLUDE if Path(self.subdirectory) == Path(".") else [],
             )
         )
 
