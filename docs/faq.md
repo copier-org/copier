@@ -98,3 +98,9 @@ class ContextUpdater(ContextHook):
 
 Now you can use these added variables in your Jinja templates, and in files and folders
 names!
+
+## Why Copier consumes a lot of resources?
+
+If the repository containing the template is a shallow clone, the git process called by
+Copier might consume unusually high resources. To avoid that, use a fully-cloned
+repository.

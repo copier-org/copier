@@ -458,6 +458,39 @@ ci:
     On Windows, double-quotes are not valid characters in file and directory paths.
     This is why we used **single-quotes** in the example above.
 
+## Generating a directory structure
+
+You can use answers to generate file names as well as whole directory structures.
+
+```yaml title="copier.yml"
+package:
+    type: str
+    help: Package name
+```
+
+```shell
+📁 your_template
+├── 📄 copier.yml
+└── 📄 {{ package.replace('.', _copier_conf.sep) }}{{ _copier_conf.sep }}__main__.py.jinja
+```
+
+If you answer
+
+> your_package.cli.main
+
+Copier will generate this structure:
+
+```shell
+📁 your_project
+└── 📁 your_package
+    └── 📁 cli
+        └── 📁 main
+            └── 📄 __main__.py
+```
+
+You can either use any separator, like `.`, and replace it with `_copier_conf.sep`, like
+in the example above, or just use `/` in the answer (works on Windows too).
+
 ## Available settings
 
 Template settings alter how the template is rendered.

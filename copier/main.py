@@ -1,5 +1,6 @@
 """Main functions and classes, used to generate or update projects."""
 
+import os
 import platform
 import subprocess
 import sys
@@ -244,6 +245,7 @@ class Worker:
                 "answers_file": self.answers_relpath,
                 "src_path": self.template.local_abspath,
                 "vcs_ref_hash": self.template.commit_hash,
+                "sep": os.sep,
             }
         )
 
@@ -510,6 +512,7 @@ class Worker:
         ):
             return
         if not self.pretend:
+            dst_abspath.parent.mkdir(parents=True, exist_ok=True)
             dst_abspath.write_bytes(new_content)
             dst_abspath.chmod(src_mode)
 
@@ -551,6 +554,8 @@ class Worker:
         # With an empty suffix, the templated sibling always exists.
         if templated_sibling.exists() and self.template.templates_suffix:
             return None
+        if self.template.templates_suffix and is_template:
+            relpath = relpath.with_suffix("")
         rendered_parts = []
         for part in relpath.parts:
             # Skip folder if any part is rendered as an empty string
@@ -560,14 +565,6 @@ class Worker:
             if str(self.answers_relpath) in part:
                 part = Path(part).name
             rendered_parts.append(part)
-
-        with suppress(IndexError):
-            # With an empty suffix, the next instruction
-            # would erroneously empty the last rendered part
-            if is_template and self.template.templates_suffix:
-                rendered_parts[-1] = rendered_parts[-1][
-                    : -len(self.template.templates_suffix)
-                ]
         result = Path(*rendered_parts)
         if not is_template:
             templated_sibling = (

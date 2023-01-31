@@ -346,3 +346,24 @@ def test_commit_hash(src_repo, tmp_path):
     copier.run_copy(str(src_repo), tmp_path)
     assert tmp_path.joinpath("tag").read_text() == "1.0"
     assert tmp_path.joinpath("commit").read_text() == commit
+
+
+def test_value_with_forward_slash(tmp_path_factory):
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src
+            / "{{ filename.replace('.', _copier_conf.sep) }}.txt": "This is template.",
+        }
+    )
+    copier.run_auto(
+        str(src),
+        dst,
+        data={
+            "filename": "a.b.c",
+        },
+    )
+
+    file_rendered = (dst / "a" / "b" / "c.txt").read_text()
+    file_expected = "This is template."
+    assert file_rendered == file_expected

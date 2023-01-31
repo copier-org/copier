@@ -4,10 +4,11 @@ from os.path import exists, join
 from pathlib import Path
 
 import pytest
+from packaging.version import Version
 from plumbum import local
 from plumbum.cmd import git
 
-from copier import Worker, run_copy, run_update, vcs
+from copier import Worker, errors, run_copy, run_update, vcs
 
 
 def test_get_repo():
@@ -70,6 +71,38 @@ def test_clone():
 
 
 @pytest.mark.impure
+def test_local_clone():
+    tmp = vcs.clone("https://github.com/copier-org/copier.git")
+    assert tmp
+    assert exists(join(tmp, "README.md"))
+
+    local_tmp = vcs.clone(str(tmp))
+    assert local_tmp
+    assert exists(join(local_tmp, "README.md"))
+    shutil.rmtree(local_tmp, ignore_errors=True)
+
+
+@pytest.mark.impure
+def test_shallow_clone(tmp_path, recwarn):
+    # This test should always work but should be much slower if `is_git_shallow_repo()` is not
+    # checked in `vcs.clone()`.
+    src_path = str(tmp_path / "autopretty")
+    git("clone", "--depth=2", "https://github.com/copier-org/autopretty.git", src_path)
+    assert exists(join(src_path, "README.md"))
+
+    if vcs.GIT_VERSION >= Version("2.27"):
+        with pytest.warns(errors.ShallowCloneWarning):
+            local_tmp = vcs.clone(str(src_path))
+    else:
+        assert len(recwarn) == 0
+        local_tmp = vcs.clone(str(src_path))
+        assert len(recwarn) == 0
+    assert local_tmp
+    assert exists(join(local_tmp, "README.md"))
+    shutil.rmtree(local_tmp, ignore_errors=True)
+
+
+@pytest.mark.impure
 def test_removes_temporary_clone(tmp_path):
     src_path = "https://github.com/copier-org/autopretty.git"
     with Worker(src_path=src_path, dst_path=tmp_path, defaults=True) as worker:
@@ -80,7 +113,8 @@ def test_removes_temporary_clone(tmp_path):
 
 @pytest.mark.impure
 def test_dont_remove_local_clone(tmp_path):
-    src_path = vcs.clone("https://github.com/copier-org/autopretty.git")
+    src_path = str(tmp_path / "autopretty")
+    git("clone", "https://github.com/copier-org/autopretty.git", src_path)
     with Worker(src_path=src_path, dst_path=tmp_path, defaults=True) as worker:
         worker.run_copy()
     assert exists(src_path)
@@ -89,7 +123,8 @@ def test_dont_remove_local_clone(tmp_path):
 @pytest.mark.impure
 def test_update_using_local_source_path_with_tilde(tmp_path):
     # first, get a local repository clone
-    src_path = vcs.clone("https://github.com/copier-org/autopretty.git")
+    src_path = str(tmp_path / "autopretty")
+    git("clone", "https://github.com/copier-org/autopretty.git", src_path)
 
     # then prepare the user path to this clone (starting with ~)
     if os.name == "nt":
