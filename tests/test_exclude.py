@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from copier.main import run_auto
+from copier.template import DEFAULT_EXCLUDE
 
 from .helpers import PROJECT_TEMPLATE, build_file_tree
 
@@ -91,3 +92,38 @@ def test_path_filter(tmp_path_factory):
     run_auto(str(src), dst)
     for key, value in file_excluded.items():
         assert (dst / key).exists() != value
+
+
+def test_config_exclude_with_subdirectory(tmp_path_factory):
+    """Default excludes are not applied when a (true) subdirectory is specified."""
+    # Make sure the file under test is in the list of default excludes
+    assert "copier.yml" in DEFAULT_EXCLUDE
+
+    src, dst = tmp_path_factory.mktemp("src"), tmp_path_factory.mktemp("dst")
+    build_file_tree(
+        {
+            src / "copier.yml": "_subdirectory: 'template'",
+            src / "template" / "copier.yml": "",
+        }
+    )
+    run_auto(str(src), dst, quiet=True)
+    assert (dst / "copier.yml").exists()
+
+    src, dst = tmp_path_factory.mktemp("src"), tmp_path_factory.mktemp("dst")
+    build_file_tree(
+        {src / "copier.yml": "_subdirectory: '.'", src / "template" / "copier.yml": ""}
+    )
+    run_auto(str(src), dst, quiet=True)
+    assert not (dst / "template" / "copier.yml").exists()
+
+    src, dst = tmp_path_factory.mktemp("src"), tmp_path_factory.mktemp("dst")
+    build_file_tree(
+        {src / "copier.yml": "_subdirectory: ''", src / "template" / "copier.yml": ""}
+    )
+    run_auto(str(src), dst, quiet=True)
+    assert not (dst / "template" / "copier.yml").exists()
+
+    src, dst = tmp_path_factory.mktemp("src"), tmp_path_factory.mktemp("dst")
+    build_file_tree({src / "copier.yml": "", src / "template" / "copier.yml": ""})
+    run_auto(str(src), dst, quiet=True)
+    assert not (dst / "template" / "copier.yml").exists()

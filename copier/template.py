@@ -300,7 +300,12 @@ class Template:
 
         See [exclude][].
         """
-        return tuple(self.config_data.get("exclude", DEFAULT_EXCLUDE))
+        return tuple(
+            self.config_data.get(
+                "exclude",
+                DEFAULT_EXCLUDE if Path(self.subdirectory) == Path(".") else [],
+            )
+        )
 
     @cached_property
     def jinja_extensions(self) -> Tuple[str, ...]:

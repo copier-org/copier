@@ -643,6 +643,12 @@ The CLI option can be passed several times to add several patterns.
 
 !!! info
 
+    When the [`subdirectory`](#subdirectory) parameter is defined and its value is the
+    path of an actual subdirectory (i.e. not `""` or `"."` or `"./"`), then the default
+    value of the `exclude` parameter is `[]`.
+
+!!! info
+
     When you add this parameter from CLI or API, it will **not replace** the values
     defined in `copier.yml` (or the defaults, if missing).
 
