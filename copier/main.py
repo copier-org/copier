@@ -502,8 +502,6 @@ class Worker:
         else:
             new_content = src_abspath.read_bytes()
         dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
-        if dst_abspath.is_dir():
-            return
         src_mode = src_abspath.stat().st_mode
         if not self._render_allowed(
             dst_relpath,
