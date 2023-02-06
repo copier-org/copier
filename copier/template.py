@@ -88,6 +88,7 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
     Raises:
         InvalidConfigFileError: When the file is formatted badly.
     """
+
     class _Loader(yaml.FullLoader):
         ...
 
