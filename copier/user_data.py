@@ -12,7 +12,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    ChainMap as t_ChainMap,
     Dict,
     Mapping,
     Optional,
@@ -121,7 +120,7 @@ class AnswersMap:
     default: AnyByStrDict = field(default_factory=dict)
 
     @cached_property
-    def combined(self) -> t_ChainMap[str, Any]:
+    def combined(self) -> Mapping[str, Any]:
         """Answers combined from different sources, sorted by priority."""
         return ChainMap(
             self.local,
