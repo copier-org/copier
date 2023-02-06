@@ -92,26 +92,28 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
         loader_class=yaml.FullLoader, base_dir=conf_path.parent
     )
 
-    try:
-        with open(conf_path) as f:
+    with open(conf_path) as f:
+        try:
             flattened_result = lflatten(yaml.load_all(f, Loader=yaml.FullLoader))
-            merged_options = defaultdict(list)
-            for option in (
-                "_exclude",
-                "_jinja_extensions",
-                "_secret_questions",
-                "_skip_if_exists",
-            ):
-                for result in flattened_result:
-                    try:
-                        values = result[option]
-                    except KeyError:
-                        pass
-                    else:
-                        merged_options[option].extend(values)
-            return dict(ChainMap(dict(merged_options), *reversed(flattened_result)))
-    except yaml.parser.ParserError as e:
-        raise InvalidConfigFileError(conf_path, quiet) from e
+        except yaml.parser.ParserError as e:
+            raise InvalidConfigFileError(conf_path, quiet) from e
+
+    merged_options = defaultdict(list)
+    for option in (
+        "_exclude",
+        "_jinja_extensions",
+        "_secret_questions",
+        "_skip_if_exists",
+    ):
+        for result in flattened_result:
+            try:
+                values = result[option]
+            except KeyError:
+                pass
+            else:
+                merged_options[option].extend(values)
+
+    return dict(ChainMap(dict(merged_options), *reversed(flattened_result)))
 
 
 def verify_copier_version(version_str: str) -> None:
