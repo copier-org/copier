@@ -88,13 +88,16 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
     Raises:
         InvalidConfigFileError: When the file is formatted badly.
     """
+    class _Loader(yaml.FullLoader):
+        ...
+
     YamlIncludeConstructor.add_to_loader_class(
-        loader_class=yaml.FullLoader, base_dir=conf_path.parent
+        loader_class=_Loader, base_dir=conf_path.parent
     )
 
     try:
         with open(conf_path) as f:
-            flattened_result = lflatten(yaml.load_all(f, Loader=yaml.FullLoader))
+            flattened_result = lflatten(yaml.load_all(f, Loader=_Loader))
             merged_options = defaultdict(list)
             for option in (
                 "_exclude",
