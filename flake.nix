@@ -1,4 +1,11 @@
 {
+  description = "Source code project lifecycle management tool";
+
+  nixConfig = {
+    extra-trusted-public-keys = "copier.cachix.org-1:sVkdQyyNXrgc53qXPCH9zuS91zpt5eBYcg7JQSmTBG4=";
+    extra-substituters = "https://copier.cachix.org";
+  };
+
   inputs = {
     devenv.url = "github:cachix/devenv/v0.5";
     flake-compat = {
