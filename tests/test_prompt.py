@@ -224,7 +224,7 @@ def test_placeholder(tmp_path_factory, spawn):
     assert answers == {
         "_src_path": str(template),
         "question_1": "answer 1",
-        "question_2": None,
+        "question_2": "",
     }
 
 
@@ -477,3 +477,126 @@ def test_var_name_value_allowed(tmp_path_factory, spawn):
     # Check answers file
     answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
     assert answers["value"] == "string"
+
+
+@pytest.mark.parametrize(
+    "type_name, expected_answer",
+    [
+        ("str", ""),
+        ("int", ValueError("Invalid input")),
+        ("float", ValueError("Invalid input")),
+        ("json", ValueError("Invalid input")),
+        ("yaml", None),
+    ],
+)
+def test_text_question_without_default(
+    tmp_path_factory, spawn, type_name, expected_answer
+):
+    template, subproject = (
+        tmp_path_factory.mktemp("template"),
+        tmp_path_factory.mktemp("subproject"),
+    )
+    build_file_tree(
+        {
+            template
+            / "copier.yml": yaml.dump(
+                {
+                    "_envops": BRACKET_ENVOPS,
+                    "_templates_suffix": SUFFIX_TMPL,
+                    "text_question_without_default": {"type": type_name},
+                }
+            ),
+            template
+            / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
+        }
+    )
+    tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
+    expect_prompt(tui, "text_question_without_default", type_name)
+    tui.expect_exact("")
+    tui.sendline()
+    if isinstance(expected_answer, ValueError):
+        tui.expect_exact(str(expected_answer))
+        assert not (subproject / ".copier-answers.yml").exists()
+    else:
+        tui.expect_exact(pexpect.EOF)
+        answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
+        assert answers == {
+            "_src_path": str(template),
+            "text_question_without_default": expected_answer,
+        }
+
+
+def test_bool_question_without_default(tmp_path_factory, spawn):
+    template, subproject = (
+        tmp_path_factory.mktemp("template"),
+        tmp_path_factory.mktemp("subproject"),
+    )
+    build_file_tree(
+        {
+            template
+            / "copier.yml": yaml.dump(
+                {
+                    "_envops": BRACKET_ENVOPS,
+                    "_templates_suffix": SUFFIX_TMPL,
+                    "bool_question_without_default": {"type": "bool"},
+                }
+            ),
+            template
+            / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
+        }
+    )
+    tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
+    expect_prompt(tui, "bool_question_without_default", "bool")
+    tui.expect_exact("(y/N)")
+    tui.sendline()
+    tui.expect_exact(pexpect.EOF)
+    answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
+    assert answers == {
+        "_src_path": str(template),
+        "bool_question_without_default": False,
+    }
+
+
+@pytest.mark.parametrize(
+    "type_name, choices, expected_answer",
+    [
+        ("str", ["one", "two", "three"], "one"),
+        ("int", [1, 2, 3], 1),
+        ("float", [1.0, 2.0, 3.0], 1.0),
+        ("json", ["[1]", "[2]", "[3]"], [1]),
+        ("yaml", ["- 1", "- 2", "- 3"], [1]),
+    ],
+)
+def test_choice_question_without_default(
+    tmp_path_factory, spawn, type_name, choices, expected_answer
+):
+    template, subproject = (
+        tmp_path_factory.mktemp("template"),
+        tmp_path_factory.mktemp("subproject"),
+    )
+    build_file_tree(
+        {
+            template
+            / "copier.yml": yaml.dump(
+                {
+                    "_envops": BRACKET_ENVOPS,
+                    "_templates_suffix": SUFFIX_TMPL,
+                    "choice_question_without_default": {
+                        "type": type_name,
+                        "choices": choices,
+                    },
+                }
+            ),
+            template
+            / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
+        }
+    )
+    tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
+    expect_prompt(tui, "choice_question_without_default", type_name)
+    tui.sendline()
+    tui.expect_exact(pexpect.EOF)
+    answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
+    assert answers == {
+        "_src_path": str(template),
+        "choice_question_without_default": expected_answer,
+    }

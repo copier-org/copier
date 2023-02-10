@@ -289,8 +289,6 @@ class Question:
 
     def filter_answer(self, answer) -> Any:
         """Cast the answer to the desired type."""
-        if answer == self.get_default_rendered():
-            return self.get_default()
         return cast_answer_type(answer, self.get_cast_fn())
 
     def get_message(self) -> str:
