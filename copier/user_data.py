@@ -359,9 +359,7 @@ class Question:
 
     def get_multiline(self) -> bool:
         """Get the value for multiline."""
-        multiline = self.render_value(self.multiline)
-        multiline = cast_answer_type(multiline, cast_str_to_bool)
-        return bool(multiline)
+        return cast_str_to_bool(self.render_value(self.multiline))
 
     def validate_answer(self, answer) -> bool:
         """Validate user answer."""
@@ -388,10 +386,7 @@ class Question:
             or self.var_name in self.answers.init
         ):
             return False
-        when = self.when
-        when = self.render_value(when)
-        when = cast_answer_type(when, cast_str_to_bool)
-        return bool(when)
+        return cast_str_to_bool(self.render_value(self.when))
 
     def render_value(
         self, value: Any, extra_answers: Optional[AnyByStrDict] = None
