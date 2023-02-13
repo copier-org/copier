@@ -412,6 +412,7 @@ class Question:
             raise UserMessageError(str(error)) from error
 
     def parse_answer(self, answer: Any) -> Any:
+        """Parse the answer according to the question's type."""
         cast_fn = self.get_cast_fn()
         ans = cast_answer_type(answer, cast_fn)
         choice_values = {
