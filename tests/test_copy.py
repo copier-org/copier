@@ -2,16 +2,20 @@ import os
 import platform
 import stat
 import sys
+from contextlib import nullcontext as does_not_raise
 from pathlib import Path
 
 import pytest
+import yaml
 from plumbum import local
 from plumbum.cmd import git
+from prompt_toolkit.validation import ValidationError
 
 import copier
 from copier import copy
 
 from .helpers import (
+    BRACKET_ENVOPS,
     BRACKET_ENVOPS_JSON,
     PROJECT_TEMPLATE,
     assert_file,
@@ -367,3 +371,117 @@ def test_value_with_forward_slash(tmp_path_factory):
     file_rendered = (dst / "a" / "b" / "c.txt").read_text()
     file_expected = "This is template."
     assert file_rendered == file_expected
+
+
+@pytest.mark.parametrize(
+    "spec, value, expected",
+    [
+        ({"type": "int"}, "no-int", pytest.raises(ValueError)),
+        ({"type": "int"}, "0", does_not_raise()),
+        (
+            {
+                "type": "int",
+                "validator": "[% if q <= 0 %]must be positive[% endif %]",
+            },
+            "0",
+            pytest.raises(ValidationError),
+        ),
+        (
+            {
+                "type": "int",
+                "validator": "[% if q <= 0 %]must be positive[% endif %]",
+            },
+            "1",
+            does_not_raise(),
+        ),
+        (
+            {
+                "type": "str",
+                "validator": "[% if q|length < 3 %]too short[% endif %]",
+            },
+            "ab",
+            pytest.raises(ValidationError),
+        ),
+        (
+            {
+                "type": "str",
+                "validator": "[% if q|length < 3 %]too short[% endif %]",
+            },
+            "abc",
+            does_not_raise(),
+        ),
+        ({"type": "bool"}, "true", does_not_raise()),
+        ({"type": "bool"}, "false", does_not_raise()),
+        (
+            {"type": "int", "choices": [1, 2, 3]},
+            "1",
+            does_not_raise(),
+        ),
+        (
+            {"type": "int", "choices": [1, 2, 3]},
+            "4",
+            pytest.raises(ValueError),
+        ),
+        (
+            {"type": "int", "choices": {"one": 1, "two": 2, "three": 3}},
+            "1",
+            does_not_raise(),
+        ),
+        (
+            {"type": "int", "choices": {"one": 1, "two": 2, "three": 3}},
+            "4",
+            pytest.raises(ValueError),
+        ),
+        (
+            {"type": "str", "choices": {"one": None, "two": None, "three": None}},
+            "one",
+            does_not_raise(),
+        ),
+        (
+            {"type": "str", "choices": {"one": None, "two": None, "three": None}},
+            "four",
+            pytest.raises(ValueError),
+        ),
+        (
+            {"type": "yaml", "choices": {"one": None, "two": 2, "three": "null"}},
+            "one",
+            does_not_raise(),
+        ),
+        (
+            {"type": "yaml", "choices": {"one": None, "two": 2, "three": "null"}},
+            "2",
+            does_not_raise(),
+        ),
+        (
+            {"type": "yaml", "choices": {"one": None, "two": 2, "three": "null"}},
+            "null",
+            does_not_raise(),
+        ),
+        (
+            {"type": "yaml", "choices": {"one": None, "two": 2, "three": "null"}},
+            "two",
+            pytest.raises(ValueError),
+        ),
+        (
+            {"type": "yaml", "choices": {"one": None, "two": 2, "three": "null"}},
+            "three",
+            pytest.raises(ValueError),
+        ),
+    ],
+)
+def test_validate_init_data(tmp_path_factory, spec, value, expected):
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src
+            / "copier.yml": yaml.dump(
+                {
+                    "_envops": BRACKET_ENVOPS,
+                    "_templates_suffix": ".jinja",
+                    "q": spec,
+                }
+            ),
+        }
+    )
+    with expected:
+        copier.copy(str(src), str(dst), data={"q": value})

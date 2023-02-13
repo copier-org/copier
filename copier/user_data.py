@@ -365,9 +365,8 @@ class Question:
 
     def validate_answer(self, answer) -> bool:
         """Validate user answer."""
-        cast_fn = self.get_cast_fn()
         try:
-            ans = cast_fn(answer)
+            ans = self.parse_answer(answer)
         except Exception:
             return False
 
@@ -411,6 +410,17 @@ class Question:
             return template.render({**self.answers.combined, **(extra_answers or {})})
         except UndefinedError as error:
             raise UserMessageError(str(error)) from error
+
+    def parse_answer(self, answer: Any) -> Any:
+        cast_fn = self.get_cast_fn()
+        ans = cast_answer_type(answer, cast_fn)
+        choice_values = {
+            cast_answer_type(choice.value, cast_fn)
+            for choice in self._formatted_choices
+        }
+        if choice_values and ans not in choice_values:
+            raise ValueError("Invalid choice")
+        return ans
 
 
 def parse_yaml_string(string: str) -> Any:

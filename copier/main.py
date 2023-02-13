@@ -375,18 +375,26 @@ class Worker:
         )
         questions: List[Question] = []
         for var_name, details in self.template.questions_data.items():
-            if var_name in result.init:
-                # Do not ask again
-                continue
-            questions.append(
-                Question(
-                    answers=result,
-                    ask_user=not self.defaults,
-                    jinja_env=self.jinja_env,
-                    var_name=var_name,
-                    **details,
-                )
+            question = Question(
+                answers=result,
+                ask_user=not self.defaults,
+                jinja_env=self.jinja_env,
+                var_name=var_name,
+                **details,
             )
+            if var_name in result.init:
+                answer = result.init[var_name]
+                # Try to parse the answer value.
+                question.parse_answer(answer)
+                # Try to validate the answer value if the question has a
+                # validator.
+                question.validate_answer(answer)
+                # At this point, the answer value is valid. Do not ask the
+                # question again.
+                continue
+
+            questions.append(question)
+
         for question in questions:
             # Display TUI and ask user interactively only without --defaults
             try:
