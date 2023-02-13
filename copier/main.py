@@ -381,7 +381,6 @@ class Worker:
             questions.append(
                 Question(
                     answers=result,
-                    ask_user=not self.defaults,
                     jinja_env=self.jinja_env,
                     var_name=var_name,
                     **details,
