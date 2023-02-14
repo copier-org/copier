@@ -377,7 +377,6 @@ class Worker:
         for var_name, details in self.template.questions_data.items():
             question = Question(
                 answers=result,
-                ask_user=not self.defaults,
                 jinja_env=self.jinja_env,
                 var_name=var_name,
                 **details,
