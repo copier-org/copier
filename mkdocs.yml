@@ -10,6 +10,7 @@ nav:
   - Configuring a template: "configuring.md"
   - Generating a project: "generating.md"
   - Updating a project: "updating.md"
+  - Template hierarchies: "hierarchies.md"
   - Reference:
       - cli.py: "reference/cli.md"
       - errors.py: "reference/errors.md"
