@@ -25,7 +25,7 @@ the need for a parent template creator to anticipate useful extension points (e.
 ## Concept
 
 Meta-templates introduce a layer of indirection which enables applying changes in a
-parent templates to a child template. The following diagram depicts the relationship
+parent template to a child template. The following diagram depicts the relationship
 between meta-templates (trapezoid shape), templates (rectangle shape), and projects
 (hexagon shape):
 
