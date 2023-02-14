@@ -197,7 +197,6 @@ class Question:
     choices: Union[Dict[Any, Any], Sequence[Any]] = field(default_factory=list)
     default: Any = None
     help: str = ""
-    ask_user: bool = False
     multiline: Union[str, bool] = False
     placeholder: str = ""
     secret: bool = False
@@ -379,13 +378,6 @@ class Question:
 
     def get_when(self, answers) -> bool:
         """Get skip condition for question."""
-        if (
-            # Skip on --defaults
-            not self.ask_user
-            # Skip on --data=this_question=some_answer
-            or self.var_name in self.answers.init
-        ):
-            return False
         return cast_str_to_bool(self.render_value(self.when))
 
     def render_value(
