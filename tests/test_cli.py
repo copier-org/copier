@@ -125,6 +125,10 @@ def test_help():
     COPIER_CMD("--help-all")
 
 
+def test_update_help():
+    assert "-o, --conflict" in COPIER_CMD("update", "--help")
+
+
 def test_python_run():
     cmd = [sys.executable, "-m", "copier", "--help-all"]
     assert subprocess.run(cmd, check=True).returncode == 0
