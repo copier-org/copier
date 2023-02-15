@@ -50,7 +50,7 @@ def test_pretend_mode(tmp_path_factory):
     build_file_tree(
         {
             src
-            / "copier.yml": f"""
+            / "copier.yml": """
                 _tasks:
                     - touch created-by-task.txt
             """
