@@ -83,7 +83,7 @@ cmd = "mkdocs serve"
 help = "start local docs server"
 
 [tool.poe.tasks.lint]
-cmd = "pre-commit run --all-files"
+script = "devtasks:lint"
 help = "check (and auto-fix) style with pre-commit"
 
 [tool.poe.tasks.test]
