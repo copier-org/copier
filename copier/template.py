@@ -90,7 +90,7 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
     """
 
     class _Loader(yaml.FullLoader):
-        ...
+        """Intermediate class to avoid monkey-patching main loader."""
 
     YamlIncludeConstructor.add_to_loader_class(
         loader_class=_Loader, base_dir=conf_path.parent
