@@ -651,7 +651,8 @@ class Worker:
             if not self.quiet:
                 # TODO Unify printing tools
                 print("")  # padding space
-            self._execute_tasks(self.template.tasks)
+            if not self.pretend:
+                self._execute_tasks(self.template.tasks)
         except Exception:
             if not was_existing and self.cleanup_on_error:
                 rmtree(self.subproject.local_abspath)
@@ -743,9 +744,10 @@ class Worker:
                     )
                     diff = diff_cmd("--inter-hunk-context=0")
             # Run pre-migration tasks
-            self._execute_tasks(
-                self.template.migration_tasks("before", self.subproject.template)
-            )
+            if not self.pretend:
+                self._execute_tasks(
+                    self.template.migration_tasks("before", self.subproject.template)
+                )
             self._uncached_copy()
             # Try to apply cached diff into final destination
             with local.cwd(self.subproject.local_abspath):
@@ -786,9 +788,10 @@ class Worker:
             _remove_old_files(self.subproject.local_abspath, compared)
 
         # Run post-migration tasks
-        self._execute_tasks(
-            self.template.migration_tasks("after", self.subproject.template)
-        )
+        if not self.pretend:
+            self._execute_tasks(
+                self.template.migration_tasks("after", self.subproject.template)
+            )
 
     def _uncached_copy(self):
         """Copy template to destination without using answer cache."""

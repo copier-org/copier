@@ -223,3 +223,57 @@ def test_prereleases(tmp_path: Path):
     # It should fail if downgrading
     with pytest.raises(UserMessageError):
         copy(dst_path=dst, defaults=True, overwrite=True)
+
+
+def test_pretend_mode(tmp_path_factory):
+    src, dst = tmp_path_factory.mktemp("src"), tmp_path_factory.mktemp("dst")
+
+    # Build template in v1
+    with local.cwd(src):
+        git("init")
+        build_file_tree(
+            {
+                "[[ _copier_conf.answers_file ]].jinja": "[[_copier_answers|to_nice_yaml]]",
+                "copier.yml": f"""
+                    _envops: {BRACKET_ENVOPS_JSON}
+                """,
+            }
+        )
+        git("add", ".")
+        git("commit", "-mv1")
+        git("tag", "v1")
+
+    copy(str(src), str(dst))
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    assert answers["_commit"] == "v1"
+
+    with local.cwd(dst):
+        git("init")
+        git("add", ".")
+        git("commit", "-mv1")
+
+    # Evolve template to v2
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "[[ _copier_conf.answers_file ]].jinja": "[[_copier_answers|to_nice_yaml]]",
+                "copier.yml": f"""
+                    _envops: {BRACKET_ENVOPS_JSON}
+                    _migrations:
+                    -   version: v2
+                        before:
+                        -   touch v2-before.txt
+                        after:
+                        -   touch v2-after.txt
+                """,
+            }
+        )
+        git("add", ".")
+        git("commit", "-mv2")
+        git("tag", "v2")
+
+    copy(dst_path=dst, overwrite=True, pretend=True)
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    assert answers["_commit"] == "v1"
+    assert not (dst / "v2-before.txt").exists()
+    assert not (dst / "v2-after.txt").exists()
