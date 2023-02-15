@@ -299,11 +299,7 @@ class Worker:
         return bool(ask(f" Overwrite {dst_relpath}?", default=True))
 
     def _render_allowed(
-        self,
-        dst_relpath: Path,
-        is_dir: bool = False,
-        expected_contents: bytes = b"",
-        expected_permissions=None,
+        self, dst_relpath: Path, is_dir: bool = False, expected_contents: bytes = b""
     ) -> bool:
         """Determine if a file or directory can be rendered.
 
@@ -510,11 +506,7 @@ class Worker:
             new_content = src_abspath.read_bytes()
         dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
         src_mode = src_abspath.stat().st_mode
-        if not self._render_allowed(
-            dst_relpath,
-            expected_contents=new_content,
-            expected_permissions=src_mode,
-        ):
+        if not self._render_allowed(dst_relpath, expected_contents=new_content):
             return
         if not self.pretend:
             dst_abspath.parent.mkdir(parents=True, exist_ok=True)
