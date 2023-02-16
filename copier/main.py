@@ -11,7 +11,7 @@ from functools import partial
 from itertools import chain
 from pathlib import Path
 from shutil import rmtree
-from typing import Callable, Iterable, List, Mapping, Optional, Sequence
+from typing import Callable, Iterable, Mapping, Optional, Sequence
 from unicodedata import normalize
 
 from jinja2.loaders import FileSystemLoader
@@ -373,7 +373,7 @@ class Worker:
             last=self.subproject.last_answers,
             metadata=self.template.metadata,
         )
-        questions: List[Question] = []
+
         for var_name, details in self.template.questions_data.items():
             question = Question(
                 answers=result,
@@ -392,9 +392,6 @@ class Worker:
                 # question again.
                 continue
 
-            questions.append(question)
-
-        for question in questions:
             # Display TUI and ask user interactively only without --defaults
             try:
                 new_answer = (
@@ -406,6 +403,7 @@ class Worker:
                 )
             except KeyboardInterrupt as err:
                 raise CopierAnswersInterrupt(result, question, self.template) from err
+
             previous_answer = result.combined.get(question.var_name)
             # If question was skipped and it's the 1st
             # run, you could be getting a raw templated value
@@ -415,6 +413,7 @@ class Worker:
                 new_answer = question.filter_answer(new_answer)
             if new_answer != previous_answer:
                 result.user[question.var_name] = new_answer
+
         return result
 
     @cached_property
