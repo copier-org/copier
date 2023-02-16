@@ -711,16 +711,26 @@ class Worker:
         ) as new_copy:
             old_worker = self._make_old_worker(old_copy)
             old_worker.run_copy()
-            recopy_worker = replace(
-                self,
-                dst_path=new_copy,
-                data=self.subproject.last_answers,
-                defaults=True,
-                quiet=True,
-                src_path=self.subproject.template.url,
+
+            # Run pre-migration tasks
+            self._execute_tasks(
+                self.template.migration_tasks("before", self.subproject.template)
             )
-            recopy_worker.run_copy()
-            compared = dircmp(old_copy, new_copy)
+
+            # Clear last answers cache to load possible answers migration
+            with suppress(AttributeError):
+                del self.answers
+            with suppress(AttributeError):
+                del self.subproject.last_answers
+            new_worker = replace(
+                self,
+                src_path=self.subproject.template.url,
+                dst_path=new_copy,
+            )
+            # Use last answers from the pre-migrated project
+            new_worker.subproject.last_answers = self.subproject.last_answers
+            new_worker.run_copy()
+
             # Extract diff between temporary destination and real destination
             with local.cwd(old_copy):
                 subproject_top = git(
@@ -742,11 +752,23 @@ class Worker:
                         file=sys.stderr,
                     )
                     diff = diff_cmd("--inter-hunk-context=0")
-            # Run pre-migration tasks
-            self._execute_tasks(
-                self.template.migration_tasks("before", self.subproject.template)
-            )
-            self._uncached_copy()
+
+            # Copy the new template output into the actual destination with the
+            # answers from the temporary destination.
+            # TODO: Do this more elegantly.
+            old_data = self.data
+            old_defaults = self.defaults
+            old_quiet = self.quiet
+            self.data = new_worker.answers.combined
+            self.defaults = True
+            self.quiet = True
+            try:
+                self.run_copy()
+            finally:
+                self.data = old_data
+                self.defaults = old_defaults
+                self.quiet = old_quiet
+
             # Try to apply cached diff into final destination
             with local.cwd(self.subproject.local_abspath):
                 apply_cmd = git["apply", "--reject", "--exclude", self.answers_relpath]
@@ -777,28 +799,18 @@ class Worker:
                             "after updating",
                             fname,
                             old_worker.subproject.local_abspath / fname,
-                            recopy_worker.subproject.local_abspath / fname,
+                            new_worker.subproject.local_abspath / fname,
                             retcode=None,
                         )
                         # Remove rejection witness
                         Path(f"{fname}.rej").unlink()
             # Trigger recursive removal of deleted files in last template version
-            _remove_old_files(self.subproject.local_abspath, compared)
+            _remove_old_files(self.subproject.local_abspath, dircmp(old_copy, new_copy))
 
         # Run post-migration tasks
         self._execute_tasks(
             self.template.migration_tasks("after", self.subproject.template)
         )
-
-    def _uncached_copy(self):
-        """Copy template to destination without using answer cache."""
-        # Clear last answers cache to load possible answers migration
-        with suppress(AttributeError):
-            del self.answers
-        with suppress(AttributeError):
-            del self.subproject.last_answers
-        # Do a normal update in final destination
-        self.run_copy()
 
     def _make_old_worker(self, old_copy):
         """Create a worker to copy the old template into a temporary destination."""

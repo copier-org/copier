@@ -1,3 +1,5 @@
+from plumbum import local
+from plumbum.cmd import git
 from pytest import TempPathFactory
 
 import copier
@@ -76,3 +78,34 @@ def test_dont_render_conditional_subdir(tmp_path_factory: TempPathFactory):
 
     file_rendered = dst / "subdir" / "file.txt"
     assert not file_rendered.exists()
+
+
+def test_answer_changes(tmp_path_factory: TempPathFactory):
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{_copier_answers|to_nice_yaml}}",
+                "copier.yml": f"""
+                    condition:
+                        type: bool
+                """,
+                "{% if condition %}file.txt{% endif %}.jinja": "",
+            }
+        )
+        git("init")
+        git("add", ".")
+        git("commit", "-mv1")
+        git("tag", "v1")
+
+    copier.copy(str(src), dst, data={"condition": True})
+    assert (dst / "file.txt").exists()
+
+    with local.cwd(dst):
+        git("init")
+        git("add", ".")
+        git("commit", "-mv1")
+
+    copier.copy(dst_path=dst, data={"condition": False})
+    assert not (dst / "file.txt").exists()
