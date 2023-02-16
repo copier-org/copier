@@ -87,7 +87,7 @@ def test_answer_changes(tmp_path_factory: TempPathFactory):
         build_file_tree(
             {
                 "{{ _copier_conf.answers_file }}.jinja": "{{_copier_answers|to_nice_yaml}}",
-                "copier.yml": f"""
+                "copier.yml": """
                     condition:
                         type: bool
                 """,
