@@ -46,3 +46,49 @@ def test_help():
 def test_python_run():
     cmd = [sys.executable, "-m", "copier", "--help-all"]
     assert subprocess.run(cmd, check=True).returncode == 0
+
+
+def test_skip_filenotexists(tmp_path, template_path):
+    run_result = CopierApp.run(
+        [
+            "--quiet",
+            "-a",
+            "altered-answers.yml",
+            "--overwrite",
+            "--skip=a.txt",
+            str(template_path),
+            str(tmp_path),
+        ],
+        exit=False,
+    )
+    a_txt = tmp_path / "a.txt"
+    assert run_result[1] == 0
+    assert a_txt.exists()
+    assert a_txt.is_file()
+    assert a_txt.read_text() == "EXAMPLE_CONTENT"
+    answers = yaml.safe_load((tmp_path / "altered-answers.yml").read_text())
+    assert answers["_src_path"] == str(template_path)
+
+
+def test_skip_fileexists(tmp_path, template_path):
+    a_txt = tmp_path / "a.txt"
+    with open(a_txt, "w") as f_a:
+        f_a.write("PREVIOUS_CONTENT")
+    run_result = CopierApp.run(
+        [
+            "--quiet",
+            "-a",
+            "altered-answers.yml",
+            "--overwrite",
+            "--skip=a.txt",
+            str(template_path),
+            str(tmp_path),
+        ],
+        exit=False,
+    )
+    assert run_result[1] == 0
+    assert a_txt.exists()
+    assert a_txt.is_file()
+    assert a_txt.read_text() == "PREVIOUS_CONTENT"
+    answers = yaml.safe_load((tmp_path / "altered-answers.yml").read_text())
+    assert answers["_src_path"] == str(template_path)

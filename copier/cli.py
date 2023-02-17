@@ -221,6 +221,7 @@ class CopierApp(cli.Application):
             defaults=self.force or self.defaults,
             overwrite=self.force or self.overwrite,
             pretend=self.pretend,
+            skip_if_exists=self.skip,
             quiet=self.quiet,
             src_path=src_path,
             vcs_ref=self.vcs_ref,
