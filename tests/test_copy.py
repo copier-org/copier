@@ -221,7 +221,7 @@ def test_exclude_replaces(tmp_path_factory: pytest.TempPathFactory) -> None:
 
 
 def test_skip_if_exists(tmp_path: Path) -> None:
-    copier.copy("tests/demo_skip_dst", tmp_path)
+    copier.copy(str(Path("tests/demo_skip_dst")), tmp_path)
     copier.copy(
         str(Path("tests", "demo_skip_src")),
         tmp_path,
