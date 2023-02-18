@@ -103,7 +103,7 @@ def test_copy_with_non_version_tags_and_vcs_ref(
     )
 
 
-def test_copy(tmp_path):
+def test_copy(tmp_path: Path) -> None:
     render(tmp_path)
 
     generated = (tmp_path / "pyproject.toml").read_text()
