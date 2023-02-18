@@ -225,7 +225,7 @@ def test_skip_if_exists(tmp_path: Path) -> None:
     copier.copy(
         str(Path("tests", "demo_skip_src")),
         tmp_path,
-        skip_if_exists=["b.noeof.txt", str(Path("meh", "c.noeof.txt"))],
+        skip_if_exists=["b.noeof.txt", "meh/c.noeof.txt"],
         defaults=True,
         overwrite=True,
     )
@@ -241,7 +241,7 @@ def test_skip_if_exists_rendered_patterns(tmp_path: Path) -> None:
         str(Path("tests", "demo_skip_src")),
         tmp_path,
         data={"name": "meh"},
-        skip_if_exists=[str(Path("{{ name }}", "c.noeof.txt"))],
+        skip_if_exists=["{{ name }}/c.noeof.txt"],
         defaults=True,
         overwrite=True,
     )
