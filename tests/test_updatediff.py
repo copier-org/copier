@@ -12,13 +12,12 @@ from plumbum.cmd import git
 from copier import Worker, copy
 from copier.cli import CopierApp
 from copier.main import run_copy, run_update
-from copier.types import RelativePath
 
 from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree
 
 
 @pytest.mark.impure
-def test_updatediff(tmp_path_factory):
+def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     # Prepare repo bundle
     repo = src / "repo"
@@ -26,26 +25,29 @@ def test_updatediff(tmp_path_factory):
     last_commit = ""
     build_file_tree(
         {
-            repo
-            / ".copier-answers.yml.jinja": """\
+            (repo / ".copier-answers.yml.jinja"): (
+                """\
                 # Changes here will be overwritten by Copier
                 {{ _copier_answers|to_nice_yaml }}
-            """,
-            repo
-            / "copier.yml": """\
+                """
+            ),
+            (repo / "copier.yml"): (
+                """\
                 _envops:
                     "keep_trailing_newline": True
                 project_name: to become a pirate
                 author_name: Guybrush
-            """,
-            repo
-            / "README.txt.jinja": """
+                """
+            ),
+            (repo / "README.txt.jinja"): (
+                """\
                 Let me introduce myself.
 
                 My name is {{author_name}}, and my project is {{project_name}}.
 
                 Thanks for your attention.
-            """,
+                """
+            ),
         }
     )
     with local.cwd(repo):
@@ -55,8 +57,8 @@ def test_updatediff(tmp_path_factory):
         git("tag", "v0.0.1")
     build_file_tree(
         {
-            repo
-            / "copier.yml": """\
+            (repo / "copier.yml"): (
+                """\
                 _envops:
                     "keep_trailing_newline": True
                 project_name: to become a pirate
@@ -77,7 +79,8 @@ def test_updatediff(tmp_path_factory):
                             - touch before-v1.0.0
                         after:
                             - touch after-v1.0.0
-            """,
+                """
+            ),
         }
     )
     with local.cwd(repo):
@@ -87,8 +90,8 @@ def test_updatediff(tmp_path_factory):
         git("tag", "v0.0.2")
     build_file_tree(
         {
-            repo
-            / "copier.yml": """\
+            (repo / "copier.yml"): (
+                """\
                 _envops:
                     "keep_trailing_newline": True
                 project_name: to rule
@@ -109,9 +112,10 @@ def test_updatediff(tmp_path_factory):
                             - touch before-v1.0.0
                         after:
                             - touch after-v1.0.0
-            """,
-            repo
-            / "README.txt.jinja": """
+                """
+            ),
+            (repo / "README.txt.jinja"): (
+                """\
                 Let me introduce myself.
 
                 My name is {{author_name}}.
@@ -119,7 +123,8 @@ def test_updatediff(tmp_path_factory):
                 My project is {{project_name}}.
 
                 Thanks for your attention.
-            """,
+                """
+            ),
         }
     )
     with local.cwd(repo):
@@ -145,15 +150,15 @@ def test_updatediff(tmp_path_factory):
     # Check it's copied OK
     assert answers.read_text() == dedent(
         f"""\
-            # Changes here will be overwritten by Copier
-            _commit: v0.0.1
-            _src_path: {bundle}
-            author_name: Guybrush
-            project_name: to become a pirate\n
+        # Changes here will be overwritten by Copier
+        _commit: v0.0.1
+        _src_path: {bundle}
+        author_name: Guybrush
+        project_name: to become a pirate\n
         """
     )
     assert readme.read_text() == dedent(
-        """
+        """\
         Let me introduce myself.
 
         My name is Guybrush, and my project is to become a pirate.
@@ -171,28 +176,27 @@ def test_updatediff(tmp_path_factory):
         git("add", ".")
         commit("-m", "hello world")
         # Emulate the user modifying the README by hand
-        with open(readme, "w") as readme_fd:
-            readme_fd.write(
-                dedent(
-                    """
-                    Let me introduce myself.
+        readme.write_text(
+            dedent(
+                """\
+                Let me introduce myself.
 
-                    My name is Guybrush, and my project is to become a pirate.
+                My name is Guybrush, and my project is to become a pirate.
 
-                    Thanks for your grog.
-                    """
-                )
+                Thanks for your grog.
+                """
             )
+        )
         commit("-m", "I prefer grog")
         # Update target to latest tag and check it's updated in answers file
         CopierApp.invoke(defaults=True, overwrite=True)
         assert answers.read_text() == dedent(
             f"""\
-                # Changes here will be overwritten by Copier
-                _commit: v0.0.2
-                _src_path: {bundle}
-                author_name: Guybrush
-                project_name: to become a pirate\n
+            # Changes here will be overwritten by Copier
+            _commit: v0.0.2
+            _src_path: {bundle}
+            author_name: Guybrush
+            project_name: to become a pirate\n
             """
         )
         # Check migrations were executed properly
@@ -217,15 +221,15 @@ def test_updatediff(tmp_path_factory):
         # Check it's updated OK
         assert answers.read_text() == dedent(
             f"""\
-                # Changes here will be overwritten by Copier
-                _commit: {last_commit}
-                _src_path: {bundle}
-                author_name: Guybrush
-                project_name: to become a pirate\n
+            # Changes here will be overwritten by Copier
+            _commit: {last_commit}
+            _src_path: {bundle}
+            author_name: Guybrush
+            project_name: to become a pirate\n
             """
         )
         assert readme.read_text() == dedent(
-            """
+            """\
             Let me introduce myself.
 
             My name is Guybrush.
@@ -248,7 +252,7 @@ def test_updatediff(tmp_path_factory):
             vcs_ref="HEAD",
         )
         assert readme.read_text() == dedent(
-            """
+            """\
             Let me introduce myself.
 
             My name is Largo LaGrande.
@@ -267,7 +271,7 @@ def test_updatediff(tmp_path_factory):
             vcs_ref="HEAD",
         ).run_copy()
         assert readme.read_text() == dedent(
-            """
+            """\
             Let me introduce myself.
 
             My name is Largo LaGrande.
@@ -287,14 +291,14 @@ def test_updatediff(tmp_path_factory):
     condition=platform.system() == "Windows", reason="Git broken on Windows?"
 )
 @pytest.mark.impure
-def test_commit_hooks_respected(tmp_path_factory):
+def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> None:
     """Commit hooks are taken into account when producing the update diff."""
     # Prepare source template v1
     src, dst1, dst2 = map(tmp_path_factory.mktemp, ("src", "dst1", "dst2"))
-    with local.cwd(src):
-        build_file_tree(
-            {
-                "copier.yml": f"""
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                f"""\
                 _envops: {BRACKET_ENVOPS_JSON}
                 _templates_suffix: {SUFFIX_TMPL}
                 _tasks:
@@ -302,11 +306,15 @@ def test_commit_hooks_respected(tmp_path_factory):
                     - pre-commit install
                     - pre-commit run -a || true
                 what: grog
-                """,
-                "[[ _copier_conf.answers_file ]].tmpl": """
+                """
+            ),
+            (src / "[[ _copier_conf.answers_file ]].tmpl"): (
+                """\
                 [[ _copier_answers|to_nice_yaml ]]
-                """,
-                ".pre-commit-config.yaml": r"""
+                """
+            ),
+            (src / ".pre-commit-config.yaml"): (
+                r"""
                 repos:
                 -   repo: https://github.com/pre-commit/mirrors-prettier
                     rev: v2.0.4
@@ -319,15 +327,19 @@ def test_commit_hooks_respected(tmp_path_factory):
                         entry: found forbidden files; remove them
                         language: fail
                         files: "\\.rej$"
-                """,
-                "life.yml.tmpl": """
+                """
+            ),
+            (src / "life.yml.tmpl"): (
+                """\
                 # Following code should be reformatted by pre-commit after copying
                 Line 1:      hello
                 Line 2:      [[ what ]]
                 Line 3:      bye
-                """,
-            }
-        )
+                """
+            ),
+        }
+    )
+    with local.cwd(src):
         git("init")
         git("add", ".")
         git("commit", "-m", "commit 1")
@@ -350,19 +362,21 @@ def test_commit_hooks_respected(tmp_path_factory):
             """
         )
     # Evolve source template to v2
-    with local.cwd(src):
-        build_file_tree(
-            {
-                "life.yml.tmpl": """
+    build_file_tree(
+        {
+            (src / "life.yml.tmpl"): (
+                """\
                 # Following code should be reformatted by pre-commit after copying
                 Line 1:     hello world
                 Line 2:     grow up
                 Line 3:     [[ what ]]
                 Line 4:     grow old
                 Line 5:     bye bye world
-                """,
-            }
-        )
+                """
+            ),
+        }
+    )
+    with local.cwd(src):
         git("init")
         git("add", ".")
         git("commit", "-m", "commit 2")
@@ -429,50 +443,61 @@ def test_commit_hooks_respected(tmp_path_factory):
         assert Path(f"{life}.rej").is_file()
 
 
-def test_update_from_tagged_to_head(src_repo, tmp_path):
+def test_update_from_tagged_to_head(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     # Build a template
-    with local.cwd(src_repo):
-        build_file_tree(
-            {
-                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
-                "example": "1",
-            }
-        )
+    build_file_tree(
+        {
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+            (src / "example"): "1",
+        }
+    )
+    with local.cwd(src):
+        git("init")
         git("add", "-A")
         git("commit", "-m1")
         # Publish v1 release
         git("tag", "v1")
-        # New commit, no release
-        build_file_tree({"example": "2"})
+    # New commit, no release
+    build_file_tree(
+        {
+            src / "example": "2",
+        }
+    )
+    with local.cwd(src):
         git("commit", "-am2")
         sha = git("rev-parse", "--short", "HEAD").strip()
     # Copy it without specifying version
-    run_copy(src_path=str(src_repo), dst_path=tmp_path)
-    example = tmp_path / "example"
-    answers_file = tmp_path / ".copier-answers.yml"
+    run_copy(src_path=str(src), dst_path=dst)
+    example = dst / "example"
+    answers_file = dst / ".copier-answers.yml"
     assert example.read_text() == "1"
     assert yaml.safe_load(answers_file.read_text())["_commit"] == "v1"
     # Build repo on copy
-    with local.cwd(tmp_path):
+    with local.cwd(dst):
         git("init")
         git("add", "-A")
         git("commit", "-m3")
     # Update project, it must let us do it
-    run_update(tmp_path, vcs_ref="HEAD", defaults=True, overwrite=True)
+    run_update(dst, vcs_ref="HEAD", defaults=True, overwrite=True)
     assert example.read_text() == "2"
     assert yaml.safe_load(answers_file.read_text())["_commit"] == f"v1-1-g{sha}"
 
 
-def test_skip_update(tmp_path_factory):
+def test_skip_update(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yaml"): "_skip_if_exists: [skip_me]",
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_yaml }}"
+            ),
+            (src / "skip_me"): "1",
+        }
+    )
     with local.cwd(src):
-        build_file_tree(
-            {
-                "copier.yaml": "_skip_if_exists: [skip_me]",
-                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
-                "skip_me": "1",
-            }
-        )
         git("init")
         git("add", ".")
         git("commit", "-m1")
@@ -488,8 +513,12 @@ def test_skip_update(tmp_path_factory):
         git("init")
         git("add", ".")
         git("commit", "-m1")
+    build_file_tree(
+        {
+            src / "skip_me": "3",
+        }
+    )
     with local.cwd(src):
-        build_file_tree({"skip_me": "3"})
         git("commit", "-am2")
         git("tag", "2.0.0")
     run_update(dst, defaults=True, overwrite=True)
@@ -501,29 +530,36 @@ def test_skip_update(tmp_path_factory):
 
 @pytest.mark.timeout(20)
 @pytest.mark.parametrize(
-    "answers_file", (None, ".copier-answers.yml", ".custom.copier-answers.yaml")
+    "answers_file", [None, ".copier-answers.yml", ".custom.copier-answers.yaml"]
 )
 def test_overwrite_answers_file_always(
-    tmp_path_factory, answers_file: Optional[RelativePath]
+    tmp_path_factory: pytest.TempPathFactory, answers_file: Optional[str]
 ):
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yaml"): "question_1: true",
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_yaml }}"
+            ),
+            (src / "answer_1.jinja"): "{{ question_1 }}",
+        }
+    )
     with local.cwd(src):
-        build_file_tree(
-            {
-                "copier.yaml": "question_1: true",
-                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
-                "answer_1.jinja": "{{ question_1 }}",
-            }
-        )
         git("init")
         git("add", ".")
         git("commit", "-m1")
         git("tag", "1")
-        build_file_tree({"copier.yaml": "question_1: false"})
+    build_file_tree(
+        {
+            src / "copier.yaml": "question_1: false",
+        }
+    )
+    with local.cwd(src):
         git("commit", "-am2")
         git("tag", "2")
     # When copying, there's nothing to overwrite, overwrite=False shouldn't hang
-    run_copy(str(src), str(dst), vcs_ref="1", defaults=True, answers_file=answers_file)
+    run_copy(str(src), dst, vcs_ref="1", defaults=True, answers_file=answers_file)
     with local.cwd(dst):
         git("init")
         git("add", ".")
@@ -532,79 +568,88 @@ def test_overwrite_answers_file_always(
         # which shouldn't ask, so also this shouldn't hang with overwrite=False
         run_update(defaults=True, answers_file=answers_file)
     answers = yaml.safe_load(
-        Path(dst, answers_file or ".copier-answers.yml").read_bytes()
+        (dst / (answers_file or ".copier-answers.yml")).read_bytes()
     )
     assert answers["question_1"] is True
     assert answers["_commit"] == "2"
     assert (dst / "answer_1").read_text() == "True"
 
 
-def test_file_removed(src_repo, tmp_path):
+def test_file_removed(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     # Add a file in the template repo
-    with local.cwd(src_repo):
-        build_file_tree(
-            {
-                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
-                "1.txt": "content 1",
-                Path("dir 2", "2.txt"): "content 2",
-                Path("dir 3", "subdir 3", "3.txt"): "content 3",
-                Path("dir 4", "subdir 4", "4.txt"): "content 4",
-                Path("dir 5", "subdir 5", "5.txt"): "content 5",
-            }
-        )
+    build_file_tree(
+        {
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_yaml }}"
+            ),
+            (src / "1.txt"): "content 1",
+            (src / "dir 2" / "2.txt"): "content 2",
+            (src / "dir 3" / "subdir 3" / "3.txt"): "content 3",
+            (src / "dir 4" / "subdir 4" / "4.txt"): "content 4",
+            (src / "dir 5" / "subdir 5" / "5.txt"): "content 5",
+        }
+    )
+    with local.cwd(src):
+        git("init")
         git("add", "-A")
         git("commit", "-m1")
         git("tag", "1")
     # Copy in subproject
-    with local.cwd(tmp_path):
+    run_copy(str(src), dst)
+    with local.cwd(dst):
         git("init")
-        run_copy(str(src_repo))
-        # Subproject has an extra file
-        build_file_tree(
-            {
-                "I.txt": "content I",
-                Path("dir II", "II.txt"): "content II",
-                Path("dir 3", "subdir III", "III.txt"): "content III",
-                Path("dir 4", "subdir 4", "IV.txt"): "content IV",
-            }
-        )
+    # Subproject has an extra file
+    build_file_tree(
+        {
+            (dst / "I.txt"): "content I",
+            (dst / "dir II" / "II.txt"): "content II",
+            (dst / "dir 3" / "subdir III" / "III.txt"): "content III",
+            (dst / "dir 4" / "subdir 4" / "IV.txt"): "content IV",
+        }
+    )
+    with local.cwd(dst):
         git("add", "-A")
         git("commit", "-m2")
     # All files exist
-    assert tmp_path.joinpath(".copier-answers.yml").is_file()
-    assert tmp_path.joinpath("1.txt").is_file()
-    assert tmp_path.joinpath("dir 2", "2.txt").is_file()
-    assert tmp_path.joinpath("dir 3", "subdir 3", "3.txt").is_file()
-    assert tmp_path.joinpath("dir 4", "subdir 4", "4.txt").is_file()
-    assert tmp_path.joinpath("dir 5", "subdir 5", "5.txt").is_file()
-    assert tmp_path.joinpath("I.txt").is_file()
-    assert tmp_path.joinpath("dir II", "II.txt").is_file()
-    assert tmp_path.joinpath("dir 3", "subdir III", "III.txt").is_file()
-    assert tmp_path.joinpath("dir 4", "subdir 4", "IV.txt").is_file()
+    assert (dst / ".copier-answers.yml").is_file()
+    assert (dst / "1.txt").is_file()
+    assert (dst / "dir 2" / "2.txt").is_file()
+    assert (dst / "dir 3" / "subdir 3" / "3.txt").is_file()
+    assert (dst / "dir 4" / "subdir 4" / "4.txt").is_file()
+    assert (dst / "dir 5" / "subdir 5" / "5.txt").is_file()
+    assert (dst / "I.txt").is_file()
+    assert (dst / "dir II" / "II.txt").is_file()
+    assert (dst / "dir 3" / "subdir III" / "III.txt").is_file()
+    assert (dst / "dir 4" / "subdir 4" / "IV.txt").is_file()
     # Template removes file 1
-    with local.cwd(src_repo):
-        Path("1.txt").unlink()
-        rmtree("dir 2")
-        rmtree("dir 3")
-        rmtree("dir 4")
-        rmtree("dir 5")
-        build_file_tree({"6.txt": "content 6"})
+    (src / "1.txt").unlink()
+    rmtree(src / "dir 2")
+    rmtree(src / "dir 3")
+    rmtree(src / "dir 4")
+    rmtree(src / "dir 5")
+    build_file_tree(
+        {
+            src / "6.txt": "content 6",
+        }
+    )
+    with local.cwd(src):
         git("add", "-A")
         git("commit", "-m3")
         git("tag", "2")
     # Subproject updates
-    with local.cwd(tmp_path):
+    with local.cwd(dst):
         run_update(conflict="rej")
     # Check what must still exist
-    assert tmp_path.joinpath(".copier-answers.yml").is_file()
-    assert tmp_path.joinpath("I.txt").is_file()
-    assert tmp_path.joinpath("dir II", "II.txt").is_file()
-    assert tmp_path.joinpath("dir 3", "subdir III", "III.txt").is_file()
-    assert tmp_path.joinpath("dir 4", "subdir 4", "IV.txt").is_file()
-    assert tmp_path.joinpath("6.txt").is_file()
+    assert (dst / ".copier-answers.yml").is_file()
+    assert (dst / "I.txt").is_file()
+    assert (dst / "dir II" / "II.txt").is_file()
+    assert (dst / "dir 3" / "subdir III" / "III.txt").is_file()
+    assert (dst / "dir 4" / "subdir 4" / "IV.txt").is_file()
+    assert (dst / "6.txt").is_file()
     # Check what must not exist
-    assert not tmp_path.joinpath("1.txt").exists()
-    assert not tmp_path.joinpath("dir 2").exists()
-    assert not tmp_path.joinpath("dir 3", "subdir 3").exists()
-    assert not tmp_path.joinpath("dir 4", "subdir 4", "4.txt").exists()
-    assert not tmp_path.joinpath("dir 5").exists()
+    assert not (dst / "1.txt").exists()
+    assert not (dst / "dir 2").exists()
+    assert not (dst / "dir 3" / "subdir 3").exists()
+    assert not (dst / "dir 4" / "subdir 4" / "4.txt").exists()
+    assert not (dst / "dir 5").exists()

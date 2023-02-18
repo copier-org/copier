@@ -1,57 +1,60 @@
+import pytest
+
 import copier
 
 from .helpers import build_file_tree
 
 
-def test_empty_suffix(tmp_path_factory):
-    root = tmp_path_factory.mktemp("demo_empty_suffix")
+def test_empty_suffix(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
-            root
-            / "copier.yaml": """
+            (src / "copier.yaml"): (
+                """\
                 _templates_suffix: ""
                 name:
                     type: str
                     default: pingu
-            """,
-            root / "render_me": "Hello {{name}}!",
-            root / "{{name}}.txt": "Hello {{name}}!",
-            root / "{{name}}" / "render_me.txt": "Hello {{name}}!",
+                """
+            ),
+            (src / "render_me"): "Hello {{name}}!",
+            (src / "{{name}}.txt"): "Hello {{name}}!",
+            (src / "{{name}}" / "render_me.txt"): "Hello {{name}}!",
         }
     )
-    dest = tmp_path_factory.mktemp("dst")
-    copier.copy(str(root), dest, defaults=True, overwrite=True)
+    copier.copy(str(src), dst, defaults=True, overwrite=True)
 
-    assert not (dest / "copier.yaml").exists()
+    assert not (dst / "copier.yaml").exists()
 
-    assert (dest / "render_me").exists()
-    assert (dest / "pingu.txt").exists()
-    assert (dest / "pingu" / "render_me.txt").exists()
+    assert (dst / "render_me").exists()
+    assert (dst / "pingu.txt").exists()
+    assert (dst / "pingu" / "render_me.txt").exists()
 
     expected = "Hello pingu!"
-    assert (dest / "render_me").read_text() == expected
-    assert (dest / "pingu.txt").read_text() == expected
-    assert (dest / "pingu" / "render_me.txt").read_text() == expected
+    assert (dst / "render_me").read_text() == expected
+    assert (dst / "pingu.txt").read_text() == expected
+    assert (dst / "pingu" / "render_me.txt").read_text() == expected
 
 
-def test_binary_file_fallback_to_copy(tmp_path_factory):
-    root = tmp_path_factory.mktemp("demo_empty_suffix_binary_file")
+def test_binary_file_fallback_to_copy(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
-            root
-            / "copier.yaml": """
+            (src / "copier.yaml"): (
+                """\
                 _templates_suffix: ""
                 name:
                     type: str
                     default: pingu
-            """,
-            root
-            / "logo.png": b"\x89PNG\r\n\x1a\n\x00\rIHDR\x00\xec\n{{name}}\n\x00\xec",
+                """
+            ),
+            (src / "logo.png"): (
+                b"\x89PNG\r\n\x1a\n\x00\rIHDR\x00\xec\n{{name}}\n\x00\xec"
+            ),
         }
     )
-    dest = tmp_path_factory.mktemp("dst")
-    copier.copy(str(root), dest, defaults=True, overwrite=True)
-    logo = dest / "logo.png"
+    copier.copy(str(src), dst, defaults=True, overwrite=True)
+    logo = dst / "logo.png"
     assert logo.exists()
     logo_bytes = logo.read_bytes()
     assert b"{{name}}" in logo_bytes

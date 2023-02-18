@@ -1,18 +1,22 @@
 import json
 from datetime import datetime
+from typing import Optional, Sequence, Type, Union
 
 import pexpect
 import pytest
 import yaml
+from pexpect.popen_spawn import PopenSpawn
 
 from copier import Worker
 from copier.errors import InvalidTypeError
+from copier.types import AnyByStrDict, OptStr
 
 from .helpers import (
     BRACKET_ENVOPS,
     BRACKET_ENVOPS_JSON,
     COPIER_PATH,
     SUFFIX_TMPL,
+    Spawn,
     build_file_tree,
     expect_prompt,
 )
@@ -26,12 +30,12 @@ main_question = {
 
 
 class Prompt:
-    def __init__(self, name, format, help=None):
+    def __init__(self, name: str, format: str, help: OptStr = None) -> None:
         self.name = name
         self.format = format
         self.help = help
 
-    def expect(self, tui):
+    def expect(self, tui: PopenSpawn) -> None:
         expect_prompt(tui, self.name, self.format, self.help)
 
 
@@ -142,23 +146,25 @@ class Prompt:
     ],
 )
 def test_templated_prompt(
-    questions_data, expected_value, expected_outputs, tmp_path_factory, spawn
-):
-    template, subproject = (
-        tmp_path_factory.mktemp("template"),
-        tmp_path_factory.mktemp("subproject"),
-    )
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    questions_data: AnyByStrDict,
+    expected_value: Union[str, int],
+    expected_outputs: Sequence[Union[str, Prompt]],
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     questions_combined = {**main_question, **questions_data}
     # There's always only 1 question; get its name
-    question_name = questions_data.copy().popitem()[0]
+    question_name = next(iter(questions_data))
     build_file_tree(
         {
-            template / "copier.yml": json.dumps(questions_combined),
-            template
-            / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
+            (src / "copier.yml"): json.dumps(questions_combined),
+            (src / "[[ _copier_conf.answers_file ]].tmpl"): (
+                "[[ _copier_answers|to_nice_yaml ]]"
+            ),
         }
     )
-    tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
+    tui = spawn(COPIER_PATH + (str(src), str(dst)), timeout=10)
     expect_prompt(tui, "main", "str")
     tui.expect_exact(main_default)
     tui.sendline()
@@ -169,16 +175,18 @@ def test_templated_prompt(
             tui.expect_exact(output)
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers[question_name] == expected_value
 
 
-def test_templated_prompt_custom_envops(tmp_path_factory):
+def test_templated_prompt_custom_envops(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
-            src
-            / "copier.yml": """
+            (src / "copier.yml"): (
+                """\
                 _envops:
                     block_start_string: "<%"
                     block_end_string: "%>"
@@ -193,11 +201,10 @@ def test_templated_prompt_custom_envops(tmp_path_factory):
 
                 sentence:
                     type: str
-                    default:
-                        "<% if powerlevel >= 9000 %>It's over 9000!<% else %>It's only << powerlevel >>...<%
-                        endif %>"
-            """,
-            src / "result.jinja": "<<sentence>>",
+                    default: "<% if powerlevel >= 9000 %>It's over 9000!<% else %>It's only << powerlevel >>...<% endif %>"
+                """
+            ),
+            (src / "result.jinja"): "<<sentence>>",
         }
     )
     worker1 = Worker(str(src), dst, defaults=True, overwrite=True)
@@ -211,21 +218,22 @@ def test_templated_prompt_custom_envops(tmp_path_factory):
     assert (dst / "result").read_text() == "It's only 1..."
 
 
-def test_templated_prompt_builtins(tmp_path_factory):
+def test_templated_prompt_builtins(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
-            src
-            / "copier.yaml": f"""
+            (src / "copier.yaml"): (
+                f"""\
                 _templates_suffix: {SUFFIX_TMPL}
                 _envops: {BRACKET_ENVOPS_JSON}
                 question1:
                     default: "[[ now() ]]"
                 question2:
                     default: "[[ make_secret() ]]"
-            """,
-            src / "now.tmpl": "[[ question1 ]]",
-            src / "make_secret.tmpl": "[[ question2 ]]",
+                """
+            ),
+            (src / "now.tmpl"): "[[ question1 ]]",
+            (src / "make_secret.tmpl"): "[[ question2 ]]",
         }
     )
     Worker(str(src), dst, defaults=True, overwrite=True).run_copy()
@@ -236,14 +244,19 @@ def test_templated_prompt_builtins(tmp_path_factory):
 
 @pytest.mark.parametrize(
     "questions, raises, returns",
-    (
+    [
         ({"question": {"default": "{{ not_valid }}"}}, None, ""),
         ({"question": {"help": "{{ not_valid }}"}}, None, "None"),
         ({"question": {"type": "{{ not_valid }}"}}, InvalidTypeError, "None"),
         ({"question": {"choices": ["{{ not_valid }}"]}}, None, "None"),
-    ),
+    ],
 )
-def test_templated_prompt_invalid(tmp_path_factory, questions, raises, returns):
+def test_templated_prompt_invalid(
+    tmp_path_factory: pytest.TempPathFactory,
+    questions: AnyByStrDict,
+    raises: Optional[Type[BaseException]],
+    returns: str,
+) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {

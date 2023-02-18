@@ -6,14 +6,15 @@ import textwrap
 from enum import Enum
 from hashlib import sha1
 from pathlib import Path
-from typing import Mapping
+from typing import Mapping, Optional, Protocol, Tuple, Union, cast
 
+from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
 from prompt_toolkit.input.ansi_escape_sequences import REVERSE_ANSI_SEQUENCES
 from prompt_toolkit.keys import Keys
 
 import copier
-from copier.types import StrOrPath
+from copier.types import OptStr, StrOrPath
 
 PROJECT_TEMPLATE = Path(__file__).parent / "demo"
 
@@ -56,6 +57,11 @@ BRACKET_ENVOPS_JSON = json.dumps(BRACKET_ENVOPS)
 SUFFIX_TMPL = ".tmpl"
 
 
+class Spawn(Protocol):
+    def __call__(self, cmd: Tuple[str, ...], *, timeout: Optional[int]) -> PopenSpawn:
+        ...
+
+
 class Keyboard(str, Enum):
     ControlH = REVERSE_ANSI_SEQUENCES[Keys.ControlH]
     ControlC = REVERSE_ANSI_SEQUENCES[Keys.ControlC]
@@ -76,31 +82,35 @@ class Keyboard(str, Enum):
     Backspace = ControlH
 
 
-def render(tmp_path, **kwargs):
+def render(tmp_path: Path, **kwargs) -> None:
     kwargs.setdefault("quiet", True)
     copier.copy(str(PROJECT_TEMPLATE), tmp_path, data=DATA, **kwargs)
 
 
-def assert_file(tmp_path, *path):
-    p1 = os.path.join(str(tmp_path), *path)
-    p2 = os.path.join(str(PROJECT_TEMPLATE), *path)
+def assert_file(tmp_path: Path, *path: str) -> None:
+    p1 = tmp_path.joinpath(*path)
+    p2 = PROJECT_TEMPLATE.joinpath(*path)
     assert filecmp.cmp(p1, p2)
 
 
-def build_file_tree(spec: Mapping[StrOrPath, str], dedent: bool = True):
+def build_file_tree(
+    spec: Mapping[StrOrPath, Union[str, bytes]], dedent: bool = True
+) -> None:
     """Builds a file tree based on the received spec."""
     for path, contents in spec.items():
         path = Path(path)
         binary = isinstance(contents, bytes)
         if not binary and dedent:
-            contents = textwrap.dedent(contents)
+            contents = textwrap.dedent(cast(str, contents))
         path.parent.mkdir(parents=True, exist_ok=True)
         mode = "wb" if binary else "w"
         with path.open(mode) as fd:
             fd.write(contents)
 
 
-def expect_prompt(tui, name, expected_type, help=None):
+def expect_prompt(
+    tui: PopenSpawn, name: str, expected_type: str, help: OptStr = None
+) -> None:
     """Check that we get a prompt in the standard form"""
     if help:
         tui.expect_exact(help)
