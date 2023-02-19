@@ -831,7 +831,7 @@ used in `copier.yml`, templated folder names, and templated file names.
     ├── 📁 includes
     │   └── 📄 name-slug.jinja
     └── 📁 template
-        └── 📄 {% include "$:name-slug.jinja" %}.py
+        └── 📄 {% include '$:name-slug.jinja' %}.py
     ```
 
     with the following Copier configuration

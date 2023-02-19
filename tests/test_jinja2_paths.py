@@ -56,9 +56,9 @@ def test_include(
                 '{% include "$:name-slug.jinja" %}'
             ),
             # File for testing the Jinja include statement in the file name.
-            (src / subdir / '{% include "$:name-slug.jinja" %}.txt'): "",
+            (src / subdir / "{% include '$:name-slug.jinja' %}.txt"): "",
             # File for testing the Jinja include statement in the folder name.
-            (src / subdir / '{% include "$:name-slug.jinja" %}' / "test.txt"): "",
+            (src / subdir / "{% include '$:name-slug.jinja' %}" / "test.txt"): "",
         }
     )
     copier.copy(str(src), dst, defaults=True)
@@ -128,13 +128,13 @@ def test_import_macro(
             (
                 src
                 / subdir
-                / '{% from "$:slugify.jinja" import slugify %}{{ slugify(name) }}.txt'
+                / "{% from '$:slugify.jinja' import slugify %}{{ slugify(name) }}.txt"
             ): "",
             # File for testing the Jinja import statement in the folder name.
             (
                 src
                 / subdir
-                / '{% from "$:slugify.jinja" import slugify %}{{ slugify(name) }}'
+                / "{% from '$:slugify.jinja' import slugify %}{{ slugify(name) }}"
                 / "test.txt"
             ): "",
         }
