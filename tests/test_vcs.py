@@ -56,8 +56,8 @@ def test_get_repo() -> None:
     assert get("git.myproject.org/MyProject") is None
     assert get("https://google.com") is None
 
-    assert (
-        get("tests/demo_updatediff_repo.bundle") == "tests/demo_updatediff_repo.bundle"
+    assert get(str(Path("tests", "demo_updatediff_repo.bundle"))) == str(
+        Path("tests", "demo_updatediff_repo.bundle")
     )
 
 

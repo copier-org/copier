@@ -256,7 +256,7 @@ def test_worker_good_data(tmp_path: Path) -> None:
         ),
         # func_args > user_data
         (
-            {"src_path": "tests/demo_data", "exclude": ["aaa"]},
+            {"src_path": str(Path("tests", "demo_data")), "exclude": ["aaa"]},
             ("exclude1", "exclude2", "aaa"),
         ),
     ],
