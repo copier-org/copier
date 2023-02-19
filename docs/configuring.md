@@ -801,6 +801,60 @@ on them, so they are always installed when Copier is installed.
     [other Jinja2 topics](https://github.com/search?q=jinja&type=topics), or
     [on PyPI using the jinja + extension keywords](https://pypi.org/search/?q=jinja+extension).
 
+### `jinja_paths`
+
+-   Format: `Dict[str, str]`
+-   CLI flags: N/A
+-   Default value: `{}`
+
+Additional paths relative to the repository root from which to load Jinja2 templates,
+referenced by `:`-delimited identifiers, in the Jinja2 environment.
+
+Configuring an additional Jinja2 path is useful for deriving values via Jinja2
+[includes](https://jinja.palletsprojects.com/en/3.1.x/templates/#include) or macro
+[imports](https://jinja.palletsprojects.com/en/3.1.x/templates/#import) which can be
+used in `copier.yml`, templated folder names, and templated file names.
+
+!!! attention "Note to template writers"
+
+    Jinja2 template files loaded from additional paths should typically not be copied
+    to the project. Either use a [subdirectory](#subdirectory) and use additional
+    Jinja2 paths adjacent to it, or [exclude](#exclude) the additional Jinja2 paths.
+
+!!! example "Deriving a slug from answer"
+
+    A template might have the layout
+
+    ```shell title="Project layout"
+    📁 my_copier_template
+    ├── 📄 copier.yml
+    ├── 📁 includes
+    │   └── 📄 name-slug.jinja
+    └── 📁 template
+        └── 📄 {% include "$:name-slug.jinja" %}.py
+    ```
+
+    with the following Copier configuration
+
+    ```yaml title="copier.yml"
+    _subdirectory: template
+    _jinja_paths:
+        $: includes
+
+    name:
+        type: str
+    slug:
+        type: str
+        default: '{% include "$:name-slug.jinja" %}'
+    ```
+
+    and the Jinja2 template that derives a (simplified) slug from the answer to the
+    `name` question:
+
+    ```jinja title="includes/name-slug.jinja"
+    {{ name|lower|replace(' ', '-') }}
+    ```
+
 ### `migrations`
 
 -   Format: `List[dict]`

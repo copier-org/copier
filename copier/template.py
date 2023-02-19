@@ -318,6 +318,14 @@ class Template:
         return tuple(self.config_data.get("jinja_extensions", ()))
 
     @cached_property
+    def jinja_paths(self) -> Mapping[str, str]:
+        """Get Jinja2 paths specified in the template, or `{}`.
+
+        See [jinja_paths][].
+        """
+        return self.config_data.get("jinja_paths", {})
+
+    @cached_property
     def metadata(self) -> AnyByStrDict:
         """Get template metadata.
 

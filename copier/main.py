@@ -14,7 +14,7 @@ from shutil import rmtree
 from typing import Callable, Iterable, List, Mapping, Optional, Sequence
 from unicodedata import normalize
 
-from jinja2.loaders import FileSystemLoader
+from jinja2.loaders import ChoiceLoader, FileSystemLoader, PrefixLoader
 from jinja2.sandbox import SandboxedEnvironment
 from pathspec import PathSpec
 from plumbum import ProcessExecutionError, colors
@@ -440,8 +440,20 @@ class Worker:
 
         Respects template settings.
         """
-        paths = [str(self.template.local_abspath)]
-        loader = FileSystemLoader(paths)
+        loader = ChoiceLoader(
+            [
+                PrefixLoader(
+                    {
+                        prefix: FileSystemLoader(
+                            [str(self.template.local_abspath / path)]
+                        )
+                        for prefix, path in self.template.jinja_paths.items()
+                    },
+                    delimiter=":",
+                ),
+                FileSystemLoader([str(self.template.local_abspath)]),
+            ]
+        )
         default_extensions = [
             "jinja2_ansible_filters.AnsibleCoreFiltersExtension",
         ]
