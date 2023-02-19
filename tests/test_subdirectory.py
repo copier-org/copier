@@ -239,7 +239,6 @@ def test_new_version_uses_subdirectory(
 
     # Now change the template
     with local.cwd(src):
-
         # Update the README
         Path("README.md").write_text("upstream version 2")
 
@@ -309,7 +308,6 @@ def test_new_version_changes_subdirectory(
 
     # Now change the template
     with local.cwd(src):
-
         # Update the README
         Path("subdir1", "README.md").write_text("upstream version 2")
 
