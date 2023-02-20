@@ -1,5 +1,6 @@
 import subprocess
 import sys
+from pathlib import Path
 from typing import Callable, Generator
 
 import pytest
@@ -37,15 +38,12 @@ def template_path_with_dot_config(
         build_file_tree(
             {
                 root
-                / f"{config_folder}{{{{ _copier_conf.answers_file }}}}.jinja": """\
+                / config_folder
+                / "{{ _copier_conf.answers_file }}.jinja": """\
                     # Changes here will be overwritten by Copier
                     {{ _copier_answers|to_nice_yaml }}
                     """,
                 root / "a.txt": "EXAMPLE_CONTENT",
-                root
-                / "copier.yaml": """\
-                _answers_file: altered-answers.yml
-                """,
             }
         )
         return str(root)
@@ -69,7 +67,10 @@ def test_good_cli_run(tmp_path, template_path):
 
 @pytest.mark.parametrize(
     "config_folder",
-    ["", ".config/", ".config/subconfig/", ".config/subconfig/deep_nested_config/"],
+    map(
+        Path,
+        ["", ".config/", ".config/subconfig/", ".config/subconfig/deep_nested_config/"],
+    ),
 )
 def test_good_cli_run_dot_config(
     tmp_path, template_path_with_dot_config, config_folder
@@ -79,17 +80,17 @@ def test_good_cli_run_dot_config(
     Added based on the discussion: https://github.com/copier-org/copier/discussions/859
     """
 
-    config_path = template_path_with_dot_config(config_folder)
+    src = template_path_with_dot_config(config_folder)
 
-    with local.cwd(config_path):
+    with local.cwd(src):
         git_commands()
 
     run_result = CopierApp.run(
         [
             "--quiet",
             "-a",
-            f"{config_folder}altered-answers.yml",
-            config_path,
+            config_folder / "altered-answers.yml",
+            src,
             str(tmp_path),
         ],
         exit=False,
@@ -100,18 +101,18 @@ def test_good_cli_run_dot_config(
     assert a_txt.is_file()
     assert a_txt.read_text() == "EXAMPLE_CONTENT"
     answers = yaml.safe_load(
-        (tmp_path / f"{config_folder}altered-answers.yml").read_text()
+        (tmp_path / config_folder / "altered-answers.yml").read_text()
     )
-    assert answers["_src_path"] == config_path
+    assert answers["_src_path"] == src
 
     with local.cwd(str(tmp_path)):
         git_commands()
 
     run_update = CopierApp.invoke(
-        str(tmp_path), answers_file=f"{config_folder}altered-answers.yml", quiet=True
+        str(tmp_path), answers_file=config_folder / "altered-answers.yml", quiet=True
     )
     assert run_update[1] == 0
-    assert answers["_src_path"] == config_path
+    assert answers["_src_path"] == src
 
 
 def git_commands():
