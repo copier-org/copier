@@ -1028,7 +1028,7 @@ This allows you to keep separate the template metadata and the template code.
         │   ├── 📄 {{ _copier_conf.answers_file }}.jinja # (2)
         │   └── 📄 pyproject.toml.jinja
         └── 📁 pipenv
-        │   ├── 📄 {{ _copier_conf.answers_file }}.jinja
+            ├── 📄 {{ _copier_conf.answers_file }}.jinja
             └── 📄 Pipfile.jinja
         ```
 
