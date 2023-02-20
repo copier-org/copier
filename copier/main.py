@@ -567,6 +567,10 @@ class Worker:
             part = self._render_string(part)
             if not part:
                 return None
+            # {{ _copier_conf.answers_file }} becomes the full path; in that case,
+            # restore part to be just the end leaf
+            if str(self.answers_relpath) == part:
+                part = Path(part).name
             rendered_parts.append(part)
         result = Path(*rendered_parts)
         if not is_template:
