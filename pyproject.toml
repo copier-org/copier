@@ -34,7 +34,7 @@ funcy = ">=1.17"
 importlib-metadata = { version = ">=3.4,<7.0", python = "<3.8" }
 jinja2 = ">=3.1.1"
 jinja2-ansible-filters = ">=1.3.1"
-packaging = ">=21.0" # packaging is needed when installing from PyPI
+packaging = ">=23.0"
 pathspec = ">=0.9.0"
 plumbum = ">=1.6.9"
 pydantic = ">=1.10.2"
