@@ -3,6 +3,7 @@ site_description: Library and command-line utility for rendering projects templa
 site_url: https://copier.readthedocs.io/
 repo_url: https://github.com/copier-org/copier
 repo_name: copier-org/copier
+watch: [copier]
 
 nav:
   - Overview: "index.md"
@@ -68,6 +69,4 @@ markdown_extensions:
 plugins:
   - autorefs
   - search
-  - mkdocstrings:
-      watch:
-        - copier
+  - mkdocstrings
