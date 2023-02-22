@@ -15,13 +15,13 @@ project, the user will be prompted to fill in or confirm the default values.
 
 ## Minimal example
 
-```shell
-📁 my_copier_template ------------------------ # your template project
-├── 📄 copier.yml ---------------------------- # your template configuration
-├── 📁 .git ---------------------------------- # your template is a Git repository
-├── 📁 {{project_name}} ---------------------- # a folder with a templated name
-│   └── 📄 {{module_name}}.py.jinja ---------- # a file with a templated name
-└── 📄 {{_copier_conf.answers_file}}.jinja --- # answers are recorded here
+```tree result="shell"
+my_copier_template ---------------------------- # your template project
+    copier.yml -------------------------------- # your template configuration
+    .git/ ------------------------------------- # your template is a Git repository
+    {{project_name}} -------------------------- # a folder with a templated name
+        {{module_name}}.py.jinja -------------- # a file with a templated name
+        {{_copier_conf.answers_file}}.jinja --- # answers are recorded here
 ```
 
 ```yaml title="copier.yml"
@@ -48,11 +48,11 @@ Generating a project from this template with `super_project` and `world` as answ
 the `project_name` and `module_name` questions respectively would create in the
 following directory and files:
 
-```shell
-📁 generated_project
-├── 📁 super_project
-│   └── 📄 world.py
-└── 📄 .copier-answers.yml
+```tree result="shell"
+generated_project
+    super_project
+        world.py
+    .copier-answers.yml
 ```
 
 ```python title="super_project/world.py"
