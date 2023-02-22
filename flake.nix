@@ -34,11 +34,6 @@
           name = "copier-${version}";
           POETRY_DYNAMIC_VERSIONING_BYPASS = version;
           projectDir = ./.;
-          overrides = pkgs.poetry2nix.overrides.withDefaults (final: prev: {
-            pydantic = prev.pydantic.overrideAttrs (old: {
-              buildInputs = old.buildInputs ++ [pkgs.libxcrypt];
-            });
-          });
 
           # Test configuration
           nativeCheckInputs = [pkgs.git];
