@@ -1,8 +1,12 @@
 """Development helper tasks."""
-import os
+import logging
 import shutil
 from pathlib import Path
-from subprocess import check_call
+
+from plumbum import TEE, CommandNotFound, ProcessExecutionError, local
+
+_logger = logging.getLogger(__name__)
+HERE = Path(__file__).parent
 
 
 def clean():
@@ -33,20 +37,53 @@ def clean():
 
 def dev_setup():
     """Set up a development environment."""
-    # Gitpod sets PIP_USER=yes, which breaks poetry
-    env = dict(os.environ, PIP_USER="no")
-    check_call(["poetry", "install", "--with", "docs"], env=env)
-    check_call(
-        [
-            "poetry",
-            "run",
-            "pre-commit",
-            "install",
-            "-t",
-            "pre-commit",
-            "-t",
-            "commit-msg",
-        ],
-        env=env,
-    )
-    check_call(["poetry", "run", "pre-commit", "install-hooks"], env=env)
+    with local.cwd(HERE):
+        local["direnv"]("allow")
+        local["poetry"]("install")
+
+
+def lint(recycle_container=False):
+    """Lint and format the project."""
+    args = [
+        "--extra-experimental-features",
+        "nix-command flakes",
+        "--extra-substituters",
+        "https://copier.cachix.org https://devenv.cachix.org",
+        "--extra-trusted-public-keys",
+        "copier.cachix.org-1:sVkdQyyNXrgc53qXPCH9zuS91zpt5eBYcg7JQSmTBG4= devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=",
+        "develop",
+        "--impure",
+        ".",
+        "--command",
+        "pre-commit",
+        "run",
+        "--color=always",
+        "--all-files",
+    ]
+    try:
+        local["nix"].with_cwd(HERE)[args] & TEE
+    except CommandNotFound:
+        _logger.warn("Nix not found; fallback to a container")
+        runner = local.get("docker", "podman")
+        try:
+            (
+                runner[
+                    "container",
+                    "create",
+                    "--name=copier-lint-v1",
+                    f"--volume={HERE}:{HERE}:rw,z",
+                    f"--workdir={HERE}",
+                    "docker.io/nixos/nix",
+                    "nix",
+                    args,
+                ]
+                & TEE
+            )
+        except ProcessExecutionError:
+            _logger.info(
+                "Couldn't create copier-lint-v1 container, probably because a previous one exists. "
+                "Remove it if you want to recycle it. Otherwise, this is OK."
+            )
+        runner["container", "start", "--attach", "copier-lint-v1"] & TEE
+    except ProcessExecutionError as error:
+        raise SystemExit(error.errno)

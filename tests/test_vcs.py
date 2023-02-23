@@ -157,3 +157,21 @@ def test_update_using_local_source_path_with_tilde(tmp_path: Path) -> None:
         answers_file=".copier-answers.autopretty.yml",
     )
     assert worker.answers.combined["_src_path"] == user_src_path
+
+
+def test_invalid_version(tmp_path):
+    sample = tmp_path / "sample.txt"
+    with local.cwd(tmp_path):
+        git("init")
+        sample.write_text("1")
+        git("add", sample)
+        git("commit", "-m1")
+        git("tag", "not-a-version")
+        sample.write_text("2")
+        git("commit", "-am2")
+        git("tag", "v2")
+        sample.write_text("3")
+        git("commit", "-am3")
+        assert git("describe", "--tags").strip() != "v2"
+        vcs.checkout_latest_tag(tmp_path)
+        assert git("describe", "--tags").strip() == "v2"

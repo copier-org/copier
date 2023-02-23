@@ -299,11 +299,7 @@ class Worker:
         return bool(ask(f" Overwrite {dst_relpath}?", default=True))
 
     def _render_allowed(
-        self,
-        dst_relpath: Path,
-        is_dir: bool = False,
-        expected_contents: bytes = b"",
-        expected_permissions=None,
+        self, dst_relpath: Path, is_dir: bool = False, expected_contents: bytes = b""
     ) -> bool:
         """Determine if a file or directory can be rendered.
 
@@ -332,33 +328,22 @@ class Worker:
                 file_=sys.stderr,
             )
             return True
-        except (IsADirectoryError, PermissionError) as error:
+        except PermissionError as error:
             # HACK https://bugs.python.org/issue43095
-            if isinstance(error, PermissionError) and not (
-                error.errno == 13 and platform.system() == "Windows"
-            ):
+            if not (error.errno == 13 and platform.system() == "Windows"):
                 raise
-            if is_dir:
-                printf(
-                    "identical",
-                    dst_relpath,
-                    style=Style.IGNORE,
-                    quiet=self.quiet,
-                    file_=sys.stderr,
-                )
-                return True
-            return self._solve_render_conflict(dst_relpath)
-        else:
-            if previous_content == expected_contents:
-                printf(
-                    "identical",
-                    dst_relpath,
-                    style=Style.IGNORE,
-                    quiet=self.quiet,
-                    file_=sys.stderr,
-                )
-                return True
-            return self._solve_render_conflict(dst_relpath)
+        except IsADirectoryError:
+            assert is_dir
+        if is_dir or previous_content == expected_contents:
+            printf(
+                "identical",
+                dst_relpath,
+                style=Style.IGNORE,
+                quiet=self.quiet,
+                file_=sys.stderr,
+            )
+            return True
+        return self._solve_render_conflict(dst_relpath)
 
     @cached_property
     def answers(self) -> AnswersMap:
@@ -510,11 +495,7 @@ class Worker:
             new_content = src_abspath.read_bytes()
         dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
         src_mode = src_abspath.stat().st_mode
-        if not self._render_allowed(
-            dst_relpath,
-            expected_contents=new_content,
-            expected_permissions=src_mode,
-        ):
+        if not self._render_allowed(dst_relpath, expected_contents=new_content):
             return
         if not self.pretend:
             dst_abspath.parent.mkdir(parents=True, exist_ok=True)
@@ -567,6 +548,10 @@ class Worker:
             part = self._render_string(part)
             if not part:
                 return None
+            # {{ _copier_conf.answers_file }} becomes the full path; in that case,
+            # restore part to be just the end leaf
+            if str(self.answers_relpath) == part:
+                part = Path(part).name
             rendered_parts.append(part)
         result = Path(*rendered_parts)
         if not is_template:

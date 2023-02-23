@@ -542,7 +542,7 @@ running `copier update`, this setting has no effect.
 ### `conflict`
 
 -   Format: `Literal["rej", "inline"]`
--   CLI flags: `-o`, `--conflict`
+-   CLI flags: `-o`, `--conflict` (only available in `copier update` subcommand)
 -   Default value: `rej`
 
 When updating a project, sometimes Copier doesn't know what to do with a diff code hunk.
@@ -1028,7 +1028,7 @@ This allows you to keep separate the template metadata and the template code.
         │   ├── 📄 {{ _copier_conf.answers_file }}.jinja # (2)
         │   └── 📄 pyproject.toml.jinja
         └── 📁 pipenv
-        │   ├── 📄 {{ _copier_conf.answers_file }}.jinja
+            ├── 📄 {{ _copier_conf.answers_file }}.jinja
             └── 📄 Pipfile.jinja
         ```
 

@@ -32,9 +32,8 @@ jobs:
           - macos-latest
           - ubuntu-latest
           - windows-latest
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11-dev"]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.python-version == '3.11-dev' }}
     steps:
       # HACK https://github.com/actions/cache/issues/315
       - name: Enable msys binaries
@@ -120,7 +119,7 @@ jobs:
             }}
 
       # Check direnv works as expected
-      - uses: JRMurr/direnv-nix-action@v2
+      - uses: JRMurr/direnv-nix-action@v3
         with:
           install-nix: "false"
           cache-store: "false"
