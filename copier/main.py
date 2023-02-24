@@ -712,25 +712,6 @@ class Worker:
             old_worker = self._make_old_worker(old_copy)
             old_worker.run_copy()
 
-            # Run pre-migration tasks
-            self._execute_tasks(
-                self.template.migration_tasks("before", self.subproject.template)
-            )
-
-            # Clear last answers cache to load possible answers migration
-            with suppress(AttributeError):
-                del self.answers
-            with suppress(AttributeError):
-                del self.subproject.last_answers
-            new_worker = replace(
-                self,
-                src_path=self.subproject.template.url,
-                dst_path=new_copy,
-            )
-            # Use last answers from the pre-migrated project
-            new_worker.subproject.last_answers = self.subproject.last_answers
-            new_worker.run_copy()
-
             # Extract diff between temporary destination and real destination
             with local.cwd(old_copy):
                 subproject_top = git(
@@ -752,6 +733,25 @@ class Worker:
                         file=sys.stderr,
                     )
                     diff = diff_cmd("--inter-hunk-context=0")
+
+            # Run pre-migration tasks
+            self._execute_tasks(
+                self.template.migration_tasks("before", self.subproject.template)
+            )
+
+            # Clear last answers cache to load possible answers migration
+            with suppress(AttributeError):
+                del self.answers
+            with suppress(AttributeError):
+                del self.subproject.last_answers
+            new_worker = replace(
+                self,
+                src_path=self.subproject.template.url,
+                dst_path=new_copy,
+            )
+            # Use last answers from the pre-migrated project
+            new_worker.subproject.last_answers = self.subproject.last_answers
+            new_worker.run_copy()
 
             # Copy the new template output into the actual destination with the
             # answers from the temporary destination.
