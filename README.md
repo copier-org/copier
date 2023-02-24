@@ -139,8 +139,16 @@ This project would not be a thing without him.
 Many thanks to [pykong](https://github.com/pykong) who took over maintainership on the
 project, promoted it, and laid out the bases of what the project is today.
 
-Big thanks also go to [Yajo](https://github.com/Yajo) for his relentless zest for
+Big thanks also go to [yajo](https://github.com/yajo) for his relentless zest for
 improving `Copier` even further.
 
 Thanks a lot, [pawamoy](https://github.com/pawamoy) for polishing very important rough
 edges and improving the documentation and UX a lot.
+
+Also special thanks to [sisp](https://github.com/sisp) for being very helpful in
+polishing documentation, fixing bugs, helping the community and cleaning up the
+codebase.
+
+And thanks to all financial supporters and folks that give us a shiny star! ⭐
+
+[![Star History Chart](https://api.star-history.com/svg?repos=copier-org/copier&type=Date)](https://star-history.com/#copier-org/copier&Date)
