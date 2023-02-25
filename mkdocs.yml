@@ -68,6 +68,7 @@ markdown_extensions:
 plugins:
   - autorefs
   - search
+  - markdown-exec
   - mkdocstrings:
       watch:
         - copier
