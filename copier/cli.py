@@ -50,7 +50,6 @@ from pathlib import Path
 from textwrap import dedent
 from unittest.mock import patch
 
-import yaml
 from plumbum import cli, colors
 
 from copier.tools import copier_version
@@ -191,7 +190,6 @@ class CopierApp(cli.Application):
         """
         for arg in values:
             key, value = arg.split("=", 1)
-            value = yaml.safe_load(value)
             self.data[key] = value
 
     def _worker(self, src_path: OptStr = None, dst_path: str = ".", **kwargs) -> Worker:

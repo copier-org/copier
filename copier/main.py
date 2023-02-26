@@ -367,14 +367,14 @@ class Worker:
                 **details,
             )
             if var_name in result.init:
-                answer = result.init[var_name]
                 # Try to parse the answer value.
-                question.parse_answer(answer)
+                answer = question.parse_answer(result.init[var_name])
                 # Try to validate the answer value if the question has a
                 # validator.
                 question.validate_answer(answer)
                 # At this point, the answer value is valid. Do not ask the
-                # question again.
+                # question again, but set answer as the user's answer instead.
+                result.user[var_name] = answer
                 continue
 
             questions.append(question)
