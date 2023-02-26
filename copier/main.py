@@ -27,6 +27,7 @@ from pydantic.json import pydantic_encoder
 from questionary import unsafe_prompt
 
 from .errors import CopierAnswersInterrupt, ExtensionNotFoundError, UserMessageError
+from .renderer import Renderer
 from .subproject import Subproject
 from .template import Task, Template
 from .tools import Style, TemporaryDirectory, printf
@@ -466,113 +467,6 @@ class Worker:
             )
         )
 
-    def _render_file(self, src_abspath: Path) -> None:
-        """Render one file.
-
-        Args:
-            src_abspath:
-                The absolute path to the file that will be rendered.
-        """
-        # TODO Get from main.render_file()
-        assert src_abspath.is_absolute()
-        src_relpath = src_abspath.relative_to(self.template.local_abspath).as_posix()
-        src_renderpath = src_abspath.relative_to(self.template_copy_root)
-        dst_relpath = self._render_path(src_renderpath)
-        if dst_relpath is None:
-            return
-        if src_abspath.name.endswith(self.template.templates_suffix):
-            try:
-                tpl = self.jinja_env.get_template(src_relpath)
-            except UnicodeDecodeError:
-                if self.template.templates_suffix:
-                    # suffix is not empty, re-raise
-                    raise
-                # suffix is empty, fallback to copy
-                new_content = src_abspath.read_bytes()
-            else:
-                new_content = tpl.render(**self._render_context()).encode()
-        else:
-            new_content = src_abspath.read_bytes()
-        dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
-        src_mode = src_abspath.stat().st_mode
-        if not self._render_allowed(dst_relpath, expected_contents=new_content):
-            return
-        if not self.pretend:
-            dst_abspath.parent.mkdir(parents=True, exist_ok=True)
-            dst_abspath.write_bytes(new_content)
-            dst_abspath.chmod(src_mode)
-
-    def _render_folder(self, src_abspath: Path) -> None:
-        """Recursively render a folder.
-
-        Args:
-            src_path:
-                Folder to be rendered. It must be an absolute path within
-                the template.
-        """
-        assert src_abspath.is_absolute()
-        src_relpath = src_abspath.relative_to(self.template_copy_root)
-        dst_relpath = self._render_path(src_relpath)
-        if dst_relpath is None:
-            return
-        if not self._render_allowed(dst_relpath, is_dir=True):
-            return
-        dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
-        if not self.pretend:
-            dst_abspath.mkdir(parents=True, exist_ok=True)
-        for file in src_abspath.iterdir():
-            if file.is_dir():
-                self._render_folder(file)
-            else:
-                self._render_file(file)
-
-    def _render_path(self, relpath: Path) -> Optional[Path]:
-        """Render one relative path.
-
-        Args:
-            relpath:
-                The relative path to be rendered. Obviously, it can be templated.
-        """
-        is_template = relpath.name.endswith(self.template.templates_suffix)
-        templated_sibling = (
-            self.template.local_abspath / f"{relpath}{self.template.templates_suffix}"
-        )
-        # With an empty suffix, the templated sibling always exists.
-        if templated_sibling.exists() and self.template.templates_suffix:
-            return None
-        if self.template.templates_suffix and is_template:
-            relpath = relpath.with_suffix("")
-        rendered_parts = []
-        for part in relpath.parts:
-            # Skip folder if any part is rendered as an empty string
-            part = self._render_string(part)
-            if not part:
-                return None
-            # {{ _copier_conf.answers_file }} becomes the full path; in that case,
-            # restore part to be just the end leaf
-            if str(self.answers_relpath) == part:
-                part = Path(part).name
-            rendered_parts.append(part)
-        result = Path(*rendered_parts)
-        if not is_template:
-            templated_sibling = (
-                self.template.local_abspath
-                / f"{result}{self.template.templates_suffix}"
-            )
-            if templated_sibling.exists():
-                return None
-        return result
-
-    def _render_string(self, string: str) -> str:
-        """Render one templated string.
-
-        Args:
-            string:
-                The template source string.
-        """
-        tpl = self.jinja_env.from_string(string)
-        return tpl.render(**self._render_context())
-
     @cached_property
     def subproject(self) -> Subproject:
         """Get related subproject."""
@@ -590,15 +484,6 @@ class Worker:
                 raise TypeError("Template not found")
             url = str(self.subproject.template.url)
         return Template(url=url, ref=self.vcs_ref, use_prereleases=self.use_prereleases)
-
-    @cached_property
-    def template_copy_root(self) -> Path:
-        """Absolute path from where to start copying.
-
-        It points to the cloned template local abspath + the rendered subdir, if any.
-        """
-        subdir = self._render_string(self.template.subdirectory) or ""
-        return self.template.local_abspath / subdir
 
     # Main operations
     def run_auto(self) -> None:
@@ -624,7 +509,6 @@ class Worker:
         See [generating a project][generating-a-project].
         """
         was_existing = self.subproject.local_abspath.exists()
-        src_abspath = self.template_copy_root
         try:
             if not self.quiet:
                 # TODO Unify printing tools
@@ -632,7 +516,7 @@ class Worker:
                     f"\nCopying from template version {self.template.version}",
                     file=sys.stderr,
                 )
-            self._render_folder(src_abspath)
+            self._default_renderer.render()
             if not self.quiet:
                 # TODO Unify printing tools
                 print("")  # padding space
@@ -809,6 +693,21 @@ class Worker:
         git("commit", "--allow-empty", "-am", "dumb commit 2")
         git("config", "--unset", "user.name")
         git("config", "--unset", "user.email")
+
+    @cached_property
+    def _default_renderer(self) -> Renderer:
+        return Renderer(
+            template=self.template,
+            subproject=self.subproject,
+            _render_allowed=self._render_allowed,
+            pretend=self.pretend,
+            jinja_env=self.jinja_env,
+            answers_relpath=self.answers_relpath,
+            _render_context=self._render_context(),
+        )
+
+    def _render_string(self, string: str) -> str:
+        return self._default_renderer.render_string(string)
 
 
 def run_copy(
