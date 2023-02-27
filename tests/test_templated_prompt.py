@@ -307,7 +307,7 @@ def test_templated_prompt_with_conditional_choices(
         tui,
         "terragrunt_version",
         "str",
-        help="Which Terragrunt version you want to use?",
+        help="Which Terragrunt version do you want to use?",
     )
     for terragrunt_version in terragrunt_versions:
         tui.expect_exact(terragrunt_version)
