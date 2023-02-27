@@ -423,6 +423,16 @@ def test_value_with_forward_slash(tmp_path_factory):
             pytest.raises(ValueError),
         ),
         (
+            {"type": "int", "choices": [1, "", 3]},
+            "1",
+            does_not_raise(),
+        ),
+        (
+            {"type": "int", "choices": [1, "", 3]},
+            "",
+            pytest.raises(ValueError),
+        ),
+        (
             {"type": "int", "choices": {"one": 1, "two": 2, "three": 3}},
             "1",
             does_not_raise(),
@@ -430,6 +440,16 @@ def test_value_with_forward_slash(tmp_path_factory):
         (
             {"type": "int", "choices": {"one": 1, "two": 2, "three": 3}},
             "4",
+            pytest.raises(ValueError),
+        ),
+        (
+            {"type": "int", "choices": {"one": 1, "": 2, "three": 3}},
+            "",
+            pytest.raises(ValueError),
+        ),
+        (
+            {"type": "int", "choices": {"one": 1, "": 2, "three": 3}},
+            "2",
             pytest.raises(ValueError),
         ),
         (

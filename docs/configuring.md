@@ -81,6 +81,14 @@ Supported keys:
 
         A choice value of `null` makes it become the same as its key.
 
+    !!! tip "Conditional choices"
+
+        A choice can be disabled by setting its key (for dict-style or tuple-style
+        choices) or value (for list-style choices) to `""`. Disabling a choice is
+        useful when its validity depends on the answer to a previous question in which
+        case a template with a condition on this answer should render an empty string
+        when the choice should be disabled.
+
     !!! warning
 
         You are able to use different types for each choice value, but it is not

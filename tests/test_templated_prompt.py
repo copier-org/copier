@@ -258,3 +258,57 @@ def test_templated_prompt_invalid(tmp_path_factory, questions, raises, returns):
     else:
         worker.run_copy()
         assert (dst / "result").read_text() == returns
+
+
+@pytest.mark.parametrize(
+    "terraform_version, terragrunt_versions",
+    [
+        ("1.2", ["0.41", "0.40", "0.39", "0.38"]),
+        ("1.3", ["0.41", "0.40"]),
+    ],
+)
+def test_templated_prompt_with_conditional_choices(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn,
+    terraform_version,
+    terragrunt_versions,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                """\
+                terraform_version:
+                    type: str
+                    help: Which Terraform version do you want to use?
+                    choices:
+                        - "1.3"
+                        - "1.2"
+
+                terragrunt_version:
+                    type: str
+                    help: Which Terragrunt version you want to use?
+                    choices:
+                        - "{% if terraform_version.split('.')|map('int')|list <= [1, 3] %}0.41{% endif %}"
+                        - "{% if terraform_version.split('.')|map('int')|list <= [1, 3] %}0.40{% endif %}"
+                        - "{% if terraform_version.split('.')|map('int')|list <= [1, 2] %}0.39{% endif %}"
+                        - "{% if terraform_version.split('.')|map('int')|list <= [1, 2] %}0.38{% endif %}"
+                """
+            ),
+            (src / "result.jinja"): "{{question}}",
+        }
+    )
+    tui = spawn(
+        COPIER_PATH
+        + (f"--data=terraform_version={terraform_version}", "copy", str(src), str(dst)),
+        timeout=10,
+    )
+    expect_prompt(
+        tui,
+        "terragrunt_version",
+        "str",
+        help="Which Terragrunt version you want to use?",
+    )
+    for terragrunt_version in terragrunt_versions:
+        tui.expect_exact(terragrunt_version)
+    tui.sendline()

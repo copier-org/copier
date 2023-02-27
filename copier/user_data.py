@@ -281,6 +281,9 @@ class Question:
                 name = value = choice
             # The name must always be a str
             name = str(self.render_value(name))
+            # If the name is an empty string, ignore this choice.
+            if not name:
+                continue
             # The value can be templated
             value = self.render_value(value)
             result.append(Choice(name, value))
