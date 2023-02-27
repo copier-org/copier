@@ -287,7 +287,7 @@ def test_templated_prompt_with_conditional_choices(
 
                 terragrunt_version:
                     type: str
-                    help: Which Terragrunt version you want to use?
+                    help: Which Terragrunt version do you want to use?
                     choices:
                         - "{% if terraform_version.split('.')|map('int')|list <= [1, 3] %}0.41{% endif %}"
                         - "{% if terraform_version.split('.')|map('int')|list <= [1, 3] %}0.40{% endif %}"
