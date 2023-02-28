@@ -505,7 +505,8 @@ name:
 
 slug:
     type: str
-    help: "{% include 'name-slug.jinja' %}"
+    help: A slug of the name
+    default: "{% include 'name-slug.jinja' %}"
 ```
 
 ```jinja title="name-slug.jinja"
@@ -567,7 +568,8 @@ name:
 
 slug:
     type: str
-    help: "{% from 'slugify.jinja' import slugify %}{{ slugify(name) }}'
+    help: A slug of the name
+    default: "{% from 'slugify.jinja' import slugify %}{{ slugify(name) }}'
 ```
 
 or in a templated folder name, in a templated file name, or in the templated content of
