@@ -39,7 +39,7 @@ def test_include(
                     },
                     "slug": {
                         "type": "str",
-                        "default": "{% include pathjoin('includes', 'name-slug.jinja') %}",
+                        "default": "{% include 'includes/name-slug.jinja' %}",
                     },
                 }
             ),
@@ -50,19 +50,19 @@ def test_include(
             (src / subdir / "slug-answer.txt.jinja"): "{{ slug }}",
             # File for testing the Jinja include statement as content.
             (src / subdir / "slug-from-include.txt.jinja"): (
-                "{% include pathjoin('includes', 'name-slug.jinja') %}"
+                "{% include 'includes/name-slug.jinja' %}"
             ),
             # File for testing the Jinja include statement in the file name.
             (
                 src
                 / subdir
-                / "{% include pathjoin('includes', 'name-slug.jinja') %}.txt"
+                / "{% include posixpath('includes', 'name-slug.jinja') %}.txt"
             ): "",
             # File for testing the Jinja include statement in the folder name.
             (
                 src
                 / subdir
-                / "{% include pathjoin('includes', 'name-slug.jinja') %}"
+                / "{% include posixpath('includes', 'name-slug.jinja') %}"
                 / "test.txt"
             ): "",
         }
@@ -108,7 +108,7 @@ def test_import_macro(
                     "slug": {
                         "type": "str",
                         "default": (
-                            "{% from pathjoin('includes', 'slugify.jinja') import slugify %}"
+                            "{% from 'includes/slugify.jinja' import slugify %}"
                             "{{ slugify(name) }}"
                         ),
                     },
@@ -125,20 +125,20 @@ def test_import_macro(
             (src / subdir / "slug-answer.txt.jinja"): "{{ slug }}",
             # File for testing the Jinja import statement as content.
             (src / subdir / "slug-from-macro.txt.jinja"): (
-                "{% from pathjoin('includes', 'slugify.jinja') import slugify %}"
+                "{% from 'includes/slugify.jinja' import slugify %}"
                 "{{ slugify(name) }}"
             ),
             # File for testing the Jinja import statement in the file name.
             (
                 src
                 / subdir
-                / "{% from pathjoin('includes', 'slugify.jinja') import slugify %}{{ slugify(name) }}.txt"
+                / "{% from posixpath('includes', 'slugify.jinja') import slugify %}{{ slugify(name) }}.txt"
             ): "",
             # File for testing the Jinja import statement in the folder name.
             (
                 src
                 / subdir
-                / "{% from pathjoin('includes', 'slugify.jinja') import slugify %}{{ slugify(name) }}"
+                / "{% from posixpath('includes', 'slugify.jinja') import slugify %}{{ slugify(name) }}"
                 / "test.txt"
             ): "",
         }

@@ -602,15 +602,16 @@ or use a [subdirectory](#subdirectory), e.g.:
 _subdirectory: template
 ```
 
-In addition, Jinja include and import statements will need to use a path separator and
-may look like this:
+In addition, Jinja include and import statements will need to use a POSIX path separator
+(also on Windows) which is not supported in template folder and file names. For this
+reason, Copier provides a helper function `posixpath`:
 
 ```jinja
-{% include joinpath('includes', 'name-slug.jinja') %}
+{% include posixpath('includes', 'name-slug.jinja') %}
 ```
 
 ```jinja
-{% from joinpath('includes', 'slugify.jinja') import slugify %}
+{% from posixpath('includes', 'slugify.jinja') import slugify %}
 ```
 
 ## Available settings

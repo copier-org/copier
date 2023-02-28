@@ -451,9 +451,10 @@ class Worker:
         env.filters["to_json"] = partial(
             env.filters["to_json"], default=pydantic_encoder
         )
-        # Add a helper function to join filesystem paths using the OS-specific
-        # path separator.
-        env.globals["pathjoin"] = os.path.join
+        # Add a helper function to join filesystem paths using the path
+        # separator `/` as Jinja uses the POSIX and not OS-specific path
+        # separator for includes/imports.
+        env.globals["posixpath"] = lambda *p: "/".join(p)
         return env
 
     @cached_property
