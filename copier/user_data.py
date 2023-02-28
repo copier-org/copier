@@ -1,6 +1,5 @@
 """Functions used to load user data."""
 import json
-import os
 import sys
 import warnings
 from collections import ChainMap
