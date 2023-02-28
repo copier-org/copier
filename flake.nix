@@ -13,7 +13,7 @@
       flake = false;
     };
     flake-utils.url = github:numtide/flake-utils;
-    nixpkgs.url = github:NixOS/nixpkgs/nixos-22.11;
+    nixpkgs.url = github:NixOS/nixpkgs;
     poetry2nix.url = github:nix-community/poetry2nix;
   };
 
@@ -26,10 +26,11 @@
         };
         lastRelease = (pkgs.lib.importTOML ./pyproject.toml).tool.commitizen.version;
         version = "${lastRelease}.dev${self.sourceInfo.lastModifiedDate}+nix-git-${self.sourceInfo.shortRev or "dirty"}";
+        python = pkgs.python311;
 
         # Builders
         copierApp = pkgs.poetry2nix.mkPoetryApplication {
-          inherit version;
+          inherit python version;
           name = "copier-${version}";
           POETRY_DYNAMIC_VERSIONING_BYPASS = version;
           projectDir = ./.;
@@ -40,7 +41,7 @@
           });
 
           # Test configuration
-          checkInputs = [pkgs.git];
+          nativeCheckInputs = [pkgs.git];
           pythonImportsCheck = ["copier"];
           doCheck = true;
           installCheckPhase = ''
@@ -56,7 +57,7 @@
               pytest --color=yes -m 'not impure'
           '';
         };
-        copierModule = pkgs.python3.pkgs.toPythonModule copierApp;
+        copierModule = python.pkgs.toPythonModule copierApp;
       in rec {
         devShells.default = devenv.lib.mkShell {
           inherit inputs pkgs;
@@ -64,11 +65,8 @@
             {
               packages = with pkgs; [
                 # Essential dev tools
-                (pkgs.python3.withPackages (ps:
-                  with ps; [
-                    poetry
-                    poetry-dynamic-versioning
-                  ]))
+                poetry
+                python
 
                 # IDE integration tools
                 alejandra

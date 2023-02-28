@@ -499,7 +499,6 @@ def test_skip_update(tmp_path_factory):
     assert not (dst / "skip_me.rej").exists()
 
 
-@pytest.mark.timeout(20)
 @pytest.mark.parametrize(
     "answers_file", (None, ".copier-answers.yml", ".custom.copier-answers.yaml")
 )

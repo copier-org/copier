@@ -8,7 +8,7 @@ from tempfile import mkdtemp
 from warnings import warn
 
 from packaging import version
-from packaging.version import Version
+from packaging.version import InvalidVersion, Version
 from plumbum import TF, ProcessExecutionError, colors, local
 from plumbum.cmd import git
 
@@ -110,7 +110,7 @@ def checkout_latest_tag(local_repo: StrOrPath, use_prereleases: OptBool = False)
             If `False`, skip prerelease git tags.
     """
     with local.cwd(local_repo):
-        all_tags = git("tag").split()
+        all_tags = filter(valid_version, git("tag").split())
         if not use_prereleases:
             all_tags = filter(
                 lambda tag: not version.parse(tag).is_prerelease, all_tags
@@ -187,3 +187,15 @@ def clone(url: str, ref: OptStr = None) -> str:
         git("submodule", "update", "--checkout", "--init", "--recursive", "--force")
 
     return location
+
+
+def valid_version(version_: str) -> bool:
+    """Tell if a string is a valid [PEP 440][] version specifier.
+
+    [PEP 440]: https://peps.python.org/pep-0440/
+    """
+    try:
+        version.parse(version_)
+    except InvalidVersion:
+        return False
+    return True
