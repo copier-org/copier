@@ -605,7 +605,7 @@ _subdirectory: template
 ```
 
 In addition, Jinja include and import statements will need to use a POSIX path separator
-(also on Windows) which is not supported in template folder and file names. For this
+(also on Windows) which is not supported in templated folder and file names. For this
 reason, Copier provides a helper function `posixpath`:
 
 ```jinja
