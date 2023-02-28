@@ -426,9 +426,7 @@ class Worker:
         Respects template settings.
         """
         paths = [str(self.template.local_abspath)]
-        loader = FileSystemLoader(
-            paths,
-        )
+        loader = FileSystemLoader(paths)
         default_extensions = [
             "jinja2_ansible_filters.AnsibleCoreFiltersExtension",
         ]
