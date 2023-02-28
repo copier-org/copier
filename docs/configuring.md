@@ -606,11 +606,11 @@ In addition, Jinja include and import statements will need to use a path separat
 may look like this:
 
 ```jinja
-{% include 'includes' + _copier_conf.sep + 'name-slug.jinja' %}
+{% include joinpath('includes', 'name-slug.jinja') %}
 ```
 
 ```jinja
-{% from 'includes' + _copier_conf.sep + 'slugify.jinja' import slugify %}
+{% from joinpath('includes', 'slugify.jinja') import slugify %}
 ```
 
 ## Available settings

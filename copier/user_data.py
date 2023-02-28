@@ -395,13 +395,7 @@ class Question:
             # value was not a string
             return value
         try:
-            return template.render(
-                {
-                    "_copier_conf": {"sep": os.sep},
-                    **self.answers.combined,
-                    **(extra_answers or {}),
-                }
-            )
+            return template.render({**self.answers.combined, **(extra_answers or {})})
         except UndefinedError as error:
             raise UserMessageError(str(error)) from error
 

@@ -451,6 +451,9 @@ class Worker:
         env.filters["to_json"] = partial(
             env.filters["to_json"], default=pydantic_encoder
         )
+        # Add a helper function to join filesystem paths using the OS-specific
+        # path separator.
+        env.globals["pathjoin"] = os.path.join
         return env
 
     @cached_property
