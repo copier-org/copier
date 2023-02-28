@@ -33,16 +33,13 @@ def test_include(
             (src / "copier.yml"): yaml.safe_dump(
                 {
                     **settings,
-                    "_jinja_paths": {
-                        "$": "includes",
-                    },
                     "name": {
                         "type": "str",
                         "default": "The Name",
                     },
                     "slug": {
                         "type": "str",
-                        "default": '{% include "$:name-slug.jinja" %}',
+                        "default": "{% include 'includes' + _copier_conf.sep + 'name-slug.jinja' %}",
                     },
                 }
             ),
@@ -53,12 +50,21 @@ def test_include(
             (src / subdir / "slug-answer.txt.jinja"): "{{ slug }}",
             # File for testing the Jinja include statement as content.
             (src / subdir / "slug-from-include.txt.jinja"): (
-                '{% include "$:name-slug.jinja" %}'
+                "{% include 'includes' + _copier_conf.sep + 'name-slug.jinja' %}"
             ),
             # File for testing the Jinja include statement in the file name.
-            (src / subdir / "{% include '$:name-slug.jinja' %}.txt"): "",
+            (
+                src
+                / subdir
+                / "{% include 'includes' + _copier_conf.sep + 'name-slug.jinja' %}.txt"
+            ): "",
             # File for testing the Jinja include statement in the folder name.
-            (src / subdir / "{% include '$:name-slug.jinja' %}" / "test.txt"): "",
+            (
+                src
+                / subdir
+                / "{% include 'includes' + _copier_conf.sep + 'name-slug.jinja' %}"
+                / "test.txt"
+            ): "",
         }
     )
     copier.copy(str(src), dst, defaults=True)
@@ -95,9 +101,6 @@ def test_import_macro(
             (src / "copier.yml"): yaml.safe_dump(
                 {
                     **settings,
-                    "_jinja_paths": {
-                        "$": "includes",
-                    },
                     "name": {
                         "type": "str",
                         "default": "The Name",
@@ -105,7 +108,7 @@ def test_import_macro(
                     "slug": {
                         "type": "str",
                         "default": (
-                            '{% from "$:slugify.jinja" import slugify %}'
+                            "{% from 'includes' + _copier_conf.sep + 'slugify.jinja' import slugify %}"
                             "{{ slugify(name) }}"
                         ),
                     },
@@ -122,19 +125,20 @@ def test_import_macro(
             (src / subdir / "slug-answer.txt.jinja"): "{{ slug }}",
             # File for testing the Jinja import statement as content.
             (src / subdir / "slug-from-macro.txt.jinja"): (
-                '{% from "$:slugify.jinja" import slugify %}{{ slugify(name) }}'
+                "{% from 'includes' + _copier_conf.sep + 'slugify.jinja' import slugify %}"
+                "{{ slugify(name) }}"
             ),
             # File for testing the Jinja import statement in the file name.
             (
                 src
                 / subdir
-                / "{% from '$:slugify.jinja' import slugify %}{{ slugify(name) }}.txt"
+                / "{% from 'includes' + _copier_conf.sep + 'slugify.jinja' import slugify %}{{ slugify(name) }}.txt"
             ): "",
             # File for testing the Jinja import statement in the folder name.
             (
                 src
                 / subdir
-                / "{% from '$:slugify.jinja' import slugify %}{{ slugify(name) }}"
+                / "{% from 'includes' + _copier_conf.sep + 'slugify.jinja' import slugify %}{{ slugify(name) }}"
                 / "test.txt"
             ): "",
         }
