@@ -1382,7 +1382,3 @@ copier -a .copier-answers.main.yml update
 copier -a .copier-answers.pre-commit.yml update
 copier -a .copier-answers.ci.yml update
 ```
-
-```
-
-```
