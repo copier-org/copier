@@ -348,7 +348,7 @@ cannot use Jinja templating in your answers.
 The `copier.yml` file supports multiple documents as well as using the `!include` tag to
 include settings and questions from other YAML files. This allows you to split up a
 larger `copier.yml` and enables you to reuse common partial sections from your
-templates. When multiple documents are used, care has to be taken with question and
+templates. When multiple documents are used, care has to be taken with questions and
 settings that are defined in more than one document:
 
 -   A question with the same name overwrites definitions from an earlier document.
