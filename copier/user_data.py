@@ -197,7 +197,6 @@ class Question:
     choices: Union[Dict[Any, Any], Sequence[Any]] = field(default_factory=list)
     default: Any = None
     help: str = ""
-    ask_user: bool = False
     multiline: Union[str, bool] = False
     placeholder: str = ""
     secret: bool = False
@@ -357,15 +356,12 @@ class Question:
 
     def get_multiline(self) -> bool:
         """Get the value for multiline."""
-        multiline = self.render_value(self.multiline)
-        multiline = cast_answer_type(multiline, cast_str_to_bool)
-        return bool(multiline)
+        return cast_str_to_bool(self.render_value(self.multiline))
 
     def validate_answer(self, answer) -> bool:
         """Validate user answer."""
-        cast_fn = self.get_cast_fn()
         try:
-            ans = cast_fn(answer)
+            ans = self.parse_answer(answer)
         except Exception:
             return False
 
@@ -379,17 +375,7 @@ class Question:
 
     def get_when(self, answers) -> bool:
         """Get skip condition for question."""
-        if (
-            # Skip on --defaults
-            not self.ask_user
-            # Skip on --data=this_question=some_answer
-            or self.var_name in self.answers.init
-        ):
-            return False
-        when = self.when
-        when = self.render_value(when)
-        when = cast_answer_type(when, cast_str_to_bool)
-        return bool(when)
+        return cast_str_to_bool(self.render_value(self.when))
 
     def render_value(
         self, value: Any, extra_answers: Optional[AnyByStrDict] = None
@@ -409,6 +395,18 @@ class Question:
             return template.render({**self.answers.combined, **(extra_answers or {})})
         except UndefinedError as error:
             raise UserMessageError(str(error)) from error
+
+    def parse_answer(self, answer: Any) -> Any:
+        """Parse the answer according to the question's type."""
+        cast_fn = self.get_cast_fn()
+        ans = cast_answer_type(answer, cast_fn)
+        choice_values = {
+            cast_answer_type(choice.value, cast_fn)
+            for choice in self._formatted_choices
+        }
+        if choice_values and ans not in choice_values:
+            raise ValueError("Invalid choice")
+        return ans
 
 
 def parse_yaml_string(string: str) -> Any:

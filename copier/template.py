@@ -88,13 +88,17 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
     Raises:
         InvalidConfigFileError: When the file is formatted badly.
     """
+
+    class _Loader(yaml.FullLoader):
+        """Intermediate class to avoid monkey-patching main loader."""
+
     YamlIncludeConstructor.add_to_loader_class(
-        loader_class=yaml.FullLoader, base_dir=conf_path.parent
+        loader_class=_Loader, base_dir=conf_path.parent
     )
 
     with open(conf_path) as f:
         try:
-            flattened_result = lflatten(yaml.load_all(f, Loader=yaml.FullLoader))
+            flattened_result = lflatten(yaml.load_all(f, Loader=_Loader))
         except yaml.parser.ParserError as e:
             raise InvalidConfigFileError(conf_path, quiet) from e
 
