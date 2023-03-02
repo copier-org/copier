@@ -1,9 +1,11 @@
 {
   description = "Source code project lifecycle management tool";
 
+  # HACK https://github.com/NixOS/nix/issues/6771
+  # TODO Leave only Copier's settings when fixed
   nixConfig = {
-    extra-trusted-public-keys = "copier.cachix.org-1:sVkdQyyNXrgc53qXPCH9zuS91zpt5eBYcg7JQSmTBG4=";
-    extra-substituters = "https://copier.cachix.org";
+    extra-trusted-public-keys = "copier.cachix.org-1:sVkdQyyNXrgc53qXPCH9zuS91zpt5eBYcg7JQSmTBG4= devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=";
+    extra-substitutes = "https://copier.cachix.org https://devenv.cachix.org";
   };
 
   inputs = {
