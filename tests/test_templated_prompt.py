@@ -251,7 +251,7 @@ def test_templated_prompt_invalid(tmp_path_factory, questions, raises, returns):
             src / "result.jinja": "{{question}}",
         }
     )
-    worker = Worker(str(src), dst, defaults=True, overwrite=True)
+    worker = Worker(str(src), dst, data={"question": ""}, overwrite=True)
     if raises:
         with pytest.raises(raises):
             worker.run_copy()

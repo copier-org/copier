@@ -26,10 +26,6 @@ def template_path(tmp_path_factory) -> str:
 
                 round: 1st
 
-                # A str question without a default should default to None
-                str_question_without_default:
-                    type: str
-
                 # password_1 and password_2 must not appear in answers file
                 _secret_questions:
                     - password_1
@@ -76,7 +72,6 @@ def test_answersfile(template_path, tmp_path, answers_file):
     )
     log = load_answersfile_data(tmp_path, answers_file)
     assert log["round"] == "1st"
-    assert log["str_question_without_default"] is None
     assert "password_1" not in log
     assert "password_2" not in log
 
@@ -101,7 +96,6 @@ def test_answersfile(template_path, tmp_path, answers_file):
     )
     log = load_answersfile_data(tmp_path, answers_file)
     assert log["round"] == "2nd"
-    assert log["str_question_without_default"] is None
     assert "password_1" not in log
     assert "password_2" not in log
 
@@ -125,6 +119,5 @@ def test_answersfile(template_path, tmp_path, answers_file):
     )
     log = load_answersfile_data(tmp_path, answers_file)
     assert log["round"] == "2nd"
-    assert log["str_question_without_default"] is None
     assert "password_1" not in log
     assert "password_2" not in log
