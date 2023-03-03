@@ -489,9 +489,7 @@ def test_var_name_value_allowed(tmp_path_factory, spawn):
         ("yaml", None),
     ],
 )
-def test_text_question_without_default(
-    tmp_path_factory, spawn, type_name, expected_answer
-):
+def test_required_text_question(tmp_path_factory, spawn, type_name, expected_answer):
     template, subproject = (
         tmp_path_factory.mktemp("template"),
         tmp_path_factory.mktemp("subproject"),
@@ -503,7 +501,7 @@ def test_text_question_without_default(
                 {
                     "_envops": BRACKET_ENVOPS,
                     "_templates_suffix": SUFFIX_TMPL,
-                    "text_question_without_default": {"type": type_name},
+                    "question": {"type": type_name},
                 }
             ),
             template
@@ -511,7 +509,7 @@ def test_text_question_without_default(
         }
     )
     tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
-    expect_prompt(tui, "text_question_without_default", type_name)
+    expect_prompt(tui, "question", type_name)
     tui.expect_exact("")
     tui.sendline()
     if isinstance(expected_answer, ValueError):
@@ -522,11 +520,11 @@ def test_text_question_without_default(
         answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
         assert answers == {
             "_src_path": str(template),
-            "text_question_without_default": expected_answer,
+            "question": expected_answer,
         }
 
 
-def test_bool_question_without_default(tmp_path_factory, spawn):
+def test_required_bool_question(tmp_path_factory, spawn):
     template, subproject = (
         tmp_path_factory.mktemp("template"),
         tmp_path_factory.mktemp("subproject"),
@@ -538,7 +536,7 @@ def test_bool_question_without_default(tmp_path_factory, spawn):
                 {
                     "_envops": BRACKET_ENVOPS,
                     "_templates_suffix": SUFFIX_TMPL,
-                    "bool_question_without_default": {"type": "bool"},
+                    "question": {"type": "bool"},
                 }
             ),
             template
@@ -546,14 +544,14 @@ def test_bool_question_without_default(tmp_path_factory, spawn):
         }
     )
     tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
-    expect_prompt(tui, "bool_question_without_default", "bool")
+    expect_prompt(tui, "question", "bool")
     tui.expect_exact("(y/N)")
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
     answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
     assert answers == {
         "_src_path": str(template),
-        "bool_question_without_default": False,
+        "question": False,
     }
 
 
@@ -567,7 +565,7 @@ def test_bool_question_without_default(tmp_path_factory, spawn):
         ("yaml", ["- 1", "- 2", "- 3"], [1]),
     ],
 )
-def test_choice_question_without_default(
+def test_required_choice_question(
     tmp_path_factory, spawn, type_name, choices, expected_answer
 ):
     template, subproject = (
@@ -581,7 +579,7 @@ def test_choice_question_without_default(
                 {
                     "_envops": BRACKET_ENVOPS,
                     "_templates_suffix": SUFFIX_TMPL,
-                    "choice_question_without_default": {
+                    "question": {
                         "type": type_name,
                         "choices": choices,
                     },
@@ -592,11 +590,11 @@ def test_choice_question_without_default(
         }
     )
     tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
-    expect_prompt(tui, "choice_question_without_default", type_name)
+    expect_prompt(tui, "question", type_name)
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
     answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
     assert answers == {
         "_src_path": str(template),
-        "choice_question_without_default": expected_answer,
+        "question": expected_answer,
     }
