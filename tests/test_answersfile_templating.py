@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 import copier
+from copier.user_data import load_answersfile_data
 
 from .helpers import build_file_tree
 
@@ -13,13 +14,13 @@ def template_path(tmp_path_factory) -> str:
     build_file_tree(
         {
             root
-            / ".copier-answers-{{module_name}}.yml": """\
+            / "{{ _copier_conf.answers_file }}.jinja": """\
                 # Changes here will be overwritten by Copier
-                [[ _copier_answers|to_nice_yaml ]]
+                {{ _copier_answers|to_nice_yaml }}
                 """,
             root
             / "copier.yml": """\
-                _answers_file: .answers-file-changed-in-template.yml
+                _answers_file: ".copier-answers-{{ module_name }}.yml"
 
                 module_name:
                     type: str
@@ -29,9 +30,15 @@ def template_path(tmp_path_factory) -> str:
     return str(root)
 
 
-@pytest.mark.parametrize("answers_file", [None, ".changed-by-user.yaml"])
+@pytest.mark.parametrize("answers_file", [None, ".changed-by-user.yml"])
 def test_answersfile_templating(template_path, tmp_path, answers_file):
-    """Test copier behaves properly when using an answersfile."""
+    """
+    Test copier behaves properly when _answers_file contains a template
+
+    Checks that template is resolved successfully and that a subsequent
+    copy that resolves to a different answers file doesn't clobber the
+    old answers file.
+    """
     copier.copy(
         template_path,
         tmp_path,
@@ -40,9 +47,16 @@ def test_answersfile_templating(template_path, tmp_path, answers_file):
         defaults=True,
         overwrite=True,
     )
-    answers_file = ".copier-answers-mymodule.yml"
-    path = Path(tmp_path) / (answers_file)
+    first_answers_file = (
+        ".copier-answers-mymodule.yml"
+        if answers_file is None
+        else ".changed-by-user.yml"
+    )
+    path = Path(tmp_path) / (first_answers_file)
     assert path.exists()
+    answers = load_answersfile_data(tmp_path, first_answers_file)
+    assert answers["module_name"] == "mymodule"
+
     copier.copy(
         template_path,
         tmp_path,
@@ -50,9 +64,16 @@ def test_answersfile_templating(template_path, tmp_path, answers_file):
         defaults=True,
         overwrite=True,
     )
-    answers_file = ".copier-answers-anothermodule.yml"
-    path = Path(tmp_path) / (answers_file)
+
+    # Assert second one created
+    second_answers_file = ".copier-answers-anothermodule.yml"
+    path = Path(tmp_path) / (second_answers_file)
     assert path.exists()
-    answers_file = ".copier-answers-mymodule.yml"
-    path = Path(tmp_path) / (answers_file)
+    answers = load_answersfile_data(tmp_path, second_answers_file)
+    assert answers["module_name"] == "anothermodule"
+
+    # Assert first one still exists
+    path = Path(tmp_path) / (first_answers_file)
     assert path.exists()
+    answers = load_answersfile_data(tmp_path, first_answers_file)
+    assert answers["module_name"] == "mymodule"
