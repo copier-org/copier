@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pytest
 
 import copier
@@ -52,8 +50,7 @@ def test_answersfile_templating(template_path, tmp_path, answers_file):
         if answers_file is None
         else ".changed-by-user.yml"
     )
-    path = Path(tmp_path) / (first_answers_file)
-    assert path.exists()
+    assert (tmp_path / first_answers_file).exists()
     answers = load_answersfile_data(tmp_path, first_answers_file)
     assert answers["module_name"] == "mymodule"
 
@@ -67,13 +64,11 @@ def test_answersfile_templating(template_path, tmp_path, answers_file):
 
     # Assert second one created
     second_answers_file = ".copier-answers-anothermodule.yml"
-    path = Path(tmp_path) / (second_answers_file)
-    assert path.exists()
+    assert (tmp_path / second_answers_file).exists()
     answers = load_answersfile_data(tmp_path, second_answers_file)
     assert answers["module_name"] == "anothermodule"
 
     # Assert first one still exists
-    path = Path(tmp_path) / (first_answers_file)
-    assert path.exists()
+    assert (tmp_path / first_answers_file).exists()
     answers = load_answersfile_data(tmp_path, first_answers_file)
     assert answers["module_name"] == "mymodule"
