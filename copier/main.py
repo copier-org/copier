@@ -26,7 +26,7 @@ from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
 from questionary import unsafe_prompt
 
-from .errors import CopierAnswersInterrupt, ExtensionNotFoundError, UserMessageError
+from .errors import CopierAnswersInterrupt, ExtensionNotFoundError, UserMessageError, SubprojectOutdatedError
 from .subproject import Subproject
 from .template import Task, Template
 from .tools import Style, TemporaryDirectory, printf, readlink
@@ -767,6 +767,43 @@ class Worker:
             )
         self._apply_update()
 
+    def run_check(self) -> None:
+        """Check if a subproject is using the latest version of it's template
+
+        See [checking a project][checking-a-project].
+        """
+        # Check all you need is there
+        if self.subproject.template is None or self.subproject.template.ref is None:
+            raise UserMessageError(
+                "Cannot check because cannot obtain old template references "
+                f"from `{self.subproject.answers_relpath}`."
+            )
+        if self.template.commit is None:
+            raise UserMessageError(
+                "Checking is only supported in git-tracked templates."
+            )
+        if not self.subproject.template.version:
+            raise UserMessageError(
+                "Cannot check: version from last update not detected."
+            )
+        if not self.template.version:
+            raise UserMessageError("Cannot check: version from template not detected.")
+
+        if not self.quiet:
+            # TODO Unify printing tools
+            print(
+                f"Currently using template version {self.subproject.template.version}, "
+                f"latest is {self.template.version}.",
+                file=sys.stderr)
+
+        if self.template.version > self.subproject.template.version:
+            if not self.quiet:
+                print("New template version available.", file=sys.stderr)
+            raise SubprojectOutdatedError("")
+        elif not self.quiet:
+            # TODO Unify printing tools
+            print("No newer template version available.", file=sys.stderr)
+
     def _apply_update(self):
         subproject_top = Path(
             git(
@@ -940,6 +977,22 @@ def run_auto(
     if src_path is None:
         return run_update(dst_path, data, **kwargs)
     return run_copy(src_path, dst_path, data, **kwargs)
+
+
+def run_check(
+    dst_path: StrOrPath = ".",
+    data: Optional[AnyByStrDict] = None,
+    **kwargs,
+) -> Worker:
+    """Check if a subproject is using the latest versio of its template.
+
+    See [Worker][copier.main.Worker] fields to understand this function's args.
+    """
+    if data is not None:
+        kwargs["data"] = data
+    with Worker(dst_path=Path(dst_path), **kwargs) as worker:
+        worker.run_check()
+    return worker
 
 
 def _remove_old_files(prefix: Path, cmp: dircmp, rm_common: bool = False):

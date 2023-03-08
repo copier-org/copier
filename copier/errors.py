@@ -22,6 +22,10 @@ class UserMessageError(CopierError):
     """Exit the program giving a message to the user."""
 
 
+class SubprojectOutdatedError(UserMessageError):
+    """An old version of the template is being used."""
+
+
 class UnsupportedVersionError(UserMessageError):
     """Copier version does not support template version."""
 
