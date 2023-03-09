@@ -36,7 +36,7 @@ def git_init(message="hello world") -> None:
 
 
 def test_config_data_is_loaded_from_file() -> None:
-    tpl = Template(str(Path("tests", "demo_data")))
+    tpl = Template("tests/demo_data")
     assert tpl.exclude == ("exclude1", "exclude2")
     assert tpl.skip_if_exists == ["skip_if_exists1", "skip_if_exists2"]
     assert tpl.tasks == [
@@ -46,7 +46,7 @@ def test_config_data_is_loaded_from_file() -> None:
 
 
 def test_config_data_is_merged_from_files() -> None:
-    tpl = Template(str(Path("tests", "demo_merge_options_from_answerfiles")))
+    tpl = Template("tests/demo_merge_options_from_answerfiles")
     assert list(tpl.skip_if_exists) == [
         "skip_if_exists0",
         "skip_if_exists1",
@@ -110,19 +110,19 @@ def test_invalid_yaml(capsys: pytest.CaptureFixture[str]) -> None:
 @pytest.mark.parametrize(
     "conf_path, check_err",
     [
-        (Path("tests", "demo_invalid"), lambda x: "INVALID" in x),
+        ("tests/demo_invalid", lambda x: "INVALID" in x),
         # test key collision between including and included file
-        (Path("tests", "demo_transclude_invalid", "demo"), None),
+        ("tests/demo_transclude_invalid/demo", None),
         # test key collision between two included files
-        (Path("tests", "demo_transclude_invalid_multi", "demo"), None),
+        ("tests/demo_transclude_invalid_multi/demo", None),
     ],
 )
 def test_invalid_config_data(
     capsys: pytest.CaptureFixture[str],
-    conf_path: Path,
+    conf_path: str,
     check_err: Optional[Callable[[str], bool]],
 ) -> None:
-    template = Template(str(conf_path))
+    template = Template(conf_path)
     with pytest.raises(InvalidConfigFileError):
         template.config_data
     if check_err:
@@ -132,45 +132,46 @@ def test_invalid_config_data(
 
 def test_valid_multi_section(tmp_path: Path) -> None:
     """Including multiple files works fine merged with multiple sections."""
-    build_file_tree(
-        {
-            (tmp_path / "exclusions.yml"): "_exclude: ['*.yml']",
-            (tmp_path / "common_jinja.yml"): (
-                f"""\
-                _templates_suffix: {SUFFIX_TMPL}
-                _envops:
-                    block_start_string: "[%"
-                    block_end_string: "%]"
-                    comment_start_string: "[#"
-                    comment_end_string: "#]"
-                    variable_start_string: "[["
-                    variable_end_string: "]]"
-                    keep_trailing_newline: true
-                """
-            ),
-            (tmp_path / "common_questions.yml"): (
-                """\
-                your_age:
-                    type: int
-                your_name:
-                    type: yaml
-                    help: your name from common questions
-                """
-            ),
-            (tmp_path / "copier.yml"): (
-                """\
-                ---
-                !include 'common_*.yml'
-                ---
-                !include exclusions.yml
-                ---
-                your_name:
-                    type: str
-                    help: your name from latest section
-                """
-            ),
-        }
-    )
+    with local.cwd(tmp_path):
+        build_file_tree(
+            {
+                "exclusions.yml": "_exclude: ['*.yml']",
+                "common_jinja.yml": (
+                    f"""\
+                    _templates_suffix: {SUFFIX_TMPL}
+                    _envops:
+                        block_start_string: "[%"
+                        block_end_string: "%]"
+                        comment_start_string: "[#"
+                        comment_end_string: "#]"
+                        variable_start_string: "[["
+                        variable_end_string: "]]"
+                        keep_trailing_newline: true
+                    """
+                ),
+                "common_questions.yml": (
+                    """\
+                    your_age:
+                        type: int
+                    your_name:
+                        type: yaml
+                        help: your name from common questions
+                    """
+                ),
+                "copier.yml": (
+                    """\
+                    ---
+                    !include 'common_*.yml'
+                    ---
+                    !include exclusions.yml
+                    ---
+                    your_name:
+                        type: str
+                        help: your name from latest section
+                    """
+                ),
+            }
+        )
     template = Template(str(tmp_path))
     assert template.exclude == ("*.yml",)
     assert template.envops == {
@@ -189,13 +190,13 @@ def test_valid_multi_section(tmp_path: Path) -> None:
 
 
 def test_config_data_empty() -> None:
-    template = Template(str(Path("tests", "demo_config_empty")))
+    template = Template("tests/demo_config_empty")
     assert template.config_data == {"secret_questions": set()}
     assert template.questions_data == {}
 
 
 def test_multiple_config_file_error() -> None:
-    template = Template(str(Path("tests", "demo_multi_config")))
+    template = Template("tests/demo_multi_config")
     with pytest.raises(MultipleConfigFilesError):
         template.config_data
 
@@ -227,7 +228,7 @@ def test_flags_extra_fails() -> None:
 
 def test_missing_template(tmp_path: Path) -> None:
     with pytest.raises(ValueError):
-        copier.copy(str(Path("i_do_not_exist")), tmp_path)
+        copier.copy("./i_do_not_exist", tmp_path)
 
 
 def is_subdict(small: Dict[Any, Any], big: Dict[Any, Any]) -> bool:
@@ -236,7 +237,7 @@ def is_subdict(small: Dict[Any, Any], big: Dict[Any, Any]) -> bool:
 
 def test_worker_good_data(tmp_path: Path) -> None:
     # This test is probably useless, as it tests the what and not the how
-    conf = copier.Worker(str(Path("tests", "demo_data")), tmp_path)
+    conf = copier.Worker("./tests/demo_data", tmp_path)
     assert conf._render_context()["_folder_name"] == tmp_path.name
     assert conf.all_exclusions == ("exclude1", "exclude2")
     assert conf.template.skip_if_exists == ["skip_if_exists1", "skip_if_exists2"]
@@ -256,7 +257,7 @@ def test_worker_good_data(tmp_path: Path) -> None:
         ),
         # func_args > user_data
         (
-            {"src_path": str(Path("tests", "demo_data")), "exclude": ["aaa"]},
+            {"src_path": "tests/demo_data", "exclude": ["aaa"]},
             ("exclude1", "exclude2", "aaa"),
         ),
     ],
@@ -269,7 +270,7 @@ def test_worker_config_precedence(
 
 
 def test_config_data_transclusion() -> None:
-    config = copier.Worker(str(Path("tests", "demo_transclude", "demo")))
+    config = copier.Worker("tests/demo_transclude/demo")
     assert config.all_exclusions == ("exclude1", "exclude2")
 
 
@@ -478,29 +479,29 @@ def test_user_defaults_updated(
     expected_updated: str,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
-    build_file_tree(
-        {
-            (src / "copier.yaml"): (
-                """\
-                a_string:
-                    default: lorem ipsum
-                    type: str
-                """
-            ),
-            (src / "user_data.txt.jinja"): (
-                """\
-                A string: {{ a_string }}
-                """
-            ),
-            (src / "{{ _copier_conf.answers_file }}.jinja"): (
-                """\
-                # Changes here will be overwritten by Copier
-                {{ _copier_answers|to_nice_yaml }}
-                """
-            ),
-        }
-    )
     with local.cwd(src):
+        build_file_tree(
+            {
+                (src / "copier.yaml"): (
+                    """\
+                    a_string:
+                        default: lorem ipsum
+                        type: str
+                    """
+                ),
+                (src / "user_data.txt.jinja"): (
+                    """\
+                    A string: {{ a_string }}
+                    """
+                ),
+                (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                    """\
+                    # Changes here will be overwritten by Copier
+                    {{ _copier_answers|to_nice_yaml }}
+                    """
+                ),
+            }
+        )
         git_init()
 
     copier.copy(

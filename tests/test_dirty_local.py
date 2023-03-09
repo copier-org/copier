@@ -31,10 +31,8 @@ def test_copy(tmp_path_factory: pytest.TempPathFactory) -> None:
         copier.copy(str(src), dst, data=DATA, quiet=True)
 
     generated = (dst / "pyproject.toml").read_text()
-    expected = (
-        Path(__file__).parent / "reference_files" / "pyproject.toml"
-    ).read_text()
-    assert generated == expected
+    control = (Path(__file__).parent / "reference_files" / "pyproject.toml").read_text()
+    assert generated == control
 
     # assert template still dirty
     with local.cwd(src):
@@ -58,8 +56,16 @@ def test_update(tmp_path_factory: pytest.TempPathFactory) -> None:
                     "keep_trailing_newline": True
                 """
             ),
-            (src / "aaaa.txt"): "Lorem ipsum",
-            (src / "to_delete.txt"): "delete me.",
+            (src / "aaaa.txt"): (
+                """
+                Lorem ipsum
+                """
+            ),
+            (src / "to_delete.txt"): (
+                """
+                delete me.
+                """
+            ),
         }
     )
 

@@ -67,8 +67,8 @@ def test_multiple_questions_interrupt(tmp_path_factory: pytest.TempPathFactory) 
     ):
         with pytest.raises(CopierAnswersInterrupt) as err:
             worker.run_copy()
-            assert err.value.answers.user == {
-                "question1": "foobar",
-                "question2": "yosemite",
-            }
-            assert err.value.template == worker.template
+        assert err.value.answers.user == {
+            "question1": "foobar",
+            "question2": "yosemite",
+        }
+        assert err.value.template == worker.template

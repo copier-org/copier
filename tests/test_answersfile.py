@@ -69,12 +69,15 @@ def test_answersfile(template_path: str, tmp_path: Path, answers_file: OptStr) -
         overwrite=True,
     )
     answers_file = answers_file or ".answers-file-changed-in-template.yml"
-    assert round_file.read_text() == dedent(
-        """\
-        It's the 1st round.
-        password_1=password one
-        password_2=password two
-        """
+    assert (
+        round_file.read_text()
+        == dedent(
+            """
+            It's the 1st round.
+            password_1=password one
+            password_2=password two
+            """
+        ).lstrip()
     )
     log = load_answersfile_data(tmp_path, answers_file)
     assert log["round"] == "1st"
@@ -91,12 +94,15 @@ def test_answersfile(template_path: str, tmp_path: Path, answers_file: OptStr) -
         defaults=True,
         overwrite=True,
     )
-    assert round_file.read_text() == dedent(
-        """\
-        It's the 2nd round.
-        password_1=password one
-        password_2=password two
-        """
+    assert (
+        round_file.read_text()
+        == dedent(
+            """
+            It's the 2nd round.
+            password_1=password one
+            password_2=password two
+            """
+        ).lstrip()
     )
     log = load_answersfile_data(tmp_path, answers_file)
     assert log["round"] == "2nd"
@@ -112,12 +118,15 @@ def test_answersfile(template_path: str, tmp_path: Path, answers_file: OptStr) -
         defaults=True,
         overwrite=True,
     )
-    assert round_file.read_text() == dedent(
-        """\
-        It's the 2nd round.
-        password_1=password one
-        password_2=password two
-        """
+    assert (
+        round_file.read_text()
+        == dedent(
+            """
+            It's the 2nd round.
+            password_1=password one
+            password_2=password two
+            """
+        ).lstrip()
     )
     log = load_answersfile_data(tmp_path, answers_file)
     assert log["round"] == "2nd"

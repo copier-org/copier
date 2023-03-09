@@ -1,5 +1,4 @@
 import warnings
-from textwrap import dedent
 
 import pytest
 
@@ -45,13 +44,9 @@ def test_normal_jinja2(tmp_path_factory: pytest.TempPathFactory) -> None:
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         copier.run_auto(str(src), dst, defaults=True, overwrite=True)
-    assert (dst / "TODO.txt").read_text() == dedent(
-        """\
-        [[ Guybrush TODO LIST]]
-        [# GROG #]
-            - Become a pirate
-        """
-    )
+    todo = (dst / "TODO.txt").read_text()
+    expected = "[[ Guybrush TODO LIST]]\n[# GROG #]\n    - Become a pirate\n"
+    assert todo == expected
 
 
 def test_to_not_keep_trailing_newlines_in_jinja2(

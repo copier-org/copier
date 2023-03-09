@@ -40,7 +40,7 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
                 """
             ),
             (repo / "README.txt.jinja"): (
-                """\
+                """
                 Let me introduce myself.
 
                 My name is {{author_name}}, and my project is {{project_name}}.
@@ -115,7 +115,7 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
                 """
             ),
             (repo / "README.txt.jinja"): (
-                """\
+                """
                 Let me introduce myself.
 
                 My name is {{author_name}}.
@@ -158,7 +158,7 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
         """
     )
     assert readme.read_text() == dedent(
-        """\
+        """
         Let me introduce myself.
 
         My name is Guybrush, and my project is to become a pirate.
@@ -178,7 +178,7 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
         # Emulate the user modifying the README by hand
         readme.write_text(
             dedent(
-                """\
+                """
                 Let me introduce myself.
 
                 My name is Guybrush, and my project is to become a pirate.
@@ -229,7 +229,7 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
             """
         )
         assert readme.read_text() == dedent(
-            """\
+            """
             Let me introduce myself.
 
             My name is Guybrush.
@@ -252,7 +252,7 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
             vcs_ref="HEAD",
         )
         assert readme.read_text() == dedent(
-            """\
+            """
             Let me introduce myself.
 
             My name is Largo LaGrande.
@@ -271,7 +271,7 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
             vcs_ref="HEAD",
         ).run_copy()
         assert readme.read_text() == dedent(
-            """\
+            """
             Let me introduce myself.
 
             My name is Largo LaGrande.
@@ -295,51 +295,51 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
     """Commit hooks are taken into account when producing the update diff."""
     # Prepare source template v1
     src, dst1, dst2 = map(tmp_path_factory.mktemp, ("src", "dst1", "dst2"))
-    build_file_tree(
-        {
-            (src / "copier.yml"): (
-                f"""\
-                _envops: {BRACKET_ENVOPS_JSON}
-                _templates_suffix: {SUFFIX_TMPL}
-                _tasks:
-                    - git init
-                    - pre-commit install
-                    - pre-commit run -a || true
-                what: grog
-                """
-            ),
-            (src / "[[ _copier_conf.answers_file ]].tmpl"): (
-                """\
-                [[ _copier_answers|to_nice_yaml ]]
-                """
-            ),
-            (src / ".pre-commit-config.yaml"): (
-                r"""
-                repos:
-                -   repo: https://github.com/pre-commit/mirrors-prettier
-                    rev: v2.0.4
-                    hooks:
-                    -   id: prettier
-                -   repo: local
-                    hooks:
-                    -   id: forbidden-files
-                        name: forbidden files
-                        entry: found forbidden files; remove them
-                        language: fail
-                        files: "\\.rej$"
-                """
-            ),
-            (src / "life.yml.tmpl"): (
-                """\
-                # Following code should be reformatted by pre-commit after copying
-                Line 1:      hello
-                Line 2:      [[ what ]]
-                Line 3:      bye
-                """
-            ),
-        }
-    )
     with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yml": (
+                    f"""
+                    _envops: {BRACKET_ENVOPS_JSON}
+                    _templates_suffix: {SUFFIX_TMPL}
+                    _tasks:
+                        - git init
+                        - pre-commit install
+                        - pre-commit run -a || true
+                    what: grog
+                    """
+                ),
+                "[[ _copier_conf.answers_file ]].tmpl": (
+                    """
+                    [[ _copier_answers|to_nice_yaml ]]
+                    """
+                ),
+                ".pre-commit-config.yaml": (
+                    r"""
+                    repos:
+                    -   repo: https://github.com/pre-commit/mirrors-prettier
+                        rev: v2.0.4
+                        hooks:
+                        -   id: prettier
+                    -   repo: local
+                        hooks:
+                        -   id: forbidden-files
+                            name: forbidden files
+                            entry: found forbidden files; remove them
+                            language: fail
+                            files: "\\.rej$"
+                    """
+                ),
+                "life.yml.tmpl": (
+                    """
+                    # Following code should be reformatted by pre-commit after copying
+                    Line 1:      hello
+                    Line 2:      [[ what ]]
+                    Line 3:      bye
+                    """
+                ),
+            }
+        )
         git("init")
         git("add", ".")
         git("commit", "-m", "commit 1")
@@ -362,21 +362,21 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
             """
         )
     # Evolve source template to v2
-    build_file_tree(
-        {
-            (src / "life.yml.tmpl"): (
-                """\
-                # Following code should be reformatted by pre-commit after copying
-                Line 1:     hello world
-                Line 2:     grow up
-                Line 3:     [[ what ]]
-                Line 4:     grow old
-                Line 5:     bye bye world
-                """
-            ),
-        }
-    )
     with local.cwd(src):
+        build_file_tree(
+            {
+                "life.yml.tmpl": (
+                    """\
+                    # Following code should be reformatted by pre-commit after copying
+                    Line 1:     hello world
+                    Line 2:     grow up
+                    Line 3:     [[ what ]]
+                    Line 4:     grow old
+                    Line 5:     bye bye world
+                    """
+                ),
+            }
+        )
         git("init")
         git("add", ".")
         git("commit", "-m", "commit 2")
@@ -446,27 +446,20 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
 def test_update_from_tagged_to_head(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     # Build a template
-    build_file_tree(
-        {
-            (src / "{{ _copier_conf.answers_file }}.jinja"): (
-                "{{ _copier_answers|to_nice_yaml }}"
-            ),
-            (src / "example"): "1",
-        }
-    )
     with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+                "example": "1",
+            }
+        )
         git("init")
         git("add", "-A")
         git("commit", "-m1")
         # Publish v1 release
         git("tag", "v1")
-    # New commit, no release
-    build_file_tree(
-        {
-            src / "example": "2",
-        }
-    )
-    with local.cwd(src):
+        # New commit, no release
+        build_file_tree({"example": "2"})
         git("commit", "-am2")
         sha = git("rev-parse", "--short", "HEAD").strip()
     # Copy it without specifying version
@@ -488,16 +481,14 @@ def test_update_from_tagged_to_head(tmp_path_factory: pytest.TempPathFactory) ->
 
 def test_skip_update(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
-    build_file_tree(
-        {
-            (src / "copier.yaml"): "_skip_if_exists: [skip_me]",
-            (src / "{{ _copier_conf.answers_file }}.jinja"): (
-                "{{ _copier_answers|to_yaml }}"
-            ),
-            (src / "skip_me"): "1",
-        }
-    )
     with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yaml": "_skip_if_exists: [skip_me]",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "skip_me": "1",
+            }
+        )
         git("init")
         git("add", ".")
         git("commit", "-m1")
@@ -513,12 +504,8 @@ def test_skip_update(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("init")
         git("add", ".")
         git("commit", "-m1")
-    build_file_tree(
-        {
-            src / "skip_me": "3",
-        }
-    )
     with local.cwd(src):
+        build_file_tree({"skip_me": "3"})
         git("commit", "-am2")
         git("tag", "2.0.0")
     run_update(dst, defaults=True, overwrite=True)
@@ -536,26 +523,19 @@ def test_overwrite_answers_file_always(
     tmp_path_factory: pytest.TempPathFactory, answers_file: Optional[str]
 ):
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
-    build_file_tree(
-        {
-            (src / "copier.yaml"): "question_1: true",
-            (src / "{{ _copier_conf.answers_file }}.jinja"): (
-                "{{ _copier_answers|to_yaml }}"
-            ),
-            (src / "answer_1.jinja"): "{{ question_1 }}",
-        }
-    )
     with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yaml": "question_1: true",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "answer_1.jinja": "{{ question_1 }}",
+            }
+        )
         git("init")
         git("add", ".")
         git("commit", "-m1")
         git("tag", "1")
-    build_file_tree(
-        {
-            src / "copier.yaml": "question_1: false",
-        }
-    )
-    with local.cwd(src):
+        build_file_tree({"copier.yaml": "question_1: false"})
         git("commit", "-am2")
         git("tag", "2")
     # When copying, there's nothing to overwrite, overwrite=False shouldn't hang
@@ -578,37 +558,34 @@ def test_overwrite_answers_file_always(
 def test_file_removed(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     # Add a file in the template repo
-    build_file_tree(
-        {
-            (src / "{{ _copier_conf.answers_file }}.jinja"): (
-                "{{ _copier_answers|to_yaml }}"
-            ),
-            (src / "1.txt"): "content 1",
-            (src / "dir 2" / "2.txt"): "content 2",
-            (src / "dir 3" / "subdir 3" / "3.txt"): "content 3",
-            (src / "dir 4" / "subdir 4" / "4.txt"): "content 4",
-            (src / "dir 5" / "subdir 5" / "5.txt"): "content 5",
-        }
-    )
     with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "1.txt": "content 1",
+                Path("dir 2", "2.txt"): "content 2",
+                Path("dir 3", "subdir 3", "3.txt"): "content 3",
+                Path("dir 4", "subdir 4", "4.txt"): "content 4",
+                Path("dir 5", "subdir 5", "5.txt"): "content 5",
+            }
+        )
         git("init")
         git("add", "-A")
         git("commit", "-m1")
         git("tag", "1")
     # Copy in subproject
-    run_copy(str(src), dst)
     with local.cwd(dst):
         git("init")
-    # Subproject has an extra file
-    build_file_tree(
-        {
-            (dst / "I.txt"): "content I",
-            (dst / "dir II" / "II.txt"): "content II",
-            (dst / "dir 3" / "subdir III" / "III.txt"): "content III",
-            (dst / "dir 4" / "subdir 4" / "IV.txt"): "content IV",
-        }
-    )
-    with local.cwd(dst):
+        run_copy(str(src))
+        # Subproject has an extra file
+        build_file_tree(
+            {
+                "I.txt": "content I",
+                Path("dir II", "II.txt"): "content II",
+                Path("dir 3", "subdir III", "III.txt"): "content III",
+                Path("dir 4", "subdir 4", "IV.txt"): "content IV",
+            }
+        )
         git("add", "-A")
         git("commit", "-m2")
     # All files exist
@@ -623,17 +600,13 @@ def test_file_removed(tmp_path_factory: pytest.TempPathFactory) -> None:
     assert (dst / "dir 3" / "subdir III" / "III.txt").is_file()
     assert (dst / "dir 4" / "subdir 4" / "IV.txt").is_file()
     # Template removes file 1
-    (src / "1.txt").unlink()
-    rmtree(src / "dir 2")
-    rmtree(src / "dir 3")
-    rmtree(src / "dir 4")
-    rmtree(src / "dir 5")
-    build_file_tree(
-        {
-            src / "6.txt": "content 6",
-        }
-    )
     with local.cwd(src):
+        Path("1.txt").unlink()
+        rmtree("dir 2")
+        rmtree("dir 3")
+        rmtree("dir 4")
+        rmtree("dir 5")
+        build_file_tree({"6.txt": "content 6"})
         git("add", "-A")
         git("commit", "-m3")
         git("tag", "2")

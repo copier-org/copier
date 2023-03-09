@@ -1,6 +1,6 @@
 import os
+import shutil
 from pathlib import Path
-from shutil import rmtree
 
 import pytest
 from packaging.version import Version
@@ -57,8 +57,7 @@ def test_get_repo() -> None:
     assert get("https://google.com") is None
 
     assert (
-        get(str(Path("tests", "demo_updatediff_repo.bundle")))
-        == Path("tests", "demo_updatediff_repo.bundle").as_posix()
+        get("tests/demo_updatediff_repo.bundle") == "tests/demo_updatediff_repo.bundle"
     )
 
 
@@ -67,7 +66,7 @@ def test_clone() -> None:
     tmp = vcs.clone("https://github.com/copier-org/copier.git")
     assert tmp
     assert Path(tmp, "README.md").exists()
-    rmtree(tmp, ignore_errors=True)
+    shutil.rmtree(tmp, ignore_errors=True)
 
 
 @pytest.mark.impure
@@ -79,21 +78,16 @@ def test_local_clone() -> None:
     local_tmp = vcs.clone(tmp)
     assert local_tmp
     assert Path(local_tmp, "README.md").exists()
-    rmtree(local_tmp, ignore_errors=True)
+    shutil.rmtree(local_tmp, ignore_errors=True)
 
 
 @pytest.mark.impure
 def test_shallow_clone(tmp_path: Path, recwarn: pytest.WarningsRecorder) -> None:
     # This test should always work but should be much slower if `is_git_shallow_repo()` is not
     # checked in `vcs.clone()`.
-    src_path = tmp_path / "autopretty"
-    git(
-        "clone",
-        "--depth=2",
-        "https://github.com/copier-org/autopretty.git",
-        str(src_path),
-    )
-    assert (src_path / "README.md").exists()
+    src_path = str(tmp_path / "autopretty")
+    git("clone", "--depth=2", "https://github.com/copier-org/autopretty.git", src_path)
+    assert Path(src_path, "README.md").exists()
 
     if vcs.GIT_VERSION >= Version("2.27"):
         with pytest.warns(errors.ShallowCloneWarning):
@@ -104,13 +98,13 @@ def test_shallow_clone(tmp_path: Path, recwarn: pytest.WarningsRecorder) -> None
         assert len(recwarn) == 0
     assert local_tmp
     assert Path(local_tmp, "README.md").exists()
-    rmtree(local_tmp, ignore_errors=True)
+    shutil.rmtree(local_tmp, ignore_errors=True)
 
 
 @pytest.mark.impure
 def test_removes_temporary_clone(tmp_path: Path) -> None:
-    src = "https://github.com/copier-org/autopretty.git"
-    with Worker(src_path=src, dst_path=tmp_path, defaults=True) as worker:
+    src_path = "https://github.com/copier-org/autopretty.git"
+    with Worker(src_path=src_path, dst_path=tmp_path, defaults=True) as worker:
         worker.run_copy()
         temp_clone = worker.template.local_abspath
     assert not temp_clone.exists()
@@ -118,25 +112,25 @@ def test_removes_temporary_clone(tmp_path: Path) -> None:
 
 @pytest.mark.impure
 def test_dont_remove_local_clone(tmp_path: Path) -> None:
-    src_path = tmp_path / "autopretty"
+    src_path = str(tmp_path / "autopretty")
     git("clone", "https://github.com/copier-org/autopretty.git", src_path)
-    with Worker(src_path=str(src_path), dst_path=tmp_path, defaults=True) as worker:
+    with Worker(src_path=src_path, dst_path=tmp_path, defaults=True) as worker:
         worker.run_copy()
-    assert src_path.exists()
+    assert Path(src_path).exists()
 
 
 @pytest.mark.impure
 def test_update_using_local_source_path_with_tilde(tmp_path: Path) -> None:
     # first, get a local repository clone
-    src_path = tmp_path / "autopretty"
-    git("clone", "https://github.com/copier-org/autopretty.git", str(src_path))
+    src_path = str(tmp_path / "autopretty")
+    git("clone", "https://github.com/copier-org/autopretty.git", src_path)
 
     # then prepare the user path to this clone (starting with ~)
     if os.name == "nt":
         # in GitHub CI, the user in the temporary path is not the same as the current user:
         # ["C:\\", "Users", "RUNNER~X"] vs. runneradmin
-        user = src_path.parts[2]
-        user_src_path = str(Path("~", "..", user, *src_path.parts[3:]))
+        user = Path(src_path).parts[2]
+        user_src_path = str(Path("~", "..", user, *Path(src_path).parts[3:]))
     else:
         # temporary path is in /tmp, so climb back up from ~ using ../
         user_src_path = f"~/{'/'.join(['..'] * len(Path.home().parts))}{src_path}"

@@ -513,12 +513,7 @@ def test_multi_template_answers(tmp_path_factory: pytest.TempPathFactory) -> Non
             (tpl1 / "{{ _copier_conf.answers_file }}.jinja"): (
                 "{{ _copier_answers|to_nice_yaml }}"
             ),
-            (tpl2 / "copier.yml"): (
-                """\
-                _answers_file: two.yml
-                q2: a2
-                """
-            ),
+            (tpl2 / "copier.yml"): "{_answers_file: two.yml, q2: a2}",
             (tpl2 / "{{ _copier_conf.answers_file }}.jinja"): (
                 "{{ _copier_answers|to_nice_yaml }}"
             ),
@@ -542,11 +537,11 @@ def test_multi_template_answers(tmp_path_factory: pytest.TempPathFactory) -> Non
         git("add", "-A")
         git("commit", "-m2")
         # Check contents
-        answers1 = yaml.safe_load(Path(".copier-answers.yml").read_bytes())
+        answers1 = yaml.safe_load(Path(".copier-answers.yml").read_text())
         assert answers1["_src_path"] == str(tpl1)
         assert answers1["q1"] == "a1"
         assert "q2" not in answers1
-        answers2 = yaml.safe_load(Path("two.yml").read_bytes())
+        answers2 = yaml.safe_load(Path("two.yml").read_text())
         assert answers2["_src_path"] == str(tpl2)
         assert answers2["q2"] == "a2"
         assert "q1" not in answers2

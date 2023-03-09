@@ -1,4 +1,3 @@
-import json
 import platform
 import stat
 import sys
@@ -7,6 +6,7 @@ from pathlib import Path
 from typing import ContextManager
 
 import pytest
+import yaml
 from plumbum import local
 from plumbum.cmd import git
 from prompt_toolkit.validation import ValidationError
@@ -16,6 +16,7 @@ from copier import copy
 from copier.types import AnyByStrDict
 
 from .helpers import (
+    BRACKET_ENVOPS,
     BRACKET_ENVOPS_JSON,
     PROJECT_TEMPLATE,
     assert_file,
@@ -107,10 +108,8 @@ def test_copy(tmp_path: Path) -> None:
     render(tmp_path)
 
     generated = (tmp_path / "pyproject.toml").read_text()
-    expected = (
-        Path(__file__).parent / "reference_files" / "pyproject.toml"
-    ).read_text()
-    assert generated == expected
+    control = (Path(__file__).parent / "reference_files" / "pyproject.toml").read_text()
+    assert generated == control
 
     assert_file(tmp_path, "doc", "mañana.txt")
     assert_file(tmp_path, "doc", "images", "nslogo.gif")
@@ -474,12 +473,12 @@ def test_validate_init_data(
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
-            (src / "copier.yml"): (
-                f"""\
-                _envops: {BRACKET_ENVOPS_JSON}
-                _templates_suffix: .jinja
-                q: {json.dumps(spec)}
-                """
+            (src / "copier.yml"): yaml.dump(
+                {
+                    "_envops": BRACKET_ENVOPS,
+                    "_templates_suffix": ".jinja",
+                    "q": spec,
+                }
             ),
         }
     )

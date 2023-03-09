@@ -101,54 +101,47 @@ def test_update_subdirectory_from_root_path(
     tmp_path_factory: pytest.TempPathFactory,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
-    build_file_tree(
-        {
-            (src / "copier.yaml"): (
-                """\
-                q1:
-                    type: str
-                    default: a1
-                """
-            ),
-            (src / "file1.jinja"): (
-                """\
-                version 1
-                hello
-                {{ q1 }}
-                bye
-                """
-            ),
-            (src / "{{ _copier_conf.answers_file }}.jinja"): (
-                "{{ _copier_answers|to_nice_yaml }}"
-            ),
-        }
-    )
     with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yaml": (
+                    """\
+                    q1:
+                        type: str
+                        default: a1
+                    """
+                ),
+                "file1.jinja": (
+                    """\
+                    version 1
+                    hello
+                    {{ q1 }}
+                    bye
+                    """
+                ),
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+            }
+        )
         git("init")
         git("add", ".")
         git("commit", "-m1")
         git("tag", "1")
-    build_file_tree(
-        {
-            (src / "file1.jinja"): (
-                """\
-                version 2
-                hello
-                {{ q1 }}
-                bye
-                """
-            ),
-        }
-    )
-    with local.cwd(src):
+        build_file_tree(
+            {
+                "file1.jinja": (
+                    """\
+                    version 2
+                    hello
+                    {{ q1 }}
+                    bye
+                    """
+                ),
+            }
+        )
         git("commit", "-am2")
         git("tag", "2")
-    build_file_tree(
-        {
-            (dst / "dst_top_file"): "one",
-        }
-    )
     with local.cwd(dst):
+        build_file_tree({"dst_top_file": "one"})
         git("init")
         git("add", ".")
         git("commit", "-m0")
@@ -164,12 +157,12 @@ def test_update_subdirectory_from_root_path(
     with local.cwd(dst):
         git("add", ".")
         git("commit", "-m1")
-    copier.run_update(
-        dst / "subfolder",
-        defaults=True,
-        overwrite=True,
-        answers_file=".custom.copier-answers.yaml",
-    )
+        copier.run_update(
+            "subfolder",
+            defaults=True,
+            overwrite=True,
+            answers_file=".custom.copier-answers.yaml",
+        )
     answers = yaml.safe_load(
         (dst / "subfolder" / ".custom.copier-answers.yaml").read_bytes()
     )
@@ -284,11 +277,11 @@ def test_new_version_changes_subdirectory(
     # First, create the template with an initial subdirectory and README inside it
     build_file_tree(
         {
-            (src / "copier.yml"): "_subdirectory: subdir1",
+            (src / "copier.yml"): "_subdirectory: subdir1\n",
             (src / "subdir1" / "[[_copier_conf.answers_file]].tmpl"): (
-                "[[_copier_answers|to_nice_yaml]]"
+                "[[_copier_answers|to_nice_yaml]]\n"
             ),
-            (src / "subdir1" / "README.md"): "upstream version 1",
+            (src / "subdir1" / "README.md"): "upstream version 1\n",
         }
     )
     with local.cwd(src):
@@ -303,19 +296,19 @@ def test_new_version_changes_subdirectory(
         git_init("hello project")
 
         # After first commit, change the README, commit again
-        Path("README.md").write_text("downstream version 1")
+        Path("README.md").write_text("downstream version 1\n")
         git("commit", "-am", "updated readme")
 
     # Now change the template
     with local.cwd(src):
         # Update the README
-        Path("subdir1", "README.md").write_text("upstream version 2")
+        Path("subdir1", "README.md").write_text("upstream version 2\n")
 
         # Rename the subdirectory
         Path("subdir1").rename("subdir2")
 
         # Update copier.yml to reflect this change
-        Path("copier.yml").write_text("_subdirectory: subdir2")
+        Path("copier.yml").write_text("_subdirectory: subdir2\n")
 
         # Commit the changes
         git("add", ".", "-A")
@@ -328,7 +321,7 @@ def test_new_version_changes_subdirectory(
 
     # Assert that the README still exists, and was NOT force updated
     assert (dst / "README.md").exists()
-    assert (dst / "README.md").read_text() == "downstream version 1"
+    assert (dst / "README.md").read_text() == "downstream version 1\n"
 
     # Also assert the subdirectories themselves were not rendered
     assert not (dst / "subdir1").exists()

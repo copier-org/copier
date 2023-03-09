@@ -232,8 +232,8 @@ def test_templated_prompt_builtins(tmp_path_factory: pytest.TempPathFactory) -> 
                     default: "[[ make_secret() ]]"
                 """
             ),
-            (src / "now.tmpl"): "[[ question1 ]]",
-            (src / "make_secret.tmpl"): "[[ question2 ]]",
+            src / "now.tmpl": "[[ question1 ]]",
+            src / "make_secret.tmpl": "[[ question2 ]]",
         }
     )
     Worker(str(src), dst, defaults=True, overwrite=True).run_copy()

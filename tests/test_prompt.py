@@ -207,16 +207,17 @@ def test_placeholder(tmp_path_factory: pytest.TempPathFactory, spawn: Spawn) -> 
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
-            (src / "copier.yml"): (
-                f"""\
-                _envops: {BRACKET_ENVOPS_JSON}
-                _templates_suffix: {SUFFIX_TMPL}
-                question_1: answer 1
-                question_2:
-                    type: str
-                    help: write a list of answers
-                    placeholder: Write something like [[ question_1 ]], but better
-                """
+            (src / "copier.yml"): yaml.dump(
+                {
+                    "_envops": BRACKET_ENVOPS,
+                    "_templates_suffix": SUFFIX_TMPL,
+                    "question_1": "answer 1",
+                    "question_2": {
+                        "type": "str",
+                        "help": "write a list of answers",
+                        "placeholder": "Write something like [[ question_1 ]], but better",
+                    },
+                }
             ),
             (src / "[[ _copier_conf.answers_file ]].tmpl"): (
                 "[[ _copier_answers|to_nice_yaml ]]"
@@ -246,23 +247,22 @@ def test_multiline(
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
-            (src / "copier.yml"): (
-                f"""\
-                _envops: {BRACKET_ENVOPS_JSON}
-                _templates_suffix: {SUFFIX_TMPL}
-                question_1: answer 1
-                question_2:
-                    type: {type_}
-                question_3:
-                    type: {type_}
-                    multiline: true
-                question_4:
-                    type: {type_}
-                    multiline: "[[ question_1 == 'answer 1' ]]"
-                question_5:
-                    type: {type_}
-                    multiline: "[[ question_1 != 'answer 1' ]]"
-                """
+            (src / "copier.yml"): yaml.dump(
+                {
+                    "_envops": BRACKET_ENVOPS,
+                    "_templates_suffix": SUFFIX_TMPL,
+                    "question_1": "answer 1",
+                    "question_2": {"type": type_},
+                    "question_3": {"type": type_, "multiline": True},
+                    "question_4": {
+                        "type": type_,
+                        "multiline": "[[ question_1 == 'answer 1' ]]",
+                    },
+                    "question_5": {
+                        "type": type_,
+                        "multiline": "[[ question_1 != 'answer 1' ]]",
+                    },
+                }
             ),
             (src / "[[ _copier_conf.answers_file ]].tmpl"): (
                 "[[ _copier_answers|to_nice_yaml ]]"
@@ -329,8 +329,8 @@ def test_update_choice(
         {
             (src / "copier.yml"): (
                 f"""\
-                _envops: {BRACKET_ENVOPS_JSON}
                 _templates_suffix: {SUFFIX_TMPL}
+                _envops: {BRACKET_ENVOPS_JSON}
                 pick_one:
                     type: float
                     default: 3
@@ -424,11 +424,11 @@ def test_multiline_defaults(
     tui.expect_exact(pexpect.EOF)
     answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert (
-        ["one", "two", {"three": ["four"]}]
-        == answers["yaml_single"]
+        answers["yaml_single"]
         == answers["yaml_multi"]
         == answers["json_single"]
         == answers["json_multi"]
+        == ["one", "two", {"three": ["four"]}]
     )
 
 
@@ -439,12 +439,12 @@ def test_partial_interrupt(
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
-            (src / "copier.yml"): (
-                """\
-                question_1: answer 1
-                question_2: answer 2
-                """
-            )
+            (src / "copier.yml"): yaml.safe_dump(
+                {
+                    "question_1": "answer 1",
+                    "question_2": "answer 2",
+                }
+            ),
         }
     )
     tui = spawn(COPIER_PATH + (str(src), str(dst)), timeout=10)
@@ -470,6 +470,8 @@ def test_var_name_value_allowed(
     See https://github.com/copier-org/copier/pull/780 for more details.
     """
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    # Create template
     build_file_tree(
         {
             (src / "copier.yaml"): (
@@ -484,10 +486,12 @@ def test_var_name_value_allowed(
             ),
         }
     )
+    # Copy
     tui = spawn(COPIER_PATH + (str(src), str(dst)), timeout=10)
     expect_prompt(tui, "value", "str")
     tui.expect_exact("string")
     tui.send(Keyboard.Alt + Keyboard.Enter)
     tui.expect_exact(pexpect.EOF)
+    # Check answers file
     answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers["value"] == "string"
