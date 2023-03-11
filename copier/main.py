@@ -218,8 +218,6 @@ class Worker:
         Arguments:
             tasks: The list of tasks to run.
         """
-        if self.pretend:
-            return
         for i, task in enumerate(tasks):
             task_cmd = task.cmd
             if isinstance(task_cmd, str):
@@ -234,6 +232,8 @@ class Worker:
                     | f" > Running task {i + 1} of {len(tasks)}: {task_cmd}",
                     file=sys.stderr,
                 )
+            if self.pretend:
+                continue
             with local.cwd(self.subproject.local_abspath), local.env(**task.extra_env):
                 subprocess.run(task_cmd, shell=use_shell, check=True, env=local.env)
 
