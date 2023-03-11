@@ -1,6 +1,8 @@
+from pathlib import Path
 from subprocess import CalledProcessError
 
 import pytest
+from plumbum import local
 
 import copier
 
@@ -34,3 +36,16 @@ def test_no_cleanup_when_folder_existed(tmp_path):
         copier.copy("./tests/demo_cleanup", tmp_path, quiet=True, cleanup_on_error=True)
     assert tmp_path.exists()
     assert preexisting_file.exists()
+
+
+def test_no_cleanup_when_template_in_parent_folder(tmp_path: Path) -> None:
+    """Copier will not delete a local template in a parent folder."""
+    src = tmp_path / "src"
+    src.mkdir()
+    dst = tmp_path / "dst"
+    dst.mkdir()
+    cwd = tmp_path / "cwd"
+    cwd.mkdir()
+    with local.cwd(cwd):
+        copier.copy(str(Path("..", "src")), dst, quiet=True)
+    assert src.exists()

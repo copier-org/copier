@@ -460,7 +460,9 @@ class Template:
                 checkout_latest_tag(result, self.use_prereleases)
         if not result.is_dir():
             raise ValueError("Local template must be a directory.")
-        return result.absolute()
+        with suppress(OSError):
+            result = result.resolve()
+        return result
 
     @cached_property
     def url_expanded(self) -> str:
