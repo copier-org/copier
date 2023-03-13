@@ -982,7 +982,7 @@ def run_check(
     data: Optional[AnyByStrDict] = None,
     **kwargs,
 ) -> Worker:
-    """Check if a subproject is using the latest versio of its template.
+    """Check if a subproject is using the latest version of its template.
 
     See [Worker][copier.main.Worker] fields to understand this function's args.
     """
