@@ -768,7 +768,7 @@ class Worker:
         self._apply_update()
 
     def run_check(self) -> None:
-        """Check if a subproject is using the latest version of it's template
+        """Check if a subproject is using the latest version of its template.
 
         See [checking a project][checking-a-project].
         """
@@ -789,20 +789,18 @@ class Worker:
         if not self.template.version:
             raise UserMessageError("Cannot check: version from template not detected.")
 
-        if not self.quiet:
-            # TODO Unify printing tools
-            print(
-                f"Currently using template version {self.subproject.template.version}, "
-                f"latest is {self.template.version}.",
-                file=sys.stderr)
-
         if self.template.version > self.subproject.template.version:
             if not self.quiet:
-                print("New template version available.", file=sys.stderr)
-            raise SubprojectOutdatedError("")
+                # TODO Unify printing tools
+                print(
+                    f"NEW template version available. "
+                    f"Currently using {self.subproject.template.version}, "
+                    f"latest is {self.template.version}.",
+                    file=sys.stderr)
+            raise SubprojectOutdatedError()
         elif not self.quiet:
             # TODO Unify printing tools
-            print("No newer template version available.", file=sys.stderr)
+            print("Project is up-to-date 🎉", file=sys.stderr)
 
     def _apply_update(self):
         subproject_top = Path(
@@ -988,8 +986,6 @@ def run_check(
 
     See [Worker][copier.main.Worker] fields to understand this function's args.
     """
-    if data is not None:
-        kwargs["data"] = data
     with Worker(dst_path=Path(dst_path), **kwargs) as worker:
         worker.run_check()
     return worker

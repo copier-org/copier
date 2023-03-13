@@ -41,7 +41,7 @@ Basically, there are 4 different commands you can run:
         ```
 
 -   [`copier check`][copier.cli.CopierCheckSubApp] to check if a preexisting
-    project is using the latest version of its template
+    project is using the latest version of its template.
 
     !!! example
 
@@ -386,7 +386,7 @@ class CopierCheckSubApp(cli.Application):
         (it must be a key called `_src_path`).
 
         If that file contains also `_commit` and `destination_path` is a git
-        repository, this command will do its best determine whether a newer
+        repository, this command will do its best to determine whether a newer
         version is available, applying PEP 440 to the template's history.
         """
     )
