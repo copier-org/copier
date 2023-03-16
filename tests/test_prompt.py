@@ -169,20 +169,15 @@ def test_when(
 ) -> None:
     """Test that the 2nd question is skipped or not, properly."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    questions = {
+        "_envops": BRACKET_ENVOPS,
+        "_templates_suffix": SUFFIX_TMPL,
+        "question_1": question_1,
+        "question_2": {"default": "something", "type": "yaml", "when": question_2_when},
+    }
     build_file_tree(
         {
-            (src / "copier.yml"): yaml.dump(
-                {
-                    "_envops": BRACKET_ENVOPS,
-                    "_templates_suffix": SUFFIX_TMPL,
-                    "question_1": question_1,
-                    "question_2": {
-                        "type": "yaml",
-                        "default": "something",
-                        "when": question_2_when,
-                    },
-                }
-            ),
+            (src / "copier.yml"): yaml.dump(questions),
             (src / "[[ _copier_conf.answers_file ]].tmpl"): (
                 "[[ _copier_answers|to_nice_yaml ]]"
             ),

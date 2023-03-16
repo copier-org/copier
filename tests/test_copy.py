@@ -181,12 +181,7 @@ def test_exclude_file(tmp_path: Path) -> None:
 def test_exclude_extends(tmp_path_factory: pytest.TempPathFactory) -> None:
     """Exclude argument extends the original exclusions instead of replacing them."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
-    build_file_tree(
-        {
-            src / "test.txt": "Test text",
-            src / "test.json": '"test json"',
-        }
-    )
+    build_file_tree({src / "test.txt": "Test text", src / "test.json": '"test json"'})
     # Convert to git repo
     with local.cwd(src):
         git("init")
@@ -222,7 +217,7 @@ def test_exclude_replaces(tmp_path_factory: pytest.TempPathFactory) -> None:
 def test_skip_if_exists(tmp_path: Path) -> None:
     copier.copy(str(Path("tests", "demo_skip_dst")), tmp_path)
     copier.copy(
-        str(Path("tests", "demo_skip_src")),
+        "tests/demo_skip_src",
         tmp_path,
         skip_if_exists=["b.noeof.txt", "meh/c.noeof.txt"],
         defaults=True,
@@ -235,9 +230,9 @@ def test_skip_if_exists(tmp_path: Path) -> None:
 
 
 def test_skip_if_exists_rendered_patterns(tmp_path: Path) -> None:
-    copier.copy(str(Path("tests", "demo_skip_dst")), tmp_path)
+    copier.copy("tests/demo_skip_dst", tmp_path)
     copier.copy(
-        str(Path("tests", "demo_skip_src")),
+        "tests/demo_skip_src",
         tmp_path,
         data={"name": "meh"},
         skip_if_exists=["{{ name }}/c.noeof.txt"],
@@ -317,13 +312,13 @@ def test_empty_dir(tmp_path_factory: pytest.TempPathFactory, generate: bool) -> 
 )
 @pytest.mark.parametrize(
     "permissions",
-    [
+    (
         stat.S_IRUSR,
         stat.S_IRWXU,
         stat.S_IRWXU | stat.S_IRWXG,
         stat.S_IRWXU | stat.S_IRWXO,
         stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO,
-    ],
+    ),
 )
 def test_preserved_permissions(
     tmp_path_factory: pytest.TempPathFactory, permissions: int

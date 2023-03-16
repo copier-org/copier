@@ -1,4 +1,5 @@
 import json
+from collections import deque
 from pathlib import Path
 from textwrap import dedent
 
@@ -191,9 +192,16 @@ def test_cli_interactive(template_path: str, tmp_path: Path, spawn: Spawn) -> No
     tui.sendline("- I'd love it")
     tui.send(Keyboard.Esc + Keyboard.Enter)
     expect_prompt(tui, "choose_list", "str", help="You see the value of the list items")
-    tui.expect_exact("first")
-    tui.expect_exact("second")
-    tui.expect_exact("third")
+    deque(
+        map(
+            tui.expect_exact,
+            [
+                "first",
+                "second",
+                "third",
+            ],
+        )
+    )
     tui.sendline()
     expect_prompt(
         tui,
@@ -201,21 +209,38 @@ def test_cli_interactive(template_path: str, tmp_path: Path, spawn: Spawn) -> No
         "str",
         help="You see the 1st tuple item, but I get the 2nd item as a result",
     )
-    tui.expect_exact("one")
-    tui.expect_exact("two")
-    tui.expect_exact("three")
+    deque(
+        map(
+            tui.expect_exact,
+            [
+                "one",
+                "two",
+                "three",
+            ],
+        )
+    )
     tui.sendline()
     expect_prompt(
         tui, "choose_dict", "str", help="You see the dict key, but I get the dict value"
     )
-    tui.expect_exact("one")
-    tui.expect_exact("two")
-    tui.expect_exact("three")
+    deque(
+        map(
+            tui.expect_exact,
+            [
+                "one",
+                "two",
+                "three",
+            ],
+        )
+    )
     tui.sendline()
     expect_prompt(tui, "choose_number", "float", help="This must be a number")
-    tui.expect_exact("-1.1")
-    tui.expect_exact("0")
-    tui.expect_exact("1")
+    deque(
+        map(
+            tui.expect_exact,
+            ["-1.1", "0", "1"],
+        )
+    )
     tui.sendline()
     expect_prompt(tui, "minutes_under_water", "int")
     tui.expect_exact("10")
@@ -397,14 +422,14 @@ def test_tui_inherited_default(
         "owner1": "example",
         "owner2": owner2,
     }
-    assert json.loads((dst / "answers.json").read_bytes()) == result
+    assert json.loads((dst / "answers.json").read_text()) == result
     with local.cwd(dst):
         git("init")
         git("add", "--all")
         git("commit", "--message", "init project")
     # After a forced update, answers stay the same
     run_update(dst, defaults=True, overwrite=True)
-    assert json.loads((dst / "answers.json").read_bytes()) == result
+    assert json.loads((dst / "answers.json").read_text()) == result
 
 
 def test_tui_typed_default(
@@ -434,7 +459,7 @@ def test_tui_typed_default(
     )
     tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
     tui.expect_exact(pexpect.EOF)
-    assert json.loads((dst / "answers.json").read_bytes()) == {
+    assert json.loads((dst / "answers.json").read_text()) == {
         "_src_path": str(src),
         "test1": False,
         "test2": False,

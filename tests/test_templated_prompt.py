@@ -244,12 +244,12 @@ def test_templated_prompt_builtins(tmp_path_factory: pytest.TempPathFactory) -> 
 
 @pytest.mark.parametrize(
     "questions, raises, returns",
-    [
+    (
         ({"question": {"default": "{{ not_valid }}"}}, None, ""),
         ({"question": {"help": "{{ not_valid }}"}}, None, "None"),
         ({"question": {"type": "{{ not_valid }}"}}, InvalidTypeError, "None"),
         ({"question": {"choices": ["{{ not_valid }}"]}}, None, "None"),
-    ],
+    ),
 )
 def test_templated_prompt_invalid(
     tmp_path_factory: pytest.TempPathFactory,

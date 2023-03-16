@@ -9,7 +9,7 @@ from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree
 
 @pytest.fixture(scope="module")
 def template_path(tmp_path_factory: pytest.TempPathFactory) -> str:
-    root = tmp_path_factory.mktemp("template")
+    root = tmp_path_factory.mktemp("demo_tasks")
     build_file_tree(
         {
             (root / "copier.yaml"): (

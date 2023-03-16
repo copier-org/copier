@@ -30,12 +30,7 @@ def test_exclude_recursive_negate(tmp_path: Path) -> None:
 
 def test_config_exclude(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
-    build_file_tree(
-        {
-            src / "copier.yml": "_exclude: ['*.txt']",
-            src / "aaaa.txt": "",
-        }
-    )
+    build_file_tree({src / "copier.yml": "_exclude: ['*.txt']", src / "aaaa.txt": ""})
     run_auto(str(src), dst, quiet=True)
     assert not (dst / "aaaa.txt").exists()
     assert (dst / "copier.yml").exists()
@@ -43,12 +38,7 @@ def test_config_exclude(tmp_path_factory: pytest.TempPathFactory) -> None:
 
 def test_config_exclude_extended(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
-    build_file_tree(
-        {
-            src / "copier.yml": "_exclude: ['*.txt']",
-            src / "aaaa.txt": "",
-        }
-    )
+    build_file_tree({src / "copier.yml": "_exclude: ['*.txt']", src / "aaaa.txt": ""})
     run_auto(str(src), dst, quiet=True, exclude=["*.yml"])
     assert not (dst / "aaaa.txt").exists()
     assert not (dst / "copier.yml").exists()
@@ -57,10 +47,7 @@ def test_config_exclude_extended(tmp_path_factory: pytest.TempPathFactory) -> No
 def test_config_include(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
-        {
-            src / "copier.yml": "_exclude: ['!.svn']",
-            src / ".svn" / "hello": "",
-        }
+        {src / "copier.yml": "_exclude: ['!.svn']", src / ".svn" / "hello": ""}
     )
     run_auto(str(src), dst, quiet=True)
     assert (dst / ".svn" / "hello").exists()
@@ -129,30 +116,19 @@ def test_config_exclude_with_subdirectory(
 
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
-        {
-            src / "copier.yml": "_subdirectory: '.'",
-            src / "template" / "copier.yml": "",
-        }
+        {src / "copier.yml": "_subdirectory: '.'", src / "template" / "copier.yml": ""}
     )
     run_auto(str(src), dst, quiet=True)
     assert not (dst / "template" / "copier.yml").exists()
 
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
-        {
-            src / "copier.yml": "_subdirectory: ''",
-            src / "template" / "copier.yml": "",
-        }
+        {src / "copier.yml": "_subdirectory: ''", src / "template" / "copier.yml": ""}
     )
     run_auto(str(src), dst, quiet=True)
     assert not (dst / "template" / "copier.yml").exists()
 
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
-    build_file_tree(
-        {
-            src / "copier.yml": "",
-            src / "template" / "copier.yml": "",
-        }
-    )
+    build_file_tree({src / "copier.yml": "", src / "template" / "copier.yml": ""})
     run_auto(str(src), dst, quiet=True)
     assert not (dst / "template" / "copier.yml").exists()
