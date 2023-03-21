@@ -11,7 +11,7 @@ from functools import partial
 from itertools import chain
 from pathlib import Path
 from shutil import rmtree
-from typing import Callable, Iterable, List, Mapping, Optional, Sequence
+from typing import Callable, Iterable, Mapping, Optional, Sequence
 from unicodedata import normalize
 
 from jinja2.loaders import FileSystemLoader
@@ -358,7 +358,7 @@ class Worker:
             last=self.subproject.last_answers,
             metadata=self.template.metadata,
         )
-        questions: List[Question] = []
+
         for var_name, details in self.template.questions_data.items():
             question = Question(
                 answers=result,
@@ -377,9 +377,6 @@ class Worker:
                 result.user[var_name] = answer
                 continue
 
-            questions.append(question)
-
-        for question in questions:
             # Display TUI and ask user interactively only without --defaults
             try:
                 new_answer = (
@@ -400,6 +397,7 @@ class Worker:
                 new_answer = question.filter_answer(new_answer)
             if new_answer != previous_answer:
                 result.user[question.var_name] = new_answer
+
         return result
 
     @cached_property
