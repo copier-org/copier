@@ -14,16 +14,17 @@ from .helpers import COPIER_CMD, build_file_tree
 
 
 @pytest.fixture(scope="module")
-def template_path(tmp_path_factory) -> str:
+def template_path(tmp_path_factory: pytest.TempPathFactory) -> str:
     root = tmp_path_factory.mktemp("template")
     build_file_tree(
         {
-            root
-            / "{{ _copier_conf.answers_file }}.jinja": """\
+            (root / "{{ _copier_conf.answers_file }}.jinja"): (
+                """\
                 # Changes here will be overwritten by Copier
                 {{ _copier_answers|to_nice_yaml }}
-                """,
-            root / "a.txt": "EXAMPLE_CONTENT",
+                """
+            ),
+            (root / "a.txt"): "EXAMPLE_CONTENT",
         }
     )
     return str(root)
@@ -31,7 +32,7 @@ def template_path(tmp_path_factory) -> str:
 
 @pytest.fixture(scope="module")
 def template_path_with_dot_config(
-    tmp_path_factory,
+    tmp_path_factory: pytest.TempPathFactory,
 ) -> Generator[Callable[[str], str], str, None]:
     def _template_path_with_dot_config(config_folder: str) -> str:
         root = tmp_path_factory.mktemp("template")
@@ -51,9 +52,9 @@ def template_path_with_dot_config(
     yield _template_path_with_dot_config
 
 
-def test_good_cli_run(tmp_path, template_path):
+def test_good_cli_run(template_path: str, tmp_path: Path) -> None:
     run_result = CopierApp.run(
-        ["--quiet", "-a", "altered-answers.yml", str(template_path), str(tmp_path)],
+        ["--quiet", "-a", "altered-answers.yml", template_path, str(tmp_path)],
         exit=False,
     )
     a_txt = tmp_path / "a.txt"
@@ -62,7 +63,7 @@ def test_good_cli_run(tmp_path, template_path):
     assert a_txt.is_file()
     assert a_txt.read_text() == "EXAMPLE_CONTENT"
     answers = yaml.safe_load((tmp_path / "altered-answers.yml").read_text())
-    assert answers["_src_path"] == str(template_path)
+    assert answers["_src_path"] == template_path
 
 
 @pytest.mark.parametrize(
@@ -130,14 +131,16 @@ def test_cli_data_parsed_by_question_type(
     ),
 )
 def test_good_cli_run_dot_config(
-    tmp_path, template_path_with_dot_config, config_folder
+    tmp_path: Path,
+    template_path_with_dot_config: Callable[[str], str],
+    config_folder: Path,
 ):
     """Function to test different locations of the answersfile.
 
     Added based on the discussion: https://github.com/copier-org/copier/discussions/859
     """
 
-    src = template_path_with_dot_config(config_folder)
+    src = template_path_with_dot_config(str(config_folder))
 
     with local.cwd(src):
         git_commands()
@@ -172,26 +175,26 @@ def test_good_cli_run_dot_config(
     assert answers["_src_path"] == src
 
 
-def git_commands():
+def git_commands() -> None:
     git("init")
     git("add", "-A")
     git("commit", "-m", "init")
 
 
-def test_help():
+def test_help() -> None:
     COPIER_CMD("--help-all")
 
 
-def test_update_help():
+def test_update_help() -> None:
     assert "-o, --conflict" in COPIER_CMD("update", "--help")
 
 
-def test_python_run():
+def test_python_run() -> None:
     cmd = [sys.executable, "-m", "copier", "--help-all"]
     assert subprocess.run(cmd, check=True).returncode == 0
 
 
-def test_skip_filenotexists(tmp_path, template_path):
+def test_skip_filenotexists(template_path: str, tmp_path: Path) -> None:
     run_result = CopierApp.run(
         [
             "--quiet",
@@ -199,7 +202,7 @@ def test_skip_filenotexists(tmp_path, template_path):
             "altered-answers.yml",
             "--overwrite",
             "--skip=a.txt",
-            str(template_path),
+            template_path,
             str(tmp_path),
         ],
         exit=False,
@@ -213,10 +216,9 @@ def test_skip_filenotexists(tmp_path, template_path):
     assert answers["_src_path"] == str(template_path)
 
 
-def test_skip_fileexists(tmp_path, template_path):
+def test_skip_fileexists(template_path: str, tmp_path: Path) -> None:
     a_txt = tmp_path / "a.txt"
-    with open(a_txt, "w") as f_a:
-        f_a.write("PREVIOUS_CONTENT")
+    a_txt.write_text("PREVIOUS_CONTENT")
     run_result = CopierApp.run(
         [
             "--quiet",
@@ -224,7 +226,7 @@ def test_skip_fileexists(tmp_path, template_path):
             "altered-answers.yml",
             "--overwrite",
             "--skip=a.txt",
-            str(template_path),
+            template_path,
             str(tmp_path),
         ],
         exit=False,

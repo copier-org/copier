@@ -1,9 +1,12 @@
 import re
+from pathlib import Path
+
+import pytest
 
 from .helpers import render
 
 
-def test_output(capsys, tmp_path):
+def test_output(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
     render(tmp_path, quiet=False)
     _, err = capsys.readouterr()
     assert re.search(r"create[^\s]*  config\.py", err)
@@ -11,7 +14,7 @@ def test_output(capsys, tmp_path):
     assert re.search(r"create[^\s]*  doc[/\\]images[/\\]nslogo\.gif", err)
 
 
-def test_output_pretend(capsys, tmp_path):
+def test_output_pretend(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
     render(tmp_path, quiet=False, pretend=True)
     _, err = capsys.readouterr()
     assert re.search(r"create[^\s]*  config\.py", err)
@@ -19,7 +22,7 @@ def test_output_pretend(capsys, tmp_path):
     assert re.search(r"create[^\s]*  doc[/\\]images[/\\]nslogo\.gif", err)
 
 
-def test_output_force(capsys, tmp_path):
+def test_output_force(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
     render(tmp_path)
     capsys.readouterr()
     render(tmp_path, quiet=False, defaults=True, overwrite=True)
@@ -30,7 +33,7 @@ def test_output_force(capsys, tmp_path):
     assert re.search(r"identical[^\s]*  doc[/\\]images[/\\]nslogo\.gif", err)
 
 
-def test_output_skip(capsys, tmp_path):
+def test_output_skip(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
     render(tmp_path)
     capsys.readouterr()
     render(tmp_path, quiet=False, skip_if_exists=["config.py"])
@@ -41,7 +44,7 @@ def test_output_skip(capsys, tmp_path):
     assert re.search(r"identical[^\s]*  doc[/\\]images[/\\]nslogo\.gif", err)
 
 
-def test_output_quiet(capsys, tmp_path):
+def test_output_quiet(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
     render(tmp_path, quiet=True)
     out, err = capsys.readouterr()
     assert out == ""

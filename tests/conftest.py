@@ -1,23 +1,16 @@
 import platform
 import sys
-from pathlib import Path
+from typing import Optional, Tuple
 
 import pytest
 from coverage.tracer import CTracer
 from pexpect.popen_spawn import PopenSpawn
-from plumbum.cmd import git
+
+from .helpers import Spawn
 
 
 @pytest.fixture
-def src_repo(tmp_path_factory) -> Path:
-    """Quick helper to avoid creating template repo constantly."""
-    result = tmp_path_factory.mktemp("src_repo")
-    git("-C", result, "init")
-    return result
-
-
-@pytest.fixture
-def spawn():
+def spawn() -> Spawn:
     """Spawn a copier process TUI to interact with."""
     if platform.system() == "Windows":
         # HACK https://github.com/prompt-toolkit/python-prompt-toolkit/issues/1243#issuecomment-706668723
@@ -26,7 +19,7 @@ def spawn():
             "pexpect fails on Windows",
         )
 
-    def _spawn(cmd, *, timeout=None, logfile=sys.stderr.buffer, **kwargs) -> PopenSpawn:
+    def _spawn(cmd: Tuple[str, ...], *, timeout: Optional[int] = None) -> PopenSpawn:
         # Disable subprocess timeout if debugging (except coverage), for commodity
         # See https://stackoverflow.com/a/67065084/1468388
         tracer = getattr(sys, "gettrace", lambda: None)()
@@ -36,6 +29,6 @@ def spawn():
         # instead. However, it's working fine and it seems easier to fix in the
         # future to work on Windows (where, this way, spawning actually works; it's just
         # python-prompt-toolkit that rejects displaying a TUI)
-        return PopenSpawn(cmd, timeout, logfile=logfile, **kwargs)
+        return PopenSpawn(cmd, timeout, logfile=sys.stderr.buffer)
 
     return _spawn

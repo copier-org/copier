@@ -6,10 +6,12 @@ from textwrap import dedent
 import pexpect
 import pytest
 import yaml
+from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
 from plumbum.cmd import git
 
 from copier import copy, run_auto, run_update
+from copier.types import OptStr
 
 from .helpers import (
     BRACKET_ENVOPS,
@@ -17,6 +19,7 @@ from .helpers import (
     COPIER_PATH,
     SUFFIX_TMPL,
     Keyboard,
+    Spawn,
     build_file_tree,
     expect_prompt,
 )
@@ -26,12 +29,12 @@ BLK_END = BRACKET_ENVOPS["block_end_string"]
 
 
 @pytest.fixture(scope="module")
-def template_path(tmp_path_factory) -> str:
+def template_path(tmp_path_factory: pytest.TempPathFactory) -> str:
     root = tmp_path_factory.mktemp("template")
     build_file_tree(
         {
-            root
-            / "copier.yml": f"""\
+            (root / "copier.yml"): (
+                f"""\
                 _templates_suffix: {SUFFIX_TMPL}
                 _envops: {BRACKET_ENVOPS_JSON}
                 love_me:
@@ -91,9 +94,10 @@ def template_path(tmp_path_factory) -> str:
                 # Simplified format is still supported
                 minutes_under_water: 10
                 optional_value: null
-            """,
-            root
-            / "results.txt.tmpl": """\
+                """
+            ),
+            (root / "results.txt.tmpl"): (
+                """\
                 love_me: [[love_me|tojson]]
                 your_name: [[your_name|tojson]]
                 your_age: [[your_age|tojson]]
@@ -106,13 +110,29 @@ def template_path(tmp_path_factory) -> str:
                 choose_number: [[choose_number|tojson]]
                 minutes_under_water: [[minutes_under_water|tojson]]
                 optional_value: [[optional_value|tojson]]
-            """,
+            """
+            ),
         }
     )
     return str(root)
 
 
-def test_api(tmp_path, template_path):
+def check_invalid(
+    tui: PopenSpawn,
+    name: str,
+    format: str,
+    invalid_value: str,
+    help: OptStr = None,
+    err: str = "Invalid input",
+):
+    """Check that invalid input is reported correctly"""
+    expect_prompt(tui, name, format, help)
+    tui.sendline(invalid_value)
+    tui.expect_exact(invalid_value)
+    tui.expect_exact(err)
+
+
+def test_api(template_path: str, tmp_path: Path) -> None:
     """Test copier correctly processes advanced questions and answers through API."""
     copy(
         template_path,
@@ -128,8 +148,7 @@ def test_api(tmp_path, template_path):
         defaults=True,
         overwrite=True,
     )
-    results_file = tmp_path / "results.txt"
-    assert results_file.read_text() == dedent(
+    assert (tmp_path / "results.txt").read_text() == dedent(
         """\
             love_me: false
             your_name: "LeChuck"
@@ -147,16 +166,8 @@ def test_api(tmp_path, template_path):
     )
 
 
-def test_cli_interactive(tmp_path, spawn, template_path):
+def test_cli_interactive(template_path: str, tmp_path: Path, spawn: Spawn) -> None:
     """Test copier correctly processes advanced questions and answers through CLI."""
-
-    def check_invalid(tui, name, format, invalid_value, help=None, err="Invalid input"):
-        """Check that invalid input is reported correctly"""
-        expect_prompt(tui, name, format, help)
-        tui.sendline(invalid_value)
-        tui.expect_exact(invalid_value)
-        tui.expect_exact(err)
-
     tui = spawn(COPIER_PATH + ("copy", template_path, str(tmp_path)), timeout=10)
     expect_prompt(tui, "love_me", "bool", help="I need to know it. Do you love me?")
     tui.send("y")
@@ -238,8 +249,7 @@ def test_cli_interactive(tmp_path, spawn, template_path):
     expect_prompt(tui, "optional_value", "yaml")
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
-    results_file = tmp_path / "results.txt"
-    assert results_file.read_text() == dedent(
+    assert (tmp_path / "results.txt").read_text() == dedent(
         """\
             love_me: true
             your_name: "Guybrush Threpwood"
@@ -257,7 +267,7 @@ def test_cli_interactive(tmp_path, spawn, template_path):
     )
 
 
-def test_api_str_data(tmp_path, template_path):
+def test_api_str_data(template_path: str, tmp_path: Path) -> None:
     """Test copier when all data comes as a string.
 
     This happens i.e. when using the --data CLI argument.
@@ -277,8 +287,7 @@ def test_api_str_data(tmp_path, template_path):
         defaults=True,
         overwrite=True,
     )
-    results_file = tmp_path / "results.txt"
-    assert results_file.read_text() == dedent(
+    assert (tmp_path / "results.txt").read_text() == dedent(
         """\
             love_me: false
             your_name: "LeChuck"
@@ -297,10 +306,9 @@ def test_api_str_data(tmp_path, template_path):
 
 
 def test_cli_interatively_with_flag_data_and_type_casts(
-    tmp_path: Path, spawn, template_path
+    template_path: str, tmp_path: Path, spawn: Spawn
 ):
     """Assert how choices work when copier is invoked with --data interactively."""
-    invalid = "Invalid input"
     tui = spawn(
         COPIER_PATH
         + (
@@ -318,20 +326,16 @@ def test_cli_interatively_with_flag_data_and_type_casts(
     tui.send("y")
     expect_prompt(tui, "your_name", "str", help="Please tell me your name.")
     tui.sendline("Guybrush Threpwood")
-    expect_prompt(tui, "your_age", "int", help="How old are you?")
-    tui.send("wrong your_age")
-    tui.expect_exact(invalid)
+    check_invalid(tui, "your_age", "int", "wrong your_age", help="How old are you?")
     tui.sendline()  # Does nothing, "wrong your_age still on screen"
     tui.send((Keyboard.Alt + Keyboard.Backspace) * 2)
     tui.sendline("22")
-    expect_prompt(tui, "your_height", "float", help="What's your height?")
-    tui.send("wrong your_height")
-    tui.expect_exact(invalid)
+    check_invalid(
+        tui, "your_height", "float", "wrong your_height", help="What's your height?"
+    )
     tui.send((Keyboard.Alt + Keyboard.Backspace) * 2)
     tui.sendline("1.56")
-    expect_prompt(tui, "more_json_info", "json")
-    tui.sendline('{"objective":')
-    tui.expect_exact(invalid)
+    check_invalid(tui, "more_json_info", "json", '{"objective":')
     tui.sendline('"be a pirate"}')
     tui.send(Keyboard.Esc + Keyboard.Enter)
     expect_prompt(tui, "anything_else", "yaml", help="Wanna give me any more info?")
@@ -364,15 +368,20 @@ def test_cli_interatively_with_flag_data_and_type_casts(
 
 
 @pytest.mark.parametrize(
-    "has_2_owners, owner2", ((True, "example2"), (False, "example"))
+    "has_2_owners, owner2", [(True, "example2"), (False, "example")]
 )
-def test_tui_inherited_default(tmp_path_factory, spawn, has_2_owners, owner2):
+def test_tui_inherited_default(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    has_2_owners: bool,
+    owner2: str,
+) -> None:
     """Make sure a template inherits default as expected."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
-            src
-            / "copier.yaml": """\
+            (src / "copier.yaml"): (
+                """\
                 owner1:
                     type: str
                 has_2_owners:
@@ -382,21 +391,20 @@ def test_tui_inherited_default(tmp_path_factory, spawn, has_2_owners, owner2):
                     type: str
                     default: "{{ owner1 }}"
                     when: "{{ has_2_owners }}"
-            """,
-            src
-            / "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
-            src / "answers.json.jinja": "{{ _copier_answers|to_nice_json }}",
+                """
+            ),
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+            (src / "answers.json.jinja"): "{{ _copier_answers|to_nice_json }}",
         }
     )
-    _git = git["-C", src]
-    _git("init")
-    _git("add", "--all")
-    _git("commit", "--message", "init template")
-    _git("tag", "1")
-    tui = spawn(
-        COPIER_PATH + ("copy", str(src), str(dst)),
-        timeout=10,
-    )
+    with local.cwd(src):
+        git("init")
+        git("add", "--all")
+        git("commit", "--message", "init template")
+        git("tag", "1")
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
     expect_prompt(tui, "owner1", "str")
     tui.sendline("example")
     expect_prompt(tui, "has_2_owners", "bool")
@@ -414,23 +422,25 @@ def test_tui_inherited_default(tmp_path_factory, spawn, has_2_owners, owner2):
         "owner1": "example",
         "owner2": owner2,
     }
-    assert json.load((dst / "answers.json").open()) == result
-    _git = git["-C", dst]
-    _git("init")
-    _git("add", "--all")
-    _git("commit", "--message", "init project")
+    assert json.loads((dst / "answers.json").read_text()) == result
+    with local.cwd(dst):
+        git("init")
+        git("add", "--all")
+        git("commit", "--message", "init project")
     # After a forced update, answers stay the same
     run_update(dst, defaults=True, overwrite=True)
-    assert json.load((dst / "answers.json").open()) == result
+    assert json.loads((dst / "answers.json").read_text()) == result
 
 
-def test_tui_typed_default(tmp_path_factory, spawn):
+def test_tui_typed_default(
+    tmp_path_factory: pytest.TempPathFactory, spawn: Spawn
+) -> None:
     """Make sure a template defaults are typed as expected."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
-            src
-            / "copier.yaml": """\
+            (src / "copier.yaml"): (
+                """\
                 test1:
                     type: bool
                     default: false
@@ -439,32 +449,32 @@ def test_tui_typed_default(tmp_path_factory, spawn):
                     type: bool
                     default: "{{ 'a' == 'b' }}"
                     when: false
-            """,
-            src
-            / "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
-            src / "answers.json.jinja": "{{ _copier_answers|to_nice_json }}",
+                """
+            ),
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+            (src / "answers.json.jinja"): "{{ _copier_answers|to_nice_json }}",
         }
     )
-    tui = spawn(
-        COPIER_PATH + ("copy", str(src), str(dst)),
-        timeout=10,
-    )
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
     tui.expect_exact(pexpect.EOF)
-    result = {
+    assert json.loads((dst / "answers.json").read_text()) == {
         "_src_path": str(src),
         "test1": False,
         "test2": False,
     }
-    assert json.load((dst / "answers.json").open()) == result
 
 
-def test_selection_type_cast(tmp_path_factory, spawn):
+def test_selection_type_cast(
+    tmp_path_factory: pytest.TempPathFactory, spawn: Spawn
+) -> None:
     """Selection question with different types, properly casted."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
-            src
-            / "copier.yaml": """\
+            (src / "copier.yaml"): (
+                """\
                 postgres1: &pg
                     type: yaml
                     default: 10
@@ -483,14 +493,12 @@ def test_selection_type_cast(tmp_path_factory, spawn):
                         - [becomes array, "[one, 2, -3.0]"]
                 nulls2: *nulls
                 nulls3: *nulls
-            """,
-            src / "answers.json.jinja": "{{ _copier_answers|to_json }}",
+                """
+            ),
+            (src / "answers.json.jinja"): "{{ _copier_answers|to_json }}",
         }
     )
-    tui = spawn(
-        COPIER_PATH + ("copy", str(src), str(dst)),
-        timeout=10,
-    )
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
     expect_prompt(
         tui, "postgres1", "yaml", help="Which PostgreSQL version do you want to deploy?"
     )
@@ -521,24 +529,27 @@ def test_selection_type_cast(tmp_path_factory, spawn):
     }
 
 
-def test_multi_template_answers(tmp_path_factory):
+def test_multi_template_answers(tmp_path_factory: pytest.TempPathFactory) -> None:
     tpl1, tpl2, dst = map(tmp_path_factory.mktemp, map(str, range(3)))
     # Build 2 templates with different questions and answers file defaults
     build_file_tree(
         {
-            tpl1 / "copier.yml": "q1: a1",
-            tpl1
-            / "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
-            tpl2 / "copier.yml": "{_answers_file: two.yml, q2: a2}",
-            tpl2
-            / "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+            (tpl1 / "copier.yml"): "q1: a1",
+            (tpl1 / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+            (tpl2 / "copier.yml"): "{_answers_file: two.yml, q2: a2}",
+            (tpl2 / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
         }
     )
     # Make them git-tracked
     for tpl in (tpl1, tpl2):
-        git("-C", tpl, "init")
-        git("-C", tpl, "add", "-A")
-        git("-C", tpl, "commit", "-m1")
+        with local.cwd(tpl):
+            git("init")
+            git("add", "-A")
+            git("commit", "-m1")
     with local.cwd(dst):
         # Apply template 1
         run_auto(str(tpl1), overwrite=True, defaults=True)
@@ -551,11 +562,11 @@ def test_multi_template_answers(tmp_path_factory):
         git("add", "-A")
         git("commit", "-m2")
         # Check contents
-        answers1 = yaml.safe_load(Path(".copier-answers.yml").open())
+        answers1 = yaml.safe_load(Path(".copier-answers.yml").read_text())
         assert answers1["_src_path"] == str(tpl1)
         assert answers1["q1"] == "a1"
         assert "q2" not in answers1
-        answers2 = yaml.safe_load(Path("two.yml").open())
+        answers2 = yaml.safe_load(Path("two.yml").read_text())
         assert answers2["_src_path"] == str(tpl2)
         assert answers2["q2"] == "a2"
         assert "q1" not in answers2
