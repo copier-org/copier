@@ -503,67 +503,61 @@ def test_var_name_value_allowed(
     ],
 )
 def test_required_text_question(tmp_path_factory, spawn, type_name, expected_answer):
-    template, subproject = (
-        tmp_path_factory.mktemp("template"),
-        tmp_path_factory.mktemp("subproject"),
-    )
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
-            template
-            / "copier.yml": yaml.dump(
+            (src / "copier.yml"): yaml.dump(
                 {
                     "_envops": BRACKET_ENVOPS,
                     "_templates_suffix": SUFFIX_TMPL,
                     "question": {"type": type_name},
                 }
             ),
-            template
-            / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
+            (src / "[[ _copier_conf.answers_file ]].tmpl"): (
+                "[[ _copier_answers|to_nice_yaml ]]"
+            ),
         }
     )
-    tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
+    tui = spawn(COPIER_PATH + (str(src), str(dst)), timeout=10)
     expect_prompt(tui, "question", type_name)
     tui.expect_exact("")
     tui.sendline()
     if isinstance(expected_answer, ValueError):
         tui.expect_exact(str(expected_answer))
-        assert not (subproject / ".copier-answers.yml").exists()
+        assert not (dst / ".copier-answers.yml").exists()
     else:
         tui.expect_exact(pexpect.EOF)
-        answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
+        answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
         assert answers == {
-            "_src_path": str(template),
+            "_src_path": str(src),
             "question": expected_answer,
         }
 
 
 def test_required_bool_question(tmp_path_factory, spawn):
-    template, subproject = (
-        tmp_path_factory.mktemp("template"),
-        tmp_path_factory.mktemp("subproject"),
-    )
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
-            template
-            / "copier.yml": yaml.dump(
+            (src / "copier.yml"): yaml.dump(
                 {
                     "_envops": BRACKET_ENVOPS,
                     "_templates_suffix": SUFFIX_TMPL,
                     "question": {"type": "bool"},
                 }
             ),
-            template
-            / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
+            (src / "[[ _copier_conf.answers_file ]].tmpl"): (
+                "[[ _copier_answers|to_nice_yaml ]]"
+            ),
         }
     )
-    tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
+    tui = spawn(COPIER_PATH + (str(src), str(dst)), timeout=10)
     expect_prompt(tui, "question", "bool")
     tui.expect_exact("(y/N)")
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers == {
-        "_src_path": str(template),
+        "_src_path": str(src),
         "question": False,
     }
 
@@ -581,14 +575,10 @@ def test_required_bool_question(tmp_path_factory, spawn):
 def test_required_choice_question(
     tmp_path_factory, spawn, type_name, choices, expected_answer
 ):
-    template, subproject = (
-        tmp_path_factory.mktemp("template"),
-        tmp_path_factory.mktemp("subproject"),
-    )
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
-            template
-            / "copier.yml": yaml.dump(
+            (src / "copier.yml"): yaml.dump(
                 {
                     "_envops": BRACKET_ENVOPS,
                     "_templates_suffix": SUFFIX_TMPL,
@@ -598,16 +588,17 @@ def test_required_choice_question(
                     },
                 }
             ),
-            template
-            / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
+            (src / "[[ _copier_conf.answers_file ]].tmpl"): (
+                "[[ _copier_answers|to_nice_yaml ]]"
+            ),
         }
     )
-    tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
+    tui = spawn(COPIER_PATH + (str(src), str(dst)), timeout=10)
     expect_prompt(tui, "question", type_name)
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers == {
-        "_src_path": str(template),
+        "_src_path": str(src),
         "question": expected_answer,
     }

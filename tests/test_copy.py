@@ -491,8 +491,7 @@ def test_required_question_without_data(
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
-            src
-            / "copier.yml": yaml.safe_dump(
+            (src / "copier.yml"): yaml.safe_dump(
                 {
                     "question": {
                         "type": type_name,
@@ -502,7 +501,7 @@ def test_required_question_without_data(
         }
     )
     with pytest.raises(ValueError, match='Question "question" is required'):
-        copier.copy(str(src), str(dst), defaults=True)
+        copier.copy(str(src), dst, defaults=True)
 
 
 @pytest.mark.parametrize(
@@ -532,4 +531,4 @@ def test_required_choice_question_without_data(
         }
     )
     with pytest.raises(ValueError, match='Question "question" is required'):
-        copier.copy(str(src), str(dst), defaults=True)
+        copier.copy(str(src), dst, defaults=True)
