@@ -226,7 +226,7 @@ def test_prereleases(tmp_path: Path):
 
 
 def test_pretend_mode(tmp_path_factory: pytest.TempPathFactory) -> None:
-    src, dst = tmp_path_factory.mktemp("src"), tmp_path_factory.mktemp("dst")
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
     # Build template in v1
     with local.cwd(src):
@@ -234,16 +234,18 @@ def test_pretend_mode(tmp_path_factory: pytest.TempPathFactory) -> None:
         build_file_tree(
             {
                 "[[ _copier_conf.answers_file ]].jinja": "[[_copier_answers|to_nice_yaml]]",
-                "copier.yml": f"""
+                "copier.yml": (
+                    f"""\
                     _envops: {BRACKET_ENVOPS_JSON}
-                """,
+                    """
+                ),
             }
         )
         git("add", ".")
         git("commit", "-mv1")
         git("tag", "v1")
 
-    copy(str(src), str(dst))
+    copy(str(src), dst)
     answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers["_commit"] == "v1"
 
@@ -257,7 +259,8 @@ def test_pretend_mode(tmp_path_factory: pytest.TempPathFactory) -> None:
         build_file_tree(
             {
                 "[[ _copier_conf.answers_file ]].jinja": "[[_copier_answers|to_nice_yaml]]",
-                "copier.yml": f"""
+                "copier.yml": (
+                    f"""\
                     _envops: {BRACKET_ENVOPS_JSON}
                     _migrations:
                     -   version: v2
@@ -265,7 +268,8 @@ def test_pretend_mode(tmp_path_factory: pytest.TempPathFactory) -> None:
                         -   touch v2-before.txt
                         after:
                         -   touch v2-after.txt
-                """,
+                    """
+                ),
             }
         )
         git("add", ".")

@@ -46,15 +46,16 @@ def test_copy_tasks(tmp_path, demo_template):
 
 
 def test_pretend_mode(tmp_path_factory: pytest.TempPathFactory) -> None:
-    src, dst = tmp_path_factory.mktemp("src"), tmp_path_factory.mktemp("dst")
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
-            src
-            / "copier.yml": """
+            (src / "copier.yml"): (
+                """
                 _tasks:
                     - touch created-by-task.txt
-            """
+                """
+            )
         }
     )
-    copier.copy(str(src), str(dst), pretend=True)
+    copier.copy(str(src), dst, pretend=True)
     assert not (dst / "created-by-task.txt").exists()
