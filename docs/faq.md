@@ -116,3 +116,42 @@ names!
 If the repository containing the template is a shallow clone, the git process called by
 Copier might consume unusually high resources. To avoid that, use a fully-cloned
 repository.
+
+## While developing, why the template doesn't include dirty changes?
+
+Copier follows [a specific algorithm](./configuring.md#templates-versions) to choose
+what reference to use from the template. It also
+[includes dirty changes in the `HEAD` ref while developing locally](./configuring.md#copying-dirty-changes).
+
+However, did you make sure you are selecting the `HEAD` ref for copying?
+
+Imagine this is the status of your dirty template in `./src`:
+
+```shell
+$ git -C ./src status --porcelain=v1
+?? new-file.txt
+
+$ git -C ./src tag
+v1.0.0
+v2.0.0
+```
+
+Now, if you copy that template into a folder like this:
+
+```shell
+$ copier copy ./src ./dst
+```
+
+... you'll notice there's no `new-file.txt`. Why?
+
+Well, Copier indeed included that into the `HEAD` ref. However, it still selected
+`v2.0.0` as the ref to copy, because that's what Copier does.
+
+However, if you do this:
+
+```shell
+$ copier -r HEAD copy ./src ./dst
+```
+
+... then you'll notice `new-file.txt` does exist. You passed a specific ref to copy, so
+Copier skips its autodetection and just goes for the `HEAD` you already chose.

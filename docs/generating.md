@@ -41,9 +41,11 @@ By default, Copier will copy from the last release found in template Git tags, s
 [PEP 440](https://peps.python.org/pep-0440/), regardless of whether the template is from
 a URL or a local clone of a Git repository.
 
-The exception to this is if you use a local clone of a template repository that has had
-any modifications made, in this case Copier will use this modified working copy of the
-template to aid development of new template features.
+### Copying dirty changes
+
+If you use a local clone of a template repository that has had any uncommitted
+modifications made, Copier will use this modified working copy of the template to aid
+development of new template features.
 
 If you would like to override the version of template being installed, the
 [`--vcs-ref`](../configuring/#vcs_ref) argument can be used to specify a branch, tag or
@@ -55,16 +57,12 @@ For example to use the latest master branch from a public repository:
 copier --vcs-ref master https://github.com/foo/copier-template.git ./path/to/destination
 ```
 
-Or to work from the current checked out revision of a local template:
+Or to work from the current checked out revision of a local template (including dirty
+changes):
 
 ```shell
 copier --vcs-ref HEAD path/to/project/template path/to/destination
 ```
-
-!!! tip
-
-    If there are uncommited changes in the local template, they will be included in the `HEAD`
-    ref
 
 ## Regenerating a project
 

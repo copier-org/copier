@@ -28,7 +28,7 @@ def test_copy(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("init")
 
     with pytest.warns(DirtyLocalWarning):
-        copier.copy(str(src), dst, data=DATA, quiet=True)
+        copier.copy(str(src), dst, data=DATA, vcs_ref="HEAD", quiet=True)
 
     generated = (dst / "pyproject.toml").read_text()
     control = (Path(__file__).parent / "reference_files" / "pyproject.toml").read_text()
@@ -37,6 +37,23 @@ def test_copy(tmp_path_factory: pytest.TempPathFactory) -> None:
     # assert template still dirty
     with local.cwd(src):
         assert bool(git("status", "--porcelain").strip())
+
+
+def test_copy_dirty_head(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "tracked": "",
+            src / "untracked": "",
+        }
+    )
+    with local.cwd(src):
+        git("init")
+        git("add", "tracked")
+        git("commit", "-m1")
+    copier.run_copy(str(src), dst, vcs_ref="HEAD")
+    assert (dst / "tracked").exists()
+    assert (dst / "untracked").exists()
 
 
 def test_update(tmp_path_factory: pytest.TempPathFactory) -> None:
