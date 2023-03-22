@@ -490,3 +490,63 @@ def test_var_name_value_allowed(
     # Check answers file
     answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers["value"] == "string"
+
+@pytest.mark.parametrize(
+    "choices",
+    (
+        [1, 2, 3],
+        [["one", 1], ["two", 2], ["three", 3]],
+        {"one": 1, "two": 2, "three": 3},
+    ),
+)
+def test_list_checkbox(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    choices: Union[
+        List[int],
+        List[List[Union[str, int]]],  # actually `List[Tuple[str, int]]`
+        Dict[str, int],
+    ],
+):
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    # Create template
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                f"""\
+                _templates_suffix: {SUFFIX_TMPL}
+                _envops: {BRACKET_ENVOPS_JSON}
+                pick_one:
+                    type: list
+                    default: [1, 3]
+                    choices: {choices}
+                """
+            ),
+            (src / "[[ _copier_conf.answers_file ]].tmpl"): (
+                "[[ _copier_answers|to_nice_yaml ]]"
+            ),
+        }
+    )
+
+    # Copy
+    tui = spawn(COPIER_PATH + (str(src), str(dst)), timeout=10)
+    expect_prompt(tui, "pick_one", "list")
+    tui.send('i')  # invert selection
+    tui.send(Keyboard.Enter)
+    tui.expect_exact(pexpect.EOF)
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    assert answers["pick_one"] == [2]
+
+    with local.cwd(dst):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+    # Update
+    tui = spawn(COPIER_PATH + (str(src), str(dst)), timeout=10)
+    expect_prompt(tui, "pick_one", "list")
+    tui.send('i')  # invert selection
+    tui.send(Keyboard.Enter)
+    tui.expect_exact(pexpect.EOF)
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    assert answers["pick_one"] == [1, 3]

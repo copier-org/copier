@@ -272,6 +272,9 @@ class Question:
         choices = self.choices
         if isinstance(self.choices, dict):
             choices = list(self.choices.items())
+        
+        islist = self.get_type_name() == "list"
+        default = self.get_default()
         for choice in choices:
             # If a choice is a value pair
             if isinstance(choice, (tuple, list)):
@@ -279,11 +282,12 @@ class Question:
             # If a choice is a single value
             else:
                 name = value = choice
+            checked = islist and value in default
             # The name must always be a str
             name = str(self.render_value(name))
             # The value can be templated
             value = self.render_value(value)
-            result.append(Choice(name, value))
+            result.append(Choice(name, value, checked=checked))
         return result
 
     def filter_answer(self, answer) -> Any:
