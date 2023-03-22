@@ -274,7 +274,9 @@ class Question:
             choices = list(self.choices.items())
         
         islist = self.get_type_name() == "list"
-        default = self.get_default()
+        defaults = ()
+        if islist:
+            defaults = self.get_default() or ()
         for choice in choices:
             # If a choice is a value pair
             if isinstance(choice, (tuple, list)):
@@ -282,7 +284,7 @@ class Question:
             # If a choice is a single value
             else:
                 name = value = choice
-            checked = islist and value in default
+            checked = islist and value in defaults
             # The name must always be a str
             name = str(self.render_value(name))
             # The value can be templated
