@@ -48,8 +48,7 @@ def is_in_git_repo(path: StrOrPath) -> bool:
 def is_git_shallow_repo(path: StrOrPath) -> bool:
     """Indicate if a given path is a git shallow repo directory."""
     try:
-        git("-C", path, "rev-parse", "--is-shallow-repository")
-        return True
+        return git("-C", path, "rev-parse", "--is-shallow-repository").strip() == "true"
     except (OSError, ProcessExecutionError):
         return False
 
@@ -160,8 +159,8 @@ def clone(url: str, ref: OptStr = None) -> str:
         else:
             _clone = _clone["--filter=blob:none"]
     _clone()
-
-    if not ref and os.path.exists(url) and Path(url).is_dir():
+    # Include dirty changes if checking out a local HEAD
+    if ref in {None, "HEAD"} and os.path.exists(url) and Path(url).is_dir():
         is_dirty = False
         with local.cwd(url):
             is_dirty = bool(git("status", "--porcelain").strip())
@@ -183,7 +182,7 @@ def clone(url: str, ref: OptStr = None) -> str:
                 )
 
     with local.cwd(location):
-        git("checkout", ref or "HEAD")
+        git("reset", "--hard", ref or "HEAD")
         git("submodule", "update", "--checkout", "--init", "--recursive", "--force")
 
     return location
