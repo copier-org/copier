@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List, Mapping, Tuple, Union
+from typing import Any, Dict, List, Mapping, Tuple, Union
 
 import pexpect
 import pytest
@@ -502,7 +502,12 @@ def test_var_name_value_allowed(
         ("yaml", None),
     ],
 )
-def test_required_text_question(tmp_path_factory, spawn, type_name, expected_answer):
+def test_required_text_question(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    type_name: str,
+    expected_answer: Union[str, None, ValueError],
+) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
@@ -534,7 +539,9 @@ def test_required_text_question(tmp_path_factory, spawn, type_name, expected_ans
         }
 
 
-def test_required_bool_question(tmp_path_factory, spawn):
+def test_required_bool_question(
+    tmp_path_factory: pytest.TempPathFactory, spawn: Spawn
+) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
@@ -573,8 +580,12 @@ def test_required_bool_question(tmp_path_factory, spawn):
     ],
 )
 def test_required_choice_question(
-    tmp_path_factory, spawn, type_name, choices, expected_answer
-):
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    type_name: str,
+    choices: List[Any],
+    expected_answer: Any,
+) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
