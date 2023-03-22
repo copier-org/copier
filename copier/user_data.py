@@ -326,7 +326,7 @@ class Question:
         if type_name == "bool":
             questionary_type = "confirm"
         if self.choices:
-            questionary_type = "select"
+            questionary_type = "checkbox" if type_name == 'list' else "select"
             result["choices"] = self._formatted_choices
         if questionary_type == "input":
             if self.secret:
@@ -454,4 +454,5 @@ CAST_STR_TO_NATIVE: Mapping[str, Callable] = {
     "json": json.loads,
     "str": str,
     "yaml": parse_yaml_string,
+    'list': list,
 }
