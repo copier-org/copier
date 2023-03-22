@@ -225,7 +225,7 @@ def test_prereleases(tmp_path: Path):
         copy(dst_path=dst, defaults=True, overwrite=True)
 
 
-def test_pretend_mode(tmp_path_factory):
+def test_pretend_mode(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = tmp_path_factory.mktemp("src"), tmp_path_factory.mktemp("dst")
 
     # Build template in v1

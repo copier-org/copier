@@ -45,7 +45,7 @@ def test_copy_tasks(tmp_path, demo_template):
     assert (tmp_path / "pyfile").is_file()
 
 
-def test_pretend_mode(tmp_path_factory):
+def test_pretend_mode(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = tmp_path_factory.mktemp("src"), tmp_path_factory.mktemp("dst")
     build_file_tree(
         {
