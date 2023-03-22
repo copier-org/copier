@@ -215,8 +215,6 @@ class Question:
         if v == "":
             default_type_name = type(values.get("default")).__name__
             v = default_type_name if default_type_name in CAST_STR_TO_NATIVE else "yaml"
-        if v == "list" and not values.get("choices"):
-            raise ValueError("List-type questions must provide choices")
         return v
 
     def get_default(self) -> Any:
@@ -328,7 +326,7 @@ class Question:
         if type_name == "bool":
             questionary_type = "confirm"
         if self.choices:
-            questionary_type = "checkbox" if type_name == 'list' else "select"
+            questionary_type = "checkbox" if type_name == "list" else "select"
             result["choices"] = self._formatted_choices
         if questionary_type == "input":
             if self.secret:
