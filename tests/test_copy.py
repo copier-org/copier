@@ -68,6 +68,130 @@ def test_copy_with_non_version_tags(tmp_path_factory: pytest.TempPathFactory) ->
     )
 
 
+def test_copy_with_local_version_tags_PEP440_post(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yaml"): (
+                """\
+                _tasks:
+                    - cat v1.txt
+                """
+            ),
+            (src / "v1.txt"): "file only in v1",
+        }
+    )
+    with local.cwd(src):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "1.2.3")
+
+    with local.cwd(src):
+        Path("v1.txt").write_text("Test content2")
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "1.2.3.post1")
+
+    with local.cwd(src):
+        Path("v1.txt").write_text("Test content3")
+        git("add", ".")
+        git("commit", "-m1")
+
+    copier.run_auto(
+        str(src),
+        dst,
+        vcs_ref="HEAD",
+        use_prereleases=True,
+        defaults=True,
+    )
+
+
+def test_copy_with_local_version_tags_PEP440_dev(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yaml"): (
+                """\
+                _tasks:
+                    - cat v1.txt
+                """
+            ),
+            (src / "v1.txt"): "file only in v1",
+        }
+    )
+    with local.cwd(src):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "1.2.3")
+
+    with local.cwd(src):
+        Path("v1.txt").write_text("Test content2")
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "1.2.4.dev1")
+
+    with local.cwd(src):
+        Path("v1.txt").write_text("Test content3")
+        git("add", ".")
+        git("commit", "-m1")
+
+    copier.run_auto(
+        str(src),
+        dst,
+        vcs_ref="HEAD",
+        defaults=True,
+    )
+
+
+def _test_copy_with_local_version_tags_PEP440_post_flex(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yaml"): (
+                """\
+                _tasks:
+                    - cat v1.txt
+                """
+            ),
+            (src / "v1.txt"): "file only in v1",
+        }
+    )
+    with local.cwd(src):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "v1.2.3")
+
+    with local.cwd(src):
+        Path("v1.txt").write_text("Test content2")
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "v1.2.3.post1")
+
+    with local.cwd(src):
+        Path("v1.txt").write_text("Test content3")
+        git("add", ".")
+        git("commit", "-m1")
+
+    copier.run_auto(
+        str(src),
+        dst,
+        vcs_ref="HEAD",
+        defaults=True,
+    )
+
+
 def test_copy_with_non_version_tags_and_vcs_ref(
     tmp_path_factory: pytest.TempPathFactory,
 ) -> None:
