@@ -1,16 +1,13 @@
-from pathlib import Path
-
+import pytest
 from plumbum import local
 from plumbum.cmd import git
 
 from copier import copy
 
-from .helpers import PROJECT_TEMPLATE, build_file_tree
-
-REPO_BUNDLE_PATH = Path(f"{PROJECT_TEMPLATE}_update_tasks.bundle").absolute()
+from .helpers import build_file_tree
 
 
-def test_update_tasks(tmp_path_factory):
+def test_update_tasks(tmp_path_factory: pytest.TempPathFactory) -> None:
     """Test that updating a template runs tasks from the expected version."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     # Prepare repo bundle
@@ -18,17 +15,19 @@ def test_update_tasks(tmp_path_factory):
     bundle = src / "demo_update_tasks.bundle"
     build_file_tree(
         {
-            repo
-            / ".copier-answers.yml.jinja": """\
+            (repo / ".copier-answers.yml.jinja"): (
+                """\
                 # Changes here will be overwritten by Copier
                 {{ _copier_answers|to_nice_yaml }}
-            """,
-            repo
-            / "copier.yaml": """\
+                """
+            ),
+            (repo / "copier.yaml"): (
+                """\
                 _tasks:
                     - cat v1.txt
-            """,
-            repo / "v1.txt": "file only in v1",
+                """
+            ),
+            (repo / "v1.txt"): "file only in v1",
         }
     )
     with local.cwd(repo):
@@ -38,12 +37,13 @@ def test_update_tasks(tmp_path_factory):
         git("tag", "v1")
     build_file_tree(
         {
-            repo
-            / "copier.yaml": """\
+            (repo / "copier.yaml"): (
+                """\
                 _tasks:
                     - cat v2.txt
-            """,
-            repo / "v2.txt": "file only in v2",
+                """
+            ),
+            (repo / "v2.txt"): "file only in v2",
         }
     )
     (repo / "v1.txt").unlink()
@@ -54,13 +54,7 @@ def test_update_tasks(tmp_path_factory):
         git("tag", "v2")
         git("bundle", "create", bundle, "--all")
     # Copy the 1st version
-    copy(
-        str(bundle),
-        dst,
-        defaults=True,
-        overwrite=True,
-        vcs_ref="v1",
-    )
+    copy(str(bundle), dst, defaults=True, overwrite=True, vcs_ref="v1")
     # Init destination as a new independent git repo
     with local.cwd(dst):
         git("init")
@@ -71,4 +65,4 @@ def test_update_tasks(tmp_path_factory):
         git("add", ".")
         git("commit", "-m", "hello world")
     # Update target to v2
-    copy(dst_path=str(dst), defaults=True, overwrite=True)
+    copy(dst_path=dst, defaults=True, overwrite=True)
