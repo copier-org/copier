@@ -456,5 +456,5 @@ CAST_STR_TO_NATIVE: Mapping[str, Callable] = {
     "json": json.loads,
     "str": str,
     "yaml": parse_yaml_string,
-    'list': list,
+    "list": list,
 }
