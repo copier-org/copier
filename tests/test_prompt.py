@@ -491,6 +491,7 @@ def test_var_name_value_allowed(
     answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers["value"] == "string"
 
+
 @pytest.mark.parametrize(
     "choices",
     (
