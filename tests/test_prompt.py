@@ -532,11 +532,14 @@ def test_list_checkbox(
     # Copy
     tui = spawn(COPIER_PATH + (str(src), str(dst)), timeout=10)
     expect_prompt(tui, "pick_one", "list")
-    tui.send('i')  # invert selection
+    tui.send(Keyboard.Down)
+    tui.send(" ")  # select 2
+    tui.send(Keyboard.Down)
+    tui.send(" ")  # deselect 3
     tui.send(Keyboard.Enter)
     tui.expect_exact(pexpect.EOF)
     answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
-    assert answers["pick_one"] == [2]
+    assert answers["pick_one"] == [1, 2]
 
     with local.cwd(dst):
         git("init")
@@ -545,8 +548,8 @@ def test_list_checkbox(
     # Update
     tui = spawn(COPIER_PATH + (str(src), str(dst)), timeout=10)
     expect_prompt(tui, "pick_one", "list")
-    tui.send('i')  # invert selection
+    tui.send("i")  # invert selection
     tui.send(Keyboard.Enter)
     tui.expect_exact(pexpect.EOF)
     answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
-    assert answers["pick_one"] == [1, 3]
+    assert answers["pick_one"] == [3]
