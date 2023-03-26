@@ -1,3 +1,6 @@
+from pathlib import Path
+from typing import Optional
+
 import pytest
 
 import copier
@@ -7,7 +10,7 @@ from .helpers import build_file_tree
 
 
 @pytest.fixture(scope="module")
-def template_path(tmp_path_factory) -> str:
+def template_path(tmp_path_factory: pytest.TempPathFactory) -> str:
     root = tmp_path_factory.mktemp("template")
     build_file_tree(
         {
@@ -29,7 +32,9 @@ def template_path(tmp_path_factory) -> str:
 
 
 @pytest.mark.parametrize("answers_file", [None, ".changed-by-user.yml"])
-def test_answersfile_templating(template_path, tmp_path, answers_file):
+def test_answersfile_templating(
+    template_path: str, tmp_path: Path, answers_file: Optional[str]
+) -> None:
     """
     Test copier behaves properly when _answers_file contains a template
 
