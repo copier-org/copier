@@ -18,50 +18,10 @@ Or within Python code:
 copier.run_auto("path/to/project/template", "path/to/destination")
 ```
 
-The "template" parameter can be a local path, a URL, or a shortcut URL. The following
-shortcut URLs are supported:
+The "template" parameter can be a local path, an URL, or a shortcut URL:
 
 -   GitHub: `gh:namespace/project`
 -   GitLab: `gl:namespace/project`
-
-When using a URL, `https://github.com/*` and `https://gitlab.com/*` are automatically
-recognized as Git URLs. For other Git server URLs, the following combinations of
-prefixes and postfixes are compatible:
-
-=== "HTTP protocol"
-
-    |  `git+` prefix   |  `.git` postfix  |
-    | :--------------: | :--------------: |
-    | :material-check: |                  |
-    |                  | :material-check: |
-    | :material-check: | :material-check: |
-
-=== "SSH protocol"
-
-    |  `git@` prefix   | `git+ssh://` prefix | `ssh://` prefix  |  `.git` postfix  |
-    | :--------------: | :-----------------: | :--------------: | :--------------: |
-    | :material-check: |                     |                  |                  |
-    | :material-check: |                     |                  | :material-check: |
-    |                  |  :material-check:   |                  |                  |
-    |                  |  :material-check:   |                  | :material-check: |
-    |                  |                     | :material-check: | :material-check: |
-
-=== "Git protocol"
-
-    | `git://` prefix  |  `.git` postfix  |
-    | :--------------: | :--------------: |
-    | :material-check: |                  |
-    | :material-check: | :material-check: |
-
-    !!! danger
-
-        The Git protocol is [discouraged for security reasons][git-protocol-cons] and
-        not supported by [GitHub][git-protocol-github] and GitLab.
-
-[git-protocol-cons]:
-    https://git-scm.com/book/en/v2/Git-on-the-Server-The-Protocols#_the_cons_4
-[git-protocol-github]:
-    https://github.blog/2021-09-01-improving-git-protocol-security-github/#no-more-unauthenticated-git)
 
 Use the `--data` command-line argument or the `data` parameter of the
 `copier.run_auto()` function to pass whatever extra context you want to be available in
