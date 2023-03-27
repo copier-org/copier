@@ -195,7 +195,7 @@ class CopierApp(cli.Application):
             else:
                 if not Path(arg).exists():
                     raise UserMessageError(f"Data file {arg} not found")
-                if not Path(arg).suffix not in [".yaml", ".yml"]:
+                if not Path(arg).suffix in {".yaml", ".yml"}:
                     raise UserMessageError(f"Data file {arg} must be a YAML file")
                 with open(arg) as f:
                     self.data.update(yaml.safe_load(f))
