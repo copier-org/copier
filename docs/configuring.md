@@ -703,6 +703,29 @@ questions with default answers.
     copier -fd 'user_name=Manuel Calavera' copy template destination
     ```
 
+As alternative you can also pass the path to yaml file that contains your data. This
+cannot be used in the API.
+
+!!! example
+
+    Example CLI usage to take a yaml file as data:
+
+    ```yml
+    user_name: Alice Bob
+    age: 7
+    height: 1.83
+    ```
+
+    Calling this:
+    ```sh
+    copier -d input.yml copy template destination
+    ```
+
+    does the same thing as:
+    ```sh
+    copier -d "user_name=Alice Bob" -d "age=7" -d "height=1.83" copy template destination
+    ```
+
 ### `envops`
 
 -   Format: `dict`

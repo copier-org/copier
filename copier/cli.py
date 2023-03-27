@@ -43,6 +43,7 @@ Basically, there are 3 different commands you can run:
 Below are the docs of each one of those.
 """
 
+import yaml
 import sys
 from functools import wraps
 from io import StringIO
@@ -188,8 +189,16 @@ class CopierApp(cli.Application):
                 Each value in the list is of the following form: `NAME=VALUE`.
         """
         for arg in values:
-            key, value = arg.split("=", 1)
-            self.data[key] = value
+            if "=" in arg:
+                key, value = arg.split("=", 1)
+                self.data[key] = value
+            else:
+                if not Path(arg).exists():
+                    raise UserMessageError(f"Data file {arg} not found")
+                if not Path(arg).suffix not in [".yaml", ".yml"]:
+                    raise UserMessageError(f"Data file {arg} must be a YAML file")
+                with open(arg) as f:
+                    self.data.update(yaml.safe_load(f))
 
     def _worker(self, src_path: OptStr = None, dst_path: str = ".", **kwargs) -> Worker:
         """
