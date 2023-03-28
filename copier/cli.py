@@ -43,7 +43,6 @@ Basically, there are 3 different commands you can run:
 Below are the docs of each one of those.
 """
 
-import yaml
 import sys
 from functools import wraps
 from io import StringIO
@@ -51,6 +50,7 @@ from pathlib import Path
 from textwrap import dedent
 from unittest.mock import patch
 
+import yaml
 from plumbum import cli, colors
 
 from .errors import UserMessageError
@@ -193,7 +193,7 @@ class CopierApp(cli.Application):
                 key, value = arg.split("=", 1)
                 self.data[key] = value
             else:
-                if not Path(arg).exists():
+                if not Path(arg).is_file():
                     raise UserMessageError(f"Data file {arg} not found")
                 if not Path(arg).suffix in {".yaml", ".yml"}:
                     raise UserMessageError(f"Data file {arg} must be a YAML file")
