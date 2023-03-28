@@ -52,10 +52,9 @@ from unittest.mock import patch
 
 from plumbum import cli, colors
 
-from copier.tools import copier_version
-
 from .errors import UserMessageError
 from .main import Worker
+from .tools import copier_version
 from .types import AnyByStrDict, OptStr, StrSeq
 
 
