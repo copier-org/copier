@@ -124,7 +124,7 @@ def check_invalid(
     invalid_value: str,
     help: OptStr = None,
     err: str = "Invalid input",
-):
+) -> None:
     """Check that invalid input is reported correctly"""
     expect_prompt(tui, name, format, help)
     tui.sendline(invalid_value)
@@ -307,7 +307,7 @@ def test_api_str_data(template_path: str, tmp_path: Path) -> None:
 
 def test_cli_interatively_with_flag_data_and_type_casts(
     template_path: str, tmp_path: Path, spawn: Spawn
-):
+) -> None:
     """Assert how choices work when copier is invoked with --data interactively."""
     tui = spawn(
         COPIER_PATH

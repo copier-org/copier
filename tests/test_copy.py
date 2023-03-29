@@ -464,7 +464,7 @@ def test_validate_init_data(
     spec: AnyByStrDict,
     value: str,
     expected: ContextManager[None],
-):
+) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
