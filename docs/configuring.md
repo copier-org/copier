@@ -492,8 +492,11 @@ in the example above, or just use `/` in the answer (works on Windows too).
 
 ## Importing Jinja templates and macros
 
-You can import templates and macros to reduce code duplication. A common scenario is the
-derivation of new values from answers, e.g. computing the slug of a human-readable name:
+You can
+[include templates](https://jinja.palletsprojects.com/en/3.1.x/templates/#include) and
+[import macros](https://jinja.palletsprojects.com/en/3.1.x/templates/#import) to reduce
+code duplication. A common scenario is the derivation of new values from answers, e.g.
+computing the slug of a human-readable name:
 
 ```yaml title="copier.yml"
 _exclude:
@@ -606,14 +609,15 @@ _subdirectory: template
 
 In addition, Jinja include and import statements will need to use a POSIX path separator
 (also on Windows) which is not supported in templated folder and file names. For this
-reason, Copier provides a helper function `posixpath`:
+reason, Copier provides a filter
+`pathjoin(*paths: str, mode: Literal["posix", "windows", "native"] = "posix")`:
 
 ```jinja
-{% include posixpath('includes', 'name-slug.jinja') %}
+{% include 'includes' | pathjoin('name-slug.jinja') %}
 ```
 
 ```jinja
-{% from posixpath('includes', 'slugify.jinja') import slugify %}
+{% from 'includes' | pathjoin('slugify.jinja') import slugify %}
 ```
 
 ## Available settings
