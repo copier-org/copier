@@ -461,7 +461,7 @@ class Worker:
         def _pathjoin(
             *path: str, mode: Literal["posix", "windows", "native"] = "posix"
         ) -> str:
-            return separators["mode"].join(path)
+            return separators[mode].join(path)
 
         env.filters["pathjoin"] = _pathjoin
         return env
