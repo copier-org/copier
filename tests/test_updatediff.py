@@ -520,7 +520,7 @@ def test_skip_update(tmp_path_factory: pytest.TempPathFactory) -> None:
 )
 def test_overwrite_answers_file_always(
     tmp_path_factory: pytest.TempPathFactory, answers_file: Optional[str]
-):
+) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     with local.cwd(src):
         build_file_tree(
