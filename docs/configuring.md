@@ -414,10 +414,10 @@ use_precommit:
 
 And then, you can generate a `.pre-commit-config.yaml` file only if they answered "yes":
 
-```shell
-📁 your_template
-├── 📄 copier.yml
-└── 📄 {% if use_precommit %}.pre-commit-config.yaml{% endif %}.jinja
+```tree result="shell"
+your_template
+    copier.yml
+    {% if use_precommit %}.pre-commit-config.yaml{% endif %}.jinja
 ```
 
 !!! important
@@ -439,14 +439,13 @@ ci:
     default: github
 ```
 
-```shell
-📁 your_template
-├── 📄 copier.yml
-├── 📁 {% if ci == 'github' %}.github{% endif %}
-│   └── 📁 workflows
-│       └── 📄 ci.yml
-└── 📄 {% if ci == 'gitlab' %}.gitlab-ci.yml{% endif %}.jinja
-
+```tree result="shell"
+your_template
+    copier.yml
+    {% if ci == 'github' %}.github{% endif %}
+        workflows
+            ci.yml
+    {% if ci == 'gitlab' %}.gitlab-ci.yml{% endif %}.jinja
 ```
 
 !!! important
@@ -468,10 +467,10 @@ package:
     help: Package name
 ```
 
-```shell
-📁 your_template
-├── 📄 copier.yml
-└── 📄 {{ package.replace('.', _copier_conf.sep) }}{{ _copier_conf.sep }}__main__.py.jinja
+```tree result="shell"
+your_template
+    copier.yml
+    {{ package.replace('.', _copier_conf.sep) }}{{ _copier_conf.sep }}__main__.py.jinja
 ```
 
 If you answer
@@ -480,12 +479,12 @@ If you answer
 
 Copier will generate this structure:
 
-```shell
-📁 your_project
-└── 📁 your_package
-    └── 📁 cli
-        └── 📁 main
-            └── 📄 __main__.py
+```tree result="shell"
+your_project
+    your_package
+        cli
+            main
+                __main__.py
 ```
 
 You can either use any separator, like `.`, and replace it with `_copier_conf.sep`, like
@@ -542,7 +541,7 @@ running `copier update`, this setting has no effect.
 ### `conflict`
 
 -   Format: `Literal["rej", "inline"]`
--   CLI flags: `-o`, `--conflict`
+-   CLI flags: `-o`, `--conflict` (only available in `copier update` subcommand)
 -   Default value: `rej`
 
 When updating a project, sometimes Copier doesn't know what to do with a diff code hunk.
@@ -988,12 +987,12 @@ This allows you to keep separate the template metadata and the template code.
     !!! example "Example project with different `.gitignore` files"
 
 
-        ```shell title="Project layout"
-        📁 my_copier_template
-        ├── 📄 copier.yml       # (1)
-        ├── 📄 .gitignore       # (2)
-        └── 📁 template         # (3)
-            └── 📄 .gitignore   # (4)
+        ```tree result="shell" title="Project layout"
+        my_copier_template
+            copier.yml       # (1)
+            .gitignore       # (2)
+            template         # (3)
+                .gitignore   # (4)
         ```
 
         1.  Same contents as the example above.
@@ -1021,15 +1020,15 @@ This allows you to keep separate the template metadata and the template code.
                 - pipenv
         ```
 
-        ```shell title="Project layout"
-        📁 my_copier_template
-        ├── 📄 copier.yaml # (1)
-        ├── 📁 poetry
-        │   ├── 📄 {{ _copier_conf.answers_file }}.jinja # (2)
-        │   └── 📄 pyproject.toml.jinja
-        └── 📁 pipenv
-        │   ├── 📄 {{ _copier_conf.answers_file }}.jinja
-            └── 📄 Pipfile.jinja
+        ```tree result="shell" title="Project layout"
+        my_copier_template
+            copier.yaml # (1)
+            poetry
+                {{ _copier_conf.answers_file }}.jinja # (2)
+                pyproject.toml.jinja
+            pipenv
+                {{ _copier_conf.answers_file }}.jinja
+                Pipfile.jinja
         ```
 
         1.  The configuration from the previous example snippet.

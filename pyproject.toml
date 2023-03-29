@@ -13,6 +13,7 @@ classifiers = [
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
 ]
 authors = ["Ben Felder <ben@felder.io>"]
 homepage = "https://github.com/copier-org/copier"
@@ -34,7 +35,7 @@ funcy = ">=1.17"
 importlib-metadata = { version = ">=3.4,<7.0", python = "<3.8" }
 jinja2 = ">=3.1.1"
 jinja2-ansible-filters = ">=1.3.1"
-packaging = ">=21.0" # packaging is needed when installing from PyPI
+packaging = ">=23.0"
 pathspec = ">=0.9.0"
 plumbum = ">=1.6.9"
 pydantic = ">=1.10.2"
@@ -63,7 +64,8 @@ types-psutil = "*"
 optional = true
 
 [tool.poetry.group.docs.dependencies]
-mkdocs-material = ">=8.2,<9.0.0"
+markdown-exec = ">=1.3.0"
+mkdocs-material = ">=8.2,<10.0.0"
 mkdocstrings = { version = ">=0.19.0", extras = ["python"] }
 
 [tool.poe.tasks.clean]
@@ -83,7 +85,7 @@ cmd = "mkdocs serve"
 help = "start local docs server"
 
 [tool.poe.tasks.lint]
-cmd = "pre-commit run --all-files"
+script = "devtasks:lint"
 help = "check (and auto-fix) style with pre-commit"
 
 [tool.poe.tasks.test]

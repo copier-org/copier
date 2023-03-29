@@ -2,10 +2,17 @@
   description = "Source code project lifecycle management tool";
 
   nixConfig = {
-    extra-trusted-public-keys = "copier.cachix.org-1:sVkdQyyNXrgc53qXPCH9zuS91zpt5eBYcg7JQSmTBG4=";
-    extra-substituters = "https://copier.cachix.org";
+    # HACK https://github.com/NixOS/nix/issues/6771
+    # TODO Leave only own cache settings when fixed
+    extra-trusted-public-keys = [
+      "copier.cachix.org-1:sVkdQyyNXrgc53qXPCH9zuS91zpt5eBYcg7JQSmTBG4="
+      "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
+    ];
+    extra-substituters = [
+      "https://copier.cachix.org"
+      "https://devenv.cachix.org"
+    ];
   };
-
   inputs = {
     devenv.url = "github:cachix/devenv/v0.5";
     flake-compat = {
@@ -13,7 +20,7 @@
       flake = false;
     };
     flake-utils.url = github:numtide/flake-utils;
-    nixpkgs.url = github:NixOS/nixpkgs/nixos-22.11;
+    nixpkgs.url = github:NixOS/nixpkgs;
     poetry2nix.url = github:nix-community/poetry2nix;
   };
 
@@ -26,21 +33,17 @@
         };
         lastRelease = (pkgs.lib.importTOML ./pyproject.toml).tool.commitizen.version;
         version = "${lastRelease}.dev${self.sourceInfo.lastModifiedDate}+nix-git-${self.sourceInfo.shortRev or "dirty"}";
+        python = pkgs.python311;
 
         # Builders
         copierApp = pkgs.poetry2nix.mkPoetryApplication {
-          inherit version;
+          inherit python version;
           name = "copier-${version}";
           POETRY_DYNAMIC_VERSIONING_BYPASS = version;
           projectDir = ./.;
-          overrides = pkgs.poetry2nix.overrides.withDefaults (final: prev: {
-            pydantic = prev.pydantic.overrideAttrs (old: {
-              buildInputs = old.buildInputs ++ [pkgs.libxcrypt];
-            });
-          });
 
           # Test configuration
-          checkInputs = [pkgs.git];
+          nativeCheckInputs = [pkgs.git];
           pythonImportsCheck = ["copier"];
           doCheck = true;
           installCheckPhase = ''
@@ -56,7 +59,7 @@
               pytest --color=yes -m 'not impure'
           '';
         };
-        copierModule = pkgs.python3.pkgs.toPythonModule copierApp;
+        copierModule = python.pkgs.toPythonModule copierApp;
       in rec {
         devShells.default = devenv.lib.mkShell {
           inherit inputs pkgs;
@@ -64,11 +67,8 @@
             {
               packages = with pkgs; [
                 # Essential dev tools
-                (pkgs.python3.withPackages (ps:
-                  with ps; [
-                    poetry
-                    poetry-dynamic-versioning
-                  ]))
+                poetry
+                python
 
                 # IDE integration tools
                 alejandra

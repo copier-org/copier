@@ -7,13 +7,13 @@ from poethepoet.app import PoeThePoet
 from copier.tools import TemporaryDirectory
 
 
-def test_types():
+def test_types() -> None:
     """Ensure source code static typing."""
     result = PoeThePoet(Path("."))(["types"])
     assert result == 0
 
 
-def test_temporary_directory_with_readonly_files_deletion():
+def test_temporary_directory_with_readonly_files_deletion() -> None:
     """Ensure temporary directories containing read-only files are properly deleted, whatever the OS."""
     with TemporaryDirectory() as tmp_dir:
         ro_file = Path(tmp_dir) / "readonly.txt"
@@ -23,7 +23,7 @@ def test_temporary_directory_with_readonly_files_deletion():
     assert not Path(tmp_dir).exists()
 
 
-def test_temporary_directory_with_git_repo_deletion():
+def test_temporary_directory_with_git_repo_deletion() -> None:
     """Ensure temporary directories containing git repositories are properly deleted, whatever the OS."""
     with TemporaryDirectory() as tmp_dir:
         git("init")

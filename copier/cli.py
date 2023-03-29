@@ -50,13 +50,11 @@ from pathlib import Path
 from textwrap import dedent
 from unittest.mock import patch
 
-import yaml
 from plumbum import cli, colors
-
-from copier.tools import copier_version
 
 from .errors import UserMessageError
 from .main import Worker
+from .tools import copier_version
 from .types import AnyByStrDict, OptStr, StrSeq
 
 
@@ -82,7 +80,6 @@ class CopierApp(cli.Application):
 
     Attributes:
         answers_file: Set [answers_file][] option.
-        conflict: Set [conflict][] option.
         exclude: Set [exclude][] option.
         vcs_ref: Set [vcs_ref][] option.
         pretend: Set [pretend][] option.
@@ -128,15 +125,6 @@ class CopierApp(cli.Application):
         help=(
             "Update using this path (relative to `destination_path`) "
             "to find the answers file"
-        ),
-    )
-    conflict: cli.SwitchAttr = cli.SwitchAttr(
-        ["-o", "--conflict"],
-        cli.Set("rej", "inline"),
-        default="rej",
-        help=(
-            "Behavior on conflict: rej=Create .rej file, inline=inline conflict "
-            "markers (inline is still experimental)"
         ),
     )
     exclude: cli.SwitchAttr = cli.SwitchAttr(
@@ -201,7 +189,6 @@ class CopierApp(cli.Application):
         """
         for arg in values:
             key, value = arg.split("=", 1)
-            value = yaml.safe_load(value)
             self.data[key] = value
 
     def _worker(self, src_path: OptStr = None, dst_path: str = ".", **kwargs) -> Worker:
@@ -221,11 +208,11 @@ class CopierApp(cli.Application):
             defaults=self.force or self.defaults,
             overwrite=self.force or self.overwrite,
             pretend=self.pretend,
+            skip_if_exists=self.skip,
             quiet=self.quiet,
             src_path=src_path,
             vcs_ref=self.vcs_ref,
             use_prereleases=self.prereleases,
-            conflict=self.conflict,
             **kwargs,
         )
 
@@ -315,6 +302,9 @@ class CopierUpdateSubApp(cli.Application):
 
     Use this subcommand to update an existing subproject from a template
     that supports updates.
+
+    Attributes:
+        conflict: Set [conflict][] option.
     """
 
     DESCRIPTION = "Update a copy from its original template"
@@ -331,6 +321,16 @@ class CopierUpdateSubApp(cli.Application):
         """
     )
 
+    conflict: cli.SwitchAttr = cli.SwitchAttr(
+        ["-o", "--conflict"],
+        cli.Set("rej", "inline"),
+        default="rej",
+        help=(
+            "Behavior on conflict: rej=Create .rej file, inline=inline conflict "
+            "markers (inline is still experimental)"
+        ),
+    )
+
     @handle_exceptions
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
         """Call [run_update][copier.main.Worker.run_update].
@@ -345,6 +345,7 @@ class CopierUpdateSubApp(cli.Application):
         """
         self.parent._worker(
             dst_path=destination_path,
+            conflict=self.conflict,
         ).run_update()
         return 0
 

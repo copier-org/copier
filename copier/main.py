@@ -11,7 +11,7 @@ from functools import partial
 from itertools import chain
 from pathlib import Path
 from shutil import rmtree
-from typing import Callable, Iterable, List, Mapping, Optional, Sequence
+from typing import Callable, Iterable, Mapping, Optional, Sequence
 from unicodedata import normalize
 
 from jinja2.loaders import FileSystemLoader
@@ -232,6 +232,8 @@ class Worker:
                     | f" > Running task {i + 1} of {len(tasks)}: {task_cmd}",
                     file=sys.stderr,
                 )
+            if self.pretend:
+                continue
             with local.cwd(self.subproject.local_abspath), local.env(**task.extra_env):
                 subprocess.run(task_cmd, shell=use_shell, check=True, env=local.env)
 
@@ -299,11 +301,7 @@ class Worker:
         return bool(ask(f" Overwrite {dst_relpath}?", default=True))
 
     def _render_allowed(
-        self,
-        dst_relpath: Path,
-        is_dir: bool = False,
-        expected_contents: bytes = b"",
-        expected_permissions=None,
+        self, dst_relpath: Path, is_dir: bool = False, expected_contents: bytes = b""
     ) -> bool:
         """Determine if a file or directory can be rendered.
 
@@ -332,33 +330,22 @@ class Worker:
                 file_=sys.stderr,
             )
             return True
-        except (IsADirectoryError, PermissionError) as error:
+        except PermissionError as error:
             # HACK https://bugs.python.org/issue43095
-            if isinstance(error, PermissionError) and not (
-                error.errno == 13 and platform.system() == "Windows"
-            ):
+            if not (error.errno == 13 and platform.system() == "Windows"):
                 raise
-            if is_dir:
-                printf(
-                    "identical",
-                    dst_relpath,
-                    style=Style.IGNORE,
-                    quiet=self.quiet,
-                    file_=sys.stderr,
-                )
-                return True
-            return self._solve_render_conflict(dst_relpath)
-        else:
-            if previous_content == expected_contents:
-                printf(
-                    "identical",
-                    dst_relpath,
-                    style=Style.IGNORE,
-                    quiet=self.quiet,
-                    file_=sys.stderr,
-                )
-                return True
-            return self._solve_render_conflict(dst_relpath)
+        except IsADirectoryError:
+            assert is_dir
+        if is_dir or previous_content == expected_contents:
+            printf(
+                "identical",
+                dst_relpath,
+                style=Style.IGNORE,
+                quiet=self.quiet,
+                file_=sys.stderr,
+            )
+            return True
+        return self._solve_render_conflict(dst_relpath)
 
     @cached_property
     def answers(self) -> AnswersMap:
@@ -373,7 +360,7 @@ class Worker:
             last=self.subproject.last_answers,
             metadata=self.template.metadata,
         )
-        questions: List[Question] = []
+
         for var_name, details in self.template.questions_data.items():
             question = Question(
                 answers=result,
@@ -382,19 +369,16 @@ class Worker:
                 **details,
             )
             if var_name in result.init:
-                answer = result.init[var_name]
                 # Try to parse the answer value.
-                question.parse_answer(answer)
+                answer = question.parse_answer(result.init[var_name])
                 # Try to validate the answer value if the question has a
                 # validator.
                 question.validate_answer(answer)
                 # At this point, the answer value is valid. Do not ask the
-                # question again.
+                # question again, but set answer as the user's answer instead.
+                result.user[var_name] = answer
                 continue
 
-            questions.append(question)
-
-        for question in questions:
             # Display TUI and ask user interactively only without --defaults
             try:
                 new_answer = (
@@ -415,6 +399,7 @@ class Worker:
                 new_answer = question.filter_answer(new_answer)
             if new_answer != previous_answer:
                 result.user[question.var_name] = new_answer
+
         return result
 
     @cached_property
@@ -427,7 +412,9 @@ class Worker:
         2. Template default.
         3. Copier default.
         """
-        return self.answers_file or self.template.answers_relpath
+        path = self.answers_file or self.template.answers_relpath
+        template = self.jinja_env.from_string(str(path))
+        return Path(template.render(**self.answers.combined))
 
     @cached_property
     def all_exclusions(self) -> StrSeq:
@@ -510,11 +497,7 @@ class Worker:
             new_content = src_abspath.read_bytes()
         dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
         src_mode = src_abspath.stat().st_mode
-        if not self._render_allowed(
-            dst_relpath,
-            expected_contents=new_content,
-            expected_permissions=src_mode,
-        ):
+        if not self._render_allowed(dst_relpath, expected_contents=new_content):
             return
         if not self.pretend:
             dst_abspath.parent.mkdir(parents=True, exist_ok=True)
@@ -567,6 +550,10 @@ class Worker:
             part = self._render_string(part)
             if not part:
                 return None
+            # {{ _copier_conf.answers_file }} becomes the full path; in that case,
+            # restore part to be just the end leaf
+            if str(self.answers_relpath) == part:
+                part = Path(part).name
             rendered_parts.append(part)
         result = Path(*rendered_parts)
         if not is_template:

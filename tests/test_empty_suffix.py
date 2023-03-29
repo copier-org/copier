@@ -1,25 +1,27 @@
+import pytest
+
 import copier
 
 from .helpers import build_file_tree
 
 
-def test_empty_suffix(tmp_path_factory):
-    root = tmp_path_factory.mktemp("demo_empty_suffix")
+def test_empty_suffix(tmp_path_factory: pytest.TempPathFactory) -> None:
+    root, dest = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
-            root
-            / "copier.yaml": """
+            (root / "copier.yaml"): (
+                """\
                 _templates_suffix: ""
                 name:
                     type: str
                     default: pingu
-            """,
-            root / "render_me": "Hello {{name}}!",
-            root / "{{name}}.txt": "Hello {{name}}!",
-            root / "{{name}}" / "render_me.txt": "Hello {{name}}!",
+                """
+            ),
+            (root / "render_me"): "Hello {{name}}!",
+            (root / "{{name}}.txt"): "Hello {{name}}!",
+            (root / "{{name}}" / "render_me.txt"): "Hello {{name}}!",
         }
     )
-    dest = tmp_path_factory.mktemp("dst")
     copier.copy(str(root), dest, defaults=True, overwrite=True)
 
     assert not (dest / "copier.yaml").exists()
@@ -34,22 +36,23 @@ def test_empty_suffix(tmp_path_factory):
     assert (dest / "pingu" / "render_me.txt").read_text() == expected
 
 
-def test_binary_file_fallback_to_copy(tmp_path_factory):
-    root = tmp_path_factory.mktemp("demo_empty_suffix_binary_file")
+def test_binary_file_fallback_to_copy(tmp_path_factory: pytest.TempPathFactory) -> None:
+    root, dest = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
-            root
-            / "copier.yaml": """
+            (root / "copier.yaml"): (
+                """\
                 _templates_suffix: ""
                 name:
                     type: str
                     default: pingu
-            """,
-            root
-            / "logo.png": b"\x89PNG\r\n\x1a\n\x00\rIHDR\x00\xec\n{{name}}\n\x00\xec",
+                """
+            ),
+            (root / "logo.png"): (
+                b"\x89PNG\r\n\x1a\n\x00\rIHDR\x00\xec\n{{name}}\n\x00\xec"
+            ),
         }
     )
-    dest = tmp_path_factory.mktemp("dst")
     copier.copy(str(root), dest, defaults=True, overwrite=True)
     logo = dest / "logo.png"
     assert logo.exists()

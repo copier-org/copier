@@ -1,5 +1,5 @@
 """Copier CLI entrypoint."""
-from copier.cli import CopierApp
+from .cli import CopierApp
 
 # HACK https://github.com/nix-community/poetry2nix/issues/504
 copier_app_run = CopierApp.run

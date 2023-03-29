@@ -1,25 +1,28 @@
+from pathlib import Path
 from textwrap import dedent
 
 import pytest
 
 import copier
+from copier.types import OptStr
 from copier.user_data import load_answersfile_data
 
 from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree
 
 
 @pytest.fixture(scope="module")
-def template_path(tmp_path_factory) -> str:
+def template_path(tmp_path_factory: pytest.TempPathFactory) -> str:
     root = tmp_path_factory.mktemp("template")
     build_file_tree(
         {
-            root
-            / "[[ _copier_conf.answers_file ]].tmpl": """\
+            (root / "[[ _copier_conf.answers_file ]].tmpl"): (
+                """\
                 # Changes here will be overwritten by Copier
                 [[ _copier_answers|to_nice_yaml ]]
-                """,
-            root
-            / "copier.yml": f"""\
+                """
+            ),
+            (root / "copier.yml"): (
+                f"""\
                 _answers_file: .answers-file-changed-in-template.yml
                 _templates_suffix: {SUFFIX_TMPL}
                 _envops: {BRACKET_ENVOPS_JSON}
@@ -38,20 +41,22 @@ def template_path(tmp_path_factory) -> str:
                 password_2:
                     secret: yes
                     default: password two
-                """,
-            root
-            / "round.txt.tmpl": """\
+                """
+            ),
+            (root / "round.txt.tmpl"): (
+                """\
                 It's the [[round]] round.
                 password_1=[[password_1]]
                 password_2=[[password_2]]
-                """,
+                """
+            ),
         }
     )
     return str(root)
 
 
 @pytest.mark.parametrize("answers_file", [None, ".changed-by-user.yaml"])
-def test_answersfile(template_path, tmp_path, answers_file):
+def test_answersfile(template_path: str, tmp_path: Path, answers_file: OptStr) -> None:
     """Test copier behaves properly when using an answersfile."""
     round_file = tmp_path / "round.txt"
 
