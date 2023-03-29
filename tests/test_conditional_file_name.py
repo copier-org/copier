@@ -59,7 +59,7 @@ def test_dont_render_conditional_subdir(tmp_path_factory: TempPathFactory):
     assert not (dst / "subdir" / "file.txt").exists()
 
 
-def test_answer_changes(tmp_path_factory: TempPathFactory):
+def test_answer_changes(tmp_path_factory: TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
     with local.cwd(src):
