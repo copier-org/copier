@@ -33,6 +33,7 @@ from .tools import Style, TemporaryDirectory, printf
 from .types import (
     AnyByStrDict,
     JSONSerializable,
+    Literal,
     OptStr,
     RelativePath,
     StrOrPath,
@@ -449,10 +450,20 @@ class Worker:
         env.filters["to_json"] = partial(
             env.filters["to_json"], default=pydantic_encoder
         )
-        # Add a helper function to join filesystem paths using the path
-        # separator `/` as Jinja uses the POSIX and not OS-specific path
-        # separator for includes/imports.
-        env.globals["posixpath"] = lambda *p: "/".join(p)
+
+        # Add a filter to join filesystem paths.
+        separators = {
+            "posix": "/",
+            "windows": "\\",
+            "native": os.path.sep,
+        }
+
+        def _pathjoin(
+            *path: str, mode: Literal["posix", "windows", "native"] = "posix"
+        ) -> str:
+            return separators["mode"].join(path)
+
+        env.filters["pathjoin"] = _pathjoin
         return env
 
     @cached_property

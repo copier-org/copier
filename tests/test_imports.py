@@ -56,13 +56,13 @@ def test_include(
             (
                 src
                 / subdir
-                / "{% include posixpath('includes', 'name-slug.jinja') %}.txt"
+                / "{% include 'includes' | pathjoin('name-slug.jinja') %}.txt"
             ): "",
             # File for testing the Jinja include statement in the folder name.
             (
                 src
                 / subdir
-                / "{% include posixpath('includes', 'name-slug.jinja') %}"
+                / "{% include 'includes' | pathjoin('name-slug.jinja') %}"
                 / "test.txt"
             ): "",
         }
@@ -132,13 +132,13 @@ def test_import_macro(
             (
                 src
                 / subdir
-                / "{% from posixpath('includes', 'slugify.jinja') import slugify %}{{ slugify(name) }}.txt"
+                / "{% from 'includes' | pathjoin('slugify.jinja') import slugify %}{{ slugify(name) }}.txt"
             ): "",
             # File for testing the Jinja import statement in the folder name.
             (
                 src
                 / subdir
-                / "{% from posixpath('includes', 'slugify.jinja') import slugify %}{{ slugify(name) }}"
+                / "{% from 'includes' | pathjoin('slugify.jinja') import slugify %}{{ slugify(name) }}"
                 / "test.txt"
             ): "",
         }
