@@ -1,3 +1,10 @@
+github:
+  prebuilds:
+    addBadge: true
+    addCheck: prevent-merge-on-error
+    master: true
+    pullRequests: true
+
 vscode:
   extensions:
     - bpruitt-goddard.mermaid-markdown-syntax-highlighting
@@ -5,15 +12,10 @@ vscode:
     - esbenp.prettier-vscode
     - ms-python.python
 
-image:
-  file: .gitpod.dockerfile
-
 ports:
   # Mkdocs local server; start it with `poe docs`
   - port: 8000
     onOpen: notify
 
 tasks:
-  - init:
-      export PIP_USER=no && poetry install -E docs && poetry run pre-commit install -t
-      pre-commit -t commit-msg && poetry run pre-commit install-hooks
+  - init: direnv allow

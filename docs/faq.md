@@ -1,5 +1,17 @@
 # Frequently Asked Questions
 
+## Can Copier be applied over a preexisting project?
+
+Yes, of course. Copier understands this use case out of the box. That's actually what
+powers features such as [updating](../updating) or the ability of
+[applying multiple templates to the same subproject](../configuring#applying-multiple-templates-to-the-same-subproject).
+
+!!! example
+
+    ```shell
+    copier copy https://github.com/me/my-template.git ./my-preexisting-git-project
+    ```
+
 ## How can I alter the context before rendering the project?
 
 Similar questions:
@@ -98,3 +110,9 @@ class ContextUpdater(ContextHook):
 
 Now you can use these added variables in your Jinja templates, and in files and folders
 names!
+
+## Why Copier consumes a lot of resources?
+
+If the repository containing the template is a shallow clone, the git process called by
+Copier might consume unusually high resources. To avoid that, use a fully-cloned
+repository.

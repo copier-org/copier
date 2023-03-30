@@ -1,17 +1,22 @@
-import os
 import platform
 import stat
 import sys
+from contextlib import nullcontext as does_not_raise
 from pathlib import Path
+from typing import ContextManager
 
 import pytest
+import yaml
 from plumbum import local
 from plumbum.cmd import git
+from prompt_toolkit.validation import ValidationError
 
 import copier
 from copier import copy
+from copier.types import AnyByStrDict
 
 from .helpers import (
+    BRACKET_ENVOPS,
     BRACKET_ENVOPS_JSON,
     PROJECT_TEMPLATE,
     assert_file,
@@ -21,7 +26,7 @@ from .helpers import (
 )
 
 
-def test_project_not_found(tmp_path):
+def test_project_not_found(tmp_path: Path) -> None:
     with pytest.raises(ValueError):
         copier.copy("foobar", tmp_path)
 
@@ -29,34 +34,33 @@ def test_project_not_found(tmp_path):
         copier.copy(__file__, tmp_path)
 
 
-def test_copy_with_non_version_tags(tmp_path_factory):
+def test_copy_with_non_version_tags(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
-    # Prepare repo bundle
-    repo = src / "repo"
-    repo.mkdir()
     build_file_tree(
         {
-            repo
-            / ".copier-answers.yml.jinja": """\
+            (src / ".copier-answers.yml.jinja"): (
+                """\
                 # Changes here will be overwritten by Copier
                 {{ _copier_answers|to_nice_yaml }}
-            """,
-            repo
-            / "copier.yaml": """\
+                """
+            ),
+            (src / "copier.yaml"): (
+                """\
                 _tasks:
                     - cat v1.txt
-            """,
-            repo / "v1.txt": "file only in v1",
+                """
+            ),
+            (src / "v1.txt"): "file only in v1",
         }
     )
-    with local.cwd(repo):
+    with local.cwd(src):
         git("init")
         git("add", ".")
         git("commit", "-m1")
         git("tag", "test_tag.post23+deadbeef")
 
     copy(
-        str(repo),
+        str(src),
         dst,
         defaults=True,
         overwrite=True,
@@ -64,34 +68,35 @@ def test_copy_with_non_version_tags(tmp_path_factory):
     )
 
 
-def test_copy_with_non_version_tags_and_vcs_ref(tmp_path_factory):
+def test_copy_with_non_version_tags_and_vcs_ref(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
-    # Prepare repo bundle
-    repo = src / "repo"
-    repo.mkdir()
     build_file_tree(
         {
-            repo
-            / ".copier-answers.yml.jinja": """\
+            (src / ".copier-answers.yml.jinja"): (
+                """\
                 # Changes here will be overwritten by Copier
                 {{ _copier_answers|to_nice_yaml }}
-            """,
-            repo
-            / "copier.yaml": """\
+                """
+            ),
+            (src / "copier.yaml"): (
+                """\
                 _tasks:
                     - cat v1.txt
-            """,
-            repo / "v1.txt": "file only in v1",
+                """
+            ),
+            (src / "v1.txt"): "file only in v1",
         }
     )
-    with local.cwd(repo):
+    with local.cwd(src):
         git("init")
         git("add", ".")
         git("commit", "-m1")
         git("tag", "test_tag.post23+deadbeef")
 
     copy(
-        str(repo),
+        str(src),
         dst,
         defaults=True,
         overwrite=True,
@@ -99,42 +104,40 @@ def test_copy_with_non_version_tags_and_vcs_ref(tmp_path_factory):
     )
 
 
-def test_copy(tmp_path):
+def test_copy(tmp_path: Path) -> None:
     render(tmp_path)
 
     generated = (tmp_path / "pyproject.toml").read_text()
-    control = (Path(__file__).parent / "reference_files/pyproject.toml").read_text()
+    control = (Path(__file__).parent / "reference_files" / "pyproject.toml").read_text()
     assert generated == control
 
     assert_file(tmp_path, "doc", "mañana.txt")
     assert_file(tmp_path, "doc", "images", "nslogo.gif")
 
-    p1 = str(tmp_path / "awesome" / "hello.txt")
-    p2 = str(PROJECT_TEMPLATE / "[[ myvar ]]" / "hello.txt")
+    p1 = tmp_path / "awesome" / "hello.txt"
+    p2 = PROJECT_TEMPLATE / "[[ myvar ]]" / "hello.txt"
     assert filecmp.cmp(p1, p2)
 
-    with open(tmp_path / "README.txt") as readme:
-        assert readme.read() == "This is the README for Copier.\n"
+    assert (tmp_path / "README.txt").read_text() == "This is the README for Copier.\n"
 
-    p1 = str(tmp_path / "awesome.txt")
-    p2 = str(PROJECT_TEMPLATE / "[[ myvar ]].txt")
+    p1 = tmp_path / "awesome.txt"
+    p2 = PROJECT_TEMPLATE / "[[ myvar ]].txt"
     assert filecmp.cmp(p1, p2)
 
-    assert not os.path.exists(tmp_path / "[% if not py3 %]py2_only.py[% endif %]")
-    assert not os.path.exists(tmp_path / "[% if py3 %]py3_only.py[% endif %]")
-    assert not os.path.exists(tmp_path / "py2_only.py")
-    assert os.path.exists(tmp_path / "py3_only.py")
-    assert not os.path.exists(
+    assert not (tmp_path / "[% if not py3 %]py2_only.py[% endif %]").exists()
+    assert not (tmp_path / "[% if py3 %]py3_only.py[% endif %]").exists()
+    assert not (tmp_path / "py2_only.py").exists()
+    assert (tmp_path / "py3_only.py").exists()
+    assert not (
         tmp_path / "[% if not py3 %]py2_folder[% endif %]" / "thing.py"
-    )
-    assert not os.path.exists(
-        tmp_path / "[% if py3 %]py3_folder[% endif %]" / "thing.py"
-    )
-    assert not os.path.exists(tmp_path / "py2_folder" / "thing.py")
-    assert os.path.exists(tmp_path / "py3_folder" / "thing.py")
+    ).exists()
+    assert not (tmp_path / "[% if py3 %]py3_folder[% endif %]" / "thing.py").exists()
+    assert not (tmp_path / "py2_folder" / "thing.py").exists()
+    assert (tmp_path / "py3_folder" / "thing.py").exists()
 
 
-def test_copy_repo(tmp_path):
+@pytest.mark.impure
+def test_copy_repo(tmp_path: Path) -> None:
     copier.copy(
         "gh:copier-org/copier.git",
         tmp_path,
@@ -145,17 +148,17 @@ def test_copy_repo(tmp_path):
     assert (tmp_path / "README.md").exists()
 
 
-def test_default_exclude(tmp_path):
+def test_default_exclude(tmp_path: Path) -> None:
     render(tmp_path)
     assert not (tmp_path / ".svn").exists()
 
 
-def test_include_file(tmp_path):
+def test_include_file(tmp_path: Path) -> None:
     render(tmp_path, exclude=["!.svn"])
     assert_file(tmp_path, ".svn")
 
 
-def test_include_pattern(tmp_path):
+def test_include_pattern(tmp_path: Path) -> None:
     render(tmp_path, exclude=["!.*"])
     assert (tmp_path / ".svn").exists()
 
@@ -165,7 +168,7 @@ def test_include_pattern(tmp_path):
     reason="Mac claims to use UTF-8 filesystem, but behaves differently.",
     strict=True,
 )
-def test_exclude_file(tmp_path):
+def test_exclude_file(tmp_path: Path) -> None:
     print(f"Filesystem encoding is {sys.getfilesystemencoding()}")
     # This file name is b"man\xcc\x83ana.txt".decode()
     render(tmp_path, exclude=["mañana.txt"])
@@ -175,25 +178,25 @@ def test_exclude_file(tmp_path):
     assert (tmp_path / "doc" / "manana.txt").exists()
 
 
-def test_exclude_extends(tmp_path: Path):
+def test_exclude_extends(tmp_path_factory: pytest.TempPathFactory) -> None:
     """Exclude argument extends the original exclusions instead of replacing them."""
-    src, dst = tmp_path / "src", tmp_path / "dst"
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree({src / "test.txt": "Test text", src / "test.json": '"test json"'})
     # Convert to git repo
     with local.cwd(src):
         git("init")
         git("add", ".")
         git("commit", "-m", "hello world")
-    copier.copy(str(src), str(dst), exclude=["*.txt"])
+    copier.copy(str(src), dst, exclude=["*.txt"])
     assert (dst / "test.json").is_file()
     assert not (dst / "test.txt").exists()
     # .git exists in src, but not in dst because it is excluded by default
     assert not (dst / ".git").exists()
 
 
-def test_exclude_replaces(tmp_path: Path):
+def test_exclude_replaces(tmp_path_factory: pytest.TempPathFactory) -> None:
     """Exclude in copier.yml replaces default values."""
-    src, dst = tmp_path / "src", tmp_path / "dst"
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
             src / "test.txt": "Test text",
@@ -203,7 +206,7 @@ def test_exclude_replaces(tmp_path: Path):
             src / "copier.yml": "_exclude: ['*.json']",
         }
     )
-    copier.copy(str(src), str(dst), exclude=["*.txt"])
+    copier.copy(str(src), dst, exclude=["*.txt"])
     assert (dst / "test.yaml").is_file()
     assert not (dst / "test.txt").exists()
     assert not (dst / "test.json").exists()
@@ -211,8 +214,8 @@ def test_exclude_replaces(tmp_path: Path):
     assert (dst / "copier.yaml").is_file()
 
 
-def test_skip_if_exists(tmp_path):
-    copier.copy("tests/demo_skip_dst", tmp_path)
+def test_skip_if_exists(tmp_path: Path) -> None:
+    copier.copy(str(Path("tests", "demo_skip_dst")), tmp_path)
     copier.copy(
         "tests/demo_skip_src",
         tmp_path,
@@ -226,7 +229,7 @@ def test_skip_if_exists(tmp_path):
     assert (tmp_path / "meh" / "c.noeof.txt").read_text() == "SKIPPED"
 
 
-def test_skip_if_exists_rendered_patterns(tmp_path):
+def test_skip_if_exists_rendered_patterns(tmp_path: Path) -> None:
     copier.copy("tests/demo_skip_dst", tmp_path)
     copier.copy(
         "tests/demo_skip_src",
@@ -241,7 +244,7 @@ def test_skip_if_exists_rendered_patterns(tmp_path):
     assert (tmp_path / "meh" / "c.noeof.txt").read_text() == "SKIPPED"
 
 
-def test_skip_option(tmp_path):
+def test_skip_option(tmp_path: Path) -> None:
     render(tmp_path)
     path = tmp_path / "pyproject.toml"
     content = "lorem ipsum"
@@ -250,7 +253,7 @@ def test_skip_option(tmp_path):
     assert path.read_text() == content
 
 
-def test_force_option(tmp_path):
+def test_force_option(tmp_path: Path) -> None:
     render(tmp_path)
     path = tmp_path / "pyproject.toml"
     content = "lorem ipsum"
@@ -259,36 +262,35 @@ def test_force_option(tmp_path):
     assert path.read_text() != content
 
 
-def test_pretend_option(tmp_path):
+def test_pretend_option(tmp_path: Path) -> None:
     render(tmp_path, pretend=True)
     assert not (tmp_path / "doc").exists()
     assert not (tmp_path / "config.py").exists()
     assert not (tmp_path / "pyproject.toml").exists()
 
 
-@pytest.mark.parametrize("generate", (True, False))
-def test_empty_dir(tmp_path_factory, generate):
+@pytest.mark.parametrize("generate", [True, False])
+def test_empty_dir(tmp_path_factory: pytest.TempPathFactory, generate: bool) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
-            src
-            / "copier.yaml": f"""
+            (src / "copier.yaml"): (
+                f"""\
                 _subdirectory: tpl
                 _templates_suffix: .jinja
                 _envops: {BRACKET_ENVOPS_JSON}
                 do_it:
                     type: bool
-            """,
-            src
-            / "tpl"
-            / "[% if do_it %]one_dir[% endif %]"
-            / "one.txt.jinja": "[[ do_it ]]",
-            src / "tpl" / "two.txt": "[[ do_it ]]",
-            src / "tpl" / "[% if do_it %]three.txt[% endif %].jinja": "[[ do_it ]]",
-            src
-            / "tpl"
-            / "four"
-            / "[% if do_it %]five.txt[% endif %].jinja": "[[ do_it ]]",
+                """
+            ),
+            (src / "tpl" / "[% if do_it %]one_dir[% endif %]" / "one.txt.jinja"): (
+                "[[ do_it ]]"
+            ),
+            (src / "tpl" / "two.txt"): "[[ do_it ]]",
+            (src / "tpl" / "[% if do_it %]three.txt[% endif %].jinja"): "[[ do_it ]]",
+            (src / "tpl" / "four" / "[% if do_it %]five.txt[% endif %].jinja"): (
+                "[[ do_it ]]"
+            ),
         },
     )
     copier.run_copy(str(src), dst, {"do_it": generate}, defaults=True, overwrite=True)
@@ -320,28 +322,160 @@ def test_empty_dir(tmp_path_factory, generate):
 )
 def test_preserved_permissions(
     tmp_path_factory: pytest.TempPathFactory, permissions: int
-):
+) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     src_file = src / "the_file"
     src_file.write_text("content")
     src_file.chmod(permissions)
     copier.run_copy(str(src), dst, defaults=True, overwrite=True)
-    dst_file = dst / "the_file"
-    assert (dst_file.stat().st_mode & permissions) == permissions
+    assert ((dst / "the_file").stat().st_mode & permissions) == permissions
 
 
-def test_commit_hash(src_repo, tmp_path):
+def test_commit_hash(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
-            src_repo / "commit.jinja": "{{_copier_conf.vcs_ref_hash}}",
-            src_repo / "tag.jinja": "{{_copier_answers._commit}}",
+            src / "commit.jinja": "{{_copier_conf.vcs_ref_hash}}",
+            src / "tag.jinja": "{{_copier_answers._commit}}",
         }
     )
-    src_git = git["-C", src_repo]
-    src_git("add", "-A")
-    src_git("commit", "-m1")
-    src_git("tag", "1.0")
-    commit = src_git("rev-parse", "HEAD").strip()
-    copier.run_copy(str(src_repo), tmp_path)
-    assert tmp_path.joinpath("tag").read_text() == "1.0"
-    assert tmp_path.joinpath("commit").read_text() == commit
+    with local.cwd(src):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m1")
+        git("tag", "1.0")
+        commit = git("rev-parse", "HEAD").strip()
+    copier.run_copy(str(src), dst)
+    assert (dst / "tag").read_text() == "1.0"
+    assert (dst / "commit").read_text() == commit
+
+
+def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "{{ filename.replace('.', _copier_conf.sep) }}.txt"): (
+                "This is template."
+            ),
+        }
+    )
+    copier.run_auto(str(src), dst, data={"filename": "a.b.c"})
+    assert (dst / "a" / "b" / "c.txt").read_text() == "This is template."
+
+
+@pytest.mark.parametrize(
+    "spec, value, expected",
+    [
+        ({"type": "int"}, "no-int", pytest.raises(ValueError)),
+        ({"type": "int"}, "0", does_not_raise()),
+        (
+            {
+                "type": "int",
+                "validator": "[% if q <= 0 %]must be positive[% endif %]",
+            },
+            "0",
+            pytest.raises(ValidationError),
+        ),
+        (
+            {
+                "type": "int",
+                "validator": "[% if q <= 0 %]must be positive[% endif %]",
+            },
+            "1",
+            does_not_raise(),
+        ),
+        (
+            {
+                "type": "str",
+                "validator": "[% if q|length < 3 %]too short[% endif %]",
+            },
+            "ab",
+            pytest.raises(ValidationError),
+        ),
+        (
+            {
+                "type": "str",
+                "validator": "[% if q|length < 3 %]too short[% endif %]",
+            },
+            "abc",
+            does_not_raise(),
+        ),
+        ({"type": "bool"}, "true", does_not_raise()),
+        ({"type": "bool"}, "false", does_not_raise()),
+        (
+            {"type": "int", "choices": [1, 2, 3]},
+            "1",
+            does_not_raise(),
+        ),
+        (
+            {"type": "int", "choices": [1, 2, 3]},
+            "4",
+            pytest.raises(ValueError),
+        ),
+        (
+            {"type": "int", "choices": {"one": 1, "two": 2, "three": 3}},
+            "1",
+            does_not_raise(),
+        ),
+        (
+            {"type": "int", "choices": {"one": 1, "two": 2, "three": 3}},
+            "4",
+            pytest.raises(ValueError),
+        ),
+        (
+            {"type": "str", "choices": {"one": None, "two": None, "three": None}},
+            "one",
+            does_not_raise(),
+        ),
+        (
+            {"type": "str", "choices": {"one": None, "two": None, "three": None}},
+            "four",
+            pytest.raises(ValueError),
+        ),
+        (
+            {"type": "yaml", "choices": {"one": None, "two": 2, "three": "null"}},
+            "one",
+            does_not_raise(),
+        ),
+        (
+            {"type": "yaml", "choices": {"one": None, "two": 2, "three": "null"}},
+            "2",
+            does_not_raise(),
+        ),
+        (
+            {"type": "yaml", "choices": {"one": None, "two": 2, "three": "null"}},
+            "null",
+            does_not_raise(),
+        ),
+        (
+            {"type": "yaml", "choices": {"one": None, "two": 2, "three": "null"}},
+            "two",
+            pytest.raises(ValueError),
+        ),
+        (
+            {"type": "yaml", "choices": {"one": None, "two": 2, "three": "null"}},
+            "three",
+            pytest.raises(ValueError),
+        ),
+    ],
+)
+def test_validate_init_data(
+    tmp_path_factory: pytest.TempPathFactory,
+    spec: AnyByStrDict,
+    value: str,
+    expected: ContextManager[None],
+):
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): yaml.dump(
+                {
+                    "_envops": BRACKET_ENVOPS,
+                    "_templates_suffix": ".jinja",
+                    "q": spec,
+                }
+            ),
+        }
+    )
+    with expected:
+        copier.copy(str(src), dst, data={"q": value})

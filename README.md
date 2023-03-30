@@ -25,18 +25,19 @@ A library and CLI app for rendering project templates.
 1. Install Git 2.27 or newer.
 1. To use as a CLI app: `pipx install copier`
 1. To use as a library: `pip install copier` or `conda install -c conda-forge copier`
+1. To use with 100% reproducibility: `nix profile install github:copier-org/copier`
 
 ## Quick start
 
 To create a template:
 
 ```shell
-📁 my_copier_template ------------------------ # your template project
-├── 📄 copier.yml ---------------------------- # your template configuration
-├── 📁 .git ---------------------------------- # your template is a Git repository
-├── 📁 {{project_name}} ---------------------- # a folder with a templated name
-│   └── 📄 {{module_name}}.py.jinja ---------- # a file with a templated name
-└── 📄 {{_copier_conf.answers_file}}.jinja --- # answers are recorded here
+📁 my_copier_template                        # your template project
+├── 📄 copier.yml                            # your template configuration
+├── 📁 .git/                                 # your template is a Git repository
+├── 📁 {{project_name}}                      # a folder with a templated name
+│   └── 📄 {{module_name}}.py.jinja          # a file with a templated name
+└── 📄 {{_copier_conf.answers_file}}.jinja   # answers are recorded here
 ```
 
 ```yaml title="copier.yml"
@@ -56,7 +57,7 @@ print("Hello from {{module_name}}!")
 
 ```yaml+jinja title="{{_copier_conf.answers_file}}.jinja"
 # Changes here will be overwritten by Copier
-{{_copier_answers|to_nice_yaml}}
+{{ _copier_answers|to_nice_yaml -}}
 ```
 
 To generate a project from the template:
@@ -138,8 +139,16 @@ This project would not be a thing without him.
 Many thanks to [pykong](https://github.com/pykong) who took over maintainership on the
 project, promoted it, and laid out the bases of what the project is today.
 
-Big thanks also go to [Yajo](https://github.com/Yajo) for his relentless zest for
+Big thanks also go to [yajo](https://github.com/yajo) for his relentless zest for
 improving `Copier` even further.
 
 Thanks a lot, [pawamoy](https://github.com/pawamoy) for polishing very important rough
 edges and improving the documentation and UX a lot.
+
+Also special thanks to [sisp](https://github.com/sisp) for being very helpful in
+polishing documentation, fixing bugs, helping the community and cleaning up the
+codebase.
+
+And thanks to all financial supporters and folks that give us a shiny star! ⭐
+
+[![Star History Chart](https://api.star-history.com/svg?repos=copier-org/copier&type=Date)](https://star-history.com/#copier-org/copier&Date)

@@ -12,7 +12,7 @@ from warnings import warn
 import dunamai
 import packaging.version
 import yaml
-from iteration_utilities import deepflatten
+from funcy import lflatten
 from packaging.version import Version, parse
 from plumbum.cmd import git
 from plumbum.machines import local
@@ -88,36 +88,36 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
     Raises:
         InvalidConfigFileError: When the file is formatted badly.
     """
+
+    class _Loader(yaml.FullLoader):
+        """Intermediate class to avoid monkey-patching main loader."""
+
     YamlIncludeConstructor.add_to_loader_class(
-        loader_class=yaml.FullLoader, base_dir=conf_path.parent
+        loader_class=_Loader, base_dir=conf_path.parent
     )
 
-    try:
-        with open(conf_path) as f:
-            flattened_result = list(
-                deepflatten(
-                    yaml.load_all(f, Loader=yaml.FullLoader),
-                    depth=2,
-                    types=(list,),
-                )
-            )
-            merged_options = defaultdict(list)
-            for option in (
-                "_exclude",
-                "_jinja_extensions",
-                "_secret_questions",
-                "_skip_if_exists",
-            ):
-                for result in flattened_result:
-                    try:
-                        values = result[option]
-                    except KeyError:
-                        pass
-                    else:
-                        merged_options[option].extend(values)
-            return dict(ChainMap(dict(merged_options), *reversed(flattened_result)))
-    except yaml.parser.ParserError as e:
-        raise InvalidConfigFileError(conf_path, quiet) from e
+    with open(conf_path) as f:
+        try:
+            flattened_result = lflatten(yaml.load_all(f, Loader=_Loader))
+        except yaml.parser.ParserError as e:
+            raise InvalidConfigFileError(conf_path, quiet) from e
+
+    merged_options = defaultdict(list)
+    for option in (
+        "_exclude",
+        "_jinja_extensions",
+        "_secret_questions",
+        "_skip_if_exists",
+    ):
+        for result in flattened_result:
+            try:
+                values = result[option]
+            except KeyError:
+                pass
+            else:
+                merged_options[option].extend(values)
+
+    return dict(ChainMap(dict(merged_options), *reversed(flattened_result)))
 
 
 def verify_copier_version(version_str: str) -> None:
@@ -306,7 +306,12 @@ class Template:
 
         See [exclude][].
         """
-        return tuple(self.config_data.get("exclude", DEFAULT_EXCLUDE))
+        return tuple(
+            self.config_data.get(
+                "exclude",
+                DEFAULT_EXCLUDE if Path(self.subdirectory) == Path(".") else [],
+            )
+        )
 
     @cached_property
     def jinja_extensions(self) -> Tuple[str, ...]:
@@ -366,7 +371,7 @@ class Template:
 
     @cached_property
     def min_copier_version(self) -> Optional[Version]:
-        """Gets minimal copier version for the template and validates it.
+        """Get minimal copier version for the template and validates it.
 
         See [min_copier_version][].
         """

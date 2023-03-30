@@ -134,7 +134,7 @@ Supported keys:
 -   **multiline**: When set to `true`, it allows multiline input. This is especially
     useful when `type` is `json` or `yaml`.
 
-    **validator**: Jinja template with which to validate the user input. This template
+-   **validator**: Jinja template with which to validate the user input. This template
     will be rendered with the combined answers as variables; it should render _nothing_
     if the value is valid, and an error message to show to the user otherwise.
 
@@ -190,6 +190,10 @@ Supported keys:
         type: str # Any value will be treated raw as a string
         help: An awesome project needs an awesome name. Tell me yours.
         default: paradox-specifier
+        validator: >-
+            {% if not (project_name | regex_search('^[a-z][a-z0-9\-]+$')) %}
+            project_name must start with a letter, followed one or more letters, digits or dashes all lowercase.
+            {% endif %}
 
     rocket_launch_password:
         type: str
@@ -410,10 +414,10 @@ use_precommit:
 
 And then, you can generate a `.pre-commit-config.yaml` file only if they answered "yes":
 
-```shell
-📁 your_template
-├── 📄 copier.yml
-└── 📄 {% if use_precommit %}.pre-commit-config.yaml{% endif %}.jinja
+```tree result="shell"
+your_template
+    copier.yml
+    {% if use_precommit %}.pre-commit-config.yaml{% endif %}.jinja
 ```
 
 !!! important
@@ -435,14 +439,13 @@ ci:
     default: github
 ```
 
-```shell
-📁 your_template
-├── 📄 copier.yml
-├── 📁 {% if ci == 'github' %}.github{% endif %}
-│   └── 📁 workflows
-│       └── 📄 ci.yml
-└── 📄 {% if ci == 'gitlab' %}.gitlab-ci.yml{% endif %}.jinja
-
+```tree result="shell"
+your_template
+    copier.yml
+    {% if ci == 'github' %}.github{% endif %}
+        workflows
+            ci.yml
+    {% if ci == 'gitlab' %}.gitlab-ci.yml{% endif %}.jinja
 ```
 
 !!! important
@@ -453,6 +456,39 @@ ci:
 
     On Windows, double-quotes are not valid characters in file and directory paths.
     This is why we used **single-quotes** in the example above.
+
+## Generating a directory structure
+
+You can use answers to generate file names as well as whole directory structures.
+
+```yaml title="copier.yml"
+package:
+    type: str
+    help: Package name
+```
+
+```tree result="shell"
+your_template
+    copier.yml
+    {{ package.replace('.', _copier_conf.sep) }}{{ _copier_conf.sep }}__main__.py.jinja
+```
+
+If you answer
+
+> your_package.cli.main
+
+Copier will generate this structure:
+
+```tree result="shell"
+your_project
+    your_package
+        cli
+            main
+                __main__.py
+```
+
+You can either use any separator, like `.`, and replace it with `_copier_conf.sep`, like
+in the example above, or just use `/` in the answer (works on Windows too).
 
 ## Available settings
 
@@ -505,7 +541,7 @@ running `copier update`, this setting has no effect.
 ### `conflict`
 
 -   Format: `Literal["rej", "inline"]`
--   CLI flags: `-o`, `--conflict`
+-   CLI flags: `-o`, `--conflict` (only available in `copier update` subcommand)
 -   Default value: `rej`
 
 When updating a project, sometimes Copier doesn't know what to do with a diff code hunk.
@@ -574,7 +610,9 @@ to know available options.
     By specifying this, your template will be compatible with both Copier 5 and 6.
 
     Copier 6 will apply these older defaults if your [min_copier_version][] is lower
-    than 6, but that will be removed in the future.
+    than 6.
+
+    Copier 7+ no longer uses the old defaults independent of [min_copier_version][].
 
 ### `exclude`
 
@@ -601,6 +639,12 @@ The CLI option can be passed several times to add several patterns.
             - "*.bar"
             - ".git"
         ```
+
+!!! info
+
+    When the [`subdirectory`](#subdirectory) parameter is defined and its value is the
+    path of an actual subdirectory (i.e. not `""` or `"."` or `"./"`), then the default
+    value of the `exclude` parameter is `[]`.
 
 !!! info
 
@@ -943,12 +987,12 @@ This allows you to keep separate the template metadata and the template code.
     !!! example "Example project with different `.gitignore` files"
 
 
-        ```shell title="Project layout"
-        📁 my_copier_template
-        ├── 📄 copier.yml       # (1)
-        ├── 📄 .gitignore       # (2)
-        └── 📁 template         # (3)
-            └── 📄 .gitignore   # (4)
+        ```tree result="shell" title="Project layout"
+        my_copier_template
+            copier.yml       # (1)
+            .gitignore       # (2)
+            template         # (3)
+                .gitignore   # (4)
         ```
 
         1.  Same contents as the example above.
@@ -976,15 +1020,15 @@ This allows you to keep separate the template metadata and the template code.
                 - pipenv
         ```
 
-        ```shell title="Project layout"
-        📁 my_copier_template
-        ├── 📄 copier.yaml # (1)
-        ├── 📁 poetry
-        │   ├── 📄 {{ _copier_conf.answers_file }}.jinja # (2)
-        │   └── 📄 pyproject.toml.jinja
-        └── 📁 pipenv
-        │   ├── 📄 {{ _copier_conf.answers_file }}.jinja
-            └── 📄 Pipfile.jinja
+        ```tree result="shell" title="Project layout"
+        my_copier_template
+            copier.yaml # (1)
+            poetry
+                {{ _copier_conf.answers_file }}.jinja # (2)
+                pyproject.toml.jinja
+            pipenv
+                {{ _copier_conf.answers_file }}.jinja
+                Pipfile.jinja
         ```
 
         1.  The configuration from the previous example snippet.
@@ -1047,7 +1091,9 @@ templates suffix is _not_ empty, Copier will abort and print an error message.
     add it to your `copier.yml` to keep it future-proof.
 
     Copier 6 will apply that old default if your [min_copier_version][] is lower
-    than 6, but that will be removed in the future.
+    than 6.
+
+    Copier 7+ no longer uses the old default independent of [min_copier_version][].
 
 ### `use_prereleases`
 
@@ -1131,9 +1177,9 @@ The default name will be `.copier-answers.yml`, but
 
 The file must have this content:
 
-```yaml
+```yaml+jinja
 # Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
-{{_copier_answers|to_nice_yaml}}
+{{ _copier_answers|to_nice_yaml -}}
 ```
 
 !!! important

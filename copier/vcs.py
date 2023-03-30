@@ -8,11 +8,11 @@ from tempfile import mkdtemp
 from warnings import warn
 
 from packaging import version
-from packaging.version import Version
+from packaging.version import InvalidVersion, Version
 from plumbum import TF, ProcessExecutionError, colors, local
 from plumbum.cmd import git
 
-from .errors import DirtyLocalWarning
+from .errors import DirtyLocalWarning, ShallowCloneWarning
 from .tools import TemporaryDirectory
 from .types import OptBool, OptStr, StrOrPath
 
@@ -45,6 +45,15 @@ def is_in_git_repo(path: StrOrPath) -> bool:
         return False
 
 
+def is_git_shallow_repo(path: StrOrPath) -> bool:
+    """Indicate if a given path is a git shallow repo directory."""
+    try:
+        git("-C", path, "rev-parse", "--is-shallow-repository")
+        return True
+    except (OSError, ProcessExecutionError):
+        return False
+
+
 def is_git_bundle(path: Path) -> bool:
     """Indicate if a path is a valid git bundle."""
     with suppress(OSError):
@@ -56,7 +65,7 @@ def is_git_bundle(path: Path) -> bool:
 
 
 def get_repo(url: str) -> OptStr:
-    """Transforms `url` into a git-parseable origin URL.
+    """Transform `url` into a git-parseable origin URL.
 
     Args:
         url:
@@ -101,7 +110,7 @@ def checkout_latest_tag(local_repo: StrOrPath, use_prereleases: OptBool = False)
             If `False`, skip prerelease git tags.
     """
     with local.cwd(local_repo):
-        all_tags = git("tag").split()
+        all_tags = filter(valid_version, git("tag").split())
         if not use_prereleases:
             all_tags = filter(
                 lambda tag: not version.parse(tag).is_prerelease, all_tags
@@ -133,12 +142,23 @@ def clone(url: str, ref: OptStr = None) -> str:
         ref:
             Reference to checkout. For Git repos, defaults to `HEAD`.
     """
-
     location = mkdtemp(prefix=f"{__name__}.clone.")
     _clone = git["clone", "--no-checkout", url, location]
     # Faster clones if possible
     if GIT_VERSION >= Version("2.27"):
-        _clone = _clone["--filter=blob:none"]
+        url_match = re.match("(file://)?(.*)", url)
+        if url_match is not None:
+            file_url = url_match.groups()[-1]
+        else:
+            file_url = url
+        if is_git_shallow_repo(file_url):
+            warn(
+                f"The repository '{url}' is a shallow clone, this might lead to unexpected "
+                "failure or unusually high resource consumption.",
+                ShallowCloneWarning,
+            )
+        else:
+            _clone = _clone["--filter=blob:none"]
     _clone()
 
     if not ref and os.path.exists(url) and Path(url).is_dir():
@@ -167,3 +187,15 @@ def clone(url: str, ref: OptStr = None) -> str:
         git("submodule", "update", "--checkout", "--init", "--recursive", "--force")
 
     return location
+
+
+def valid_version(version_: str) -> bool:
+    """Tell if a string is a valid [PEP 440][] version specifier.
+
+    [PEP 440]: https://peps.python.org/pep-0440/
+    """
+    try:
+        version.parse(version_)
+    except InvalidVersion:
+        return False
+    return True

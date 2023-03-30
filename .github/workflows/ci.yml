@@ -32,9 +32,8 @@ jobs:
           - macos-latest
           - ubuntu-latest
           - windows-latest
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11-dev"]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.python-version == '3.11-dev' }}
     steps:
       # HACK https://github.com/actions/cache/issues/315
       - name: Enable msys binaries
@@ -68,10 +67,11 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install poetry poetry-dynamic-versioning
-          poetry install --with docs -v
+          poetry install --with dev,docs -v
       - name: Run pytest
         run: poetry run poe test --cov=./ --cov-report=xml -ra .
       - name: Upload coverage to Codecov
+        continue-on-error: true
         uses: codecov/codecov-action@v3
         env:
           OS: ${{ matrix.os }}
@@ -84,9 +84,55 @@ jobs:
           name: copier
           token: ${{ secrets.CODECOV_TOKEN }}
 
+  flake-check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+
+      # Install Nix and set up Cachix
+      - uses: cachix/install-nix-action@v20
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+      - uses: cachix/cachix-action@v12
+        with:
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          extraPullNames: devenv
+          name: copier
+          pushFilter: (-source$|nixpkgs\.tar\.gz$)
+
+      # Cache for poetry venv when using direnv
+      - uses: actions/cache@v3
+        with:
+          path: |
+            .cache
+            .devenv
+            .direnv
+            .venv
+          key:
+            direnv|${{ runner.os }}|${{ hashFiles('pyproject.toml', '*.lock', '*.nix')
+            }}
+
+      # Check direnv works as expected
+      - uses: JRMurr/direnv-nix-action@v3
+        with:
+          install-nix: "false"
+          cache-store: "false"
+      - run: copier --version
+
+      # Run nix checks
+      - run: nix flake check -L
+
   publish:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-    needs: build
+    needs:
+      - build
+      - flake-check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

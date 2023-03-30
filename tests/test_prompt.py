@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Dict, List, Mapping, Tuple, Union
 
 import pexpect
 import pytest
@@ -6,19 +7,22 @@ import yaml
 from plumbum import local
 from plumbum.cmd import git
 
+from copier.types import StrOrPath
+
 from .helpers import (
     BRACKET_ENVOPS,
     BRACKET_ENVOPS_JSON,
     COPIER_PATH,
     SUFFIX_TMPL,
     Keyboard,
+    Spawn,
     build_file_tree,
     expect_prompt,
 )
 
-DEFAULT = object()
-MARIO_TREE = {
-    "copier.yml": f"""\
+MARIO_TREE: Mapping[StrOrPath, Union[str, bytes]] = {
+    "copier.yml": (
+        f"""\
         _templates_suffix: {SUFFIX_TMPL}
         _envops: {BRACKET_ENVOPS_JSON}
         in_love:
@@ -36,19 +40,29 @@ MARIO_TREE = {
         what_enemy_does:
             type: str
             default: "[[ your_enemy ]] hates [[ your_name ]]"
-        """,
+        """
+    ),
     "[[ _copier_conf.answers_file ]].tmpl": "[[_copier_answers|to_nice_yaml]]",
 }
 
 
-@pytest.mark.parametrize("name", [DEFAULT, None, "Luigi"])
-def test_copy_default_advertised(tmp_path_factory, spawn, name):
+@pytest.mark.parametrize(
+    "name, args",
+    [
+        ("Mario", ()),  # Default name in the template
+        ("Luigi", ("--data=your_name=Luigi",)),
+        ("None", ("--data=your_name=None",)),
+    ],
+)
+def test_copy_default_advertised(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    name: str,
+    args: Tuple[str, ...],
+) -> None:
     """Test that the questions for the user are OK"""
-    template, subproject = (
-        tmp_path_factory.mktemp("template"),
-        tmp_path_factory.mktemp("subproject"),
-    )
-    with local.cwd(template):
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
         build_file_tree(MARIO_TREE)
         git("init")
         git("add", ".")
@@ -56,17 +70,9 @@ def test_copy_default_advertised(tmp_path_factory, spawn, name):
         git("tag", "v1")
         git("commit", "--allow-empty", "-m", "v2")
         git("tag", "v2")
-    with local.cwd(subproject):
+    with local.cwd(dst):
         # Copy the v1 template
-        args = ()
-        if name is not DEFAULT:
-            args += (f"--data=your_name={name}",)
-        else:
-            name = "Mario"  # Default in the template
-        name = str(name)
-        tui = spawn(
-            COPIER_PATH + (str(template), ".", "--vcs-ref=v1") + args, timeout=10
-        )
+        tui = spawn(COPIER_PATH + (str(src), ".", "--vcs-ref=v1") + args, timeout=10)
         # Check what was captured
         expect_prompt(tui, "in_love", "bool")
         tui.expect_exact("(Y/n)")
@@ -154,12 +160,15 @@ def test_copy_default_advertised(tmp_path_factory, spawn, name):
         ("[% if question_1 %]FALSE[% endif %]", False),
     ),
 )
-def test_when(tmp_path_factory, question_1, question_2_when, spawn, asks):
+def test_when(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    question_1: Union[str, int, float, bool],
+    question_2_when: Union[bool, str],
+    asks: bool,
+) -> None:
     """Test that the 2nd question is skipped or not, properly."""
-    template, subproject = (
-        tmp_path_factory.mktemp("template"),
-        tmp_path_factory.mktemp("subproject"),
-    )
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     questions = {
         "_envops": BRACKET_ENVOPS,
         "_templates_suffix": SUFFIX_TMPL,
@@ -168,35 +177,32 @@ def test_when(tmp_path_factory, question_1, question_2_when, spawn, asks):
     }
     build_file_tree(
         {
-            template / "copier.yml": yaml.dump(questions),
-            template
-            / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
+            (src / "copier.yml"): yaml.dump(questions),
+            (src / "[[ _copier_conf.answers_file ]].tmpl"): (
+                "[[ _copier_answers|to_nice_yaml ]]"
+            ),
         }
     )
-    tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
+    tui = spawn(COPIER_PATH + (str(src), str(dst)), timeout=10)
     expect_prompt(tui, "question_1", type(question_1).__name__)
     tui.sendline()
     if asks:
         expect_prompt(tui, "question_2", "yaml")
         tui.sendline()
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers == {
-        "_src_path": str(template),
+        "_src_path": str(src),
         "question_1": question_1,
         "question_2": "something",
     }
 
 
-def test_placeholder(tmp_path_factory, spawn):
-    template, subproject = (
-        tmp_path_factory.mktemp("template"),
-        tmp_path_factory.mktemp("subproject"),
-    )
+def test_placeholder(tmp_path_factory: pytest.TempPathFactory, spawn: Spawn) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
-            template
-            / "copier.yml": yaml.dump(
+            (src / "copier.yml"): yaml.dump(
                 {
                     "_envops": BRACKET_ENVOPS,
                     "_templates_suffix": SUFFIX_TMPL,
@@ -208,11 +214,12 @@ def test_placeholder(tmp_path_factory, spawn):
                     },
                 }
             ),
-            template
-            / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
+            (src / "[[ _copier_conf.answers_file ]].tmpl"): (
+                "[[ _copier_answers|to_nice_yaml ]]"
+            ),
         }
     )
-    tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
+    tui = spawn(COPIER_PATH + (str(src), str(dst)), timeout=10)
     expect_prompt(tui, "question_1", "str")
     tui.expect_exact("answer 1")
     tui.sendline()
@@ -220,24 +227,22 @@ def test_placeholder(tmp_path_factory, spawn):
     tui.expect_exact("Write something like answer 1, but better")
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers == {
-        "_src_path": str(template),
+        "_src_path": str(src),
         "question_1": "answer 1",
         "question_2": None,
     }
 
 
-@pytest.mark.parametrize("type_", ("str", "yaml", "json"))
-def test_multiline(tmp_path_factory, spawn, type_):
-    template, subproject = (
-        tmp_path_factory.mktemp("template"),
-        tmp_path_factory.mktemp("subproject"),
-    )
+@pytest.mark.parametrize("type_", ["str", "yaml", "json"])
+def test_multiline(
+    tmp_path_factory: pytest.TempPathFactory, spawn: Spawn, type_: str
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
-            template
-            / "copier.yml": yaml.dump(
+            (src / "copier.yml"): yaml.dump(
                 {
                     "_envops": BRACKET_ENVOPS,
                     "_templates_suffix": SUFFIX_TMPL,
@@ -254,11 +259,12 @@ def test_multiline(tmp_path_factory, spawn, type_):
                     },
                 }
             ),
-            template
-            / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
+            (src / "[[ _copier_conf.answers_file ]].tmpl"): (
+                "[[ _copier_answers|to_nice_yaml ]]"
+            ),
         }
     )
-    tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
+    tui = spawn(COPIER_PATH + (str(src), str(dst)), timeout=10)
     expect_prompt(tui, "question_1", "str")
     tui.expect_exact("answer 1")
     tui.sendline()
@@ -273,10 +279,10 @@ def test_multiline(tmp_path_factory, spawn, type_):
     expect_prompt(tui, "question_5", type_)
     tui.sendline('"answer 5"')
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     if type_ == "str":
         assert answers == {
-            "_src_path": str(template),
+            "_src_path": str(src),
             "question_1": "answer 1",
             "question_2": '"answer 2"',
             "question_3": ('"answer 3"\n'),
@@ -285,7 +291,7 @@ def test_multiline(tmp_path_factory, spawn, type_):
         }
     else:
         assert answers == {
-            "_src_path": str(template),
+            "_src_path": str(src),
             "question_1": "answer 1",
             "question_2": ("answer 2"),
             "question_3": ("answer 3"),
@@ -302,65 +308,70 @@ def test_multiline(tmp_path_factory, spawn, type_):
         {"one": 1, "two": 2, "three": 3},
     ),
 )
-def test_update_choice(tmp_path_factory, spawn, choices):
+def test_update_choice(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    choices: Union[
+        List[int],
+        List[List[Union[str, int]]],  # actually `List[Tuple[str, int]]`
+        Dict[str, int],
+    ],
+) -> None:
     """Choices are properly remembered and selected in TUI when updating."""
-    template, subproject = (
-        tmp_path_factory.mktemp("template"),
-        tmp_path_factory.mktemp("subproject"),
-    )
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     # Create template
     build_file_tree(
         {
-            template
-            / "copier.yml": f"""
+            (src / "copier.yml"): (
+                f"""\
                 _templates_suffix: {SUFFIX_TMPL}
                 _envops: {BRACKET_ENVOPS_JSON}
                 pick_one:
                     type: float
                     default: 3
                     choices: {choices}
-                """,
-            template
-            / "[[ _copier_conf.answers_file ]].tmpl": "[[ _copier_answers|to_nice_yaml ]]",
+                """
+            ),
+            (src / "[[ _copier_conf.answers_file ]].tmpl"): (
+                "[[ _copier_answers|to_nice_yaml ]]"
+            ),
         }
     )
-    with local.cwd(template):
+    with local.cwd(src):
         git("init")
         git("add", ".")
         git("commit", "-m one")
         git("tag", "v1")
     # Copy
-    tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
+    tui = spawn(COPIER_PATH + (str(src), str(dst)), timeout=10)
     expect_prompt(tui, "pick_one", "float")
     tui.sendline(Keyboard.Up)
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers["pick_one"] == 2.0
-    with local.cwd(subproject):
+    with local.cwd(dst):
         git("init")
         git("add", ".")
         git("commit", "-m1")
     # Update
-    tui = spawn(COPIER_PATH + (str(subproject),), timeout=10)
+    tui = spawn(COPIER_PATH + (str(dst),), timeout=10)
     expect_prompt(tui, "pick_one", "float")
     tui.sendline(Keyboard.Down)
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers["pick_one"] == 3.0
 
 
 @pytest.mark.skip("TODO: fix this")
-def test_multiline_defaults(tmp_path_factory, spawn):
+def test_multiline_defaults(
+    tmp_path_factory: pytest.TempPathFactory, spawn: Spawn
+) -> None:
     """Multiline questions with scalar defaults produce multiline defaults."""
-    template, subproject = (
-        tmp_path_factory.mktemp("template"),
-        tmp_path_factory.mktemp("subproject"),
-    )
-    # Create template
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
-            template
-            / "copier.yaml": """
+            (src / "copier.yaml"): (
+                """\
                 yaml_single:
                     type: yaml
                     default: &default
@@ -379,13 +390,14 @@ def test_multiline_defaults(tmp_path_factory, spawn):
                     type: json
                     multiline: yes
                     default: *default
-                """,
-            template
-            / "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+                """
+            ),
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
         }
     )
-    # Copy
-    tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
+    tui = spawn(COPIER_PATH + (str(src), str(dst)), timeout=10)
     expect_prompt(tui, "yaml_single", "yaml")
     # This test will always fail here, because python prompt toolkit gives
     # syntax highlighting to YAML and JSON outputs, encoded into terminal
@@ -405,7 +417,7 @@ def test_multiline_defaults(tmp_path_factory, spawn):
     )
     tui.send(Keyboard.Alt + Keyboard.Enter)
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert (
         answers["yaml_single"]
         == answers["yaml_multi"]
@@ -415,15 +427,14 @@ def test_multiline_defaults(tmp_path_factory, spawn):
     )
 
 
-def test_partial_interrupt(tmp_path_factory, spawn):
-    template, subproject = (
-        tmp_path_factory.mktemp("template"),
-        tmp_path_factory.mktemp("subproject"),
-    )
+def test_partial_interrupt(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
-            template
-            / "copier.yml": yaml.safe_dump(
+            (src / "copier.yml"): yaml.safe_dump(
                 {
                     "question_1": "answer 1",
                     "question_2": "answer 2",
@@ -431,7 +442,7 @@ def test_partial_interrupt(tmp_path_factory, spawn):
             ),
         }
     )
-    tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
+    tui = spawn(COPIER_PATH + (str(src), str(dst)), timeout=10)
     expect_prompt(tui, "question_1", "str")
     tui.expect_exact("answer 1")
     # Answer the first question using the default.
@@ -446,34 +457,36 @@ def test_partial_interrupt(tmp_path_factory, spawn):
     tui.expect_exact(pexpect.EOF)
 
 
-def test_var_name_value_allowed(tmp_path_factory, spawn):
+def test_var_name_value_allowed(
+    tmp_path_factory: pytest.TempPathFactory, spawn: Spawn
+) -> None:
     """Test that a question var name "value" causes no name collision.
 
     See https://github.com/copier-org/copier/pull/780 for more details.
     """
-    template, subproject = (
-        tmp_path_factory.mktemp("template"),
-        tmp_path_factory.mktemp("subproject"),
-    )
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
     # Create template
     build_file_tree(
         {
-            template
-            / "copier.yaml": """
+            (src / "copier.yaml"): (
+                """\
                 value:
                     type: str
                     default: string
-                """,
-            template
-            / "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+                """
+            ),
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
         }
     )
     # Copy
-    tui = spawn(COPIER_PATH + (str(template), str(subproject)), timeout=10)
+    tui = spawn(COPIER_PATH + (str(src), str(dst)), timeout=10)
     expect_prompt(tui, "value", "str")
     tui.expect_exact("string")
     tui.send(Keyboard.Alt + Keyboard.Enter)
     tui.expect_exact(pexpect.EOF)
     # Check answers file
-    answers = yaml.safe_load((subproject / ".copier-answers.yml").read_text())
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers["value"] == "string"

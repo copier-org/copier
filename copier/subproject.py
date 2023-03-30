@@ -39,7 +39,7 @@ class Subproject:
     answers_relpath: Path = Path(".copier-answers.yml")
 
     def is_dirty(self) -> bool:
-        """Indicates if the local template root is dirty.
+        """Indicate if the local template root is dirty.
 
         Only applicable for VCS-tracked templates.
         """
@@ -50,7 +50,7 @@ class Subproject:
 
     @property
     def _raw_answers(self) -> AnyByStrDict:
-        """The last answers, loaded raw as yaml."""
+        """Get last answers, loaded raw as yaml."""
         try:
             return yaml.safe_load(
                 (self.local_abspath / self.answers_relpath).read_text()

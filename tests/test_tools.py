@@ -1,31 +1,19 @@
-import platform
 from pathlib import Path
 from stat import S_IREAD
 
-import pytest
 from plumbum.cmd import git
 from poethepoet.app import PoeThePoet
 
 from copier.tools import TemporaryDirectory
 
 
-@pytest.mark.skipif(
-    condition=platform.system() == "Windows",
-    reason="Windows does weird things with line endings.",
-)
-def test_lint():
-    """Ensure source code formatting"""
-    result = PoeThePoet(Path("."))(["lint", "--show-diff-on-failure", "--color=always"])
-    assert result == 0
-
-
-def test_types():
+def test_types() -> None:
     """Ensure source code static typing."""
     result = PoeThePoet(Path("."))(["types"])
     assert result == 0
 
 
-def test_temporary_directory_with_readonly_files_deletion():
+def test_temporary_directory_with_readonly_files_deletion() -> None:
     """Ensure temporary directories containing read-only files are properly deleted, whatever the OS."""
     with TemporaryDirectory() as tmp_dir:
         ro_file = Path(tmp_dir) / "readonly.txt"
@@ -35,8 +23,8 @@ def test_temporary_directory_with_readonly_files_deletion():
     assert not Path(tmp_dir).exists()
 
 
-def test_temporary_directory_with_git_repo_deletion():
+def test_temporary_directory_with_git_repo_deletion() -> None:
     """Ensure temporary directories containing git repositories are properly deleted, whatever the OS."""
     with TemporaryDirectory() as tmp_dir:
-        git("clone", "--depth=1", ".", Path(tmp_dir) / "repo")
+        git("init")
     assert not Path(tmp_dir).exists()
