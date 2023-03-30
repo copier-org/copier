@@ -1,8 +1,10 @@
 import os
 import shutil
 from pathlib import Path
+from typing import Callable, Iterator, Sequence
 
 import pytest
+import yaml
 from packaging.version import Version
 from plumbum import local
 from plumbum.cmd import git
@@ -169,3 +171,30 @@ def test_invalid_version(tmp_path):
         assert git("describe", "--tags").strip() != "v2"
         vcs.checkout_latest_tag(tmp_path)
         assert git("describe", "--tags").strip() == "v2"
+
+
+@pytest.mark.parametrize("sorter", [iter, reversed])
+def test_select_latest_version_tag(
+    tmp_path_factory: pytest.TempPathFactory,
+    sorter: Callable[[Sequence[str]], Iterator[str]],
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    filename = "version.txt"
+
+    with local.cwd(src):
+        git("init")
+        Path("{{ _copier_conf.answers_file }}.jinja").write_text(
+            "{{ _copier_answers|to_nice_yaml }}"
+        )
+        for version in sorter(["v1", "v1.0", "v1.0.0", "v1.0.1"]):
+            Path(filename).write_text(version)
+            git("add", ".")
+            git("commit", "-m", version)
+            git("tag", version)
+
+    run_copy(str(src), dst)
+
+    assert (dst / filename).is_file()
+    assert (dst / filename).read_text() == "v1.0.1"
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    assert answers["_commit"] == "v1.0.1"
