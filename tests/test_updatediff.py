@@ -628,6 +628,85 @@ def test_file_removed(tmp_path_factory: pytest.TempPathFactory) -> None:
     assert not (dst / "dir 5").exists()
 
 
+def test_update_inline_changed_answers_and_questions(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "copier.yml": "b: false",
+                "content.jinja": """\
+                    aaa
+                    {%- if b %}
+                    bbb
+                    {%- endif %}
+                    zzz
+                    """,
+            }
+        )
+        git("init")
+        git("add", "-A")
+        git("commit", "-m1")
+        git("tag", "1")
+        build_file_tree(
+            {
+                "copier.yml": dedent(
+                    """\
+                    b: false
+                    c: false
+                    """
+                ),
+                "content.jinja": """\
+                    aaa
+                    {%- if b %}
+                    bbb
+                    {%- endif %}
+                    {%- if c %}
+                    ccc
+                    {%- endif %}
+                    zzz
+                    """,
+            }
+        )
+        git("commit", "-am2")
+        git("tag", "2")
+    # Init project
+    run_copy(str(src), dst, data={"b": True}, vcs_ref="1")
+    assert "ccc" not in (dst / "content").read_text()
+    with local.cwd(dst):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m1")
+        # Project evolution
+        Path("content").write_text(
+            dedent(
+                """\
+                aaa
+                bbb
+                jjj
+                zzz
+                """
+            )
+        )
+        git("commit", "-am2")
+        # Update from template, inline, with answer changes
+        run_update(data={"c": True}, defaults=True, overwrite=True, conflict="inline")
+        assert Path("content").read_text() == dedent(
+            """\
+            aaa
+            bbb
+            <<<<<<< before updating
+            jjj
+            =======
+            ccc
+            >>>>>>> after updating
+            zzz
+            """
+        )
+
+
 @pytest.mark.parametrize("conflict", ["rej", "inline"])
 def test_update_in_repo_subdirectory(
     tmp_path_factory: pytest.TempPathFactory, conflict: Literal["rej", "inline"]
