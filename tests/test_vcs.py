@@ -1,6 +1,7 @@
 import os
 import shutil
 from pathlib import Path
+from typing import Callable, Iterator, Sequence
 
 import pytest
 from packaging.version import Version
@@ -169,3 +170,25 @@ def test_invalid_version(tmp_path):
         assert git("describe", "--tags").strip() != "v2"
         vcs.checkout_latest_tag(tmp_path)
         assert git("describe", "--tags").strip() == "v2"
+
+
+@pytest.mark.parametrize("sorter", [iter, reversed])
+def test_select_latest_version_tag(
+    tmp_path_factory: pytest.TempPathFactory,
+    sorter: Callable[[Sequence[str]], Iterator[str]],
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    filename = "verison.txt"
+
+    with local.cwd(src):
+        git("init")
+        for version in sorter(["v1", "v1.0", "v1.0.0", "v1.0.1"]):
+            Path(filename).write_text(version)
+            git("add", ".")
+            git("commit", "-m", version)
+            git("tag", version)
+
+    run_copy(str(src), dst)
+
+    assert (dst / filename).is_file()
+    assert (dst / filename).read_text() == "v1.0.1"
