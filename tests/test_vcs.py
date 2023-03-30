@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Callable, Iterator, Sequence
 
 import pytest
+import yaml
 from packaging.version import Version
 from plumbum import local
 from plumbum.cmd import git
@@ -182,6 +183,9 @@ def test_select_latest_version_tag(
 
     with local.cwd(src):
         git("init")
+        Path("{{ _copier_conf.answers_file }}.jinja").write_text(
+            "{{ _copier_answers|to_nice_yaml }}"
+        )
         for version in sorter(["v1", "v1.0", "v1.0.0", "v1.0.1"]):
             Path(filename).write_text(version)
             git("add", ".")
@@ -192,3 +196,5 @@ def test_select_latest_version_tag(
 
     assert (dst / filename).is_file()
     assert (dst / filename).read_text() == "v1.0.1"
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    assert answers["_commit"] == "v1.0.1"
