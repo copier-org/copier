@@ -690,17 +690,27 @@ class Worker:
         self._apply_update()
 
     def _apply_update(self):
+        subproject_top = Path(
+            git(
+                "-C",
+                self.subproject.local_abspath,
+                "rev-parse",
+                "--show-toplevel",
+            ).strip()
+        )
+        subproject_subdir = self.subproject.local_abspath.relative_to(subproject_top)
+
         # Copy old template into a temporary destination
         with TemporaryDirectory(
             prefix=f"{__name__}.update_diff."
         ) as old_copy, TemporaryDirectory(
             prefix=f"{__name__}.recopy_diff."
         ) as new_copy:
-            old_worker = self._make_old_worker(old_copy)
+            old_worker = self._make_old_worker(old_copy / subproject_subdir)
             old_worker.run_copy()
             recopy_worker = replace(
                 self,
-                dst_path=new_copy,
+                dst_path=new_copy / subproject_subdir,
                 data=self.subproject.last_answers,
                 defaults=True,
                 quiet=True,
@@ -710,14 +720,8 @@ class Worker:
             compared = dircmp(old_copy, new_copy)
             # Extract diff between temporary destination and real destination
             with local.cwd(old_copy):
-                subproject_top = git(
-                    "-C",
-                    self.subproject.local_abspath.absolute(),
-                    "rev-parse",
-                    "--show-toplevel",
-                ).strip()
                 self._git_initialize_repo()
-                git("remote", "add", "real_dst", "file://" + subproject_top)
+                git("remote", "add", "real_dst", "file://" + str(subproject_top))
                 git("fetch", "--depth=1", "real_dst", "HEAD")
                 diff_cmd = git["diff-tree", "--unified=1", "HEAD...FETCH_HEAD"]
                 try:
@@ -735,7 +739,7 @@ class Worker:
             )
             self._uncached_copy()
             # Try to apply cached diff into final destination
-            with local.cwd(self.subproject.local_abspath):
+            with local.cwd(subproject_top):
                 apply_cmd = git["apply", "--reject", "--exclude", self.answers_relpath]
                 for skip_pattern in chain(
                     self.skip_if_exists, self.template.skip_if_exists
@@ -763,14 +767,14 @@ class Worker:
                             "-L",
                             "after updating",
                             fname,
-                            old_worker.subproject.local_abspath / fname,
-                            recopy_worker.subproject.local_abspath / fname,
+                            Path(old_copy) / fname,
+                            Path(new_copy) / fname,
                             retcode=None,
                         )
                         # Remove rejection witness
                         Path(f"{fname}.rej").unlink()
             # Trigger recursive removal of deleted files in last template version
-            _remove_old_files(self.subproject.local_abspath, compared)
+            _remove_old_files(subproject_top, compared)
 
         # Run post-migration tasks
         self._execute_tasks(
