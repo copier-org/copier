@@ -178,7 +178,7 @@ def test_select_latest_version_tag(
     sorter: Callable[[Sequence[str]], Iterator[str]],
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
-    filename = "verison.txt"
+    filename = "version.txt"
 
     with local.cwd(src):
         git("init")
