@@ -4,6 +4,7 @@ from shutil import rmtree
 from textwrap import dedent
 from typing import Optional
 
+import pexpect
 import pytest
 import yaml
 from plumbum import local
@@ -14,7 +15,13 @@ from copier.cli import CopierApp
 from copier.main import run_copy, run_update
 from copier.types import Literal
 
-from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree
+from .helpers import (
+    BRACKET_ENVOPS_JSON,
+    COPIER_PATH,
+    SUFFIX_TMPL,
+    Spawn,
+    build_file_tree,
+)
 
 
 @pytest.mark.impure
@@ -632,8 +639,9 @@ def test_file_removed(tmp_path_factory: pytest.TempPathFactory) -> None:
     assert not (dst / "dir 5").exists()
 
 
+@pytest.mark.parametrize("interactive", [True, False])
 def test_update_inline_changed_answers_and_questions(
-    tmp_path_factory: pytest.TempPathFactory,
+    tmp_path_factory: pytest.TempPathFactory, interactive: bool, spawn: Spawn
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     with local.cwd(src):
@@ -677,7 +685,14 @@ def test_update_inline_changed_answers_and_questions(
         git("commit", "-am2")
         git("tag", "2")
     # Init project
-    run_copy(str(src), dst, data={"b": True}, vcs_ref="1")
+    if interactive:
+        tui = spawn(COPIER_PATH + ("-r1", "copy", str(src), str(dst)), timeout=10)
+        tui.expect_exact("b (bool)")
+        tui.expect_exact("(y/N)")
+        tui.send("y")
+        tui.expect_exact(pexpect.EOF)
+    else:
+        run_copy(str(src), dst, data={"b": True}, vcs_ref="1")
     assert "ccc" not in (dst / "content").read_text()
     with local.cwd(dst):
         git("init")
@@ -696,7 +711,19 @@ def test_update_inline_changed_answers_and_questions(
         )
         git("commit", "-am2")
         # Update from template, inline, with answer changes
-        run_update(data={"c": True}, defaults=True, overwrite=True, conflict="inline")
+        if interactive:
+            tui = spawn(COPIER_PATH + ("-w", "update", "--conflict=inline"), timeout=10)
+            tui.expect_exact("b (bool)")
+            tui.expect_exact("(Y/n)")
+            tui.sendline()
+            tui.expect_exact("c (bool)")
+            tui.expect_exact("(y/N)")
+            tui.send("y")
+            tui.expect_exact(pexpect.EOF)
+        else:
+            run_update(
+                data={"c": True}, defaults=True, overwrite=True, conflict="inline"
+            )
         assert Path("content").read_text() == dedent(
             """\
             aaa
