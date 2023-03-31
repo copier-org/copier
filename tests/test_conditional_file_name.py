@@ -65,7 +65,7 @@ def test_answer_changes(tmp_path_factory: TempPathFactory) -> None:
     with local.cwd(src):
         build_file_tree(
             {
-                "{{ _copier_conf.answers_file }}.jinja": "{{_copier_answers|to_nice_yaml}}",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
                 "copier.yml": """
                     condition:
                         type: bool
