@@ -12,6 +12,7 @@ from plumbum.cmd import git
 from copier import Worker, copy
 from copier.cli import CopierApp
 from copier.main import run_copy, run_update
+from copier.types import Literal
 
 from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree
 
@@ -304,7 +305,7 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
                     _templates_suffix: {SUFFIX_TMPL}
                     _tasks:
                         - git init
-                        - pre-commit install
+                        - pre-commit install -t pre-commit -t commit-msg
                         - pre-commit run -a || true
                     what: grog
                     """
@@ -321,6 +322,10 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
                         rev: v2.0.4
                         hooks:
                         -   id: prettier
+                    -   repo: https://github.com/commitizen-tools/commitizen
+                        rev: v2.42.1
+                        hooks:
+                        -   id: commitizen
                     -   repo: local
                         hooks:
                         -   id: forbidden-files
@@ -342,7 +347,7 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
         )
         git("init")
         git("add", ".")
-        git("commit", "-m", "commit 1")
+        git("commit", "-m", "feat: commit 1")
         git("tag", "v1")
     # Copy source template
     copy(src_path=str(src), dst_path=dst1, defaults=True, overwrite=True)
@@ -350,9 +355,9 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
         life = Path("life.yml")
         git("add", ".")
         # 1st commit fails because pre-commit reformats life.yml
-        git("commit", "-am", "failed commit", retcode=1)
+        git("commit", "-am", "feat: failed commit", retcode=1)
         # 2nd commit works because it's already formatted
-        git("commit", "-am", "copied v1")
+        git("commit", "-am", "feat: copied v1")
         assert life.read_text() == dedent(
             """\
             # Following code should be reformatted by pre-commit after copying
@@ -379,12 +384,12 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
         )
         git("init")
         git("add", ".")
-        git("commit", "-m", "commit 2")
+        git("commit", "-m", "feat: commit 2")
         git("tag", "v2")
     # Update subproject to v2
     copy(dst_path=dst1, defaults=True, overwrite=True, conflict="rej")
     with local.cwd(dst1):
-        git("commit", "-am", "copied v2")
+        git("commit", "-am", "feat: copied v2")
         assert life.read_text() == dedent(
             """\
             # Following code should be reformatted by pre-commit after copying
@@ -411,14 +416,14 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
                 """
             )
         )
-        git("commit", "-am", "subproject is evolved")
+        git("commit", "-am", "chore: subproject is evolved")
     # A new subproject appears, which is a shallow clone of the 1st one.
     # Using file:// prefix to allow local shallow clones.
     git("clone", "--depth=1", f"file://{dst1}", dst2)
     with local.cwd(dst2):
         # Subproject re-updates just to change some values
         copy(data={"what": "study"}, defaults=True, overwrite=True, conflict="rej")
-        git("commit", "-am", "re-updated to change values after evolving")
+        git("commit", "-am", "chore: re-updated to change values after evolving")
         # Subproject evolution was respected up to sane possibilities.
         # In an ideal world, this file would be exactly the same as what's written
         # a few lines above, just changing "grog" for "study". However, that's nearly
@@ -520,7 +525,7 @@ def test_skip_update(tmp_path_factory: pytest.TempPathFactory) -> None:
 )
 def test_overwrite_answers_file_always(
     tmp_path_factory: pytest.TempPathFactory, answers_file: Optional[str]
-):
+) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     with local.cwd(src):
         build_file_tree(
@@ -625,3 +630,142 @@ def test_file_removed(tmp_path_factory: pytest.TempPathFactory) -> None:
     assert not (dst / "dir 3" / "subdir 3").exists()
     assert not (dst / "dir 4" / "subdir 4" / "4.txt").exists()
     assert not (dst / "dir 5").exists()
+
+
+def test_update_inline_changed_answers_and_questions(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "copier.yml": "b: false",
+                "content.jinja": """\
+                    aaa
+                    {%- if b %}
+                    bbb
+                    {%- endif %}
+                    zzz
+                    """,
+            }
+        )
+        git("init")
+        git("add", "-A")
+        git("commit", "-m1")
+        git("tag", "1")
+        build_file_tree(
+            {
+                "copier.yml": dedent(
+                    """\
+                    b: false
+                    c: false
+                    """
+                ),
+                "content.jinja": """\
+                    aaa
+                    {%- if b %}
+                    bbb
+                    {%- endif %}
+                    {%- if c %}
+                    ccc
+                    {%- endif %}
+                    zzz
+                    """,
+            }
+        )
+        git("commit", "-am2")
+        git("tag", "2")
+    # Init project
+    run_copy(str(src), dst, data={"b": True}, vcs_ref="1")
+    assert "ccc" not in (dst / "content").read_text()
+    with local.cwd(dst):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m1")
+        # Project evolution
+        Path("content").write_text(
+            dedent(
+                """\
+                aaa
+                bbb
+                jjj
+                zzz
+                """
+            )
+        )
+        git("commit", "-am2")
+        # Update from template, inline, with answer changes
+        run_update(data={"c": True}, defaults=True, overwrite=True, conflict="inline")
+        assert Path("content").read_text() == dedent(
+            """\
+            aaa
+            bbb
+            <<<<<<< before updating
+            jjj
+            =======
+            ccc
+            >>>>>>> after updating
+            zzz
+            """
+        )
+
+
+@pytest.mark.parametrize("conflict", ["rej", "inline"])
+def test_update_in_repo_subdirectory(
+    tmp_path_factory: pytest.TempPathFactory, conflict: Literal["rej", "inline"]
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    subdir = Path("subdir")
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "version.txt": "v1",
+            }
+        )
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "v1")
+
+    run_copy(str(src), dst / subdir)
+
+    with local.cwd(dst):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+
+    assert (dst / subdir / ".copier-answers.yml").is_file()
+    assert (dst / subdir / "version.txt").is_file()
+    assert (dst / subdir / "version.txt").read_text() == "v1"
+
+    with local.cwd(dst):
+        build_file_tree({subdir / "version.txt": "v1 edited"})
+        git("add", ".")
+        git("commit", "-m1e")
+
+    with local.cwd(src):
+        build_file_tree({"version.txt": "v2"})
+        git("add", ".")
+        git("commit", "-m2")
+        git("tag", "v2")
+
+    run_update(dst / subdir, overwrite=True, conflict=conflict)
+
+    assert (dst / subdir / ".copier-answers.yml").is_file()
+    assert (dst / subdir / "version.txt").is_file()
+    if conflict == "rej":
+        assert (dst / subdir / "version.txt").read_text() == "v2"
+        assert (dst / subdir / "version.txt.rej").is_file()
+    else:
+        assert (dst / subdir / "version.txt").read_text() == dedent(
+            """\
+            <<<<<<< before updating
+            v1 edited
+            =======
+            v2
+            >>>>>>> after updating
+            """
+        )

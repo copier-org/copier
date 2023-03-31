@@ -690,25 +690,37 @@ class Worker:
         self._apply_update()
 
     def _apply_update(self):
+        subproject_top = Path(
+            git(
+                "-C",
+                self.subproject.local_abspath,
+                "rev-parse",
+                "--show-toplevel",
+            ).strip()
+        )
+        subproject_subdir = self.subproject.local_abspath.relative_to(subproject_top)
+
         # Copy old template into a temporary destination
         with TemporaryDirectory(
             prefix=f"{__name__}.update_diff."
         ) as old_copy, TemporaryDirectory(
             prefix=f"{__name__}.recopy_diff."
         ) as new_copy:
-            old_worker = self._make_old_worker(old_copy)
+            old_worker = replace(
+                self,
+                src_path=self.subproject.template.url,
+                dst_path=old_copy / subproject_subdir,
+                data=self.subproject.last_answers,
+                defaults=True,
+                quiet=True,
+                vcs_ref=self.subproject.template.commit,
+            )
             old_worker.run_copy()
 
             # Extract diff between temporary destination and real destination
             with local.cwd(old_copy):
-                subproject_top = git(
-                    "-C",
-                    self.subproject.local_abspath.absolute(),
-                    "rev-parse",
-                    "--show-toplevel",
-                ).strip()
                 self._git_initialize_repo()
-                git("remote", "add", "real_dst", "file://" + subproject_top)
+                git("remote", "add", "real_dst", "file://" + str(subproject_top))
                 git("fetch", "--depth=1", "real_dst", "HEAD")
                 diff_cmd = git["diff-tree", "--unified=1", "HEAD...FETCH_HEAD"]
                 try:
@@ -734,10 +746,12 @@ class Worker:
             new_worker = replace(
                 self,
                 src_path=self.subproject.template.url,
-                dst_path=new_copy,
+                dst_path=new_copy / subproject_subdir,
             )
             # Use last answers from the pre-migrated project
-            new_worker.subproject.last_answers = self.subproject.last_answers
+            new_worker.subproject.last_answers = replace(
+                self, defaults=True
+            ).answers.combined
             new_worker.run_copy()
 
             # Copy the new template output into the actual destination with the
@@ -757,7 +771,7 @@ class Worker:
                 self.quiet = old_quiet
 
             # Try to apply cached diff into final destination
-            with local.cwd(self.subproject.local_abspath):
+            with local.cwd(subproject_top):
                 apply_cmd = git["apply", "--reject", "--exclude", self.answers_relpath]
                 for skip_pattern in chain(
                     self.skip_if_exists, self.template.skip_if_exists
@@ -785,32 +799,19 @@ class Worker:
                             "-L",
                             "after updating",
                             fname,
-                            old_worker.subproject.local_abspath / fname,
-                            new_worker.subproject.local_abspath / fname,
+                            Path(old_copy) / fname,
+                            Path(new_copy) / fname,
                             retcode=None,
                         )
                         # Remove rejection witness
                         Path(f"{fname}.rej").unlink()
             # Trigger recursive removal of deleted files in last template version
-            _remove_old_files(self.subproject.local_abspath, dircmp(old_copy, new_copy))
+            _remove_old_files(subproject_top, dircmp(old_copy, new_copy))
 
         # Run post-migration tasks
         self._execute_tasks(
             self.template.migration_tasks("after", self.subproject.template)
         )
-
-    def _make_old_worker(self, old_copy):
-        """Create a worker to copy the old template into a temporary destination."""
-        old_worker = replace(
-            self,
-            dst_path=old_copy,
-            data=self.subproject.last_answers,
-            defaults=True,
-            quiet=True,
-            src_path=self.subproject.template.url,
-            vcs_ref=self.subproject.template.commit,
-        )
-        return old_worker
 
     def _git_initialize_repo(self):
         """Initialize a git repository in the current directory."""
@@ -819,8 +820,9 @@ class Worker:
         git("config", "user.name", "Copier")
         git("config", "user.email", "copier@copier")
         # 1st commit could fail if any pre-commit hook reformats code
+        # 2nd commit uses --no-verify to disable pre-commit-like checks
         git("commit", "--allow-empty", "-am", "dumb commit 1", retcode=None)
-        git("commit", "--allow-empty", "-am", "dumb commit 2")
+        git("commit", "--allow-empty", "-am", "dumb commit 2", "--no-verify")
         git("config", "--unset", "user.name")
         git("config", "--unset", "user.email")
 
