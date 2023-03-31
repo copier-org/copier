@@ -109,43 +109,39 @@ template_repo("template repository")
 template_current("/tmp/template<br>(current tag)")
 template_latest("/tmp/template<br>(latest tag)")
 
-project_regen_current("/tmp/project<br>(fresh, current version)")
-project_regen_latest("/tmp/project<br>(fresh, latest version)")
+project_regen("/tmp/project<br>(fresh, current version)")
 project_current("current project")
 project_half("half migrated<br>project")
 project_updated("updated project")
 project_applied("updated project<br>(diff applied)")
 project_full("fully updated<br>and migrated project")
 
-generate_latest["generate and run tasks<br>(prompting)"]
-update["update current<br>project in-place<br>(no prompting)<br>+ run tasks again"]
+update["update current<br>project in-place<br>(prompting)<br>+ run tasks again"]
 compare["compare to get diff"]
 apply["apply diff"]
 
 diff("diff")
 
 %% edges ----------------------------------------------------------
-        template_repo --> |"git clone (1)"| template_current
-     template_current --> |"generate and run tasks (2)"| project_regen_current
-project_regen_current --> compare
+        template_repo --> |git clone| template_current
+        template_repo --> |git clone| template_latest
+
+     template_current --> |generate and run tasks| project_regen
       project_current --> compare
-              compare --> |"(3)"| diff
-      project_current --> |"apply pre-migrations (4)"| project_half
-        template_repo --> |"git clone (5)"| template_latest
-      template_latest --> generate_latest
-         project_half .-> |use migrated answers| generate_latest
-      generate_latest --> |"(6)"| project_regen_latest
-         project_half --> |"(7)"| update
- project_regen_latest .-> |use answers| update
-               update --> |"(8)"| project_updated
+      project_current --> |apply pre-migrations| project_half
+        project_regen --> compare
+         project_half --> update
+      template_latest --> update
+               update --> project_updated
+              compare --> diff
                  diff --> apply
       project_updated --> apply
-                apply --> |"(9)"| project_applied
-      project_applied --> |"apply post-migrations (10)"| project_full
+                apply --> project_applied
+      project_applied --> |apply post-migrations| project_full
 
 %% style ----------------------------------------------------------
 classDef blackborder stroke:#000;
-class generate_latest,compare,update,apply blackborder;
+class compare,update,apply blackborder;
 ```
 
 As you can see here, `copier` does several things:
@@ -153,9 +149,8 @@ As you can see here, `copier` does several things:
 -   It regenerates a fresh project from the current template version.
 -   Then, it compares both version to get the diff from "fresh project" to "current
     project".
--   Now, it applies pre-migrations to your project, generates a fresh project with
-    migrated answers (if applicable) from the latest template changes (asking for
-    confirmation), and updates the current project with these answers.
+-   Now, it applies pre-migrations to your project, and updates the current project with
+    the latest template changes (asking for confirmation).
 -   Finally, it re-applies the previously obtained diff and then runs the
     post-migrations.
 
