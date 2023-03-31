@@ -700,12 +700,10 @@ class Worker:
         )
         subproject_subdir = self.subproject.local_abspath.relative_to(subproject_top)
 
-        # Copy old template into a temporary destination
         with TemporaryDirectory(
-            prefix=f"{__name__}.update_diff."
-        ) as old_copy, TemporaryDirectory(
-            prefix=f"{__name__}.recopy_diff."
-        ) as new_copy:
+            prefix=f"{__name__}.old_copy."
+        ) as old_copy, TemporaryDirectory(prefix=f"{__name__}.new_copy.") as new_copy:
+            # Copy old template into a temporary destination
             old_worker = replace(
                 self,
                 dst_path=old_copy / subproject_subdir,
@@ -716,16 +714,6 @@ class Worker:
                 vcs_ref=self.subproject.template.commit,
             )
             old_worker.run_copy()
-            new_worker = replace(
-                self,
-                dst_path=new_copy / subproject_subdir,
-                data=replace(self, defaults=True).answers.combined,
-                defaults=True,
-                quiet=True,
-                src_path=self.subproject.template.url,
-            )
-            new_worker.run_copy()
-            compared = dircmp(old_copy, new_copy)
             # Extract diff between temporary destination and real destination
             with local.cwd(old_copy):
                 self._git_initialize_repo()
@@ -752,6 +740,17 @@ class Worker:
                 del self.subproject.last_answers
             # Do a normal update in final destination
             self.run_copy()
+            # Render with the same answers in an empty dir to avoid pollution
+            new_worker = replace(
+                self,
+                dst_path=new_copy / subproject_subdir,
+                data=self.answers.combined,
+                defaults=True,
+                quiet=True,
+                src_path=self.subproject.template.url,
+            )
+            new_worker.run_copy()
+            compared = dircmp(old_copy, new_copy)
             # Try to apply cached diff into final destination
             with local.cwd(subproject_top):
                 apply_cmd = git["apply", "--reject", "--exclude", self.answers_relpath]
