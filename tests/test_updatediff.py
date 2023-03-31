@@ -12,6 +12,7 @@ from plumbum.cmd import git
 from copier import Worker, copy
 from copier.cli import CopierApp
 from copier.main import run_copy, run_update
+from copier.types import Literal
 
 from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree
 
@@ -706,5 +707,65 @@ def test_update_inline_changed_answers_and_questions(
             ccc
             >>>>>>> after updating
             zzz
+            """
+        )
+
+
+@pytest.mark.parametrize("conflict", ["rej", "inline"])
+def test_update_in_repo_subdirectory(
+    tmp_path_factory: pytest.TempPathFactory, conflict: Literal["rej", "inline"]
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    subdir = Path("subdir")
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "version.txt": "v1",
+            }
+        )
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "v1")
+
+    run_copy(str(src), dst / subdir)
+
+    with local.cwd(dst):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+
+    assert (dst / subdir / ".copier-answers.yml").is_file()
+    assert (dst / subdir / "version.txt").is_file()
+    assert (dst / subdir / "version.txt").read_text() == "v1"
+
+    with local.cwd(dst):
+        build_file_tree({subdir / "version.txt": "v1 edited"})
+        git("add", ".")
+        git("commit", "-m1e")
+
+    with local.cwd(src):
+        build_file_tree({"version.txt": "v2"})
+        git("add", ".")
+        git("commit", "-m2")
+        git("tag", "v2")
+
+    run_update(dst / subdir, overwrite=True, conflict=conflict)
+
+    assert (dst / subdir / ".copier-answers.yml").is_file()
+    assert (dst / subdir / "version.txt").is_file()
+    if conflict == "rej":
+        assert (dst / subdir / "version.txt").read_text() == "v2"
+        assert (dst / subdir / "version.txt.rej").is_file()
+    else:
+        assert (dst / subdir / "version.txt").read_text() == dedent(
+            """\
+            <<<<<<< before updating
+            v1 edited
+            =======
+            v2
+            >>>>>>> after updating
             """
         )
