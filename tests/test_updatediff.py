@@ -304,7 +304,7 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
                     _templates_suffix: {SUFFIX_TMPL}
                     _tasks:
                         - git init
-                        - pre-commit install
+                        - pre-commit install -t pre-commit -t commit-msg
                         - pre-commit run -a || true
                     what: grog
                     """
@@ -321,6 +321,10 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
                         rev: v2.0.4
                         hooks:
                         -   id: prettier
+                    -   repo: https://github.com/commitizen-tools/commitizen
+                        rev: v2.42.1
+                        hooks:
+                        -   id: commitizen
                     -   repo: local
                         hooks:
                         -   id: forbidden-files
@@ -342,7 +346,7 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
         )
         git("init")
         git("add", ".")
-        git("commit", "-m", "commit 1")
+        git("commit", "-m", "feat: commit 1")
         git("tag", "v1")
     # Copy source template
     copy(src_path=str(src), dst_path=dst1, defaults=True, overwrite=True)
@@ -350,9 +354,9 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
         life = Path("life.yml")
         git("add", ".")
         # 1st commit fails because pre-commit reformats life.yml
-        git("commit", "-am", "failed commit", retcode=1)
+        git("commit", "-am", "feat: failed commit", retcode=1)
         # 2nd commit works because it's already formatted
-        git("commit", "-am", "copied v1")
+        git("commit", "-am", "feat: copied v1")
         assert life.read_text() == dedent(
             """\
             # Following code should be reformatted by pre-commit after copying
@@ -379,12 +383,12 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
         )
         git("init")
         git("add", ".")
-        git("commit", "-m", "commit 2")
+        git("commit", "-m", "feat: commit 2")
         git("tag", "v2")
     # Update subproject to v2
     copy(dst_path=dst1, defaults=True, overwrite=True, conflict="rej")
     with local.cwd(dst1):
-        git("commit", "-am", "copied v2")
+        git("commit", "-am", "feat: copied v2")
         assert life.read_text() == dedent(
             """\
             # Following code should be reformatted by pre-commit after copying
@@ -411,14 +415,14 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
                 """
             )
         )
-        git("commit", "-am", "subproject is evolved")
+        git("commit", "-am", "chore: subproject is evolved")
     # A new subproject appears, which is a shallow clone of the 1st one.
     # Using file:// prefix to allow local shallow clones.
     git("clone", "--depth=1", f"file://{dst1}", dst2)
     with local.cwd(dst2):
         # Subproject re-updates just to change some values
         copy(data={"what": "study"}, defaults=True, overwrite=True, conflict="rej")
-        git("commit", "-am", "re-updated to change values after evolving")
+        git("commit", "-am", "chore: re-updated to change values after evolving")
         # Subproject evolution was respected up to sane possibilities.
         # In an ideal world, this file would be exactly the same as what's written
         # a few lines above, just changing "grog" for "study". However, that's nearly
