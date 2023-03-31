@@ -609,15 +609,15 @@ _subdirectory: template
 
 In addition, Jinja include and import statements will need to use a POSIX path separator
 (also on Windows) which is not supported in templated folder and file names. For this
-reason, Copier provides a filter
+reason, Copier provides a function
 `pathjoin(*paths: str, mode: Literal["posix", "windows", "native"] = "posix")`:
 
 ```jinja
-{% include 'includes' | pathjoin('name-slug.jinja') %}
+{% include pathjoin('includes', 'name-slug.jinja') %}
 ```
 
 ```jinja
-{% from 'includes' | pathjoin('slugify.jinja') import slugify %}
+{% from pathjoin('includes', 'slugify.jinja') import slugify %}
 ```
 
 ## Available settings

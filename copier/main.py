@@ -451,7 +451,7 @@ class Worker:
             env.filters["to_json"], default=pydantic_encoder
         )
 
-        # Add a filter to join filesystem paths.
+        # Add a global function to join filesystem paths.
         separators = {
             "posix": "/",
             "windows": "\\",
@@ -463,7 +463,7 @@ class Worker:
         ) -> str:
             return separators[mode].join(path)
 
-        env.filters["pathjoin"] = _pathjoin
+        env.globals["pathjoin"] = _pathjoin
         return env
 
     @cached_property
