@@ -31,7 +31,6 @@ from jinja2.sandbox import SandboxedEnvironment
 from pathspec import PathSpec
 from plumbum import ProcessExecutionError, colors
 from plumbum.cli.terminal import ask
-from plumbum.cmd import git
 from plumbum.machines import local
 from pydantic import ConfigDict, PositiveInt
 from pydantic.dataclasses import dataclass
@@ -57,6 +56,7 @@ from .types import (
     StrSeq,
 )
 from .user_data import DEFAULT_DATA, AnswersMap, Question
+from .vcs import git
 
 
 @dataclass(config=ConfigDict(extra="forbid"))

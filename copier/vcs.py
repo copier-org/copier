@@ -10,14 +10,29 @@ from warnings import warn
 from packaging import version
 from packaging.version import InvalidVersion, Version
 from plumbum import TF, ProcessExecutionError, colors, local
-from plumbum.cmd import git
 
 from .errors import DirtyLocalWarning, ShallowCloneWarning
 from .types import OptBool, OptStr, StrOrPath
 
+try:
+    from plumbum.cmd import git
+
+    GIT_VERSION = Version(re.findall(r"\d+\.\d+\.\d+", git("version"))[0])
+except ImportError:
+    import warnings
+
+    warnings.warn(
+        "git command not found, some functionality might not work", UserWarning
+    )
+
+    def git(*args, **kwargs):
+        raise OSError("git is not available")
+
+    GIT_VERSION = None
+
+
 GIT_PREFIX = ("git@", "git://", "git+", "https://github.com/", "https://gitlab.com/")
 GIT_POSTFIX = ".git"
-GIT_VERSION = Version(re.findall(r"\d+\.\d+\.\d+", git("version"))[0])
 REPLACEMENTS = (
     (re.compile(r"^gh:/?(.*\.git)$"), r"https://github.com/\1"),
     (re.compile(r"^gh:/?(.*)$"), r"https://github.com/\1.git"),

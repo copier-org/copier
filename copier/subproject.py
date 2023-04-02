@@ -9,13 +9,12 @@ from pathlib import Path
 from typing import Callable, List, Optional
 
 import yaml
-from plumbum.cmd import git
 from plumbum.machines import local
 from pydantic.dataclasses import dataclass
 
 from .template import Template
 from .types import AbsolutePath, AnyByStrDict, VCSTypes
-from .vcs import is_in_git_repo
+from .vcs import git, is_in_git_repo
 
 
 @dataclass

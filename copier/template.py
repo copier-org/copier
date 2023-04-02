@@ -14,7 +14,6 @@ import packaging.version
 import yaml
 from funcy import lflatten
 from packaging.version import Version, parse
-from plumbum.cmd import git
 from plumbum.machines import local
 from pydantic.dataclasses import dataclass
 from yamlinclude import YamlIncludeConstructor
@@ -28,7 +27,7 @@ from .errors import (
 )
 from .tools import copier_version, handle_remove_readonly
 from .types import AnyByStrDict, Env, OptStr, StrSeq, Union, VCSTypes
-from .vcs import checkout_latest_tag, clone, get_repo
+from .vcs import checkout_latest_tag, clone, get_repo, git
 
 # Default list of files in the template to exclude from the rendered project
 DEFAULT_EXCLUDE: Tuple[str, ...] = (
