@@ -33,6 +33,7 @@ from .tools import Style, TemporaryDirectory, printf
 from .types import (
     AnyByStrDict,
     JSONSerializable,
+    Literal,
     OptStr,
     RelativePath,
     StrOrPath,
@@ -451,6 +452,20 @@ class Worker:
         env.filters["to_json"] = partial(
             env.filters["to_json"], default=pydantic_encoder
         )
+
+        # Add a global function to join filesystem paths.
+        separators = {
+            "posix": "/",
+            "windows": "\\",
+            "native": os.path.sep,
+        }
+
+        def _pathjoin(
+            *path: str, mode: Literal["posix", "windows", "native"] = "posix"
+        ) -> str:
+            return separators[mode].join(path)
+
+        env.globals["pathjoin"] = _pathjoin
         return env
 
     @cached_property

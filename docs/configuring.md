@@ -490,6 +490,136 @@ your_project
 You can either use any separator, like `.`, and replace it with `_copier_conf.sep`, like
 in the example above, or just use `/` in the answer (works on Windows too).
 
+## Importing Jinja templates and macros
+
+You can
+[include templates](https://jinja.palletsprojects.com/en/3.1.x/templates/#include) and
+[import macros](https://jinja.palletsprojects.com/en/3.1.x/templates/#import) to reduce
+code duplication. A common scenario is the derivation of new values from answers, e.g.
+computing the slug of a human-readable name:
+
+```yaml title="copier.yml"
+_exclude:
+    - name-slug
+
+name:
+    type: str
+    help: A nice human-readable name
+
+slug:
+    type: str
+    help: A slug of the name
+    default: "{% include 'name-slug.jinja' %}"
+```
+
+```jinja title="name-slug.jinja"
+{# For simplicity ... -#}
+{{ name|lower|replace(' ', '-') }}
+```
+
+```tree result="shell"
+your_template
+    copier.yml
+    name-slug.jinja
+```
+
+It is also possible to include a template in a templated folder name
+
+```tree result="shell"
+your_template
+    copier.yml
+    name-slug.jinja
+    {% include 'name-slug.jinja' %}
+        __init__.py
+```
+
+or in a templated file name
+
+```tree result="shell"
+your_template
+    copier.yml
+    name-slug.jinja
+    {% include 'name-slug.jinja' %}.py
+```
+
+or in the templated content of a text file:
+
+```toml title="pyproject.toml.jinja"
+[project]
+name = "{% include 'name-slug.jinja' %}"
+# ...
+```
+
+Similarly, a Jinja macro can be defined
+
+```jinja title="slugify.jinja"
+{# For simplicity ... -#}
+{% macro slugify(value) -%}
+{{ value|lower|replace(' ', '-') }}
+{%- endmacro %}
+```
+
+and imported, e.g. in `copier.yml`
+
+```yaml title="copier.yml"
+_exclude:
+    - slugify
+
+name:
+    type: str
+    help: A nice human-readable name
+
+slug:
+    type: str
+    help: A slug of the name
+    default: "{% from 'slugify.jinja' import slugify %}{{ slugify(name) }}'
+```
+
+or in a templated folder name, in a templated file name, or in the templated content of
+a text file.
+
+!!! info
+
+    Import/Include paths are relative to the template root.
+
+As the number of imported templates and macros grows, you may want to place them in a
+dedicated folder such as `includes`:
+
+```tree result="shell"
+your_template
+    copier.yml
+    includes
+        name-slug.jinja
+        slugify.jinja
+        ...
+```
+
+Then, make sure to [exclude](#exclude) this folder
+
+```yaml title="copier.yml"
+_exclude:
+    - includes
+```
+
+or use a [subdirectory](#subdirectory), e.g.:
+
+```yaml title="copier.yml"
+_subdirectory: template
+```
+
+In addition, Jinja include and import statements will need to use a POSIX path separator
+(also on Windows) which is not supported in templated folder and file names. For this
+reason, Copier provides a function
+`pathjoin(*paths: str, mode: Literal["posix", "windows", "native"] = "posix")`:
+
+```jinja
+{% include pathjoin('includes', 'name-slug.jinja') %}
+```
+
+```jinja
+{% from pathjoin('includes', 'slugify.jinja') import slugify %}
+```
+
 ## Available settings
 
 Template settings alter how the template is rendered.
