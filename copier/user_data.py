@@ -452,9 +452,6 @@ def load_answersfile_data(
 
 def cast_answer_type(answer: Any, type_fn: Callable) -> Any:
     """Cast answer to expected type."""
-    # Skip casting None into "None"
-    if type_fn is str and answer is None:
-        return answer
     try:
         return type_fn(answer)
     except (TypeError, AttributeError):
