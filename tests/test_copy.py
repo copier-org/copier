@@ -540,3 +540,82 @@ def test_required_choice_question_without_data(
     )
     with pytest.raises(ValueError, match='Question "question" is required'):
         copier.copy(str(src), dst, defaults=True)
+
+
+@pytest.mark.parametrize(
+    "type_name, default, expected",
+    [
+        ("str", "string", does_not_raise()),
+        ("str", "1.0", does_not_raise()),
+        ("str", 1.0, does_not_raise()),
+        ("str", None, pytest.raises(TypeError)),
+        ("int", 1, does_not_raise()),
+        ("int", 1.0, does_not_raise()),
+        ("int", "1", does_not_raise()),
+        ("int", "1.0", pytest.raises(ValueError)),
+        ("int", "no-int", pytest.raises(ValueError)),
+        ("int", None, pytest.raises(TypeError)),
+        ("float", 1.1, does_not_raise()),
+        ("float", 1, does_not_raise()),
+        ("float", "1.1", does_not_raise()),
+        ("float", "no-float", pytest.raises(ValueError)),
+        ("float", None, pytest.raises(TypeError)),
+        ("bool", True, does_not_raise()),
+        ("bool", False, does_not_raise()),
+        ("bool", "y", does_not_raise()),
+        ("bool", "n", does_not_raise()),
+        ("bool", None, pytest.raises(TypeError)),
+        ("json", '"string"', does_not_raise()),
+        ("json", "1", does_not_raise()),
+        ("json", 1, does_not_raise()),
+        ("json", "1.1", does_not_raise()),
+        ("json", 1.1, does_not_raise()),
+        ("json", "true", does_not_raise()),
+        ("json", True, does_not_raise()),
+        ("json", "false", does_not_raise()),
+        ("json", False, does_not_raise()),
+        ("json", "{}", does_not_raise()),
+        ("json", {}, does_not_raise()),
+        ("json", "[]", does_not_raise()),
+        ("json", [], does_not_raise()),
+        ("json", "null", does_not_raise()),
+        ("json", None, does_not_raise()),
+        ("yaml", '"string"', does_not_raise()),
+        ("yaml", "string", does_not_raise()),
+        ("yaml", "1", does_not_raise()),
+        ("yaml", 1, does_not_raise()),
+        ("yaml", "1.1", does_not_raise()),
+        ("yaml", 1.1, does_not_raise()),
+        ("yaml", "true", does_not_raise()),
+        ("yaml", True, does_not_raise()),
+        ("yaml", "false", does_not_raise()),
+        ("yaml", False, does_not_raise()),
+        ("yaml", "{}", does_not_raise()),
+        ("yaml", {}, does_not_raise()),
+        ("yaml", "[]", does_not_raise()),
+        ("yaml", [], does_not_raise()),
+        ("yaml", "null", does_not_raise()),
+        ("yaml", None, does_not_raise()),
+    ],
+)
+def test_validate_default_value(
+    tmp_path_factory: pytest.TempPathFactory,
+    type_name: str,
+    default: Any,
+    expected: ContextManager[None],
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): yaml.dump(
+                {
+                    "q": {
+                        "type": type_name,
+                        "default": default,
+                    }
+                }
+            )
+        }
+    )
+    with expected:
+        copier.copy(str(src), dst, defaults=True)

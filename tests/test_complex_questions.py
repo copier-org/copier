@@ -84,7 +84,7 @@ def template_path(tmp_path_factory: pytest.TempPathFactory) -> str:
                         three: third
                 choose_number:
                     help: This must be a number
-                    default: null
+                    default: -1.1
                     type: float
                     choices:
                         - -1.1
@@ -159,7 +159,7 @@ def test_api(template_path: str, tmp_path: Path) -> None:
             choose_list: "first"
             choose_tuple: "second"
             choose_dict: "third"
-            choose_number: null
+            choose_number: -1.1
             minutes_under_water: 10
             optional_value: null
         """
