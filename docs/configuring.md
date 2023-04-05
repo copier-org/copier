@@ -703,6 +703,39 @@ questions with default answers.
     copier -fd 'user_name=Manuel Calavera' copy template destination
     ```
 
+### `data`
+
+-   Format: `str`
+-   CLI flags: `--data-file`
+-   Default value: N/A
+
+As an alternative you can also pass the path to a YAML file that contains your data.
+Passing a data file is only supported through the CLI.
+
+This cannot be defined in `copier.yml`, where its equivalent would be just normal
+questions with default answers.
+
+!!! example
+
+    Example CLI usage with a YAML file containing data:
+
+    ```yaml
+    user_name: Manuel Calavera
+    age: 7
+    height: 1.83
+    ```
+
+    Passing a data file
+
+    ```shell
+    copier -d input.yml copy template destination
+    ```
+
+    is equivalent to passing its content as key-value pairs:
+
+    ```shell
+    copier -d 'user_name=Manuel Calavera' -d 'age=7' -d 'height=1.83' copy template destination
+
 ### `envops`
 
 -   Format: `dict`
