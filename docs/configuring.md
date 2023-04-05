@@ -719,7 +719,7 @@ questions with default answers.
 
     Example CLI usage with a YAML file containing data:
 
-    ```yaml
+    ```yaml title="input.yml"
     user_name: Manuel Calavera
     age: 7
     height: 1.83
@@ -728,7 +728,7 @@ questions with default answers.
     Passing a data file
 
     ```shell
-    copier -d input.yml copy template destination
+    copier --data-file input.yml copy template destination
     ```
 
     is equivalent to passing its content as key-value pairs:
