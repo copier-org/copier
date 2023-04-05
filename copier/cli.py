@@ -180,6 +180,7 @@ class CopierApp(cli.Application):
         "VARIABLE=VALUE",
         list=True,
         help="Make VARIABLE available as VALUE when rendering the template",
+        excludes=["--data-file"],
     )
     def data_switch(self, values: StrSeq) -> None:
         """Update [data][] with provided values.
@@ -196,6 +197,7 @@ class CopierApp(cli.Application):
         ["--data-file"],
         str,
         help="Load data from a YAML file",
+        excludes=["--data"],
     )
     def data_file_switch(self, path: str) -> None:
         """Update [data][] with provided values.
