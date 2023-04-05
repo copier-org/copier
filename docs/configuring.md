@@ -703,6 +703,10 @@ questions with default answers.
     copier -fd 'user_name=Manuel Calavera' copy template destination
     ```
 
+!!! info
+
+    The `--data` option is mutually exclusive with [`--data-file`](#data_file) option.
+
 ### `data_file`
 
 -   Format: `str`
@@ -735,6 +739,10 @@ questions with default answers.
 
     ```shell
     copier -d 'user_name=Manuel Calavera' -d 'age=7' -d 'height=1.83' copy template destination
+
+!!! info
+
+    The `--data-file` option is mutually exclusive with [`--data`](#data) option.
 
 ### `envops`
 
