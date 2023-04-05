@@ -192,6 +192,24 @@ class CopierApp(cli.Application):
             key, value = arg.split("=", 1)
             self.data[key] = value
 
+    @cli.switch(
+        ["--data-file"],
+        str,
+        help="Load data from a YAML file",
+    )
+    def data_file_switch(self, path: str) -> None:
+        """Update [data][] with provided values.
+
+        Arguments:
+            path: The path to the YAML file to load.
+        """
+        if not Path(path).exists():
+            raise UserMessageError(f"Data file {path} not found")
+        if not Path(path).suffix not in [".yaml", ".yml"]:
+            raise UserMessageError(f"Data file {path} must be a YAML file")
+        with open(path) as f:
+            self.data.update(yaml.safe_load(f))
+
     def _worker(self, src_path: OptStr = None, dst_path: str = ".", **kwargs) -> Worker:
         """
         Run Copier's internal API using CLI switches.
