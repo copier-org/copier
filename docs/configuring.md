@@ -703,7 +703,7 @@ questions with default answers.
     copier -fd 'user_name=Manuel Calavera' copy template destination
     ```
 
-### `data`
+### `data_file`
 
 -   Format: `str`
 -   CLI flags: `--data-file`
