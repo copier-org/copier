@@ -742,7 +742,7 @@ questions with default answers.
 
 !!! info
 
-    The `--data-file` option is mutually exclusive with [`--data`](#data) option.
+    The `--data-file` flag is mutually exclusive with the [`-d, --data`](#data) flags.
 
 ### `envops`
 
