@@ -205,8 +205,6 @@ class CopierApp(cli.Application):
         Arguments:
             path: The path to the YAML file to load.
         """
-        if not Path(path).suffix not in [".yaml", ".yml"]:
-            raise UserMessageError(f"Data file {path} must be a YAML file")
         with open(path) as f:
             self.data.update(yaml.safe_load(f))
 
