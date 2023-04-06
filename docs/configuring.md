@@ -713,9 +713,10 @@ questions with default answers.
 -   CLI flags: `--data-file`
 -   Default value: N/A
 
-As an alternative to [`--data`][data] you can also pass the path to a YAML file that contains your data.
-!!! info
-    Not supported in `copier.yml` or API calls. Only supported through the CLI.
+As an alternative to [`-d, --data`](#data) you can also pass the path to a YAML file
+that contains your data.
+
+!!! info Not supported in `copier.yml` or API calls. Only supported through the CLI.
 
 !!! example
 
