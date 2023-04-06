@@ -713,7 +713,7 @@ questions with default answers.
 -   CLI flags: `--data-file`
 -   Default value: N/A
 
-As an alternative you can also pass the path to a YAML file that contains your data.
+As an alternative to [`--data`][data] you can also pass the path to a YAML file that contains your data.
 Passing a data file is only supported through the CLI.
 
 This cannot be defined in `copier.yml`, where its equivalent would be just normal
