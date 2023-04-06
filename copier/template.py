@@ -28,7 +28,7 @@ from .errors import (
 )
 from .tools import copier_version, handle_remove_readonly
 from .types import AnyByStrDict, Env, OptStr, StrSeq, Union, VCSTypes
-from .vcs import checkout_latest_tag, clone, get_repo
+from .vcs import checkout_latest_tag, clone, get_repo, valid_version
 
 # HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
 if sys.version_info >= (3, 8):
@@ -261,7 +261,10 @@ class Template:
         """If the template is VCS-tracked, get its commit description."""
         if self.vcs == "git":
             with local.cwd(self.local_abspath):
-                return git("describe", "--tags", "--always").strip()
+                tags = git("tag", "--points-at", "HEAD").splitlines()
+                tags = list(filter(valid_version, tags))
+                tags.sort(key=lambda x: len(x))
+                return tags[-1]
 
     @cached_property
     def commit_hash(self) -> OptStr:
