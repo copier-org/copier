@@ -195,18 +195,16 @@ class CopierApp(cli.Application):
 
     @cli.switch(
         ["--data-file"],
-        str,
+        cli.ExistingPath,
         help="Load data from a YAML file",
         excludes=["--data"],
     )
-    def data_file_switch(self, path: str) -> None:
+    def data_file_switch(self, path: plumbum.LocalPath) -> None:
         """Update [data][] with provided values.
 
         Arguments:
             path: The path to the YAML file to load.
         """
-        if not Path(path).exists():
-            raise UserMessageError(f"Data file {path} not found")
         if not Path(path).suffix not in [".yaml", ".yml"]:
             raise UserMessageError(f"Data file {path} must be a YAML file")
         with open(path) as f:
