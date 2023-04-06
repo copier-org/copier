@@ -705,7 +705,7 @@ questions with default answers.
 
 !!! info
 
-    The `--data` option is mutually exclusive with [`--data-file`](#data_file) option.
+    The `-d, --data` flags are mutually exclusive with the [`--data-file`](#data_file) flag.
 
 ### `data_file`
 
