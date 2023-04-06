@@ -714,10 +714,8 @@ questions with default answers.
 -   Default value: N/A
 
 As an alternative to [`--data`][data] you can also pass the path to a YAML file that contains your data.
-Passing a data file is only supported through the CLI.
-
-This cannot be defined in `copier.yml`, where its equivalent would be just normal
-questions with default answers.
+!!! info
+    Not supported in `copier.yml` or API calls. Only supported through the CLI.
 
 !!! example
 
