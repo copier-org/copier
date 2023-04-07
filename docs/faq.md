@@ -12,6 +12,31 @@ powers features such as [updating](../updating) or the ability of
     copier copy https://github.com/me/my-template.git ./my-preexisting-git-project
     ```
 
+## How to use Copier from Docker or Podman?
+
+Copier doesn't provide an image by default. However, it does provide a nix package, so
+you can use Nix to run Copier reproducibly from within a container:
+
+```shell
+# Change for docker if needed
+engine=podman
+
+# You can pin the version; example: github:copier-org/copier/v8.0.0
+copier=github:copier-org/copier
+
+$engine container run --rm -it docker.io/nixos/nix \
+    nix --extra-experimental-features 'nix-command flakes' --accept-flake-config \
+    run $copier -- --help
+```
+
+You can even generate a reproducible minimal docker image with just Copier inside, with:
+
+```shell
+nix bundle --bundler github:NixOS/bundlers#toDockerImage \
+    github:copier-org/copier#packages.x86_64-linux.default
+docker load < python*copier*.tar.gz
+```
+
 ## How can I alter the context before rendering the project?
 
 Similar questions:
