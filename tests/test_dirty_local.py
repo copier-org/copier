@@ -66,6 +66,7 @@ def test_update(tmp_path_factory: pytest.TempPathFactory) -> None:
                 delete me.
                 """
             ),
+            (src / "symlink.txt"): Path("./to_delete.txt"),
         }
     )
 
@@ -84,6 +85,10 @@ def test_update(tmp_path_factory: pytest.TempPathFactory) -> None:
         with open("aaaa.txt", "a") as f:
             f.write("dolor sit amet")
 
+        # test updating a symlink
+        Path("symlink.txt").unlink()
+        Path("symlink.txt").symlink_to("test_file.txt")
+
         # test removing a file
         Path("to_delete.txt").unlink()
 
@@ -98,6 +103,10 @@ def test_update(tmp_path_factory: pytest.TempPathFactory) -> None:
 
     assert (src / "aaaa.txt").read_text() != (dst / "aaaa.txt").read_text()
 
+    p1 = src / "symlink.txt"
+    p2 = dst / "symlink.txt"
+    assert p1.read_text() != p2.read_text()
+
     assert (dst / "to_delete.txt").exists()
 
     with pytest.warns(DirtyLocalWarning):
@@ -107,6 +116,11 @@ def test_update(tmp_path_factory: pytest.TempPathFactory) -> None:
     assert (dst / "test_file.txt").exists()
 
     assert (src / "aaaa.txt").read_text() == (dst / "aaaa.txt").read_text()
+
+    p1 = src / "symlink.txt"
+    p2 = dst / "symlink.txt"
+    assert p1.read_text() == p2.read_text()
+    assert not (dst / "symlink.txt").is_symlink()
 
     # HACK https://github.com/copier-org/copier/issues/461
     # TODO test file deletion on update

@@ -1022,6 +1022,18 @@ Run but do not make any changes.
 
     Not supported in `copier.yml`.
 
+### `preserve_symlinks`
+
+-   Format: `bool`
+-   CLI flags: N/A
+-   Default value: `False`
+
+Keep symlinks as symlinks. If this is set to `False` symlinks will be replaced with the
+file they point to.
+
+When set to `True` and the symlink ends with the template suffix (`.jinja` by default)
+the target path of the symlink will be rendered as a jinja template.
+
 ### `quiet`
 
 -   Format: `bool`
