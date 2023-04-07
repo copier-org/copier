@@ -811,7 +811,12 @@ Also don't ask questions to the user; just use default values
 -   CLI flags: `--defaults`
 -   Default value: `False`
 
-Use default answers to questions, which might be null if not specified.
+Use default answers to questions.
+
+!!! attention
+
+    Any question that does not have a default value must be answered
+    [via CLI/API](#data). Otherwise, an error is raised.
 
 !!! info
 

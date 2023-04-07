@@ -2,7 +2,17 @@
 
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Mapping, Optional, Sequence, TypeVar, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Mapping,
+    NewType,
+    Optional,
+    Sequence,
+    TypeVar,
+    Union,
+)
 
 from pydantic.validators import path_validator
 
@@ -37,6 +47,8 @@ T = TypeVar("T")
 JSONSerializable = (dict, list, str, int, float, bool, type(None))
 VCSTypes = Literal["git"]
 Env = Mapping[str, str]
+MissingType = NewType("MissingType", object)
+MISSING = MissingType(object())
 
 
 class AllowArbitraryTypes:

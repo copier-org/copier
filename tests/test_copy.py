@@ -3,7 +3,7 @@ import stat
 import sys
 from contextlib import nullcontext as does_not_raise
 from pathlib import Path
-from typing import ContextManager
+from typing import Any, ContextManager, List
 
 import pytest
 import yaml
@@ -487,3 +487,56 @@ def test_validate_init_data(
     )
     with expected:
         copier.copy(str(src), dst, data={"q": value})
+
+
+@pytest.mark.parametrize(
+    "type_name",
+    ["str", "int", "float", "bool", "json", "yaml"],
+)
+def test_required_question_without_data(
+    tmp_path_factory: pytest.TempPathFactory, type_name: str
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): yaml.safe_dump(
+                {
+                    "question": {
+                        "type": type_name,
+                    }
+                }
+            )
+        }
+    )
+    with pytest.raises(ValueError, match='Question "question" is required'):
+        copier.copy(str(src), dst, defaults=True)
+
+
+@pytest.mark.parametrize(
+    "type_name, choices",
+    [
+        ("str", ["one", "two", "three"]),
+        ("int", [1, 2, 3]),
+        ("float", [1.0, 2.0, 3.0]),
+        ("json", ["[1]", "[2]", "[3]"]),
+        ("yaml", ["- 1", "- 2", "- 3"]),
+    ],
+)
+def test_required_choice_question_without_data(
+    tmp_path_factory: pytest.TempPathFactory, type_name: str, choices: List[Any]
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): yaml.safe_dump(
+                {
+                    "question": {
+                        "type": type_name,
+                        "choices": choices,
+                    }
+                }
+            )
+        }
+    )
+    with pytest.raises(ValueError, match='Question "question" is required'):
+        copier.copy(str(src), dst, defaults=True)

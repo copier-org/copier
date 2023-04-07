@@ -31,6 +31,7 @@ from .subproject import Subproject
 from .template import Task, Template
 from .tools import Style, TemporaryDirectory, printf, readlink
 from .types import (
+    MISSING,
     AnyByStrDict,
     JSONSerializable,
     Literal,
@@ -392,13 +393,14 @@ class Worker:
 
             # Display TUI and ask user interactively only without --defaults
             try:
-                new_answer = (
-                    question.get_default()
-                    if self.defaults
-                    else unsafe_prompt(
+                if self.defaults:
+                    new_answer = question.get_default()
+                    if new_answer is MISSING:
+                        raise ValueError(f'Question "{var_name}" is required')
+                else:
+                    new_answer = unsafe_prompt(
                         [question.get_questionary_structure()], answers=result.combined
                     )[question.var_name]
-                )
             except KeyboardInterrupt as err:
                 raise CopierAnswersInterrupt(result, question, self.template) from err
             previous_answer = result.combined.get(question.var_name)
