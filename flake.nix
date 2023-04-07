@@ -43,7 +43,7 @@
           projectDir = ./.;
 
           # Test configuration
-          nativeCheckInputs = [pkgs.git];
+          propagatedNativeBuildInputs = [pkgs.git];
           pythonImportsCheck = ["copier"];
           doCheck = true;
           installCheckPhase = ''
