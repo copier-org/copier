@@ -572,7 +572,7 @@ name:
 slug:
     type: str
     help: A slug of the name
-    default: "{% from 'slugify.jinja' import slugify %}{{ slugify(name) }}'
+    default: "{% from 'slugify.jinja' import slugify %}{{ slugify(name) }}"
 ```
 
 or in a templated folder name, in a templated file name, or in the templated content of
