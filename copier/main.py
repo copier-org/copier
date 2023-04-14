@@ -27,6 +27,7 @@ from pydantic.json import pydantic_encoder
 from questionary import unsafe_prompt
 
 from .errors import CopierAnswersInterrupt, ExtensionNotFoundError, UserMessageError
+from .jinja import JsonSchemaFilter
 from .subproject import Subproject
 from .template import Task, Template
 from .tools import Style, TemporaryDirectory, printf, readlink
@@ -464,6 +465,9 @@ class Worker:
         env.filters["to_json"] = partial(
             env.filters["to_json"], default=pydantic_encoder
         )
+
+        # Add a filter to validate a JSON/YAML document using JSON Schema.
+        env.filters["jsonschema"] = JsonSchemaFilter(self.template.local_abspath)
 
         # Add a global function to join filesystem paths.
         separators = {

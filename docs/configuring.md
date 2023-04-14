@@ -138,6 +138,80 @@ Supported keys:
     will be rendered with the combined answers as variables; it should render _nothing_
     if the value is valid, and an error message to show to the user otherwise.
 
+    In addition to handcrafted validation logic, a [JSON Schema][jsonschema] document in
+    JSON or YAML format can be used via the Jinja filter `jsonschema(schema_uri: str)`
+    which returns a [`jsonschema.ValidationError`][python-jsonschema-validationerror]
+    object when validation fails and `None` otherwise. The [JSON Schema
+    dialect][jsonschema-dialect] is inferred from the `$schema` field in the JSON Schema
+    document and, when omitted, defaults to the [latest dialect supported by the
+    installed `jsonschema` library][python-jsonschema-features]. Both local and remote
+    schemas are supported including [schema references][jsonschema-ref] and [JSON
+    Pointers][jsonschema-jsonpointer]. Paths to local schemas are relative to the local
+    template root and always use POSIX-style path separators (`/`) on all operating
+    systems.
+
+    [jsonschema]: https://json-schema.org
+    [jsonschema-dialect]:
+        https://json-schema.org/understanding-json-schema/reference/schema.html#schema
+    [jsonschema-ref]:
+        https://json-schema.org/understanding-json-schema/structuring.html#ref
+    [jsonschema-jsonpointer]:
+        https://json-schema.org/understanding-json-schema/structuring.html#json-pointer
+    [python-jsonschema-features]:
+        https://python-jsonschema.readthedocs.io/en/stable/#features
+    [python-jsonschema-validationerror]:
+        https://python-jsonschema.readthedocs.io/en/stable/api/jsonschema/exceptions/#jsonschema.exceptions.ValidationError
+
+    !!! example "Validation using JSON Schema"
+
+        === "copier.yml"
+
+            ```yaml
+            # Use
+            _subdirectory: template
+            # or
+            _exclude:
+                - schemas/
+            # to prevent copying schemas to the generated project.
+
+            python_dependencies:
+                type: yaml
+                # A typical validator might look like
+                validator: >-
+                    {{
+                        python_dependencies
+                        | jsonschema('schemas/python-dependencies.yml')
+                        | default('', true)
+                    }}
+                # or equivalently
+                validator: |-
+                    {% with error = python_dependencies | jsonschema('schemas/python-dependencies.yml') %}
+                    {{ error | default('', true) }}
+                    {% endwith %}
+                # or equivalently
+                validator: |-
+                    {% with error = python_dependencies | jsonschema('schemas/python-dependencies.yml') %}
+                    {% if error %}{{ error }}{% endif %}
+                    {% endwith %}
+                # or you can create a completely custom error message based
+                # on the `jsonschema.ValidationError` object.
+            ```
+
+        === "schemas/python-dependencies.yml"
+
+            ```yaml
+            $schema: "https://json-schema.org/draft-07/schema#"
+            type: object
+            patternProperties:
+                "^[a-zA-Z-_.0-9]+$":
+                    $ref: "https://json.schemastore.org/pyproject.json#/definitions/poetry-dependency-any"
+            ```
+
+    !!! info
+
+        When a validation error occurs during interactive prompting, only the first line
+        is shown.
+
 -   **when**: Condition that, if `false`, skips the question.
 
     If it is a boolean, it is used directly, but it's a bit absurd in that case.
