@@ -1,5 +1,5 @@
 from os.path import sep
-from pathlib import Path, PosixPath
+from pathlib import Path, PurePosixPath
 from typing import Any, Optional
 from urllib.parse import urldefrag, urlparse
 from urllib.request import url2pathname, urlopen
@@ -39,9 +39,9 @@ class JsonSchemaFilter:
             )
         else:
             schema_file, fragment = urldefrag(schema_uri)
-            schema_file_relpath = PosixPath(schema_file)
+            schema_file_relpath = PurePosixPath(schema_file)
             if schema_file_relpath.is_absolute():
-                raise PathNotRelativeError(path=schema_file_relpath)
+                raise PathNotRelativeError(path=Path(schema_file_relpath))
             schema_file_abspath = (self._template_root / schema_file_relpath).resolve()
             schema = {"$ref": f"{schema_file_abspath.name}#{fragment}"}
             base_uri = schema_file_abspath.parent
