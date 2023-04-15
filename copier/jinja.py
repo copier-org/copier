@@ -1,7 +1,7 @@
 from os.path import sep
 from pathlib import Path, PosixPath
 from typing import Any, Optional
-from urllib.parse import urlparse, urldefrag
+from urllib.parse import urldefrag, urlparse
 from urllib.request import url2pathname, urlopen
 
 import jsonschema

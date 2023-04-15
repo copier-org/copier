@@ -1,9 +1,9 @@
+import json
 import re
 from contextlib import nullcontext as does_not_raise
 from textwrap import dedent, indent
 from typing import Any
 
-import json
 import pexpect
 import pytest
 import yaml
@@ -13,10 +13,10 @@ from copier import run_copy
 from copier.types import AnyByStrDict
 
 from .helpers import (
-    COPIER_PATH,
     BRACKET_ENVOPS_JSON,
-    build_file_tree,
+    COPIER_PATH,
     Spawn,
+    build_file_tree,
     expect_prompt,
 )
 
