@@ -61,11 +61,13 @@ class JsonSchemaFilter:
 
     def _resolve_local_schema(self, uri: str) -> Any:
         schema_file_abspath = Path(url2pathname(urlparse(uri).path))
-        if not schema_file_abspath.is_relative_to(self._template_root):
+        try:
+            schema_file_abspath.relative_to(self._template_root)
+        except ValueError as exc:
             raise ValueError(
                 f'Schema file path "{schema_file_abspath}" must resolve to a path '
                 f'under the template root "{self._template_root}"'
-            )
+            ) from exc
         with schema_file_abspath.open() as f:
             schema = yaml.safe_load(f)
         return schema
