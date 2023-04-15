@@ -28,39 +28,35 @@ class JsonSchemaFilter:
     ) -> Optional[jsonschema.ValidationError]:
         if schema_uri.startswith(("http://", "https://")):
             schema = {"$ref": schema_uri}
-            base_uri = self._template_root
-            resolver = jsonschema.RefResolver(
-                "",
-                {},
-                handlers={
-                    "http": self._resolve_remote_schema,
-                    "https": self._resolve_remote_schema,
-                },
-            )
         else:
             schema_file, fragment = urldefrag(schema_uri)
             schema_file_relpath = PurePosixPath(schema_file)
             if schema_file_relpath.is_absolute():
                 raise PathNotRelativeError(path=Path(schema_file_relpath))
             schema_file_abspath = (self._template_root / schema_file_relpath).resolve()
-            schema = {"$ref": f"{schema_file_abspath.name}#{fragment}"}
-            base_uri = schema_file_abspath.parent
-            resolver = jsonschema.RefResolver(
-                "file:{0}{0}{base_uri}{0}".format(sep, base_uri=base_uri),
-                {},
-                handlers={
-                    "file": self._resolve_local_schema,
-                    "http": self._resolve_remote_schema,
-                    "https": self._resolve_remote_schema,
-                },
-            )
+            schema = {"$ref": f"{schema_file_abspath}#{fragment}"}
         try:
-            return jsonschema.validate(instance, schema, resolver=resolver)
+            return jsonschema.validate(
+                instance,
+                schema,
+                resolver=jsonschema.RefResolver(
+                    "",
+                    {},
+                    handlers={
+                        "": self._resolve_local_schema,
+                        "file": self._resolve_local_schema,
+                        "http": self._resolve_remote_schema,
+                        "https": self._resolve_remote_schema,
+                    },
+                ),
+            )
         except jsonschema.ValidationError as exc:
             return exc
 
     def _resolve_local_schema(self, uri: str) -> Any:
-        schema_file_abspath = Path(url2pathname(urlparse(uri).path))
+        parsed_uri = urlparse(uri)
+        host = "{0}{0}{mnt}{0}".format(sep, mnt=parsed_uri.netloc)
+        schema_file_abspath = (Path(host) / url2pathname(parsed_uri.path)).resolve()
         try:
             schema_file_abspath.relative_to(self._template_root)
         except ValueError as exc:
