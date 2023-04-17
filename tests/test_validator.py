@@ -5,7 +5,7 @@ import sys
 from contextlib import closing, nullcontext as does_not_raise
 from functools import partial
 from http.server import SimpleHTTPRequestHandler
-from os import PathLike
+from pathlib import Path
 from socketserver import TCPServer
 from textwrap import dedent, indent
 from threading import Thread
@@ -46,7 +46,7 @@ def get_unused_tcp_port() -> int:
         return sock.getsockname()[1]
 
 
-HTTPServerFactory: TypeAlias = Callable[[PathLike], str]
+HTTPServerFactory: TypeAlias = Callable[[Path], str]
 
 
 @pytest.fixture
@@ -54,11 +54,11 @@ def http_server_factory() -> Iterator[HTTPServerFactory]:
     server_host = "127.0.0.1"
     server_disposers: List[Callable[[], None]] = []
 
-    def create(directory: PathLike) -> str:
+    def create(directory: Path) -> str:
         server_port = get_unused_tcp_port()
         server = TCPServer(
             (server_host, server_port),
-            partial(SimpleHTTPRequestHandler, directory=directory),
+            partial(SimpleHTTPRequestHandler, directory=str(directory)),
         )
         server_disposers.append(server.shutdown)
         server_thread = Thread(target=server.serve_forever)
