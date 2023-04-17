@@ -355,6 +355,7 @@ class CopierUpdateSubApp(cli.Application):
         self.parent._worker(
             dst_path=destination_path,
             conflict=self.conflict,
+            context_lines=self.context_lines,
         ).run_update()
         return 0
 
