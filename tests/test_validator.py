@@ -1,6 +1,7 @@
 import json
 import re
 import socket
+import sys
 from contextlib import closing, nullcontext as does_not_raise
 from functools import partial
 from http.server import SimpleHTTPRequestHandler
@@ -9,7 +10,7 @@ from socketserver import TCPServer
 from textwrap import dedent, indent
 from threading import Thread
 from time import sleep
-from typing import Any, Callable, Iterator, List, Literal, TypeAlias
+from typing import Any, Callable, Iterator, List, Literal
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
@@ -27,6 +28,12 @@ from .helpers import (
     build_file_tree,
     expect_prompt,
 )
+
+# HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
+if sys.version_info >= (3, 10):
+    from typing import TypeAlias
+else:
+    from typing_extensions import TypeAlias
 
 
 def serialize(data: Any, format=Literal["json", "yaml"]) -> str:
