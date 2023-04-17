@@ -1,5 +1,5 @@
-from os.path import sep
 from pathlib import Path, PurePosixPath
+from platform import system
 from typing import Any, Optional
 from urllib.parse import urldefrag, urlparse
 from urllib.request import url2pathname, urlopen
@@ -34,7 +34,9 @@ class JsonSchemaFilter:
             if schema_file_relpath.is_absolute():
                 raise PathNotRelativeError(path=Path(schema_file_relpath))
             schema_file_abspath = (self._template_root / schema_file_relpath).resolve()
-            schema = {"$ref": f"{schema_file_abspath}#{fragment}"}
+            # HACK https://github.com/python-jsonschema/jsonschema/issues/98#issuecomment-105475109
+            scheme = "file:///" if system() == "Windows" else "file://"
+            schema = {"$ref": f"{scheme}{schema_file_abspath.as_posix()}#{fragment}"}
         try:
             return jsonschema.validate(
                 instance,
@@ -43,7 +45,7 @@ class JsonSchemaFilter:
                     "",
                     {},
                     handlers={
-                        "": self._resolve_local_schema,
+                        "file": self._resolve_local_schema,
                         "http": self._resolve_remote_schema,
                         "https": self._resolve_remote_schema,
                     },
@@ -53,9 +55,7 @@ class JsonSchemaFilter:
             return exc
 
     def _resolve_local_schema(self, uri: str) -> Any:
-        parsed_uri = urlparse(uri)
-        host = "{0}{0}{mnt}{0}".format(sep, mnt=parsed_uri.netloc)
-        schema_file_abspath = (Path(host) / url2pathname(parsed_uri.path)).resolve()
+        schema_file_abspath = Path(url2pathname(urlparse(uri).path)).resolve()
         try:
             schema_file_abspath.relative_to(self._template_root)
         except ValueError as exc:
