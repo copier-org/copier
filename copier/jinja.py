@@ -44,7 +44,6 @@ class JsonSchemaFilter:
                     {},
                     handlers={
                         "": self._resolve_local_schema,
-                        "file": self._resolve_local_schema,
                         "http": self._resolve_remote_schema,
                         "https": self._resolve_remote_schema,
                     },
