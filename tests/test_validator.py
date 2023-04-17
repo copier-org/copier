@@ -9,7 +9,7 @@ from socketserver import TCPServer
 from textwrap import dedent, indent
 from threading import Thread
 from time import sleep
-from typing import Any, Callable, Iterator, Literal, List, TypeAlias
+from typing import Any, Callable, Iterator, List, Literal, TypeAlias
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
