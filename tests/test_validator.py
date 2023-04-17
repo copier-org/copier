@@ -9,7 +9,7 @@ from socketserver import TCPServer
 from textwrap import dedent, indent
 from threading import Thread
 from time import sleep
-from typing import Any, Callable, Iterator, Literal, Set, TypeAlias
+from typing import Any, Callable, Iterator, Literal, List, TypeAlias
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
@@ -45,7 +45,7 @@ HTTPServerFactory: TypeAlias = Callable[[PathLike], str]
 @pytest.fixture
 def http_server_factory() -> Iterator[HTTPServerFactory]:
     server_host = "127.0.0.1"
-    server_disposers: Set[Callable[[], None]] = set()
+    server_disposers: List[Callable[[], None]] = []
 
     def create(directory: PathLike) -> str:
         server_port = get_unused_tcp_port()
@@ -53,7 +53,7 @@ def http_server_factory() -> Iterator[HTTPServerFactory]:
             (server_host, server_port),
             partial(SimpleHTTPRequestHandler, directory=directory),
         )
-        server_disposers.add(server.shutdown)
+        server_disposers.append(server.shutdown)
         server_thread = Thread(target=server.serve_forever)
         server_thread.daemon = True
         server_thread.start()
