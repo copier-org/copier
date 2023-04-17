@@ -683,6 +683,28 @@ code hunk in the file itself, similar to the behavior of `git merge`.
 
     Not supported in `copier.yml`.
 
+### `context_lines`
+
+-   Format: `Int`
+-   CLI flags: `-c`, `--context-lines` (only available in `copier update` subcommand)
+-   Default value: `1`
+
+During a project update, Copier needs to compare the template evolution with the
+subproject evolution. This way, it can detect what changed, where and how to merge those
+changes. [Refer here for more details on this process](./updating.md).
+
+The more lines you use, the more accurate Copier will be when detecting conflicts. But
+you will also have more conflicts to solve by yourself. FWIW, Git uses 3 lines by
+default.
+
+The less lines you use, the less conflicts you will have. However, Copier will not be so
+accurate and could even move lines around if the file it's comparing has several similar
+code chunks.
+
+!!! info
+
+    Not supported in `copier.yml`.
+
 ### `data`
 
 -   Format: `dict|List[str=str]`
