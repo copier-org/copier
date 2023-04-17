@@ -796,3 +796,144 @@ def test_update_in_repo_subdirectory(
             >>>>>>> after updating
             """
         )
+
+
+@pytest.mark.parametrize(
+    "context_lines",
+    [
+        pytest.param(
+            1,
+            marks=pytest.mark.xfail(
+                reason="Not enough context lines to resolve the conflict.", strict=True
+            ),
+        ),
+        pytest.param(
+            2,
+            marks=pytest.mark.xfail(
+                reason="Not enough context lines to resolve the conflict.", strict=True
+            ),
+        ),
+        3,
+    ],
+)
+def test_update_needs_more_context(
+    tmp_path_factory: pytest.TempPathFactory, context_lines: int
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    # Create a template where some code blocks are similar
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "sample.py": dedent(
+                    """\
+                    def function_one():
+                        print("This line is equal to the next one.")
+                        print("This line is equal to the next one.")
+                        print("This line is equal to the next one.")
+                        print("This line is equal to the next one.")
+                        print("Previous line lied.")
+
+                    def function_two():
+                        print("This line is equal to the next one.")
+                        print("This line is equal to the next one.")
+                        print("This line is equal to the next one.")
+                        print("This line is equal to the next one.")
+                        print("Previous line lied.")
+                    """
+                ),
+            }
+        )
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "v1")
+    # Render and evolve that project
+    with local.cwd(dst):
+        run_copy(str(src), ".")
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        build_file_tree(
+            {
+                "sample.py": dedent(
+                    """\
+                    def function_one():
+                        print("This line is equal to the next one.")
+                        print("This line is equal to the next one.")
+                        print("This line is equal to the next one.")
+                        print("This line is equal to the next one.")
+                        print("Previous line lied.")
+
+                    def function_two():
+                        print("This line is equal to the next one.")
+                        print("This line is equal to the next one.")
+                        print("This line is new.")
+                        print("This line is equal to the next one.")
+                        print("This line is equal to the next one.")
+                        print("Previous line lied.")
+                    """
+                )
+            }
+        )
+        git("commit", "-am2")
+    # Evolve the template
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "sample.py": dedent(
+                    """\
+                    def function_zero():
+                        print("This line is equal to the next one.")
+                        print("This line is equal to the next one.")
+                        print("This line is equal to the next one.")
+                        print("This line is equal to the next one.")
+                        print("Previous line lied.")
+
+                    def function_one():
+                        print("This line is equal to the next one.")
+                        print("This line is equal to the next one.")
+                        print("This line is equal to the next one.")
+                        print("This line is equal to the next one.")
+                        print("Previous line lied.")
+
+                    def function_two():
+                        print("This line is equal to the next one.")
+                        print("This line is equal to the next one.")
+                        print("This line is equal to the next one.")
+                        print("This line is equal to the next one.")
+                        print("Previous line lied.")
+                    """
+                )
+            }
+        )
+        git("commit", "-am3")
+        git("tag", "v2")
+    # Update the project
+    run_update(dst, overwrite=True, conflict="inline", context_lines=context_lines)
+    # Check the update result
+    assert (dst / "sample.py").read_text() == dedent(
+        """\
+        def function_zero():
+            print("This line is equal to the next one.")
+            print("This line is equal to the next one.")
+            print("This line is equal to the next one.")
+            print("This line is equal to the next one.")
+            print("Previous line lied.")
+
+        def function_one():
+            print("This line is equal to the next one.")
+            print("This line is equal to the next one.")
+            print("This line is equal to the next one.")
+            print("This line is equal to the next one.")
+            print("Previous line lied.")
+
+        def function_two():
+            print("This line is equal to the next one.")
+            print("This line is equal to the next one.")
+            print("This line is new.")
+            print("This line is equal to the next one.")
+            print("This line is equal to the next one.")
+            print("Previous line lied.")
+        """
+    )
