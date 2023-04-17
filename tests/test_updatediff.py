@@ -17,6 +17,7 @@ from copier.types import Literal
 
 from .helpers import (
     BRACKET_ENVOPS_JSON,
+    COPIER_CMD,
     COPIER_PATH,
     SUFFIX_TMPL,
     Spawn,
@@ -804,20 +805,25 @@ def test_update_in_repo_subdirectory(
         pytest.param(
             1,
             marks=pytest.mark.xfail(
-                reason="Not enough context lines to resolve the conflict.", strict=True
+                raises=AssertionError,
+                reason="Not enough context lines to resolve the conflict.",
+                strict=True,
             ),
         ),
         pytest.param(
             2,
             marks=pytest.mark.xfail(
-                reason="Not enough context lines to resolve the conflict.", strict=True
+                raises=AssertionError,
+                reason="Not enough context lines to resolve the conflict.",
+                strict=True,
             ),
         ),
         3,
     ],
 )
+@pytest.mark.parametrize("api", [True, False])
 def test_update_needs_more_context(
-    tmp_path_factory: pytest.TempPathFactory, context_lines: int
+    tmp_path_factory: pytest.TempPathFactory, context_lines: int, api: bool
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     # Create a template where some code blocks are similar
@@ -850,7 +856,10 @@ def test_update_needs_more_context(
         git("tag", "v1")
     # Render and evolve that project
     with local.cwd(dst):
-        run_copy(str(src), ".")
+        if api:
+            run_copy(str(src), ".")
+        else:
+            CopierApp.invoke("copy", str(src), ".")
         git("init")
         git("add", ".")
         git("commit", "-m1")
@@ -910,7 +919,16 @@ def test_update_needs_more_context(
         git("commit", "-am3")
         git("tag", "v2")
     # Update the project
-    run_update(dst, overwrite=True, conflict="inline", context_lines=context_lines)
+    if api:
+        run_update(dst, overwrite=True, conflict="inline", context_lines=context_lines)
+    else:
+        COPIER_CMD(
+            "--overwrite",
+            "update",
+            str(dst),
+            "--conflict=inline",
+            f"--context-lines={context_lines}",
+        )
     # Check the update result
     assert (dst / "sample.py").read_text() == dedent(
         """\
