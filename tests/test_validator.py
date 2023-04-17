@@ -351,23 +351,19 @@ def test_jsonschema_local_ref(
                 """
             ),
             (src / "schemas" / "schema.yaml"): serialize(
-                {"$ref": f"{prefix}sub/schema.json"}, "yaml"
+                {"$ref": f"{prefix}sub/sub/schema.json"}, "yaml"
             ),
             (src / "schemas" / "schema.json"): serialize(
-                {"$ref": f"{prefix}sub/schema.yaml"}, "json"
-            ),
-            (src / "schemas" / "sub" / "schema.yaml"): serialize(
-                {"$ref": f"{prefix}sub/schema.json"}, "yaml"
-            ),
-            (src / "schemas" / "sub" / "schema.json"): serialize(
-                {"$ref": f"{prefix}sub/schema.yaml"}, "json"
+                {"$ref": f"{prefix}sub/sub/schema.yaml"}, "json"
             ),
             (src / "schemas" / "sub" / "sub" / "schema.yaml"): serialize(
-                SCHEMA, "yaml"
+                {"$ref": f"{prefix}../schema.json"}, "yaml"
             ),
             (src / "schemas" / "sub" / "sub" / "schema.json"): serialize(
-                SCHEMA, "json"
+                {"$ref": f"{prefix}../schema.yaml"}, "json"
             ),
+            (src / "schemas" / "sub" / "schema.yaml"): serialize(SCHEMA, "yaml"),
+            (src / "schemas" / "sub" / "schema.json"): serialize(SCHEMA, "json"),
         }
     )
     with (
@@ -477,19 +473,19 @@ def test_jsonschema_remote_ref(
                 """
             ),
             (srv / "schema.yaml"): serialize(
-                {"$ref": f"{prefix}sub/schema.json"}, "yaml"
+                {"$ref": f"{prefix}sub/sub/schema.json"}, "yaml"
             ),
             (srv / "schema.json"): serialize(
                 {"$ref": f"{prefix}sub/schema.yaml"}, "json"
             ),
-            (srv / "sub" / "schema.yaml"): serialize(
-                {"$ref": f"{prefix}sub/schema.json"}, "yaml"
+            (srv / "sub" / "sub" / "schema.yaml"): serialize(
+                {"$ref": f"{prefix}../schema.json"}, "yaml"
             ),
-            (srv / "sub" / "schema.json"): serialize(
-                {"$ref": f"{prefix}sub/schema.yaml"}, "json"
+            (srv / "sub" / "sub" / "schema.json"): serialize(
+                {"$ref": f"{prefix}../schema.yaml"}, "json"
             ),
-            (srv / "sub" / "sub" / "schema.yaml"): serialize(SCHEMA, "yaml"),
-            (srv / "sub" / "sub" / "schema.json"): serialize(SCHEMA, "json"),
+            (srv / "sub" / "schema.yaml"): serialize(SCHEMA, "yaml"),
+            (srv / "sub" / "schema.json"): serialize(SCHEMA, "json"),
         }
     )
     with (
