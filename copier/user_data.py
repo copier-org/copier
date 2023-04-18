@@ -417,10 +417,10 @@ class Question:
         """Parse the answer according to the question's type."""
         cast_fn = self.get_cast_fn()
         ans = cast_answer_type(answer, cast_fn)
-        choice_values = {
+        choice_values = [
             cast_answer_type(choice.value, cast_fn)
             for choice in self._formatted_choices
-        }
+        ]
         if choice_values and ans not in choice_values:
             raise ValueError("Invalid choice")
         return ans
