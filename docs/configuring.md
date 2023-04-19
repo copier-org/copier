@@ -1213,20 +1213,24 @@ Commands to execute after generating or updating a project from your template.
 
 They run ordered, and with the `$STAGE=task` variable in their environment.
 
-Example `copier.yml`:
+!!! example
 
-```yaml
-_tasks:
-    # Strings get executed under system's default shell
-    - "git init"
-    - "rm {{ name_of_the_project }}/README.md"
-    # Arrays are executed without shell, saving you the work of escaping arguments
-    - [invoke, "--search-root={{ _copier_conf.src_path }}", after-copy]
-    # You are able to output the full conf to JSON, to be parsed by your script
-    - [invoke, end-process, "--full-conf={{ _copier_conf|to_json }}"]
-    # Your script can be run by the same Python environment used to run Copier
-    - ["{{ _copier_python }}", task.py]
-```
+    ```yaml title="copier.yml"
+    _tasks:
+        # Strings get executed under system's default shell
+        - "git init"
+        - "rm {{ name_of_the_project }}/README.md"
+        # Arrays are executed without shell, saving you the work of escaping arguments
+        - [invoke, "--search-root={{ _copier_conf.src_path }}", after-copy]
+        # You are able to output the full conf to JSON, to be parsed by your script
+        - [invoke, end-process, "--full-conf={{ _copier_conf|to_json }}"]
+        # Your script can be run by the same Python environment used to run Copier
+        - ["{{ _copier_python }}", task.py]
+    ```
+
+    Note: the example assumes you use [Invoke](https://www.pyinvoke.org/) as
+    your task manager. But it's just an example. The point is that we're showing
+    how to build and call commands.
 
 ### `templates_suffix`
 
