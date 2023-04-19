@@ -449,8 +449,8 @@ def cast_answer_type(answer: Any, type_name: str) -> Any:
     """Cast answer to expected type."""
     try:
         type_fn = CAST_STR_TO_NATIVE[type_name]
-    except KeyError:
-        raise InvalidTypeError("Invalid answer type")
+    except KeyError as exc:
+        raise InvalidTypeError("Invalid answer type") from exc
     # Only JSON or YAML questions support `None` as an answer
     if answer is None and type_name not in {"json", "yaml"}:
         raise TypeError(
