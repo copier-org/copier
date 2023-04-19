@@ -209,7 +209,7 @@ class Question:
     var_name: str
     answers: AnswersMap
     jinja_env: SandboxedEnvironment
-    choices: Union[Dict[Any, Any], Sequence[Any]] = field(default_factory=list)
+    choices: Union[Sequence[Any], Dict[Any, Any]] = field(default_factory=list)
     default: Any = MISSING
     help: str = ""
     multiline: Union[str, bool] = False
