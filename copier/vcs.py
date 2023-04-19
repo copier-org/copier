@@ -182,7 +182,7 @@ def clone(url: str, ref: OptStr = None) -> str:
                 )
 
     with local.cwd(location):
-        git("reset", "--hard", ref or "HEAD")
+        git("checkout", "-f", ref or "HEAD")
         git("submodule", "update", "--checkout", "--init", "--recursive", "--force")
 
     return location
