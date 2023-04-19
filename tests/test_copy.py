@@ -465,6 +465,16 @@ def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> N
             "three",
             pytest.raises(ValueError),
         ),
+        (
+            {"type": "yaml", "choices": {"array": "[a, b]"}},
+            "[a, b]",
+            does_not_raise(),
+        ),
+        (
+            {"type": "yaml", "choices": {"object": "k: v"}},
+            "k: v",
+            does_not_raise(),
+        ),
     ],
 )
 def test_validate_init_data(
