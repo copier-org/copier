@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v7.2.0 (2023-04-19)
+
+### Feat
+
+-   customizable update accuracy
+
+### Fix
+
+-   fix using a branch name as VCS ref
+-   answer validation for question with complex choices (#1110)
+
 ## v7.1.0 (2023-04-07)
 
 ### Feat

@@ -348,7 +348,7 @@ cannot use Jinja templating in your answers.
 The `copier.yml` file supports multiple documents as well as using the `!include` tag to
 include settings and questions from other YAML files. This allows you to split up a
 larger `copier.yml` and enables you to reuse common partial sections from your
-templates. When multiple documents are used, care has to be taken with question and
+templates. When multiple documents are used, care has to be taken with questions and
 settings that are defined in more than one document:
 
 -   A question with the same name overwrites definitions from an earlier document.
@@ -572,7 +572,7 @@ name:
 slug:
     type: str
     help: A slug of the name
-    default: "{% from 'slugify.jinja' import slugify %}{{ slugify(name) }}'
+    default: "{% from 'slugify.jinja' import slugify %}{{ slugify(name) }}"
 ```
 
 or in a templated folder name, in a templated file name, or in the templated content of
@@ -678,6 +678,28 @@ When updating a project, sometimes Copier doesn't know what to do with a diff co
 This option controls the output format if this happens. The default, `rej`, creates
 `*.rej` files that contain the unresolved diffs. The `inline` option includes the diff
 code hunk in the file itself, similar to the behavior of `git merge`.
+
+!!! info
+
+    Not supported in `copier.yml`.
+
+### `context_lines`
+
+-   Format: `Int`
+-   CLI flags: `-c`, `--context-lines` (only available in `copier update` subcommand)
+-   Default value: `1`
+
+During a project update, Copier needs to compare the template evolution with the
+subproject evolution. This way, it can detect what changed, where and how to merge those
+changes. [Refer here for more details on this process](./updating.md).
+
+The more lines you use, the more accurate Copier will be when detecting conflicts. But
+you will also have more conflicts to solve by yourself. FWIW, Git uses 3 lines by
+default.
+
+The less lines you use, the less conflicts you will have. However, Copier will not be so
+accurate and could even move lines around if the file it's comparing has several similar
+code chunks.
 
 !!! info
 
@@ -1191,20 +1213,24 @@ Commands to execute after generating or updating a project from your template.
 
 They run ordered, and with the `$STAGE=task` variable in their environment.
 
-Example `copier.yml`:
+!!! example
 
-```yaml
-_tasks:
-    # Strings get executed under system's default shell
-    - "git init"
-    - "rm {{ name_of_the_project }}/README.md"
-    # Arrays are executed without shell, saving you the work of escaping arguments
-    - [invoke, "--search-root={{ _copier_conf.src_path }}", after-copy]
-    # You are able to output the full conf to JSON, to be parsed by your script
-    - [invoke, end-process, "--full-conf={{ _copier_conf|to_json }}"]
-    # Your script can be run by the same Python environment used to run Copier
-    - ["{{ _copier_python }}", task.py]
-```
+    ```yaml title="copier.yml"
+    _tasks:
+        # Strings get executed under system's default shell
+        - "git init"
+        - "rm {{ name_of_the_project }}/README.md"
+        # Arrays are executed without shell, saving you the work of escaping arguments
+        - [invoke, "--search-root={{ _copier_conf.src_path }}", after-copy]
+        # You are able to output the full conf to JSON, to be parsed by your script
+        - [invoke, end-process, "--full-conf={{ _copier_conf|to_json }}"]
+        # Your script can be run by the same Python environment used to run Copier
+        - ["{{ _copier_python }}", task.py]
+    ```
+
+    Note: the example assumes you use [Invoke](https://www.pyinvoke.org/) as
+    your task manager. But it's just an example. The point is that we're showing
+    how to build and call commands.
 
 ### `templates_suffix`
 

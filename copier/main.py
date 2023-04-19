@@ -21,7 +21,7 @@ from plumbum import ProcessExecutionError, colors
 from plumbum.cli.terminal import ask
 from plumbum.cmd import git
 from plumbum.machines import local
-from pydantic import ConfigDict, Extra
+from pydantic import ConfigDict, Extra, PositiveInt
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
 from questionary import unsafe_prompt
@@ -157,6 +157,15 @@ class Worker:
 
         conflict:
             One of "rej" (default), "inline" (still experimental).
+
+        context_lines:
+            Lines of context to consider when solving conflicts in updates.
+
+            With more lines, context resolution is more accurate, but it will
+            also produce more conflicts if your subproject has evolved.
+
+            With less lines, context resolution is less accurate, but it will
+            respect better the evolution of your subproject.
     """
 
     src_path: Optional[str] = None
@@ -174,6 +183,7 @@ class Worker:
     pretend: bool = False
     quiet: bool = False
     conflict: str = "rej"
+    context_lines: PositiveInt = 1
 
     def __enter__(self):
         """Allow using worker as a context manager."""
@@ -787,7 +797,9 @@ class Worker:
                 self._git_initialize_repo()
                 git("remote", "add", "real_dst", "file://" + str(subproject_top))
                 git("fetch", "--depth=1", "real_dst", "HEAD")
-                diff_cmd = git["diff-tree", "--unified=1", "HEAD...FETCH_HEAD"]
+                diff_cmd = git[
+                    "diff-tree", f"--unified={self.context_lines}", "HEAD...FETCH_HEAD"
+                ]
                 try:
                     diff = diff_cmd("--inter-hunk-context=-1")
                 except ProcessExecutionError:
