@@ -161,7 +161,7 @@ class CopierApp(cli.Application):
         ["-w", "--overwrite"],
         help="Overwrite files that already exist, without asking.",
     )
-    skip: cli.Flag = cli.SwitchAttr(
+    skip: cli.SwitchAttr = cli.SwitchAttr(
         ["-s", "--skip"],
         str,
         list=True,
