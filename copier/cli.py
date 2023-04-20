@@ -121,6 +121,7 @@ class CopierApp(cli.Application):
 
     answers_file: cli.SwitchAttr = cli.SwitchAttr(
         ["-a", "--answers-file"],
+        cli.ExistingFile,
         default=None,
         help=(
             "Update using this path (relative to `destination_path`) "
