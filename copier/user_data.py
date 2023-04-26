@@ -83,9 +83,6 @@ class AnswersMap:
     """Object that gathers answers from different sources.
 
     Attributes:
-        local:
-            Local overrides to other answers.
-
         user:
             Answers provided by the user, interactively.
 
@@ -116,10 +113,6 @@ class AnswersMap:
             See [copier.main.Worker][].
     """
 
-    # Private
-    local: AnyByStrDict = field(default_factory=dict, init=False)
-
-    # Public
     user: AnyByStrDict = field(default_factory=dict)
     init: AnyByStrDict = field(default_factory=dict)
     metadata: AnyByStrDict = field(default_factory=dict)
@@ -131,7 +124,6 @@ class AnswersMap:
     def combined(self) -> Mapping[str, Any]:
         """Answers combined from different sources, sorted by priority."""
         return ChainMap(
-            self.local,
             self.user,
             self.init,
             self.metadata,
