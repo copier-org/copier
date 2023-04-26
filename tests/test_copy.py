@@ -512,6 +512,42 @@ def test_validate_init_data(
         copier.copy(str(src), dst, data={"q": value})
 
 
+@pytest.mark.parametrize("defaults", [False, True])
+def test_validate_init_data_with_skipped_question(
+    tmp_path_factory: pytest.TempPathFactory, defaults: bool
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                f"""\
+                _envops: {BRACKET_ENVOPS_JSON}
+
+                kind:
+                    type: str
+                    help: What kind do you need?
+                    choices:
+                        foo: foo
+                        bar: bar
+
+                testbar:
+                    when: "[[ kind == 'bar' ]]"
+                    type: str
+                    help: any string bar?
+
+                testfoo:
+                    when: "[[ kind == 'foo' ]]"
+                    type: str
+                    help: any string foo?
+                """
+            ),
+        }
+    )
+    copier.copy(
+        str(src), dst, defaults=defaults, data={"kind": "foo", "testfoo": "helloworld"}
+    )
+
+
 @pytest.mark.parametrize(
     "type_name",
     ["str", "int", "float", "bool", "json", "yaml"],

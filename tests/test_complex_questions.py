@@ -420,7 +420,7 @@ def test_tui_inherited_default(
         "_src_path": str(src),
         "has_2_owners": has_2_owners,
         "owner1": "example",
-        "owner2": owner2,
+        **({"owner2": owner2} if has_2_owners else {}),
     }
     assert json.loads((dst / "answers.json").read_text()) == result
     with local.cwd(dst):
@@ -430,40 +430,6 @@ def test_tui_inherited_default(
     # After a forced update, answers stay the same
     run_update(dst, defaults=True, overwrite=True)
     assert json.loads((dst / "answers.json").read_text()) == result
-
-
-def test_tui_typed_default(
-    tmp_path_factory: pytest.TempPathFactory, spawn: Spawn
-) -> None:
-    """Make sure a template defaults are typed as expected."""
-    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
-    build_file_tree(
-        {
-            (src / "copier.yaml"): (
-                """\
-                test1:
-                    type: bool
-                    default: false
-                    when: false
-                test2:
-                    type: bool
-                    default: "{{ 'a' == 'b' }}"
-                    when: false
-                """
-            ),
-            (src / "{{ _copier_conf.answers_file }}.jinja"): (
-                "{{ _copier_answers|to_nice_yaml }}"
-            ),
-            (src / "answers.json.jinja"): "{{ _copier_answers|to_nice_json }}",
-        }
-    )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
-    tui.expect_exact(pexpect.EOF)
-    assert json.loads((dst / "answers.json").read_text()) == {
-        "_src_path": str(src),
-        "test1": False,
-        "test2": False,
-    }
 
 
 def test_selection_type_cast(
@@ -570,3 +536,31 @@ def test_multi_template_answers(tmp_path_factory: pytest.TempPathFactory) -> Non
         assert answers2["_src_path"] == str(tpl2)
         assert answers2["q2"] == "a2"
         assert "q1" not in answers2
+
+
+def test_omit_answer_for_skipped_question(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                """\
+                disabled:
+                    type: str
+                    when: false
+
+                disabled_with_default:
+                    type: str
+                    default: hello
+                    when: false
+                """
+            ),
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+        }
+    )
+    copy(str(src), dst, defaults=True, data={"disabled": "hello"})
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    assert answers == {"_src_path": str(src)}
