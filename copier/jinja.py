@@ -1,7 +1,6 @@
-from platform import system
-from typing import Any, ClassVar, Mapping, Optional, Union
+from typing import Any, Mapping, Optional, Union
 from urllib.parse import urlparse
-from urllib.request import url2pathname, urlopen
+from urllib.request import urlopen
 
 import jsonschema
 import yaml
@@ -11,9 +10,6 @@ from jinja2.ext import Extension
 
 class JsonSchemaExtension(Extension):
     """Jinja extension for validating data against a JSON Schema document."""
-
-    # HACK https://github.com/python-jsonschema/jsonschema/issues/98#issuecomment-105475109
-    _FILE_SCHEME: ClassVar[str] = "file:///" if system() == "Windows" else "file://"
 
     def __init__(self, environment: Environment) -> None:
         super().__init__(environment)
@@ -28,7 +24,7 @@ class JsonSchemaExtension(Extension):
             else:
                 if not schema.startswith("/"):
                     schema = f"/{schema}"
-                schema = {"$ref": f"{self._FILE_SCHEME}{schema}"}
+                schema = {"$ref": f"file://{schema}"}
         try:
             jsonschema.validate(
                 instance,
@@ -47,9 +43,9 @@ class JsonSchemaExtension(Extension):
             return exc
 
     def _resolve_local_schema(self, uri: str) -> Any:
-        schema_file = url2pathname(urlparse(uri).path)
         if not self.environment.loader:
             raise RuntimeError("JSON Schema extension requires a loader")
+        schema_file = urlparse(uri).path
         try:
             schema, *_ = self.environment.loader.get_source(
                 self.environment, schema_file
