@@ -326,7 +326,7 @@ def test_jsonschema_remote_schema(
 )
 @pytest.mark.parametrize("prefix", ["", "./"])
 @pytest.mark.parametrize("format", ["json", "yaml"])
-def test_jsonschema_local_ref(
+def test_jsonschema_local_ref_with_relative_path(
     tmp_path_factory: pytest.TempPathFactory,
     prefix: str,
     format: str,
@@ -362,6 +362,72 @@ def test_jsonschema_local_ref(
             ),
             (src / "schemas" / "sub" / "sub" / "schema.json"): serialize(
                 {"$ref": f"{prefix}../schema.yaml"}, "json"
+            ),
+            (src / "schemas" / "sub" / "schema.yaml"): serialize(SCHEMA, "yaml"),
+            (src / "schemas" / "sub" / "schema.json"): serialize(SCHEMA, "json"),
+        }
+    )
+    with (
+        pytest.raises(ValidationError, match=re.escape(message))
+        if message
+        else does_not_raise()
+    ):
+        run_copy(str(src), dst, data={"q": yaml.safe_dump(value)})
+
+
+@pytest.mark.parametrize(
+    "value, message",
+    [
+        (
+            {"age": 30},
+            "",
+        ),
+        (
+            {"age": -1},
+            dedent(
+                """
+                -1 is less than the minimum of 0
+
+                Failed validating 'minimum' in schema['properties']['age']:
+                    {'minimum': 0, 'type': 'integer'}
+
+                On instance['age']:
+                    -1
+                """
+            ).strip(),
+        ),
+    ],
+)
+@pytest.mark.parametrize("format", ["json", "yaml"])
+def test_jsonschema_local_ref_with_absolute_path(
+    tmp_path_factory: pytest.TempPathFactory,
+    format: str,
+    value: Any,
+    message: str,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                f"""\
+                _envops: {BRACKET_ENVOPS_JSON}
+                _exclude:
+                    - schemas
+                q:
+                    type: yaml
+                    validator: >-
+                        [[
+                            q
+                            | jsonschema('/schemas/schema.{format}')
+                            | default('', true)
+                        ]]
+                """
+            ),
+            (src / "schemas" / "schema.yaml"): serialize(
+                {"$ref": "/schemas/sub/schema.json"}, "yaml"
+            ),
+            (src / "schemas" / "schema.json"): serialize(
+                {"$ref": "/schemas/sub/schema.yaml"}, "json"
             ),
             (src / "schemas" / "sub" / "schema.yaml"): serialize(SCHEMA, "yaml"),
             (src / "schemas" / "sub" / "schema.json"): serialize(SCHEMA, "json"),
