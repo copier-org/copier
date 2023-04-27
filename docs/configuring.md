@@ -139,13 +139,14 @@ Supported keys:
     if the value is valid, and an error message to show to the user otherwise.
 
     In addition to handcrafted validation logic, a [JSON Schema][jsonschema] document in
-    JSON or YAML format can be used via the Jinja filter `jsonschema(schema_uri: str)`
-    which returns a [`jsonschema.ValidationError`][python-jsonschema-validationerror]
-    object when validation fails and `None` otherwise. The [JSON Schema
-    dialect][jsonschema-dialect] is inferred from the `$schema` field in the JSON Schema
-    document and, when omitted, defaults to the [latest dialect supported by the
-    installed `jsonschema` library][python-jsonschema-features]. Both local and remote
-    schemas are supported including [schema references][jsonschema-ref] and [JSON
+    JSON or YAML format can be used via the Jinja filter
+    `jsonschema(schema: str | Mapping[str, Any])` which returns a
+    [`jsonschema.ValidationError`][python-jsonschema-validationerror] object when
+    validation fails and `None` otherwise. The [JSON Schema dialect][jsonschema-dialect]
+    is inferred from the `$schema` field in the JSON Schema document and, when omitted,
+    defaults to the [latest dialect supported by the installed `jsonschema`
+    library][python-jsonschema-features]. Both local and remote schemas are supported
+    including [schema references][jsonschema-ref] and [JSON
     Pointers][jsonschema-jsonpointer]. Paths to local schemas are relative to the local
     template root and always use POSIX-style path separators (`/`) on all operating
     systems.
@@ -166,7 +167,7 @@ Supported keys:
 
         === "copier.yml"
 
-            ```yaml
+            ```yaml title="Local file schema"
             # Use
             _subdirectory: template
             # or
@@ -195,6 +196,27 @@ Supported keys:
                     {% endwith %}
                 # or you can create a completely custom error message based
                 # on the `jsonschema.ValidationError` object.
+            ```
+
+            ```yaml title="Inline schema"
+            # Use
+            _subdirectory: template
+            # or
+            _exclude:
+                - schemas/
+            # to prevent copying schemas to the generated project.
+
+            python_dependencies:
+                type: yaml
+                validator: |-
+                    {% set schema | from_yaml %}
+                    $schema: "https://json-schema.org/draft-07/schema#"
+                    type: object
+                    patternProperties:
+                        "^[a-zA-Z-_.0-9]+$":
+                            $ref: "https://json.schemastore.org/pyproject.json#/definitions/poetry-dependency-any"
+                    {% endset %}
+                    {{ python_dependencies | jsonschema(schema) | default('', true) }}
             ```
 
         === "schemas/python-dependencies.yml"

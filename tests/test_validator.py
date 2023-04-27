@@ -10,7 +10,7 @@ from socketserver import TCPServer
 from textwrap import dedent, indent
 from threading import Thread
 from time import sleep
-from typing import Any, Callable, Iterator, List
+from typing import Any, Callable, Iterator, List, Optional
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
@@ -37,8 +37,14 @@ else:
     from typing_extensions import TypeAlias
 
 
-def serialize(data: Any, format: Literal["json", "yaml"]) -> str:
-    return json.dumps(data) if format == "json" else yaml.safe_dump(data)
+def serialize(
+    data: Any, format: Literal["json", "yaml"], indent: Optional[int] = None
+) -> str:
+    return (
+        json.dumps(data, indent=indent)
+        if format == "json"
+        else yaml.safe_dump(data, indent=indent)
+    )
 
 
 def get_unused_tcp_port() -> int:
@@ -172,6 +178,77 @@ def test_jsonschema_basic(
             else does_not_raise()
         ):
             run_copy(str(src), dst, data={"q": yaml.safe_dump(value)})
+
+
+@pytest.mark.parametrize(
+    "value, message",
+    [
+        (
+            {"age": 30},
+            "",
+        ),
+        (
+            {"age": -1},
+            dedent(
+                """
+                -1 is less than the minimum of 0
+
+                Failed validating 'minimum' in schema['properties']['age']:
+                    {'minimum': 0, 'type': 'integer'}
+
+                On instance['age']:
+                    -1
+                """
+            ).strip(),
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    "validator",
+    [
+        f"""\
+        validator: |-
+            [% set schema | from_yaml %]
+{indent(serialize(SCHEMA, "yaml", indent=4), " " * 12)}
+            [% endset %]
+            [[ q | jsonschema(schema) | default('', true) ]]
+        """,
+        f"""\
+        validator: |-
+            [% set schema | from_json %]
+{indent(serialize(SCHEMA, "json", indent=4), " " * 12)}
+            [% endset %]
+            [[ q | jsonschema(schema) | default('', true) ]]
+        """,
+    ],
+)
+def test_jsonschema_inline(
+    tmp_path_factory: pytest.TempPathFactory,
+    validator: str,
+    value: Any,
+    message: str,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): dedent(
+                f"""\
+                _envops: {BRACKET_ENVOPS_JSON}
+                _exclude:
+                    - schemas
+                q:
+                    type: yaml
+                """
+            )
+            + indent(dedent(validator), " " * 4),
+        }
+    )
+    with (
+        pytest.raises(ValidationError, match=re.escape(message))
+        if message
+        else does_not_raise()
+    ):
+        run_copy(str(src), dst, data={"q": yaml.safe_dump(value)})
 
 
 @pytest.mark.parametrize(

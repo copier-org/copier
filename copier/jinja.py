@@ -1,5 +1,5 @@
 from platform import system
-from typing import Any, ClassVar, Optional
+from typing import Any, ClassVar, Mapping, Optional, Union
 from urllib.parse import urlparse
 from urllib.request import url2pathname, urlopen
 
@@ -20,14 +20,15 @@ class JsonSchemaExtension(Extension):
         environment.filters["jsonschema"] = self
 
     def __call__(
-        self, instance: Any, schema_uri: str
+        self, instance: Any, schema: Union[str, Mapping[str, Any]]
     ) -> Optional[jsonschema.ValidationError]:
-        if schema_uri.startswith(("http://", "https://")):
-            schema = {"$ref": schema_uri}
-        else:
-            if not schema_uri.startswith("/"):
-                schema_uri = f"/{schema_uri}"
-            schema = {"$ref": f"{self._FILE_SCHEME}{schema_uri}"}
+        if isinstance(schema, str):
+            if schema.startswith(("http://", "https://")):
+                schema = {"$ref": schema}
+            else:
+                if not schema.startswith("/"):
+                    schema = f"/{schema}"
+                schema = {"$ref": f"{self._FILE_SCHEME}{schema}"}
         try:
             return jsonschema.validate(
                 instance,
