@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from shutil import copy2, copytree
 
@@ -13,14 +12,14 @@ from copier.main import run_copy, run_update
 from .helpers import DATA, PROJECT_TEMPLATE, build_file_tree
 
 
-def test_copy(tmp_path_factory):
+def test_copy(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
     # dirs_exist_ok not available in Python 3.7
-    for item in os.listdir(PROJECT_TEMPLATE):
-        item_src_path = os.path.join(PROJECT_TEMPLATE, item)
-        item_dst_path = os.path.join(src, item)
-        if os.path.isdir(item_src_path):
+    for item in PROJECT_TEMPLATE.iterdir():
+        item_src_path = item
+        item_dst_path = src / item.name
+        if item_src_path.is_dir():
             copytree(item_src_path, item_dst_path)
         else:
             copy2(item_src_path, item_dst_path)
@@ -29,7 +28,7 @@ def test_copy(tmp_path_factory):
         git("init")
 
     with pytest.warns(DirtyLocalWarning):
-        copier.copy(str(src), str(dst), data=DATA, quiet=True)
+        copier.copy(str(src), dst, data=DATA, vcs_ref="HEAD", quiet=True)
 
     generated = (dst / "pyproject.toml").read_text()
     control = (Path(__file__).parent / "reference_files" / "pyproject.toml").read_text()
@@ -40,29 +39,51 @@ def test_copy(tmp_path_factory):
         assert bool(git("status", "--porcelain").strip())
 
 
-def test_update(tmp_path_factory):
+def test_copy_dirty_head(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "tracked": "",
+            src / "untracked": "",
+        }
+    )
+    with local.cwd(src):
+        git("init")
+        git("add", "tracked")
+        git("commit", "-m1")
+    copier.run_copy(str(src), dst, vcs_ref="HEAD")
+    assert (dst / "tracked").exists()
+    assert (dst / "untracked").exists()
+
+
+def test_update(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
     build_file_tree(
         {
-            src
-            / ".copier-answers.yml.jinja": """\
+            (src / ".copier-answers.yml.jinja"): (
+                """\
                 # Changes here will be overwritten by Copier
                 {{ _copier_answers|to_nice_yaml }}
-            """,
-            src
-            / "copier.yml": """\
+                """
+            ),
+            (src / "copier.yml"): (
+                """\
                 _envops:
                     "keep_trailing_newline": True
-            """,
-            src
-            / "aaaa.txt": """
+                """
+            ),
+            (src / "aaaa.txt"): (
+                """
                 Lorem ipsum
-            """,
-            src
-            / "to_delete.txt": """
+                """
+            ),
+            (src / "to_delete.txt"): (
+                """
                 delete me.
-            """,
+                """
+            ),
+            (src / "symlink.txt"): Path("./to_delete.txt"),
         }
     )
 
@@ -75,15 +96,18 @@ def test_update(tmp_path_factory):
 
     with local.cwd(src):
         # test adding a file
-        with open("test_file.txt", "w") as f:
-            f.write("Test content")
+        Path("test_file.txt").write_text("Test content")
 
         # test updating a file
         with open("aaaa.txt", "a") as f:
             f.write("dolor sit amet")
 
+        # test updating a symlink
+        Path("symlink.txt").unlink()
+        Path("symlink.txt").symlink_to("test_file.txt")
+
         # test removing a file
-        os.remove("to_delete.txt")
+        Path("to_delete.txt").unlink()
 
     # dst must be vcs-tracked to use run_update
     with local.cwd(dst):
@@ -92,24 +116,29 @@ def test_update(tmp_path_factory):
         git("commit", "-m", "first commit on dst")
 
     # make sure changes have not yet propagated
-    assert not os.path.exists(dst / "test_file.txt")
+    assert not (dst / "test_file.txt").exists()
 
-    p1 = src / "aaaa.txt"
-    p2 = dst / "aaaa.txt"
+    assert (src / "aaaa.txt").read_text() != (dst / "aaaa.txt").read_text()
+
+    p1 = src / "symlink.txt"
+    p2 = dst / "symlink.txt"
     assert p1.read_text() != p2.read_text()
 
-    assert os.path.exists(dst / "to_delete.txt")
+    assert (dst / "to_delete.txt").exists()
 
     with pytest.warns(DirtyLocalWarning):
         run_update(dst, defaults=True, overwrite=True)
 
     # make sure changes propagate after update
-    assert os.path.exists(dst / "test_file.txt")
+    assert (dst / "test_file.txt").exists()
 
-    p1 = src / "aaaa.txt"
-    p2 = dst / "aaaa.txt"
+    assert (src / "aaaa.txt").read_text() == (dst / "aaaa.txt").read_text()
+
+    p1 = src / "symlink.txt"
+    p2 = dst / "symlink.txt"
     assert p1.read_text() == p2.read_text()
+    assert not (dst / "symlink.txt").is_symlink()
 
     # HACK https://github.com/copier-org/copier/issues/461
     # TODO test file deletion on update
-    # assert not os.path.exists(dst / "to_delete.txt")
+    # assert not (dst / "to_delete.txt").exists()

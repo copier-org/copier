@@ -52,10 +52,9 @@ from unittest.mock import patch
 
 from plumbum import cli, colors
 
-from copier.tools import copier_version
-
 from .errors import UserMessageError
 from .main import Worker
+from .tools import copier_version
 from .types import AnyByStrDict, OptStr, StrSeq
 
 
@@ -331,6 +330,15 @@ class CopierUpdateSubApp(cli.Application):
             "markers (inline is still experimental)"
         ),
     )
+    context_lines: cli.SwitchAttr = cli.SwitchAttr(
+        ["-c", "--context-lines"],
+        int,
+        default=1,
+        help=(
+            "Lines of context to use for detecting conflicts. Increase for "
+            "accuracy, decrease for resilience."
+        ),
+    )
 
     @handle_exceptions
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
@@ -347,6 +355,7 @@ class CopierUpdateSubApp(cli.Application):
         self.parent._worker(
             dst_path=destination_path,
             conflict=self.conflict,
+            context_lines=self.context_lines,
         ).run_update()
         return 0
 

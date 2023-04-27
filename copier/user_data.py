@@ -31,7 +31,15 @@ from questionary.prompts.common import Choice
 
 from .errors import InvalidTypeError, UserMessageError
 from .tools import cast_str_to_bool, force_str_end
-from .types import AllowArbitraryTypes, AnyByStrDict, OptStr, OptStrOrPath, StrOrPath
+from .types import (
+    MISSING,
+    AllowArbitraryTypes,
+    AnyByStrDict,
+    MissingType,
+    OptStr,
+    OptStrOrPath,
+    StrOrPath,
+)
 
 # HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
 if sys.version_info >= (3, 8):
@@ -195,7 +203,7 @@ class Question:
     answers: AnswersMap
     jinja_env: SandboxedEnvironment
     choices: Union[Dict[Any, Any], Sequence[Any]] = field(default_factory=list)
-    default: Any = None
+    default: Any = MISSING
     help: str = ""
     multiline: Union[str, bool] = False
     placeholder: str = ""
@@ -219,7 +227,6 @@ class Question:
 
     def get_default(self) -> Any:
         """Get the default value for this question, casted to its expected type."""
-        cast_fn = self.get_cast_fn()
         try:
             result = self.answers.init[self.var_name]
         except KeyError:
@@ -229,11 +236,13 @@ class Question:
                 try:
                     result = self.answers.user_defaults[self.var_name]
                 except KeyError:
+                    if self.default is MISSING:
+                        return MISSING
                     result = self.render_value(self.default)
-        result = cast_answer_type(result, cast_fn)
+        result = cast_answer_type(result, self.get_type_name())
         return result
 
-    def get_default_rendered(self) -> Union[bool, str, Choice, None]:
+    def get_default_rendered(self) -> Union[bool, str, Choice, None, MissingType]:
         """Get default answer rendered for the questionary lib.
 
         The questionary lib expects some specific data types, and returns
@@ -243,6 +252,8 @@ class Question:
         This helper allows such usages.
         """
         default = self.get_default()
+        if default is MISSING:
+            return MISSING
         # If there are choices, return the one that matches the expressed default
         if self.choices:
             for choice in self._formatted_choices:
@@ -291,9 +302,7 @@ class Question:
 
     def filter_answer(self, answer) -> Any:
         """Cast the answer to the desired type."""
-        if answer == self.get_default_rendered():
-            return self.get_default()
-        return cast_answer_type(answer, self.get_cast_fn())
+        return cast_answer_type(answer, self.get_type_name())
 
     def get_message(self) -> str:
         """Get the message that will be printed to the user."""
@@ -316,7 +325,6 @@ class Question:
         """Get the question in a format that the questionary lib understands."""
         lexer = None
         result: AnyByStrDict = {
-            "default": self.get_default_rendered(),
             "filter": self.filter_answer,
             "message": self.get_message(),
             "mouse_support": True,
@@ -324,10 +332,16 @@ class Question:
             "qmark": "🕵️" if self.secret else "🎤",
             "when": self.get_when,
         }
+        default = self.get_default_rendered()
+        if default is not MISSING:
+            result["default"] = default
         questionary_type = "input"
         type_name = self.get_type_name()
         if type_name == "bool":
             questionary_type = "confirm"
+            # For backwards compatibility
+            if default is MISSING:
+                result["default"] = False
         if self.choices:
             questionary_type = "select"
             result["choices"] = self._formatted_choices
@@ -348,16 +362,12 @@ class Question:
         result.update({"type": questionary_type})
         return result
 
-    def get_cast_fn(self) -> Callable:
-        """Obtain function to cast user answer to desired type."""
-        type_name = self.get_type_name()
-        if type_name not in CAST_STR_TO_NATIVE:
-            raise InvalidTypeError("Invalid question type")
-        return CAST_STR_TO_NATIVE.get(type_name, parse_yaml_string)
-
     def get_type_name(self) -> str:
         """Render the type name and return it."""
-        return self.render_value(self.type)
+        type_name = self.render_value(self.type)
+        if type_name not in CAST_STR_TO_NATIVE:
+            raise InvalidTypeError("Invalid question type")
+        return type_name
 
     def get_multiline(self) -> bool:
         """Get the value for multiline."""
@@ -403,12 +413,12 @@ class Question:
 
     def parse_answer(self, answer: Any) -> Any:
         """Parse the answer according to the question's type."""
-        cast_fn = self.get_cast_fn()
-        ans = cast_answer_type(answer, cast_fn)
-        choice_values = {
-            cast_answer_type(choice.value, cast_fn)
+        type_name = self.get_type_name()
+        ans = cast_answer_type(answer, type_name)
+        choice_values = [
+            cast_answer_type(choice.value, type_name)
             for choice in self._formatted_choices
-        }
+        ]
         if choice_values and ans not in choice_values:
             raise ValueError("Invalid choice")
         return ans
@@ -438,16 +448,25 @@ def load_answersfile_data(
         return {}
 
 
-def cast_answer_type(answer: Any, type_fn: Callable) -> Any:
+def cast_answer_type(answer: Any, type_name: str) -> Any:
     """Cast answer to expected type."""
-    # Skip casting None into "None"
-    if type_fn is str and answer is None:
-        return answer
+    try:
+        type_fn = CAST_STR_TO_NATIVE[type_name]
+    except KeyError as exc:
+        raise InvalidTypeError("Invalid answer type") from exc
+    # Only JSON or YAML questions support `None` as an answer
+    if answer is None and type_name not in {"json", "yaml"}:
+        raise TypeError(
+            f'Invalid answer of type "{type(answer)}" to question of type '
+            f'"{type_name}"'
+        )
     try:
         return type_fn(answer)
     except (TypeError, AttributeError):
         # JSON or YAML failed because it wasn't a string; no need to convert
-        return answer
+        if type_name in {"json", "yaml"}:
+            return answer
+        raise
 
 
 CAST_STR_TO_NATIVE: Mapping[str, Callable] = {

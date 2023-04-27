@@ -447,6 +447,14 @@ class Template:
         return result
 
     @cached_property
+    def preserve_symlinks(self) -> bool:
+        """Know if Copier should preserve symlinks when rendering the template.
+
+        See [preserve_symlinks][].
+        """
+        return bool(self.config_data.get("preserve_symlinks", False))
+
+    @cached_property
     def local_abspath(self) -> Path:
         """Get the absolute path to the template on disk.
 
@@ -460,7 +468,9 @@ class Template:
                 checkout_latest_tag(result, self.use_prereleases)
         if not result.is_dir():
             raise ValueError("Local template must be a directory.")
-        return result.absolute()
+        with suppress(OSError):
+            result = result.resolve()
+        return result
 
     @cached_property
     def url_expanded(self) -> str:

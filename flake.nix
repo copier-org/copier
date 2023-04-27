@@ -2,10 +2,17 @@
   description = "Source code project lifecycle management tool";
 
   nixConfig = {
-    extra-trusted-public-keys = "copier.cachix.org-1:sVkdQyyNXrgc53qXPCH9zuS91zpt5eBYcg7JQSmTBG4=";
-    extra-substituters = "https://copier.cachix.org";
+    # HACK https://github.com/NixOS/nix/issues/6771
+    # TODO Leave only own cache settings when fixed
+    extra-trusted-public-keys = [
+      "copier.cachix.org-1:sVkdQyyNXrgc53qXPCH9zuS91zpt5eBYcg7JQSmTBG4="
+      "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
+    ];
+    extra-substituters = [
+      "https://copier.cachix.org"
+      "https://devenv.cachix.org"
+    ];
   };
-
   inputs = {
     devenv.url = "github:cachix/devenv/v0.5";
     flake-compat = {
@@ -34,14 +41,9 @@
           name = "copier-${version}";
           POETRY_DYNAMIC_VERSIONING_BYPASS = version;
           projectDir = ./.;
-          overrides = pkgs.poetry2nix.overrides.withDefaults (final: prev: {
-            pydantic = prev.pydantic.overrideAttrs (old: {
-              buildInputs = old.buildInputs ++ [pkgs.libxcrypt];
-            });
-          });
 
           # Test configuration
-          nativeCheckInputs = [pkgs.git];
+          propagatedNativeBuildInputs = [pkgs.git];
           pythonImportsCheck = ["copier"];
           doCheck = true;
           installCheckPhase = ''

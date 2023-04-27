@@ -178,3 +178,17 @@ class TemporaryDirectory(tempfile.TemporaryDirectory):
     @staticmethod
     def _robust_cleanup(name):
         shutil.rmtree(name, ignore_errors=False, onerror=handle_remove_readonly)
+
+
+def readlink(link: Path) -> Path:
+    """A custom version of os.readlink/pathlib.Path.readlink.
+
+    pathlib.Path.readlink is what we ideally would want to use, but it is only available on python>=3.9.
+    os.readlink doesn't support Path and bytes on Windows for python<3.8
+    """
+    if sys.version_info >= (3, 9):
+        return link.readlink()
+    elif sys.version_info >= (3, 8) or os.name != "nt":
+        return Path(os.readlink(link))
+    else:
+        return Path(os.readlink(str(link)))

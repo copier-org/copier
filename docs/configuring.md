@@ -356,7 +356,7 @@ cannot use Jinja templating in your answers.
 The `copier.yml` file supports multiple documents as well as using the `!include` tag to
 include settings and questions from other YAML files. This allows you to split up a
 larger `copier.yml` and enables you to reuse common partial sections from your
-templates. When multiple documents are used, care has to be taken with question and
+templates. When multiple documents are used, care has to be taken with questions and
 settings that are defined in more than one document:
 
 -   A question with the same name overwrites definitions from an earlier document.
@@ -498,6 +498,136 @@ your_project
 You can either use any separator, like `.`, and replace it with `_copier_conf.sep`, like
 in the example above, or just use `/` in the answer (works on Windows too).
 
+## Importing Jinja templates and macros
+
+You can
+[include templates](https://jinja.palletsprojects.com/en/3.1.x/templates/#include) and
+[import macros](https://jinja.palletsprojects.com/en/3.1.x/templates/#import) to reduce
+code duplication. A common scenario is the derivation of new values from answers, e.g.
+computing the slug of a human-readable name:
+
+```yaml title="copier.yml"
+_exclude:
+    - name-slug
+
+name:
+    type: str
+    help: A nice human-readable name
+
+slug:
+    type: str
+    help: A slug of the name
+    default: "{% include 'name-slug.jinja' %}"
+```
+
+```jinja title="name-slug.jinja"
+{# For simplicity ... -#}
+{{ name|lower|replace(' ', '-') }}
+```
+
+```tree result="shell"
+your_template
+    copier.yml
+    name-slug.jinja
+```
+
+It is also possible to include a template in a templated folder name
+
+```tree result="shell"
+your_template
+    copier.yml
+    name-slug.jinja
+    {% include 'name-slug.jinja' %}
+        __init__.py
+```
+
+or in a templated file name
+
+```tree result="shell"
+your_template
+    copier.yml
+    name-slug.jinja
+    {% include 'name-slug.jinja' %}.py
+```
+
+or in the templated content of a text file:
+
+```toml title="pyproject.toml.jinja"
+[project]
+name = "{% include 'name-slug.jinja' %}"
+# ...
+```
+
+Similarly, a Jinja macro can be defined
+
+```jinja title="slugify.jinja"
+{# For simplicity ... -#}
+{% macro slugify(value) -%}
+{{ value|lower|replace(' ', '-') }}
+{%- endmacro %}
+```
+
+and imported, e.g. in `copier.yml`
+
+```yaml title="copier.yml"
+_exclude:
+    - slugify
+
+name:
+    type: str
+    help: A nice human-readable name
+
+slug:
+    type: str
+    help: A slug of the name
+    default: "{% from 'slugify.jinja' import slugify %}{{ slugify(name) }}"
+```
+
+or in a templated folder name, in a templated file name, or in the templated content of
+a text file.
+
+!!! info
+
+    Import/Include paths are relative to the template root.
+
+As the number of imported templates and macros grows, you may want to place them in a
+dedicated folder such as `includes`:
+
+```tree result="shell"
+your_template
+    copier.yml
+    includes
+        name-slug.jinja
+        slugify.jinja
+        ...
+```
+
+Then, make sure to [exclude](#exclude) this folder
+
+```yaml title="copier.yml"
+_exclude:
+    - includes
+```
+
+or use a [subdirectory](#subdirectory), e.g.:
+
+```yaml title="copier.yml"
+_subdirectory: template
+```
+
+In addition, Jinja include and import statements will need to use a POSIX path separator
+(also on Windows) which is not supported in templated folder and file names. For this
+reason, Copier provides a function
+`pathjoin(*paths: str, mode: Literal["posix", "windows", "native"] = "posix")`:
+
+```jinja
+{% include pathjoin('includes', 'name-slug.jinja') %}
+```
+
+```jinja
+{% from pathjoin('includes', 'slugify.jinja') import slugify %}
+```
+
 ## Available settings
 
 Template settings alter how the template is rendered.
@@ -556,6 +686,28 @@ When updating a project, sometimes Copier doesn't know what to do with a diff co
 This option controls the output format if this happens. The default, `rej`, creates
 `*.rej` files that contain the unresolved diffs. The `inline` option includes the diff
 code hunk in the file itself, similar to the behavior of `git merge`.
+
+!!! info
+
+    Not supported in `copier.yml`.
+
+### `context_lines`
+
+-   Format: `Int`
+-   CLI flags: `-c`, `--context-lines` (only available in `copier update` subcommand)
+-   Default value: `1`
+
+During a project update, Copier needs to compare the template evolution with the
+subproject evolution. This way, it can detect what changed, where and how to merge those
+changes. [Refer here for more details on this process](./updating.md).
+
+The more lines you use, the more accurate Copier will be when detecting conflicts. But
+you will also have more conflicts to solve by yourself. FWIW, Git uses 3 lines by
+default.
+
+The less lines you use, the less conflicts you will have. However, Copier will not be so
+accurate and could even move lines around if the file it's comparing has several similar
+code chunks.
 
 !!! info
 
@@ -689,7 +841,12 @@ Also don't ask questions to the user; just use default values
 -   CLI flags: `--defaults`
 -   Default value: `False`
 
-Use default answers to questions, which might be null if not specified.
+Use default answers to questions.
+
+!!! attention
+
+    Any question that does not have a default value must be answered
+    [via CLI/API](#data). Otherwise, an error is raised.
 
 !!! info
 
@@ -900,6 +1057,18 @@ Run but do not make any changes.
 
     Not supported in `copier.yml`.
 
+### `preserve_symlinks`
+
+-   Format: `bool`
+-   CLI flags: N/A
+-   Default value: `False`
+
+Keep symlinks as symlinks. If this is set to `False` symlinks will be replaced with the
+file they point to.
+
+When set to `True` and the symlink ends with the template suffix (`.jinja` by default)
+the target path of the symlink will be rendered as a jinja template.
+
 ### `quiet`
 
 -   Format: `bool`
@@ -1052,20 +1221,24 @@ Commands to execute after generating or updating a project from your template.
 
 They run ordered, and with the `$STAGE=task` variable in their environment.
 
-Example `copier.yml`:
+!!! example
 
-```yaml
-_tasks:
-    # Strings get executed under system's default shell
-    - "git init"
-    - "rm {{ name_of_the_project }}/README.md"
-    # Arrays are executed without shell, saving you the work of escaping arguments
-    - [invoke, "--search-root={{ _copier_conf.src_path }}", after-copy]
-    # You are able to output the full conf to JSON, to be parsed by your script
-    - [invoke, end-process, "--full-conf={{ _copier_conf|to_json }}"]
-    # Your script can be run by the same Python environment used to run Copier
-    - ["{{ _copier_python }}", task.py]
-```
+    ```yaml title="copier.yml"
+    _tasks:
+        # Strings get executed under system's default shell
+        - "git init"
+        - "rm {{ name_of_the_project }}/README.md"
+        # Arrays are executed without shell, saving you the work of escaping arguments
+        - [invoke, "--search-root={{ _copier_conf.src_path }}", after-copy]
+        # You are able to output the full conf to JSON, to be parsed by your script
+        - [invoke, end-process, "--full-conf={{ _copier_conf|to_json }}"]
+        # Your script can be run by the same Python environment used to run Copier
+        - ["{{ _copier_python }}", task.py]
+    ```
+
+    Note: the example assumes you use [Invoke](https://www.pyinvoke.org/) as
+    your task manager. But it's just an example. The point is that we're showing
+    how to build and call commands.
 
 ### `templates_suffix`
 

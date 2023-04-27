@@ -4,6 +4,63 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v7.2.0 (2023-04-19)
+
+### Feat
+
+-   customizable update accuracy
+
+### Fix
+
+-   fix using a branch name as VCS ref
+-   answer validation for question with complex choices (#1110)
+
+## v7.1.0 (2023-04-07)
+
+### Feat
+
+-   include git in flake app
+-   support preserving symlinks when copying templates (#938)
+-   allow imports in inline templates (#986)
+-   properly support update in repo subdirectory (#1069)
+-   allow templating `_answers_file` setting (#1027)
+-   let answers file exist in a subdirectory
+-   validate answers given via CLI/API
+-   exclude nothing by default when using subdirectory
+-   add native OS directory separator variable in `_copier_conf.sep` to allow generating
+    dynamic directory structures
+-   nix support
+
+### Fix
+
+-   include dirty local changes when copying HEAD
+-   require answer for questions without default value (#958)
+-   **cleanup**: don't clean up local template in parent folder
+-   delete conditionally created file when answer changes (#982)
+-   properly support diffs over updates with new interactive answers
+-   ignore Git hooks during project update (#1066)
+-   properly support diffs over updates with new answers
+-   skip tasks in pretend mode (#970)
+-   parse CLI data using question's answer parser
+-   don't set YAML `!include` constructor globally (#947)
+-   **cli**: use `--conflict` flag only in `copier update` subcommand
+-   ignore template repo tags that aren't valid PEP 440 versions
+-   --skip option was ignored (#966)
+-   Remove useless is_dir check
+-   don't attempt to render a file if its name is empty
+-   warn users against using shallow clones as template source
+
+### Refactor
+
+-   **tests**: remove unknown timeout marker
+-   deduplicate code
+-   remove unused method argument
+-   simplify casting boolean question settings
+-   remove useless code related to not asking a question
+-   **typing**: use `Mapping` instead of `ChainMap` type
+-   move unrelated code out of try-except block
+-   **inline**: smarter inline conflict markers algorithm
+
 ## v7.1.0a0 (2022-12-29)
 
 ### Feat

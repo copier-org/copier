@@ -12,6 +12,31 @@ powers features such as [updating](../updating) or the ability of
     copier copy https://github.com/me/my-template.git ./my-preexisting-git-project
     ```
 
+## How to use Copier from Docker or Podman?
+
+Copier doesn't provide an image by default. However, it does provide a nix package, so
+you can use Nix to run Copier reproducibly from within a container:
+
+```shell
+# Change for docker if needed
+engine=podman
+
+# You can pin the version; example: github:copier-org/copier/v8.0.0
+copier=github:copier-org/copier
+
+$engine container run --rm -it docker.io/nixos/nix \
+    nix --extra-experimental-features 'nix-command flakes' --accept-flake-config \
+    run $copier -- --help
+```
+
+You can even generate a reproducible minimal docker image with just Copier inside, with:
+
+```shell
+nix bundle --bundler github:NixOS/bundlers#toDockerImage \
+    github:copier-org/copier#packages.x86_64-linux.default
+docker load < python*copier*.tar.gz
+```
+
 ## How can I alter the context before rendering the project?
 
 Similar questions:
@@ -116,3 +141,42 @@ names!
 If the repository containing the template is a shallow clone, the git process called by
 Copier might consume unusually high resources. To avoid that, use a fully-cloned
 repository.
+
+## While developing, why the template doesn't include dirty changes?
+
+Copier follows [a specific algorithm](./configuring.md#templates-versions) to choose
+what reference to use from the template. It also
+[includes dirty changes in the `HEAD` ref while developing locally](./configuring.md#copying-dirty-changes).
+
+However, did you make sure you are selecting the `HEAD` ref for copying?
+
+Imagine this is the status of your dirty template in `./src`:
+
+```shell
+$ git -C ./src status --porcelain=v1
+?? new-file.txt
+
+$ git -C ./src tag
+v1.0.0
+v2.0.0
+```
+
+Now, if you copy that template into a folder like this:
+
+```shell
+$ copier copy ./src ./dst
+```
+
+... you'll notice there's no `new-file.txt`. Why?
+
+Well, Copier indeed included that into the `HEAD` ref. However, it still selected
+`v2.0.0` as the ref to copy, because that's what Copier does.
+
+However, if you do this:
+
+```shell
+$ copier -r HEAD copy ./src ./dst
+```
+
+... then you'll notice `new-file.txt` does exist. You passed a specific ref to copy, so
+Copier skips its autodetection and just goes for the `HEAD` you already chose.
