@@ -27,7 +27,7 @@ from pydantic.json import pydantic_encoder
 from questionary import unsafe_prompt
 
 from .errors import CopierAnswersInterrupt, ExtensionNotFoundError, UserMessageError
-from .jinja import JsonSchemaFilter
+from .jinja import JsonSchemaExtension
 from .subproject import Subproject
 from .template import Task, Template
 from .tools import Style, TemporaryDirectory, printf, readlink
@@ -445,6 +445,7 @@ class Worker:
         loader = FileSystemLoader(paths)
         default_extensions = [
             "jinja2_ansible_filters.AnsibleCoreFiltersExtension",
+            JsonSchemaExtension,
         ]
         extensions = default_extensions + list(self.template.jinja_extensions)
         # We want to minimize the risk of hidden malware in the templates
@@ -465,9 +466,6 @@ class Worker:
         env.filters["to_json"] = partial(
             env.filters["to_json"], default=pydantic_encoder
         )
-
-        # Add a filter to validate a JSON/YAML document using JSON Schema.
-        env.filters["jsonschema"] = JsonSchemaFilter(self.template.local_abspath)
 
         # Add a global function to join filesystem paths.
         separators = {

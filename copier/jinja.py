@@ -1,27 +1,23 @@
-from pathlib import Path, PurePosixPath
 from platform import system
-from typing import Any, Optional
-from urllib.parse import urldefrag, urlparse
+from typing import Any, ClassVar, Optional
+from urllib.parse import urlparse
 from urllib.request import url2pathname, urlopen
 
 import jsonschema
 import yaml
+from jinja2 import Environment, TemplateNotFound
+from jinja2.ext import Extension
 
-from .errors import PathNotRelativeError
 
+class JsonSchemaExtension(Extension):
+    """Jinja extension for validating data against a JSON Schema document."""
 
-class JsonSchemaFilter:
-    """Jinja filter for validating data against a JSON Schema document.
+    # HACK https://github.com/python-jsonschema/jsonschema/issues/98#issuecomment-105475109
+    _FILE_SCHEME: ClassVar[str] = "file:///" if system() == "Windows" else "file://"
 
-    Args:
-        template_root:
-            The absolute path to the template on disk.
-    """
-
-    _template_root: Path
-
-    def __init__(self, template_root: Path) -> None:
-        self._template_root = template_root
+    def __init__(self, environment: Environment) -> None:
+        super().__init__(environment)
+        environment.filters["jsonschema"] = self
 
     def __call__(
         self, instance: Any, schema_uri: str
@@ -29,14 +25,9 @@ class JsonSchemaFilter:
         if schema_uri.startswith(("http://", "https://")):
             schema = {"$ref": schema_uri}
         else:
-            schema_file, fragment = urldefrag(schema_uri)
-            schema_file_relpath = PurePosixPath(schema_file)
-            if schema_file_relpath.is_absolute():
-                raise PathNotRelativeError(path=Path(schema_file_relpath))
-            schema_file_abspath = (self._template_root / schema_file_relpath).resolve()
-            # HACK https://github.com/python-jsonschema/jsonschema/issues/98#issuecomment-105475109
-            scheme = "file:///" if system() == "Windows" else "file://"
-            schema = {"$ref": f"{scheme}{schema_file_abspath.as_posix()}#{fragment}"}
+            if not schema_uri.startswith("/"):
+                schema_uri = f"/{schema_uri}"
+            schema = {"$ref": f"{self._FILE_SCHEME}{schema_uri}"}
         try:
             return jsonschema.validate(
                 instance,
@@ -55,17 +46,16 @@ class JsonSchemaFilter:
             return exc
 
     def _resolve_local_schema(self, uri: str) -> Any:
-        schema_file_abspath = Path(url2pathname(urlparse(uri).path)).resolve()
+        schema_file = url2pathname(urlparse(uri).path)
+        if not self.environment.loader:
+            raise RuntimeError("JSON Schema extension requires a loader")
         try:
-            schema_file_abspath.relative_to(self._template_root)
-        except ValueError as exc:
-            raise ValueError(
-                f'Schema file path "{schema_file_abspath}" must resolve to a path '
-                f'under the template root "{self._template_root}"'
-            ) from exc
-        with schema_file_abspath.open() as f:
-            schema = yaml.safe_load(f)
-        return schema
+            schema, *_ = self.environment.loader.get_source(
+                self.environment, schema_file
+            )
+        except TemplateNotFound as exc:
+            raise FileNotFoundError(f'Schema file "{schema_file}" not found') from exc
+        return yaml.safe_load(schema)
 
     def _resolve_remote_schema(self, uri: str) -> Any:
         with urlopen(uri) as response:

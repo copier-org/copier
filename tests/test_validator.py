@@ -380,19 +380,15 @@ def test_jsonschema_local_ref(
     [
         (
             "schemas/schema.yaml",
-            'Schema file path ".+" must resolve to a path under the template root ".+"',
+            'Schema file ".+" not found',
         ),
         (
             "../schema.yaml",
-            'Schema file path ".+" must resolve to a path under the template root ".+"',
-        ),
-        (
-            "/schemas/schema.yaml",
-            '".+" is not a relative path',
+            'Schema file ".+" not found',
         ),
     ],
 )
-def test_jsonschema_local_invalid(
+def test_jsonschema_local_file_not_found(
     tmp_path_factory: pytest.TempPathFactory, path: str, message: str
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
