@@ -1540,6 +1540,18 @@ files = [
 ]
 
 [[package]]
+name = "types-jsonschema"
+version = "4.17.0.7"
+description = "Typing stubs for jsonschema"
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "types-jsonschema-4.17.0.7.tar.gz", hash = "sha256:130e57c5f1ca755f95775d0822ad7a3907294e1461306af54baf804f317fd54c"},
+    {file = "types_jsonschema-4.17.0.7-py3-none-any.whl", hash = "sha256:e129b52be6df841d97a98f087631dd558f7812eb91ff7b733c3301bd2446271b"},
+]
+
+[[package]]
 name = "types-psutil"
 version = "5.9.5.11"
 description = "Typing stubs for psutil"
@@ -1686,4 +1698,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.7,<4.0" # HACK https://github.com/PyCQA/isort/issues/1945
-content-hash = "8465d918ffd22e28bfc071ee3d21d13f90584fd7ca40798080eec226ac328bb6"
+content-hash = "a5d951676fa1818f38b2fda326085fe227a65688b48a21c995e5e8af37e656e2"
