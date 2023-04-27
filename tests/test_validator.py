@@ -96,7 +96,7 @@ def http_server_factory() -> Iterator[HTTPServerFactory]:
 
 
 SCHEMA = {
-    "$schema": "https://json-schema.org/draft-07/schema#",
+    "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
     "properties": {
         "age": {

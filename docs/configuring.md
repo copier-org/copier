@@ -210,7 +210,7 @@ Supported keys:
                 type: yaml
                 validator: |-
                     {% set schema | from_yaml %}
-                    $schema: "https://json-schema.org/draft-07/schema#"
+                    $schema: "http://json-schema.org/draft-07/schema#"
                     type: object
                     patternProperties:
                         "^[a-zA-Z-_.0-9]+$":
@@ -222,7 +222,7 @@ Supported keys:
         === "schemas/python-dependencies.yml"
 
             ```yaml
-            $schema: "https://json-schema.org/draft-07/schema#"
+            $schema: "http://json-schema.org/draft-07/schema#"
             type: object
             patternProperties:
                 "^[a-zA-Z-_.0-9]+$":
