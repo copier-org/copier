@@ -37,7 +37,7 @@ else:
     from typing_extensions import TypeAlias
 
 
-def serialize(data: Any, format=Literal["json", "yaml"]) -> str:
+def serialize(data: Any, format: Literal["json", "yaml"]) -> str:
     return json.dumps(data) if format == "json" else yaml.safe_dump(data)
 
 
@@ -130,7 +130,7 @@ def test_jsonschema_basic(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
     interactive: bool,
-    format: str,
+    format: Literal["json", "yaml"],
     value: Any,
     message: str,
 ) -> None:
@@ -329,7 +329,7 @@ def test_jsonschema_remote_schema(
 def test_jsonschema_local_ref_with_relative_path(
     tmp_path_factory: pytest.TempPathFactory,
     prefix: str,
-    format: str,
+    format: Literal["json", "yaml"],
     value: Any,
     message: str,
 ) -> None:
