@@ -30,7 +30,7 @@ class JsonSchemaExtension(Extension):
                     schema = f"/{schema}"
                 schema = {"$ref": f"{self._FILE_SCHEME}{schema}"}
         try:
-            return jsonschema.validate(
+            jsonschema.validate(
                 instance,
                 schema,
                 resolver=jsonschema.RefResolver(
