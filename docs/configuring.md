@@ -81,13 +81,40 @@ Supported keys:
 
         A choice value of `null` makes it become the same as its key.
 
-    !!! tip "Conditional choices"
+    !!! tip "Validation and conditional choices"
 
-        A choice can be disabled by setting its key (for dict-style or tuple-style
-        choices) or value (for list-style choices) to `""`. Disabling a choice is
-        useful when its validity depends on the answer to a previous question in which
-        case a template with a condition on this answer should render an empty string
-        when the choice should be disabled.
+        A choice can be validated by using the extended syntax with dict-style and
+        tuple-style choices. For example:
+
+        ```yaml title="copier.yml"
+        cloud:
+            type: str
+            help: Which cloud provider do you use?
+            choices:
+                - Any
+                - AWS
+                - Azure
+                - GCP
+
+        iac:
+            type: str
+            help: Which IaC tool do you use?
+            choices:
+                Terraform: tf
+                Cloud Formation:
+                    value: cf
+                    validator: "{% if cloud != 'AWS' %}Requires AWS{% endif %}"
+                Azure Resource Manager:
+                    value: arm
+                    validator: "{% if cloud != 'Azure' %}Requires Azure{% endif %}"
+                Deployment Manager:
+                    value: dm
+                    validator: "{% if cloud != 'GCP' %}Requires GCP{% endif %}"
+        ```
+
+        When the rendered validator is a non-empty string, the choice is disabled and
+        the message is shown. Choice validation is useful when the validity of a choice
+        depends on the answer to a previous question.
 
     !!! warning
 

@@ -292,12 +292,23 @@ class Question:
                 name = value = choice
             # The name must always be a str
             name = str(self.render_value(name))
-            # If the name is an empty string, ignore this choice.
-            if not name:
-                continue
+            # Extract the extended syntax for dict-like (dict-style or
+            # tuple-style) choices if applicable
+            disabled = ""
+            if isinstance(choice, (tuple, list)) and isinstance(value, dict):
+                if "value" not in value:
+                    raise KeyError("Property 'value' is required")
+                if "validator" in value and not isinstance(value["validator"], str):
+                    raise ValueError("Property 'validator' must be a string")
+                disabled = self.render_value(value.get("validator", ""))
+                value = value["value"]
             # The value can be templated
             value = self.render_value(value)
-            result.append(Choice(name, value))
+            c = Choice(name, value, disabled=disabled)
+            # Try to cast the value according to the question's type to raise
+            # an error in case the value is incompatible.
+            cast_answer_type(c.value, self.get_type_name())
+            result.append(c)
         return result
 
     def filter_answer(self, answer) -> Any:
@@ -415,13 +426,15 @@ class Question:
         """Parse the answer according to the question's type."""
         type_name = self.get_type_name()
         ans = cast_answer_type(answer, type_name)
-        choice_values = [
-            cast_answer_type(choice.value, type_name)
-            for choice in self._formatted_choices
-        ]
-        if choice_values and ans not in choice_values:
-            raise ValueError("Invalid choice")
-        return ans
+        choices = self._formatted_choices
+        if not choices:
+            return ans
+        for choice in choices:
+            if ans == cast_answer_type(choice.value, type_name):
+                if choice.disabled:
+                    raise ValueError(f"Invalid choice: {choice.disabled}")
+                return ans
+        raise ValueError("Invalid choice")
 
 
 def parse_yaml_string(string: str) -> Any:

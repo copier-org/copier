@@ -434,14 +434,28 @@ def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> N
             pytest.raises(ValueError),
         ),
         (
-            {"type": "int", "choices": [1, "", 3]},
-            "1",
+            {
+                "type": "int",
+                "choices": [1, ["2", {"value": None}], 3],
+            },
+            "2",
             does_not_raise(),
         ),
         (
-            {"type": "int", "choices": [1, "", 3]},
-            "",
-            pytest.raises(ValueError),
+            {
+                "type": "int",
+                "choices": [1, ["2", {"value": None, "disabled": ""}], 3],
+            },
+            "2",
+            does_not_raise(),
+        ),
+        (
+            {
+                "type": "int",
+                "choices": [1, ["2", {"value": None, "validator": "disabled"}], 3],
+            },
+            "2",
+            pytest.raises(ValueError, match="Invalid choice: disabled"),
         ),
         (
             {"type": "int", "choices": {"one": 1, "two": 2, "three": 3}},
@@ -454,14 +468,33 @@ def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> N
             pytest.raises(ValueError),
         ),
         (
-            {"type": "int", "choices": {"one": 1, "": 2, "three": 3}},
-            "",
-            pytest.raises(ValueError),
+            {"type": "int", "choices": {"one": 1, "two": {"value": 2}, "three": 3}},
+            "2",
+            does_not_raise(),
         ),
         (
-            {"type": "int", "choices": {"one": 1, "": 2, "three": 3}},
+            {
+                "type": "int",
+                "choices": {
+                    "one": 1,
+                    "two": {"value": 2, "validator": ""},
+                    "three": 3,
+                },
+            },
             "2",
-            pytest.raises(ValueError),
+            does_not_raise(),
+        ),
+        (
+            {
+                "type": "int",
+                "choices": {
+                    "one": 1,
+                    "two": {"value": 2, "validator": "disabled"},
+                    "three": 3,
+                },
+            },
+            "2",
+            pytest.raises(ValueError, match="Invalid choice: disabled"),
         ),
         (
             {"type": "str", "choices": {"one": None, "two": None, "three": None}},
@@ -507,6 +540,82 @@ def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> N
             {"type": "yaml", "choices": {"object": "k: v"}},
             "k: v",
             does_not_raise(),
+        ),
+        (
+            {"type": "yaml", "choices": {"complex": {"value": {"key": "value"}}}},
+            "key: value",
+            does_not_raise(),
+        ),
+        (
+            {
+                "type": "yaml",
+                "choices": {"complex": {"value": {"key": "value"}, "validator": ""}},
+            },
+            "key: value",
+            does_not_raise(),
+        ),
+        (
+            {
+                "type": "yaml",
+                "choices": {
+                    "complex": {"value": {"key": "value"}, "validator": "disabled"}
+                },
+            },
+            "key: value",
+            pytest.raises(ValueError, match="Invalid choice: disabled"),
+        ),
+        (
+            {"type": "yaml", "choices": {"complex": {"key": "value"}}},
+            "key: value",
+            pytest.raises(KeyError, match="Property 'value' is required"),
+        ),
+        (
+            {"type": "yaml", "choices": {"complex": {"value": 1, "validator": {}}}},
+            "1",
+            pytest.raises(ValueError, match="Property 'validator' must be a string"),
+        ),
+        (
+            {"type": "yaml", "choices": [{"key": "value"}]},
+            "key: value",
+            does_not_raise(),
+        ),
+        (
+            {"type": "yaml", "choices": [{"value": 1, "validator": {}}]},
+            "value: 1\nvalidator: {}",
+            does_not_raise(),
+        ),
+        (
+            {"type": "yaml", "choices": [["complex", {"value": {"key": "value"}}]]},
+            "key: value",
+            does_not_raise(),
+        ),
+        (
+            {
+                "type": "yaml",
+                "choices": [["complex", {"value": {"key": "value"}, "validator": ""}]],
+            },
+            "key: value",
+            does_not_raise(),
+        ),
+        (
+            {
+                "type": "yaml",
+                "choices": [
+                    ["complex", {"value": {"key": "value"}, "validator": "disabled"}]
+                ],
+            },
+            "key: value",
+            pytest.raises(ValueError, match="Invalid choice: disabled"),
+        ),
+        (
+            {"type": "yaml", "choices": [["complex", {"key": "value"}]]},
+            "key: value",
+            pytest.raises(KeyError, match="Property 'value' is required"),
+        ),
+        (
+            {"type": "yaml", "choices": [["complex", {"value": 1, "validator": {}}]]},
+            "1",
+            pytest.raises(ValueError, match="Property 'validator' must be a string"),
         ),
     ],
 )

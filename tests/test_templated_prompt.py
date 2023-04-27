@@ -274,54 +274,90 @@ def test_templated_prompt_invalid(
 
 
 @pytest.mark.parametrize(
-    "terraform_version, terragrunt_versions",
+    "cloud, iac_choices",
     [
-        ("1.2", ["0.41", "0.40", "0.39", "0.38"]),
-        ("1.3", ["0.41", "0.40"]),
+        (
+            "Any",
+            [
+                "Terraform",
+                "Cloud Formation (Requires AWS)",
+                "Azure Resource Manager (Requires Azure)",
+                "Deployment Manager (Requires GCP)",
+            ],
+        ),
+        (
+            "AWS",
+            [
+                "Terraform",
+                "Cloud Formation",
+                "Azure Resource Manager (Requires Azure)",
+                "Deployment Manager (Requires GCP)",
+            ],
+        ),
+        (
+            "Azure",
+            [
+                "Terraform",
+                "Cloud Formation (Requires AWS)",
+                "Azure Resource Manager",
+                "Deployment Manager (Requires GCP)",
+            ],
+        ),
+        (
+            "GCP",
+            [
+                "Terraform",
+                "Cloud Formation (Requires AWS)",
+                "Azure Resource Manager (Requires Azure)",
+                "Deployment Manager",
+            ],
+        ),
     ],
 )
 def test_templated_prompt_with_conditional_choices(
     tmp_path_factory: pytest.TempPathFactory,
-    spawn,
-    terraform_version,
-    terragrunt_versions,
+    spawn: Spawn,
+    cloud: str,
+    iac_choices: str,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
             (src / "copier.yml"): (
                 """\
-                terraform_version:
+                cloud:
                     type: str
-                    help: Which Terraform version do you want to use?
+                    help: Which cloud provider do you use?
                     choices:
-                        - "1.3"
-                        - "1.2"
+                        - Any
+                        - AWS
+                        - Azure
+                        - GCP
 
-                terragrunt_version:
+                iac:
                     type: str
-                    help: Which Terragrunt version do you want to use?
+                    help: Which IaC tool do you use?
                     choices:
-                        - "{% if terraform_version.split('.')|map('int')|list <= [1, 3] %}0.41{% endif %}"
-                        - "{% if terraform_version.split('.')|map('int')|list <= [1, 3] %}0.40{% endif %}"
-                        - "{% if terraform_version.split('.')|map('int')|list <= [1, 2] %}0.39{% endif %}"
-                        - "{% if terraform_version.split('.')|map('int')|list <= [1, 2] %}0.38{% endif %}"
+                        Terraform: tf
+                        Cloud Formation:
+                            value: cf
+                            validator: "{% if cloud != 'AWS' %}Requires AWS{% endif %}"
+                        Azure Resource Manager:
+                            value: arm
+                            validator: "{% if cloud != 'Azure' %}Requires Azure{% endif %}"
+                        Deployment Manager:
+                            value: dm
+                            validator: "{% if cloud != 'GCP' %}Requires GCP{% endif %}"
                 """
             ),
             (src / "result.jinja"): "{{question}}",
         }
     )
     tui = spawn(
-        COPIER_PATH
-        + (f"--data=terraform_version={terraform_version}", "copy", str(src), str(dst)),
+        COPIER_PATH + (f"--data=cloud={cloud}", "copy", str(src), str(dst)),
         timeout=10,
     )
-    expect_prompt(
-        tui,
-        "terragrunt_version",
-        "str",
-        help="Which Terragrunt version do you want to use?",
-    )
-    for terragrunt_version in terragrunt_versions:
-        tui.expect_exact(terragrunt_version)
+    expect_prompt(tui, "iac", "str", help="Which IaC tool do you use?")
+    for iac in iac_choices:
+        tui.expect_exact(iac)
     tui.sendline()
