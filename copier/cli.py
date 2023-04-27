@@ -119,7 +119,7 @@ class CopierApp(cli.Application):
     CALL_MAIN_IF_NESTED_COMMAND = False
     data: AnyByStrDict = {}
 
-    answers_file: cli.SwitchAttr = cli.SwitchAttr(
+    answers_file = cli.SwitchAttr(
         ["-a", "--answers-file"],
         default=None,
         help=(
@@ -127,7 +127,7 @@ class CopierApp(cli.Application):
             "to find the answers file"
         ),
     )
-    exclude: cli.SwitchAttr = cli.SwitchAttr(
+    exclude = cli.SwitchAttr(
         ["-x", "--exclude"],
         str,
         list=True,
@@ -136,7 +136,7 @@ class CopierApp(cli.Application):
             "that must not be copied"
         ),
     )
-    vcs_ref: cli.SwitchAttr = cli.SwitchAttr(
+    vcs_ref = cli.SwitchAttr(
         ["-r", "--vcs-ref"],
         str,
         help=(
@@ -146,29 +146,27 @@ class CopierApp(cli.Application):
             "the latest version, use `--vcs-ref=HEAD`."
         ),
     )
-    pretend: cli.Flag = cli.Flag(
-        ["-n", "--pretend"], help="Run but do not make any changes"
-    )
-    force: cli.Flag = cli.Flag(
+    pretend = cli.Flag(["-n", "--pretend"], help="Run but do not make any changes")
+    force = cli.Flag(
         ["-f", "--force"],
         help="Same as `--defaults --overwrite`.",
     )
-    defaults: cli.Flag = cli.Flag(
+    defaults = cli.Flag(
         ["-l", "--defaults"],
         help="Use default answers to questions, which might be null if not specified.",
     )
-    overwrite: cli.Flag = cli.Flag(
+    overwrite = cli.Flag(
         ["-w", "--overwrite"],
         help="Overwrite files that already exist, without asking.",
     )
-    skip: cli.SwitchAttr = cli.SwitchAttr(
+    skip = cli.SwitchAttr(
         ["-s", "--skip"],
         str,
         list=True,
         help="Skip specified files if they exist already",
     )
-    quiet: cli.Flag = cli.Flag(["-q", "--quiet"], help="Suppress status output")
-    prereleases: cli.Flag = cli.Flag(
+    quiet = cli.Flag(["-q", "--quiet"], help="Suppress status output")
+    prereleases = cli.Flag(
         ["-g", "--prereleases"],
         help="Use prereleases to compare template VCS tags.",
     )
@@ -269,7 +267,7 @@ class CopierCopySubApp(cli.Application):
 
     DESCRIPTION = "Copy from a template source to a destination."
 
-    cleanup_on_error: cli.Flag = cli.Flag(
+    cleanup_on_error = cli.Flag(
         ["-C", "--no-cleanup"],
         default=True,
         help="On error, do not delete destination if it was created by Copier.",
@@ -321,7 +319,7 @@ class CopierUpdateSubApp(cli.Application):
         """
     )
 
-    conflict: cli.SwitchAttr = cli.SwitchAttr(
+    conflict = cli.SwitchAttr(
         ["-o", "--conflict"],
         cli.Set("rej", "inline"),
         default="rej",
@@ -330,7 +328,7 @@ class CopierUpdateSubApp(cli.Application):
             "markers (inline is still experimental)"
         ),
     )
-    context_lines: cli.SwitchAttr = cli.SwitchAttr(
+    context_lines = cli.SwitchAttr(
         ["-c", "--context-lines"],
         int,
         default=1,
