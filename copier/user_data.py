@@ -84,9 +84,6 @@ class AnswersMap:
     """Object that gathers answers from different sources.
 
     Attributes:
-        local:
-            Local overrides to other answers.
-
         user:
             Answers provided by the user, interactively.
 
@@ -118,7 +115,6 @@ class AnswersMap:
     """
 
     # Private
-    local: AnyByStrDict = field(default_factory=dict, init=False)
     removed: Set[str] = field(default_factory=set, init=False)
 
     # Public
@@ -134,7 +130,6 @@ class AnswersMap:
         """Answers combined from different sources, sorted by priority."""
         combined = dict(
             ChainMap(
-                self.local,
                 self.user,
                 self.init,
                 self.metadata,
