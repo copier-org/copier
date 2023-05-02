@@ -16,6 +16,7 @@ from typing import (
     Mapping,
     Optional,
     Sequence,
+    Set,
     Union,
 )
 
@@ -83,9 +84,6 @@ class AnswersMap:
     """Object that gathers answers from different sources.
 
     Attributes:
-        local:
-            Local overrides to other answers.
-
         user:
             Answers provided by the user, interactively.
 
@@ -117,7 +115,7 @@ class AnswersMap:
     """
 
     # Private
-    local: AnyByStrDict = field(default_factory=dict, init=False)
+    removed: Set[str] = field(default_factory=set, init=False)
 
     # Public
     user: AnyByStrDict = field(default_factory=dict)
@@ -127,23 +125,32 @@ class AnswersMap:
     user_defaults: AnyByStrDict = field(default_factory=dict)
     default: AnyByStrDict = field(default_factory=dict)
 
-    @cached_property
+    @property
     def combined(self) -> Mapping[str, Any]:
         """Answers combined from different sources, sorted by priority."""
-        return ChainMap(
-            self.local,
-            self.user,
-            self.init,
-            self.metadata,
-            self.last,
-            self.user_defaults,
-            self.default,
-            DEFAULT_DATA,
+        combined = dict(
+            ChainMap(
+                self.user,
+                self.init,
+                self.metadata,
+                self.last,
+                self.user_defaults,
+                self.default,
+                DEFAULT_DATA,
+            )
         )
+        for key in self.removed:
+            if key in combined:
+                del combined[key]
+        return combined
 
     def old_commit(self) -> OptStr:
         """Commit when the project was updated from this template the last time."""
         return self.last.get("_commit")
+
+    def remove(self, key: str) -> None:
+        """Remove an answer by key."""
+        self.removed.add(key)
 
 
 @dataclass(config=AllowArbitraryTypes)
@@ -202,7 +209,7 @@ class Question:
     var_name: str
     answers: AnswersMap
     jinja_env: SandboxedEnvironment
-    choices: Union[Dict[Any, Any], Sequence[Any]] = field(default_factory=list)
+    choices: Union[Sequence[Any], Dict[Any, Any]] = field(default_factory=list)
     default: Any = MISSING
     help: str = ""
     multiline: Union[str, bool] = False
@@ -341,7 +348,7 @@ class Question:
             "mouse_support": True,
             "name": self.var_name,
             "qmark": "🕵️" if self.secret else "🎤",
-            "when": self.get_when,
+            "when": lambda _: self.get_when(),
         }
         default = self.get_default_rendered()
         if default is not MISSING:
@@ -399,7 +406,7 @@ class Question:
             raise ValidationError(message=err_msg)
         return True
 
-    def get_when(self, answers) -> bool:
+    def get_when(self) -> bool:
         """Get skip condition for question."""
         return cast_str_to_bool(self.render_value(self.when))
 

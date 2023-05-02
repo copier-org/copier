@@ -390,6 +390,12 @@ class Worker:
                 var_name=var_name,
                 **details,
             )
+            # Skip a question when the skip condition is met and remove any data
+            # from the answers map, so no answer for this question is recorded
+            # in the answers file.
+            if not question.get_when():
+                result.remove(var_name)
+                continue
             if var_name in result.init:
                 # Try to parse the answer value.
                 answer = question.parse_answer(result.init[var_name])
@@ -413,15 +419,7 @@ class Worker:
                     )[question.var_name]
             except KeyboardInterrupt as err:
                 raise CopierAnswersInterrupt(result, question, self.template) from err
-            previous_answer = result.combined.get(question.var_name)
-            # If question was skipped and it's the 1st
-            # run, you could be getting a raw templated value
-            default_answer = result.default.get(question.var_name)
-            if new_answer == default_answer:
-                new_answer = question.render_value(default_answer)
-                new_answer = question.filter_answer(new_answer)
-            if new_answer != previous_answer:
-                result.user[question.var_name] = new_answer
+            result.user[var_name] = new_answer
 
         return result
 
