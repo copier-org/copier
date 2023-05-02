@@ -541,11 +541,19 @@ def test_validate_init_data_with_skipped_question(
                     help: any string foo?
                 """
             ),
+            (src / "result.jinja"): (
+                """\
+                [[ kind ]]
+                [[ testbar ]]
+                [[ testfoo ]]
+                """
+            ),
         }
     )
     copier.copy(
         str(src), dst, defaults=defaults, data={"kind": "foo", "testfoo": "helloworld"}
     )
+    assert (dst / "result").read_text() == "foo\n\nhelloworld\n"
 
 
 @pytest.mark.parametrize(
