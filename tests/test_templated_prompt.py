@@ -271,3 +271,93 @@ def test_templated_prompt_invalid(
     else:
         worker.run_copy()
         assert (dst / "result").read_text() == returns
+
+
+@pytest.mark.parametrize(
+    "cloud, iac_choices",
+    [
+        (
+            "Any",
+            [
+                "Terraform",
+                "Cloud Formation (Requires AWS)",
+                "Azure Resource Manager (Requires Azure)",
+                "Deployment Manager (Requires GCP)",
+            ],
+        ),
+        (
+            "AWS",
+            [
+                "Terraform",
+                "Cloud Formation",
+                "Azure Resource Manager (Requires Azure)",
+                "Deployment Manager (Requires GCP)",
+            ],
+        ),
+        (
+            "Azure",
+            [
+                "Terraform",
+                "Cloud Formation (Requires AWS)",
+                "Azure Resource Manager",
+                "Deployment Manager (Requires GCP)",
+            ],
+        ),
+        (
+            "GCP",
+            [
+                "Terraform",
+                "Cloud Formation (Requires AWS)",
+                "Azure Resource Manager (Requires Azure)",
+                "Deployment Manager",
+            ],
+        ),
+    ],
+)
+def test_templated_prompt_with_conditional_choices(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    cloud: str,
+    iac_choices: str,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                """\
+                cloud:
+                    type: str
+                    help: Which cloud provider do you use?
+                    choices:
+                        - Any
+                        - AWS
+                        - Azure
+                        - GCP
+
+                iac:
+                    type: str
+                    help: Which IaC tool do you use?
+                    choices:
+                        Terraform: tf
+                        Cloud Formation:
+                            value: cf
+                            validator: "{% if cloud != 'AWS' %}Requires AWS{% endif %}"
+                        Azure Resource Manager:
+                            value: arm
+                            validator: "{% if cloud != 'Azure' %}Requires Azure{% endif %}"
+                        Deployment Manager:
+                            value: dm
+                            validator: "{% if cloud != 'GCP' %}Requires GCP{% endif %}"
+                """
+            ),
+            (src / "result.jinja"): "{{question}}",
+        }
+    )
+    tui = spawn(
+        COPIER_PATH + (f"--data=cloud={cloud}", "copy", str(src), str(dst)),
+        timeout=10,
+    )
+    expect_prompt(tui, "iac", "str", help="Which IaC tool do you use?")
+    for iac in iac_choices:
+        tui.expect_exact(iac)
+    tui.sendline()
