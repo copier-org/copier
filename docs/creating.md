@@ -21,7 +21,7 @@ my_copier_template                            # your template project
     .git/                                     # your template is a Git repository
     {{project_name}}                          # a folder with a templated name
         {{module_name}}.py.jinja              # a file with a templated name
-        {{_copier_conf.answers_file}}.jinja   # answers are recorded here
+    {{_copier_conf.answers_file}}.jinja       # answers are recorded here
 ```
 
 ```yaml title="copier.yml"
