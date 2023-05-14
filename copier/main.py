@@ -597,10 +597,10 @@ class Worker:
         if not self.pretend:
             dst_abspath.mkdir(parents=True, exist_ok=True)
         for file in src_abspath.iterdir():
-            if file.is_dir():
-                self._render_folder(file)
-            elif file.is_symlink() and self.template.preserve_symlinks:
+            if file.is_symlink() and self.template.preserve_symlinks:
                 self._render_symlink(file)
+            elif file.is_dir():
+                self._render_folder(file)
             else:
                 self._render_file(file)
 
