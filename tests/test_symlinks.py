@@ -385,3 +385,16 @@ def test_copy_symlink_none_path(tmp_path_factory):
     assert os.path.exists(dst / "target.txt")
     assert not os.path.exists(dst / "symlink.txt")
     assert not os.path.islink(dst / "symlink.txt")
+
+
+def test_recursive_symlink(tmp_path_factory: pytest.TempPathFactory):
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "copier.yaml": "_preserve_symlinks: true",
+            src / "one" / "two" / "three" / "root": Path("../../../"),
+        }
+    )
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    assert (dst / "one" / "two" / "three" / "root").is_symlink()
+    assert readlink(dst / "one" / "two" / "three" / "root") == Path("../../../")
