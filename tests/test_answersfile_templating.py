@@ -42,7 +42,7 @@ def test_answersfile_templating(
     copy that resolves to a different answers file doesn't clobber the
     old answers file.
     """
-    copier.copy(
+    copier.run_copy(
         template_path,
         tmp_path,
         {"module_name": "mymodule"},
@@ -59,7 +59,7 @@ def test_answersfile_templating(
     answers = load_answersfile_data(tmp_path, first_answers_file)
     assert answers["module_name"] == "mymodule"
 
-    copier.copy(
+    copier.run_copy(
         template_path,
         tmp_path,
         {"module_name": "anothermodule"},

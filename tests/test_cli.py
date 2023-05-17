@@ -54,7 +54,15 @@ def template_path_with_dot_config(
 
 def test_good_cli_run(template_path: str, tmp_path: Path) -> None:
     run_result = CopierApp.run(
-        ["--quiet", "-a", "altered-answers.yml", template_path, str(tmp_path)],
+        [
+            "copier",
+            "copy",
+            "--quiet",
+            "-a",
+            "altered-answers.yml",
+            template_path,
+            str(tmp_path),
+        ],
         exit=False,
     )
     a_txt = tmp_path / "a.txt"
@@ -114,7 +122,7 @@ def test_cli_data_parsed_by_question_type(
         }
     )
     run_result = CopierApp.run(
-        ["--quiet", f"--data=question={answer}", str(src), str(dst)],
+        ["copier", "copy", f"--data=question={answer}", str(src), str(dst), "--quiet"],
         exit=False,
     )
     assert run_result[1] == 0
@@ -147,9 +155,11 @@ def test_good_cli_run_dot_config(
 
     run_result = CopierApp.run(
         [
+            "copier",
+            "copy",
             "--quiet",
             "-a",
-            config_folder / "altered-answers.yml",
+            str(config_folder / "altered-answers.yml"),
             src,
             str(tmp_path),
         ],
@@ -168,8 +178,16 @@ def test_good_cli_run_dot_config(
     with local.cwd(str(tmp_path)):
         git_commands()
 
-    run_update = CopierApp.invoke(
-        str(tmp_path), answers_file=config_folder / "altered-answers.yml", quiet=True
+    run_update = CopierApp.run(
+        [
+            "copier",
+            "update",
+            str(tmp_path),
+            "--answers-file",
+            str(config_folder / "altered-answers.yml"),
+            "--quiet",
+        ],
+        exit=False,
     )
     assert run_update[1] == 0
     assert answers["_src_path"] == src
@@ -206,6 +224,8 @@ def test_python_run() -> None:
 def test_skip_filenotexists(template_path: str, tmp_path: Path) -> None:
     run_result = CopierApp.run(
         [
+            "copier",
+            "copy",
             "--quiet",
             "-a",
             "altered-answers.yml",
@@ -230,6 +250,8 @@ def test_skip_fileexists(template_path: str, tmp_path: Path) -> None:
     a_txt.write_text("PREVIOUS_CONTENT")
     run_result = CopierApp.run(
         [
+            "copier",
+            "copy",
             "--quiet",
             "-a",
             "altered-answers.yml",

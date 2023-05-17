@@ -67,7 +67,7 @@ def test_include(
             ): "",
         }
     )
-    copier.copy(str(src), dst, defaults=True)
+    copier.run_copy(str(src), dst, defaults=True)
     assert (dst / "slug-answer.txt").read_text() == "the-name"
     assert (dst / "slug-from-include.txt").read_text() == "the-name"
     assert (dst / "the-name.txt").exists()
@@ -143,7 +143,7 @@ def test_import_macro(
             ): "",
         }
     )
-    copier.copy(str(src), dst, defaults=True)
+    copier.run_copy(str(src), dst, defaults=True)
     assert (dst / "slug-answer.txt").read_text() == "the-name"
     assert (dst / "slug-from-macro.txt").read_text() == "the-name"
     assert (dst / "the-name.txt").exists()

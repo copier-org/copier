@@ -36,14 +36,14 @@ class GlobalsExtension(Extension):
 
 
 def test_default_jinja2_extensions(tmp_path: Path) -> None:
-    copier.copy(str(PROJECT_TEMPLATE) + "_extensions_default", tmp_path)
+    copier.run_copy(str(PROJECT_TEMPLATE) + "_extensions_default", tmp_path)
     super_file = tmp_path / "super_file.md"
     assert super_file.exists()
     assert super_file.read_text() == "path\n"
 
 
 def test_additional_jinja2_extensions(tmp_path: Path) -> None:
-    copier.copy(str(PROJECT_TEMPLATE) + "_extensions_additional", tmp_path)
+    copier.run_copy(str(PROJECT_TEMPLATE) + "_extensions_additional", tmp_path)
     super_file = tmp_path / "super_file.md"
     assert super_file.exists()
     assert super_file.read_text() == "super var! super func! super filter!\n"
@@ -56,7 +56,7 @@ def test_to_json_filter_with_conf(tmp_path_factory: pytest.TempPathFactory) -> N
             src / "conf.json.jinja": "{{ _copier_conf|to_json }}",
         }
     )
-    copier.copy(str(src), dst)
+    copier.run_copy(str(src), dst)
     conf_file = dst / "conf.json"
     assert conf_file.exists()
     # must not raise an error

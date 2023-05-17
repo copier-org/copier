@@ -37,7 +37,7 @@ def test_version_less_than_required(
 ) -> None:
     monkeypatch.setattr("copier.__version__", "0.0.0a0")
     with pytest.raises(UnsupportedVersionError):
-        copier.copy(template_path, tmp_path)
+        copier.run_copy(template_path, tmp_path)
 
 
 def test_version_equal_required(
@@ -45,7 +45,7 @@ def test_version_equal_required(
 ) -> None:
     monkeypatch.setattr("copier.__version__", "10.5.1")
     # assert no error
-    copier.copy(template_path, tmp_path)
+    copier.run_copy(template_path, tmp_path)
 
 
 def test_version_greater_than_required(
@@ -53,14 +53,14 @@ def test_version_greater_than_required(
 ) -> None:
     monkeypatch.setattr("copier.__version__", "99.99.99")
     # assert no error
-    copier.copy(template_path, tmp_path)
+    copier.run_copy(template_path, tmp_path)
 
 
 def test_minimum_version_update(
     template_path: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr("copier.__version__", "11.0.0")
-    copier.copy(template_path, tmp_path)
+    copier.run_copy(template_path, tmp_path)
 
     with local.cwd(tmp_path):
         git("init")
@@ -71,15 +71,15 @@ def test_minimum_version_update(
 
     monkeypatch.setattr("copier.__version__", "0.0.0.post0")
     with pytest.raises(UnsupportedVersionError):
-        copier.copy(template_path, tmp_path)
+        copier.run_copy(template_path, tmp_path)
 
     monkeypatch.setattr("copier.__version__", "10.5.1")
     # assert no error
-    copier.copy(template_path, tmp_path)
+    copier.run_copy(template_path, tmp_path)
 
     monkeypatch.setattr("copier.__version__", "99.99.99")
     # assert no error
-    copier.copy(template_path, tmp_path)
+    copier.run_copy(template_path, tmp_path)
 
 
 def test_version_0_0_0_ignored(

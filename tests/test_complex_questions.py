@@ -10,7 +10,7 @@ from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
 from plumbum.cmd import git
 
-from copier import copy, run_auto, run_update
+from copier import run_copy, run_update
 from copier.types import OptStr
 
 from .helpers import (
@@ -134,7 +134,7 @@ def check_invalid(
 
 def test_api(template_path: str, tmp_path: Path) -> None:
     """Test copier correctly processes advanced questions and answers through API."""
-    copy(
+    run_copy(
         template_path,
         tmp_path,
         {
@@ -272,7 +272,7 @@ def test_api_str_data(template_path: str, tmp_path: Path) -> None:
 
     This happens i.e. when using the --data CLI argument.
     """
-    copy(
+    run_copy(
         template_path,
         tmp_path,
         data={
@@ -312,11 +312,11 @@ def test_cli_interatively_with_flag_data_and_type_casts(
     tui = spawn(
         COPIER_PATH
         + (
+            "copy",
             "--data=choose_list=second",
             "--data=choose_dict=first",
             "--data=choose_tuple=third",
             "--data=choose_number=1",
-            "copy",
             template_path,
             str(tmp_path),
         ),
@@ -518,12 +518,12 @@ def test_multi_template_answers(tmp_path_factory: pytest.TempPathFactory) -> Non
             git("commit", "-m1")
     with local.cwd(dst):
         # Apply template 1
-        run_auto(str(tpl1), overwrite=True, defaults=True)
+        run_copy(str(tpl1), overwrite=True, defaults=True)
         git("init")
         git("add", "-A")
         git("commit", "-m1")
         # Apply template 2
-        run_auto(str(tpl2), overwrite=True, defaults=True)
+        run_copy(str(tpl2), overwrite=True, defaults=True)
         git("init")
         git("add", "-A")
         git("commit", "-m2")
@@ -561,6 +561,6 @@ def test_omit_answer_for_skipped_question(
             ),
         }
     )
-    copy(str(src), dst, defaults=True, data={"disabled": "hello"})
+    run_copy(str(src), dst, defaults=True, data={"disabled": "hello"})
     answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers == {"_src_path": str(src)}

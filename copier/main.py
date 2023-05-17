@@ -679,18 +679,6 @@ class Worker:
         return self.template.local_abspath / subdir
 
     # Main operations
-    def run_auto(self) -> None:
-        """Copy or update automatically.
-
-        If `src_path` was supplied, execute
-        [run_copy][copier.main.Worker.run_copy].
-
-        Otherwise, execute [run_update][copier.main.Worker.run_update].
-        """
-        if self.src_path:
-            return self.run_copy()
-        return self.run_update()
-
     def run_copy(self) -> None:
         """Generate a subproject from zero, ignoring what was in the folder.
 
@@ -722,6 +710,16 @@ class Worker:
         if not self.quiet:
             # TODO Unify printing tools
             print("")  # padding space
+
+    def run_recopy(self) -> None:
+        """Update a subproject, keeping answers but discarding evolution."""
+        if self.subproject.template is None:
+            raise UserMessageError(
+                "Cannot recopy because cannot obtain old template references "
+                f"from `{self.subproject.answers_relpath}`."
+            )
+        new_worker = replace(self, src_path=self.subproject.template.url)
+        return new_worker.run_copy()
 
     def run_update(self) -> None:
         """Update a subproject that was already generated.
@@ -905,6 +903,22 @@ def run_copy(
     return worker
 
 
+def run_recopy(
+    dst_path: StrOrPath = ".", data: Optional[AnyByStrDict] = None, **kwargs
+) -> Worker:
+    """Update a subproject from its template, discarding subproject evolution.
+
+    This is a shortcut for [run_recopy][copier.main.Worker.run_recopy].
+
+    See [Worker][copier.main.Worker] fields to understand this function's args.
+    """
+    if data is not None:
+        kwargs["data"] = data
+    with Worker(dst_path=Path(dst_path), **kwargs) as worker:
+        worker.run_recopy()
+    return worker
+
+
 def run_update(
     dst_path: StrOrPath = ".",
     data: Optional[AnyByStrDict] = None,
@@ -921,23 +935,6 @@ def run_update(
     with Worker(dst_path=Path(dst_path), **kwargs) as worker:
         worker.run_update()
     return worker
-
-
-def run_auto(
-    src_path: OptStr = None,
-    dst_path: StrOrPath = ".",
-    data: Optional[AnyByStrDict] = None,
-    **kwargs,
-) -> Worker:
-    """Generate or update a subproject.
-
-    This is a shortcut for [run_auto][copier.main.Worker.run_auto].
-
-    See [Worker][copier.main.Worker] fields to understand this function's args.
-    """
-    if src_path is None:
-        return run_update(dst_path, data, **kwargs)
-    return run_copy(src_path, dst_path, data, **kwargs)
 
 
 def _remove_old_files(prefix: Path, cmp: dircmp, rm_common: bool = False):

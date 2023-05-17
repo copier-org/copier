@@ -57,7 +57,7 @@ def test_answersfile(template_path: str, tmp_path: Path, answers_file: OptStr) -
     round_file = tmp_path / "round.txt"
 
     # Check 1st round is properly executed and remembered
-    copier.copy(
+    copier.run_copy(
         template_path,
         tmp_path,
         answers_file=answers_file,
@@ -81,7 +81,7 @@ def test_answersfile(template_path: str, tmp_path: Path, answers_file: OptStr) -
     assert "password_2" not in log
 
     # Check 2nd round is properly executed and remembered
-    copier.copy(
+    copier.run_copy(
         template_path,
         tmp_path,
         {"round": "2nd"},
@@ -105,7 +105,7 @@ def test_answersfile(template_path: str, tmp_path: Path, answers_file: OptStr) -
     assert "password_2" not in log
 
     # Check repeating 2nd is properly executed and remembered
-    copier.copy(
+    copier.run_copy(
         template_path,
         tmp_path,
         answers_file=answers_file,

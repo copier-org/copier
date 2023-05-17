@@ -8,7 +8,7 @@ import yaml
 from plumbum import local
 from plumbum.cmd import git
 
-from copier import copy
+from copier import run_copy, run_update
 from copier.errors import UserMessageError
 
 from .helpers import BRACKET_ENVOPS_JSON, PROJECT_TEMPLATE, build_file_tree
@@ -41,7 +41,7 @@ def test_migrations_and_tasks(tmp_path: Path) -> None:
         git("commit", "--allow-empty", "-m2")
         git("tag", "v2.0")
     # Copy it in v1
-    copy(src_path=str(src), dst_path=dst, vcs_ref="v1.0.0")
+    run_copy(src_path=str(src), dst_path=dst, vcs_ref="v1.0.0")
     # Check copy was OK
     assert (dst / "created-with-tasks.txt").read_text() == "task 1\ntask 2\n"
     assert not (dst / "delete-in-tasks.txt").exists()
@@ -59,7 +59,7 @@ def test_migrations_and_tasks(tmp_path: Path) -> None:
         git("config", "user.email", "test@copier")
         git("commit", "-m1")
     # Update it to v2
-    copy(dst_path=dst, defaults=True, overwrite=True)
+    run_update(dst_path=dst, defaults=True, overwrite=True)
     # Check update was OK
     assert (dst / "created-with-tasks.txt").read_text() == "task 1\ntask 2\n" * 2
     assert not (dst / "delete-in-tasks.txt").exists()
@@ -102,7 +102,7 @@ def test_pre_migration_modifies_answers(
         git("tag", "v1")
     # User copies v1 template into subproject
     with local.cwd(dst):
-        copy(src_path=str(src), defaults=True, overwrite=True)
+        run_copy(src_path=str(src), defaults=True, overwrite=True)
         answers = json.loads(Path(".copier-answers.yml").read_text())
         assert answers["_commit"] == "v1"
         assert answers["best_song"] == "la vie en rose"
@@ -143,7 +143,7 @@ def test_pre_migration_modifies_answers(
         git("tag", "v2")
     # User updates subproject to v2 template
     with local.cwd(dst):
-        copy(defaults=True, overwrite=True)
+        run_update(defaults=True, overwrite=True)
         answers = json.loads(Path(".copier-answers.yml").read_text())
         assert answers["_commit"] == "v2"
         assert "best_song" not in answers
@@ -196,7 +196,7 @@ def test_prereleases(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("commit", "-amv2a1")
         git("tag", "v2.0.0.alpha1")
     # Copying with use_prereleases=False copies v1
-    copy(src_path=str(src), dst_path=dst, defaults=True, overwrite=True)
+    run_copy(src_path=str(src), dst_path=dst, defaults=True, overwrite=True)
     answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers["_commit"] == "v1.0.0"
     assert (dst / "version.txt").read_text() == "v1.0.0"
@@ -211,7 +211,7 @@ def test_prereleases(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("add", ".")
         git("commit", "-mv1")
         # Update it without prereleases; nothing changes
-        copy(defaults=True, overwrite=True)
+        run_update(defaults=True, overwrite=True)
         assert not git("status", "--porcelain")
     assert not (dst / "v1.9").exists()
     assert not (dst / "v2.dev0").exists()
@@ -219,7 +219,7 @@ def test_prereleases(tmp_path_factory: pytest.TempPathFactory) -> None:
     assert not (dst / "v2.a1").exists()
     assert not (dst / "v2.a2").exists()
     # Update it with prereleases
-    copy(dst_path=dst, defaults=True, overwrite=True, use_prereleases=True)
+    run_update(dst_path=dst, defaults=True, overwrite=True, use_prereleases=True)
     answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers["_commit"] == "v2.0.0.alpha1"
     assert (dst / "version.txt").read_text() == "v2.0.0.alpha1"
@@ -230,7 +230,7 @@ def test_prereleases(tmp_path_factory: pytest.TempPathFactory) -> None:
     assert not (dst / "v2.a2").exists()
     # It should fail if downgrading
     with pytest.raises(UserMessageError):
-        copy(dst_path=dst, defaults=True, overwrite=True)
+        run_update(dst_path=dst, defaults=True, overwrite=True)
 
 
 def test_pretend_mode(tmp_path_factory: pytest.TempPathFactory) -> None:
@@ -253,7 +253,7 @@ def test_pretend_mode(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("commit", "-mv1")
         git("tag", "v1")
 
-    copy(str(src), dst)
+    run_copy(str(src), dst)
     answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers["_commit"] == "v1"
 
@@ -284,7 +284,7 @@ def test_pretend_mode(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("commit", "-mv2")
         git("tag", "v2")
 
-    copy(dst_path=dst, overwrite=True, pretend=True)
+    run_update(dst_path=dst, overwrite=True, pretend=True)
     answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers["_commit"] == "v1"
     assert not (dst / "v2-before.txt").exists()
