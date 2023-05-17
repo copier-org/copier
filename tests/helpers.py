@@ -10,6 +10,7 @@ from typing import Mapping, Optional, Tuple, Union
 
 from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
+from plumbum.cmd import git
 from prompt_toolkit.input.ansi_escape_sequences import REVERSE_ANSI_SEQUENCES
 from prompt_toolkit.keys import Keys
 
@@ -90,7 +91,7 @@ class Keyboard(str, Enum):
 
 def render(tmp_path: Path, **kwargs) -> None:
     kwargs.setdefault("quiet", True)
-    copier.copy(str(PROJECT_TEMPLATE), tmp_path, data=DATA, **kwargs)
+    copier.run_copy(str(PROJECT_TEMPLATE), tmp_path, data=DATA, **kwargs)
 
 
 def assert_file(tmp_path: Path, *path: str) -> None:
@@ -136,3 +137,21 @@ def expect_prompt(
         tui.expect_exact(name)
         if expected_type != "str":
             tui.expect_exact(f"({expected_type})")
+
+
+def git_save(
+    dst: StrOrPath = ".", message: str = "Test commit", tag: Optional[str] = None
+):
+    """Save the current repo state in git.
+
+    Args:
+        dst: Path to the repo to save.
+        message: Commit message.
+        tag: Tag to create, optionally.
+    """
+    with local.cwd(dst):
+        git("init")
+        git("add", ".")
+        git("commit", "-m", message)
+        if tag:
+            git("tag", tag)

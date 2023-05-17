@@ -18,7 +18,7 @@ def test_render_conditional(tmp_path_factory: TempPathFactory) -> None:
             ),
         }
     )
-    copier.run_auto(str(src), dst, data={"conditional": {"variable": True}})
+    copier.run_copy(str(src), dst, data={"conditional": {"variable": True}})
     assert (dst / "file.txt").read_text() == "This is True."
 
 
@@ -31,7 +31,7 @@ def test_dont_render_conditional(tmp_path_factory: TempPathFactory) -> None:
             ),
         }
     )
-    copier.run_auto(str(src), dst)
+    copier.run_copy(str(src), dst)
     assert not (dst / "file.txt").exists()
 
 
@@ -44,7 +44,7 @@ def test_render_conditional_subdir(tmp_path_factory: TempPathFactory) -> None:
             ),
         }
     )
-    copier.run_auto(str(src), dst, data={"conditional": {"variable": True}})
+    copier.run_copy(str(src), dst, data={"conditional": {"variable": True}})
     assert (dst / "subdir" / "file.txt").read_text() == "This is True."
 
 
@@ -57,7 +57,7 @@ def test_dont_render_conditional_subdir(tmp_path_factory: TempPathFactory) -> No
             ),
         }
     )
-    copier.run_auto(str(src), dst)
+    copier.run_copy(str(src), dst)
     assert not (dst / "subdir" / "file.txt").exists()
 
 
@@ -84,14 +84,14 @@ def test_answer_changes(
         git("tag", "v1")
 
     if interactive:
-        tui = spawn(COPIER_PATH + (str(src), str(dst)), timeout=10)
+        tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
         expect_prompt(tui, "condition", "bool")
         tui.expect_exact("(y/N)")
         tui.sendline("y")
         tui.expect_exact("Yes")
         tui.expect_exact(pexpect.EOF)
     else:
-        copier.copy(str(src), dst, data={"condition": True})
+        copier.run_copy(str(src), dst, data={"condition": True})
 
     assert (dst / "file.txt").exists()
 
@@ -101,13 +101,13 @@ def test_answer_changes(
         git("commit", "-mv1")
 
     if interactive:
-        tui = spawn(COPIER_PATH + ("--overwrite", "update", str(dst)), timeout=10)
+        tui = spawn(COPIER_PATH + ("update", "--overwrite", str(dst)), timeout=10)
         expect_prompt(tui, "condition", "bool")
         tui.expect_exact("(Y/n)")
         tui.sendline("n")
         tui.expect_exact("No")
         tui.expect_exact(pexpect.EOF)
     else:
-        copier.copy(dst_path=dst, data={"condition": False}, overwrite=True)
+        copier.run_update(dst_path=dst, data={"condition": False}, overwrite=True)
 
     assert not (dst / "file.txt").exists()

@@ -10,9 +10,8 @@ import yaml
 from plumbum import local
 from plumbum.cmd import git
 
-from copier import Worker, copy
 from copier.cli import CopierApp
-from copier.main import run_copy, run_update
+from copier.main import Worker, run_copy, run_update
 from copier.types import Literal
 
 from .helpers import (
@@ -148,13 +147,17 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
     answers = target / ".copier-answers.yml"
     commit = git["commit", "--all"]
     # Run copier 1st time, with specific tag
-    CopierApp.invoke(
-        "copy",
-        str(bundle),
-        str(target),
-        defaults=True,
-        overwrite=True,
-        vcs_ref="v0.0.1",
+    CopierApp.run(
+        [
+            "copier",
+            "copy",
+            str(bundle),
+            str(target),
+            "--defaults",
+            "--overwrite",
+            "--vcs-ref=v0.0.1",
+        ],
+        exit=False,
     )
     # Check it's copied OK
     assert answers.read_text() == dedent(
@@ -198,7 +201,7 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
         )
         commit("-m", "I prefer grog")
         # Update target to latest tag and check it's updated in answers file
-        CopierApp.invoke(defaults=True, overwrite=True)
+        CopierApp.run(["copier", "update", "--defaults", "--overwrite"], exit=False)
         assert answers.read_text() == dedent(
             f"""\
             # Changes here will be overwritten by Copier
@@ -219,7 +222,10 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
         assert not (target / "after-v1.0.0").is_file()
         commit("-m", "Update template to v0.0.2")
         # Update target to latest commit, which is still untagged
-        CopierApp.invoke(defaults=True, overwrite=True, vcs_ref="HEAD")
+        CopierApp.run(
+            ["copier", "update", "--defaults", "--overwrite", "--vcs-ref=HEAD"],
+            exit=False,
+        )
         # Check no new migrations were executed
         assert not (target / "before-v0.0.1").is_file()
         assert not (target / "after-v0.0.1").is_file()
@@ -251,10 +257,13 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
         commit("-m", f"Update template to {last_commit}")
         assert not git("status", "--porcelain")
         # No more updates exist, so updating again should change nothing
-        CopierApp.invoke(defaults=True, overwrite=True, vcs_ref="HEAD")
+        CopierApp.run(
+            ["copier", "update", "--defaults", "--overwrite", "--vcs-ref=HEAD"],
+            exit=False,
+        )
         assert not git("status", "--porcelain")
         # If I change an option, it updates properly
-        copy(
+        run_update(
             data={"author_name": "Largo LaGrande", "project_name": "to steal a lot"},
             defaults=True,
             overwrite=True,
@@ -358,7 +367,7 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
         git("commit", "-m", "feat: commit 1")
         git("tag", "v1")
     # Copy source template
-    copy(src_path=str(src), dst_path=dst1, defaults=True, overwrite=True)
+    run_copy(src_path=str(src), dst_path=dst1, defaults=True, overwrite=True)
     with local.cwd(dst1):
         life = Path("life.yml")
         git("add", ".")
@@ -395,7 +404,7 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
         git("commit", "-m", "feat: commit 2")
         git("tag", "v2")
     # Update subproject to v2
-    copy(dst_path=dst1, defaults=True, overwrite=True, conflict="rej")
+    run_update(dst_path=dst1, defaults=True, overwrite=True, conflict="rej")
     with local.cwd(dst1):
         git("commit", "-am", "feat: copied v2")
         assert life.read_text() == dedent(
@@ -430,7 +439,9 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
     git("clone", "--depth=1", f"file://{dst1}", dst2)
     with local.cwd(dst2):
         # Subproject re-updates just to change some values
-        copy(data={"what": "study"}, defaults=True, overwrite=True, conflict="rej")
+        run_update(
+            data={"what": "study"}, defaults=True, overwrite=True, conflict="rej"
+        )
         git("commit", "-am", "chore: re-updated to change values after evolving")
         # Subproject evolution was respected up to sane possibilities.
         # In an ideal world, this file would be exactly the same as what's written
@@ -687,7 +698,7 @@ def test_update_inline_changed_answers_and_questions(
         git("tag", "2")
     # Init project
     if interactive:
-        tui = spawn(COPIER_PATH + ("-r1", "copy", str(src), str(dst)), timeout=10)
+        tui = spawn(COPIER_PATH + ("copy", "-r1", str(src), str(dst)), timeout=10)
         tui.expect_exact("b (bool)")
         tui.expect_exact("(y/N)")
         tui.send("y")
@@ -713,7 +724,7 @@ def test_update_inline_changed_answers_and_questions(
         git("commit", "-am2")
         # Update from template, inline, with answer changes
         if interactive:
-            tui = spawn(COPIER_PATH + ("-w", "update", "--conflict=inline"), timeout=10)
+            tui = spawn(COPIER_PATH + ("update", "-w", "--conflict=inline"), timeout=10)
             tui.expect_exact("b (bool)")
             tui.expect_exact("(Y/n)")
             tui.sendline()
@@ -859,7 +870,7 @@ def test_update_needs_more_context(
         if api:
             run_copy(str(src), ".")
         else:
-            CopierApp.invoke("copy", str(src), ".")
+            CopierApp.run(["copier", "copy", str(src), "."], exit=False)
         git("init")
         git("add", ".")
         git("commit", "-m1")
@@ -923,8 +934,8 @@ def test_update_needs_more_context(
         run_update(dst, overwrite=True, conflict="inline", context_lines=context_lines)
     else:
         COPIER_CMD(
-            "--overwrite",
             "update",
+            "--overwrite",
             str(dst),
             "--conflict=inline",
             f"--context-lines={context_lines}",

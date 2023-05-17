@@ -185,3 +185,14 @@ How to overcome that situation?
    versions.
 1. Or you can just [recopy the project][regenerating-a-project] when you update to a
    newer Copier major release.
+
+## When the update gets broken because while replaying old copy
+
+This is uncommon, but it can happen sometimes. For example, maybe the last update was
+relying on some external resources that are not longer available. Generally, you should
+keep your templates as pure as possible to avoid those situations.
+
+However, if this is happening to you, try the `copier recopy` command, which will
+discard all the smart update algorithm explained here. It will behave just like if you
+were applying the template for the 1st time, but it will keep your answers from the last
+update.

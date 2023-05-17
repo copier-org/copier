@@ -72,20 +72,7 @@ def handle_exceptions(method, *args, **kwargs):
 
 
 class CopierApp(cli.Application):
-    """The Copier CLI application.
-
-    Attributes:
-        answers_file: Set [answers_file][] option.
-        exclude: Set [exclude][] option.
-        vcs_ref: Set [vcs_ref][] option.
-        pretend: Set [pretend][] option.
-        force: Set [force][] option.
-        defaults: Set [defaults][] option.
-        overwrite: Set [overwrite][] option.
-        skip: Set [skip_if_exists][] option.
-        prereleases: Set [use_prereleases][] option.
-        quiet: Set [quiet][] option.
-    """
+    """The Copier CLI application."""
 
     DESCRIPTION = "Create a new project from a template."
     DESCRIPTION_MORE = (
@@ -105,14 +92,13 @@ class CopierApp(cli.Application):
             )
         )
     )
-    USAGE = dedent(
-        """\
-        copier [MAIN_SWITCHES] [copy] [SUB_SWITCHES] template_src destination_path
-        copier [MAIN_SWITCHES] [update] [SUB_SWITCHES] [destination_path]
-        """
-    )
     VERSION = copier_version()
     CALL_MAIN_IF_NESTED_COMMAND = False
+
+
+class _Subcommand(cli.Application):
+    """Base class for Copier subcommands."""
+
     data: AnyByStrDict = {}
 
     answers_file = cli.SwitchAttr(
@@ -210,55 +196,13 @@ class CopierApp(cli.Application):
             **kwargs,
         )
 
-    @handle_exceptions
-    def main(self, *args: str) -> int:
-        """Copier CLI app shortcuts.
-
-        This method redirects abstract CLI calls
-        (those that don't specify `copy` or `update`)
-        to [CopierCopySubApp.main][copier.cli.CopierCopySubApp.main]
-        or [CopierUpdateSubApp.main][copier.cli.CopierUpdateSubApp.main]
-        automatically.
-
-        Examples:
-            - `copier from to` → `copier copy from to`
-            - `copier from` → `copier update from`
-            - `copier` → `copier update .`
-        """
-        # Redirect to subcommand if supplied
-        if args and args[0] in self._subcommands:
-            self.nested_command = (
-                self._subcommands[args[0]].subapplication,
-                ["copier %s" % args[0]] + list(args[1:]),
-            )
-        # If using 0 or 1 args, you want to update
-        elif len(args) in {0, 1}:
-            self.nested_command = (
-                self._subcommands["update"].subapplication,
-                ["copier update"] + list(args),
-            )
-        # If using 2 args, you want to copy
-        elif len(args) == 2:
-            self.nested_command = (
-                self._subcommands["copy"].subapplication,
-                ["copier copy"] + list(args),
-            )
-        # If using more args, you're wrong
-        else:
-            self.help()
-            raise UserMessageError("Unsupported arguments")
-        return 0
-
 
 @CopierApp.subcommand("copy")
-class CopierCopySubApp(cli.Application):
+class CopierCopySubApp(_Subcommand):
     """The `copier copy` subcommand.
 
     Use this subcommand to bootstrap a new subproject from a template, or to override
     a preexisting subproject ignoring its history diff.
-
-    Attributes:
-        cleanup_on_error: Set [cleanup_on_error][] option.
     """
 
     DESCRIPTION = "Copy from a template source to a destination."
@@ -282,7 +226,7 @@ class CopierCopySubApp(cli.Application):
             destination_path:
                 Where to generate the new subproject. It must not exist or be empty.
         """
-        self.parent._worker(
+        self._worker(
             template_src,
             destination_path,
             cleanup_on_error=self.cleanup_on_error,
@@ -290,27 +234,69 @@ class CopierCopySubApp(cli.Application):
         return 0
 
 
+@CopierApp.subcommand("recopy")
+class CopierRecopySubApp(_Subcommand):
+    """The `copier recopy` subcommand.
+
+    Use this subcommand to update an existing subproject from a template that
+    supports updates, ignoring any subproject evolution since the last Copier
+    execution.
+    """
+
+    DESCRIPTION = "Recopy a subproject from its original template"
+    DESCRIPTION_MORE = dedent(
+        """\
+        The copy must have a valid answers file which contains info from the
+        last Copier execution, including the source template (it must be a key
+        called `_src_path`).
+
+        This command will ignore any diff that you have generated since the
+        last `copier` execution. It will act as if it were the 1st time you
+        apply the template to the destination path. However, it will keep the
+        answers.
+
+        If you want a smarter update that respects your project evolution, use
+        `copier update` instead.
+        """
+    )
+
+    @handle_exceptions
+    def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
+        """Call [run_recopy][copier.main.Worker.run_recopy].
+
+        Parameters:
+            destination_path:
+                Only the destination path is needed to update, because the
+                `src_path` comes from [the answers file][the-copier-answersyml-file].
+
+                The subproject must exist. If not specified, the currently
+                working directory is used.
+        """
+        self._worker(
+            dst_path=destination_path,
+        ).run_recopy()
+        return 0
+
+
 @CopierApp.subcommand("update")
-class CopierUpdateSubApp(cli.Application):
+class CopierUpdateSubApp(_Subcommand):
     """The `copier update` subcommand.
 
     Use this subcommand to update an existing subproject from a template
-    that supports updates.
-
-    Attributes:
-        conflict: Set [conflict][] option.
+    that supports updates, respecting that subproject evolution since the last
+    Copier execution.
     """
 
-    DESCRIPTION = "Update a copy from its original template"
+    DESCRIPTION = "Update a subproject from its original template"
     DESCRIPTION_MORE = dedent(
         """\
         The copy must have a valid answers file which contains info
         from the last Copier execution, including the source template
         (it must be a key called `_src_path`).
 
-        If that file contains also `_commit` and `destination_path` is a git
+        If that file contains also `_commit`, and `destination_path` is a git
         repository, this command will do its best to respect the diff that you have
-        generated since the last `copier` execution. To avoid that, use `copier copy`
+        generated since the last `copier` execution. To avoid that, use `copier recopy`
         instead.
         """
     )
@@ -346,7 +332,7 @@ class CopierUpdateSubApp(cli.Application):
                 The subproject must exist. If not specified, the currently
                 working directory is used.
         """
-        self.parent._worker(
+        self._worker(
             dst_path=destination_path,
             conflict=self.conflict,
             context_lines=self.context_lines,

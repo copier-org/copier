@@ -5,7 +5,7 @@ import pytest
 from plumbum import local
 from plumbum.cmd import git
 
-from copier import copy, readlink, run_copy, run_update
+from copier import readlink, run_copy, run_update
 from copier.errors import DirtyLocalWarning
 
 from .helpers import build_file_tree
@@ -32,7 +32,7 @@ def test_copy_symlink(tmp_path_factory):
         git("add", ".")
         git("commit", "-m", "hello world")
 
-    copy(
+    run_copy(
         str(repo),
         dst,
         defaults=True,
@@ -68,7 +68,7 @@ def test_copy_symlink_templated_name(tmp_path_factory):
         git("add", ".")
         git("commit", "-m", "hello world")
 
-    copy(
+    run_copy(
         str(repo),
         dst,
         defaults=True,
@@ -105,7 +105,7 @@ def test_copy_symlink_templated_target(tmp_path_factory):
         git("add", ".")
         git("commit", "-m", "hello world")
 
-    copy(
+    run_copy(
         str(repo),
         dst,
         defaults=True,
@@ -144,7 +144,7 @@ def test_copy_symlink_missing_target(tmp_path_factory):
         git("add", ".")
         git("commit", "-m", "hello world")
 
-    copy(
+    run_copy(
         str(repo),
         dst,
         defaults=True,
@@ -180,7 +180,7 @@ def test_option_preserve_symlinks_false(tmp_path_factory):
         git("add", ".")
         git("commit", "-m", "hello world")
 
-    copy(
+    run_copy(
         str(repo),
         dst,
         defaults=True,
@@ -213,7 +213,7 @@ def test_option_preserve_symlinks_default(tmp_path_factory):
         git("add", ".")
         git("commit", "-m", "hello world")
 
-    copy(
+    run_copy(
         str(repo),
         dst,
         defaults=True,
@@ -307,7 +307,7 @@ def test_exclude_symlink(tmp_path_factory):
         git("add", ".")
         git("commit", "-m", "hello world")
 
-    copy(
+    run_copy(
         str(repo),
         dst,
         defaults=True,
@@ -340,7 +340,7 @@ def test_pretend_symlink(tmp_path_factory):
         git("add", ".")
         git("commit", "-m", "hello world")
 
-    copy(
+    run_copy(
         str(repo),
         dst,
         defaults=True,
@@ -374,7 +374,7 @@ def test_copy_symlink_none_path(tmp_path_factory):
         git("add", ".")
         git("commit", "-m", "hello world")
 
-    copy(
+    run_copy(
         str(repo),
         dst,
         defaults=True,

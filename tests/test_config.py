@@ -87,7 +87,7 @@ def test_read_data(
             ),
         }
     )
-    copier.copy(str(src), dst, defaults=True, overwrite=True)
+    copier.run_copy(str(src), dst, defaults=True, overwrite=True)
     assert (dst / "user_data.txt").read_text() == dedent(
         """\
         A string: lorem ipsum
@@ -228,7 +228,7 @@ def test_flags_extra_fails() -> None:
 
 def test_missing_template(tmp_path: Path) -> None:
     with pytest.raises(ValueError):
-        copier.copy("./i_do_not_exist", tmp_path)
+        copier.run_copy("./i_do_not_exist", tmp_path)
 
 
 def is_subdict(small: Dict[Any, Any], big: Dict[Any, Any]) -> bool:
@@ -374,7 +374,7 @@ def test_user_defaults(
             ),
         }
     )
-    copier.copy(
+    copier.run_copy(
         str(src),
         dst,
         defaults=True,
@@ -504,7 +504,7 @@ def test_user_defaults_updated(
         )
         git_init()
 
-    copier.copy(
+    copier.run_copy(
         str(src),
         dst,
         defaults=True,

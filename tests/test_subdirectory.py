@@ -67,7 +67,7 @@ def template_path(tmp_path_factory: pytest.TempPathFactory) -> str:
 
 
 def test_copy_subdirectory_api_option(template_path: str, tmp_path: Path) -> None:
-    copier.copy(
+    copier.run_copy(
         template_path,
         tmp_path,
         defaults=True,
@@ -79,18 +79,18 @@ def test_copy_subdirectory_api_option(template_path: str, tmp_path: Path) -> Non
 
 
 def test_copy_subdirectory_config(template_path: str, tmp_path: Path) -> None:
-    copier.copy(template_path, tmp_path, defaults=True, overwrite=True)
+    copier.run_copy(template_path, tmp_path, defaults=True, overwrite=True)
     assert (tmp_path / "conf_readme.md").exists()
     assert not (tmp_path / "api_readme.md").exists()
 
 
 def test_update_subdirectory(template_path: str, tmp_path: Path) -> None:
-    copier.copy(template_path, tmp_path, defaults=True, overwrite=True)
+    copier.run_copy(template_path, tmp_path, defaults=True, overwrite=True)
 
     with local.cwd(tmp_path):
         git_init()
 
-    copier.copy(dst_path=tmp_path, defaults=True, overwrite=True)
+    copier.run_update(dst_path=tmp_path, defaults=True, overwrite=True)
     assert not (tmp_path / "conf_project").exists()
     assert not (tmp_path / "api_project").exists()
     assert not (tmp_path / "api_readme.md").exists()
@@ -218,7 +218,7 @@ def test_new_version_uses_subdirectory(
         git("tag", "v1")
 
     # Generate the project a first time, assert the README exists
-    copier.copy(str(src), dst, defaults=True, overwrite=True)
+    copier.run_copy(str(src), dst, defaults=True, overwrite=True)
     assert (dst / "README.md").exists()
     assert "_commit: v1" in (dst / ".copier-answers.yml").read_text()
 
@@ -252,7 +252,7 @@ def test_new_version_uses_subdirectory(
         git("tag", "v2")
 
     # Finally, update the generated project
-    copier.copy(dst_path=dst, defaults=True, overwrite=True, conflict=conflict)
+    copier.run_update(dst_path=dst, defaults=True, overwrite=True, conflict=conflict)
     assert "_commit: v2" in (dst / ".copier-answers.yml").read_text()
 
     # Assert that the README still exists, and the conflicts were handled
@@ -288,7 +288,7 @@ def test_new_version_changes_subdirectory(
         git_init("hello template")
 
     # Generate the project a first time, assert the README exists
-    copier.copy(str(src), dst, defaults=True, overwrite=True)
+    copier.run_copy(str(src), dst, defaults=True, overwrite=True)
     assert (dst / "README.md").exists()
 
     # Start versioning the generated project
@@ -315,7 +315,7 @@ def test_new_version_changes_subdirectory(
         git("commit", "-m", "changed from subdir1 to subdir2")
 
     # Finally, update the generated project
-    copier.copy(
+    copier.run_copy(
         str(src), dst, defaults=True, overwrite=True, skip_if_exists=["README.md"]
     )
 

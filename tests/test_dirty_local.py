@@ -28,7 +28,7 @@ def test_copy(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("init")
 
     with pytest.warns(DirtyLocalWarning):
-        copier.copy(str(src), dst, data=DATA, vcs_ref="HEAD", quiet=True)
+        copier.run_copy(str(src), dst, data=DATA, vcs_ref="HEAD", quiet=True)
 
     generated = (dst / "pyproject.toml").read_text()
     control = (Path(__file__).parent / "reference_files" / "pyproject.toml").read_text()

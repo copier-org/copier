@@ -12,7 +12,7 @@ from plumbum.cmd import git
 from prompt_toolkit.validation import ValidationError
 
 import copier
-from copier import copy
+from copier import run_copy
 from copier.types import AnyByStrDict
 
 from .helpers import (
@@ -28,10 +28,10 @@ from .helpers import (
 
 def test_project_not_found(tmp_path: Path) -> None:
     with pytest.raises(ValueError):
-        copier.copy("foobar", tmp_path)
+        copier.run_copy("foobar", tmp_path)
 
     with pytest.raises(ValueError):
-        copier.copy(__file__, tmp_path)
+        copier.run_copy(__file__, tmp_path)
 
 
 def test_copy_with_non_version_tags(tmp_path_factory: pytest.TempPathFactory) -> None:
@@ -59,7 +59,7 @@ def test_copy_with_non_version_tags(tmp_path_factory: pytest.TempPathFactory) ->
         git("commit", "-m1")
         git("tag", "test_tag.post23+deadbeef")
 
-    copy(
+    run_copy(
         str(src),
         dst,
         defaults=True,
@@ -95,7 +95,7 @@ def test_copy_with_non_version_tags_and_vcs_ref(
         git("commit", "-m1")
         git("tag", "test_tag.post23+deadbeef")
 
-    copy(
+    run_copy(
         str(src),
         dst,
         defaults=True,
@@ -114,7 +114,7 @@ def test_copy_with_vcs_ref_branch(tmp_path_factory: pytest.TempPathFactory) -> N
         git("checkout", "-b", "branch")
         git("commit", "-m2", "--allow-empty")
         git("checkout", main_branch)
-    copy(str(src), dst, vcs_ref="branch")
+    run_copy(str(src), dst, vcs_ref="branch")
 
 
 def test_copy(tmp_path: Path) -> None:
@@ -153,7 +153,7 @@ def test_copy(tmp_path: Path) -> None:
 
 @pytest.mark.impure
 def test_copy_repo(tmp_path: Path) -> None:
-    copier.copy(
+    copier.run_copy(
         "gh:copier-org/copier.git",
         tmp_path,
         vcs_ref="HEAD",
@@ -202,7 +202,7 @@ def test_exclude_extends(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("init")
         git("add", ".")
         git("commit", "-m", "hello world")
-    copier.copy(str(src), dst, exclude=["*.txt"])
+    copier.run_copy(str(src), dst, exclude=["*.txt"])
     assert (dst / "test.json").is_file()
     assert not (dst / "test.txt").exists()
     # .git exists in src, but not in dst because it is excluded by default
@@ -221,7 +221,7 @@ def test_exclude_replaces(tmp_path_factory: pytest.TempPathFactory) -> None:
             src / "copier.yml": "_exclude: ['*.json']",
         }
     )
-    copier.copy(str(src), dst, exclude=["*.txt"])
+    copier.run_copy(str(src), dst, exclude=["*.txt"])
     assert (dst / "test.yaml").is_file()
     assert not (dst / "test.txt").exists()
     assert not (dst / "test.json").exists()
@@ -230,8 +230,8 @@ def test_exclude_replaces(tmp_path_factory: pytest.TempPathFactory) -> None:
 
 
 def test_skip_if_exists(tmp_path: Path) -> None:
-    copier.copy(str(Path("tests", "demo_skip_dst")), tmp_path)
-    copier.copy(
+    copier.run_copy(str(Path("tests", "demo_skip_dst")), tmp_path)
+    copier.run_copy(
         "tests/demo_skip_src",
         tmp_path,
         skip_if_exists=["b.noeof.txt", "meh/c.noeof.txt"],
@@ -245,8 +245,8 @@ def test_skip_if_exists(tmp_path: Path) -> None:
 
 
 def test_skip_if_exists_rendered_patterns(tmp_path: Path) -> None:
-    copier.copy("tests/demo_skip_dst", tmp_path)
-    copier.copy(
+    copier.run_copy("tests/demo_skip_dst", tmp_path)
+    copier.run_copy(
         "tests/demo_skip_src",
         tmp_path,
         data={"name": "meh"},
@@ -380,7 +380,7 @@ def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> N
             ),
         }
     )
-    copier.run_auto(str(src), dst, data={"filename": "a.b.c"})
+    copier.run_copy(str(src), dst, data={"filename": "a.b.c"})
     assert (dst / "a" / "b" / "c.txt").read_text() == "This is template."
 
 
@@ -643,7 +643,7 @@ def test_validate_init_data(
         }
     )
     with expected:
-        copier.copy(str(src), dst, data={"q": value})
+        copier.run_copy(str(src), dst, data={"q": value})
 
 
 @pytest.mark.parametrize("defaults", [False, True])
@@ -684,7 +684,7 @@ def test_validate_init_data_with_skipped_question(
             ),
         }
     )
-    copier.copy(
+    copier.run_copy(
         str(src), dst, defaults=defaults, data={"kind": "foo", "testfoo": "helloworld"}
     )
     assert (dst / "result").read_text() == "foo\n\nhelloworld\n"
@@ -710,7 +710,7 @@ def test_required_question_without_data(
         }
     )
     with pytest.raises(ValueError, match='Question "question" is required'):
-        copier.copy(str(src), dst, defaults=True)
+        copier.run_copy(str(src), dst, defaults=True)
 
 
 @pytest.mark.parametrize(
@@ -740,7 +740,7 @@ def test_required_choice_question_without_data(
         }
     )
     with pytest.raises(ValueError, match='Question "question" is required'):
-        copier.copy(str(src), dst, defaults=True)
+        copier.run_copy(str(src), dst, defaults=True)
 
 
 @pytest.mark.parametrize(
@@ -823,4 +823,4 @@ def test_validate_default_value(
         }
     )
     with expected:
-        copier.copy(str(src), dst, defaults=True)
+        copier.run_copy(str(src), dst, defaults=True)
