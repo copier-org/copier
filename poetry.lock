@@ -242,6 +242,18 @@ tomli = {version = "*", optional = true, markers = "python_full_version <= \"3.1
 toml = ["tomli"]
 
 [[package]]
+name = "decorator"
+version = "5.1.1"
+description = "Decorators for Humans"
+category = "main"
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "decorator-5.1.1-py3-none-any.whl", hash = "sha256:b8c3f85900b9dc423225913c5aace94729fe1fa9763b38939a95226f02d37186"},
+    {file = "decorator-5.1.1.tar.gz", hash = "sha256:637996211036b6385ef91435e4fae22989472f9d571faba8927ba8253acbc330"},
+]
+
+[[package]]
 name = "distlib"
 version = "0.3.6"
 description = "Distribution utilities"
@@ -1430,6 +1442,18 @@ files = [
 ]
 
 [[package]]
+name = "types-decorator"
+version = "5.1.8.3"
+description = "Typing stubs for decorator"
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "types-decorator-5.1.8.3.tar.gz", hash = "sha256:32dd380fc88d0e7a1f27a84ba1ce6e29ba0ad42caaa1b88e7b5d27e61f6e4962"},
+    {file = "types_decorator-5.1.8.3-py3-none-any.whl", hash = "sha256:2ad329af49b824db8069ebba9bf03b1cbcafba72eb338be255a1fd902e85edb9"},
+]
+
+[[package]]
 name = "types-psutil"
 version = "5.9.5.12"
 description = "Typing stubs for psutil"
@@ -1575,5 +1599,5 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 
 [metadata]
 lock-version = "2.0"
-python-versions = ">=3.7,<4.0"
-content-hash = "c1002faa20b75b62f8161aec53fb4a512b7bca426da442efdaa695258f2d5a62"
+python-versions = ">=3.7,<4.0" # HACK https://github.com/PyCQA/isort/issues/1945
+content-hash = "d7efb51bf09f33c6785f98b1f8ad5cb4a6f5d359b68ec0bbef3fb5963fc7a245"
