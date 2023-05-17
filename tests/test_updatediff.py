@@ -404,7 +404,9 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
         git("commit", "-m", "feat: commit 2")
         git("tag", "v2")
     # Update subproject to v2
-    run_update(dst_path=dst1, defaults=True, overwrite=True, conflict="rej")
+    run_update(
+        dst_path=dst1, defaults=True, overwrite=True, conflict="rej", context_lines=1
+    )
     with local.cwd(dst1):
         git("commit", "-am", "feat: copied v2")
         assert life.read_text() == dedent(
@@ -440,7 +442,11 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
     with local.cwd(dst2):
         # Subproject re-updates just to change some values
         run_update(
-            data={"what": "study"}, defaults=True, overwrite=True, conflict="rej"
+            data={"what": "study"},
+            defaults=True,
+            overwrite=True,
+            conflict="rej",
+            context_lines=1,
         )
         git("commit", "-am", "chore: re-updated to change values after evolving")
         # Subproject evolution was respected up to sane possibilities.

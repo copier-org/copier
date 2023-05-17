@@ -25,11 +25,11 @@ answers you provided when copied last time. However, sometimes it's impossible f
 Copier to know what to do with a diff code hunk. In those cases, copier handles the
 conflict in one of two ways, controlled with the `--conflict` option:
 
--   `--conflict rej` (default): Creates a separate `.rej` file for each file with
-    conflicts. These files contain the unresolved diffs.
--   `--conflict inline` (experimental): Updates the file with conflict markers. This is
-    quite similar to the conflict markers created when a `git merge` command encounters
-    a conflict. For more information, see the "Checking Out Conflicts" section of the
+-   `--conflict rej`: Creates a separate `.rej` file for each file with conflicts. These
+    files contain the unresolved diffs.
+-   `--conflict inline` (default): Updates the file with conflict markers. This is quite
+    similar to the conflict markers created when a `git merge` command encounters a
+    conflict. For more information, see the "Checking Out Conflicts" section of the
     [`git` documentation](https://git-scm.com/book/en/v2/Git-Tools-Advanced-Merging).
 
 If the update results in conflicts, _you should review those manually_ before

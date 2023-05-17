@@ -304,16 +304,15 @@ class CopierUpdateSubApp(_Subcommand):
     conflict = cli.SwitchAttr(
         ["-o", "--conflict"],
         cli.Set("rej", "inline"),
-        default="rej",
+        default="inline",
         help=(
-            "Behavior on conflict: rej=Create .rej file, inline=inline conflict "
-            "markers (inline is still experimental)"
+            "Behavior on conflict: Create .rej files, or add inline conflict markers."
         ),
     )
     context_lines = cli.SwitchAttr(
         ["-c", "--context-lines"],
         int,
-        default=1,
+        default=3,
         help=(
             "Lines of context to use for detecting conflicts. Increase for "
             "accuracy, decrease for resilience."

@@ -707,11 +707,11 @@ running `copier update`, this setting has no effect.
 
 -   Format: `Literal["rej", "inline"]`
 -   CLI flags: `-o`, `--conflict` (only available in `copier update` subcommand)
--   Default value: `rej`
+-   Default value: `inline`
 
 When updating a project, sometimes Copier doesn't know what to do with a diff code hunk.
-This option controls the output format if this happens. The default, `rej`, creates
-`*.rej` files that contain the unresolved diffs. The `inline` option includes the diff
+This option controls the output format if this happens. Using `rej`, creates `*.rej`
+files that contain the unresolved diffs. The `inline` option (default) includes the diff
 code hunk in the file itself, similar to the behavior of `git merge`.
 
 !!! info
