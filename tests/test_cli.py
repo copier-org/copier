@@ -182,11 +182,20 @@ def git_commands() -> None:
 
 
 def test_help() -> None:
-    COPIER_CMD("--help-all")
+    _help = COPIER_CMD("--help-all")
+    assert "copier copy [SWITCHES] template_src destination_path" in _help
+    assert "copier update [SWITCHES] [destination_path=.]" in _help
+
+
+def test_copy_help() -> None:
+    _help = COPIER_CMD("copy", "--help")
+    assert "copier copy [SWITCHES] template_src destination_path" in _help
 
 
 def test_update_help() -> None:
-    assert "-o, --conflict" in COPIER_CMD("update", "--help")
+    _help = COPIER_CMD("update", "--help")
+    assert "-o, --conflict" in _help
+    assert "copier update [SWITCHES] [destination_path=.]" in _help
 
 
 def test_python_run() -> None:

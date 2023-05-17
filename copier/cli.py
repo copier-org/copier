@@ -44,12 +44,12 @@ Below are the docs of each one of those.
 """
 
 import sys
-from functools import wraps
 from io import StringIO
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import patch
 
+from decorator import decorator
 from plumbum import cli, colors
 
 from .errors import UserMessageError
@@ -58,21 +58,17 @@ from .tools import copier_version
 from .types import AnyByStrDict, OptStr, StrSeq
 
 
-def handle_exceptions(method):
+@decorator
+def handle_exceptions(method, *args, **kwargs):
     """Handle keyboard interruption while running a method."""
-
-    @wraps(method)
-    def _wrapper(*args, **kwargs):
+    try:
         try:
-            try:
-                return method(*args, **kwargs)
-            except KeyboardInterrupt:
-                raise UserMessageError("Execution stopped by user")
-        except UserMessageError as error:
-            print(colors.red | "\n".join(error.args), file=sys.stderr)
-            return 1
-
-    return _wrapper
+            return method(*args, **kwargs)
+        except KeyboardInterrupt:
+            raise UserMessageError("Execution stopped by user")
+    except UserMessageError as error:
+        print(colors.red | "\n".join(error.args), file=sys.stderr)
+        return 1
 
 
 class CopierApp(cli.Application):
