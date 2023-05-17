@@ -71,19 +71,19 @@ To generate a project from the template:
 -   Or in Python code, programmatically:
 
     ```python
-    from copier import run_auto
+    from copier import run_copy
 
     # Create a project from a local path
-    run_auto("path/to/project/template", "path/to/destination")
+    run_copy("path/to/project/template", "path/to/destination")
 
     # Or from a Git URL.
-    run_auto("https://github.com/copier-org/copier.git", "path/to/destination")
+    run_copy("https://github.com/copier-org/copier.git", "path/to/destination")
 
     # You can also use "gh:" as a shortcut of "https://github.com/"
-    run_auto("gh:copier-org/copier.git", "path/to/destination")
+    run_copy("gh:copier-org/copier.git", "path/to/destination")
 
     # Or "gl:" as a shortcut of "https://gitlab.com/"
-    run_auto("gl:copier-org/copier.git", "path/to/destination")
+    run_copy("gl:copier-org/copier.git", "path/to/destination")
     ```
 
 ## Basic concepts
