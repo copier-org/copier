@@ -74,9 +74,8 @@ class Worker:
     Then, execute one of its main methods, which are prefixed with `run_`:
 
     -   [run_copy][copier.main.Worker.run_copy] to copy a subproject.
+    -   [run_recopy][copier.main.Worker.run_recopy] to recopy a subproject.
     -   [run_update][copier.main.Worker.run_update] to update a subproject.
-    -   [run_auto][copier.main.Worker.run_auto] to let it choose whether you
-        want to copy or update the subproject.
 
     Example:
         ```python
