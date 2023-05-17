@@ -182,8 +182,8 @@ class Worker:
     overwrite: bool = False
     pretend: bool = False
     quiet: bool = False
-    conflict: str = "rej"
-    context_lines: PositiveInt = 1
+    conflict: str = "inline"
+    context_lines: PositiveInt = 3
 
     def __enter__(self):
         """Allow using worker as a context manager."""
