@@ -986,6 +986,8 @@ on them, so they are always installed when Copier is installed.
     -   [`jinja2_time.TimeExtension`](https://github.com/hackebrot/jinja2-time): adds a
         `now` tag that provides convenient access to the
         [arrow.now()](http://crsmithdev.com/arrow/#arrow.factory.ArrowFactory.now) API.
+    -   [`jinja2_jsonschema.JsonSchemaExtension](https://github.com/copier-org/jinja2-jsonschema):
+        adds a `jsonschema` filter for validating data against a JSON/YAML schema.
 
     Search for more extensions on GitHub using the
     [jinja2-extension topic](https://github.com/topics/jinja2-extension), or
