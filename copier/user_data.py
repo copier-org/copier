@@ -232,6 +232,24 @@ class Question:
             v = default_type_name if default_type_name in CAST_STR_TO_NATIVE else "yaml"
         return v
 
+    def cast_answer(self, answer: Any) -> Any:
+        """Cast answer to expected type."""
+        type_name = self.get_type_name()
+        type_fn = CAST_STR_TO_NATIVE[type_name]
+        # Only JSON or YAML questions support `None` as an answer
+        if answer is None and type_name not in {"json", "yaml"}:
+            raise InvalidTypeError(
+                f'Invalid answer "{answer}" of type "{type(answer)}" '
+                f'to question "{self.var_name}" of type "{type_name}"'
+            )
+        try:
+            return type_fn(answer)
+        except (TypeError, AttributeError) as error:
+            # JSON or YAML failed because it wasn't a string; no need to convert
+            if type_name in {"json", "yaml"}:
+                return answer
+            raise InvalidTypeError from error
+
     def get_default(self) -> Any:
         """Get the default value for this question, casted to its expected type."""
         try:
@@ -246,7 +264,7 @@ class Question:
                     if self.default is MISSING:
                         return MISSING
                     result = self.render_value(self.default)
-        result = cast_answer_type(result, self.get_type_name())
+        result = self.cast_answer(result)
         return result
 
     def get_default_rendered(self) -> Union[bool, str, Choice, None, MissingType]:
@@ -314,13 +332,9 @@ class Question:
             c = Choice(name, value, disabled=disabled)
             # Try to cast the value according to the question's type to raise
             # an error in case the value is incompatible.
-            cast_answer_type(c.value, self.get_type_name())
+            self.cast_answer(c.value)
             result.append(c)
         return result
-
-    def filter_answer(self, answer) -> Any:
-        """Cast the answer to the desired type."""
-        return cast_answer_type(answer, self.get_type_name())
 
     def get_message(self) -> str:
         """Get the message that will be printed to the user."""
@@ -343,7 +357,7 @@ class Question:
         """Get the question in a format that the questionary lib understands."""
         lexer = None
         result: AnyByStrDict = {
-            "filter": self.filter_answer,
+            "filter": self.cast_answer,
             "message": self.get_message(),
             "mouse_support": True,
             "name": self.var_name,
@@ -384,7 +398,9 @@ class Question:
         """Render the type name and return it."""
         type_name = self.render_value(self.type)
         if type_name not in CAST_STR_TO_NATIVE:
-            raise InvalidTypeError("Invalid question type")
+            raise InvalidTypeError(
+                f'Unsupported type "{type_name}" in question "{self.var_name}"'
+            )
         return type_name
 
     def get_multiline(self) -> bool:
@@ -431,13 +447,12 @@ class Question:
 
     def parse_answer(self, answer: Any) -> Any:
         """Parse the answer according to the question's type."""
-        type_name = self.get_type_name()
-        ans = cast_answer_type(answer, type_name)
+        ans = self.cast_answer(answer)
         choices = self._formatted_choices
         if not choices:
             return ans
         for choice in choices:
-            if ans == cast_answer_type(choice.value, type_name):
+            if ans == self.cast_answer(choice.value):
                 if choice.disabled:
                     raise ValueError(f"Invalid choice: {choice.disabled}")
                 return ans
@@ -466,27 +481,6 @@ def load_answersfile_data(
             return yaml.safe_load(fd)
     except FileNotFoundError:
         return {}
-
-
-def cast_answer_type(answer: Any, type_name: str) -> Any:
-    """Cast answer to expected type."""
-    try:
-        type_fn = CAST_STR_TO_NATIVE[type_name]
-    except KeyError as exc:
-        raise InvalidTypeError("Invalid answer type") from exc
-    # Only JSON or YAML questions support `None` as an answer
-    if answer is None and type_name not in {"json", "yaml"}:
-        raise TypeError(
-            f'Invalid answer of type "{type(answer)}" to question of type '
-            f'"{type_name}"'
-        )
-    try:
-        return type_fn(answer)
-    except (TypeError, AttributeError):
-        # JSON or YAML failed because it wasn't a string; no need to convert
-        if type_name in {"json", "yaml"}:
-            return answer
-        raise
 
 
 CAST_STR_TO_NATIVE: Mapping[str, Callable] = {
