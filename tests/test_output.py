@@ -3,7 +3,10 @@ from pathlib import Path
 
 import pytest
 
-from .helpers import render
+from copier.errors import InvalidTypeError
+from copier.main import run_copy
+
+from .helpers import build_file_tree, render
 
 
 def test_output(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
@@ -49,3 +52,40 @@ def test_output_quiet(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> Non
     out, err = capsys.readouterr()
     assert out == ""
     assert err == ""
+
+
+def test_question_with_invalid_type(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ["src", "dst"])
+    build_file_tree(
+        {
+            src
+            / "copier.yaml": """
+                bad:
+                    type: invalid
+                    default: 1
+                """
+        }
+    )
+    with pytest.raises(
+        InvalidTypeError, match='Unsupported type "invalid" in question "bad"'
+    ):
+        run_copy(str(src), dst, defaults=True, overwrite=True)
+
+
+def test_answer_with_invalid_type(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ["src", "dst"])
+    build_file_tree(
+        {
+            src
+            / "copier.yaml": """
+                bad:
+                    type: int
+                    default: null
+                """
+        }
+    )
+    with pytest.raises(
+        InvalidTypeError,
+        match='Invalid answer "None" of type "<class \'NoneType\'>" to question "bad" of type "int"',
+    ):
+        run_copy(str(src), dst, defaults=True, overwrite=True)
