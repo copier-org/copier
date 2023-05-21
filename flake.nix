@@ -26,7 +26,12 @@
 
   outputs = inputs:
     with inputs;
-      flake-utils.lib.eachDefaultSystem (system: let
+      {
+        overlays.default = final: prev: {
+          copier = self.packages.${prev.system}.default;
+        };
+      }
+      // flake-utils.lib.eachDefaultSystem (system: let
         pkgs = import nixpkgs {
           inherit system;
           overlays = [poetry2nix.overlay];
