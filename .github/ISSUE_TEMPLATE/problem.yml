@@ -15,7 +15,10 @@ body:
     id: template
     attributes:
       label: Template
-      description: Many problems are related to a specific Copier template. If you can provide a template, please do it. It can be a Git repo URL, a .zip file containing the template, or instructions to build it.
+      description:
+        Many problems are related to a specific Copier template. If you can provide a
+        template, please do it. It can be a Git repo URL, a .zip file containing the
+        template, or instructions to build it.
     validations:
       required: true
 
@@ -34,7 +37,10 @@ body:
     id: logs
     attributes:
       label: Logs
-      description: Provide logs of the problem. These will typically happen when getting to the latest step explained above if Copier produces an error. It helps too if you paste your copying session.
+      description:
+        Provide logs of the problem. These will typically happen when getting to the
+        latest step explained above if Copier produces an error. It helps too if you
+        paste your copying session.
       render: console
 
   - type: textarea
@@ -49,7 +55,8 @@ body:
     id: additional_info
     attributes:
       label: Screenshots/screencasts/logs
-      description: If applicable, add screenshots/screencasts/logs to help explain your problem.
+      description:
+        If applicable, add screenshots/screencasts/logs to help explain your problem.
 
   - type: dropdown
     id: env-os
