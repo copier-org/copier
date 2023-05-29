@@ -129,18 +129,6 @@ class _Subcommand(cli.Application):
         ),
     )
     pretend = cli.Flag(["-n", "--pretend"], help="Run but do not make any changes")
-    force = cli.Flag(
-        ["-f", "--force"],
-        help="Same as `--defaults --overwrite`.",
-    )
-    defaults = cli.Flag(
-        ["-l", "--defaults"],
-        help="Use default answers to questions, which might be null if not specified.",
-    )
-    overwrite = cli.Flag(
-        ["-w", "--overwrite"],
-        help="Overwrite files that already exist, without asking.",
-    )
     skip = cli.SwitchAttr(
         ["-s", "--skip"],
         str,
@@ -185,8 +173,6 @@ class _Subcommand(cli.Application):
             dst_path=Path(dst_path),
             answers_file=self.answers_file,
             exclude=self.exclude,
-            defaults=self.force or self.defaults,
-            overwrite=self.force or self.overwrite,
             pretend=self.pretend,
             skip_if_exists=self.skip,
             quiet=self.quiet,
@@ -212,6 +198,18 @@ class CopierCopySubApp(_Subcommand):
         default=True,
         help="On error, do not delete destination if it was created by Copier.",
     )
+    defaults = cli.Flag(
+        ["-l", "--defaults"],
+        help="Use default answers to questions, which might be null if not specified.",
+    )
+    force = cli.Flag(
+        ["-f", "--force"],
+        help="Same as `--defaults --overwrite`.",
+    )
+    overwrite = cli.Flag(
+        ["-w", "--overwrite"],
+        help="Overwrite files that already exist, without asking.",
+    )
 
     @handle_exceptions
     def main(self, template_src: str, destination_path: str) -> int:
@@ -230,6 +228,8 @@ class CopierCopySubApp(_Subcommand):
             template_src,
             destination_path,
             cleanup_on_error=self.cleanup_on_error,
+            defaults=self.force or self.defaults,
+            overwrite=self.force or self.overwrite,
         ).run_copy()
         return 0
 
@@ -260,6 +260,19 @@ class CopierRecopySubApp(_Subcommand):
         """
     )
 
+    defaults = cli.Flag(
+        ["-l", "--defaults"],
+        help="Use default answers to questions, which might be null if not specified.",
+    )
+    force = cli.Flag(
+        ["-f", "--force"],
+        help="Same as `--defaults --overwrite`.",
+    )
+    overwrite = cli.Flag(
+        ["-w", "--overwrite"],
+        help="Overwrite files that already exist, without asking.",
+    )
+
     @handle_exceptions
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
         """Call [run_recopy][copier.main.Worker.run_recopy].
@@ -274,6 +287,8 @@ class CopierRecopySubApp(_Subcommand):
         """
         self._worker(
             dst_path=destination_path,
+            defaults=self.force or self.defaults,
+            overwrite=self.force or self.overwrite,
         ).run_recopy()
         return 0
 
@@ -318,6 +333,10 @@ class CopierUpdateSubApp(_Subcommand):
             "accuracy, decrease for resilience."
         ),
     )
+    defaults = cli.Flag(
+        ["-l", "-f", "--defaults"],
+        help="Use default answers to questions, which might be null if not specified.",
+    )
 
     @handle_exceptions
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
@@ -335,6 +354,8 @@ class CopierUpdateSubApp(_Subcommand):
             dst_path=destination_path,
             conflict=self.conflict,
             context_lines=self.context_lines,
+            defaults=self.defaults,
+            overwrite=True,
         ).run_update()
         return 0
 
