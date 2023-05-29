@@ -57,7 +57,7 @@ templates, so that you can add, change or remove variables.
 
 In order for Copier to be able to load and use the extension when generating a project,
 it must be installed alongside Copier itself. More details in the
-[`jinja_extensions` docs](#jinja_extensions).
+[`jinja_extensions` docs](../configuring#jinja_extensions).
 
 You can then configure your Jinja extensions in Copier's configuration file:
 
