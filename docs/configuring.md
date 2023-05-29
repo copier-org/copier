@@ -882,7 +882,7 @@ Use default answers to questions.
 ### `overwrite`
 
 -   Format: `bool`
--   CLI flags: `--overwrite`
+-   CLI flags: `--overwrite` (N/A in `copier update` because it's implicit)
 -   Default value: `False`
 
 Overwrite files that already exist, without asking.
@@ -892,6 +892,8 @@ Overwrite files that already exist, without asking.
 !!! info
 
     Not supported in `copier.yml`.
+
+    Required when updating from API.
 
 ### `jinja_extensions`
 
