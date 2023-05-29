@@ -154,15 +154,6 @@ As you can see here, `copier` does several things:
 -   Finally, it re-applies the previously obtained diff and then runs the
     post-migrations.
 
-!!! important
-
-    The diff obtained by comparing the fresh, regenerated project to your
-    current project can cancel the modifications applied by the update from the latest
-    template version. During the process, `copier` will ask for your confirmation to
-    overwrite or skip modifications, but in the end, it is possible that nothing has
-    changed (except for the version in `.copier-answers.yml` of course). This is not a
-    bug: although it can be quite surprising, this behavior is correct.
-
 ## Migration across Copier major versions
 
 When there's a new major release of Copier (for example from Copier 5.x to 6.x), there
