@@ -11,6 +11,7 @@ from plumbum import local
 from plumbum.cmd import git
 
 from copier.cli import CopierApp
+from copier.errors import UserMessageError
 from copier.main import Worker, run_copy, run_update
 from copier.types import Literal
 
@@ -201,7 +202,7 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
         )
         commit("-m", "I prefer grog")
         # Update target to latest tag and check it's updated in answers file
-        CopierApp.run(["copier", "update", "--defaults", "--overwrite"], exit=False)
+        CopierApp.run(["copier", "update", "--defaults"], exit=False)
         assert answers.read_text() == dedent(
             f"""\
             # Changes here will be overwritten by Copier
@@ -223,7 +224,7 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
         commit("-m", "Update template to v0.0.2")
         # Update target to latest commit, which is still untagged
         CopierApp.run(
-            ["copier", "update", "--defaults", "--overwrite", "--vcs-ref=HEAD"],
+            ["copier", "update", "--defaults", "--vcs-ref=HEAD"],
             exit=False,
         )
         # Check no new migrations were executed
@@ -258,7 +259,7 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
         assert not git("status", "--porcelain")
         # No more updates exist, so updating again should change nothing
         CopierApp.run(
-            ["copier", "update", "--defaults", "--overwrite", "--vcs-ref=HEAD"],
+            ["copier", "update", "--defaults", "--vcs-ref=HEAD"],
             exit=False,
         )
         assert not git("status", "--porcelain")
@@ -575,7 +576,7 @@ def test_overwrite_answers_file_always(
         git("commit", "-m1")
         # When updating, the only thing to overwrite is the copier answers file,
         # which shouldn't ask, so also this shouldn't hang with overwrite=False
-        run_update(defaults=True, answers_file=answers_file)
+        run_update(defaults=True, overwrite=True, answers_file=answers_file)
     answers = yaml.safe_load(
         (dst / (answers_file or ".copier-answers.yml")).read_bytes()
     )
@@ -641,7 +642,11 @@ def test_file_removed(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("tag", "2")
     # Subproject updates
     with local.cwd(dst):
-        run_update(conflict="rej")
+        with pytest.raises(
+            UserMessageError, match="Enable overwrite to update a subproject."
+        ):
+            run_update(conflict="rej")
+        run_update(conflict="rej", overwrite=True)
     # Check what must still exist
     assert (dst / ".copier-answers.yml").is_file()
     assert (dst / "I.txt").is_file()
@@ -730,7 +735,7 @@ def test_update_inline_changed_answers_and_questions(
         git("commit", "-am2")
         # Update from template, inline, with answer changes
         if interactive:
-            tui = spawn(COPIER_PATH + ("update", "-w", "--conflict=inline"), timeout=10)
+            tui = spawn(COPIER_PATH + ("update", "--conflict=inline"), timeout=10)
             tui.expect_exact("b (bool)")
             tui.expect_exact("(Y/n)")
             tui.sendline()
@@ -941,7 +946,6 @@ def test_update_needs_more_context(
     else:
         COPIER_CMD(
             "update",
-            "--overwrite",
             str(dst),
             "--conflict=inline",
             f"--context-lines={context_lines}",

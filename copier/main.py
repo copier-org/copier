@@ -755,6 +755,11 @@ class Worker:
                 f"Your are downgrading from {self.subproject.template.version} to {self.template.version}. "
                 "Downgrades are not supported."
             )
+        if not self.overwrite:
+            # Only git-tracked subprojects can be updated, so the user can
+            # review the diff before committing; so we can safely avoid
+            # asking for confirmation
+            raise UserMessageError("Enable overwrite to update a subproject.")
         if not self.quiet:
             # TODO Unify printing tools
             print(
