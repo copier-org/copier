@@ -11,7 +11,7 @@ from functools import partial
 from itertools import chain
 from pathlib import Path
 from shutil import rmtree
-from typing import Callable, Iterable, Mapping, Optional, Sequence, Set, Union, get_args
+from typing import Callable, Iterable, Mapping, Optional, Sequence, Set, Union
 from unicodedata import normalize
 
 from jinja2.loaders import FileSystemLoader
@@ -60,6 +60,13 @@ else:
         Can be remove once python 3.7 dropped.
         """
         copy_tree(str(src), str(dst))
+
+
+# HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
+if sys.version_info >= (3, 8):
+    from typing import get_args
+else:
+    from typing_extensions import get_args
 
 
 @dataclass(config=ConfigDict(extra=Extra.forbid))
