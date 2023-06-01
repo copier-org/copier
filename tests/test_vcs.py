@@ -106,7 +106,9 @@ def test_shallow_clone(tmp_path: Path, recwarn: pytest.WarningsRecorder) -> None
 @pytest.mark.impure
 def test_removes_temporary_clone(tmp_path: Path) -> None:
     src_path = "https://github.com/copier-org/autopretty.git"
-    with Worker(src_path=src_path, dst_path=tmp_path, defaults=True) as worker:
+    with Worker(
+        src_path=src_path, dst_path=tmp_path, defaults=True, unsafe=True
+    ) as worker:
         worker.run_copy()
         temp_clone = worker.template.local_abspath
     assert not temp_clone.exists()
@@ -116,7 +118,9 @@ def test_removes_temporary_clone(tmp_path: Path) -> None:
 def test_dont_remove_local_clone(tmp_path: Path) -> None:
     src_path = str(tmp_path / "autopretty")
     git("clone", "https://github.com/copier-org/autopretty.git", src_path)
-    with Worker(src_path=src_path, dst_path=tmp_path, defaults=True) as worker:
+    with Worker(
+        src_path=src_path, dst_path=tmp_path, defaults=True, unsafe=True
+    ) as worker:
         worker.run_copy()
     assert Path(src_path).exists()
 
@@ -138,7 +142,9 @@ def test_update_using_local_source_path_with_tilde(tmp_path: Path) -> None:
         user_src_path = f"~/{'/'.join(['..'] * len(Path.home().parts))}{src_path}"
 
     # generate project and assert correct path in answers
-    worker = run_copy(src_path=user_src_path, dst_path=tmp_path, defaults=True)
+    worker = run_copy(
+        src_path=user_src_path, dst_path=tmp_path, defaults=True, unsafe=True
+    )
     assert worker.answers.combined["_src_path"] == user_src_path
 
     # assert project update works and correct path again
@@ -151,6 +157,7 @@ def test_update_using_local_source_path_with_tilde(tmp_path: Path) -> None:
         defaults=True,
         overwrite=True,
         answers_file=".copier-answers.autopretty.yml",
+        unsafe=True,
     )
     assert worker.answers.combined["_src_path"] == user_src_path
 

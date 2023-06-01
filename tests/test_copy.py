@@ -64,6 +64,7 @@ def test_copy_with_non_version_tags(tmp_path_factory: pytest.TempPathFactory) ->
         dst,
         defaults=True,
         overwrite=True,
+        unsafe=True,
         vcs_ref="HEAD",
     )
 
@@ -100,6 +101,7 @@ def test_copy_with_non_version_tags_and_vcs_ref(
         dst,
         defaults=True,
         overwrite=True,
+        unsafe=True,
         vcs_ref="test_tag.post23+deadbeef",
     )
 

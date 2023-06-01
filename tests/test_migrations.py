@@ -41,7 +41,7 @@ def test_migrations_and_tasks(tmp_path: Path) -> None:
         git("commit", "--allow-empty", "-m2")
         git("tag", "v2.0")
     # Copy it in v1
-    run_copy(src_path=str(src), dst_path=dst, vcs_ref="v1.0.0")
+    run_copy(src_path=str(src), dst_path=dst, vcs_ref="v1.0.0", unsafe=True)
     # Check copy was OK
     assert (dst / "created-with-tasks.txt").read_text() == "task 1\ntask 2\n"
     assert not (dst / "delete-in-tasks.txt").exists()
@@ -59,7 +59,7 @@ def test_migrations_and_tasks(tmp_path: Path) -> None:
         git("config", "user.email", "test@copier")
         git("commit", "-m1")
     # Update it to v2
-    run_update(dst_path=dst, defaults=True, overwrite=True)
+    run_update(dst_path=dst, defaults=True, overwrite=True, unsafe=True)
     # Check update was OK
     assert (dst / "created-with-tasks.txt").read_text() == "task 1\ntask 2\n" * 2
     assert not (dst / "delete-in-tasks.txt").exists()
@@ -143,7 +143,7 @@ def test_pre_migration_modifies_answers(
         git("tag", "v2")
     # User updates subproject to v2 template
     with local.cwd(dst):
-        run_update(defaults=True, overwrite=True)
+        run_update(defaults=True, overwrite=True, unsafe=True)
         answers = json.loads(Path(".copier-answers.yml").read_text())
         assert answers["_commit"] == "v2"
         assert "best_song" not in answers
@@ -219,7 +219,9 @@ def test_prereleases(tmp_path_factory: pytest.TempPathFactory) -> None:
     assert not (dst / "v2.a1").exists()
     assert not (dst / "v2.a2").exists()
     # Update it with prereleases
-    run_update(dst_path=dst, defaults=True, overwrite=True, use_prereleases=True)
+    run_update(
+        dst_path=dst, defaults=True, overwrite=True, use_prereleases=True, unsafe=True
+    )
     answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers["_commit"] == "v2.0.0.alpha1"
     assert (dst / "version.txt").read_text() == "v2.0.0.alpha1"
@@ -284,7 +286,7 @@ def test_pretend_mode(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("commit", "-mv2")
         git("tag", "v2")
 
-    run_update(dst_path=dst, overwrite=True, pretend=True)
+    run_update(dst_path=dst, overwrite=True, pretend=True, unsafe=True)
     answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers["_commit"] == "v1"
     assert not (dst / "v2-before.txt").exists()

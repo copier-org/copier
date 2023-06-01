@@ -202,7 +202,7 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
         )
         commit("-m", "I prefer grog")
         # Update target to latest tag and check it's updated in answers file
-        CopierApp.run(["copier", "update", "--defaults"], exit=False)
+        CopierApp.run(["copier", "update", "--defaults", "--UNSAFE"], exit=False)
         assert answers.read_text() == dedent(
             f"""\
             # Changes here will be overwritten by Copier
@@ -368,7 +368,9 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
         git("commit", "-m", "feat: commit 1")
         git("tag", "v1")
     # Copy source template
-    run_copy(src_path=str(src), dst_path=dst1, defaults=True, overwrite=True)
+    run_copy(
+        src_path=str(src), dst_path=dst1, defaults=True, overwrite=True, unsafe=True
+    )
     with local.cwd(dst1):
         life = Path("life.yml")
         git("add", ".")
@@ -406,7 +408,12 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
         git("tag", "v2")
     # Update subproject to v2
     run_update(
-        dst_path=dst1, defaults=True, overwrite=True, conflict="rej", context_lines=1
+        dst_path=dst1,
+        defaults=True,
+        overwrite=True,
+        conflict="rej",
+        context_lines=1,
+        unsafe=True,
     )
     with local.cwd(dst1):
         git("commit", "-am", "feat: copied v2")
@@ -448,6 +455,7 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
             overwrite=True,
             conflict="rej",
             context_lines=1,
+            unsafe=True,
         )
         git("commit", "-am", "chore: re-updated to change values after evolving")
         # Subproject evolution was respected up to sane possibilities.

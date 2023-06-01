@@ -1307,6 +1307,32 @@ templates suffix is _not_ empty, Copier will abort and print an error message.
 
     Copier 7+ no longer uses the old default independent of [min_copier_version][].
 
+### `unsafe`
+
+-   Format: `bool`
+-   CLI flags: `--UNSAFE`
+-   Default value: `False`
+
+Copier templates can use dangerous features that allow arbitrary code execution:
+
+-   [Jinja extensions](#jinja_extensions)
+-   [Migrations](#migrations)
+-   [Tasks](#tasks)
+
+Therefore, these features are disabled by default and Copier will raise an error (and
+exit from the CLI with code `2`) when they are found in a template. In this case, please
+verify that no malicious code gets executed by any of the used features. When you're
+sufficiently confident or willing to take the risk, set `unsafe=True` or pass the CLI
+switch `--UNSAFE`.
+
+!!! danger
+
+    Please be sure you understand the risks when allowing unsafe features!
+
+!!! info
+
+    Not supported in `copier.yml`.
+
 ### `use_prereleases`
 
 -   Format: `bool`

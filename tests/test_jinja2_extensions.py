@@ -43,7 +43,9 @@ def test_default_jinja2_extensions(tmp_path: Path) -> None:
 
 
 def test_additional_jinja2_extensions(tmp_path: Path) -> None:
-    copier.run_copy(str(PROJECT_TEMPLATE) + "_extensions_additional", tmp_path)
+    copier.run_copy(
+        str(PROJECT_TEMPLATE) + "_extensions_additional", tmp_path, unsafe=True
+    )
     super_file = tmp_path / "super_file.md"
     assert super_file.exists()
     assert super_file.read_text() == "super var! super func! super filter!\n"

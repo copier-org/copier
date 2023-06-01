@@ -11,7 +11,7 @@ from functools import partial
 from itertools import chain
 from pathlib import Path
 from shutil import rmtree
-from typing import Callable, Iterable, Mapping, Optional, Sequence, Union
+from typing import Callable, Iterable, Mapping, Optional, Sequence, Set, Union
 from unicodedata import normalize
 
 from jinja2.loaders import FileSystemLoader
@@ -26,7 +26,12 @@ from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
 from questionary import unsafe_prompt
 
-from .errors import CopierAnswersInterrupt, ExtensionNotFoundError, UserMessageError
+from .errors import (
+    CopierAnswersInterrupt,
+    ExtensionNotFoundError,
+    UnsafeTemplateError,
+    UserMessageError,
+)
 from .subproject import Subproject
 from .template import Task, Template
 from .tools import Style, TemporaryDirectory, printf, readlink
@@ -60,6 +65,13 @@ else:
         Can be remove once python 3.7 dropped.
         """
         copy_tree(str(src), str(dst))
+
+
+# HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
+if sys.version_info >= (3, 8):
+    from typing import get_args
+else:
+    from typing_extensions import get_args
 
 
 @dataclass(config=ConfigDict(extra=Extra.forbid))
@@ -165,6 +177,11 @@ class Worker:
 
             With less lines, context resolution is less accurate, but it will
             respect better the evolution of your subproject.
+
+        unsafe:
+            When `True`, allow usage of unsafe templates.
+
+            See [unsafe][]
     """
 
     src_path: Optional[str] = None
@@ -183,6 +200,7 @@ class Worker:
     quiet: bool = False
     conflict: str = "inline"
     context_lines: PositiveInt = 3
+    unsafe: bool = False
 
     def __enter__(self):
         """Allow using worker as a context manager."""
@@ -201,6 +219,27 @@ class Worker:
 
     def _cleanup(self):
         self.template._cleanup()
+
+    def _check_unsafe(self, mode: Literal["copy", "update"]) -> None:
+        """Check whether a template uses unsafe features."""
+        if self.unsafe:
+            return
+        features: Set[str] = set()
+        if self.template.jinja_extensions:
+            features.add("jinja_extensions")
+        if self.template.tasks:
+            features.add("tasks")
+        if mode == "update" and self.subproject.template:
+            if self.subproject.template.jinja_extensions:
+                features.add("jinja_extensions")
+            if self.subproject.template.tasks:
+                features.add("tasks")
+            for stage in get_args(Literal["before", "after"]):
+                if self.template.migration_tasks(stage, self.subproject.template):
+                    features.add("migrations")
+                    break
+        if features:
+            raise UnsafeTemplateError(sorted(features))
 
     def _answers_to_remember(self) -> Mapping:
         """Get only answers that will be remembered in the copier answers file."""
@@ -688,6 +727,7 @@ class Worker:
 
         See [generating a project][generating-a-project].
         """
+        self._check_unsafe("copy")
         was_existing = self.subproject.local_abspath.exists()
         src_abspath = self.template_copy_root
         try:
@@ -725,6 +765,7 @@ class Worker:
 
         See [updating a project][updating-a-project].
         """
+        self._check_unsafe("update")
         # Check all you need is there
         if self.subproject.vcs != "git":
             raise UserMessageError(

@@ -35,12 +35,14 @@ def template_path(tmp_path_factory: pytest.TempPathFactory) -> str:
 
 
 def test_render_tasks(template_path: str, tmp_path: Path) -> None:
-    copier.run_copy(template_path, tmp_path, data={"other_file": "custom"})
+    copier.run_copy(template_path, tmp_path, data={"other_file": "custom"}, unsafe=True)
     assert (tmp_path / "custom").is_file()
 
 
 def test_copy_tasks(template_path: str, tmp_path: Path) -> None:
-    copier.run_copy(template_path, tmp_path, quiet=True, defaults=True, overwrite=True)
+    copier.run_copy(
+        template_path, tmp_path, quiet=True, defaults=True, overwrite=True, unsafe=True
+    )
     assert (tmp_path / "hello").exists()
     assert (tmp_path / "hello").is_dir()
     assert (tmp_path / "hello" / "world").exists()
@@ -60,5 +62,5 @@ def test_pretend_mode(tmp_path_factory: pytest.TempPathFactory) -> None:
             )
         }
     )
-    copier.run_copy(str(src), dst, pretend=True)
+    copier.run_copy(str(src), dst, pretend=True, unsafe=True)
     assert not (dst / "created-by-task.txt").exists()
