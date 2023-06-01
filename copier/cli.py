@@ -140,6 +140,12 @@ class _Subcommand(cli.Application):
         ["-g", "--prereleases"],
         help="Use prereleases to compare template VCS tags.",
     )
+    unsafe = cli.Flag(
+        ["--UNSAFE"],
+        help=(
+            "Allow templates with unsafe features (Jinja extensions, migrations, tasks)"
+        ),
+    )
 
     @cli.switch(
         ["-d", "--data"],
@@ -179,6 +185,7 @@ class _Subcommand(cli.Application):
             src_path=src_path,
             vcs_ref=self.vcs_ref,
             use_prereleases=self.prereleases,
+            unsafe=self.unsafe,
             **kwargs,
         )
 

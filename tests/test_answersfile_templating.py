@@ -49,6 +49,7 @@ def test_answersfile_templating(
         answers_file=answers_file,
         defaults=True,
         overwrite=True,
+        unsafe=True,
     )
     first_answers_file = (
         ".copier-answers-mymodule.yml"
@@ -65,6 +66,7 @@ def test_answersfile_templating(
         {"module_name": "anothermodule"},
         defaults=True,
         overwrite=True,
+        unsafe=True,
     )
 
     # Assert second one created
