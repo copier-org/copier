@@ -52,7 +52,7 @@ from unittest.mock import patch
 from decorator import decorator
 from plumbum import cli, colors
 
-from .errors import UserMessageError
+from .errors import UnsafeTemplateError, UserMessageError
 from .main import Worker
 from .tools import copier_version
 from .types import AnyByStrDict, OptStr, StrSeq
@@ -69,6 +69,9 @@ def handle_exceptions(method, *args, **kwargs):
     except UserMessageError as error:
         print(colors.red | "\n".join(error.args), file=sys.stderr)
         return 1
+    except UnsafeTemplateError as error:
+        print(colors.red | "\n".join(error.args), file=sys.stderr)
+        return 2
 
 
 class CopierApp(cli.Application):

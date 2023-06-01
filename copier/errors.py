@@ -1,7 +1,7 @@
 """Custom exceptions used by Copier."""
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence
 
 from pydantic.errors import _PathValueError
 
@@ -96,6 +96,15 @@ class CopierAnswersInterrupt(CopierError, KeyboardInterrupt):
         self.answers = answers
         self.last_question = last_question
         self.template = template
+
+
+class UnsafeTemplateError(CopierError):
+    """Unsafe Copier template features are used without explicit consent."""
+
+    def __init__(self, features: Sequence[str]):
+        assert features
+        s = "s" if len(features) > 1 else ""
+        super().__init__(f"Template uses unsafe feature{s}: {', '.join(features)}")
 
 
 # Warnings

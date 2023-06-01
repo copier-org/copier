@@ -26,7 +26,12 @@ from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
 from questionary import unsafe_prompt
 
-from .errors import CopierAnswersInterrupt, ExtensionNotFoundError, UserMessageError
+from .errors import (
+    CopierAnswersInterrupt,
+    ExtensionNotFoundError,
+    UnsafeTemplateError,
+    UserMessageError,
+)
 from .subproject import Subproject
 from .template import Task, Template
 from .tools import Style, TemporaryDirectory, printf, readlink
@@ -234,10 +239,7 @@ class Worker:
                     features.add("migrations")
                     break
         if features:
-            s = "s" if len(features) > 1 else ""
-            raise UserMessageError(
-                f"Template uses unsafe feature{s}: {', '.join(sorted(features))}"
-            )
+            raise UnsafeTemplateError(sorted(features))
 
     def _answers_to_remember(self) -> Mapping:
         """Get only answers that will be remembered in the copier answers file."""

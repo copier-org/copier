@@ -8,7 +8,7 @@ from plumbum import local
 from plumbum.cmd import git
 
 from copier.cli import CopierApp
-from copier.errors import UserMessageError
+from copier.errors import UnsafeTemplateError
 from copier.main import run_copy, run_update
 from copier.types import AnyByStrDict
 
@@ -33,7 +33,7 @@ class JinjaExtension(Extension):
         (
             {"_tasks": ["touch task.txt"]},
             pytest.raises(
-                UserMessageError, match="Template uses unsafe feature: tasks"
+                UnsafeTemplateError, match="Template uses unsafe feature: tasks"
             ),
         ),
         (
@@ -59,7 +59,7 @@ class JinjaExtension(Extension):
         (
             {"_jinja_extensions": ["tests.test_unsafe.JinjaExtension"]},
             pytest.raises(
-                UserMessageError,
+                UnsafeTemplateError,
                 match="Template uses unsafe feature: jinja_extensions",
             ),
         ),
@@ -69,7 +69,7 @@ class JinjaExtension(Extension):
                 "_jinja_extensions": ["tests.test_unsafe.JinjaExtension"],
             },
             pytest.raises(
-                UserMessageError,
+                UnsafeTemplateError,
                 match="Template uses unsafe features: jinja_extensions, tasks",
             ),
         ),
@@ -105,7 +105,7 @@ def test_copy_cli(
     if unsafe:
         assert retcode == 0
     else:
-        assert retcode == 1
+        assert retcode == 2
         _, err = capsys.readouterr()
         assert "Template uses unsafe feature: tasks" in err
 
@@ -127,21 +127,21 @@ def test_copy_cli(
             {"_tasks": ["touch task-old.txt"]},
             {},
             pytest.raises(
-                UserMessageError, match="Template uses unsafe feature: tasks"
+                UnsafeTemplateError, match="Template uses unsafe feature: tasks"
             ),
         ),
         (
             {},
             {"_tasks": ["touch task-new.txt"]},
             pytest.raises(
-                UserMessageError, match="Template uses unsafe feature: tasks"
+                UnsafeTemplateError, match="Template uses unsafe feature: tasks"
             ),
         ),
         (
             {"_tasks": ["touch task-old.txt"]},
             {"_tasks": ["touch task-new.txt"]},
             pytest.raises(
-                UserMessageError, match="Template uses unsafe feature: tasks"
+                UnsafeTemplateError, match="Template uses unsafe feature: tasks"
             ),
         ),
         (
@@ -186,7 +186,7 @@ def test_copy_cli(
                 ]
             },
             pytest.raises(
-                UserMessageError, match="Template uses unsafe feature: migrations"
+                UnsafeTemplateError, match="Template uses unsafe feature: migrations"
             ),
         ),
         (
@@ -200,7 +200,7 @@ def test_copy_cli(
                 ]
             },
             pytest.raises(
-                UserMessageError, match="Template uses unsafe feature: migrations"
+                UnsafeTemplateError, match="Template uses unsafe feature: migrations"
             ),
         ),
         (
@@ -215,7 +215,7 @@ def test_copy_cli(
                 ]
             },
             pytest.raises(
-                UserMessageError, match="Template uses unsafe feature: migrations"
+                UnsafeTemplateError, match="Template uses unsafe feature: migrations"
             ),
         ),
         (
@@ -227,7 +227,7 @@ def test_copy_cli(
             {"_jinja_extensions": ["tests.test_unsafe.JinjaExtension"]},
             {},
             pytest.raises(
-                UserMessageError,
+                UnsafeTemplateError,
                 match="Template uses unsafe feature: jinja_extensions",
             ),
         ),
@@ -235,7 +235,7 @@ def test_copy_cli(
             {},
             {"_jinja_extensions": ["tests.test_unsafe.JinjaExtension"]},
             pytest.raises(
-                UserMessageError,
+                UnsafeTemplateError,
                 match="Template uses unsafe feature: jinja_extensions",
             ),
         ),
@@ -243,7 +243,7 @@ def test_copy_cli(
             {"_jinja_extensions": ["tests.test_unsafe.JinjaExtension"]},
             {"_jinja_extensions": ["tests.test_unsafe.JinjaExtension"]},
             pytest.raises(
-                UserMessageError,
+                UnsafeTemplateError,
                 match="Template uses unsafe feature: jinja_extensions",
             ),
         ),
@@ -261,7 +261,7 @@ def test_copy_cli(
                 "_jinja_extensions": ["tests.test_unsafe.JinjaExtension"],
             },
             pytest.raises(
-                UserMessageError,
+                UnsafeTemplateError,
                 match=(
                     "Template uses unsafe features: "
                     "jinja_extensions, migrations, tasks"
@@ -369,6 +369,6 @@ def test_update_cli(
     if unsafe:
         assert retcode == 0
     else:
-        assert retcode == 1
+        assert retcode == 2
         _, err = capsys.readouterr()
         assert "Template uses unsafe feature: tasks" in err
