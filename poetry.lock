@@ -1456,14 +1456,14 @@ files = [
 
 [[package]]
 name = "types-psutil"
-version = "5.9.5.12"
+version = "5.9.5.13"
 description = "Typing stubs for psutil"
 category = "dev"
 optional = false
 python-versions = "*"
 files = [
-    {file = "types-psutil-5.9.5.12.tar.gz", hash = "sha256:61a91679d3fe737250013b624dca09375e7cc3ad77dcc734553746c429c02aca"},
-    {file = "types_psutil-5.9.5.12-py3-none-any.whl", hash = "sha256:e9a147b8561235c6afcce5aa1adb973fad9ab2c50cf89820697687f53510358f"},
+    {file = "types-psutil-5.9.5.13.tar.gz", hash = "sha256:3374c06ff92436f57c72e5df1e8fa08480af3e846f78d72498ddc7181985ac85"},
+    {file = "types_psutil-5.9.5.13-py3-none-any.whl", hash = "sha256:692213804a926bf88eeaef40dc3c7d3e01926eb5282de4655c4bf8af1ba0b675"},
 ]
 
 [[package]]
