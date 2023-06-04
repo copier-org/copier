@@ -4,6 +4,51 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v8.0.0 (2023-06-04)
+
+### BREAKING CHANGE
+
+-   Updates will overwrite existing files always. If you need to select only some files,
+    just use `git mergetool` or `git difftool` after updating.
+-   Flag `--overwrite/-w` disappeared from `copier update`. It is now implicit.
+-   To update via API, `overwrite=True` is now required.
+-   The default update conflict mode is now `inline` instead of `rej`.
+-   By default, updates now consider 3 lines of context instead of just 1.
+-   All CLI calls to Copier must now include the subcommand as the 1st argument. For
+    example, `copier` must become now `copier update`; also `copier ./tpl ./dst` must
+    become `copier copy ./tpl ./dst`.
+-   All flags must go after the subcommand now. For example,
+    `copier -r HEAD update ./dst` must now become `copier update -r HEAD ./dst` or
+    `copier update ./dst -r HEAD`.
+-   Automatic mode removed. Since now subcommands are required, the automatic mode is
+    removed.
+-   Deprecated `copier.copy` function is removed. Use `copier.run_copy`,
+    `copier.run_update` or `copier.run_recopy` explicitly as needed.
+-   default values must be of the same type than the question.
+
+### Feat
+
+-   disable unsafe features by default and add `--UNSAFE` switch (#1171)
+-   basic nixpkgs overlay
+-   add `recopy` command and function
+-   support conditional choices (#1010)
+-   validate default values (#1075)
+
+### Fix
+
+-   explain better why an answer casting fails
+-   **cli**: display subcommand args meaning
+-   preserver recursive symlinks
+-   work around Pydantic bug when parsing choices
+-   skip validating question and generating its default value when its skip condition is
+    met
+
+### Refactor
+
+-   overwrite always on updates
+-   **update**: default to inline markers and 3 lines of context
+-   remove unused local overrides to answers
+
 ## v7.2.0 (2023-04-19)
 
 ### Feat
