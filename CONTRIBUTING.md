@@ -144,7 +144,7 @@ To run a subset of tests:
 poe test tests/the-tests-file.py
 ```
 
-### Nix binary cache
+## Nix binary cache
 
 Our direnv configuration is configured to use binary caches by default.
 
@@ -153,3 +153,6 @@ However, to add our binary caches permanently:
 ```shell
 nix-shell -p cachix --run 'cachix use copier && cachix use devenv'
 ```
+
+If you use Nix Flakes, add `--accept-flake-config` to install our binary cache
+automatically.
