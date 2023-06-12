@@ -144,7 +144,7 @@ class _Subcommand(cli.Application):
         help="Use prereleases to compare template VCS tags.",
     )
     unsafe = cli.Flag(
-        ["--UNSAFE"],
+        ["--UNSAFE", "--trust"],
         help=(
             "Allow templates with unsafe features (Jinja extensions, migrations, tasks)"
         ),
