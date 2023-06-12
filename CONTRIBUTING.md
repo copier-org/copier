@@ -120,6 +120,22 @@ Before you submit a pull request, check that it meets these guidelines:
 1.  Check that all checks pass on GitHub CI.
 1.  If something significant changed, modify docs.
 
+### Commit message guidelines
+
+Follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) standard.
+
+We use [Commitizen](https://commitizen-tools.github.io/commitizen/) to handle Copier
+releases. This tool generates the appropriate tag based on that standard. It also writes
+our [changelog](CHANGELOG.md). Changes that are included there are of type `fix`, `feat`
+and `refactor`; also `BREAKING CHANGE:` trailers will appear. If your change is not
+meaningful in the changelog, then please don't use one of those categories.
+
+If you're a maintainer and you want to merge a PR that will produce a confusing
+changelog, then please squash the PR on merge, and change the commit message to make it
+meaningful. Remember to
+[respect co-autorship](https://docs.github.com/en/pull-requests/committing-changes-to-your-project/creating-and-editing-commits/creating-a-commit-with-multiple-authors)
+when squashing, especially if multiple authors were involved.
+
 ## Tips
 
 To run a subset of tests:
