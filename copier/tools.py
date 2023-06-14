@@ -40,8 +40,6 @@ class Style:
 INDENT = " " * 2
 HLINE = "-" * 42
 
-NO_VALUE: object = object()
-
 
 def copier_version() -> Version:
     """Get closest match for the installed copier version."""
