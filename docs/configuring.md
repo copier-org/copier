@@ -1265,6 +1265,13 @@ They run ordered, and with the `$STAGE=task` variable in their environment.
         - [invoke, end-process, "--full-conf={{ _copier_conf|to_json }}"]
         # Your script can be run by the same Python environment used to run Copier
         - ["{{ _copier_python }}", task.py]
+        # OS-specific task (supported values are "linux", "macos", "windows" and `None`)
+        - >-
+          {% if _copier_conf.os in ['linux', 'macos'] %}
+          rm {{ name_of_the_project }}/README.md
+          {% elif _copier_conf.os == 'windows' %}
+          Remove-Item {{ name_of_the_project }}/README.md
+          {% endif %}
     ```
 
     Note: the example assumes you use [Invoke](https://www.pyinvoke.org/) as

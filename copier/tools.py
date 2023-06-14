@@ -2,6 +2,7 @@
 
 import errno
 import os
+import platform
 import shutil
 import stat
 import sys
@@ -10,13 +11,13 @@ import warnings
 from contextlib import suppress
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Callable, Optional, TextIO, Tuple, Union
+from typing import Any, Callable, Optional, TextIO, Tuple, Union, cast
 
 import colorama
 from packaging.version import Version
 from pydantic import StrictBool
 
-from .types import IntSeq
+from .types import IntSeq, Literal
 
 # TODO Remove condition when dropping python 3.8 support
 if sys.version_info < (3, 8):
@@ -39,6 +40,15 @@ class Style:
 
 INDENT = " " * 2
 HLINE = "-" * 42
+
+OS: Optional[Literal["linux", "macos", "windows"]] = cast(
+    Any,
+    {
+        "Linux": "linux",
+        "Darwin": "macos",
+        "Windows": "windows",
+    }.get(platform.system()),
+)
 
 
 def copier_version() -> Version:
