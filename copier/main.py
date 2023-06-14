@@ -34,7 +34,7 @@ from .errors import (
 )
 from .subproject import Subproject
 from .template import Task, Template
-from .tools import Style, TemporaryDirectory, printf, readlink
+from .tools import OS, Style, TemporaryDirectory, printf, readlink
 from .types import (
     MISSING,
     AnyByStrDict,
@@ -298,6 +298,7 @@ class Worker:
                 "src_path": self.template.local_abspath,
                 "vcs_ref_hash": self.template.commit_hash,
                 "sep": os.sep,
+                "os": OS,
             }
         )
 

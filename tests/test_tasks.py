@@ -1,8 +1,10 @@
 from pathlib import Path
+from typing import Optional
 
 import pytest
 
 import copier
+from copier.types import Literal
 
 from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree
 
@@ -64,3 +66,45 @@ def test_pretend_mode(tmp_path_factory: pytest.TempPathFactory) -> None:
     )
     copier.run_copy(str(src), dst, pretend=True, unsafe=True)
     assert not (dst / "created-by-task.txt").exists()
+
+
+@pytest.mark.parametrize(
+    "os, filename",
+    [
+        ("linux", "linux.txt"),
+        ("macos", "macos.txt"),
+        ("windows", "windows.txt"),
+        (None, "unsupported.txt"),
+    ],
+)
+def test_os_specific_tasks(
+    tmp_path_factory: pytest.TempPathFactory,
+    monkeypatch: pytest.MonkeyPatch,
+    os: Optional[Literal["linux", "macos", "windows"]],
+    filename: str,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                """\
+                _tasks:
+                -   >-
+                    {% if _copier_conf.os == 'linux' %}
+                    touch linux.txt
+                    {% elif _copier_conf.os == 'macos' %}
+                    touch macos.txt
+                    {% elif _copier_conf.os == 'windows' %}
+                    touch windows.txt
+                    {% elif _copier_conf.os is none %}
+                    touch unsupported.txt
+                    {% else %}
+                    touch never.txt
+                    {% endif %}
+                """
+            )
+        }
+    )
+    monkeypatch.setattr("copier.main.OS", os)
+    copier.run_copy(str(src), dst, unsafe=True)
+    assert (dst / filename).exists()
