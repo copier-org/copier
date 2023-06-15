@@ -994,6 +994,64 @@ on them, so they are always installed when Copier is installed.
     [other Jinja2 topics](https://github.com/search?q=jinja&type=topics), or
     [on PyPI using the jinja + extension keywords](https://pypi.org/search/?q=jinja+extension).
 
+### `message_after_copy`
+
+-   Format: `str`
+-   CLI flags: N/A
+-   Default value: `""`
+
+A message to be printed after [generating](../generating) or
+[regenerating](../generating#regenerating-a-project) a project _successfully_.
+
+If the message contains Jinja code, it will be rendered with the same context as the
+rest of the template. A [Jinja include](#importing-jinja-templates-and-macros)
+expression may be used to import a message from a file.
+
+The message is suppressed when Copier is run in [quiet mode](#quiet).
+
+!!! example
+
+    ```yaml title="copier.yml"
+    project_name:
+        type: str
+        help: An awesome project needs an awesome name. Tell me yours.
+
+    _message_after_copy: |
+        Your project "{{ project_name }}" has been created successfully!
+
+        Next steps:
+
+        1. Change directory to the project root:
+
+           $ cd {{ _copier_conf.dst_path }}
+
+        2. Read "CONTRIBUING.md" and start coding.
+    ```
+
+### `message_before_copy`
+
+-   Format: `str`
+-   CLI flags: N/A
+-   Default value: `""`
+
+Like [`message_after_copy`](#message_after_copy) but printed _before_
+[generating](../generating) or [regenerating](../generating#regenerating-a-project) a
+project.
+
+!!! example
+
+    ```yaml title="copier.yml"
+    project_name:
+        type: str
+        help: An awesome project needs an awesome name. Tell me yours.
+
+    _message_before_copy: |
+        Thanks for generating a project using our template.
+
+        You'll be asked a series of questions whose answers will be used to
+        generate a tailored project for you.
+    ```
+
 ### `migrations`
 
 -   Format: `List[dict]`

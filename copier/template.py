@@ -305,6 +305,16 @@ class Template:
         return tuple(self.config_data.get("jinja_extensions", ()))
 
     @cached_property
+    def message_after_copy(self) -> str:
+        """Get message to print after copy action specified in the template."""
+        return self.config_data.get("message_after_copy", "")
+
+    @cached_property
+    def message_before_copy(self) -> str:
+        """Get message to print before copy action specified in the template."""
+        return self.config_data.get("message_before_copy", "")
+
+    @cached_property
     def metadata(self) -> AnyByStrDict:
         """Get template metadata.
 
