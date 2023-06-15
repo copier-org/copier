@@ -318,7 +318,7 @@ def test_update(
 def test_update_cli(
     tmp_path_factory: pytest.TempPathFactory,
     capsys: pytest.CaptureFixture[str],
-    unsafe: bool,
+    unsafe: Union[bool, str],
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ["src", "dst"])
     unsafe_args = [unsafe] if unsafe else []
