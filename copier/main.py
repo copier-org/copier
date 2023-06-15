@@ -243,6 +243,10 @@ class Worker:
         if features:
             raise UnsafeTemplateError(sorted(features))
 
+    def _print_message(self, message: str) -> None:
+        if message and not self.quiet:
+            print(self._render_string(message), file=sys.stderr)
+
     def _answers_to_remember(self) -> Mapping:
         """Get only answers that will be remembered in the copier answers file."""
         # All internal values must appear first
@@ -727,6 +731,7 @@ class Worker:
         See [generating a project][generating-a-project].
         """
         self._check_unsafe("copy")
+        self._print_message(self.template.message_before_copy)
         self._ask()
         was_existing = self.subproject.local_abspath.exists()
         src_abspath = self.template_copy_root
@@ -746,6 +751,7 @@ class Worker:
             if not was_existing and self.cleanup_on_error:
                 rmtree(self.subproject.local_abspath)
             raise
+        self._print_message(self.template.message_after_copy)
         if not self.quiet:
             # TODO Unify printing tools
             print("")  # padding space
