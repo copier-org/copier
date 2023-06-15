@@ -9,7 +9,7 @@ As seen in the quick usage section, you can generate a project from a template u
 `copier` command-line tool:
 
 ```shell
-copier path/to/project/template path/to/destination
+copier copy path/to/project/template path/to/destination
 ```
 
 Or within Python code:
@@ -54,14 +54,14 @@ other reference to use.
 For example to use the latest master branch from a public repository:
 
 ```shell
-copier --vcs-ref master https://github.com/foo/copier-template.git ./path/to/destination
+copier copy --vcs-ref master https://github.com/foo/copier-template.git ./path/to/destination
 ```
 
 Or to work from the current checked out revision of a local template (including dirty
 changes):
 
 ```shell
-copier --vcs-ref HEAD path/to/project/template path/to/destination
+copier copy --vcs-ref HEAD path/to/project/template path/to/destination
 ```
 
 ## Regenerating a project

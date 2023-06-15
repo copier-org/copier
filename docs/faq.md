@@ -175,7 +175,7 @@ Well, Copier indeed included that into the `HEAD` ref. However, it still selecte
 However, if you do this:
 
 ```shell
-$ copier -r HEAD copy ./src ./dst
+$ copier copy -r HEAD ./src ./dst
 ```
 
 ... then you'll notice `new-file.txt` does exist. You passed a specific ref to copy, so

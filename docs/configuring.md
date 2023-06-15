@@ -757,7 +757,7 @@ questions with default answers.
     which is overridden, and don't ask user anything else:
 
     ```shell
-    copier -fd 'user_name=Manuel Calavera' copy template destination
+    copier copy -fd 'user_name=Manuel Calavera' template destination
     ```
 
 ### `envops`
@@ -844,7 +844,7 @@ The CLI option can be passed several times to add several patterns.
     !!! example "Example CLI usage to copy only a single file from the template"
 
         ```shell
-        copier --exclude '*' --exclude '!file-i-want' copy ./template ./destination
+        copier copy --exclude '*' --exclude '!file-i-want' ./template ./destination
         ```
 
 ### `force`
@@ -1477,16 +1477,16 @@ mkdir my-project
 cd my-project
 git init
 # Apply framework template
-copier -a .copier-answers.main.yml copy https://github.com/example-framework/framework-template.git .
+copier copy -a .copier-answers.main.yml https://github.com/example-framework/framework-template.git .
 git add .
 git commit -m 'Start project based on framework template'
 # Apply pre-commit template
-copier -a .copier-answers.pre-commit.yml copy https://gitlab.com/my-stuff/pre-commit-template.git .
+copier copy -a .copier-answers.pre-commit.yml https://gitlab.com/my-stuff/pre-commit-template.git .
 git add .
 pre-commit run -a  # Just in case 😉
 git commit -am 'Apply pre-commit template'
 # Apply internal CI template
-copier -a .copier-answers.ci.yml copy git@gitlab.example.com:my-company/ci-template.git .
+copier copy -a .copier-answers.ci.yml git@gitlab.example.com:my-company/ci-template.git .
 git add .
 git commit -m 'Apply internal CI template'
 ```
@@ -1497,7 +1497,7 @@ After a while, when templates get new releases, updates are handled separately f
 template:
 
 ```shell
-copier -a .copier-answers.main.yml update
-copier -a .copier-answers.pre-commit.yml update
-copier -a .copier-answers.ci.yml update
+copier update -a .copier-answers.main.yml
+copier update -a .copier-answers.pre-commit.yml
+copier update -a .copier-answers.ci.yml
 ```

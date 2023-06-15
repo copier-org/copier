@@ -65,7 +65,7 @@ To generate a project from the template:
 -   On the command-line:
 
     ```shell
-    copier path/to/project/template path/to/destination
+    copier copy path/to/project/template path/to/destination
     ```
 
 -   Or in Python code, programmatically:
