@@ -167,7 +167,7 @@ class Worker:
             See [quiet][].
 
         conflict:
-            One of "rej" (default), "inline" (still experimental).
+            One of "inline" (default), "rej".
 
         context_lines:
             Lines of context to consider when solving conflicts in updates.
@@ -881,7 +881,6 @@ class Worker:
                 ):
                     apply_cmd = apply_cmd["--exclude", skip_pattern]
                 (apply_cmd << diff)(retcode=None)
-                # TODO Test more, remove from experimental, make default
                 if self.conflict == "inline":
                     status = git("status", "--porcelain").strip().splitlines()
                     for line in status:
