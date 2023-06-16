@@ -202,6 +202,8 @@ class Worker:
     context_lines: PositiveInt = 3
     unsafe: bool = False
 
+    answers: AnswersMap = field(default_factory=AnswersMap, init=False)
+
     def __enter__(self):
         """Allow using worker as a context manager."""
         return self
@@ -408,12 +410,8 @@ class Worker:
             return True
         return self._solve_render_conflict(dst_relpath)
 
-    @cached_property
-    def answers(self) -> AnswersMap:
-        """Container of all answers to the questionary.
-
-        It asks the user the 1st time it is called, if running interactively.
-        """
+    def _ask(self) -> None:
+        """Ask the questions of the questionary and record their answers."""
         result = AnswersMap(
             default=self.template.default_answers,
             user_defaults=self.user_defaults,
@@ -460,7 +458,7 @@ class Worker:
                 raise CopierAnswersInterrupt(result, question, self.template) from err
             result.user[var_name] = new_answer
 
-        return result
+        self.answers = result
 
     @cached_property
     def answers_relpath(self) -> Path:
@@ -729,6 +727,7 @@ class Worker:
         See [generating a project][generating-a-project].
         """
         self._check_unsafe("copy")
+        self._ask()
         was_existing = self.subproject.local_abspath.exists()
         src_abspath = self.template_copy_root
         try:
@@ -857,7 +856,7 @@ class Worker:
             )
             # Clear last answers cache to load possible answers migration
             with suppress(AttributeError):
-                del self.answers
+                self.answers = AnswersMap()
             with suppress(AttributeError):
                 del self.subproject.last_answers
             # Do a normal update in final destination
