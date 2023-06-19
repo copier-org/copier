@@ -103,11 +103,6 @@ class AnswersMap:
         last:
             Data from [the answers file][the-copier-answersyml-file].
 
-        default:
-            Default data from the template.
-
-            See [copier.template.Template.default_answers][].
-
         user_defaults:
             Default data from the user e.g. previously completed and restored data.
 
@@ -123,7 +118,6 @@ class AnswersMap:
     metadata: AnyByStrDict = field(default_factory=dict)
     last: AnyByStrDict = field(default_factory=dict)
     user_defaults: AnyByStrDict = field(default_factory=dict)
-    default: AnyByStrDict = field(default_factory=dict)
 
     @property
     def combined(self) -> Mapping[str, Any]:
@@ -135,7 +129,6 @@ class AnswersMap:
                 self.metadata,
                 self.last,
                 self.user_defaults,
-                self.default,
                 DEFAULT_DATA,
             )
         )

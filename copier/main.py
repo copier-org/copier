@@ -415,7 +415,6 @@ class Worker:
         It asks the user the 1st time it is called, if running interactively.
         """
         result = AnswersMap(
-            default=self.template.default_answers,
             user_defaults=self.user_defaults,
             init=self.data,
             last=self.subproject.last_answers,
@@ -429,10 +428,10 @@ class Worker:
                 var_name=var_name,
                 **details,
             )
-            # Skip a question when the skip condition is met and remove any data
-            # from the answers map, so no answer for this question is recorded
-            # in the answers file.
-            if not question.get_when():
+            # Skip a question when the skip condition is met and it has no
+            # default value, and remove any data from the answers map, so no
+            # answer for this question is recorded in the answers file.
+            if not question.get_when() and question.default is MISSING:
                 result.remove(var_name)
                 continue
             if var_name in result.init:
@@ -454,7 +453,8 @@ class Worker:
                         raise ValueError(f'Question "{var_name}" is required')
                 else:
                     new_answer = unsafe_prompt(
-                        [question.get_questionary_structure()], answers=result.combined
+                        [question.get_questionary_structure()],
+                        answers={question.var_name: question.get_default()},
                     )[question.var_name]
             except KeyboardInterrupt as err:
                 raise CopierAnswersInterrupt(result, question, self.template) from err

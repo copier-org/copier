@@ -196,7 +196,7 @@ def test_when(
     assert answers == {
         "_src_path": str(src),
         "question_1": question_1,
-        **({"question_2": "something"} if asks else {}),
+        "question_2": "something",
     }
 
 

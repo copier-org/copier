@@ -182,10 +182,12 @@ Supported keys:
 
     This is most useful when [templated](#prompt-templating).
 
-    If a question is skipped, its answer will be:
+    If a question _with_ a default value is skipped, its answer will be:
 
     -   The default value, if you're generating the project for the 1st time.
     -   The last answer recorded, if you're updating the project.
+
+    If a question _without_ a default value is skipped, no answer will be recorded.
 
     !!! example
 
