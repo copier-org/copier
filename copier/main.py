@@ -198,7 +198,7 @@ class Worker:
     overwrite: bool = False
     pretend: bool = False
     quiet: bool = False
-    conflict: str = "inline"
+    conflict: Literal["inline", "rej"] = "inline"
     context_lines: PositiveInt = 3
     unsafe: bool = False
 
