@@ -1,5 +1,5 @@
 from contextlib import nullcontext as does_not_raise
-from typing import ContextManager
+from typing import ContextManager, Union
 
 import pytest
 import yaml
@@ -314,13 +314,14 @@ def test_update(
         run_update(dst, overwrite=True, unsafe=unsafe)
 
 
-@pytest.mark.parametrize("unsafe", [False, True])
+@pytest.mark.parametrize("unsafe", [False, "--trust", "--UNSAFE"])
 def test_update_cli(
     tmp_path_factory: pytest.TempPathFactory,
     capsys: pytest.CaptureFixture[str],
-    unsafe: bool,
+    unsafe: Union[bool, str],
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ["src", "dst"])
+    unsafe_args = [unsafe] if unsafe else []
 
     with local.cwd(src):
         build_file_tree(
@@ -335,7 +336,7 @@ def test_update_cli(
         git("tag", "v1")
 
     _, retcode = CopierApp.run(
-        ["copier", "copy", "--UNSAFE", str(src), str(dst)],
+        ["copier", "copy", str(src), str(dst)] + unsafe_args,
         exit=False,
     )
     assert retcode == 0
@@ -361,9 +362,9 @@ def test_update_cli(
         [
             "copier",
             "update",
-            *(["--UNSAFE"] if unsafe else []),
             str(dst),
-        ],
+        ]
+        + unsafe_args,
         exit=False,
     )
     if unsafe:
