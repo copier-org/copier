@@ -1,5 +1,5 @@
 from contextlib import nullcontext as does_not_raise
-from typing import ContextManager
+from typing import ContextManager, Union
 
 import pytest
 import yaml
