@@ -179,9 +179,9 @@ Supported keys:
     creating a computed value.
 
     If it is a string, it is converted to boolean using a parser similar to YAML, but
-    only for boolean values. The string can be [templated](#prompt-templating).
+    only for boolean values. The string can be [templated][prompt-templating].
 
-    If a question is skipped, no answer is recorded, but its default value is available
+    If a question is skipped, its answer is not recorded, but its default value is available
     in the render context.
 
     !!! example
