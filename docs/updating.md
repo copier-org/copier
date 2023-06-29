@@ -154,36 +154,25 @@ As you can see here, `copier` does several things:
 -   Finally, it re-applies the previously obtained diff and then runs the
     post-migrations.
 
-## Migration across Copier major versions
+### Recover from a broken update
 
-When there's a new major release of Copier (for example from Copier 5.x to 6.x), there
-are chances that there's something that changed. Maybe your template will not work as it
-did before.
+Usually Copier will replay the last project generation without problems. However,
+sometimes that process can break. Examples:
 
-[As explained above][how-the-update-works], Copier needs to make a copy of the template
-in its old state with its old answers so it can actually produce a diff with the new
-state and answers and apply the smart update to the project. However, **how can I be
-sure that Copier will produce the same "old state" if I copied the template with an
-older Copier major release?** Good question.
+-   When the last update was relying on some external resources that are not longer
+    available.
+-   When the old and new versions of the template depend on different incompatible
+    versions of the same Jinja extension, but Copier can only use one.
+-   When the old version of the template was built for an older version of Copier.
 
-We will do our best to respect older behaviors for at least one extra major release
-cycle, but the simpler answer is that you can't be sure of that.
+Generally, you should keep your templates as pure and simple as possible to avoid those
+situations. But it can still happen.
 
-How to overcome that situation?
+To overcome this, use [the `copier recopy` command][regenerating-a-project], which will
+discard all the smart update algorithm [explained above][how-the-update-works]. It will
+behave just like if you were applying the template for the first time, but it will keep
+your answers from the last update.
 
-1. You can write good [migrations][].
-1. Then you can test them on your template's CI on a matrix against several Copier
-   versions.
-1. Or you can just [recopy the project][regenerating-a-project] when you update to a
-   newer Copier major release.
-
-## When the update gets broken because while replaying old copy
-
-This is uncommon, but it can happen sometimes. For example, maybe the last update was
-relying on some external resources that are not longer available. Generally, you should
-keep your templates as pure as possible to avoid those situations.
-
-However, if this is happening to you, try the `copier recopy` command, which will
-discard all the smart update algorithm explained here. It will behave just like if you
-were applying the template for the 1st time, but it will keep your answers from the last
-update.
+Of course, the experience will be less satisfactory. The new template will override any
+changes found in your local project. But you can use a git diff tool to overcome that.
+After doing this, further updates generally keep on working as usual.
