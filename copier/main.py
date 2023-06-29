@@ -255,6 +255,7 @@ class Worker:
             (str(k), v)
             for (k, v) in self.answers.combined.items()
             if not k.startswith("_")
+            and k not in self.answers.hidden
             and k not in self.template.secret_questions
             and k in self.template.questions_data
             and isinstance(k, JSONSerializable)
@@ -415,7 +416,6 @@ class Worker:
         It asks the user the 1st time it is called, if running interactively.
         """
         result = AnswersMap(
-            default=self.template.default_answers,
             user_defaults=self.user_defaults,
             init=self.data,
             last=self.subproject.last_answers,
@@ -429,12 +429,13 @@ class Worker:
                 var_name=var_name,
                 **details,
             )
-            # Skip a question when the skip condition is met and remove any data
-            # from the answers map, so no answer for this question is recorded
-            # in the answers file.
+            # Skip a question when the skip condition is met and it has no
+            # default value, and remove any data from the answers map, so no
+            # answer for this question is recorded in the answers file.
             if not question.get_when():
-                result.remove(var_name)
-                continue
+                result.hide(var_name)
+                if question.default is MISSING:
+                    continue
             if var_name in result.init:
                 # Try to parse the answer value.
                 answer = question.parse_answer(result.init[var_name])
@@ -454,7 +455,8 @@ class Worker:
                         raise ValueError(f'Question "{var_name}" is required')
                 else:
                     new_answer = unsafe_prompt(
-                        [question.get_questionary_structure()], answers=result.combined
+                        [question.get_questionary_structure()],
+                        answers={question.var_name: question.get_default()},
                     )[question.var_name]
             except KeyboardInterrupt as err:
                 raise CopierAnswersInterrupt(result, question, self.template) from err

@@ -103,11 +103,6 @@ class AnswersMap:
         last:
             Data from [the answers file][the-copier-answersyml-file].
 
-        default:
-            Default data from the template.
-
-            See [copier.template.Template.default_answers][].
-
         user_defaults:
             Default data from the user e.g. previously completed and restored data.
 
@@ -115,7 +110,7 @@ class AnswersMap:
     """
 
     # Private
-    removed: Set[str] = field(default_factory=set, init=False)
+    hidden: Set[str] = field(default_factory=set, init=False)
 
     # Public
     user: AnyByStrDict = field(default_factory=dict)
@@ -123,34 +118,28 @@ class AnswersMap:
     metadata: AnyByStrDict = field(default_factory=dict)
     last: AnyByStrDict = field(default_factory=dict)
     user_defaults: AnyByStrDict = field(default_factory=dict)
-    default: AnyByStrDict = field(default_factory=dict)
 
     @property
     def combined(self) -> Mapping[str, Any]:
         """Answers combined from different sources, sorted by priority."""
-        combined = dict(
+        return dict(
             ChainMap(
                 self.user,
                 self.init,
                 self.metadata,
                 self.last,
                 self.user_defaults,
-                self.default,
                 DEFAULT_DATA,
             )
         )
-        for key in self.removed:
-            if key in combined:
-                del combined[key]
-        return combined
 
     def old_commit(self) -> OptStr:
         """Commit when the project was updated from this template the last time."""
         return self.last.get("_commit")
 
-    def remove(self, key: str) -> None:
+    def hide(self, key: str) -> None:
         """Remove an answer by key."""
-        self.removed.add(key)
+        self.hidden.add(key)
 
 
 @dataclass(config=AllowArbitraryTypes)
