@@ -429,11 +429,12 @@ class Worker:
                 var_name=var_name,
                 **details,
             )
-            # Skip a question when the skip condition is met and it has no
-            # default value, and remove any data from the answers map, so no
-            # answer for this question is recorded in the answers file.
+            # Skip a question when the skip condition is met.
             if not question.get_when():
+                # Omit its answer from the answers file.
                 result.hide(var_name)
+                # Skip immediately to the next question when it has no default
+                # value.
                 if question.default is MISSING:
                     continue
             if var_name in result.init:
