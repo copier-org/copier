@@ -159,7 +159,7 @@ As you can see here, `copier` does several things:
 Usually Copier will replay the last project generation without problems. However,
 sometimes that process can break. Examples:
 
--   When the last update was relying on some external resources that are not longer
+-   When the last update was relying on some external resources that are no longer
     available.
 -   When the old and new versions of the template depend on different incompatible
     versions of the same Jinja extension, but Copier can only use one.
@@ -174,5 +174,5 @@ behave just like if you were applying the template for the first time, but it wi
 your answers from the last update.
 
 Of course, the experience will be less satisfactory. The new template will override any
-changes found in your local project. But you can use a git diff tool to overcome that.
+changes found in your local project. But you can use a Git diff tool to overcome that.
 After doing this, further updates generally keep on working as usual.
