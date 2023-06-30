@@ -1143,20 +1143,19 @@ pyyaml = "*"
 
 [[package]]
 name = "pyyaml-include"
-version = "1.3"
+version = "1.3.1"
 description = "Extending PyYAML with a custom constructor for including YAML files within YAML files"
 optional = false
-python-versions = ">=3.5"
+python-versions = ">=3.7"
 files = [
-    {file = "pyyaml-include-1.3.tar.gz", hash = "sha256:f7fbeb8e71b50be0e6e07472f7c79dbfb1a15bade9c93a078369ff49e57e6771"},
-    {file = "pyyaml_include-1.3-py3-none-any.whl", hash = "sha256:5142a0b0f93d9b1e5872d5a814f3681ffbc70638128ced1acfd9fb57da7825ca"},
+    {file = "pyyaml-include-1.3.1.tar.gz", hash = "sha256:4cb3b4e1baae2ec251808fe1e8aed5d3d20699c541864c8e47ed866ab2f15039"},
+    {file = "pyyaml_include-1.3.1-py3-none-any.whl", hash = "sha256:e58525721a2938d29c4046350f8aad86f848660a770c29605e6f2700925fa753"},
 ]
 
 [package.dependencies]
 PyYAML = ">=5.1,<7.0"
 
 [package.extras]
-all = ["toml"]
 toml = ["toml"]
 
 [[package]]
