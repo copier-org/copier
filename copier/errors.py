@@ -3,8 +3,6 @@
 from pathlib import Path
 from typing import TYPE_CHECKING, Sequence
 
-from pydantic.errors import _PathValueError
-
 from .tools import printf_exception
 from .types import PathSeq
 
@@ -52,14 +50,14 @@ class InvalidTypeError(TypeError, CopierError):
     """The question type is not among the supported ones."""
 
 
-class PathNotAbsoluteError(_PathValueError, CopierError):
+class PathNotAbsoluteError(CopierError):
     """The path is not absolute, but it should be."""
 
     code = "path.not_absolute"
     msg_template = '"{path}" is not an absolute path'
 
 
-class PathNotRelativeError(_PathValueError, CopierError):
+class PathNotRelativeError(CopierError):
     """The path is not relative, but it should be."""
 
     code = "path.not_relative"
