@@ -451,12 +451,16 @@ class Question:
         choices = self._formatted_choices
         if not choices:
             return ans
+        choice_error = ""
         for choice in choices:
             if ans == self.cast_answer(choice.value):
-                if choice.disabled:
-                    raise ValueError(f"Invalid choice: {choice.disabled}")
-                return ans
-        raise ValueError("Invalid choice")
+                if not choice.disabled:
+                    return ans
+                if not choice_error:
+                    choice_error = choice.disabled
+        raise ValueError(
+            f"Invalid choice: {choice_error}" if choice_error else "Invalid choice"
+        )
 
 
 def parse_yaml_string(string: str) -> Any:
