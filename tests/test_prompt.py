@@ -183,6 +183,11 @@ def test_when(
             (src / "[[ _copier_conf.answers_file ]].tmpl"): (
                 "[[ _copier_answers|to_nice_yaml ]]"
             ),
+            (src / "context.yml.tmpl"): (
+                """\
+                question_2: [[ question_2 ]]
+                """
+            ),
         }
     )
     tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
@@ -198,6 +203,8 @@ def test_when(
         "question_1": question_1,
         **({"question_2": "something"} if asks else {}),
     }
+    context = yaml.safe_load((dst / "context.yml").read_text())
+    assert context == {"question_2": "something"}
 
 
 def test_placeholder(tmp_path_factory: pytest.TempPathFactory, spawn: Spawn) -> None:

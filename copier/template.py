@@ -282,11 +282,6 @@ class Template:
         return result
 
     @cached_property
-    def default_answers(self) -> AnyByStrDict:
-        """Get default answers for template's questions."""
-        return {key: value.get("default") for key, value in self.questions_data.items()}
-
-    @cached_property
     def envops(self) -> Mapping:
         """Get the Jinja configuration specified in the template, or default values.
 

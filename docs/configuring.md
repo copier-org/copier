@@ -175,17 +175,14 @@ Supported keys:
 
 -   **when**: Condition that, if `false`, skips the question.
 
-    If it is a boolean, it is used directly, but it's a bit absurd in that case.
+    If it is a boolean, it is used directly. Setting it to `false` is useful for
+    creating a computed value.
 
     If it is a string, it is converted to boolean using a parser similar to YAML, but
-    only for boolean values.
+    only for boolean values. The string can be [templated][prompt-templating].
 
-    This is most useful when [templated](#prompt-templating).
-
-    If a question is skipped, its answer will be:
-
-    -   The default value, if you're generating the project for the 1st time.
-    -   The last answer recorded, if you're updating the project.
+    If a question is skipped, its answer is not recorded, but its default value is
+    available in the render context.
 
     !!! example
 

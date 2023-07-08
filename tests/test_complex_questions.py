@@ -397,6 +397,7 @@ def test_tui_inherited_default(
                 "{{ _copier_answers|to_nice_yaml }}"
             ),
             (src / "answers.json.jinja"): "{{ _copier_answers|to_nice_json }}",
+            (src / "context.json.jinja"): '{"owner2": "{{ owner2 }}"}',
         }
     )
     with local.cwd(src):
@@ -423,6 +424,7 @@ def test_tui_inherited_default(
         **({"owner2": owner2} if has_2_owners else {}),
     }
     assert json.loads((dst / "answers.json").read_text()) == result
+    assert json.loads((dst / "context.json").read_text()) == {"owner2": owner2}
     with local.cwd(dst):
         git("init")
         git("add", "--all")
@@ -430,6 +432,45 @@ def test_tui_inherited_default(
     # After a forced update, answers stay the same
     run_update(dst, defaults=True, overwrite=True)
     assert json.loads((dst / "answers.json").read_text()) == result
+
+
+def test_tui_typed_default(
+    tmp_path_factory: pytest.TempPathFactory, spawn: Spawn
+) -> None:
+    """Make sure a template defaults are typed as expected."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yaml"): (
+                """\
+                test1:
+                    type: bool
+                    default: false
+                    when: false
+                test2:
+                    type: bool
+                    default: "{{ 'a' == 'b' }}"
+                    when: false
+                """
+            ),
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+            (src / "answers.json.jinja"): "{{ _copier_answers|to_nice_json }}",
+            (src / "context.json.jinja"): (
+                """\
+                {"test1": "{{ test1 }}", "test2": "{{ test2 }}"}
+                """
+            ),
+        }
+    )
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui.expect_exact(pexpect.EOF)
+    assert json.loads((dst / "answers.json").read_text()) == {"_src_path": str(src)}
+    assert json.loads((dst / "context.json").read_text()) == {
+        "test1": "False",
+        "test2": "False",
+    }
 
 
 def test_selection_type_cast(
@@ -559,8 +600,16 @@ def test_omit_answer_for_skipped_question(
             (src / "{{ _copier_conf.answers_file }}.jinja"): (
                 "{{ _copier_answers|to_nice_yaml }}"
             ),
+            (src / "context.yml.jinja"): yaml.safe_dump(
+                {
+                    "disabled": "{{ disabled }}",
+                    "disabled_with_default": "{{ disabled_with_default }}",
+                }
+            ),
         }
     )
     run_copy(str(src), dst, defaults=True, data={"disabled": "hello"})
     answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers == {"_src_path": str(src)}
+    context = yaml.safe_load((dst / "context.yml").read_text())
+    assert context == {"disabled": "hello", "disabled_with_default": "hello"}
