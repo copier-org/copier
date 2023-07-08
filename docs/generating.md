@@ -66,8 +66,8 @@ copier copy --vcs-ref HEAD path/to/project/template path/to/destination
 
 ## Regenerating a project
 
-When you execute `copier copy $template $project` again over a preexisting `$project`,
-Copier will just "recopy" it, ignoring previous history.
+When you execute `copier recopy $project` again over a preexisting `$project`, Copier
+will just reapply the template on it, keeping answers but ignoring previous history.
 
 !!! warning
 
