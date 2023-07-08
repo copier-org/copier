@@ -3,7 +3,6 @@ import json
 import sys
 import warnings
 from collections import ChainMap
-from dataclasses import field
 from datetime import datetime
 from hashlib import sha512
 from os import urandom
@@ -25,7 +24,7 @@ from jinja2 import UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
 from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.validation import ValidationError
-from pydantic import validator as pydantic_validator
+from pydantic import validator as pydantic_validator, Field
 from pydantic.dataclasses import dataclass
 from pygments.lexers.data import JsonLexer, YamlLexer
 from questionary.prompts.common import Choice
@@ -110,14 +109,14 @@ class AnswersMap:
     """
 
     # Private
-    hidden: Set[str] = field(default_factory=set, init=False)
+    hidden: Set[str] = Field(default_factory=set, init=False)
 
     # Public
-    user: AnyByStrDict = field(default_factory=dict)
-    init: AnyByStrDict = field(default_factory=dict)
-    metadata: AnyByStrDict = field(default_factory=dict)
-    last: AnyByStrDict = field(default_factory=dict)
-    user_defaults: AnyByStrDict = field(default_factory=dict)
+    user: AnyByStrDict = Field(default_factory=dict)
+    init: AnyByStrDict = Field(default_factory=dict)
+    metadata: AnyByStrDict = Field(default_factory=dict)
+    last: AnyByStrDict = Field(default_factory=dict)
+    user_defaults: AnyByStrDict = Field(default_factory=dict)
 
     @property
     def combined(self) -> Mapping[str, Any]:
@@ -198,7 +197,7 @@ class Question:
     var_name: str
     answers: AnswersMap
     jinja_env: SandboxedEnvironment
-    choices: Union[Sequence[Any], Dict[Any, Any]] = field(default_factory=list)
+    choices: Union[Sequence[Any], Dict[Any, Any]] = Field(default_factory=list)
     default: Any = MISSING
     help: str = ""
     multiline: Union[str, bool] = False

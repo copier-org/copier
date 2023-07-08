@@ -21,7 +21,7 @@ from plumbum import ProcessExecutionError, colors
 from plumbum.cli.terminal import ask
 from plumbum.cmd import git
 from plumbum.machines import local
-from pydantic import ConfigDict, Extra, PositiveInt
+from pydantic import ConfigDict, Extra, PositiveInt, field_validator, Field
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
 from questionary import unsafe_prompt
@@ -41,9 +41,9 @@ from .types import (
     JSONSerializable,
     Literal,
     OptStr,
-    RelativePath,
     StrOrPath,
     StrSeq,
+    path_is_relative,
 )
 from .user_data import DEFAULT_DATA, AnswersMap, Question
 
@@ -185,16 +185,16 @@ class Worker:
     """
 
     src_path: Optional[str] = None
-    dst_path: Path = field(default=Path("."))
-    answers_file: Optional[RelativePath] = None
+    dst_path: Path = Field(default=Path("."))
+    answers_file: Optional[Path] = None
     vcs_ref: OptStr = None
-    data: AnyByStrDict = field(default_factory=dict)
+    data: AnyByStrDict = Field(default_factory=dict)
     exclude: StrSeq = ()
     use_prereleases: bool = False
     skip_if_exists: StrSeq = ()
     cleanup_on_error: bool = True
     defaults: bool = False
-    user_defaults: AnyByStrDict = field(default_factory=dict)
+    user_defaults: AnyByStrDict = Field(default_factory=dict)
     overwrite: bool = False
     pretend: bool = False
     quiet: bool = False
@@ -202,7 +202,11 @@ class Worker:
     context_lines: PositiveInt = 3
     unsafe: bool = False
 
-    answers: AnswersMap = field(default_factory=AnswersMap, init=False)
+    answers: AnswersMap = Field(default_factory=AnswersMap, init=False)
+
+    @field_validator("answers_file")
+    def answers_file_is_relative(cls, value: Path) -> Path:
+        return value and path_is_relative(value)
 
     def __enter__(self):
         """Allow using worker as a context manager."""

@@ -3,7 +3,6 @@
 import sys
 from pathlib import Path
 from typing import (
-    TYPE_CHECKING,
     Any,
     Dict,
     Mapping,
@@ -14,17 +13,11 @@ from typing import (
     Union,
 )
 
-from pydantic.validators import path_validator
-
 # HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
 if sys.version_info >= (3, 8):
     from typing import Literal
 else:
     from typing_extensions import Literal
-
-if TYPE_CHECKING:
-    from pydantic.typing import CallableGenerator
-
 
 # simple types
 StrOrPath = Union[str, Path]
@@ -74,26 +67,3 @@ def path_is_relative(value: Path) -> Path:
 
         raise PathNotRelativeError(path=value)
     return value
-
-
-# Validated types
-if TYPE_CHECKING:
-    AbsolutePath = Path
-    RelativePath = Path
-else:
-
-    class AbsolutePath(Path):
-        """Require absolute paths in an argument."""
-
-        @classmethod
-        def __get_validators__(cls) -> "CallableGenerator":
-            yield path_validator
-            yield path_is_absolute
-
-    class RelativePath(Path):
-        """Require relative paths in an argument."""
-
-        @classmethod
-        def __get_validators__(cls) -> "CallableGenerator":
-            yield path_validator
-            yield path_is_relative
