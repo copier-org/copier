@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v8.1.0 (2023-07-10)
+
+### Feat
+
+-   add support for computed values via skipped questions (#1220)
+-   add `--trust` as a less scary alternative to `--UNSAFE` (#1179)
+-   add OS identifier to render context
+
+### Fix
+
+-   **pydantic**: add upper dependency bound to fix unlocked installations
+
+### Refactor
+
+-   request answers imperatively instead of implicitly via impure property
+
 ## v8.0.0 (2023-06-04)
 
 ### BREAKING CHANGE
