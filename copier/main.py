@@ -185,7 +185,7 @@ class Worker:
     """
 
     src_path: Optional[str] = None
-    dst_path: Path = field(default=Path("."))
+    dst_path: Path = Path(".")
     answers_file: Optional[RelativePath] = None
     vcs_ref: OptStr = None
     data: AnyByStrDict = field(default_factory=dict)
