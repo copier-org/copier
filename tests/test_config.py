@@ -191,7 +191,7 @@ def test_valid_multi_section(tmp_path: Path) -> None:
 
 def test_config_data_empty() -> None:
     template = Template("tests/demo_config_empty")
-    assert template.config_data == {"secret_questions": set()}
+    assert template.config_data == {}
     assert template.questions_data == {}
 
 
