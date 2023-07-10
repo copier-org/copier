@@ -156,7 +156,8 @@ Supported keys:
     long, you can use
     [YAML anchors](https://confluence.atlassian.com/bitbucket/yaml-anchors-960154027.html).
 -   **secret**: When `true`, it hides the prompt displaying asterisks (`*****`) and
-    doesn't save the answer in [the answers file](#the-copier-answersyml-file)
+    doesn't save the answer in [the answers file](#the-copier-answersyml-file). When
+    `true`, a default value is required.
 -   **placeholder**: To provide a visual example for what would be a good value. It is
     only shown while the answer is empty, so maybe it doesn't make much sense to provide
     both `default` and `placeholder`.

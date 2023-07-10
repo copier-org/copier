@@ -219,6 +219,13 @@ class Question:
             v = default_type_name if default_type_name in CAST_STR_TO_NATIVE else "yaml"
         return v
 
+    @field_validator("secret")
+    @classmethod
+    def _check_secret_question_default_value(cls, v: bool, info: FieldValidationInfo):
+        if v and info.data["default"] is MISSING:
+            raise ValueError("Secret question requires a default value")
+        return v
+
     def cast_answer(self, answer: Any) -> Any:
         """Cast answer to expected type."""
         type_name = self.get_type_name()
