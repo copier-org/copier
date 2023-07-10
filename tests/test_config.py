@@ -525,3 +525,29 @@ def test_user_defaults_updated(
         data=data_updated,
     )
     assert (dst / "user_data.txt").read_text() == expected_updated
+
+
+@pytest.mark.parametrize(
+    "config",
+    [
+        """\
+        question:
+            type: str
+            secret: true
+        """,
+        """\
+        question:
+            type: str
+
+        _secret_questions:
+            - question
+        """,
+    ],
+)
+def test_secret_question_requires_default_value(
+    tmp_path_factory: pytest.TempPathFactory, config: str
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree({src / "copier.yml": config})
+    with pytest.raises(ValueError, match="Secret question requires a default value"):
+        copier.run_copy(str(src), dst)
