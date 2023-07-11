@@ -21,7 +21,7 @@ from plumbum import ProcessExecutionError, colors
 from plumbum.cli.terminal import ask
 from plumbum.cmd import git
 from plumbum.machines import local
-from pydantic import ConfigDict, Extra, PositiveInt, field_validator, Field
+from pydantic import ConfigDict, Extra, Field, PositiveInt, field_validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
 from questionary import unsafe_prompt
@@ -185,7 +185,7 @@ class Worker:
     """
 
     src_path: Optional[str] = None
-    dst_path: Path = Field(default=Path("."))
+    dst_path: Path = Path(".")
     answers_file: Optional[Path] = None
     vcs_ref: OptStr = None
     data: AnyByStrDict = Field(default_factory=dict)

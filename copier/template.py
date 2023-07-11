@@ -55,21 +55,17 @@ DEFAULT_TEMPLATES_SUFFIX = ".jinja"
 
 def filter_config(data: AnyByStrDict) -> Tuple[AnyByStrDict, AnyByStrDict]:
     """Separates config and questions data."""
-    conf_data: AnyByStrDict = {"secret_questions": set()}
+    config_data: AnyByStrDict = {}
     questions_data = {}
     for k, v in data.items():
-        if k == "_secret_questions":
-            conf_data["secret_questions"].update(v)
-        elif k.startswith("_"):
-            conf_data[k[1:]] = v
+        if k.startswith("_"):
+            config_data[k[1:]] = v
         else:
             # Transform simplified questions format into complex
             if not isinstance(v, dict):
                 v = {"default": v}
             questions_data[k] = v
-            if v.get("secret"):
-                conf_data["secret_questions"].add(k)
-    return conf_data, questions_data
+    return config_data, questions_data
 
 
 def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
@@ -381,7 +377,11 @@ class Template:
 
         See [questions][].
         """
-        return filter_config(self._raw_config)[1]
+        result = filter_config(self._raw_config)[1]
+        for key in set(self.config_data.get("secret_questions", [])):
+            if key in result:
+                result[key]["secret"] = True
+        return result
 
     @cached_property
     def secret_questions(self) -> Set[str]:
@@ -389,7 +389,7 @@ class Template:
 
         These questions shouldn't be saved into the answers file.
         """
-        result = set(self.config_data.get("secret_questions", {}))
+        result = set(self.config_data.get("secret_questions", []))
         for key, value in self.questions_data.items():
             if value.get("secret"):
                 result.add(key)
