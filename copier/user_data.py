@@ -3,6 +3,7 @@ import json
 import sys
 import warnings
 from collections import ChainMap
+from dataclasses import field
 from datetime import datetime
 from hashlib import sha512
 from os import urandom
@@ -24,22 +25,15 @@ from jinja2 import UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
 from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.validation import ValidationError
-from pydantic import validator as pydantic_validator, Field
+from pydantic import ConfigDict, Field, field_validator
 from pydantic.dataclasses import dataclass
+from pydantic_core.core_schema import FieldValidationInfo
 from pygments.lexers.data import JsonLexer, YamlLexer
 from questionary.prompts.common import Choice
 
 from .errors import InvalidTypeError, UserMessageError
 from .tools import cast_str_to_bool, force_str_end
-from .types import (
-    MISSING,
-    AllowArbitraryTypes,
-    AnyByStrDict,
-    MissingType,
-    OptStr,
-    OptStrOrPath,
-    StrOrPath,
-)
+from .types import MISSING, AnyByStrDict, MissingType, OptStr, OptStrOrPath, StrOrPath
 
 # HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
 if sys.version_info >= (3, 8):
@@ -109,14 +103,17 @@ class AnswersMap:
     """
 
     # Private
+
+    # Pydantic's `Field()` instead of vanilla `field()` is needed for now.
+    # See https://github.com/pydantic/pydantic/issues/6600
     hidden: Set[str] = Field(default_factory=set, init=False)
 
     # Public
-    user: AnyByStrDict = Field(default_factory=dict)
-    init: AnyByStrDict = Field(default_factory=dict)
-    metadata: AnyByStrDict = Field(default_factory=dict)
-    last: AnyByStrDict = Field(default_factory=dict)
-    user_defaults: AnyByStrDict = Field(default_factory=dict)
+    user: AnyByStrDict = field(default_factory=dict)
+    init: AnyByStrDict = field(default_factory=dict)
+    metadata: AnyByStrDict = field(default_factory=dict)
+    last: AnyByStrDict = field(default_factory=dict)
+    user_defaults: AnyByStrDict = field(default_factory=dict)
 
     @property
     def combined(self) -> Mapping[str, Any]:
@@ -141,7 +138,7 @@ class AnswersMap:
         self.hidden.add(key)
 
 
-@dataclass(config=AllowArbitraryTypes)
+@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
 class Question:
     """One question asked to the user.
 
@@ -197,26 +194,28 @@ class Question:
     var_name: str
     answers: AnswersMap
     jinja_env: SandboxedEnvironment
-    choices: Union[Sequence[Any], Dict[Any, Any]] = Field(default_factory=list)
+    choices: Union[Sequence[Any], Dict[Any, Any]] = field(default_factory=list)
     default: Any = MISSING
     help: str = ""
     multiline: Union[str, bool] = False
     placeholder: str = ""
     secret: bool = False
-    type: str = ""
+    type: str = Field(default="", validate_default=True)
     validator: str = ""
     when: Union[str, bool] = True
 
-    @pydantic_validator("var_name")
-    def _check_var_name(cls, v):
+    @field_validator("var_name")
+    @classmethod
+    def _check_var_name(cls, v: str):
         if v in DEFAULT_DATA:
             raise ValueError("Invalid question name")
         return v
 
-    @pydantic_validator("type", always=True)
-    def _check_type(cls, v, values):
+    @field_validator("type")
+    @classmethod
+    def _check_type(cls, v: str, info: FieldValidationInfo):
         if v == "":
-            default_type_name = type(values.get("default")).__name__
+            default_type_name = type(info.data.get("default")).__name__
             v = default_type_name if default_type_name in CAST_STR_TO_NATIVE else "yaml"
         return v
 

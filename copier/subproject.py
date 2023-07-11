@@ -11,10 +11,9 @@ import yaml
 from plumbum.cmd import git
 from plumbum.machines import local
 from pydantic.dataclasses import dataclass
-from pydantic import field_validator
 
 from .template import Template
-from .types import AnyByStrDict, VCSTypes, path_is_absolute
+from .types import AbsolutePath, AnyByStrDict, VCSTypes
 from .vcs import is_in_git_repo
 
 # HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
@@ -36,12 +35,8 @@ class Subproject:
             Relative path to [the answers file][the-copier-answersyml-file].
     """
 
-    local_abspath: Path
+    local_abspath: AbsolutePath
     answers_relpath: Path = Path(".copier-answers.yml")
-
-    @field_validator("local_abspath")
-    def local_abspath_is_absolute(cls, value: Path) -> Path:
-        return path_is_absolute(value)
 
     def is_dirty(self) -> bool:
         """Indicate if the local template root is dirty.

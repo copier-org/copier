@@ -21,9 +21,9 @@ from plumbum import ProcessExecutionError, colors
 from plumbum.cli.terminal import ask
 from plumbum.cmd import git
 from plumbum.machines import local
-from pydantic import ConfigDict, Extra, Field, PositiveInt, field_validator
+from pydantic import ConfigDict, Field, PositiveInt
 from pydantic.dataclasses import dataclass
-from pydantic.json import pydantic_encoder
+from pydantic_core import to_jsonable_python
 from questionary import unsafe_prompt
 
 from .errors import (
@@ -41,9 +41,9 @@ from .types import (
     JSONSerializable,
     Literal,
     OptStr,
+    RelativePath,
     StrOrPath,
     StrSeq,
-    path_is_relative,
 )
 from .user_data import DEFAULT_DATA, AnswersMap, Question
 
@@ -74,7 +74,7 @@ else:
     from typing_extensions import get_args
 
 
-@dataclass(config=ConfigDict(extra=Extra.forbid))
+@dataclass(config=ConfigDict(extra="forbid"))
 class Worker:
     """Copier process state manager.
 
@@ -186,15 +186,15 @@ class Worker:
 
     src_path: Optional[str] = None
     dst_path: Path = Path(".")
-    answers_file: Optional[Path] = None
+    answers_file: Optional[RelativePath] = None
     vcs_ref: OptStr = None
-    data: AnyByStrDict = Field(default_factory=dict)
+    data: AnyByStrDict = field(default_factory=dict)
     exclude: StrSeq = ()
     use_prereleases: bool = False
     skip_if_exists: StrSeq = ()
     cleanup_on_error: bool = True
     defaults: bool = False
-    user_defaults: AnyByStrDict = Field(default_factory=dict)
+    user_defaults: AnyByStrDict = field(default_factory=dict)
     overwrite: bool = False
     pretend: bool = False
     quiet: bool = False
@@ -202,11 +202,9 @@ class Worker:
     context_lines: PositiveInt = 3
     unsafe: bool = False
 
+    # Pydantic's `Field()` instead of vanilla `field()` is needed for now.
+    # See https://github.com/pydantic/pydantic/issues/6600
     answers: AnswersMap = Field(default_factory=AnswersMap, init=False)
-
-    @field_validator("answers_file")
-    def answers_file_is_relative(cls, value: Path) -> Path:
-        return value and path_is_relative(value)
 
     def __enter__(self):
         """Allow using worker as a context manager."""
@@ -514,7 +512,7 @@ class Worker:
             )
         # patch the `to_json` filter to support Pydantic dataclasses
         env.filters["to_json"] = partial(
-            env.filters["to_json"], default=pydantic_encoder
+            env.filters["to_json"], default=to_jsonable_python
         )
 
         # Add a global function to join filesystem paths.

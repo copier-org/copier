@@ -2,22 +2,20 @@
 
 import sys
 from pathlib import Path
-from typing import (
-    Any,
-    Dict,
-    Mapping,
-    NewType,
-    Optional,
-    Sequence,
-    TypeVar,
-    Union,
-)
+from typing import Any, Dict, Mapping, NewType, Optional, Sequence, TypeVar, Union
+
+from pydantic import AfterValidator
 
 # HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
 if sys.version_info >= (3, 8):
     from typing import Literal
 else:
     from typing_extensions import Literal
+
+if sys.version_info >= (3, 9):
+    from typing import Annotated
+else:
+    from typing_extensions import Annotated
 
 # simple types
 StrOrPath = Union[str, Path]
@@ -44,12 +42,6 @@ MissingType = NewType("MissingType", object)
 MISSING = MissingType(object())
 
 
-class AllowArbitraryTypes:
-    """Allow any type for this class."""
-
-    arbitrary_types_allowed = True
-
-
 # Validators
 def path_is_absolute(value: Path) -> Path:
     """Require absolute paths in an argument."""
@@ -67,3 +59,7 @@ def path_is_relative(value: Path) -> Path:
 
         raise PathNotRelativeError(path=value)
     return value
+
+
+AbsolutePath = Annotated[Path, AfterValidator(path_is_absolute)]
+RelativePath = Annotated[Path, AfterValidator(path_is_relative)]
