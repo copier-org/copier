@@ -27,7 +27,7 @@ copier = "copier.__main__:copier_app_run"
 "Bug Tracker" = "https://github.com/copier-org/copier/issues"
 
 [tool.poetry.dependencies]
-python = ">=3.7,<4.0"                                                  # HACK https://github.com/PyCQA/isort/issues/1945
+python = ">=3.7,<4.0" # HACK https://github.com/PyCQA/isort/issues/1945
 "backports.cached-property" = { version = ">=1.0.0", python = "<3.8" }
 colorama = ">=0.4.3"
 decorator = ">=5.1.1"
@@ -122,7 +122,9 @@ add_ignore = ["D105", "D107"]
 
 [tool.pytest.ini_options]
 addopts = "-n auto -ra"
-markers = ["impure: needs network or is not 100% reproducible"]
+markers = [
+    "impure: needs network or is not 100% reproducible"
+]
 
 [tool.commitizen]
 annotated_tag = true
