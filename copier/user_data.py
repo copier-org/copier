@@ -103,10 +103,7 @@ class AnswersMap:
     """
 
     # Private
-
-    # Pydantic's `Field()` instead of vanilla `field()` is needed for now.
-    # See https://github.com/pydantic/pydantic/issues/6600
-    hidden: Set[str] = Field(default_factory=set, init=False)
+    hidden: Set[str] = field(default_factory=set, init=False)
 
     # Public
     user: AnyByStrDict = field(default_factory=dict)
