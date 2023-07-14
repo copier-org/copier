@@ -21,7 +21,7 @@
     };
     flake-utils.url = github:numtide/flake-utils;
     nixpkgs.url = github:NixOS/nixpkgs;
-    poetry2nix.url = github:nix-community/poetry2nix;
+    poetry2nix.url = github:nix-community/poetry2nix/refs/pull/1230/head; # HACK
   };
 
   outputs = inputs:

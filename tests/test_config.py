@@ -218,7 +218,7 @@ def test_flags_bad_data(data: AnyByStrDict) -> None:
 
 
 def test_flags_extra_fails() -> None:
-    with pytest.raises(TypeError):
+    with pytest.raises(ValidationError):
         copier.Worker(  # type: ignore[call-arg]
             src_path="..",
             dst_path=Path("."),

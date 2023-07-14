@@ -21,9 +21,9 @@ from plumbum import ProcessExecutionError, colors
 from plumbum.cli.terminal import ask
 from plumbum.cmd import git
 from plumbum.machines import local
-from pydantic import ConfigDict, Extra, PositiveInt
+from pydantic import ConfigDict, Field, PositiveInt
 from pydantic.dataclasses import dataclass
-from pydantic.json import pydantic_encoder
+from pydantic_core import to_jsonable_python
 from questionary import unsafe_prompt
 
 from .errors import (
@@ -74,7 +74,7 @@ else:
     from typing_extensions import get_args
 
 
-@dataclass(config=ConfigDict(extra=Extra.forbid))
+@dataclass(config=ConfigDict(extra="forbid"))
 class Worker:
     """Copier process state manager.
 
@@ -202,7 +202,9 @@ class Worker:
     context_lines: PositiveInt = 3
     unsafe: bool = False
 
-    answers: AnswersMap = field(default_factory=AnswersMap, init=False)
+    # Pydantic's `Field()` instead of vanilla `field()` is needed for now.
+    # See https://github.com/pydantic/pydantic/issues/6600
+    answers: AnswersMap = Field(default_factory=AnswersMap, init=False)
 
     def __enter__(self):
         """Allow using worker as a context manager."""
@@ -510,7 +512,7 @@ class Worker:
             )
         # patch the `to_json` filter to support Pydantic dataclasses
         env.filters["to_json"] = partial(
-            env.filters["to_json"], default=pydantic_encoder
+            env.filters["to_json"], default=to_jsonable_python
         )
 
         # Add a global function to join filesystem paths.

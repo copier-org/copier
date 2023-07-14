@@ -2,19 +2,9 @@
 
 import sys
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    Mapping,
-    NewType,
-    Optional,
-    Sequence,
-    TypeVar,
-    Union,
-)
+from typing import Any, Dict, Mapping, NewType, Optional, Sequence, TypeVar, Union
 
-from pydantic.validators import path_validator
+from pydantic import AfterValidator
 
 # HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
 if sys.version_info >= (3, 8):
@@ -22,9 +12,10 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Literal
 
-if TYPE_CHECKING:
-    from pydantic.typing import CallableGenerator
-
+if sys.version_info >= (3, 9):
+    from typing import Annotated
+else:
+    from typing_extensions import Annotated
 
 # simple types
 StrOrPath = Union[str, Path]
@@ -51,12 +42,6 @@ MissingType = NewType("MissingType", object)
 MISSING = MissingType(object())
 
 
-class AllowArbitraryTypes:
-    """Allow any type for this class."""
-
-    arbitrary_types_allowed = True
-
-
 # Validators
 def path_is_absolute(value: Path) -> Path:
     """Require absolute paths in an argument."""
@@ -76,24 +61,5 @@ def path_is_relative(value: Path) -> Path:
     return value
 
 
-# Validated types
-if TYPE_CHECKING:
-    AbsolutePath = Path
-    RelativePath = Path
-else:
-
-    class AbsolutePath(Path):
-        """Require absolute paths in an argument."""
-
-        @classmethod
-        def __get_validators__(cls) -> "CallableGenerator":
-            yield path_validator
-            yield path_is_absolute
-
-    class RelativePath(Path):
-        """Require relative paths in an argument."""
-
-        @classmethod
-        def __get_validators__(cls) -> "CallableGenerator":
-            yield path_validator
-            yield path_is_relative
+AbsolutePath = Annotated[Path, AfterValidator(path_is_absolute)]
+RelativePath = Annotated[Path, AfterValidator(path_is_relative)]
