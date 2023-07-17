@@ -9,11 +9,13 @@ from packaging.version import Version
 from plumbum import local
 from plumbum.cmd import git
 
-from copier import Worker, errors, run_copy, run_update, vcs
+from copier import Worker, run_copy, run_update
+from copier.errors import ShallowCloneWarning
+from copier.vcs import GIT_VERSION, checkout_latest_tag, clone, get_repo
 
 
 def test_get_repo() -> None:
-    get = vcs.get_repo
+    get = get_repo
 
     assert get("git@git.myproject.org:MyProject") == "git@git.myproject.org:MyProject"
     assert (
@@ -65,7 +67,7 @@ def test_get_repo() -> None:
 
 @pytest.mark.impure
 def test_clone() -> None:
-    tmp = vcs.clone("https://github.com/copier-org/copier.git")
+    tmp = clone("https://github.com/copier-org/copier.git")
     assert tmp
     assert Path(tmp, "README.md").exists()
     shutil.rmtree(tmp, ignore_errors=True)
@@ -73,11 +75,11 @@ def test_clone() -> None:
 
 @pytest.mark.impure
 def test_local_clone() -> None:
-    tmp = vcs.clone("https://github.com/copier-org/copier.git")
+    tmp = clone("https://github.com/copier-org/copier.git")
     assert tmp
     assert Path(tmp, "README.md").exists()
 
-    local_tmp = vcs.clone(tmp)
+    local_tmp = clone(tmp)
     assert local_tmp
     assert Path(local_tmp, "README.md").exists()
     shutil.rmtree(local_tmp, ignore_errors=True)
@@ -86,17 +88,17 @@ def test_local_clone() -> None:
 @pytest.mark.impure
 def test_shallow_clone(tmp_path: Path, recwarn: pytest.WarningsRecorder) -> None:
     # This test should always work but should be much slower if `is_git_shallow_repo()` is not
-    # checked in `vcs.clone()`.
+    # checked in `clone()`.
     src_path = str(tmp_path / "autopretty")
     git("clone", "--depth=2", "https://github.com/copier-org/autopretty.git", src_path)
     assert Path(src_path, "README.md").exists()
 
-    if vcs.GIT_VERSION >= Version("2.27"):
-        with pytest.warns(errors.ShallowCloneWarning):
-            local_tmp = vcs.clone(str(src_path))
+    if GIT_VERSION >= Version("2.27"):
+        with pytest.warns(ShallowCloneWarning):
+            local_tmp = clone(str(src_path))
     else:
         assert len(recwarn) == 0
-        local_tmp = vcs.clone(str(src_path))
+        local_tmp = clone(str(src_path))
         assert len(recwarn) == 0
     assert local_tmp
     assert Path(local_tmp, "README.md").exists()
@@ -176,7 +178,7 @@ def test_invalid_version(tmp_path):
         sample.write_text("3")
         git("commit", "-am3")
         assert git("describe", "--tags").strip() != "v2"
-        vcs.checkout_latest_tag(tmp_path)
+        checkout_latest_tag(tmp_path)
         assert git("describe", "--tags").strip() == "v2"
 
 
