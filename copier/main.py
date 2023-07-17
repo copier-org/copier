@@ -21,7 +21,7 @@ from plumbum import ProcessExecutionError, colors
 from plumbum.cli.terminal import ask
 from plumbum.cmd import git
 from plumbum.machines import local
-from pydantic import ConfigDict, Field, PositiveInt
+from pydantic import ConfigDict, PositiveInt
 from pydantic.dataclasses import dataclass
 from pydantic_core import to_jsonable_python
 from questionary import unsafe_prompt
@@ -202,9 +202,7 @@ class Worker:
     context_lines: PositiveInt = 3
     unsafe: bool = False
 
-    # Pydantic's `Field()` instead of vanilla `field()` is needed for now.
-    # See https://github.com/pydantic/pydantic/issues/6600
-    answers: AnswersMap = Field(default_factory=AnswersMap, init=False)
+    answers: AnswersMap = field(default_factory=AnswersMap, init=False)
 
     def __enter__(self):
         """Allow using worker as a context manager."""
