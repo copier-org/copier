@@ -7,11 +7,22 @@ import sys
 from contextlib import suppress
 from dataclasses import asdict, field, replace
 from filecmp import dircmp
-from functools import partial
+from functools import cached_property, partial
 from itertools import chain
 from pathlib import Path
 from shutil import rmtree
-from typing import Callable, Iterable, Mapping, Optional, Sequence, Set, Union
+from tempfile import TemporaryDirectory
+from typing import (
+    Callable,
+    Iterable,
+    Literal,
+    Mapping,
+    Optional,
+    Sequence,
+    Set,
+    Union,
+    get_args,
+)
 from unicodedata import normalize
 
 from jinja2.loaders import FileSystemLoader
@@ -34,44 +45,17 @@ from .errors import (
 )
 from .subproject import Subproject
 from .template import Task, Template
-from .tools import OS, Style, TemporaryDirectory, printf, readlink
+from .tools import OS, Style, printf, readlink
 from .types import (
     MISSING,
     AnyByStrDict,
     JSONSerializable,
-    Literal,
     OptStr,
     RelativePath,
     StrOrPath,
     StrSeq,
 )
 from .user_data import DEFAULT_DATA, AnswersMap, Question
-
-# HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
-if sys.version_info >= (3, 8):
-    from functools import cached_property
-else:
-    from backports.cached_property import cached_property
-
-# Backport of `shutil.copytree` for python 3.7 to accept `dirs_exist_ok` argument
-if sys.version_info >= (3, 8):
-    from shutil import copytree
-else:
-    from distutils.dir_util import copy_tree
-
-    def copytree(src: Path, dst: Path, dirs_exist_ok: bool = False):
-        """Backport of `shutil.copytree` with `dirs_exist_ok` argument.
-
-        Can be remove once python 3.7 dropped.
-        """
-        copy_tree(str(src), str(dst))
-
-
-# HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
-if sys.version_info >= (3, 8):
-    from typing import get_args
-else:
-    from typing_extensions import get_args
 
 
 @dataclass(config=ConfigDict(extra="forbid"))

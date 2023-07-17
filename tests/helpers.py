@@ -6,7 +6,7 @@ import textwrap
 from enum import Enum
 from hashlib import sha1
 from pathlib import Path
-from typing import Mapping, Optional, Tuple, Union
+from typing import Mapping, Optional, Protocol, Tuple, Union
 
 from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
@@ -16,12 +16,6 @@ from prompt_toolkit.keys import Keys
 
 import copier
 from copier.types import OptStr, StrOrPath
-
-# HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
-if sys.version_info >= (3, 8):
-    from typing import Protocol
-else:
-    from typing_extensions import Protocol
 
 PROJECT_TEMPLATE = Path(__file__).parent / "demo"
 

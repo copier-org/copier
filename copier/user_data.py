@@ -1,24 +1,14 @@
 """Functions used to load user data."""
 import json
-import sys
 import warnings
 from collections import ChainMap
 from dataclasses import field
 from datetime import datetime
+from functools import cached_property
 from hashlib import sha512
 from os import urandom
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Dict,
-    Mapping,
-    Optional,
-    Sequence,
-    Set,
-    Union,
-)
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Set, Union
 
 import yaml
 from jinja2 import UndefinedError
@@ -34,15 +24,6 @@ from questionary.prompts.common import Choice
 from .errors import InvalidTypeError, UserMessageError
 from .tools import cast_str_to_bool, force_str_end
 from .types import MISSING, AnyByStrDict, MissingType, OptStr, OptStrOrPath, StrOrPath
-
-# HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
-if sys.version_info >= (3, 8):
-    from functools import cached_property
-else:
-    from backports.cached_property import cached_property
-
-if TYPE_CHECKING:
-    pass
 
 
 # TODO Remove these two functions as well as DEFAULT_DATA in a future release

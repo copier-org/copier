@@ -3,27 +3,19 @@
 import errno
 import os
 import platform
-import shutil
 import stat
 import sys
-import tempfile
-import warnings
 from contextlib import suppress
+from importlib.metadata import version
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Callable, Optional, TextIO, Tuple, Union, cast
+from typing import Any, Callable, Literal, Optional, TextIO, Tuple, Union, cast
 
 import colorama
 from packaging.version import Version
 from pydantic import StrictBool
 
-from .types import IntSeq, Literal
-
-# TODO Remove condition when dropping python 3.8 support
-if sys.version_info < (3, 8):
-    from importlib_metadata import version
-else:
-    from importlib.metadata import version
+from .types import IntSeq
 
 colorama.init()
 
@@ -142,7 +134,8 @@ def handle_remove_readonly(
 ) -> None:
     """Handle errors when trying to remove read-only files through `shutil.rmtree`.
 
-    This handler makes sure the given file is writable, then re-execute the given removal function.
+    On Windows, `shutil.rmtree` does not handle read-only files very well. This handler
+    makes sure the given file is writable, then re-execute the given removal function.
 
     Arguments:
         func: An OS-dependant function used to remove a file.
@@ -157,41 +150,12 @@ def handle_remove_readonly(
         raise
 
 
-# See https://github.com/copier-org/copier/issues/345
-class TemporaryDirectory(tempfile.TemporaryDirectory):
-    """A custom version of `tempfile.TemporaryDirectory` that handles read-only files better.
-
-    On Windows, before Python 3.8, `shutil.rmtree` does not handle read-only files very well.
-    This custom class makes use of a [special error handler][copier.tools.handle_remove_readonly]
-    to make sure that a temporary directory containing read-only files (typically created
-    when git-cloning a repository) is properly cleaned-up (i.e. removed) after using it
-    in a context manager.
-    """
-
-    @classmethod
-    def _cleanup(cls, name, warn_message):
-        cls._robust_cleanup(name)
-        warnings.warn(warn_message, ResourceWarning)
-
-    def cleanup(self):
-        """Remove directory safely."""
-        if self._finalizer.detach():
-            self._robust_cleanup(self.name)
-
-    @staticmethod
-    def _robust_cleanup(name):
-        shutil.rmtree(name, ignore_errors=False, onerror=handle_remove_readonly)
-
-
 def readlink(link: Path) -> Path:
     """A custom version of os.readlink/pathlib.Path.readlink.
 
     pathlib.Path.readlink is what we ideally would want to use, but it is only available on python>=3.9.
-    os.readlink doesn't support Path and bytes on Windows for python<3.8
     """
     if sys.version_info >= (3, 9):
         return link.readlink()
-    elif sys.version_info >= (3, 8) or os.name != "nt":
-        return Path(os.readlink(link))
     else:
-        return Path(os.readlink(str(link)))
+        return Path(os.readlink(link))

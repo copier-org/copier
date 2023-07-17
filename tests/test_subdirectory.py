@@ -1,6 +1,6 @@
-import sys
 from pathlib import Path
 from textwrap import dedent
+from typing import Literal
 
 import pytest
 import yaml
@@ -10,12 +10,6 @@ from plumbum.cmd import git
 import copier
 
 from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree
-
-# HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
 
 
 def git_init(message="hello world"):

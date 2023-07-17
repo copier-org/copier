@@ -1,12 +1,12 @@
 """Tools related to template management."""
 import re
-import sys
 from collections import ChainMap, defaultdict
 from contextlib import suppress
 from dataclasses import field
+from functools import cached_property
 from pathlib import Path
 from shutil import rmtree
-from typing import List, Mapping, Optional, Sequence, Set, Tuple
+from typing import List, Literal, Mapping, Optional, Sequence, Set, Tuple
 from warnings import warn
 
 import dunamai
@@ -29,14 +29,6 @@ from .errors import (
 from .tools import copier_version, handle_remove_readonly
 from .types import AnyByStrDict, Env, OptStr, StrSeq, Union, VCSTypes
 from .vcs import checkout_latest_tag, clone, get_repo
-
-# HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
-if sys.version_info >= (3, 8):
-    from functools import cached_property
-else:
-    from backports.cached_property import cached_property
-
-from .types import Literal
 
 # Default list of files in the template to exclude from the rendered project
 DEFAULT_EXCLUDE: Tuple[str, ...] = (

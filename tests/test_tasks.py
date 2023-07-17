@@ -1,10 +1,9 @@
 from pathlib import Path
-from typing import Optional
+from typing import Literal, Optional
 
 import pytest
 
 import copier
-from copier.types import Literal
 
 from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree
 
