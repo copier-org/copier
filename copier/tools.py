@@ -125,11 +125,6 @@ def cast_str_to_bool(value: Any) -> bool:
     return bool(value)
 
 
-def copy_file(src_path: Path, dst_path: Path, follow_symlinks: bool = True) -> None:
-    """Copy one file to another place."""
-    shutil.copy2(src_path, dst_path, follow_symlinks=follow_symlinks)
-
-
 def force_str_end(original_str: str, end: str = "\n") -> str:
     """Make sure a `original_str` ends with `end`.
 

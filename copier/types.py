@@ -24,13 +24,11 @@ AnyByStrDict = Dict[str, Any]
 # sequences
 IntSeq = Sequence[int]
 StrSeq = Sequence[str]
-StrOrPathSeq = Sequence[StrOrPath]
 PathSeq = Sequence[Path]
 
 # optional types
 OptBool = Optional[bool]
 OptStrOrPath = Optional[StrOrPath]
-OptStrOrPathSeq = Optional[StrOrPathSeq]
 OptStr = Optional[str]
 
 # miscellaneous
