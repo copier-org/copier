@@ -1,7 +1,6 @@
 import sys
 from pathlib import Path
 from textwrap import dedent
-from typing import Union
 
 import pytest
 import yaml
@@ -195,7 +194,7 @@ def test_update_subdirectory_from_root_path(
 )
 def test_new_version_uses_subdirectory(
     tmp_path_factory: pytest.TempPathFactory,
-    conflict: Union[Literal["rej"], Literal["inline"]],
+    conflict: Literal["rej", "inline"],
     readme: str,
     expect_reject: bool,
 ) -> None:
