@@ -4,7 +4,7 @@ import re
 import sys
 from contextlib import suppress
 from pathlib import Path
-from tempfile import mkdtemp
+from tempfile import TemporaryDirectory, mkdtemp
 from warnings import warn
 
 from packaging import version
@@ -13,7 +13,6 @@ from plumbum import TF, ProcessExecutionError, colors, local
 from plumbum.cmd import git
 
 from .errors import DirtyLocalWarning, ShallowCloneWarning
-from .tools import TemporaryDirectory
 from .types import OptBool, OptStr, StrOrPath
 
 GIT_PREFIX = ("git@", "git://", "git+", "https://github.com/", "https://gitlab.com/")

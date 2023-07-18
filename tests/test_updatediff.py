@@ -2,7 +2,7 @@ import platform
 from pathlib import Path
 from shutil import rmtree
 from textwrap import dedent
-from typing import Optional
+from typing import Literal, Optional
 
 import pexpect
 import pytest
@@ -13,7 +13,6 @@ from plumbum.cmd import git
 from copier.cli import CopierApp
 from copier.errors import UserMessageError
 from copier.main import Worker, run_copy, run_update
-from copier.types import Literal
 
 from .helpers import (
     BRACKET_ENVOPS_JSON,

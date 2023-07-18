@@ -15,7 +15,6 @@ from .helpers import DATA, PROJECT_TEMPLATE, build_file_tree
 def test_copy(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
-    # dirs_exist_ok not available in Python 3.7
     for item in PROJECT_TEMPLATE.iterdir():
         item_src_path = item
         item_dst_path = src / item.name

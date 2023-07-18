@@ -2,15 +2,19 @@
 
 import sys
 from pathlib import Path
-from typing import Any, Dict, Mapping, NewType, Optional, Sequence, TypeVar, Union
+from typing import (
+    Any,
+    Dict,
+    Literal,
+    Mapping,
+    NewType,
+    Optional,
+    Sequence,
+    TypeVar,
+    Union,
+)
 
 from pydantic import AfterValidator
-
-# HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
 
 if sys.version_info >= (3, 9):
     from typing import Annotated
