@@ -819,13 +819,13 @@ ssh = ["paramiko"]
 
 [[package]]
 name = "poethepoet"
-version = "0.19.0"
+version = "0.21.1"
 description = "A task runner that works well with poetry."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "poethepoet-0.19.0-py3-none-any.whl", hash = "sha256:87038be589077e4b407050a9da644d9cd9e4076ccfc8abc7f855cf6870d5c6c2"},
-    {file = "poethepoet-0.19.0.tar.gz", hash = "sha256:897eb85ec15876d79befc7d19d4c80ce7c8b214d1bb0dcfec640abd81616bfed"},
+    {file = "poethepoet-0.21.1-py3-none-any.whl", hash = "sha256:c79b2aefc889c4490db9d64ecc1896db78700aa212b8c5f0bca4aee0395e7714"},
+    {file = "poethepoet-0.21.1.tar.gz", hash = "sha256:39d754f53714545a23cfc94b122deaf3548218b6e35b453c30973c5598719e9f"},
 ]
 
 [package.dependencies]
