@@ -3,8 +3,8 @@
 ## Can Copier be applied over a preexisting project?
 
 Yes, of course. Copier understands this use case out of the box. That's actually what
-powers features such as [updating](../updating) or the ability of
-[applying multiple templates to the same subproject](../configuring#applying-multiple-templates-to-the-same-subproject).
+powers features such as [updating](updating.md) or the ability of
+[applying multiple templates to the same subproject](configuring.md#applying-multiple-templates-to-the-same-subproject).
 
 !!! example
 
@@ -57,7 +57,7 @@ templates, so that you can add, change or remove variables.
 
 In order for Copier to be able to load and use the extension when generating a project,
 it must be installed alongside Copier itself. More details in the
-[`jinja_extensions` docs](../configuring#jinja_extensions).
+[`jinja_extensions` docs](configuring.md#jinja_extensions).
 
 You can then configure your Jinja extensions in Copier's configuration file:
 
@@ -144,9 +144,9 @@ repository.
 
 ## While developing, why the template doesn't include dirty changes?
 
-Copier follows [a specific algorithm](./configuring.md#templates-versions) to choose
-what reference to use from the template. It also
-[includes dirty changes in the `HEAD` ref while developing locally](./configuring.md#copying-dirty-changes).
+Copier follows [a specific algorithm](configuring.md#templates-versions) to choose what
+reference to use from the template. It also
+[includes dirty changes in the `HEAD` ref while developing locally](configuring.md#copying-dirty-changes).
 
 However, did you make sure you are selecting the `HEAD` ref for copying?
 
