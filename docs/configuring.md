@@ -724,7 +724,7 @@ code hunk in the file itself, similar to the behavior of `git merge`.
 
 During a project update, Copier needs to compare the template evolution with the
 subproject evolution. This way, it can detect what changed, where and how to merge those
-changes. [Refer here for more details on this process](./updating.md).
+changes. [Refer here for more details on this process](updating.md).
 
 The more lines you use, the more accurate Copier will be when detecting conflicts. But
 you will also have more conflicts to solve by yourself. FWIW, Git uses 3 lines by
@@ -977,7 +977,7 @@ on them, so they are always installed when Copier is installed.
         enhances the extension loading mechanism to allow templates writers to put their
         extensions directly in their templates. It also allows to modify the rendering context
         (the Jinja variables that you can use in your templates) before
-        rendering templates, see [using a context hook](../faq#how-can-i-alter-the-context-before-rendering-the-project).
+        rendering templates, see [using a context hook](faq.md#how-can-i-alter-the-context-before-rendering-the-project).
     -   [`jinja_markdown.MarkdownExtension`](https://github.com/jpsca/jinja-markdown):
         provides a `markdown` tag that will render Markdown to HTML using
         [PyMdown extensions](https://facelessuser.github.io/pymdown-extensions/).
@@ -1000,8 +1000,8 @@ on them, so they are always installed when Copier is installed.
 -   CLI flags: N/A
 -   Default value: `""`
 
-A message to be printed after [generating](../generating) or
-[regenerating](../generating#regenerating-a-project) a project _successfully_.
+A message to be printed after [generating](generating.md) or
+[regenerating](generating.md#regenerating-a-project) a project _successfully_.
 
 If the message contains Jinja code, it will be rendered with the same context as the
 rest of the template. A [Jinja include](#importing-jinja-templates-and-macros)
@@ -1035,7 +1035,7 @@ The message is suppressed when Copier is run in [quiet mode](#quiet).
 -   Default value: `""`
 
 Like [`message_after_copy`](#message_after_copy) but printed _before_
-[generating](../generating) or [regenerating](../generating#regenerating-a-project) a
+[generating](generating.md) or [regenerating](generating.md#regenerating-a-project) a
 project.
 
 !!! example

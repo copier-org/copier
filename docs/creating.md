@@ -68,7 +68,7 @@ module_name: world
 ```
 
 Copier allows much more advanced templating: see the next chapter,
-[configuring a template](../configuring/), to see all the configurations options and
+[configuring a template](configuring.md), to see all the configurations options and
 their usage.
 
 ## Template helpers
