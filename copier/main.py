@@ -786,7 +786,7 @@ class Worker:
             raise UserMessageError("Cannot update: version from template not detected.")
         if self.subproject.template.version > self.template.version:
             raise UserMessageError(
-                f"Your are downgrading from {self.subproject.template.version} to {self.template.version}. "
+                f"You are downgrading from {self.subproject.template.version} to {self.template.version}. "
                 "Downgrades are not supported."
             )
         if not self.overwrite:
