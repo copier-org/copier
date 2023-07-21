@@ -1402,13 +1402,13 @@ files = [
 
 [[package]]
 name = "types-decorator"
-version = "5.1.8.3"
+version = "5.1.8.4"
 description = "Typing stubs for decorator"
 optional = false
 python-versions = "*"
 files = [
-    {file = "types-decorator-5.1.8.3.tar.gz", hash = "sha256:32dd380fc88d0e7a1f27a84ba1ce6e29ba0ad42caaa1b88e7b5d27e61f6e4962"},
-    {file = "types_decorator-5.1.8.3-py3-none-any.whl", hash = "sha256:2ad329af49b824db8069ebba9bf03b1cbcafba72eb338be255a1fd902e85edb9"},
+    {file = "types-decorator-5.1.8.4.tar.gz", hash = "sha256:a8c39024634e99834bef146cec2e36c585f47884addf4dc65d6d0b7b1f627517"},
+    {file = "types_decorator-5.1.8.4-py3-none-any.whl", hash = "sha256:e411203e0ec0116964dcd491e162a951e4a68cd2d4a946172690bee43c4ebe6e"},
 ]
 
 [[package]]
