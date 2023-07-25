@@ -234,13 +234,14 @@ class CopierCopySubApp(_Subcommand):
             destination_path:
                 Where to generate the new subproject. It must not exist or be empty.
         """
-        self._worker(
+        with self._worker(
             template_src,
             destination_path,
             cleanup_on_error=self.cleanup_on_error,
             defaults=self.force or self.defaults,
             overwrite=self.force or self.overwrite,
-        ).run_copy()
+        ) as worker:
+            worker.run_copy()
         return 0
 
 
@@ -295,11 +296,12 @@ class CopierRecopySubApp(_Subcommand):
                 The subproject must exist. If not specified, the currently
                 working directory is used.
         """
-        self._worker(
+        with self._worker(
             dst_path=destination_path,
             defaults=self.force or self.defaults,
             overwrite=self.force or self.overwrite,
-        ).run_recopy()
+        ) as worker:
+            worker.run_recopy()
         return 0
 
 
@@ -360,13 +362,14 @@ class CopierUpdateSubApp(_Subcommand):
                 The subproject must exist. If not specified, the currently
                 working directory is used.
         """
-        self._worker(
+        with self._worker(
             dst_path=destination_path,
             conflict=self.conflict,
             context_lines=self.context_lines,
             defaults=self.defaults,
             overwrite=True,
-        ).run_update()
+        ) as worker:
+            worker.run_update()
         return 0
 
 
