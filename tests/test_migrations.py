@@ -151,6 +151,86 @@ def test_pre_migration_modifies_answers(
         assert json.loads(Path("songs.json").read_text()) == ["la vie en rose"]
 
 
+def test_pre_migration_skip_already_answered_questions(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """Test support for answers modifications in pre-migrations."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    # v1 of template asks for a favourite song and writes it to songs.json
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "[[ _copier_conf.answers_file ]].jinja": (
+                    "[[ _copier_answers|tojson ]]"
+                ),
+                "copier.yml": (
+                    f"""\
+                    _envops: {BRACKET_ENVOPS_JSON}
+                    best_song: la vie en rose
+                    """
+                ),
+                "songs.json.jinja": "[ [[ best_song|tojson ]] ]",
+            }
+        )
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "v1")
+    # User copies v1 template into subproject
+    with local.cwd(dst):
+        run_copy(src_path=str(src), defaults=True, overwrite=True)
+        answers = json.loads(Path(".copier-answers.yml").read_text())
+        assert answers["_commit"] == "v1"
+        assert answers["best_song"] == "la vie en rose"
+        assert json.loads(Path("songs.json").read_text()) == ["la vie en rose"]
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+    with local.cwd(src):
+        build_file_tree(
+            {
+                # v2 of template supports multiple songs, has a different default
+                # and includes a data format migration script
+                "copier.yml": (
+                    f"""\
+                    _envops: {BRACKET_ENVOPS_JSON}
+                    best_song_list:
+                        default: [paranoid android]
+                    bad_song:
+                        default: [creep]
+                    _migrations:
+                    -   version: v2
+                        before:
+                        -   - python
+                            - -c
+                            - |
+                                import sys, json, pathlib
+                                answers_path = pathlib.Path(*sys.argv[1:])
+                                answers = json.loads(answers_path.read_text())
+                                answers["best_song_list"] = [answers.pop("best_song")]
+                                answers_path.write_text(json.dumps(answers))
+                            - "[[ _copier_conf.dst_path ]]"
+                            - "[[ _copier_conf.answers_file ]]"
+                    """
+                ),
+                "songs.json.jinja": "[[ best_song_list|tojson ]]",
+            }
+        )
+        git("add", ".")
+        git("commit", "-m2")
+        git("tag", "v2")
+    # User updates subproject to v2 template
+    with local.cwd(dst):
+        run_update(defaults=True, overwrite=True, unsafe=True, skip_answered=True)
+        answers = json.loads(Path(".copier-answers.yml").read_text())
+        assert answers["_commit"] == "v2"
+        assert "best_song" not in answers
+        assert answers["best_song_list"] == ["paranoid android"]
+        assert json.loads(Path("songs.json").read_text()) == ["paranoid android"]
+        assert answers["bad_song"] == ["creep"]
+
+
 def test_prereleases(tmp_path_factory: pytest.TempPathFactory) -> None:
     """Test prereleases support for copying and updating."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
