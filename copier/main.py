@@ -853,8 +853,7 @@ class Worker:
             )
             # Clear last answers cache to load possible answers migration, if skip_answered flag is not set
             if self.skip_answered is False:
-                with suppress(AttributeError):
-                    self.answers = AnswersMap()
+                self.answers = AnswersMap()
                 with suppress(AttributeError):
                     del self.subproject.last_answers
             # Do a normal update in final destination
