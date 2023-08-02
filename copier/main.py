@@ -287,6 +287,7 @@ class Worker:
         # Backwards compatibility
         # FIXME Remove it?
         conf = asdict(self)
+        conf.pop("_cleanup_hooks")
         conf.update(
             {
                 "answers_file": self.answers_relpath,
