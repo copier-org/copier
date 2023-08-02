@@ -823,6 +823,7 @@ class Worker:
                 quiet=True,
             )
             current_worker.run_copy()
+            self.answers = current_worker.answers
             # Render with the same answers in an empty dir to avoid pollution
             new_worker = replace(
                 self,
