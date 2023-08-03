@@ -15,6 +15,7 @@ from tempfile import TemporaryDirectory
 from typing import (
     Callable,
     Iterable,
+    List,
     Literal,
     Mapping,
     Optional,
@@ -187,6 +188,7 @@ class Worker:
     unsafe: bool = False
 
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
+    _cleanup_hooks: List[Callable] = field(default_factory=list, init=False)
 
     def __enter__(self):
         """Allow using worker as a context manager."""
@@ -204,7 +206,9 @@ class Worker:
         self._cleanup()
 
     def _cleanup(self):
-        self.template._cleanup()
+        """Execute all stored cleanup methods."""
+        for method in self._cleanup_hooks:
+            method()
 
     def _check_unsafe(self, mode: Literal["copy", "update"]) -> None:
         """Check whether a template uses unsafe features."""
@@ -283,6 +287,7 @@ class Worker:
         # Backwards compatibility
         # FIXME Remove it?
         conf = asdict(self)
+        conf.pop("_cleanup_hooks")
         conf.update(
             {
                 "answers_file": self.answers_relpath,
@@ -682,10 +687,12 @@ class Worker:
     @cached_property
     def subproject(self) -> Subproject:
         """Get related subproject."""
-        return Subproject(
+        result = Subproject(
             local_abspath=self.dst_path.absolute(),
             answers_relpath=self.answers_file or Path(".copier-answers.yml"),
         )
+        self._cleanup_hooks.append(result._cleanup)
+        return result
 
     @cached_property
     def template(self) -> Template:
@@ -695,7 +702,11 @@ class Worker:
             if self.subproject.template is None:
                 raise TypeError("Template not found")
             url = str(self.subproject.template.url)
-        return Template(url=url, ref=self.vcs_ref, use_prereleases=self.use_prereleases)
+        result = Template(
+            url=url, ref=self.vcs_ref, use_prereleases=self.use_prereleases
+        )
+        self._cleanup_hooks.append(result._cleanup)
+        return result
 
     @cached_property
     def template_copy_root(self) -> Path:
@@ -750,8 +761,8 @@ class Worker:
                 "Cannot recopy because cannot obtain old template references "
                 f"from `{self.subproject.answers_relpath}`."
             )
-        new_worker = replace(self, src_path=self.subproject.template.url)
-        return new_worker.run_copy()
+        with replace(self, src_path=self.subproject.template.url) as new_worker:
+            return new_worker.run_copy()
 
     def run_update(self) -> None:
         """Update a subproject that was already generated.
@@ -816,7 +827,7 @@ class Worker:
             prefix=f"{__name__}.old_copy."
         ) as old_copy, TemporaryDirectory(prefix=f"{__name__}.new_copy.") as new_copy:
             # Copy old template into a temporary destination
-            old_worker = replace(
+            with replace(
                 self,
                 dst_path=old_copy / subproject_subdir,
                 data=self.subproject.last_answers,
@@ -824,8 +835,8 @@ class Worker:
                 quiet=True,
                 src_path=self.subproject.template.url,
                 vcs_ref=self.subproject.template.commit,
-            )
-            old_worker.run_copy()
+            ) as old_worker:
+                old_worker.run_copy()
             # Extract diff between temporary destination and real destination
             with local.cwd(old_copy):
                 self._git_initialize_repo()
@@ -853,26 +864,26 @@ class Worker:
             with suppress(AttributeError):
                 del self.subproject.last_answers
             # Do a normal update in final destination
-            current_worker = replace(
+            with replace(
                 self,
                 # Files can change due to the historical diff, and those
                 # changes are not detected in this process, so it's better to
                 # say nothing than lie.
                 # TODO
                 quiet=True,
-            )
-            current_worker.run_copy()
-            self.answers = current_worker.answers
+            ) as current_worker:
+                current_worker.run_copy()
+                self.answers = current_worker.answers
             # Render with the same answers in an empty dir to avoid pollution
-            new_worker = replace(
+            with replace(
                 self,
                 dst_path=new_copy / subproject_subdir,
                 data=self.answers.combined,
                 defaults=True,
                 quiet=True,
                 src_path=self.subproject.template.url,
-            )
-            new_worker.run_copy()
+            ) as new_worker:
+                new_worker.run_copy()
             compared = dircmp(old_copy, new_copy)
             # Try to apply cached diff into final destination
             with local.cwd(subproject_top):
