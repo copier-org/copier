@@ -853,7 +853,16 @@ class Worker:
             with suppress(AttributeError):
                 del self.subproject.last_answers
             # Do a normal update in final destination
-            self.run_copy()
+            current_worker = replace(
+                self,
+                # Files can change due to the historical diff, and those
+                # changes are not detected in this process, so it's better to
+                # say nothing than lie.
+                # TODO
+                quiet=True,
+            )
+            current_worker.run_copy()
+            self.answers = current_worker.answers
             # Render with the same answers in an empty dir to avoid pollution
             new_worker = replace(
                 self,
