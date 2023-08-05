@@ -48,8 +48,8 @@ modifications made, Copier will use this modified working copy of the template t
 development of new template features.
 
 If you would like to override the version of template being installed, the
-[`--vcs-ref`](configuring.md/#vcs_ref) argument can be used to specify a branch, tag or
-other reference to use.
+[`--vcs-ref`][vcs_ref] argument can be used to specify a branch, tag or other reference
+to use.
 
 For example to use the latest master branch from a public repository:
 
