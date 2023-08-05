@@ -3,9 +3,9 @@
 A template is a directory: usually the root folder of a Git repository.
 
 The content of the files inside the project template is copied to the destination
-without changes, **unless they end with `.jinja`** (or
-[your chosen suffix](configuring.md#templates_suffix)). In that case, the templating
-engine will be used to render them.
+without changes, **unless they end with `.jinja`** (or [your chosen
+suffix][templates_suffix]). In that case, the templating engine will be used to render
+them.
 
 Jinja2 templating is used. Learn more about it by reading
 [Jinja2 documentation](https://jinja.palletsprojects.com/).
@@ -84,7 +84,7 @@ Copier includes:
         context.
 
 -   `_copier_answers` includes the current answers dict, but slightly modified to make
-    it suitable to [autoupdate your project safely](configuring.md#the-answers-file):
+    it suitable to [autoupdate your project safely][the-copier-answersyml-file]:
     -   It doesn't contain secret answers.
     -   It doesn't contain any data that is not easy to render to JSON or YAML.
     -   It contains special keys like `_commit` and `_src_path`, indicating how the last
