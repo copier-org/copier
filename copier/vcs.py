@@ -14,21 +14,25 @@ from plumbum import TF, ProcessExecutionError, colors, local
 from .errors import DirtyLocalWarning, ShallowCloneWarning
 from .types import OptBool, OptStr, StrOrPath
 
-try:
-    from plumbum.cmd import git
 
-    GIT_VERSION = Version(re.findall(r"\d+\.\d+\.\d+", git("version"))[0])
-except ImportError:
+def get_git():
+    """Gets `git` command, or fails if it's not available"""
+    try:
+        from plumbum.cmd import git
+        return git
+    except ImportError as exc:
+        raise OSError("git is not available") from exc
+
+try:
+    GIT_VERSION = Version(re.findall(r"\d+\.\d+\.\d+", get_git()("version"))[0])
+except OSError:
     import warnings
 
     warnings.warn(
         "git command not found, some functionality might not work", UserWarning
     )
 
-    def git(*args, **kwargs):
-        raise OSError("git is not available")
-
-    GIT_VERSION = None
+    GIT_VERSION = None  # type: ignore
 
 
 GIT_PREFIX = ("git@", "git://", "git+", "https://github.com/", "https://gitlab.com/")
@@ -45,7 +49,7 @@ def is_git_repo_root(path: StrOrPath) -> bool:
     """Indicate if a given path is a git repo root directory."""
     try:
         with local.cwd(Path(path, ".git")):
-            return git("rev-parse", "--is-inside-git-dir").strip() == "true"
+            return get_git()("rev-parse", "--is-inside-git-dir").strip() == "true"
     except OSError:
         return False
 
@@ -53,7 +57,7 @@ def is_git_repo_root(path: StrOrPath) -> bool:
 def is_in_git_repo(path: StrOrPath) -> bool:
     """Indicate if a given path is in a git repo directory."""
     try:
-        git("-C", path, "rev-parse", "--show-toplevel")
+        get_git()("-C", path, "rev-parse", "--show-toplevel")
         return True
     except (OSError, ProcessExecutionError):
         return False
@@ -62,7 +66,7 @@ def is_in_git_repo(path: StrOrPath) -> bool:
 def is_git_shallow_repo(path: StrOrPath) -> bool:
     """Indicate if a given path is a git shallow repo directory."""
     try:
-        return git("-C", path, "rev-parse", "--is-shallow-repository").strip() == "true"
+        return get_git()("-C", path, "rev-parse", "--is-shallow-repository").strip() == "true"
     except (OSError, ProcessExecutionError):
         return False
 
@@ -73,8 +77,8 @@ def is_git_bundle(path: Path) -> bool:
         path = path.resolve()
     with TemporaryDirectory(prefix=f"{__name__}.is_git_bundle.") as dirname:
         with local.cwd(dirname):
-            git("init")
-            return bool(git["bundle", "verify", path] & TF)
+            get_git()("init")
+            return bool(get_git()["bundle", "verify", path] & TF)
 
 
 def get_repo(url: str) -> OptStr:
@@ -122,6 +126,7 @@ def checkout_latest_tag(local_repo: StrOrPath, use_prereleases: OptBool = False)
         use_prereleases:
             If `False`, skip prerelease git tags.
     """
+    git = get_git()
     with local.cwd(local_repo):
         all_tags = filter(valid_version, git("tag").split())
         if not use_prereleases:
@@ -155,6 +160,7 @@ def clone(url: str, ref: OptStr = None) -> str:
         ref:
             Reference to checkout. For Git repos, defaults to `HEAD`.
     """
+    git = get_git()
     location = mkdtemp(prefix=f"{__name__}.clone.")
     _clone = git["clone", "--no-checkout", url, location]
     # Faster clones if possible

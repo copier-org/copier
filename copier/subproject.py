@@ -14,7 +14,7 @@ from pydantic.dataclasses import dataclass
 
 from .template import Template
 from .types import AbsolutePath, AnyByStrDict, VCSTypes
-from .vcs import git, is_in_git_repo
+from .vcs import get_git, is_in_git_repo
 
 
 @dataclass
@@ -41,7 +41,7 @@ class Subproject:
         """
         if self.vcs == "git":
             with local.cwd(self.local_abspath):
-                return bool(git("status", "--porcelain").strip())
+                return bool(get_git()("status", "--porcelain").strip())
         return False
 
     def _cleanup(self):

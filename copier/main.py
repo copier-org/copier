@@ -56,7 +56,7 @@ from .types import (
     StrSeq,
 )
 from .user_data import DEFAULT_DATA, AnswersMap, Question
-from .vcs import git
+from .vcs import get_git
 
 
 @dataclass(config=ConfigDict(extra="forbid"))
@@ -815,6 +815,7 @@ class Worker:
         self._print_message(self.template.message_after_update)
 
     def _apply_update(self):
+        git = get_git()
         subproject_top = Path(
             git(
                 "-C",
@@ -931,6 +932,7 @@ class Worker:
 
     def _git_initialize_repo(self):
         """Initialize a git repository in the current directory."""
+        git = get_git()
         git("init", retcode=None)
         git("add", ".")
         git("config", "user.name", "Copier")
