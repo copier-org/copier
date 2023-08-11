@@ -1221,20 +1221,17 @@ toml = ["toml"]
 
 [[package]]
 name = "questionary"
-version = "1.10.0"
+version = "2.0.0"
 description = "Python library to build pretty command line user prompts ⭐️"
 optional = false
-python-versions = ">=3.6,<4.0"
+python-versions = ">=3.8"
 files = [
-    {file = "questionary-1.10.0-py3-none-any.whl", hash = "sha256:fecfcc8cca110fda9d561cb83f1e97ecbb93c613ff857f655818839dac74ce90"},
-    {file = "questionary-1.10.0.tar.gz", hash = "sha256:600d3aefecce26d48d97eee936fdb66e4bc27f934c3ab6dd1e292c4f43946d90"},
+    {file = "questionary-2.0.0-py3-none-any.whl", hash = "sha256:564ae8917f141c9ef0ed131bb2671397fcaba7a901988b39cdbb569b8f29ce94"},
+    {file = "questionary-2.0.0.tar.gz", hash = "sha256:8681b9d9ec751347ab11af2204d063b856d06845b07b442951e081780e8cb8a6"},
 ]
 
 [package.dependencies]
-prompt_toolkit = ">=2.0,<4.0"
-
-[package.extras]
-docs = ["Sphinx (>=3.3,<4.0)", "sphinx-autobuild (>=2020.9.1,<2021.0.0)", "sphinx-autodoc-typehints (>=1.11.1,<2.0.0)", "sphinx-copybutton (>=0.3.1,<0.4.0)", "sphinx-rtd-theme (>=0.5.0,<0.6.0)"]
+prompt_toolkit = ">=2.0,<=3.0.36"
 
 [[package]]
 name = "regex"
