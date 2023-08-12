@@ -1028,6 +1028,28 @@ The message is suppressed when Copier is run in [quiet mode][quiet].
         2. Read "CONTRIBUING.md" and start coding.
     ```
 
+### `message_after_update`
+
+-   Format: `str`
+-   CLI flags: N/A
+-   Default value: `""`
+
+Like [`message_after_copy`][message_after_copy] but printed after
+[_updating_](updating.md) a project.
+
+!!! example
+
+    ```yaml title="copier.yml"
+    project_name:
+        type: str
+        help: An awesome project needs an awesome name. Tell me yours.
+
+    _message_after_update: |
+        Your project "{{ project_name }}" has been updated successfully!
+        In case there are any conflicts, please resolve them. Then,
+        you're done.
+    ```
+
 ### `message_before_copy`
 
 -   Format: `str`
@@ -1049,6 +1071,29 @@ Like [`message_after_copy`][message_after_copy] but printed _before_
 
         You'll be asked a series of questions whose answers will be used to
         generate a tailored project for you.
+    ```
+
+### `message_before_update`
+
+-   Format: `str`
+-   CLI flags: N/A
+-   Default value: `""`
+
+Like [`message_before_copy`][message_after_copy] but printed before
+[_updating_](updating.md) a project.
+
+!!! example
+
+    ```yaml title="copier.yml"
+    project_name:
+        type: str
+        help: An awesome project needs an awesome name. Tell me yours.
+
+    _message_before_update: |
+        Thanks for updating your project using our template.
+
+        You'll be asked a series of questions whose answers are pre-populated
+        with previously entered values. Feel free to change them as needed.
     ```
 
 ### `migrations`

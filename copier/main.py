@@ -805,12 +805,14 @@ class Worker:
             # review the diff before committing; so we can safely avoid
             # asking for confirmation
             raise UserMessageError("Enable overwrite to update a subproject.")
+        self._print_message(self.template.message_before_update)
         if not self.quiet:
             # TODO Unify printing tools
             print(
                 f"Updating to template version {self.template.version}", file=sys.stderr
             )
         self._apply_update()
+        self._print_message(self.template.message_after_update)
 
     def _apply_update(self):
         subproject_top = Path(
