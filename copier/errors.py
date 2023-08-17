@@ -106,7 +106,10 @@ class UnsafeTemplateError(CopierError):
     def __init__(self, features: Sequence[str]):
         assert features
         s = "s" if len(features) > 1 else ""
-        super().__init__(f"Template uses unsafe feature{s}: {', '.join(features)}")
+        super().__init__(
+            f"Template uses potentially unsafe feature{s}: {', '.join(features)}.\n"
+            "If you trust this template, consider adding the `--trust` option when running `copier copy/update`."
+        )
 
 
 # Warnings
