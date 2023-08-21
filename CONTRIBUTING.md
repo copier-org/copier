@@ -62,6 +62,7 @@ your host environment:
 -   [Nix](https://nixos.org/download.html) to provide a reproducible development
     environment.
 -   [Direnv](https://direnv.net/) to load that environment automatically in your shell.
+-   [Poetry](https://python-poetry.org/) to test and lint the code.
 
 ## Get Started!
 
