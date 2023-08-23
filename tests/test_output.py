@@ -144,15 +144,6 @@ def test_messages_with_inline_text(
     # clear capture output log
     capsys.readouterr()
 
-    copy_pattern = (
-        r"^"
-        r"Thank you for using our template on (linux|macos|windows)"
-        r".+"
-        r"Project {project_name} successfully created"
-        r"\s*"
-        r"$"
-    )
-
     # copy
     if interactive:
         tui = spawn(COPIER_PATH + ("copy", "-r", "v1", str(src), str(dst)), timeout=10)
@@ -164,7 +155,14 @@ def test_messages_with_inline_text(
 
     assert (dst / "version.txt").read_text() == "v1"
     _, err = capsys.readouterr()
-    assert re.search(copy_pattern.format(project_name="myproj"), err, flags=re.S)
+    assert re.search(
+        r"""
+        ^Thank\ you\ for\ using\ our\ template\ on\ (linux|macos|windows).+
+        Project\ myproj\ successfully\ created\s*$
+        """,
+        err,
+        flags=re.S | re.X,
+    )
 
     # recopy
     if interactive:
@@ -177,7 +175,14 @@ def test_messages_with_inline_text(
 
     assert (dst / "version.txt").read_text() == "v1"
     _, err = capsys.readouterr()
-    assert re.search(copy_pattern.format(project_name="myproj_new"), err, flags=re.S)
+    assert re.search(
+        r"""
+        ^Thank\ you\ for\ using\ our\ template\ on\ (linux|macos|windows).+
+        Project\ myproj_new\ successfully\ created\s*$
+        """,
+        err,
+        flags=re.S | re.X,
+    )
 
     with local.cwd(dst):
         git("init")
@@ -199,16 +204,12 @@ def test_messages_with_inline_text(
     assert (dst / "version.txt").read_text() == "v2"
     _, err = capsys.readouterr()
     assert re.search(
-        (
-            r"^"
-            r"Updating on (linux|macos|windows)"
-            r".+"
-            r"Project {project_name} successfully updated"
-            r"\s*"
-            r"$"
-        ).format(project_name="myproj_new_update"),
+        r"""
+        ^Updating\ on\ (linux|macos|windows).+
+        Project\ myproj_new_update\ successfully\ updated\s*$
+        """,
         err,
-        flags=re.S,
+        flags=re.S | re.X,
     )
 
 
@@ -283,15 +284,6 @@ def test_messages_with_included_text(
     # clear capture output log
     capsys.readouterr()
 
-    copy_pattern = (
-        r"^"
-        r"Thank you for using our template on (linux|macos|windows)"
-        r".+"
-        r"Project {project_name} successfully created"
-        r"\s*"
-        r"$"
-    )
-
     # copy
     if interactive:
         tui = spawn(COPIER_PATH + ("copy", "-r", "v1", str(src), str(dst)), timeout=10)
@@ -303,7 +295,14 @@ def test_messages_with_included_text(
 
     assert (dst / "version.txt").read_text() == "v1"
     _, err = capsys.readouterr()
-    assert re.search(copy_pattern.format(project_name="myproj"), err, flags=re.S)
+    assert re.search(
+        r"""
+        ^Thank\ you\ for\ using\ our\ template\ on\ (linux|macos|windows).+
+        Project\ myproj\ successfully\ created\s*$
+        """,
+        err,
+        flags=re.S | re.X,
+    )
 
     # recopy
     if interactive:
@@ -316,7 +315,14 @@ def test_messages_with_included_text(
 
     assert (dst / "version.txt").read_text() == "v1"
     _, err = capsys.readouterr()
-    assert re.search(copy_pattern.format(project_name="myproj_new"), err, flags=re.S)
+    assert re.search(
+        r"""
+        ^Thank\ you\ for\ using\ our\ template\ on\ (linux|macos|windows).+
+        Project\ myproj_new\ successfully\ created\s*$
+        """,
+        err,
+        flags=re.S | re.X,
+    )
 
     with local.cwd(dst):
         git("init")
@@ -338,16 +344,12 @@ def test_messages_with_included_text(
     assert (dst / "version.txt").read_text() == "v2"
     _, err = capsys.readouterr()
     assert re.search(
-        (
-            r"^"
-            r"Updating on (linux|macos|windows)"
-            r".+"
-            r"Project {project_name} successfully updated"
-            r"\s*"
-            r"$"
-        ).format(project_name="myproj_new_update"),
+        r"""
+        ^Updating\ on\ (linux|macos|windows).+
+        Project\ myproj_new_update\ successfully\ updated\s*$
+        """,
         err,
-        flags=re.S,
+        flags=re.S | re.X,
     )
 
 
