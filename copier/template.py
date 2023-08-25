@@ -310,9 +310,19 @@ class Template:
         return self.config_data.get("message_after_copy", "")
 
     @cached_property
+    def message_after_update(self) -> str:
+        """Get message to print after update action specified in the template."""
+        return self.config_data.get("message_after_update", "")
+
+    @cached_property
     def message_before_copy(self) -> str:
         """Get message to print before copy action specified in the template."""
         return self.config_data.get("message_before_copy", "")
+
+    @cached_property
+    def message_before_update(self) -> str:
+        """Get message to print before update action specified in the template."""
+        return self.config_data.get("message_before_update", "")
 
     @cached_property
     def metadata(self) -> AnyByStrDict:

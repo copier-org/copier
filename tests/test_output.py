@@ -3,9 +3,11 @@ from pathlib import Path
 
 import pexpect
 import pytest
+from plumbum import local
+from plumbum.cmd import git
 
 from copier.errors import InvalidTypeError
-from copier.main import run_copy, run_recopy
+from copier.main import run_copy, run_recopy, run_update
 
 from .helpers import COPIER_PATH, Spawn, build_file_tree, expect_prompt, render
 
@@ -93,13 +95,14 @@ def test_answer_with_invalid_type(tmp_path_factory: pytest.TempPathFactory) -> N
 
 
 @pytest.mark.parametrize("interactive", [False, True])
-def test_message_copy_with_inline_text(
+def test_messages_with_inline_text(
     tmp_path_factory: pytest.TempPathFactory,
     capsys: pytest.CaptureFixture[str],
     spawn: Spawn,
     interactive: bool,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ["src", "dst"])
+
     build_file_tree(
         {
             (src / "copier.yaml"): (
@@ -109,6 +112,8 @@ def test_message_copy_with_inline_text(
 
                 _message_before_copy: Thank you for using our template on {{ _copier_conf.os }}
                 _message_after_copy: Project {{ project_name }} successfully created
+                _message_before_update: Updating on {{ _copier_conf.os }}
+                _message_after_update: Project {{ project_name }} successfully updated
                 """
             ),
             (src / "{{ _copier_conf.answers_file }}.jinja"): (
@@ -117,51 +122,106 @@ def test_message_copy_with_inline_text(
                 {{ _copier_answers|to_nice_yaml }}
                 """
             ),
+            (src / "version.txt"): "v1",
         }
     )
+    with local.cwd(src):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "v1")
 
-    pattern = (
-        r"^"
-        r"Thank you for using our template on (linux|macos|windows)"
-        r".+"
-        r"Project {project_name} successfully created"
-        r"\s*"
-        r"$"
+    build_file_tree(
+        {
+            (src / "version.txt"): "v2",
+        }
     )
+    with local.cwd(src):
+        git("add", ".")
+        git("commit", "-m2")
+        git("tag", "v2")
+
+    # clear capture output log
+    capsys.readouterr()
 
     # copy
     if interactive:
-        tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+        tui = spawn(COPIER_PATH + ("copy", "-r", "v1", str(src), str(dst)), timeout=10)
         expect_prompt(tui, "project_name", "str")
         tui.sendline("myproj")
         tui.expect_exact(pexpect.EOF)
     else:
-        run_copy(str(src), dst, data={"project_name": "myproj"})
+        run_copy(str(src), dst, data={"project_name": "myproj"}, vcs_ref="v1")
 
+    assert (dst / "version.txt").read_text() == "v1"
     _, err = capsys.readouterr()
-    assert re.search(pattern.format(project_name="myproj"), err, flags=re.S)
+    assert re.search(
+        r"""
+        ^Thank\ you\ for\ using\ our\ template\ on\ (linux|macos|windows).+
+        Project\ myproj\ successfully\ created\s*$
+        """,
+        err,
+        flags=re.S | re.X,
+    )
 
     # recopy
     if interactive:
-        tui = spawn(COPIER_PATH + ("recopy", str(dst)), timeout=10)
+        tui = spawn(COPIER_PATH + ("recopy", "-r", "v1", str(dst)), timeout=10)
         expect_prompt(tui, "project_name", "str")
         tui.sendline("_new")
         tui.expect_exact(pexpect.EOF)
     else:
-        run_recopy(dst, data={"project_name": "myproj_new"})
+        run_recopy(dst, data={"project_name": "myproj_new"}, vcs_ref="v1")
 
+    assert (dst / "version.txt").read_text() == "v1"
     _, err = capsys.readouterr()
-    assert re.search(pattern.format(project_name="myproj_new"), err, flags=re.S)
+    assert re.search(
+        r"""
+        ^Thank\ you\ for\ using\ our\ template\ on\ (linux|macos|windows).+
+        Project\ myproj_new\ successfully\ created\s*$
+        """,
+        err,
+        flags=re.S | re.X,
+    )
+
+    with local.cwd(dst):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+
+    # clear capture output log
+    capsys.readouterr()
+
+    # update
+    if interactive:
+        tui = spawn(COPIER_PATH + ("update", str(dst)), timeout=10)
+        expect_prompt(tui, "project_name", "str")
+        tui.sendline("_update")
+        tui.expect_exact(pexpect.EOF)
+    else:
+        run_update(dst, data={"project_name": "myproj_new_update"}, overwrite=True)
+
+    assert (dst / "version.txt").read_text() == "v2"
+    _, err = capsys.readouterr()
+    assert re.search(
+        r"""
+        ^Updating\ on\ (linux|macos|windows).+
+        Project\ myproj_new_update\ successfully\ updated\s*$
+        """,
+        err,
+        flags=re.S | re.X,
+    )
 
 
 @pytest.mark.parametrize("interactive", [False, True])
-def test_message_copy_with_included_text(
+def test_messages_with_included_text(
     tmp_path_factory: pytest.TempPathFactory,
     capsys: pytest.CaptureFixture[str],
     spawn: Spawn,
     interactive: bool,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ["src", "dst"])
+
     build_file_tree(
         {
             (src / "copier.yaml"): (
@@ -169,9 +229,11 @@ def test_message_copy_with_included_text(
                 project_name:
                     type: str
 
-                _exclude: ["*.md"]
+                _exclude: [".git", "*.md"]
                 _message_before_copy: "{% include 'message_before_copy.md.jinja' %}"
                 _message_after_copy: "{% include 'message_after_copy.md.jinja' %}"
+                _message_before_update: "{% include 'message_before_update.md.jinja' %}"
+                _message_after_update: "{% include 'message_after_update.md.jinja' %}"
                 """
             ),
             (src / "message_before_copy.md.jinja"): (
@@ -184,57 +246,122 @@ def test_message_copy_with_included_text(
                 Project {{ project_name }} successfully created
                 """
             ),
+            (src / "message_before_update.md.jinja"): (
+                """\
+                Updating on {{ _copier_conf.os }}
+                """
+            ),
+            (src / "message_after_update.md.jinja"): (
+                """\
+                Project {{ project_name }} successfully updated
+                """
+            ),
             (src / "{{ _copier_conf.answers_file }}.jinja"): (
                 """\
                 # Changes here will be overwritten by Copier
                 {{ _copier_answers|to_nice_yaml }}
                 """
             ),
+            (src / "version.txt"): "v1",
         }
     )
+    with local.cwd(src):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "v1")
 
-    pattern = (
-        r"^"
-        r"Thank you for using our template on (linux|macos|windows)"
-        r".+"
-        r"Project {project_name} successfully created"
-        r"\s*"
-        r"$"
+    build_file_tree(
+        {
+            (src / "version.txt"): "v2",
+        }
     )
+    with local.cwd(src):
+        git("add", ".")
+        git("commit", "-m2")
+        git("tag", "v2")
+
+    # clear capture output log
+    capsys.readouterr()
 
     # copy
     if interactive:
-        tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+        tui = spawn(COPIER_PATH + ("copy", "-r", "v1", str(src), str(dst)), timeout=10)
         expect_prompt(tui, "project_name", "str")
         tui.sendline("myproj")
         tui.expect_exact(pexpect.EOF)
     else:
-        run_copy(str(src), dst, data={"project_name": "myproj"})
+        run_copy(str(src), dst, data={"project_name": "myproj"}, vcs_ref="v1")
 
+    assert (dst / "version.txt").read_text() == "v1"
     _, err = capsys.readouterr()
-    assert re.search(pattern.format(project_name="myproj"), err, flags=re.S)
+    assert re.search(
+        r"""
+        ^Thank\ you\ for\ using\ our\ template\ on\ (linux|macos|windows).+
+        Project\ myproj\ successfully\ created\s*$
+        """,
+        err,
+        flags=re.S | re.X,
+    )
 
     # recopy
     if interactive:
-        tui = spawn(COPIER_PATH + ("recopy", str(dst)), timeout=10)
+        tui = spawn(COPIER_PATH + ("recopy", "-r", "v1", str(dst)), timeout=10)
         expect_prompt(tui, "project_name", "str")
         tui.sendline("_new")
         tui.expect_exact(pexpect.EOF)
     else:
-        run_recopy(dst, data={"project_name": "myproj_new"})
+        run_recopy(dst, data={"project_name": "myproj_new"}, vcs_ref="v1")
 
+    assert (dst / "version.txt").read_text() == "v1"
     _, err = capsys.readouterr()
-    assert re.search(pattern.format(project_name="myproj_new"), err, flags=re.S)
+    assert re.search(
+        r"""
+        ^Thank\ you\ for\ using\ our\ template\ on\ (linux|macos|windows).+
+        Project\ myproj_new\ successfully\ created\s*$
+        """,
+        err,
+        flags=re.S | re.X,
+    )
+
+    with local.cwd(dst):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+
+    # clear capture output log
+    capsys.readouterr()
+
+    # update
+    if interactive:
+        tui = spawn(COPIER_PATH + ("update", str(dst)), timeout=10)
+        expect_prompt(tui, "project_name", "str")
+        tui.sendline("_update")
+        tui.expect_exact(pexpect.EOF)
+    else:
+        run_update(dst, data={"project_name": "myproj_new_update"}, overwrite=True)
+
+    assert (dst / "version.txt").read_text() == "v2"
+    _, err = capsys.readouterr()
+    assert re.search(
+        r"""
+        ^Updating\ on\ (linux|macos|windows).+
+        Project\ myproj_new_update\ successfully\ updated\s*$
+        """,
+        err,
+        flags=re.S | re.X,
+    )
 
 
 @pytest.mark.parametrize("interactive", [False, True])
-def test_message_copy_quiet(
+def test_messages_quiet(
     tmp_path_factory: pytest.TempPathFactory,
     capsys: pytest.CaptureFixture[str],
     spawn: Spawn,
     interactive: bool,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ["src", "dst"])
+
     build_file_tree(
         {
             (src / "copier.yaml"): (
@@ -244,6 +371,8 @@ def test_message_copy_quiet(
 
                 _message_before_copy: Thank you for using our template on {{ _copier_conf.os }}
                 _message_after_copy: Project {{ project_name }} successfully created
+                _message_before_update: Updating on {{ _copier_conf.os }}
+                _message_after_update: Project {{ project_name }} successfully updated
                 """
             ),
             (src / "{{ _copier_conf.answers_file }}.jinja"): (
@@ -252,31 +381,83 @@ def test_message_copy_quiet(
                 {{ _copier_answers|to_nice_yaml }}
                 """
             ),
+            (src / "version.txt"): "v1",
         }
     )
+    with local.cwd(src):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "v1")
+
+    build_file_tree(
+        {
+            (src / "version.txt"): "v2",
+        }
+    )
+    with local.cwd(src):
+        git("add", ".")
+        git("commit", "-m2")
+        git("tag", "v2")
+
+    # clear capture output log
+    capsys.readouterr()
 
     # copy
     if interactive:
-        tui = spawn(COPIER_PATH + ("copy", "--quiet", str(src), str(dst)), timeout=10)
+        tui = spawn(
+            COPIER_PATH + ("copy", "--quiet", "-r", "v1", str(src), str(dst)),
+            timeout=10,
+        )
         expect_prompt(tui, "project_name", "str")
         tui.sendline("myproj")
         tui.expect_exact(pexpect.EOF)
     else:
-        run_copy(str(src), dst, data={"project_name": "myproj"}, quiet=True)
+        run_copy(
+            str(src), dst, data={"project_name": "myproj"}, vcs_ref="v1", quiet=True
+        )
 
+    assert (dst / "version.txt").read_text() == "v1"
     _, err = capsys.readouterr()
     assert "Thank you for using our template" not in err
     assert "Project myproj successfully created" not in err
 
     # recopy
     if interactive:
-        tui = spawn(COPIER_PATH + ("recopy", "--quiet", str(dst)), timeout=10)
+        tui = spawn(
+            COPIER_PATH + ("recopy", "--quiet", "-r", "v1", str(dst)), timeout=10
+        )
         expect_prompt(tui, "project_name", "str")
         tui.sendline("_new")
         tui.expect_exact(pexpect.EOF)
     else:
-        run_recopy(dst, data={"project_name": "myproj_new"}, quiet=True)
+        run_recopy(dst, data={"project_name": "myproj_new"}, vcs_ref="v1", quiet=True)
 
+    assert (dst / "version.txt").read_text() == "v1"
     _, err = capsys.readouterr()
     assert "Thank you for using our template" not in err
     assert "Project myproj_new successfully created" not in err
+
+    with local.cwd(dst):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+
+    # clear capture output log
+    capsys.readouterr()
+
+    # update
+    if interactive:
+        tui = spawn(COPIER_PATH + ("update", "--quiet", str(dst)), timeout=10)
+        expect_prompt(tui, "project_name", "str")
+        tui.sendline("_update")
+        tui.expect_exact(pexpect.EOF)
+    else:
+        run_update(
+            dst, data={"project_name": "myproj_new_update"}, overwrite=True, quiet=True
+        )
+
+    assert (dst / "version.txt").read_text() == "v2"
+    _, err = capsys.readouterr()
+    assert "Updating on" not in err
+    assert "Project myproj_new_update successfully updated" not in err
