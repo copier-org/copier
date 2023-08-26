@@ -17,11 +17,8 @@ from .types import OptBool, OptStr, StrOrPath
 
 def get_git():
     """Gets `git` command, or fails if it's not available"""
-    try:
-        from plumbum.cmd import git
-        return git
-    except ImportError as exc:
-        raise OSError("git is not available") from exc
+    return local["git"]
+
 
 try:
     GIT_VERSION = Version(re.findall(r"\d+\.\d+\.\d+", get_git()("version"))[0])
