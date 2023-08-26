@@ -20,16 +20,10 @@ def get_git():
     return local["git"]
 
 
-try:
-    GIT_VERSION = Version(re.findall(r"\d+\.\d+\.\d+", get_git()("version"))[0])
-except OSError:
-    import warnings
+def get_git_version():
+    git = get_git()
 
-    warnings.warn(
-        "git command not found, some functionality might not work", UserWarning
-    )
-
-    GIT_VERSION = None  # type: ignore
+    return Version(re.findall(r"\d+\.\d+\.\d+", git("version"))[0])
 
 
 GIT_PREFIX = ("git@", "git://", "git+", "https://github.com/", "https://gitlab.com/")
@@ -158,10 +152,11 @@ def clone(url: str, ref: OptStr = None) -> str:
             Reference to checkout. For Git repos, defaults to `HEAD`.
     """
     git = get_git()
+    git_version = get_git_version()
     location = mkdtemp(prefix=f"{__name__}.clone.")
     _clone = git["clone", "--no-checkout", url, location]
     # Faster clones if possible
-    if GIT_VERSION >= Version("2.27"):
+    if git_version >= Version("2.27"):
         url_match = re.match("(file://)?(.*)", url)
         if url_match is not None:
             file_url = url_match.groups()[-1]
