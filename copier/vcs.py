@@ -57,7 +57,10 @@ def is_in_git_repo(path: StrOrPath) -> bool:
 def is_git_shallow_repo(path: StrOrPath) -> bool:
     """Indicate if a given path is a git shallow repo directory."""
     try:
-        return get_git()("-C", path, "rev-parse", "--is-shallow-repository").strip() == "true"
+        return (
+            get_git()("-C", path, "rev-parse", "--is-shallow-repository").strip()
+            == "true"
+        )
     except (OSError, ProcessExecutionError):
         return False
 
