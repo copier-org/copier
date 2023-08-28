@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v8.2.0 (2023-08-28)
+
+### Feat
+
+-   release on FlakeHub.com too
+-   add support for pre-update and post-update messages (#1288)
+-   add support for pre-copy and post-copy messages
+
+### Fix
+
+-   do not immediately fail if git is not available
+-   provide more clarification in unsafe error message (#1280)
+-   clean up tmp dir
+-   don't lie about updated files
+-   require default value for secret question
+-   fix answer validation against conditional choices with duplicate values
+
+### Refactor
+
+-   drop support for Python 3.7 (#1252)
+
 ## v8.1.0 (2023-07-10)
 
 ### Feat
