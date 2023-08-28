@@ -25,7 +25,14 @@ A library and CLI app for rendering project templates.
 1. Install Git 2.27 or newer.
 1. To use as a CLI app: `pipx install copier`
 1. To use as a library: `pip install copier` or `conda install -c conda-forge copier`
-1. To use with 100% reproducibility: `nix profile install github:copier-org/copier`
+
+### Nix flake
+
+To install latest Copier release with 100% reproducibility:
+
+```shell
+nix profile install 'https://flakehub.com/f/copier-org/copier/*.tar.gz'
+```
 
 ## Quick start
 
