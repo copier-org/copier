@@ -14,7 +14,6 @@ import packaging.version
 import yaml
 from funcy import lflatten
 from packaging.version import Version, parse
-from plumbum.cmd import git
 from plumbum.machines import local
 from pydantic.dataclasses import dataclass
 from yamlinclude import YamlIncludeConstructor
@@ -28,7 +27,7 @@ from .errors import (
 )
 from .tools import copier_version, handle_remove_readonly
 from .types import AnyByStrDict, Env, OptStr, StrSeq, Union, VCSTypes
-from .vcs import checkout_latest_tag, clone, get_repo
+from .vcs import checkout_latest_tag, clone, get_git, get_repo
 
 # Default list of files in the template to exclude from the rendered project
 DEFAULT_EXCLUDE: Tuple[str, ...] = (
@@ -249,13 +248,13 @@ class Template:
         """If the template is VCS-tracked, get its commit description."""
         if self.vcs == "git":
             with local.cwd(self.local_abspath):
-                return git("describe", "--tags", "--always").strip()
+                return get_git()("describe", "--tags", "--always").strip()
 
     @cached_property
     def commit_hash(self) -> OptStr:
         """If the template is VCS-tracked, get its commit full hash."""
         if self.vcs == "git":
-            return git("-C", self.local_abspath, "rev-parse", "HEAD").strip()
+            return get_git()("-C", self.local_abspath, "rev-parse", "HEAD").strip()
 
     @cached_property
     def config_data(self) -> AnyByStrDict:

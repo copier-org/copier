@@ -11,7 +11,7 @@ from plumbum.cmd import git
 
 from copier import Worker, run_copy, run_update
 from copier.errors import ShallowCloneWarning
-from copier.vcs import GIT_VERSION, checkout_latest_tag, clone, get_repo
+from copier.vcs import checkout_latest_tag, clone, get_git_version, get_repo
 
 
 def test_get_repo() -> None:
@@ -93,7 +93,7 @@ def test_shallow_clone(tmp_path: Path, recwarn: pytest.WarningsRecorder) -> None
     git("clone", "--depth=2", "https://github.com/copier-org/autopretty.git", src_path)
     assert Path(src_path, "README.md").exists()
 
-    if GIT_VERSION >= Version("2.27"):
+    if get_git_version() >= Version("2.27"):
         with pytest.warns(ShallowCloneWarning):
             local_tmp = clone(str(src_path))
     else:
