@@ -848,7 +848,7 @@ The CLI option can be passed several times to add several patterns.
 ### `force`
 
 -   Format: `bool`
--   CLI flags: `-f`, `--force`
+-   CLI flags: `-f`, `--force` (N/A in `copier update`)
 -   Default value: `False`
 
 Overwrite files that already exist, without asking.

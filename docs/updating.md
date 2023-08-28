@@ -87,14 +87,14 @@ repos:
 If you want to just reuse all previous answers:
 
 ```shell
-copier update --force
+copier update --defaults
 ```
 
 If you want to change just one question, and leave all others untouched, and don't want
 to go through the whole questionary again:
 
 ```shell
-copier update --force --data updated_question="my new answer"
+copier update --defaults --data updated_question="my new answer"
 ```
 
 ## How the update works
