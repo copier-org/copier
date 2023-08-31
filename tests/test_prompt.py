@@ -199,7 +199,14 @@ def test_update_skip_answered(
         git("add", ".")
         assert "_commit: v1" in Path(".copier-answers.yml").read_text()
         git("commit", "-m", "v1")
-        tui = spawn(COPIER_PATH + ("update", "--skip-answered",), timeout=30)
+        tui = spawn(
+            COPIER_PATH
+            + (
+                "update",
+                "--skip-answered",
+            ),
+            timeout=30,
+        )
         # Check what was captured
         expect_prompt(tui, "your_enemy", "str", help="Secret enemy name")
         tui.expect_exact("******")
@@ -263,7 +270,14 @@ def test_update_with_new_field_in_new_version_skip_answered(
         git("add", ".")
         assert "_commit: v1" in Path(".copier-answers.yml").read_text()
         git("commit", "-m", "v1")
-        tui = spawn(COPIER_PATH + ("update", "--skip-answered",), timeout=30)
+        tui = spawn(
+            COPIER_PATH
+            + (
+                "update",
+                "--skip-answered",
+            ),
+            timeout=30,
+        )
         # Check what was captured
         expect_prompt(tui, "your_enemy", "str", help="Secret enemy name")
         tui.expect_exact("******")
