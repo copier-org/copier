@@ -45,6 +45,35 @@ MARIO_TREE: Mapping[StrOrPath, Union[str, bytes]] = {
     "[[ _copier_conf.answers_file ]].tmpl": "[[_copier_answers|to_nice_yaml]]",
 }
 
+MARIO_TREE_WITH_NEW_FIELD: Mapping[StrOrPath, Union[str, bytes]] = {
+    "copier.yml": (
+        f"""\
+        _templates_suffix: {SUFFIX_TMPL}
+        _envops: {BRACKET_ENVOPS_JSON}
+        in_love:
+            type: bool
+            default: yes
+        your_name:
+            type: str
+            default: Mario
+            help: If you have a name, tell me now.
+        your_enemy:
+            type: str
+            default: Bowser
+            secret: yes
+            help: Secret enemy name
+        your_sister:
+            type: str
+            default: Luigi
+            help: Your sister's name
+        what_enemy_does:
+            type: str
+            default: "[[ your_enemy ]] hates [[ your_name ]]"
+        """
+    ),
+    "[[ _copier_conf.answers_file ]].tmpl": "[[_copier_answers|to_nice_yaml]]",
+}
+
 
 @pytest.mark.parametrize(
     "name, args",
@@ -112,6 +141,135 @@ def test_copy_default_advertised(
         tui.sendline()
         expect_prompt(tui, "what_enemy_does", "str")
         tui.expect_exact(f"Bowser hates {name}")
+        tui.sendline()
+        tui.expect_exact(pexpect.EOF)
+        assert "_commit: v2" in Path(".copier-answers.yml").read_text()
+
+
+@pytest.mark.parametrize(
+    "name, args",
+    [
+        ("Mario", ()),  # Default name in the template
+        ("Luigi", ("--data=your_name=Luigi",)),
+        ("None", ("--data=your_name=None",)),
+    ],
+)
+def test_update_skip_answered(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    name: str,
+    args: Tuple[str, ...],
+) -> None:
+    """Test that the questions for the user are OK"""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(MARIO_TREE)
+        git("init")
+        git("add", ".")
+        git("commit", "-m", "v1")
+        git("tag", "v1")
+        git("commit", "--allow-empty", "-m", "v2")
+        git("tag", "v2")
+    with local.cwd(dst):
+        # Copy the v1 template
+        tui = spawn(
+            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1") + args, timeout=10
+        )
+        # Check what was captured
+        expect_prompt(tui, "in_love", "bool")
+        tui.expect_exact("(Y/n)")
+        tui.sendline()
+        tui.expect_exact("Yes")
+        if not args:
+            expect_prompt(
+                tui, "your_name", "str", help="If you have a name, tell me now."
+            )
+            tui.expect_exact(name)
+            tui.sendline()
+        expect_prompt(tui, "your_enemy", "str", help="Secret enemy name")
+        tui.expect_exact("******")
+        tui.sendline()
+        expect_prompt(tui, "what_enemy_does", "str")
+        tui.expect_exact(f"Bowser hates {name}")
+        tui.sendline()
+        tui.expect_exact(pexpect.EOF)
+        assert "_commit: v1" in Path(".copier-answers.yml").read_text()
+        # Update subproject
+        git("init")
+        git("add", ".")
+        assert "_commit: v1" in Path(".copier-answers.yml").read_text()
+        git("commit", "-m", "v1")
+        tui = spawn(COPIER_PATH + ("update", "--skip-answered",), timeout=30)
+        # Check what was captured
+        expect_prompt(tui, "your_enemy", "str", help="Secret enemy name")
+        tui.expect_exact("******")
+        tui.sendline()
+        tui.expect_exact(pexpect.EOF)
+        assert "_commit: v2" in Path(".copier-answers.yml").read_text()
+
+
+@pytest.mark.parametrize(
+    "name, args",
+    [
+        ("Mario", ()),  # Default name in the template
+        ("Luigi", ("--data=your_name=Luigi",)),
+        ("None", ("--data=your_name=None",)),
+    ],
+)
+def test_update_with_new_field_in_new_version_skip_answered(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    name: str,
+    args: Tuple[str, ...],
+) -> None:
+    """Test that the questions for the user are OK"""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(MARIO_TREE)
+        git("init")
+        git("add", ".")
+        git("commit", "-m", "v1")
+        git("tag", "v1")
+        build_file_tree(MARIO_TREE_WITH_NEW_FIELD)
+        git("add", ".")
+        git("commit", "-m", "v2")
+        git("tag", "v2")
+    with local.cwd(dst):
+        # Copy the v1 template
+        tui = spawn(
+            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1") + args, timeout=10
+        )
+        # Check what was captured
+        expect_prompt(tui, "in_love", "bool")
+        tui.expect_exact("(Y/n)")
+        tui.sendline()
+        tui.expect_exact("Yes")
+        if not args:
+            expect_prompt(
+                tui, "your_name", "str", help="If you have a name, tell me now."
+            )
+            tui.expect_exact(name)
+            tui.sendline()
+        expect_prompt(tui, "your_enemy", "str", help="Secret enemy name")
+        tui.expect_exact("******")
+        tui.sendline()
+        expect_prompt(tui, "what_enemy_does", "str")
+        tui.expect_exact(f"Bowser hates {name}")
+        tui.sendline()
+        tui.expect_exact(pexpect.EOF)
+        assert "_commit: v1" in Path(".copier-answers.yml").read_text()
+        # Update subproject
+        git("init")
+        git("add", ".")
+        assert "_commit: v1" in Path(".copier-answers.yml").read_text()
+        git("commit", "-m", "v1")
+        tui = spawn(COPIER_PATH + ("update", "--skip-answered",), timeout=30)
+        # Check what was captured
+        expect_prompt(tui, "your_enemy", "str", help="Secret enemy name")
+        tui.expect_exact("******")
+        tui.sendline()
+        expect_prompt(tui, "your_sister", "str", help="Your sister's name")
+        tui.expect_exact("Luigi")
         tui.sendline()
         tui.expect_exact(pexpect.EOF)
         assert "_commit: v2" in Path(".copier-answers.yml").read_text()
