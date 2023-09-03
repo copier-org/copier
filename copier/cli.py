@@ -349,6 +349,11 @@ class CopierUpdateSubApp(_Subcommand):
         ["-l", "-f", "--defaults"],
         help="Use default answers to questions, which might be null if not specified.",
     )
+    skip_answered = cli.Flag(
+        ["--skip-answered"],
+        default=False,
+        help="Skip questions that have already been answered",
+    )
 
     @handle_exceptions
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
@@ -367,6 +372,7 @@ class CopierUpdateSubApp(_Subcommand):
             conflict=self.conflict,
             context_lines=self.context_lines,
             defaults=self.defaults,
+            skip_answered=self.skip_answered,
             overwrite=True,
         ) as worker:
             worker.run_update()

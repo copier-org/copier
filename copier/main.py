@@ -186,6 +186,7 @@ class Worker:
     conflict: Literal["inline", "rej"] = "inline"
     context_lines: PositiveInt = 3
     unsafe: bool = False
+    skip_answered: bool = False
 
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
     _cleanup_hooks: List[Callable] = field(default_factory=list, init=False)
@@ -420,6 +421,9 @@ class Worker:
                 var_name=var_name,
                 **details,
             )
+            if self.skip_answered and var_name in result.last:
+                # Skip a question when the user already answered it.
+                continue
             # Skip a question when the skip condition is met.
             if not question.get_when():
                 # Omit its answer from the answers file.
@@ -861,11 +865,11 @@ class Worker:
             self._execute_tasks(
                 self.template.migration_tasks("before", self.subproject.template)
             )
-            # Clear last answers cache to load possible answers migration
-            with suppress(AttributeError):
+            # Clear last answers cache to load possible answers migration, if skip_answered flag is not set
+            if self.skip_answered is False:
                 self.answers = AnswersMap()
-            with suppress(AttributeError):
-                del self.subproject.last_answers
+                with suppress(AttributeError):
+                    del self.subproject.last_answers
             # Do a normal update in final destination
             with replace(
                 self,
