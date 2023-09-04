@@ -18,6 +18,7 @@ from .helpers import (
     Spawn,
     build_file_tree,
     expect_prompt,
+    git_save,
 )
 
 MARIO_TREE: Mapping[StrOrPath, Union[str, bytes]] = {
@@ -93,10 +94,7 @@ def test_copy_default_advertised(
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     with local.cwd(src):
         build_file_tree(MARIO_TREE)
-        git("init")
-        git("add", ".")
-        git("commit", "-m", "v1")
-        git("tag", "v1")
+        git_save(tag="v1")
         git("commit", "--allow-empty", "-m", "v2")
         git("tag", "v2")
     with local.cwd(dst):
@@ -124,10 +122,8 @@ def test_copy_default_advertised(
         tui.expect_exact(pexpect.EOF)
         assert "_commit: v1" in Path(".copier-answers.yml").read_text()
         # Update subproject
-        git("init")
-        git("add", ".")
+        git_save()
         assert "_commit: v1" in Path(".copier-answers.yml").read_text()
-        git("commit", "-m", "v1")
         tui = spawn(COPIER_PATH + ("update",), timeout=30)
         # Check what was captured
         expect_prompt(tui, "in_love", "bool")
@@ -154,20 +150,19 @@ def test_copy_default_advertised(
         ("None", ("--data=your_name=None",)),
     ],
 )
+@pytest.mark.parametrize("update_action", ("update", "recopy"))
 def test_update_skip_answered(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
     name: str,
+    update_action: str,
     args: Tuple[str, ...],
 ) -> None:
     """Test that the questions for the user are OK"""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     with local.cwd(src):
         build_file_tree(MARIO_TREE)
-        git("init")
-        git("add", ".")
-        git("commit", "-m", "v1")
-        git("tag", "v1")
+        git_save(tag="v1")
         git("commit", "--allow-empty", "-m", "v2")
         git("tag", "v2")
     with local.cwd(dst):
@@ -195,14 +190,11 @@ def test_update_skip_answered(
         tui.expect_exact(pexpect.EOF)
         assert "_commit: v1" in Path(".copier-answers.yml").read_text()
         # Update subproject
-        git("init")
-        git("add", ".")
-        assert "_commit: v1" in Path(".copier-answers.yml").read_text()
-        git("commit", "-m", "v1")
+        git_save()
         tui = spawn(
             COPIER_PATH
             + (
-                "update",
+                update_action,
                 "--skip-answered",
             ),
             timeout=30,
@@ -233,14 +225,9 @@ def test_update_with_new_field_in_new_version_skip_answered(
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     with local.cwd(src):
         build_file_tree(MARIO_TREE)
-        git("init")
-        git("add", ".")
-        git("commit", "-m", "v1")
-        git("tag", "v1")
+        git_save(tag="v1")
         build_file_tree(MARIO_TREE_WITH_NEW_FIELD)
-        git("add", ".")
-        git("commit", "-m", "v2")
-        git("tag", "v2")
+        git_save(tag="v2")
     with local.cwd(dst):
         # Copy the v1 template
         tui = spawn(
@@ -266,15 +253,12 @@ def test_update_with_new_field_in_new_version_skip_answered(
         tui.expect_exact(pexpect.EOF)
         assert "_commit: v1" in Path(".copier-answers.yml").read_text()
         # Update subproject
-        git("init")
-        git("add", ".")
-        assert "_commit: v1" in Path(".copier-answers.yml").read_text()
-        git("commit", "-m", "v1")
+        git_save()
         tui = spawn(
             COPIER_PATH
             + (
                 "update",
-                "--skip-answered",
+                "-A",
             ),
             timeout=30,
         )
