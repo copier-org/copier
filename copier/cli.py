@@ -283,6 +283,11 @@ class CopierRecopySubApp(_Subcommand):
         ["-w", "--overwrite"],
         help="Overwrite files that already exist, without asking.",
     )
+    skip_answered = cli.Flag(
+        ["-A", "--skip-answered"],
+        default=False,
+        help="Skip questions that have already been answered",
+    )
 
     @handle_exceptions
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
@@ -300,6 +305,7 @@ class CopierRecopySubApp(_Subcommand):
             dst_path=destination_path,
             defaults=self.force or self.defaults,
             overwrite=self.force or self.overwrite,
+            skip_answered=self.skip_answered,
         ) as worker:
             worker.run_recopy()
         return 0
@@ -350,7 +356,7 @@ class CopierUpdateSubApp(_Subcommand):
         help="Use default answers to questions, which might be null if not specified.",
     )
     skip_answered = cli.Flag(
-        ["--skip-answered"],
+        ["-A", "--skip-answered"],
         default=False,
         help="Skip questions that have already been answered",
     )
