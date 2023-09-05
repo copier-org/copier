@@ -44,7 +44,7 @@ jobs:
       - run: git config --global user.name copier-ci
       - run: git config --global user.email copier@copier
       - run: git config --global core.autocrlf input
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Needs all tags to compute dynamic version
       - name: Set up Python ${{ matrix.python-version }}
@@ -93,7 +93,7 @@ jobs:
           - ubuntu-latest
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       # Install Nix and set up Cachix
       - uses: cachix/install-nix-action@v23
@@ -135,7 +135,7 @@ jobs:
       - flake-check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Needs all tags to compute dynamic version
       - name: Set up Python 3.10
