@@ -12,12 +12,15 @@ from packaging.version import InvalidVersion, Version
 from plumbum import TF, ProcessExecutionError, colors, local
 
 from .errors import DirtyLocalWarning, ShallowCloneWarning
-from .types import OptBool, OptStr, StrOrPath
+from .types import OptBool, OptStr, OptStrOrPath, StrOrPath
 
 
-def get_git():
+def get_git(context_dir: OptStrOrPath = None):
     """Gets `git` command, or fails if it's not available"""
-    return local["git"]
+    command = local["git"]
+    if context_dir:
+        command = command["-C", context_dir]
+    return command
 
 
 def get_git_version():
