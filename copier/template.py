@@ -196,7 +196,7 @@ class Template:
     use_prereleases: bool = False
 
     def _cleanup(self) -> None:
-        temp_clone = self._temp_clone
+        temp_clone = self._temp_clone()
         if temp_clone:
             rmtree(
                 temp_clone,
@@ -204,8 +204,14 @@ class Template:
                 onerror=handle_remove_readonly,
             )
 
-    @property
     def _temp_clone(self) -> Optional[Path]:
+        """Get the path to the temporary clone of the template.
+
+        If the template hasn't yet been cloned, or if it was a local template,
+        then there's no temporary clone and this will return `None`.
+        """
+        if "local_abspath" not in self.__dict__:
+            return None
         clone_path = self.local_abspath
         original_path = Path(self.url).expanduser()
         with suppress(OSError):  # triggered for URLs on Windows

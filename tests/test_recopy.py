@@ -5,6 +5,7 @@ from plumbum import local
 
 from copier import run_copy, run_recopy
 from copier.cli import CopierApp
+from copier.vcs import get_git
 
 from .helpers import build_file_tree, git_save
 
@@ -53,3 +54,21 @@ def test_recopy_discards_evolution_cli(tpl: str, tmp_path: Path) -> None:
         _, retcode = CopierApp.run(["copier", "recopy", "-f"], exit=False)
     assert retcode == 0
     assert name_path.read_text() == "This is your name: Peach."
+
+
+def test_recopy_works_without_replay(tpl: str, tmp_path: Path) -> None:
+    # First copy
+    run_copy(tpl, tmp_path, defaults=True, overwrite=True)
+    git_save(tmp_path)
+    assert (tmp_path / "name.txt").read_text() == "This is your name: Mario."
+    # Modify template altering git history
+    Path(tpl, "name.txt.jinja").write_text("This is my name: {{ your_name }}.")
+    tpl_git = get_git(tpl)
+    tpl_git("commit", "-a", "--amend", "--no-edit")
+    # Make sure old dangling commit is lost
+    # DOCS https://stackoverflow.com/a/63209363/1468388
+    tpl_git("reflog", "expire", "--expire=now", "--all")
+    tpl_git("gc", "--prune=now", "--aggressive")
+    # Recopy
+    run_recopy(tmp_path, skip_answered=True, overwrite=True)
+    assert (tmp_path / "name.txt").read_text() == "This is my name: Mario."
