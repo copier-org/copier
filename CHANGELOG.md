@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v8.3.0 (2023-09-05)
+
+### Feat
+
+-   add `-A` as an alias for `--skip-answered`, and support it in `recopy` too
+-   add `--skip-answered` flag to avoid repeating recorded answers
+
+### Fix
+
+-   **recopy**: never clone old template (even less if it's just for cleanup)
+
 ## v8.2.0 (2023-08-28)
 
 ### Feat
