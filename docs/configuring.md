@@ -1404,6 +1404,18 @@ templates suffix is _not_ empty, Copier will abort and print an error message.
     _templates_suffix: ""
     ```
 
+If there is a file with the template extension next to another one without it, the one
+without extension will be ignored.
+
+!!! example
+
+    ```tree result="shell"
+    my_copier_template
+        README.md           # Your template's README, ignored at rendering
+        README.md.jinja     # README that will be rendered
+        CONTRIBUTING.md     # Used both for the template and the subprojects
+    ```
+
 !!! warning
 
     Copier 5 and older had a different default value: `.tmpl`. If you wish to keep it,
