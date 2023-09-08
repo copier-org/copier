@@ -1404,8 +1404,8 @@ templates suffix is _not_ empty, Copier will abort and print an error message.
     _templates_suffix: ""
     ```
 
-If there is a file with the template extension next to another one without it, the one
-without extension will be ignored.
+If there is a file with the template suffix next to another one without it, the one
+without suffix will be ignored.
 
 !!! example
 
