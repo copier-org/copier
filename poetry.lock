@@ -1277,13 +1277,13 @@ toml = ["toml"]
 
 [[package]]
 name = "questionary"
-version = "2.0.0"
+version = "2.0.1"
 description = "Python library to build pretty command line user prompts ⭐️"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "questionary-2.0.0-py3-none-any.whl", hash = "sha256:564ae8917f141c9ef0ed131bb2671397fcaba7a901988b39cdbb569b8f29ce94"},
-    {file = "questionary-2.0.0.tar.gz", hash = "sha256:8681b9d9ec751347ab11af2204d063b856d06845b07b442951e081780e8cb8a6"},
+    {file = "questionary-2.0.1-py3-none-any.whl", hash = "sha256:8ab9a01d0b91b68444dff7f6652c1e754105533f083cbe27597c8110ecc230a2"},
+    {file = "questionary-2.0.1.tar.gz", hash = "sha256:bcce898bf3dbb446ff62830c86c5c6fb9a22a54146f0f5597d3da43b10d8fc8b"},
 ]
 
 [package.dependencies]
