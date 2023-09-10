@@ -54,14 +54,14 @@ to use.
 For example to use the latest master branch from a public repository:
 
 ```shell
-copier copy --vcs-ref master https://github.com/foo/copier-template.git ./path/to/destination
+copier --vcs-ref master copy https://github.com/foo/copier-template.git ./path/to/destination
 ```
 
 Or to work from the current checked out revision of a local template (including dirty
 changes):
 
 ```shell
-copier copy --vcs-ref HEAD path/to/project/template path/to/destination
+copier --vcs-ref HEAD copy path/to/project/template path/to/destination
 ```
 
 ## Regenerating a project
