@@ -47,6 +47,7 @@ import sys
 from io import StringIO
 from pathlib import Path
 from textwrap import dedent
+from typing import Set
 from unittest.mock import patch
 
 import yaml
@@ -104,6 +105,10 @@ class CopierApp(cli.Application):
 class _Subcommand(cli.Application):
     """Base class for Copier subcommands."""
 
+    def __init__(self, executable):
+        self.cli_data_args: Set[str] = set()
+        super().__init__(executable)
+
     data: AnyByStrDict = {}
 
     answers_file = cli.SwitchAttr(
@@ -158,7 +163,6 @@ class _Subcommand(cli.Application):
         "VARIABLE=VALUE",
         list=True,
         help="Make VARIABLE available as VALUE when rendering the template",
-        excludes=["--data-file"],
     )
     def data_switch(self, values: StrSeq) -> None:
         """Update [data][] with provided values.
@@ -170,12 +174,12 @@ class _Subcommand(cli.Application):
         for arg in values:
             key, value = arg.split("=", 1)
             self.data[key] = value
+            self.cli_data_args.add(key)
 
     @cli.switch(
         ["--data-file"],
         cli.ExistingFile,
         help="Load data from a YAML file",
-        excludes=["--data"],
     )
     def data_file_switch(self, path: cli.ExistingFile) -> None:
         """Update [data][] with provided values.
@@ -184,7 +188,12 @@ class _Subcommand(cli.Application):
             path: The path to the YAML file to load.
         """
         with open(path) as f:
-            self.data.update(yaml.safe_load(f))
+            file_updates: AnyByStrDict = yaml.safe_load(f)
+
+        updates_without_cli_overrides = {
+            k: v for k, v in file_updates.items() if k not in self.cli_data_args
+        }
+        self.data.update(updates_without_cli_overrides)
 
     def _worker(self, src_path: OptStr = None, dst_path: str = ".", **kwargs) -> Worker:
         """

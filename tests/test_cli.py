@@ -170,12 +170,11 @@ def test_data_file_parsed_by_question_type(
     assert answers["question"] == "answer"
 
 
-def test_data_and_data_file_mutually_exclusive(
+def test_data_cli_takes_precedence_over_data_file(
     tmp_path_factory: pytest.TempPathFactory,
-    capsys: pytest.CaptureFixture[str],
 ):
     src, dst, local = map(tmp_path_factory.mktemp, ("src", "dst", "local"))
-
+    expected = "fourscore and seven years ago"
     build_file_tree(
         {
             (src / "copier.yml"): (
@@ -199,22 +198,17 @@ def test_data_and_data_file_mutually_exclusive(
             "copier",
             "copy",
             f"--data-file={local / 'data.yml'}",
-            '--data=question="also does not matter"',
+            f"--data=question={expected}",
             str(src),
             str(dst),
             "--quiet",
         ],
         exit=False,
     )
-    assert run_result[1] == 2  # cli failure
-    out, _ = capsys.readouterr()
-    assert any(
-        [
-            "Error: Given --data-file, the following are invalid ['--data']" in out,
-            "Error: Given --data, the following are invalid ['--data-file']" in out,
-        ]
-    )
-    assert not (dst / ".copier-answers.yml").exists()
+    assert run_result[1] == 0
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    assert answers["_src_path"] == str(src)
+    assert answers["question"] == expected
 
 
 @pytest.mark.parametrize(
