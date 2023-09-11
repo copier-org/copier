@@ -758,6 +758,46 @@ questions with default answers.
     copier copy -fd 'user_name=Manuel Calavera' template destination
     ```
 
+!!! info
+
+    The `-d, --data` flags are mutually exclusive with the [`--data-file`](#data_file) flag.
+
+### `data_file`
+
+-   Format: `str`
+-   CLI flags: `--data-file`
+-   Default value: N/A
+
+As an alternative to [`-d, --data`](#data) you can also pass the path to a YAML file
+that contains your data.
+
+!!! info Not supported in `copier.yml` or API calls. Only supported through the CLI.
+
+!!! example
+
+    Example CLI usage with a YAML file containing data:
+
+    ```yaml title="input.yml"
+    user_name: Manuel Calavera
+    age: 7
+    height: 1.83
+    ```
+
+    Passing a data file
+
+    ```shell
+    copier --data-file input.yml copy template destination
+    ```
+
+    is equivalent to passing its content as key-value pairs:
+
+    ```shell
+    copier -d 'user_name=Manuel Calavera' -d 'age=7' -d 'height=1.83' copy template destination
+
+!!! info
+
+    The `--data-file` flag is mutually exclusive with the [`-d, --data`](#data) flags.
+
 ### `envops`
 
 -   Format: `dict`
