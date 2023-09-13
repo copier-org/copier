@@ -160,7 +160,7 @@ Supported keys:
     `true`, a default value is required.
 -   **placeholder**: To provide a visual example for what would be a good value. It is
     only shown while the answer is empty, so maybe it doesn't make much sense to provide
-    both `default` and `placeholder`.
+    both `default` and `placeholder`. It must be a string.
 
     !!! warning
 
