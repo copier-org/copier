@@ -162,10 +162,6 @@ def test_data_file_parsed_by_question_type(
     tmp_path_factory: pytest.TempPathFactory, type_, answer, expected
 ) -> None:
     src, dst, local = map(tmp_path_factory.mktemp, ("src", "dst", "local"))
-    existing_data_file = local / "data.yml"
-    with existing_data_file.open("w") as f:
-        f.write(yaml.dump({"question": answer}))
-
     build_file_tree(
         {
             (src / "copier.yml"): (
@@ -180,6 +176,7 @@ def test_data_file_parsed_by_question_type(
                 {{ _copier_answers|to_nice_yaml }}
                 """
             ),
+            (local / "data.yml"): yaml.dump({"question": answer}),
         }
     )
 
@@ -187,7 +184,7 @@ def test_data_file_parsed_by_question_type(
         [
             "copier",
             "copy",
-            f"--data-file={existing_data_file.absolute()}",
+            f"--data-file={local / 'data.yml'}",
             str(src),
             str(dst),
             "--quiet",
