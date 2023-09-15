@@ -179,6 +179,7 @@ class _Subcommand(cli.Application):
     )
     def data_file_switch(self, path: LocalPath) -> None:
         """Update [data][] with provided values.
+
         Arguments:
             path: The path to the YAML file to load.
         """
