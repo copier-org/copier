@@ -760,7 +760,7 @@ questions with default answers.
 
 !!! info
 
-    The `-d, --data` flags are mutually exclusive with the [`--data-file`](#data_file) flag.
+    The `-d, --data` flags are mutually exclusive with the [`--data-file`][data_file] flag.
 
 ### `data_file`
 
@@ -768,10 +768,12 @@ questions with default answers.
 -   CLI flags: `--data-file`
 -   Default value: N/A
 
-As an alternative to [`-d, --data`](#data) you can also pass the path to a YAML file
+As an alternative to [`-d, --data`][data] you can also pass the path to a YAML file
 that contains your data.
 
-!!! info Not supported in `copier.yml` or API calls. Only supported through the CLI.
+!!! info
+
+    Not supported in `copier.yml` or API calls. Only supported through the CLI.
 
 !!! example
 
@@ -786,17 +788,18 @@ that contains your data.
     Passing a data file
 
     ```shell
-    copier --data-file input.yml copy template destination
+    copier copy --data-file input.yml template destination
     ```
 
     is equivalent to passing its content as key-value pairs:
 
     ```shell
-    copier -d 'user_name=Manuel Calavera' -d 'age=7' -d 'height=1.83' copy template destination
+    copier copy -d 'user_name=Manuel Calavera' -d 'age=7' -d 'height=1.83' template destination
+    ```
 
 !!! info
 
-    The `--data-file` flag is mutually exclusive with the [`-d, --data`](#data) flags.
+    The `--data-file` flag is mutually exclusive with the [`-d, --data`][data] flags.
 
 ### `envops`
 
