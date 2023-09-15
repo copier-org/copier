@@ -52,7 +52,6 @@ from unittest.mock import patch
 import yaml
 from decorator import decorator
 from plumbum import cli, colors
-from plumbum.path import LocalPath
 
 from .errors import UnsafeTemplateError, UserMessageError
 from .main import Worker
@@ -177,7 +176,7 @@ class _Subcommand(cli.Application):
         help="Load data from a YAML file",
         excludes=["--data"],
     )
-    def data_file_switch(self, path: LocalPath) -> None:
+    def data_file_switch(self, path: cli.ExistingFile) -> None:
         """Update [data][] with provided values.
 
         Arguments:
