@@ -235,7 +235,13 @@ def test_data_and_data_file_mutually_exclusive(
     )
     assert run_result[1] == 2  # cli failure
     out, _ = capsys.readouterr()
-    assert "Error: Given --data-file, the following are invalid ['--data']" in out
+    assert any(
+        [
+            "Error: Given --data-file, the following are invalid ['--data']" in out,
+            "Error: Given --data, the following are invalid ['--data-file']" in out,
+        ]
+    )
+
     assert not (dst / ".copier-answers.yml").exists()
 
 
