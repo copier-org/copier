@@ -241,7 +241,6 @@ def test_data_and_data_file_mutually_exclusive(
             "Error: Given --data, the following are invalid ['--data-file']" in out,
         ]
     )
-
     assert not (dst / ".copier-answers.yml").exists()
 
 
