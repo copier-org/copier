@@ -71,7 +71,8 @@ def handle_exceptions(method, *args, **kwargs):
         return 1
     except UnsafeTemplateError as error:
         print(colors.red | "\n".join(error.args), file=sys.stderr)
-        return 2
+        # DOCS https://github.com/copier-org/copier/issues/1328#issuecomment-1723214165
+        return 0b100
 
 
 class CopierApp(cli.Application):
