@@ -1482,7 +1482,7 @@ Copier templates can use dangerous features that allow arbitrary code execution:
 -   [Tasks][tasks]
 
 Therefore, these features are disabled by default and Copier will raise an error (and
-exit from the CLI with code `2`) when they are found in a template. In this case, please
+exit from the CLI with code `4`) when they are found in a template. In this case, please
 verify that no malicious code gets executed by any of the used features. When you're
 sufficiently confident or willing to take the risk, set `unsafe=True` or pass the CLI
 switch `--UNSAFE` or `--trust`.

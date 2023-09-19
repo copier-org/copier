@@ -106,7 +106,7 @@ def test_copy_cli(
     if unsafe:
         assert retcode == 0
     else:
-        assert retcode == 2
+        assert retcode == 4
         _, err = capsys.readouterr()
         assert "Template uses potentially unsafe feature: tasks." in err
 
@@ -377,6 +377,6 @@ def test_update_cli(
     if unsafe:
         assert retcode == 0
     else:
-        assert retcode == 2
+        assert retcode == 4
         _, err = capsys.readouterr()
         assert "Template uses potentially unsafe feature: tasks." in err
