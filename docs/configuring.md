@@ -768,8 +768,8 @@ questions with default answers.
 -   CLI flags: `--data-file`
 -   Default value: N/A
 
-As an alternative to [`-d, --data`][data] you can also pass the path to a YAML file
-that contains your data.
+As an alternative to [`-d, --data`][data] you can also pass the path to a YAML file that
+contains your data.
 
 !!! info
 
