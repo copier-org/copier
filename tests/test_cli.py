@@ -131,6 +131,92 @@ def test_cli_data_parsed_by_question_type(
     assert answers["question"] == expected
 
 
+def test_data_file_parsed_by_question_type(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst, local = map(tmp_path_factory.mktemp, ("src", "dst", "local"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                """\
+                question:
+                    type: str
+                """
+            ),
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                """\
+                # Changes here will be overwritten by Copier
+                {{ _copier_answers|to_nice_yaml }}
+                """
+            ),
+            (local / "data.yml"): yaml.dump({"question": "answer"}),
+        }
+    )
+
+    run_result = CopierApp.run(
+        [
+            "copier",
+            "copy",
+            f"--data-file={local / 'data.yml'}",
+            str(src),
+            str(dst),
+            "--quiet",
+        ],
+        exit=False,
+    )
+    assert run_result[1] == 0
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    assert answers["_src_path"] == str(src)
+    assert answers["question"] == "answer"
+
+
+def test_data_and_data_file_mutually_exclusive(
+    tmp_path_factory: pytest.TempPathFactory,
+    capsys: pytest.CaptureFixture[str],
+):
+    src, dst, local = map(tmp_path_factory.mktemp, ("src", "dst", "local"))
+
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                """\
+                question:
+                    type: str
+                """
+            ),
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                """\
+                # Changes here will be overwritten by Copier
+                {{ _copier_answers|to_nice_yaml }}
+                """
+            ),
+            (local / "data.yml"): yaml.dump({"question": "does not matter"}),
+        }
+    )
+
+    run_result = CopierApp.run(
+        [
+            "copier",
+            "copy",
+            f"--data-file={local / 'data.yml'}",
+            '--data=question="also does not matter"',
+            str(src),
+            str(dst),
+            "--quiet",
+        ],
+        exit=False,
+    )
+    assert run_result[1] == 2  # cli failure
+    out, _ = capsys.readouterr()
+    assert any(
+        [
+            "Error: Given --data-file, the following are invalid ['--data']" in out,
+            "Error: Given --data, the following are invalid ['--data-file']" in out,
+        ]
+    )
+    assert not (dst / ".copier-answers.yml").exists()
+
+
 @pytest.mark.parametrize(
     "config_folder",
     map(
