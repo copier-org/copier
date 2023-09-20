@@ -47,7 +47,6 @@ import sys
 from io import StringIO
 from pathlib import Path
 from textwrap import dedent
-from typing import Set
 from unittest.mock import patch
 
 import yaml
@@ -106,10 +105,8 @@ class _Subcommand(cli.Application):
     """Base class for Copier subcommands."""
 
     def __init__(self, executable):
-        self.cli_data_args: Set[str] = set()
+        self.data: AnyByStrDict = {}
         super().__init__(executable)
-
-    data: AnyByStrDict = {}
 
     answers_file = cli.SwitchAttr(
         ["-a", "--answers-file"],
@@ -174,7 +171,6 @@ class _Subcommand(cli.Application):
         for arg in values:
             key, value = arg.split("=", 1)
             self.data[key] = value
-            self.cli_data_args.add(key)
 
     @cli.switch(
         ["--data-file"],
@@ -191,7 +187,7 @@ class _Subcommand(cli.Application):
             file_updates: AnyByStrDict = yaml.safe_load(f)
 
         updates_without_cli_overrides = {
-            k: v for k, v in file_updates.items() if k not in self.cli_data_args
+            k: v for k, v in file_updates.items() if k not in self.data
         }
         self.data.update(updates_without_cli_overrides)
 
