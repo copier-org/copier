@@ -174,12 +174,15 @@ def test_data_cli_takes_precedence_over_data_file(
     tmp_path_factory: pytest.TempPathFactory,
 ):
     src, dst, local = map(tmp_path_factory.mktemp, ("src", "dst", "local"))
-    expected = "fourscore and seven years ago"
     build_file_tree(
         {
             (src / "copier.yml"): (
                 """\
                 question:
+                    type: str
+                another_question:
+                    type: str
+                yet_another_question:
                     type: str
                 """
             ),
@@ -189,16 +192,23 @@ def test_data_cli_takes_precedence_over_data_file(
                 {{ _copier_answers|to_nice_yaml }}
                 """
             ),
-            (local / "data.yml"): yaml.dump({"question": "does not matter"}),
+            (local / "data.yml"): yaml.dump(
+                {
+                    "question": "does not matter",
+                    "another_question": "another answer!",
+                    "yet_another_question": "sure, one more for you!",
+                }
+            ),
         }
     )
 
+    answer_override = "fourscore and seven years ago"
     run_result = CopierApp.run(
         [
             "copier",
             "copy",
             f"--data-file={local / 'data.yml'}",
-            f"--data=question={expected}",
+            f"--data=question={answer_override}",
             str(src),
             str(dst),
             "--quiet",
@@ -206,9 +216,20 @@ def test_data_cli_takes_precedence_over_data_file(
         exit=False,
     )
     assert run_result[1] == 0
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
-    assert answers["_src_path"] == str(src)
-    assert answers["question"] == expected
+    actual_answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    expected_answers = {
+        "_src_path": str(src),
+        "question": answer_override,
+        "another_question": "another answer!",
+        "yet_another_question": "sure, one more for you!",
+    }
+    assert actual_answers["_src_path"] == expected_answers["_src_path"]
+    assert actual_answers["question"] == expected_answers["question"]
+    assert actual_answers["another_question"] == expected_answers["another_question"]
+    assert (
+        actual_answers["yet_another_question"]
+        == expected_answers["yet_another_question"]
+    )
 
 
 @pytest.mark.parametrize(
