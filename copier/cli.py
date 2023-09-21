@@ -104,9 +104,7 @@ class CopierApp(cli.Application):
 class _Subcommand(cli.Application):
     """Base class for Copier subcommands."""
 
-    def __init__(self, executable):
-        self.data: AnyByStrDict = {}
-        super().__init__(executable)
+    data: AnyByStrDict = {}
 
     answers_file = cli.SwitchAttr(
         ["-a", "--answers-file"],
