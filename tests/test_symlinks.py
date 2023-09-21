@@ -12,7 +12,7 @@ from copier.tools import readlink
 from .helpers import build_file_tree
 
 
-def test_copy_symlink(tmp_path_factory):
+def test_copy_symlink(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     # Prepare repo bundle
     repo = src / "repo"
@@ -47,7 +47,7 @@ def test_copy_symlink(tmp_path_factory):
     assert readlink(dst / "symlink.txt") == Path("target.txt")
 
 
-def test_copy_symlink_templated_name(tmp_path_factory):
+def test_copy_symlink_templated_name(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     # Prepare repo bundle
     repo = src / "repo"
@@ -83,7 +83,9 @@ def test_copy_symlink_templated_name(tmp_path_factory):
     assert readlink(dst / "symlink.txt") == Path("target.txt")
 
 
-def test_copy_symlink_templated_target(tmp_path_factory):
+def test_copy_symlink_templated_target(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     # Prepare repo bundle
     repo = src / "repo"
@@ -125,7 +127,7 @@ def test_copy_symlink_templated_target(tmp_path_factory):
     assert readlink(dst / "symlink2.txt") == Path("{{ target_name }}.txt")
 
 
-def test_copy_symlink_missing_target(tmp_path_factory):
+def test_copy_symlink_missing_target(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     # Prepare repo bundle
     repo = src / "repo"
@@ -160,7 +162,9 @@ def test_copy_symlink_missing_target(tmp_path_factory):
     )  # exists follows symlinks, It returns False as the target doesn't exist
 
 
-def test_option_preserve_symlinks_false(tmp_path_factory):
+def test_option_preserve_symlinks_false(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     # Prepare repo bundle
     repo = src / "repo"
@@ -194,7 +198,9 @@ def test_option_preserve_symlinks_false(tmp_path_factory):
     assert not os.path.islink(dst / "symlink.txt")
 
 
-def test_option_preserve_symlinks_default(tmp_path_factory):
+def test_option_preserve_symlinks_default(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     # Prepare repo bundle
     repo = src / "repo"
@@ -227,7 +233,7 @@ def test_option_preserve_symlinks_default(tmp_path_factory):
     assert not os.path.islink(dst / "symlink.txt")
 
 
-def test_update_symlink(tmp_path_factory):
+def test_update_symlink(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
     build_file_tree(
@@ -287,7 +293,7 @@ def test_update_symlink(tmp_path_factory):
     assert readlink(dst / "symlink.txt") == Path("bbbb.txt")
 
 
-def test_exclude_symlink(tmp_path_factory):
+def test_exclude_symlink(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     # Prepare repo bundle
     repo = src / "repo"
@@ -320,7 +326,7 @@ def test_exclude_symlink(tmp_path_factory):
     assert not (dst / "symlink.txt").is_symlink()
 
 
-def test_pretend_symlink(tmp_path_factory):
+def test_pretend_symlink(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     # Prepare repo bundle
     repo = src / "repo"
@@ -353,7 +359,7 @@ def test_pretend_symlink(tmp_path_factory):
     assert not (dst / "symlink.txt").is_symlink()
 
 
-def test_copy_symlink_none_path(tmp_path_factory):
+def test_copy_symlink_none_path(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     # Prepare repo bundle
     repo = src / "repo"
@@ -388,7 +394,7 @@ def test_copy_symlink_none_path(tmp_path_factory):
     assert not os.path.islink(dst / "symlink.txt")
 
 
-def test_recursive_symlink(tmp_path_factory: pytest.TempPathFactory):
+def test_recursive_symlink(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {

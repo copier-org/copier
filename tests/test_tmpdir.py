@@ -34,7 +34,7 @@ def template_path(tmp_path_factory: pytest.TempPathFactory) -> str:
     return str(root)
 
 
-def empty_dir(dir: Path):
+def empty_dir(dir: Path) -> None:
     assert dir.is_dir()
     assert dir.exists()
     assert len(list(dir.iterdir())) == 0

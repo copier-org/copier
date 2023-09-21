@@ -10,12 +10,13 @@ from warnings import warn
 from packaging import version
 from packaging.version import InvalidVersion, Version
 from plumbum import TF, ProcessExecutionError, colors, local
+from plumbum.machines import LocalCommand
 
 from .errors import DirtyLocalWarning, ShallowCloneWarning
 from .types import OptBool, OptStr, OptStrOrPath, StrOrPath
 
 
-def get_git(context_dir: OptStrOrPath = None):
+def get_git(context_dir: OptStrOrPath = None) -> LocalCommand:
     """Gets `git` command, or fails if it's not available"""
     command = local["git"]
     if context_dir:
@@ -23,7 +24,7 @@ def get_git(context_dir: OptStrOrPath = None):
     return command
 
 
-def get_git_version():
+def get_git_version() -> Version:
     git = get_git()
 
     return Version(re.findall(r"\d+\.\d+\.\d+", git("version"))[0])

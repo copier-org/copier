@@ -12,7 +12,7 @@ import copier
 from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree
 
 
-def git_init(message="hello world"):
+def git_init(message="hello world") -> None:
     git("init")
     git("config", "user.name", "Copier Test")
     git("config", "user.email", "test@copier")
