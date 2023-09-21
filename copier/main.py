@@ -1002,7 +1002,7 @@ def run_update(
     return worker
 
 
-def _remove_old_files(prefix: Path, cmp: dircmp, rm_common: bool = False):
+def _remove_old_files(prefix: Path, cmp: dircmp, rm_common: bool = False) -> None:
     """Remove files and directories only found in "old" template.
 
     This is an internal helper method used to process a comparison of 2

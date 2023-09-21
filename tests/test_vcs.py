@@ -164,7 +164,7 @@ def test_update_using_local_source_path_with_tilde(tmp_path: Path) -> None:
     assert worker.answers.combined["_src_path"] == user_src_path
 
 
-def test_invalid_version(tmp_path):
+def test_invalid_version(tmp_path: Path) -> None:
     sample = tmp_path / "sample.txt"
     with local.cwd(tmp_path):
         git("init")

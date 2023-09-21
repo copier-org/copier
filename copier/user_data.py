@@ -27,7 +27,7 @@ from .types import MISSING, AnyByStrDict, MissingType, OptStr, OptStrOrPath, Str
 
 
 # TODO Remove these two functions as well as DEFAULT_DATA in a future release
-def _now():
+def _now() -> datetime:
     warnings.warn(
         "'now' will be removed in a future release of Copier.\n"
         "Please use this instead: {{ '%Y-%m-%d %H:%M:%S' | strftime }}\n"
@@ -37,7 +37,7 @@ def _now():
     return datetime.utcnow()
 
 
-def _make_secret():
+def _make_secret() -> str:
     warnings.warn(
         "'make_secret' will be removed in a future release of Copier.\n"
         "Please use this instead: {{ 999999999999999999999999999999999|ans_random|hash('sha512') }}\n"
