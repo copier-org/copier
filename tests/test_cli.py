@@ -223,13 +223,7 @@ def test_data_cli_takes_precedence_over_data_file(
         "another_question": "another answer!",
         "yet_another_question": "sure, one more for you!",
     }
-    assert actual_answers["_src_path"] == expected_answers["_src_path"]
-    assert actual_answers["question"] == expected_answers["question"]
-    assert actual_answers["another_question"] == expected_answers["another_question"]
-    assert (
-        actual_answers["yet_another_question"]
-        == expected_answers["yet_another_question"]
-    )
+    assert actual_answers == expected_answers
 
 
 @pytest.mark.parametrize(
