@@ -6,6 +6,8 @@ import platform
 import stat
 import sys
 from contextlib import suppress
+from decimal import Decimal
+from enum import Enum
 from importlib.metadata import version
 from pathlib import Path
 from types import TracebackType
@@ -90,7 +92,23 @@ def printf_exception(
         print(HLINE, file=sys.stderr)
 
 
-def cast_str_to_bool(value: Any) -> bool:
+def cast_to_str(value: Any) -> str:
+    """Parse anything to str.
+
+    Params:
+        value:
+            Anything to be casted to a str.
+    """
+    if isinstance(value, str):
+        return value.value if isinstance(value, Enum) else value
+    if isinstance(value, (float, int, Decimal)):
+        return str(value)
+    if isinstance(value, (bytes, bytearray)):
+        return value.decode()
+    raise ValueError(f"Could not convert {value} to string")
+
+
+def cast_to_bool(value: Any) -> bool:
     """Parse anything to bool.
 
     Params:

@@ -22,7 +22,7 @@ from pygments.lexers.data import JsonLexer, YamlLexer
 from questionary.prompts.common import Choice
 
 from .errors import InvalidTypeError, UserMessageError
-from .tools import cast_str_to_bool, force_str_end
+from .tools import cast_to_bool, cast_to_str, force_str_end
 from .types import MISSING, AnyByStrDict, MissingType, OptStr, OptStrOrPath, StrOrPath
 
 
@@ -377,7 +377,7 @@ class Question:
 
     def get_multiline(self) -> bool:
         """Get the value for multiline."""
-        return cast_str_to_bool(self.render_value(self.multiline))
+        return cast_to_bool(self.render_value(self.multiline))
 
     def validate_answer(self, answer) -> bool:
         """Validate user answer."""
@@ -396,7 +396,7 @@ class Question:
 
     def get_when(self) -> bool:
         """Get skip condition for question."""
-        return cast_str_to_bool(self.render_value(self.when))
+        return cast_to_bool(self.render_value(self.when))
 
     def render_value(
         self, value: Any, extra_answers: Optional[AnyByStrDict] = None
@@ -460,10 +460,10 @@ def load_answersfile_data(
 
 
 CAST_STR_TO_NATIVE: Mapping[str, Callable] = {
-    "bool": cast_str_to_bool,
+    "bool": cast_to_bool,
     "float": float,
     "int": int,
     "json": json.loads,
-    "str": str,
+    "str": cast_to_str,
     "yaml": parse_yaml_string,
 }

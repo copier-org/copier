@@ -2,6 +2,8 @@ import platform
 import stat
 import sys
 from contextlib import nullcontext as does_not_raise
+from decimal import Decimal
+from enum import Enum
 from pathlib import Path
 from typing import Any, ContextManager, List
 
@@ -407,6 +409,19 @@ def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> N
             "1",
             does_not_raise(),
         ),
+        ({"type": "str"}, "string", does_not_raise()),
+        ({"type": "str"}, b"bytes", does_not_raise()),
+        ({"type": "str"}, bytearray("abc", "utf-8"), does_not_raise()),
+        ({"type": "str"}, 1, does_not_raise()),
+        ({"type": "str"}, 1.1, does_not_raise()),
+        ({"type": "str"}, True, does_not_raise()),
+        ({"type": "str"}, False, does_not_raise()),
+        ({"type": "str"}, Decimal(1.1), does_not_raise()),
+        ({"type": "str"}, Enum("A", ["a", "b"], type=str).a, does_not_raise()),  # type: ignore
+        ({"type": "str"}, Enum("A", ["a", "b"]).a, pytest.raises(ValueError)),  # type: ignore
+        ({"type": "str"}, object(), pytest.raises(ValueError)),
+        ({"type": "str"}, {}, pytest.raises(ValueError)),
+        ({"type": "str"}, [], pytest.raises(ValueError)),
         (
             {
                 "type": "str",
