@@ -1,5 +1,21 @@
 # Updating a project
 
+Copier enables the code lifecycle management for generated projects. There are several
+common use cases for that, including but not limited to
+
+1. Update the answers to previous questions
+
+    Questions can be reanswered to fit the latest requirements of the generated
+    projects. This is helpful, especially when the template includes optional tools
+    that fit into different phases of a project. In that case, template consumers are
+    able to activate the optional tools gradually when the project matures.
+
+1. Sync updates from evolved templates
+
+    The template creators might update the template to add new functionalities or bug
+    fixes. The generated project can get updated if the template consumers want to keep
+    it to the latest version.
+
 The best way to update a project from its template is when all of these conditions are
 true:
 
