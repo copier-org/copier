@@ -595,13 +595,13 @@ mkdocs = ">=1.1"
 
 [[package]]
 name = "mkdocs-material"
-version = "9.4.1"
+version = "9.4.2"
 description = "Documentation that simply works"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "mkdocs_material-9.4.1-py3-none-any.whl", hash = "sha256:27e74b5b14b8b797074759beb85876ca6425e60c78f70e76be0c209627eb5199"},
-    {file = "mkdocs_material-9.4.1.tar.gz", hash = "sha256:1495273cfce13ab52bcfcc49fa6fac779ae75818dfe566ed149d9d3aea7d8439"},
+    {file = "mkdocs_material-9.4.2-py3-none-any.whl", hash = "sha256:8651ff451f84681df9d2e3388906eee63c866576d98d6bb542826f83a091b289"},
+    {file = "mkdocs_material-9.4.2.tar.gz", hash = "sha256:d53b17d058e70efd04c281f9b384ca10fb1f0bfecfe85dacdadad891bb826e3d"},
 ]
 
 [package.dependencies]
@@ -614,7 +614,7 @@ mkdocs-material-extensions = ">=1.2,<2.0"
 paginate = ">=0.5,<1.0"
 pygments = ">=2.16,<3.0"
 pymdown-extensions = ">=10.2,<11.0"
-regex = ">=2022.4,<2023.0"
+regex = ">=2022.4"
 requests = ">=2.26,<3.0"
 
 [package.extras]
