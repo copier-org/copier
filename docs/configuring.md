@@ -758,10 +758,6 @@ questions with default answers.
     copier copy -fd 'user_name=Manuel Calavera' template destination
     ```
 
-!!! info
-
-    The `-d, --data` flags are mutually exclusive with the [`--data-file`][data_file] flag.
-
 ### `data_file`
 
 -   Format: `str`
@@ -797,9 +793,16 @@ contains your data.
     copier copy -d 'user_name=Manuel Calavera' -d 'age=7' -d 'height=1.83' template destination
     ```
 
+    if you'd like to override some of the answers in the file, `--data` flags always take
+    precedence
+
+    ```shell
+    copier copy -d 'user_name=Bilbo Baggins' --data-file input.yml template destination
+    ```
+
 !!! info
 
-    The `--data-file` flag is mutually exclusive with the [`-d, --data`][data] flags.
+    command line arguments passed via `--data` will always take precedence over the answers file
 
 ### `envops`
 

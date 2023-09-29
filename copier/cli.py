@@ -104,7 +104,9 @@ class CopierApp(cli.Application):
 class _Subcommand(cli.Application):
     """Base class for Copier subcommands."""
 
-    data: AnyByStrDict = {}
+    def __init__(self, executable):
+        self.data: AnyByStrDict = {}
+        super().__init__(executable)
 
     answers_file = cli.SwitchAttr(
         ["-a", "--answers-file"],
@@ -158,7 +160,6 @@ class _Subcommand(cli.Application):
         "VARIABLE=VALUE",
         list=True,
         help="Make VARIABLE available as VALUE when rendering the template",
-        excludes=["--data-file"],
     )
     def data_switch(self, values: StrSeq) -> None:
         """Update [data][] with provided values.
@@ -175,7 +176,6 @@ class _Subcommand(cli.Application):
         ["--data-file"],
         cli.ExistingFile,
         help="Load data from a YAML file",
-        excludes=["--data"],
     )
     def data_file_switch(self, path: cli.ExistingFile) -> None:
         """Update [data][] with provided values.
@@ -184,7 +184,12 @@ class _Subcommand(cli.Application):
             path: The path to the YAML file to load.
         """
         with open(path) as f:
-            self.data.update(yaml.safe_load(f))
+            file_updates: AnyByStrDict = yaml.safe_load(f)
+
+        updates_without_cli_overrides = {
+            k: v for k, v in file_updates.items() if k not in self.data
+        }
+        self.data.update(updates_without_cli_overrides)
 
     def _worker(self, src_path: OptStr = None, dst_path: str = ".", **kwargs) -> Worker:
         """
