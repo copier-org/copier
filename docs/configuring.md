@@ -793,8 +793,8 @@ contains your data.
     copier copy -d 'user_name=Manuel Calavera' -d 'age=7' -d 'height=1.83' template destination
     ```
 
-    if you'd like to override some of the answers in the file, `--data` flags always take
-    precedence
+    If you'd like to override some of the answers in the file, `--data` flags always take
+    precedence:
 
     ```shell
     copier copy -d 'user_name=Bilbo Baggins' --data-file input.yml template destination
@@ -802,7 +802,7 @@ contains your data.
 
 !!! info
 
-    command line arguments passed via `--data` will always take precedence over the answers file
+    Command line arguments passed via `--data` always take precedence over the data file.
 
 ### `envops`
 
