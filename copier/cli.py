@@ -41,13 +41,17 @@ Basically, there are 3 different commands you can run:
         ```
 
 Below are the docs of each one of those.
+
+CLI help generated from `copier --help-all`:
+
+```sh exec="on" result="text"
+copier --help-all
+```
 """
 
 import sys
-from io import StringIO
 from pathlib import Path
 from textwrap import dedent
-from unittest.mock import patch
 
 import yaml
 from decorator import decorator
@@ -406,12 +410,3 @@ class CopierUpdateSubApp(_Subcommand):
         ) as worker:
             worker.run_update()
         return 0
-
-
-# Add --help-all results to docs
-if __doc__:
-    help_io = StringIO()
-    with patch("sys.stdout", help_io):
-        CopierApp.run(["copier", "--help-all"], exit=False)
-    help_io.seek(0)
-    __doc__ += f"\n\nCLI help generated from `copier --help-all`:\n\n```\n{help_io.read()}\n```"
