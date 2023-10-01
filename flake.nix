@@ -20,7 +20,7 @@
       flake = false;
     };
     flake-utils.url = github:numtide/flake-utils;
-    nixpkgs.url = github:NixOS/nixpkgs;
+    nixpkgs.url = github:NixOS/nixpkgs/release-23.05;
     poetry2nix.url = github:nix-community/poetry2nix;
     poetry2nix.inputs.nixpkgs.follows = "nixpkgs";
   };
