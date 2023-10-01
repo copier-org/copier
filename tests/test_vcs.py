@@ -1,17 +1,21 @@
 import os
 import shutil
 from pathlib import Path
+from typing import Callable, Iterator, Sequence
 
 import pytest
+import yaml
 from packaging.version import Version
 from plumbum import local
 from plumbum.cmd import git
 
-from copier import Worker, errors, run_copy, run_update, vcs
+from copier import Worker, run_copy, run_update
+from copier.errors import ShallowCloneWarning
+from copier.vcs import checkout_latest_tag, clone, get_git_version, get_repo
 
 
 def test_get_repo() -> None:
-    get = vcs.get_repo
+    get = get_repo
 
     assert get("git@git.myproject.org:MyProject") == "git@git.myproject.org:MyProject"
     assert (
@@ -63,7 +67,7 @@ def test_get_repo() -> None:
 
 @pytest.mark.impure
 def test_clone() -> None:
-    tmp = vcs.clone("https://github.com/copier-org/copier.git")
+    tmp = clone("https://github.com/copier-org/copier.git")
     assert tmp
     assert Path(tmp, "README.md").exists()
     shutil.rmtree(tmp, ignore_errors=True)
@@ -71,11 +75,11 @@ def test_clone() -> None:
 
 @pytest.mark.impure
 def test_local_clone() -> None:
-    tmp = vcs.clone("https://github.com/copier-org/copier.git")
+    tmp = clone("https://github.com/copier-org/copier.git")
     assert tmp
     assert Path(tmp, "README.md").exists()
 
-    local_tmp = vcs.clone(tmp)
+    local_tmp = clone(tmp)
     assert local_tmp
     assert Path(local_tmp, "README.md").exists()
     shutil.rmtree(local_tmp, ignore_errors=True)
@@ -84,17 +88,17 @@ def test_local_clone() -> None:
 @pytest.mark.impure
 def test_shallow_clone(tmp_path: Path, recwarn: pytest.WarningsRecorder) -> None:
     # This test should always work but should be much slower if `is_git_shallow_repo()` is not
-    # checked in `vcs.clone()`.
+    # checked in `clone()`.
     src_path = str(tmp_path / "autopretty")
     git("clone", "--depth=2", "https://github.com/copier-org/autopretty.git", src_path)
     assert Path(src_path, "README.md").exists()
 
-    if vcs.GIT_VERSION >= Version("2.27"):
-        with pytest.warns(errors.ShallowCloneWarning):
-            local_tmp = vcs.clone(str(src_path))
+    if get_git_version() >= Version("2.27"):
+        with pytest.warns(ShallowCloneWarning):
+            local_tmp = clone(str(src_path))
     else:
         assert len(recwarn) == 0
-        local_tmp = vcs.clone(str(src_path))
+        local_tmp = clone(str(src_path))
         assert len(recwarn) == 0
     assert local_tmp
     assert Path(local_tmp, "README.md").exists()
@@ -104,7 +108,9 @@ def test_shallow_clone(tmp_path: Path, recwarn: pytest.WarningsRecorder) -> None
 @pytest.mark.impure
 def test_removes_temporary_clone(tmp_path: Path) -> None:
     src_path = "https://github.com/copier-org/autopretty.git"
-    with Worker(src_path=src_path, dst_path=tmp_path, defaults=True) as worker:
+    with Worker(
+        src_path=src_path, dst_path=tmp_path, defaults=True, unsafe=True
+    ) as worker:
         worker.run_copy()
         temp_clone = worker.template.local_abspath
     assert not temp_clone.exists()
@@ -114,7 +120,9 @@ def test_removes_temporary_clone(tmp_path: Path) -> None:
 def test_dont_remove_local_clone(tmp_path: Path) -> None:
     src_path = str(tmp_path / "autopretty")
     git("clone", "https://github.com/copier-org/autopretty.git", src_path)
-    with Worker(src_path=src_path, dst_path=tmp_path, defaults=True) as worker:
+    with Worker(
+        src_path=src_path, dst_path=tmp_path, defaults=True, unsafe=True
+    ) as worker:
         worker.run_copy()
     assert Path(src_path).exists()
 
@@ -136,7 +144,9 @@ def test_update_using_local_source_path_with_tilde(tmp_path: Path) -> None:
         user_src_path = f"~/{'/'.join(['..'] * len(Path.home().parts))}{src_path}"
 
     # generate project and assert correct path in answers
-    worker = run_copy(src_path=user_src_path, dst_path=tmp_path, defaults=True)
+    worker = run_copy(
+        src_path=user_src_path, dst_path=tmp_path, defaults=True, unsafe=True
+    )
     assert worker.answers.combined["_src_path"] == user_src_path
 
     # assert project update works and correct path again
@@ -149,11 +159,12 @@ def test_update_using_local_source_path_with_tilde(tmp_path: Path) -> None:
         defaults=True,
         overwrite=True,
         answers_file=".copier-answers.autopretty.yml",
+        unsafe=True,
     )
     assert worker.answers.combined["_src_path"] == user_src_path
 
 
-def test_invalid_version(tmp_path):
+def test_invalid_version(tmp_path: Path) -> None:
     sample = tmp_path / "sample.txt"
     with local.cwd(tmp_path):
         git("init")
@@ -167,5 +178,32 @@ def test_invalid_version(tmp_path):
         sample.write_text("3")
         git("commit", "-am3")
         assert git("describe", "--tags").strip() != "v2"
-        vcs.checkout_latest_tag(tmp_path)
+        checkout_latest_tag(tmp_path)
         assert git("describe", "--tags").strip() == "v2"
+
+
+@pytest.mark.parametrize("sorter", [iter, reversed])
+def test_select_latest_version_tag(
+    tmp_path_factory: pytest.TempPathFactory,
+    sorter: Callable[[Sequence[str]], Iterator[str]],
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    filename = "version.txt"
+
+    with local.cwd(src):
+        git("init")
+        Path("{{ _copier_conf.answers_file }}.jinja").write_text(
+            "{{ _copier_answers|to_nice_yaml }}"
+        )
+        for version in sorter(["v1", "v1.0", "v1.0.0", "v1.0.1"]):
+            Path(filename).write_text(version)
+            git("add", ".")
+            git("commit", "-m", version)
+            git("tag", version)
+
+    run_copy(str(src), dst)
+
+    assert (dst / filename).is_file()
+    assert (dst / filename).read_text() == "v1.0.1"
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    assert answers["_commit"] == "v1.0.1"

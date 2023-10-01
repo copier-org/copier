@@ -35,10 +35,7 @@ docs! We don't want to be biased, but it's easy that we tend to be:
 [jinja]: https://jinja.palletsprojects.com/
 [ejs]: https://ejs.co/
 
-[^1]:
-    The file itself can
-    [include other YAML files](configuring.md#include-other-yaml-files).
-
+[^1]: The file itself can [include other YAML files][include-other-yaml-files].
 [^2]:
     Git repo is recommended to be able to use advanced features such as template tagging
     and smart updates.

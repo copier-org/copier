@@ -2,7 +2,7 @@ import pytest
 from plumbum import local
 from plumbum.cmd import git
 
-from copier import copy
+from copier import run_copy, run_update
 
 from .helpers import build_file_tree
 
@@ -54,7 +54,7 @@ def test_update_tasks(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("tag", "v2")
         git("bundle", "create", bundle, "--all")
     # Copy the 1st version
-    copy(str(bundle), dst, defaults=True, overwrite=True, vcs_ref="v1")
+    run_copy(str(bundle), dst, defaults=True, overwrite=True, vcs_ref="v1", unsafe=True)
     # Init destination as a new independent git repo
     with local.cwd(dst):
         git("init")
@@ -65,4 +65,4 @@ def test_update_tasks(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("add", ".")
         git("commit", "-m", "hello world")
     # Update target to v2
-    copy(dst_path=dst, defaults=True, overwrite=True)
+    run_update(dst_path=dst, defaults=True, overwrite=True, unsafe=True)

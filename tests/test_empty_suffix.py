@@ -22,7 +22,7 @@ def test_empty_suffix(tmp_path_factory: pytest.TempPathFactory) -> None:
             (root / "{{name}}" / "render_me.txt"): "Hello {{name}}!",
         }
     )
-    copier.copy(str(root), dest, defaults=True, overwrite=True)
+    copier.run_copy(str(root), dest, defaults=True, overwrite=True)
 
     assert not (dest / "copier.yaml").exists()
 
@@ -53,7 +53,7 @@ def test_binary_file_fallback_to_copy(tmp_path_factory: pytest.TempPathFactory) 
             ),
         }
     )
-    copier.copy(str(root), dest, defaults=True, overwrite=True)
+    copier.run_copy(str(root), dest, defaults=True, overwrite=True)
     logo = dest / "logo.png"
     assert logo.exists()
     logo_bytes = logo.read_bytes()

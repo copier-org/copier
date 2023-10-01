@@ -15,7 +15,6 @@ from .helpers import DATA, PROJECT_TEMPLATE, build_file_tree
 def test_copy(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
-    # dirs_exist_ok not available in Python 3.7
     for item in PROJECT_TEMPLATE.iterdir():
         item_src_path = item
         item_dst_path = src / item.name
@@ -28,7 +27,7 @@ def test_copy(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("init")
 
     with pytest.warns(DirtyLocalWarning):
-        copier.copy(str(src), dst, data=DATA, quiet=True)
+        copier.run_copy(str(src), dst, data=DATA, vcs_ref="HEAD", quiet=True)
 
     generated = (dst / "pyproject.toml").read_text()
     control = (Path(__file__).parent / "reference_files" / "pyproject.toml").read_text()
@@ -37,6 +36,23 @@ def test_copy(tmp_path_factory: pytest.TempPathFactory) -> None:
     # assert template still dirty
     with local.cwd(src):
         assert bool(git("status", "--porcelain").strip())
+
+
+def test_copy_dirty_head(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "tracked": "",
+            src / "untracked": "",
+        }
+    )
+    with local.cwd(src):
+        git("init")
+        git("add", "tracked")
+        git("commit", "-m1")
+    copier.run_copy(str(src), dst, vcs_ref="HEAD")
+    assert (dst / "tracked").exists()
+    assert (dst / "untracked").exists()
 
 
 def test_update(tmp_path_factory: pytest.TempPathFactory) -> None:
@@ -66,6 +82,7 @@ def test_update(tmp_path_factory: pytest.TempPathFactory) -> None:
                 delete me.
                 """
             ),
+            (src / "symlink.txt"): Path("./to_delete.txt"),
         }
     )
 
@@ -84,6 +101,10 @@ def test_update(tmp_path_factory: pytest.TempPathFactory) -> None:
         with open("aaaa.txt", "a") as f:
             f.write("dolor sit amet")
 
+        # test updating a symlink
+        Path("symlink.txt").unlink()
+        Path("symlink.txt").symlink_to("test_file.txt")
+
         # test removing a file
         Path("to_delete.txt").unlink()
 
@@ -98,6 +119,10 @@ def test_update(tmp_path_factory: pytest.TempPathFactory) -> None:
 
     assert (src / "aaaa.txt").read_text() != (dst / "aaaa.txt").read_text()
 
+    p1 = src / "symlink.txt"
+    p2 = dst / "symlink.txt"
+    assert p1.read_text() != p2.read_text()
+
     assert (dst / "to_delete.txt").exists()
 
     with pytest.warns(DirtyLocalWarning):
@@ -107,6 +132,11 @@ def test_update(tmp_path_factory: pytest.TempPathFactory) -> None:
     assert (dst / "test_file.txt").exists()
 
     assert (src / "aaaa.txt").read_text() == (dst / "aaaa.txt").read_text()
+
+    p1 = src / "symlink.txt"
+    p2 = dst / "symlink.txt"
+    assert p1.read_text() == p2.read_text()
+    assert not (dst / "symlink.txt").is_symlink()
 
     # HACK https://github.com/copier-org/copier/issues/461
     # TODO test file deletion on update

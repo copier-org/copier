@@ -22,11 +22,17 @@
     flake-utils.url = github:numtide/flake-utils;
     nixpkgs.url = github:NixOS/nixpkgs;
     poetry2nix.url = github:nix-community/poetry2nix;
+    poetry2nix.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = inputs:
     with inputs;
-      flake-utils.lib.eachDefaultSystem (system: let
+      {
+        overlays.default = final: prev: {
+          copier = self.packages.${prev.system}.default;
+        };
+      }
+      // flake-utils.lib.eachDefaultSystem (system: let
         pkgs = import nixpkgs {
           inherit system;
           overlays = [poetry2nix.overlay];
@@ -36,29 +42,39 @@
         python = pkgs.python311;
 
         # Builders
-        copierApp = pkgs.poetry2nix.mkPoetryApplication {
-          inherit python version;
-          name = "copier-${version}";
-          POETRY_DYNAMIC_VERSIONING_BYPASS = version;
-          projectDir = ./.;
+        copierApp = let
+          baseApp = pkgs.poetry2nix.mkPoetryApplication {
+            inherit python version;
+            name = "copier-${version}";
+            projectDir = ./.;
 
-          # Test configuration
-          nativeCheckInputs = [pkgs.git];
-          pythonImportsCheck = ["copier"];
-          doCheck = true;
-          installCheckPhase = ''
-            patchShebangs tests
-            env \
-              GIT_AUTHOR_EMAIL=copier@example.com \
-              GIT_AUTHOR_NAME=copier \
-              GIT_COMMITTER_EMAIL=copier@example.com \
-              GIT_COMMITTER_NAME=copier \
-              PATH=$out/bin:$PATH \
-              POETRY_VIRTUALENVS_PATH=$NIX_BUILD_TOP/virtualenvs \
-              PYTHONOPTIMIZE= \
-              pytest --color=yes -m 'not impure'
-          '';
-        };
+            # Test configuration
+            propagatedNativeBuildInputs = [pkgs.git];
+            pythonImportsCheck = ["copier"];
+            doCheck = true;
+            installCheckPhase = ''
+              patchShebangs tests
+              env \
+                GIT_AUTHOR_EMAIL=copier@example.com \
+                GIT_AUTHOR_NAME=copier \
+                GIT_COMMITTER_EMAIL=copier@example.com \
+                GIT_COMMITTER_NAME=copier \
+                PATH=$out/bin:$PATH \
+                POETRY_VIRTUALENVS_PATH=$NIX_BUILD_TOP/virtualenvs \
+                PYTHONOPTIMIZE= \
+                pytest --color=yes -m 'not impure'
+            '';
+          };
+        in
+          baseApp.overridePythonAttrs (old: {
+            inherit version;
+            installCheckPhase = ''
+              ${old.installCheckPhase}
+
+              # Make sure version is properly patched in Nix build
+              test "$(copier --version)" != "copier 0.0.0"
+            '';
+          });
         copierModule = python.pkgs.toPythonModule copierApp;
       in rec {
         devShells.default = devenv.lib.mkShell {

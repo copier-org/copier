@@ -4,6 +4,156 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v8.3.0 (2023-09-05)
+
+### Feat
+
+-   add `-A` as an alias for `--skip-answered`, and support it in `recopy` too
+-   add `--skip-answered` flag to avoid repeating recorded answers
+
+### Fix
+
+-   **recopy**: never clone old template (even less if it's just for cleanup)
+
+## v8.2.0 (2023-08-28)
+
+### Feat
+
+-   release on FlakeHub.com too
+-   add support for pre-update and post-update messages (#1288)
+-   add support for pre-copy and post-copy messages
+
+### Fix
+
+-   do not immediately fail if git is not available
+-   provide more clarification in unsafe error message (#1280)
+-   clean up tmp dir
+-   don't lie about updated files
+-   require default value for secret question
+-   fix answer validation against conditional choices with duplicate values
+
+### Refactor
+
+-   drop support for Python 3.7 (#1252)
+
+## v8.1.0 (2023-07-10)
+
+### Feat
+
+-   add support for computed values via skipped questions (#1220)
+-   add `--trust` as a less scary alternative to `--UNSAFE` (#1179)
+-   add OS identifier to render context
+
+### Fix
+
+-   **pydantic**: add upper dependency bound to fix unlocked installations
+
+### Refactor
+
+-   request answers imperatively instead of implicitly via impure property
+
+## v8.0.0 (2023-06-04)
+
+### BREAKING CHANGE
+
+-   Updates will overwrite existing files always. If you need to select only some files,
+    just use `git mergetool` or `git difftool` after updating.
+-   Flag `--overwrite/-w` disappeared from `copier update`. It is now implicit.
+-   To update via API, `overwrite=True` is now required.
+-   The default update conflict mode is now `inline` instead of `rej`.
+-   By default, updates now consider 3 lines of context instead of just 1.
+-   All CLI calls to Copier must now include the subcommand as the 1st argument. For
+    example, `copier` must become now `copier update`; also `copier ./tpl ./dst` must
+    become `copier copy ./tpl ./dst`.
+-   All flags must go after the subcommand now. For example,
+    `copier -r HEAD update ./dst` must now become `copier update -r HEAD ./dst` or
+    `copier update ./dst -r HEAD`.
+-   Automatic mode removed. Since now subcommands are required, the automatic mode is
+    removed.
+-   Deprecated `copier.copy` function is removed. Use `copier.run_copy`,
+    `copier.run_update` or `copier.run_recopy` explicitly as needed.
+-   default values must be of the same type than the question.
+
+### Feat
+
+-   disable unsafe features by default and add `--UNSAFE` switch (#1171)
+-   basic nixpkgs overlay
+-   add `recopy` command and function
+-   support conditional choices (#1010)
+-   validate default values (#1075)
+
+### Fix
+
+-   explain better why an answer casting fails
+-   **cli**: display subcommand args meaning
+-   preserver recursive symlinks
+-   work around Pydantic bug when parsing choices
+-   skip validating question and generating its default value when its skip condition is
+    met
+
+### Refactor
+
+-   overwrite always on updates
+-   **update**: default to inline markers and 3 lines of context
+-   remove unused local overrides to answers
+
+## v7.2.0 (2023-04-19)
+
+### Feat
+
+-   customizable update accuracy
+
+### Fix
+
+-   fix using a branch name as VCS ref
+-   answer validation for question with complex choices (#1110)
+
+## v7.1.0 (2023-04-07)
+
+### Feat
+
+-   include git in flake app
+-   support preserving symlinks when copying templates (#938)
+-   allow imports in inline templates (#986)
+-   properly support update in repo subdirectory (#1069)
+-   allow templating `_answers_file` setting (#1027)
+-   let answers file exist in a subdirectory
+-   validate answers given via CLI/API
+-   exclude nothing by default when using subdirectory
+-   add native OS directory separator variable in `_copier_conf.sep` to allow generating
+    dynamic directory structures
+-   nix support
+
+### Fix
+
+-   include dirty local changes when copying HEAD
+-   require answer for questions without default value (#958)
+-   **cleanup**: don't clean up local template in parent folder
+-   delete conditionally created file when answer changes (#982)
+-   properly support diffs over updates with new interactive answers
+-   ignore Git hooks during project update (#1066)
+-   properly support diffs over updates with new answers
+-   skip tasks in pretend mode (#970)
+-   parse CLI data using question's answer parser
+-   don't set YAML `!include` constructor globally (#947)
+-   **cli**: use `--conflict` flag only in `copier update` subcommand
+-   ignore template repo tags that aren't valid PEP 440 versions
+-   --skip option was ignored (#966)
+-   Remove useless is_dir check
+-   don't attempt to render a file if its name is empty
+-   warn users against using shallow clones as template source
+
+### Refactor
+
+-   **tests**: remove unknown timeout marker
+-   deduplicate code
+-   remove unused method argument
+-   simplify casting boolean question settings
+-   remove useless code related to not asking a question
+-   **typing**: use `Mapping` instead of `ChainMap` type
+-   move unrelated code out of try-except block
+-   **inline**: smarter inline conflict markers algorithm
+
 ## v7.1.0a0 (2022-12-29)
 
 ### Feat

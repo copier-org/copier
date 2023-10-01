@@ -21,11 +21,18 @@ A library and CLI app for rendering project templates.
 
 ## Installation
 
-1. Install Python 3.7 or newer (3.8 or newer if you're on Windows).
+1. Install Python 3.8 or newer.
 1. Install Git 2.27 or newer.
 1. To use as a CLI app: `pipx install copier`
 1. To use as a library: `pip install copier` or `conda install -c conda-forge copier`
-1. To use with 100% reproducibility: `nix profile install github:copier-org/copier`
+
+### Nix flake
+
+To install latest Copier release with 100% reproducibility:
+
+```shell
+nix profile install 'https://flakehub.com/f/copier-org/copier/*.tar.gz'
+```
 
 ## Quick start
 
@@ -65,25 +72,25 @@ To generate a project from the template:
 -   On the command-line:
 
     ```shell
-    copier path/to/project/template path/to/destination
+    copier copy path/to/project/template path/to/destination
     ```
 
 -   Or in Python code, programmatically:
 
     ```python
-    from copier import run_auto
+    from copier import run_copy
 
     # Create a project from a local path
-    run_auto("path/to/project/template", "path/to/destination")
+    run_copy("path/to/project/template", "path/to/destination")
 
     # Or from a Git URL.
-    run_auto("https://github.com/copier-org/copier.git", "path/to/destination")
+    run_copy("https://github.com/copier-org/copier.git", "path/to/destination")
 
     # You can also use "gh:" as a shortcut of "https://github.com/"
-    run_auto("gh:copier-org/copier.git", "path/to/destination")
+    run_copy("gh:copier-org/copier.git", "path/to/destination")
 
     # Or "gl:" as a shortcut of "https://gitlab.com/"
-    run_auto("gl:copier-org/copier.git", "path/to/destination")
+    run_copy("gl:copier-org/copier.git", "path/to/destination")
     ```
 
 ## Basic concepts
@@ -151,4 +158,10 @@ codebase.
 
 And thanks to all financial supporters and folks that give us a shiny star! ⭐
 
-[![Star History Chart](https://api.star-history.com/svg?repos=copier-org/copier&type=Date)](https://star-history.com/#copier-org/copier&Date)
+<a href="https://star-history.com/#copier-org/copier&Date">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=copier-org/copier&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=copier-org/copier&type=Date" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=copier-org/copier&type=Date" />
+  </picture>
+</a>

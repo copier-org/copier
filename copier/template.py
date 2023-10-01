@@ -1,12 +1,12 @@
 """Tools related to template management."""
 import re
-import sys
 from collections import ChainMap, defaultdict
 from contextlib import suppress
 from dataclasses import field
+from functools import cached_property
 from pathlib import Path
 from shutil import rmtree
-from typing import List, Mapping, Optional, Sequence, Set, Tuple
+from typing import List, Literal, Mapping, Optional, Sequence, Set, Tuple
 from warnings import warn
 
 import dunamai
@@ -14,7 +14,6 @@ import packaging.version
 import yaml
 from funcy import lflatten
 from packaging.version import Version, parse
-from plumbum.cmd import git
 from plumbum.machines import local
 from pydantic.dataclasses import dataclass
 from yamlinclude import YamlIncludeConstructor
@@ -28,15 +27,7 @@ from .errors import (
 )
 from .tools import copier_version, handle_remove_readonly
 from .types import AnyByStrDict, Env, OptStr, StrSeq, Union, VCSTypes
-from .vcs import checkout_latest_tag, clone, get_repo
-
-# HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
-if sys.version_info >= (3, 8):
-    from functools import cached_property
-else:
-    from backports.cached_property import cached_property
-
-from .types import Literal
+from .vcs import checkout_latest_tag, clone, get_git, get_repo
 
 # Default list of files in the template to exclude from the rendered project
 DEFAULT_EXCLUDE: Tuple[str, ...] = (
@@ -55,21 +46,17 @@ DEFAULT_TEMPLATES_SUFFIX = ".jinja"
 
 def filter_config(data: AnyByStrDict) -> Tuple[AnyByStrDict, AnyByStrDict]:
     """Separates config and questions data."""
-    conf_data: AnyByStrDict = {"secret_questions": set()}
+    config_data: AnyByStrDict = {}
     questions_data = {}
     for k, v in data.items():
-        if k == "_secret_questions":
-            conf_data["secret_questions"].update(v)
-        elif k.startswith("_"):
-            conf_data[k[1:]] = v
+        if k.startswith("_"):
+            config_data[k[1:]] = v
         else:
             # Transform simplified questions format into complex
             if not isinstance(v, dict):
                 v = {"default": v}
             questions_data[k] = v
-            if v.get("secret"):
-                conf_data["secret_questions"].add(k)
-    return conf_data, questions_data
+    return config_data, questions_data
 
 
 def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
@@ -209,7 +196,7 @@ class Template:
     use_prereleases: bool = False
 
     def _cleanup(self) -> None:
-        temp_clone = self._temp_clone
+        temp_clone = self._temp_clone()
         if temp_clone:
             rmtree(
                 temp_clone,
@@ -217,8 +204,14 @@ class Template:
                 onerror=handle_remove_readonly,
             )
 
-    @property
     def _temp_clone(self) -> Optional[Path]:
+        """Get the path to the temporary clone of the template.
+
+        If the template hasn't yet been cloned, or if it was a local template,
+        then there's no temporary clone and this will return `None`.
+        """
+        if "local_abspath" not in self.__dict__:
+            return None
         clone_path = self.local_abspath
         original_path = Path(self.url).expanduser()
         with suppress(OSError):  # triggered for URLs on Windows
@@ -261,13 +254,13 @@ class Template:
         """If the template is VCS-tracked, get its commit description."""
         if self.vcs == "git":
             with local.cwd(self.local_abspath):
-                return git("describe", "--tags", "--always").strip()
+                return get_git()("describe", "--tags", "--always").strip()
 
     @cached_property
     def commit_hash(self) -> OptStr:
         """If the template is VCS-tracked, get its commit full hash."""
         if self.vcs == "git":
-            return git("-C", self.local_abspath, "rev-parse", "HEAD").strip()
+            return get_git()("-C", self.local_abspath, "rev-parse", "HEAD").strip()
 
     @cached_property
     def config_data(self) -> AnyByStrDict:
@@ -280,11 +273,6 @@ class Template:
         with suppress(KeyError):
             verify_copier_version(result["min_copier_version"])
         return result
-
-    @cached_property
-    def default_answers(self) -> AnyByStrDict:
-        """Get default answers for template's questions."""
-        return {key: value.get("default") for key, value in self.questions_data.items()}
 
     @cached_property
     def envops(self) -> Mapping:
@@ -320,6 +308,26 @@ class Template:
         See [jinja_extensions][].
         """
         return tuple(self.config_data.get("jinja_extensions", ()))
+
+    @cached_property
+    def message_after_copy(self) -> str:
+        """Get message to print after copy action specified in the template."""
+        return self.config_data.get("message_after_copy", "")
+
+    @cached_property
+    def message_after_update(self) -> str:
+        """Get message to print after update action specified in the template."""
+        return self.config_data.get("message_after_update", "")
+
+    @cached_property
+    def message_before_copy(self) -> str:
+        """Get message to print before copy action specified in the template."""
+        return self.config_data.get("message_before_copy", "")
+
+    @cached_property
+    def message_before_update(self) -> str:
+        """Get message to print before update action specified in the template."""
+        return self.config_data.get("message_before_update", "")
 
     @cached_property
     def metadata(self) -> AnyByStrDict:
@@ -386,7 +394,11 @@ class Template:
 
         See [questions][].
         """
-        return filter_config(self._raw_config)[1]
+        result = filter_config(self._raw_config)[1]
+        for key in set(self.config_data.get("secret_questions", [])):
+            if key in result:
+                result[key]["secret"] = True
+        return result
 
     @cached_property
     def secret_questions(self) -> Set[str]:
@@ -394,7 +406,7 @@ class Template:
 
         These questions shouldn't be saved into the answers file.
         """
-        result = set(self.config_data.get("secret_questions", {}))
+        result = set(self.config_data.get("secret_questions", []))
         for key, value in self.questions_data.items():
             if value.get("secret"):
                 result.add(key)
@@ -447,6 +459,14 @@ class Template:
         return result
 
     @cached_property
+    def preserve_symlinks(self) -> bool:
+        """Know if Copier should preserve symlinks when rendering the template.
+
+        See [preserve_symlinks][].
+        """
+        return bool(self.config_data.get("preserve_symlinks", False))
+
+    @cached_property
     def local_abspath(self) -> Path:
         """Get the absolute path to the template on disk.
 
@@ -460,7 +480,9 @@ class Template:
                 checkout_latest_tag(result, self.use_prereleases)
         if not result.is_dir():
             raise ValueError("Local template must be a directory.")
-        return result.absolute()
+        with suppress(OSError):
+            result = result.resolve()
+        return result
 
     @cached_property
     def url_expanded(self) -> str:

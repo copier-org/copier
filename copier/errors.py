@@ -1,9 +1,7 @@
 """Custom exceptions used by Copier."""
 
 from pathlib import Path
-from typing import TYPE_CHECKING
-
-from pydantic.errors import _PathValueError
+from typing import TYPE_CHECKING, Sequence
 
 from .tools import printf_exception
 from .types import PathSeq
@@ -52,18 +50,22 @@ class InvalidTypeError(TypeError, CopierError):
     """The question type is not among the supported ones."""
 
 
-class PathNotAbsoluteError(_PathValueError, CopierError):
+class PathError(CopierError, ValueError):
+    """The path is invalid in the given context."""
+
+
+class PathNotAbsoluteError(PathError):
     """The path is not absolute, but it should be."""
 
-    code = "path.not_absolute"
-    msg_template = '"{path}" is not an absolute path'
+    def __init__(self, *, path: Path) -> None:
+        super().__init__(f'"{path}" is not an absolute path')
 
 
-class PathNotRelativeError(_PathValueError, CopierError):
+class PathNotRelativeError(PathError):
     """The path is not relative, but it should be."""
 
-    code = "path.not_relative"
-    msg_template = '"{path}" is not a relative path'
+    def __init__(self, *, path: Path) -> None:
+        super().__init__(f'"{path}" is not a relative path')
 
 
 class ExtensionNotFoundError(UserMessageError):
@@ -96,6 +98,18 @@ class CopierAnswersInterrupt(CopierError, KeyboardInterrupt):
         self.answers = answers
         self.last_question = last_question
         self.template = template
+
+
+class UnsafeTemplateError(CopierError):
+    """Unsafe Copier template features are used without explicit consent."""
+
+    def __init__(self, features: Sequence[str]):
+        assert features
+        s = "s" if len(features) > 1 else ""
+        super().__init__(
+            f"Template uses potentially unsafe feature{s}: {', '.join(features)}.\n"
+            "If you trust this template, consider adding the `--trust` option when running `copier copy/update`."
+        )
 
 
 # Warnings

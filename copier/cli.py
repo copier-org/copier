@@ -44,53 +44,40 @@ Below are the docs of each one of those.
 """
 
 import sys
-from functools import wraps
 from io import StringIO
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import patch
 
+import yaml
+from decorator import decorator
 from plumbum import cli, colors
 
-from copier.tools import copier_version
-
-from .errors import UserMessageError
+from .errors import UnsafeTemplateError, UserMessageError
 from .main import Worker
+from .tools import copier_version
 from .types import AnyByStrDict, OptStr, StrSeq
 
 
-def handle_exceptions(method):
+@decorator
+def handle_exceptions(method, *args, **kwargs):
     """Handle keyboard interruption while running a method."""
-
-    @wraps(method)
-    def _wrapper(*args, **kwargs):
+    try:
         try:
-            try:
-                return method(*args, **kwargs)
-            except KeyboardInterrupt:
-                raise UserMessageError("Execution stopped by user")
-        except UserMessageError as error:
-            print(colors.red | "\n".join(error.args), file=sys.stderr)
-            return 1
-
-    return _wrapper
+            return method(*args, **kwargs)
+        except KeyboardInterrupt:
+            raise UserMessageError("Execution stopped by user")
+    except UserMessageError as error:
+        print(colors.red | "\n".join(error.args), file=sys.stderr)
+        return 1
+    except UnsafeTemplateError as error:
+        print(colors.red | "\n".join(error.args), file=sys.stderr)
+        # DOCS https://github.com/copier-org/copier/issues/1328#issuecomment-1723214165
+        return 0b100
 
 
 class CopierApp(cli.Application):
-    """The Copier CLI application.
-
-    Attributes:
-        answers_file: Set [answers_file][] option.
-        exclude: Set [exclude][] option.
-        vcs_ref: Set [vcs_ref][] option.
-        pretend: Set [pretend][] option.
-        force: Set [force][] option.
-        defaults: Set [defaults][] option.
-        overwrite: Set [overwrite][] option.
-        skip: Set [skip_if_exists][] option.
-        prereleases: Set [use_prereleases][] option.
-        quiet: Set [quiet][] option.
-    """
+    """The Copier CLI application."""
 
     DESCRIPTION = "Create a new project from a template."
     DESCRIPTION_MORE = (
@@ -110,17 +97,18 @@ class CopierApp(cli.Application):
             )
         )
     )
-    USAGE = dedent(
-        """\
-        copier [MAIN_SWITCHES] [copy] [SUB_SWITCHES] template_src destination_path
-        copier [MAIN_SWITCHES] [update] [SUB_SWITCHES] [destination_path]
-        """
-    )
     VERSION = copier_version()
     CALL_MAIN_IF_NESTED_COMMAND = False
-    data: AnyByStrDict = {}
 
-    answers_file: cli.SwitchAttr = cli.SwitchAttr(
+
+class _Subcommand(cli.Application):
+    """Base class for Copier subcommands."""
+
+    def __init__(self, executable):
+        self.data: AnyByStrDict = {}
+        super().__init__(executable)
+
+    answers_file = cli.SwitchAttr(
         ["-a", "--answers-file"],
         default=None,
         help=(
@@ -128,7 +116,7 @@ class CopierApp(cli.Application):
             "to find the answers file"
         ),
     )
-    exclude: cli.SwitchAttr = cli.SwitchAttr(
+    exclude = cli.SwitchAttr(
         ["-x", "--exclude"],
         str,
         list=True,
@@ -137,7 +125,7 @@ class CopierApp(cli.Application):
             "that must not be copied"
         ),
     )
-    vcs_ref: cli.SwitchAttr = cli.SwitchAttr(
+    vcs_ref = cli.SwitchAttr(
         ["-r", "--vcs-ref"],
         str,
         help=(
@@ -147,31 +135,23 @@ class CopierApp(cli.Application):
             "the latest version, use `--vcs-ref=HEAD`."
         ),
     )
-    pretend: cli.Flag = cli.Flag(
-        ["-n", "--pretend"], help="Run but do not make any changes"
-    )
-    force: cli.Flag = cli.Flag(
-        ["-f", "--force"],
-        help="Same as `--defaults --overwrite`.",
-    )
-    defaults: cli.Flag = cli.Flag(
-        ["-l", "--defaults"],
-        help="Use default answers to questions, which might be null if not specified.",
-    )
-    overwrite: cli.Flag = cli.Flag(
-        ["-w", "--overwrite"],
-        help="Overwrite files that already exist, without asking.",
-    )
-    skip: cli.Flag = cli.SwitchAttr(
+    pretend = cli.Flag(["-n", "--pretend"], help="Run but do not make any changes")
+    skip = cli.SwitchAttr(
         ["-s", "--skip"],
         str,
         list=True,
         help="Skip specified files if they exist already",
     )
-    quiet: cli.Flag = cli.Flag(["-q", "--quiet"], help="Suppress status output")
-    prereleases: cli.Flag = cli.Flag(
+    quiet = cli.Flag(["-q", "--quiet"], help="Suppress status output")
+    prereleases = cli.Flag(
         ["-g", "--prereleases"],
         help="Use prereleases to compare template VCS tags.",
+    )
+    unsafe = cli.Flag(
+        ["--UNSAFE", "--trust"],
+        help=(
+            "Allow templates with unsafe features (Jinja extensions, migrations, tasks)"
+        ),
     )
 
     @cli.switch(
@@ -192,6 +172,25 @@ class CopierApp(cli.Application):
             key, value = arg.split("=", 1)
             self.data[key] = value
 
+    @cli.switch(
+        ["--data-file"],
+        cli.ExistingFile,
+        help="Load data from a YAML file",
+    )
+    def data_file_switch(self, path: cli.ExistingFile) -> None:
+        """Update [data][] with provided values.
+
+        Arguments:
+            path: The path to the YAML file to load.
+        """
+        with open(path) as f:
+            file_updates: AnyByStrDict = yaml.safe_load(f)
+
+        updates_without_cli_overrides = {
+            k: v for k, v in file_updates.items() if k not in self.data
+        }
+        self.data.update(updates_without_cli_overrides)
+
     def _worker(self, src_path: OptStr = None, dst_path: str = ".", **kwargs) -> Worker:
         """
         Run Copier's internal API using CLI switches.
@@ -206,74 +205,43 @@ class CopierApp(cli.Application):
             dst_path=Path(dst_path),
             answers_file=self.answers_file,
             exclude=self.exclude,
-            defaults=self.force or self.defaults,
-            overwrite=self.force or self.overwrite,
             pretend=self.pretend,
             skip_if_exists=self.skip,
             quiet=self.quiet,
             src_path=src_path,
             vcs_ref=self.vcs_ref,
             use_prereleases=self.prereleases,
+            unsafe=self.unsafe,
             **kwargs,
         )
 
-    @handle_exceptions
-    def main(self, *args: str) -> int:
-        """Copier CLI app shortcuts.
-
-        This method redirects abstract CLI calls
-        (those that don't specify `copy` or `update`)
-        to [CopierCopySubApp.main][copier.cli.CopierCopySubApp.main]
-        or [CopierUpdateSubApp.main][copier.cli.CopierUpdateSubApp.main]
-        automatically.
-
-        Examples:
-            - `copier from to` → `copier copy from to`
-            - `copier from` → `copier update from`
-            - `copier` → `copier update .`
-        """
-        # Redirect to subcommand if supplied
-        if args and args[0] in self._subcommands:
-            self.nested_command = (
-                self._subcommands[args[0]].subapplication,
-                ["copier %s" % args[0]] + list(args[1:]),
-            )
-        # If using 0 or 1 args, you want to update
-        elif len(args) in {0, 1}:
-            self.nested_command = (
-                self._subcommands["update"].subapplication,
-                ["copier update"] + list(args),
-            )
-        # If using 2 args, you want to copy
-        elif len(args) == 2:
-            self.nested_command = (
-                self._subcommands["copy"].subapplication,
-                ["copier copy"] + list(args),
-            )
-        # If using more args, you're wrong
-        else:
-            self.help()
-            raise UserMessageError("Unsupported arguments")
-        return 0
-
 
 @CopierApp.subcommand("copy")
-class CopierCopySubApp(cli.Application):
+class CopierCopySubApp(_Subcommand):
     """The `copier copy` subcommand.
 
     Use this subcommand to bootstrap a new subproject from a template, or to override
     a preexisting subproject ignoring its history diff.
-
-    Attributes:
-        cleanup_on_error: Set [cleanup_on_error][] option.
     """
 
     DESCRIPTION = "Copy from a template source to a destination."
 
-    cleanup_on_error: cli.Flag = cli.Flag(
+    cleanup_on_error = cli.Flag(
         ["-C", "--no-cleanup"],
         default=True,
         help="On error, do not delete destination if it was created by Copier.",
+    )
+    defaults = cli.Flag(
+        ["-l", "--defaults"],
+        help="Use default answers to questions, which might be null if not specified.",
+    )
+    force = cli.Flag(
+        ["-f", "--force"],
+        help="Same as `--defaults --overwrite`.",
+    )
+    overwrite = cli.Flag(
+        ["-w", "--overwrite"],
+        help="Overwrite files that already exist, without asking.",
     )
 
     @handle_exceptions
@@ -289,47 +257,131 @@ class CopierCopySubApp(cli.Application):
             destination_path:
                 Where to generate the new subproject. It must not exist or be empty.
         """
-        self.parent._worker(
+        with self._worker(
             template_src,
             destination_path,
             cleanup_on_error=self.cleanup_on_error,
-        ).run_copy()
+            defaults=self.force or self.defaults,
+            overwrite=self.force or self.overwrite,
+        ) as worker:
+            worker.run_copy()
+        return 0
+
+
+@CopierApp.subcommand("recopy")
+class CopierRecopySubApp(_Subcommand):
+    """The `copier recopy` subcommand.
+
+    Use this subcommand to update an existing subproject from a template that
+    supports updates, ignoring any subproject evolution since the last Copier
+    execution.
+    """
+
+    DESCRIPTION = "Recopy a subproject from its original template"
+    DESCRIPTION_MORE = dedent(
+        """\
+        The copy must have a valid answers file which contains info from the
+        last Copier execution, including the source template (it must be a key
+        called `_src_path`).
+
+        This command will ignore any diff that you have generated since the
+        last `copier` execution. It will act as if it were the 1st time you
+        apply the template to the destination path. However, it will keep the
+        answers.
+
+        If you want a smarter update that respects your project evolution, use
+        `copier update` instead.
+        """
+    )
+
+    defaults = cli.Flag(
+        ["-l", "--defaults"],
+        help="Use default answers to questions, which might be null if not specified.",
+    )
+    force = cli.Flag(
+        ["-f", "--force"],
+        help="Same as `--defaults --overwrite`.",
+    )
+    overwrite = cli.Flag(
+        ["-w", "--overwrite"],
+        help="Overwrite files that already exist, without asking.",
+    )
+    skip_answered = cli.Flag(
+        ["-A", "--skip-answered"],
+        default=False,
+        help="Skip questions that have already been answered",
+    )
+
+    @handle_exceptions
+    def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
+        """Call [run_recopy][copier.main.Worker.run_recopy].
+
+        Parameters:
+            destination_path:
+                Only the destination path is needed to update, because the
+                `src_path` comes from [the answers file][the-copier-answersyml-file].
+
+                The subproject must exist. If not specified, the currently
+                working directory is used.
+        """
+        with self._worker(
+            dst_path=destination_path,
+            defaults=self.force or self.defaults,
+            overwrite=self.force or self.overwrite,
+            skip_answered=self.skip_answered,
+        ) as worker:
+            worker.run_recopy()
         return 0
 
 
 @CopierApp.subcommand("update")
-class CopierUpdateSubApp(cli.Application):
+class CopierUpdateSubApp(_Subcommand):
     """The `copier update` subcommand.
 
     Use this subcommand to update an existing subproject from a template
-    that supports updates.
-
-    Attributes:
-        conflict: Set [conflict][] option.
+    that supports updates, respecting that subproject evolution since the last
+    Copier execution.
     """
 
-    DESCRIPTION = "Update a copy from its original template"
+    DESCRIPTION = "Update a subproject from its original template"
     DESCRIPTION_MORE = dedent(
         """\
         The copy must have a valid answers file which contains info
         from the last Copier execution, including the source template
         (it must be a key called `_src_path`).
 
-        If that file contains also `_commit` and `destination_path` is a git
+        If that file contains also `_commit`, and `destination_path` is a git
         repository, this command will do its best to respect the diff that you have
-        generated since the last `copier` execution. To avoid that, use `copier copy`
+        generated since the last `copier` execution. To avoid that, use `copier recopy`
         instead.
         """
     )
 
-    conflict: cli.SwitchAttr = cli.SwitchAttr(
+    conflict = cli.SwitchAttr(
         ["-o", "--conflict"],
         cli.Set("rej", "inline"),
-        default="rej",
+        default="inline",
         help=(
-            "Behavior on conflict: rej=Create .rej file, inline=inline conflict "
-            "markers (inline is still experimental)"
+            "Behavior on conflict: Create .rej files, or add inline conflict markers."
         ),
+    )
+    context_lines = cli.SwitchAttr(
+        ["-c", "--context-lines"],
+        int,
+        default=3,
+        help=(
+            "Lines of context to use for detecting conflicts. Increase for "
+            "accuracy, decrease for resilience."
+        ),
+    )
+    defaults = cli.Flag(
+        ["-l", "-f", "--defaults"],
+        help="Use default answers to questions, which might be null if not specified.",
+    )
+    skip_answered = cli.Flag(
+        ["-A", "--skip-answered"],
+        default=False,
+        help="Skip questions that have already been answered",
     )
 
     @handle_exceptions
@@ -344,10 +396,15 @@ class CopierUpdateSubApp(cli.Application):
                 The subproject must exist. If not specified, the currently
                 working directory is used.
         """
-        self.parent._worker(
+        with self._worker(
             dst_path=destination_path,
             conflict=self.conflict,
-        ).run_update()
+            context_lines=self.context_lines,
+            defaults=self.defaults,
+            skip_answered=self.skip_answered,
+            overwrite=True,
+        ) as worker:
+            worker.run_update()
         return 0
 
 

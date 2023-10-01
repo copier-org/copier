@@ -3,7 +3,7 @@ import stat
 import sys
 from contextlib import nullcontext as does_not_raise
 from pathlib import Path
-from typing import ContextManager
+from typing import Any, ContextManager, List
 
 import pytest
 import yaml
@@ -12,7 +12,7 @@ from plumbum.cmd import git
 from prompt_toolkit.validation import ValidationError
 
 import copier
-from copier import copy
+from copier import run_copy
 from copier.types import AnyByStrDict
 
 from .helpers import (
@@ -28,10 +28,10 @@ from .helpers import (
 
 def test_project_not_found(tmp_path: Path) -> None:
     with pytest.raises(ValueError):
-        copier.copy("foobar", tmp_path)
+        copier.run_copy("foobar", tmp_path)
 
     with pytest.raises(ValueError):
-        copier.copy(__file__, tmp_path)
+        copier.run_copy(__file__, tmp_path)
 
 
 def test_copy_with_non_version_tags(tmp_path_factory: pytest.TempPathFactory) -> None:
@@ -59,11 +59,12 @@ def test_copy_with_non_version_tags(tmp_path_factory: pytest.TempPathFactory) ->
         git("commit", "-m1")
         git("tag", "test_tag.post23+deadbeef")
 
-    copy(
+    run_copy(
         str(src),
         dst,
         defaults=True,
         overwrite=True,
+        unsafe=True,
         vcs_ref="HEAD",
     )
 
@@ -219,13 +220,27 @@ def test_copy_with_non_version_tags_and_vcs_ref(
         git("commit", "-m1")
         git("tag", "test_tag.post23+deadbeef")
 
-    copy(
+    run_copy(
         str(src),
         dst,
         defaults=True,
         overwrite=True,
+        unsafe=True,
         vcs_ref="test_tag.post23+deadbeef",
     )
+
+
+def test_copy_with_vcs_ref_branch(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        git("init")
+        main_branch = git("branch", "--show-current").strip()
+        git("add", ".")
+        git("commit", "-m1", "--allow-empty")
+        git("checkout", "-b", "branch")
+        git("commit", "-m2", "--allow-empty")
+        git("checkout", main_branch)
+    run_copy(str(src), dst, vcs_ref="branch")
 
 
 def test_copy(tmp_path: Path) -> None:
@@ -259,10 +274,12 @@ def test_copy(tmp_path: Path) -> None:
     assert not (tmp_path / "py2_folder" / "thing.py").exists()
     assert (tmp_path / "py3_folder" / "thing.py").exists()
 
+    assert (tmp_path / "aaaa.txt").exists()
+
 
 @pytest.mark.impure
 def test_copy_repo(tmp_path: Path) -> None:
-    copier.copy(
+    copier.run_copy(
         "gh:copier-org/copier.git",
         tmp_path,
         vcs_ref="HEAD",
@@ -311,7 +328,7 @@ def test_exclude_extends(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("init")
         git("add", ".")
         git("commit", "-m", "hello world")
-    copier.copy(str(src), dst, exclude=["*.txt"])
+    copier.run_copy(str(src), dst, exclude=["*.txt"])
     assert (dst / "test.json").is_file()
     assert not (dst / "test.txt").exists()
     # .git exists in src, but not in dst because it is excluded by default
@@ -330,7 +347,7 @@ def test_exclude_replaces(tmp_path_factory: pytest.TempPathFactory) -> None:
             src / "copier.yml": "_exclude: ['*.json']",
         }
     )
-    copier.copy(str(src), dst, exclude=["*.txt"])
+    copier.run_copy(str(src), dst, exclude=["*.txt"])
     assert (dst / "test.yaml").is_file()
     assert not (dst / "test.txt").exists()
     assert not (dst / "test.json").exists()
@@ -339,8 +356,8 @@ def test_exclude_replaces(tmp_path_factory: pytest.TempPathFactory) -> None:
 
 
 def test_skip_if_exists(tmp_path: Path) -> None:
-    copier.copy(str(Path("tests", "demo_skip_dst")), tmp_path)
-    copier.copy(
+    copier.run_copy(str(Path("tests", "demo_skip_dst")), tmp_path)
+    copier.run_copy(
         "tests/demo_skip_src",
         tmp_path,
         skip_if_exists=["b.noeof.txt", "meh/c.noeof.txt"],
@@ -354,8 +371,8 @@ def test_skip_if_exists(tmp_path: Path) -> None:
 
 
 def test_skip_if_exists_rendered_patterns(tmp_path: Path) -> None:
-    copier.copy("tests/demo_skip_dst", tmp_path)
-    copier.copy(
+    copier.run_copy("tests/demo_skip_dst", tmp_path)
+    copier.run_copy(
         "tests/demo_skip_src",
         tmp_path,
         data={"name": "meh"},
@@ -412,22 +429,28 @@ def test_empty_dir(tmp_path_factory: pytest.TempPathFactory, generate: bool) -> 
             ),
             (src / "tpl" / "two.txt"): "[[ do_it ]]",
             (src / "tpl" / "[% if do_it %]three.txt[% endif %].jinja"): "[[ do_it ]]",
-            (src / "tpl" / "four" / "[% if do_it %]five.txt[% endif %].jinja"): (
+            (src / "tpl" / "[% if do_it %]four.txt[% endif %].jinja"): Path(
+                "[% if do_it %]three.txt[% endif %].jinja"
+            ),
+            (src / "tpl" / "five" / "[% if do_it %]six.txt[% endif %].jinja"): (
                 "[[ do_it ]]"
             ),
         },
     )
     copier.run_copy(str(src), dst, {"do_it": generate}, defaults=True, overwrite=True)
-    assert (dst / "four").is_dir()
+    assert (dst / "five").is_dir()
     assert (dst / "two.txt").read_text() == "[[ do_it ]]"
     assert (dst / "one_dir").exists() == generate
     assert (dst / "three.txt").exists() == generate
+    assert (dst / "four.txt").exists() == generate
     assert (dst / "one_dir").is_dir() == generate
     assert (dst / "one_dir" / "one.txt").is_file() == generate
     if generate:
         assert (dst / "one_dir" / "one.txt").read_text() == repr(generate)
         assert (dst / "three.txt").read_text() == repr(generate)
-        assert (dst / "four" / "five.txt").read_text() == repr(generate)
+        assert not (dst / "four.txt").is_symlink()
+        assert (dst / "four.txt").read_text() == repr(generate)
+        assert (dst / "five" / "six.txt").read_text() == repr(generate)
 
 
 @pytest.mark.skipif(
@@ -483,7 +506,7 @@ def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> N
             ),
         }
     )
-    copier.run_auto(str(src), dst, data={"filename": "a.b.c"})
+    copier.run_copy(str(src), dst, data={"filename": "a.b.c"})
     assert (dst / "a" / "b" / "c.txt").read_text() == "This is template."
 
 
@@ -537,6 +560,30 @@ def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> N
             pytest.raises(ValueError),
         ),
         (
+            {
+                "type": "int",
+                "choices": [1, ["2", {"value": None}], 3],
+            },
+            "2",
+            does_not_raise(),
+        ),
+        (
+            {
+                "type": "int",
+                "choices": [1, ["2", {"value": None, "disabled": ""}], 3],
+            },
+            "2",
+            does_not_raise(),
+        ),
+        (
+            {
+                "type": "int",
+                "choices": [1, ["2", {"value": None, "validator": "disabled"}], 3],
+            },
+            "2",
+            pytest.raises(ValueError, match="Invalid choice: disabled"),
+        ),
+        (
             {"type": "int", "choices": {"one": 1, "two": 2, "three": 3}},
             "1",
             does_not_raise(),
@@ -547,6 +594,35 @@ def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> N
             pytest.raises(ValueError),
         ),
         (
+            {"type": "int", "choices": {"one": 1, "two": {"value": 2}, "three": 3}},
+            "2",
+            does_not_raise(),
+        ),
+        (
+            {
+                "type": "int",
+                "choices": {
+                    "one": 1,
+                    "two": {"value": 2, "validator": ""},
+                    "three": 3,
+                },
+            },
+            "2",
+            does_not_raise(),
+        ),
+        (
+            {
+                "type": "int",
+                "choices": {
+                    "one": 1,
+                    "two": {"value": 2, "validator": "disabled"},
+                    "three": 3,
+                },
+            },
+            "2",
+            pytest.raises(ValueError, match="Invalid choice: disabled"),
+        ),
+        (
             {"type": "str", "choices": {"one": None, "two": None, "three": None}},
             "one",
             does_not_raise(),
@@ -555,6 +631,17 @@ def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> N
             {"type": "str", "choices": {"one": None, "two": None, "three": None}},
             "four",
             pytest.raises(ValueError),
+        ),
+        (
+            {
+                "type": "str",
+                "choices": {
+                    "banana": {"value": "yellow", "validator": "invalid"},
+                    "tshirt": {"value": "yellow", "validator": ""},
+                },
+            },
+            "yellow",
+            does_not_raise(),
         ),
         (
             {"type": "yaml", "choices": {"one": None, "two": 2, "three": "null"}},
@@ -581,6 +668,97 @@ def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> N
             "three",
             pytest.raises(ValueError),
         ),
+        (
+            {"type": "yaml", "choices": {"array": "[a, b]"}},
+            "[a, b]",
+            does_not_raise(),
+        ),
+        (
+            {"type": "yaml", "choices": {"object": "k: v"}},
+            "k: v",
+            does_not_raise(),
+        ),
+        (
+            {"type": "yaml", "choices": [{"one": 1, "two": 2}]},
+            "one: 1\ntwo: 2",
+            does_not_raise(),
+        ),
+        (
+            {"type": "yaml", "choices": {"complex": {"value": {"key": "value"}}}},
+            "key: value",
+            does_not_raise(),
+        ),
+        (
+            {
+                "type": "yaml",
+                "choices": {"complex": {"value": {"key": "value"}, "validator": ""}},
+            },
+            "key: value",
+            does_not_raise(),
+        ),
+        (
+            {
+                "type": "yaml",
+                "choices": {
+                    "complex": {"value": {"key": "value"}, "validator": "disabled"}
+                },
+            },
+            "key: value",
+            pytest.raises(ValueError, match="Invalid choice: disabled"),
+        ),
+        (
+            {"type": "yaml", "choices": {"complex": {"key": "value"}}},
+            "key: value",
+            pytest.raises(KeyError, match="Property 'value' is required"),
+        ),
+        (
+            {"type": "yaml", "choices": {"complex": {"value": 1, "validator": {}}}},
+            "1",
+            pytest.raises(ValueError, match="Property 'validator' must be a string"),
+        ),
+        (
+            {"type": "yaml", "choices": [{"key": "value"}]},
+            "key: value",
+            does_not_raise(),
+        ),
+        (
+            {"type": "yaml", "choices": [{"value": 1, "validator": {}}]},
+            "value: 1\nvalidator: {}",
+            does_not_raise(),
+        ),
+        (
+            {"type": "yaml", "choices": [["complex", {"value": {"key": "value"}}]]},
+            "key: value",
+            does_not_raise(),
+        ),
+        (
+            {
+                "type": "yaml",
+                "choices": [["complex", {"value": {"key": "value"}, "validator": ""}]],
+            },
+            "key: value",
+            does_not_raise(),
+        ),
+        (
+            {
+                "type": "yaml",
+                "choices": [
+                    ["complex", {"value": {"key": "value"}, "validator": "disabled"}]
+                ],
+            },
+            "key: value",
+            pytest.raises(ValueError, match="Invalid choice: disabled"),
+        ),
+        (
+            {"type": "yaml", "choices": [["complex", {"key": "value"}]]},
+            "key: value",
+            pytest.raises(KeyError, match="Property 'value' is required"),
+        ),
+        (
+            {"type": "yaml", "choices": [["complex", {"value": 1, "validator": {}}]]},
+            "1",
+            pytest.raises(ValueError, match="Property 'validator' must be a string"),
+        ),
     ],
 )
 def test_validate_init_data(
@@ -588,7 +766,7 @@ def test_validate_init_data(
     spec: AnyByStrDict,
     value: str,
     expected: ContextManager[None],
-):
+) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
@@ -602,4 +780,184 @@ def test_validate_init_data(
         }
     )
     with expected:
-        copier.copy(str(src), dst, data={"q": value})
+        copier.run_copy(str(src), dst, data={"q": value})
+
+
+@pytest.mark.parametrize("defaults", [False, True])
+def test_validate_init_data_with_skipped_question(
+    tmp_path_factory: pytest.TempPathFactory, defaults: bool
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                f"""\
+                _envops: {BRACKET_ENVOPS_JSON}
+
+                kind:
+                    type: str
+                    help: What kind do you need?
+                    choices:
+                        foo: foo
+                        bar: bar
+
+                testbar:
+                    when: "[[ kind == 'bar' ]]"
+                    type: str
+                    help: any string bar?
+
+                testfoo:
+                    when: "[[ kind == 'foo' ]]"
+                    type: str
+                    help: any string foo?
+                """
+            ),
+            (src / "result.jinja"): (
+                """\
+                [[ kind ]]
+                [[ testbar ]]
+                [[ testfoo ]]
+                """
+            ),
+        }
+    )
+    copier.run_copy(
+        str(src), dst, defaults=defaults, data={"kind": "foo", "testfoo": "helloworld"}
+    )
+    assert (dst / "result").read_text() == "foo\n\nhelloworld\n"
+
+
+@pytest.mark.parametrize(
+    "type_name",
+    ["str", "int", "float", "bool", "json", "yaml"],
+)
+def test_required_question_without_data(
+    tmp_path_factory: pytest.TempPathFactory, type_name: str
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): yaml.safe_dump(
+                {
+                    "question": {
+                        "type": type_name,
+                    }
+                }
+            )
+        }
+    )
+    with pytest.raises(ValueError, match='Question "question" is required'):
+        copier.run_copy(str(src), dst, defaults=True)
+
+
+@pytest.mark.parametrize(
+    "type_name, choices",
+    [
+        ("str", ["one", "two", "three"]),
+        ("int", [1, 2, 3]),
+        ("float", [1.0, 2.0, 3.0]),
+        ("json", ["[1]", "[2]", "[3]"]),
+        ("yaml", ["- 1", "- 2", "- 3"]),
+    ],
+)
+def test_required_choice_question_without_data(
+    tmp_path_factory: pytest.TempPathFactory, type_name: str, choices: List[Any]
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): yaml.safe_dump(
+                {
+                    "question": {
+                        "type": type_name,
+                        "choices": choices,
+                    }
+                }
+            )
+        }
+    )
+    with pytest.raises(ValueError, match='Question "question" is required'):
+        copier.run_copy(str(src), dst, defaults=True)
+
+
+@pytest.mark.parametrize(
+    "type_name, default, expected",
+    [
+        ("str", "string", does_not_raise()),
+        ("str", "1.0", does_not_raise()),
+        ("str", 1.0, does_not_raise()),
+        ("str", None, pytest.raises(TypeError)),
+        ("int", 1, does_not_raise()),
+        ("int", 1.0, does_not_raise()),
+        ("int", "1", does_not_raise()),
+        ("int", "1.0", pytest.raises(ValueError)),
+        ("int", "no-int", pytest.raises(ValueError)),
+        ("int", None, pytest.raises(TypeError)),
+        ("int", {}, pytest.raises(TypeError)),
+        ("int", [], pytest.raises(TypeError)),
+        ("float", 1.1, does_not_raise()),
+        ("float", 1, does_not_raise()),
+        ("float", "1.1", does_not_raise()),
+        ("float", "no-float", pytest.raises(ValueError)),
+        ("float", None, pytest.raises(TypeError)),
+        ("float", {}, pytest.raises(TypeError)),
+        ("float", [], pytest.raises(TypeError)),
+        ("bool", True, does_not_raise()),
+        ("bool", False, does_not_raise()),
+        ("bool", "y", does_not_raise()),
+        ("bool", "n", does_not_raise()),
+        ("bool", None, pytest.raises(TypeError)),
+        ("json", '"string"', does_not_raise()),
+        ("json", "1", does_not_raise()),
+        ("json", 1, does_not_raise()),
+        ("json", "1.1", does_not_raise()),
+        ("json", 1.1, does_not_raise()),
+        ("json", "true", does_not_raise()),
+        ("json", True, does_not_raise()),
+        ("json", "false", does_not_raise()),
+        ("json", False, does_not_raise()),
+        ("json", "{}", does_not_raise()),
+        ("json", {}, does_not_raise()),
+        ("json", "[]", does_not_raise()),
+        ("json", [], does_not_raise()),
+        ("json", "null", does_not_raise()),
+        ("json", None, does_not_raise()),
+        ("yaml", '"string"', does_not_raise()),
+        ("yaml", "string", does_not_raise()),
+        ("yaml", "1", does_not_raise()),
+        ("yaml", 1, does_not_raise()),
+        ("yaml", "1.1", does_not_raise()),
+        ("yaml", 1.1, does_not_raise()),
+        ("yaml", "true", does_not_raise()),
+        ("yaml", True, does_not_raise()),
+        ("yaml", "false", does_not_raise()),
+        ("yaml", False, does_not_raise()),
+        ("yaml", "{}", does_not_raise()),
+        ("yaml", {}, does_not_raise()),
+        ("yaml", "[]", does_not_raise()),
+        ("yaml", [], does_not_raise()),
+        ("yaml", "null", does_not_raise()),
+        ("yaml", None, does_not_raise()),
+    ],
+)
+def test_validate_default_value(
+    tmp_path_factory: pytest.TempPathFactory,
+    type_name: str,
+    default: Any,
+    expected: ContextManager[None],
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): yaml.dump(
+                {
+                    "q": {
+                        "type": type_name,
+                        "default": default,
+                    }
+                }
+            )
+        }
+    )
+    with expected:
+        copier.run_copy(str(src), dst, defaults=True)

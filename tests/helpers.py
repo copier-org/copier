@@ -6,21 +6,16 @@ import textwrap
 from enum import Enum
 from hashlib import sha1
 from pathlib import Path
-from typing import Mapping, Optional, Tuple, Union, cast
+from typing import Mapping, Optional, Protocol, Tuple, Union
 
 from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
+from plumbum.cmd import git
 from prompt_toolkit.input.ansi_escape_sequences import REVERSE_ANSI_SEQUENCES
 from prompt_toolkit.keys import Keys
 
 import copier
 from copier.types import OptStr, StrOrPath
-
-# HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
-if sys.version_info >= (3, 8):
-    from typing import Protocol
-else:
-    from typing_extensions import Protocol
 
 PROJECT_TEMPLATE = Path(__file__).parent / "demo"
 
@@ -90,7 +85,7 @@ class Keyboard(str, Enum):
 
 def render(tmp_path: Path, **kwargs) -> None:
     kwargs.setdefault("quiet", True)
-    copier.copy(str(PROJECT_TEMPLATE), tmp_path, data=DATA, **kwargs)
+    copier.run_copy(str(PROJECT_TEMPLATE), tmp_path, data=DATA, **kwargs)
 
 
 def assert_file(tmp_path: Path, *path: str) -> None:
@@ -100,18 +95,30 @@ def assert_file(tmp_path: Path, *path: str) -> None:
 
 
 def build_file_tree(
-    spec: Mapping[StrOrPath, Union[str, bytes]], dedent: bool = True
-) -> None:
-    """Builds a file tree based on the received spec."""
+    spec: Mapping[StrOrPath, Union[str, bytes, Path]], dedent: bool = True
+):
+    """Builds a file tree based on the received spec.
+
+    Params:
+        spec:
+            A mapping from filesystem paths to file contents. If the content is
+            a Path object a symlink to the path will be created instead.
+
+        dedent: Dedent file contents.
+    """
     for path, contents in spec.items():
         path = Path(path)
-        binary = isinstance(contents, bytes)
-        if not binary and dedent:
-            contents = textwrap.dedent(cast(str, contents))
         path.parent.mkdir(parents=True, exist_ok=True)
-        mode = "wb" if binary else "w"
-        with path.open(mode) as fd:
-            fd.write(contents)
+        if isinstance(contents, Path):
+            os.symlink(str(contents), path)
+        else:
+            binary = isinstance(contents, bytes)
+            if not binary and dedent:
+                assert isinstance(contents, str)
+                contents = textwrap.dedent(contents)
+            mode = "wb" if binary else "w"
+            with path.open(mode) as fd:
+                fd.write(contents)
 
 
 def expect_prompt(
@@ -124,3 +131,21 @@ def expect_prompt(
         tui.expect_exact(name)
         if expected_type != "str":
             tui.expect_exact(f"({expected_type})")
+
+
+def git_save(
+    dst: StrOrPath = ".", message: str = "Test commit", tag: Optional[str] = None
+):
+    """Save the current repo state in git.
+
+    Args:
+        dst: Path to the repo to save.
+        message: Commit message.
+        tag: Tag to create, optionally.
+    """
+    with local.cwd(dst):
+        git("init")
+        git("add", ".")
+        git("commit", "-m", message)
+        if tag:
+            git("tag", tag)

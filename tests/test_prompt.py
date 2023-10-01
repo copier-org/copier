@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List, Mapping, Tuple, Union
+from typing import Any, Dict, List, Mapping, Tuple, Union
 
 import pexpect
 import pytest
@@ -18,6 +18,7 @@ from .helpers import (
     Spawn,
     build_file_tree,
     expect_prompt,
+    git_save,
 )
 
 MARIO_TREE: Mapping[StrOrPath, Union[str, bytes]] = {
@@ -45,6 +46,35 @@ MARIO_TREE: Mapping[StrOrPath, Union[str, bytes]] = {
     "[[ _copier_conf.answers_file ]].tmpl": "[[_copier_answers|to_nice_yaml]]",
 }
 
+MARIO_TREE_WITH_NEW_FIELD: Mapping[StrOrPath, Union[str, bytes]] = {
+    "copier.yml": (
+        f"""\
+        _templates_suffix: {SUFFIX_TMPL}
+        _envops: {BRACKET_ENVOPS_JSON}
+        in_love:
+            type: bool
+            default: yes
+        your_name:
+            type: str
+            default: Mario
+            help: If you have a name, tell me now.
+        your_enemy:
+            type: str
+            default: Bowser
+            secret: yes
+            help: Secret enemy name
+        your_sister:
+            type: str
+            default: Luigi
+            help: Your sister's name
+        what_enemy_does:
+            type: str
+            default: "[[ your_enemy ]] hates [[ your_name ]]"
+        """
+    ),
+    "[[ _copier_conf.answers_file ]].tmpl": "[[_copier_answers|to_nice_yaml]]",
+}
+
 
 @pytest.mark.parametrize(
     "name, args",
@@ -64,15 +94,14 @@ def test_copy_default_advertised(
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     with local.cwd(src):
         build_file_tree(MARIO_TREE)
-        git("init")
-        git("add", ".")
-        git("commit", "-m", "v1")
-        git("tag", "v1")
+        git_save(tag="v1")
         git("commit", "--allow-empty", "-m", "v2")
         git("tag", "v2")
     with local.cwd(dst):
         # Copy the v1 template
-        tui = spawn(COPIER_PATH + (str(src), ".", "--vcs-ref=v1") + args, timeout=10)
+        tui = spawn(
+            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1") + args, timeout=10
+        )
         # Check what was captured
         expect_prompt(tui, "in_love", "bool")
         tui.expect_exact("(Y/n)")
@@ -93,11 +122,9 @@ def test_copy_default_advertised(
         tui.expect_exact(pexpect.EOF)
         assert "_commit: v1" in Path(".copier-answers.yml").read_text()
         # Update subproject
-        git("init")
-        git("add", ".")
+        git_save()
         assert "_commit: v1" in Path(".copier-answers.yml").read_text()
-        git("commit", "-m", "v1")
-        tui = spawn(COPIER_PATH, timeout=30)
+        tui = spawn(COPIER_PATH + ("update",), timeout=30)
         # Check what was captured
         expect_prompt(tui, "in_love", "bool")
         tui.expect_exact("(Y/n)")
@@ -110,6 +137,137 @@ def test_copy_default_advertised(
         tui.sendline()
         expect_prompt(tui, "what_enemy_does", "str")
         tui.expect_exact(f"Bowser hates {name}")
+        tui.sendline()
+        tui.expect_exact(pexpect.EOF)
+        assert "_commit: v2" in Path(".copier-answers.yml").read_text()
+
+
+@pytest.mark.parametrize(
+    "name, args",
+    [
+        ("Mario", ()),  # Default name in the template
+        ("Luigi", ("--data=your_name=Luigi",)),
+        ("None", ("--data=your_name=None",)),
+    ],
+)
+@pytest.mark.parametrize("update_action", ("update", "recopy"))
+def test_update_skip_answered(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    name: str,
+    update_action: str,
+    args: Tuple[str, ...],
+) -> None:
+    """Test that the questions for the user are OK"""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(MARIO_TREE)
+        git_save(tag="v1")
+        git("commit", "--allow-empty", "-m", "v2")
+        git("tag", "v2")
+    with local.cwd(dst):
+        # Copy the v1 template
+        tui = spawn(
+            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1") + args, timeout=10
+        )
+        # Check what was captured
+        expect_prompt(tui, "in_love", "bool")
+        tui.expect_exact("(Y/n)")
+        tui.sendline()
+        tui.expect_exact("Yes")
+        if not args:
+            expect_prompt(
+                tui, "your_name", "str", help="If you have a name, tell me now."
+            )
+            tui.expect_exact(name)
+            tui.sendline()
+        expect_prompt(tui, "your_enemy", "str", help="Secret enemy name")
+        tui.expect_exact("******")
+        tui.sendline()
+        expect_prompt(tui, "what_enemy_does", "str")
+        tui.expect_exact(f"Bowser hates {name}")
+        tui.sendline()
+        tui.expect_exact(pexpect.EOF)
+        assert "_commit: v1" in Path(".copier-answers.yml").read_text()
+        # Update subproject
+        git_save()
+        tui = spawn(
+            COPIER_PATH
+            + (
+                update_action,
+                "--skip-answered",
+            ),
+            timeout=30,
+        )
+        # Check what was captured
+        expect_prompt(tui, "your_enemy", "str", help="Secret enemy name")
+        tui.expect_exact("******")
+        tui.sendline()
+        tui.expect_exact(pexpect.EOF)
+        assert "_commit: v2" in Path(".copier-answers.yml").read_text()
+
+
+@pytest.mark.parametrize(
+    "name, args",
+    [
+        ("Mario", ()),  # Default name in the template
+        ("Luigi", ("--data=your_name=Luigi",)),
+        ("None", ("--data=your_name=None",)),
+    ],
+)
+def test_update_with_new_field_in_new_version_skip_answered(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    name: str,
+    args: Tuple[str, ...],
+) -> None:
+    """Test that the questions for the user are OK"""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(MARIO_TREE)
+        git_save(tag="v1")
+        build_file_tree(MARIO_TREE_WITH_NEW_FIELD)
+        git_save(tag="v2")
+    with local.cwd(dst):
+        # Copy the v1 template
+        tui = spawn(
+            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1") + args, timeout=10
+        )
+        # Check what was captured
+        expect_prompt(tui, "in_love", "bool")
+        tui.expect_exact("(Y/n)")
+        tui.sendline()
+        tui.expect_exact("Yes")
+        if not args:
+            expect_prompt(
+                tui, "your_name", "str", help="If you have a name, tell me now."
+            )
+            tui.expect_exact(name)
+            tui.sendline()
+        expect_prompt(tui, "your_enemy", "str", help="Secret enemy name")
+        tui.expect_exact("******")
+        tui.sendline()
+        expect_prompt(tui, "what_enemy_does", "str")
+        tui.expect_exact(f"Bowser hates {name}")
+        tui.sendline()
+        tui.expect_exact(pexpect.EOF)
+        assert "_commit: v1" in Path(".copier-answers.yml").read_text()
+        # Update subproject
+        git_save()
+        tui = spawn(
+            COPIER_PATH
+            + (
+                "update",
+                "-A",
+            ),
+            timeout=30,
+        )
+        # Check what was captured
+        expect_prompt(tui, "your_enemy", "str", help="Secret enemy name")
+        tui.expect_exact("******")
+        tui.sendline()
+        expect_prompt(tui, "your_sister", "str", help="Your sister's name")
+        tui.expect_exact("Luigi")
         tui.sendline()
         tui.expect_exact(pexpect.EOF)
         assert "_commit: v2" in Path(".copier-answers.yml").read_text()
@@ -181,9 +339,14 @@ def test_when(
             (src / "[[ _copier_conf.answers_file ]].tmpl"): (
                 "[[ _copier_answers|to_nice_yaml ]]"
             ),
+            (src / "context.yml.tmpl"): (
+                """\
+                question_2: [[ question_2 ]]
+                """
+            ),
         }
     )
-    tui = spawn(COPIER_PATH + (str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
     expect_prompt(tui, "question_1", type(question_1).__name__)
     tui.sendline()
     if asks:
@@ -194,8 +357,10 @@ def test_when(
     assert answers == {
         "_src_path": str(src),
         "question_1": question_1,
-        "question_2": "something",
+        **({"question_2": "something"} if asks else {}),
     }
+    context = yaml.safe_load((dst / "context.yml").read_text())
+    assert context == {"question_2": "something"}
 
 
 def test_placeholder(tmp_path_factory: pytest.TempPathFactory, spawn: Spawn) -> None:
@@ -219,7 +384,7 @@ def test_placeholder(tmp_path_factory: pytest.TempPathFactory, spawn: Spawn) -> 
             ),
         }
     )
-    tui = spawn(COPIER_PATH + (str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
     expect_prompt(tui, "question_1", "str")
     tui.expect_exact("answer 1")
     tui.sendline()
@@ -231,7 +396,7 @@ def test_placeholder(tmp_path_factory: pytest.TempPathFactory, spawn: Spawn) -> 
     assert answers == {
         "_src_path": str(src),
         "question_1": "answer 1",
-        "question_2": None,
+        "question_2": "",
     }
 
 
@@ -264,7 +429,7 @@ def test_multiline(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + (str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
     expect_prompt(tui, "question_1", "str")
     tui.expect_exact("answer 1")
     tui.sendline()
@@ -343,7 +508,7 @@ def test_update_choice(
         git("commit", "-m one")
         git("tag", "v1")
     # Copy
-    tui = spawn(COPIER_PATH + (str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
     expect_prompt(tui, "pick_one", "float")
     tui.sendline(Keyboard.Up)
     tui.expect_exact(pexpect.EOF)
@@ -354,7 +519,14 @@ def test_update_choice(
         git("add", ".")
         git("commit", "-m1")
     # Update
-    tui = spawn(COPIER_PATH + (str(dst),), timeout=10)
+    tui = spawn(
+        COPIER_PATH
+        + (
+            "update",
+            str(dst),
+        ),
+        timeout=10,
+    )
     expect_prompt(tui, "pick_one", "float")
     tui.sendline(Keyboard.Down)
     tui.expect_exact(pexpect.EOF)
@@ -397,7 +569,7 @@ def test_multiline_defaults(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + (str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
     expect_prompt(tui, "yaml_single", "yaml")
     # This test will always fail here, because python prompt toolkit gives
     # syntax highlighting to YAML and JSON outputs, encoded into terminal
@@ -442,7 +614,7 @@ def test_partial_interrupt(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + (str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
     expect_prompt(tui, "question_1", "str")
     tui.expect_exact("answer 1")
     # Answer the first question using the default.
@@ -482,7 +654,7 @@ def test_var_name_value_allowed(
         }
     )
     # Copy
-    tui = spawn(COPIER_PATH + (str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
     expect_prompt(tui, "value", "str")
     tui.expect_exact("string")
     tui.send(Keyboard.Alt + Keyboard.Enter)
@@ -490,3 +662,126 @@ def test_var_name_value_allowed(
     # Check answers file
     answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers["value"] == "string"
+
+
+@pytest.mark.parametrize(
+    "type_name, expected_answer",
+    [
+        ("str", ""),
+        ("int", ValueError("Invalid input")),
+        ("float", ValueError("Invalid input")),
+        ("json", ValueError("Invalid input")),
+        ("yaml", None),
+    ],
+)
+def test_required_text_question(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    type_name: str,
+    expected_answer: Union[str, None, ValueError],
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): yaml.dump(
+                {
+                    "_envops": BRACKET_ENVOPS,
+                    "_templates_suffix": SUFFIX_TMPL,
+                    "question": {"type": type_name},
+                }
+            ),
+            (src / "[[ _copier_conf.answers_file ]].tmpl"): (
+                "[[ _copier_answers|to_nice_yaml ]]"
+            ),
+        }
+    )
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    expect_prompt(tui, "question", type_name)
+    tui.expect_exact("")
+    tui.sendline()
+    if isinstance(expected_answer, ValueError):
+        tui.expect_exact(str(expected_answer))
+        assert not (dst / ".copier-answers.yml").exists()
+    else:
+        tui.expect_exact(pexpect.EOF)
+        answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+        assert answers == {
+            "_src_path": str(src),
+            "question": expected_answer,
+        }
+
+
+def test_required_bool_question(
+    tmp_path_factory: pytest.TempPathFactory, spawn: Spawn
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): yaml.dump(
+                {
+                    "_envops": BRACKET_ENVOPS,
+                    "_templates_suffix": SUFFIX_TMPL,
+                    "question": {"type": "bool"},
+                }
+            ),
+            (src / "[[ _copier_conf.answers_file ]].tmpl"): (
+                "[[ _copier_answers|to_nice_yaml ]]"
+            ),
+        }
+    )
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    expect_prompt(tui, "question", "bool")
+    tui.expect_exact("(y/N)")
+    tui.sendline()
+    tui.expect_exact(pexpect.EOF)
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    assert answers == {
+        "_src_path": str(src),
+        "question": False,
+    }
+
+
+@pytest.mark.parametrize(
+    "type_name, choices, expected_answer",
+    [
+        ("str", ["one", "two", "three"], "one"),
+        ("int", [1, 2, 3], 1),
+        ("float", [1.0, 2.0, 3.0], 1.0),
+        ("json", ["[1]", "[2]", "[3]"], [1]),
+        ("yaml", ["- 1", "- 2", "- 3"], [1]),
+    ],
+)
+def test_required_choice_question(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    type_name: str,
+    choices: List[Any],
+    expected_answer: Any,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): yaml.dump(
+                {
+                    "_envops": BRACKET_ENVOPS,
+                    "_templates_suffix": SUFFIX_TMPL,
+                    "question": {
+                        "type": type_name,
+                        "choices": choices,
+                    },
+                }
+            ),
+            (src / "[[ _copier_conf.answers_file ]].tmpl"): (
+                "[[ _copier_answers|to_nice_yaml ]]"
+            ),
+        }
+    )
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    expect_prompt(tui, "question", type_name)
+    tui.sendline()
+    tui.expect_exact(pexpect.EOF)
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    assert answers == {
+        "_src_path": str(src),
+        "question": expected_answer,
+    }

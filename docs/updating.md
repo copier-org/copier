@@ -3,8 +3,8 @@
 The best way to update a project from its template is when all of these conditions are
 true:
 
-1. The template includes
-   [a valid `.copier-answers.yml` file](configuring.md#the-copier-answersyml-file).
+1. The destination folder includes [a valid `.copier-answers.yml`
+   file][the-copier-answersyml-file].
 1. The template is versioned with Git (with tags).
 1. The destination folder is versioned with Git.
 
@@ -25,11 +25,11 @@ answers you provided when copied last time. However, sometimes it's impossible f
 Copier to know what to do with a diff code hunk. In those cases, copier handles the
 conflict in one of two ways, controlled with the `--conflict` option:
 
--   `--conflict rej` (default): Creates a separate `.rej` file for each file with
-    conflicts. These files contain the unresolved diffs.
--   `--conflict inline` (experimental): Updates the file with conflict markers. This is
-    quite similar to the conflict markers created when a `git merge` command encounters
-    a conflict. For more information, see the "Checking Out Conflicts" section of the
+-   `--conflict rej`: Creates a separate `.rej` file for each file with conflicts. These
+    files contain the unresolved diffs.
+-   `--conflict inline` (default): Updates the file with conflict markers. This is quite
+    similar to the conflict markers created when a `git merge` command encounters a
+    conflict. For more information, see the "Checking Out Conflicts" section of the
     [`git` documentation](https://git-scm.com/book/en/v2/Git-Tools-Advanced-Merging).
 
 If the update results in conflicts, _you should review those manually_ before
@@ -87,14 +87,14 @@ repos:
 If you want to just reuse all previous answers:
 
 ```shell
-copier --force update
+copier update --defaults
 ```
 
 If you want to change just one question, and leave all others untouched, and don't want
 to go through the whole questionary again:
 
 ```shell
-copier --force --data updated_question="my new answer" update
+copier update --defaults --data updated_question="my new answer"
 ```
 
 ## How the update works
@@ -154,34 +154,25 @@ As you can see here, `copier` does several things:
 -   Finally, it re-applies the previously obtained diff and then runs the
     post-migrations.
 
-!!! important
+### Recover from a broken update
 
-    The diff obtained by comparing the fresh, regenerated project to your
-    current project can cancel the modifications applied by the update from the latest
-    template version. During the process, `copier` will ask for your confirmation to
-    overwrite or skip modifications, but in the end, it is possible that nothing has
-    changed (except for the version in `.copier-answers.yml` of course). This is not a
-    bug: although it can be quite surprising, this behavior is correct.
+Usually Copier will replay the last project generation without problems. However,
+sometimes that process can break. Examples:
 
-## Migration across Copier major versions
+-   When the last update was relying on some external resources that are no longer
+    available.
+-   When the old and new versions of the template depend on different incompatible
+    versions of the same Jinja extension, but Copier can only use one.
+-   When the old version of the template was built for an older version of Copier.
 
-When there's a new major release of Copier (for example from Copier 5.x to 6.x), there
-are chances that there's something that changed. Maybe your template will not work as it
-did before.
+Generally, you should keep your templates as pure and simple as possible to avoid those
+situations. But it can still happen.
 
-[As explained above][how-the-update-works], Copier needs to make a copy of the template
-in its old state with its old answers so it can actually produce a diff with the new
-state and answers and apply the smart update to the project. However, **how can I be
-sure that Copier will produce the same "old state" if I copied the template with an
-older Copier major release?** Good question.
+To overcome this, use [the `copier recopy` command][regenerating-a-project], which will
+discard all the smart update algorithm [explained above][how-the-update-works]. It will
+behave just like if you were applying the template for the first time, but it will keep
+your answers from the last update.
 
-We will do our best to respect older behaviors for at least one extra major release
-cycle, but the simpler answer is that you can't be sure of that.
-
-How to overcome that situation?
-
-1. You can write good [migrations][].
-1. Then you can test them on your template's CI on a matrix against several Copier
-   versions.
-1. Or you can just [recopy the project][regenerating-a-project] when you update to a
-   newer Copier major release.
+Of course, the experience will be less satisfactory. The new template will override any
+changes found in your local project. But you can use a Git diff tool to overcome that.
+After doing this, further updates generally keep on working as usual.

@@ -43,7 +43,7 @@ def test_normal_jinja2(tmp_path_factory: pytest.TempPathFactory) -> None:
     # No warnings, because template is explicit
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        copier.run_auto(str(src), dst, defaults=True, overwrite=True)
+        copier.run_copy(str(src), dst, defaults=True, overwrite=True)
     todo = (dst / "TODO.txt").read_text()
     expected = "[[ Guybrush TODO LIST]]\n[# GROG #]\n    - Become a pirate\n"
     assert todo == expected
@@ -69,5 +69,5 @@ def test_to_not_keep_trailing_newlines_in_jinja2(
     # No warnings, because template is explicit
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        copier.run_auto(str(src), dst, defaults=True, overwrite=True)
+        copier.run_copy(str(src), dst, defaults=True, overwrite=True)
     assert (dst / "data.txt").read_text() == "This is foo."

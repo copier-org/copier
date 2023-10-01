@@ -4,21 +4,34 @@ import re
 import sys
 from contextlib import suppress
 from pathlib import Path
-from tempfile import mkdtemp
+from tempfile import TemporaryDirectory, mkdtemp
 from warnings import warn
 
 from packaging import version
 from packaging.version import InvalidVersion, Version
 from plumbum import TF, ProcessExecutionError, colors, local
-from plumbum.cmd import git
+from plumbum.machines import LocalCommand
 
 from .errors import DirtyLocalWarning, ShallowCloneWarning
-from .tools import TemporaryDirectory
-from .types import OptBool, OptStr, StrOrPath
+from .types import OptBool, OptStr, OptStrOrPath, StrOrPath
+
+
+def get_git(context_dir: OptStrOrPath = None) -> LocalCommand:
+    """Gets `git` command, or fails if it's not available"""
+    command = local["git"]
+    if context_dir:
+        command = command["-C", context_dir]
+    return command
+
+
+def get_git_version() -> Version:
+    git = get_git()
+
+    return Version(re.findall(r"\d+\.\d+\.\d+", git("version"))[0])
+
 
 GIT_PREFIX = ("git@", "git://", "git+", "https://github.com/", "https://gitlab.com/")
 GIT_POSTFIX = ".git"
-GIT_VERSION = Version(re.findall(r"\d+\.\d+\.\d+", git("version"))[0])
 REPLACEMENTS = (
     (re.compile(r"^gh:/?(.*\.git)$"), r"https://github.com/\1"),
     (re.compile(r"^gh:/?(.*)$"), r"https://github.com/\1.git"),
@@ -31,7 +44,7 @@ def is_git_repo_root(path: StrOrPath) -> bool:
     """Indicate if a given path is a git repo root directory."""
     try:
         with local.cwd(Path(path, ".git")):
-            return git("rev-parse", "--is-inside-git-dir").strip() == "true"
+            return get_git()("rev-parse", "--is-inside-git-dir").strip() == "true"
     except OSError:
         return False
 
@@ -39,7 +52,7 @@ def is_git_repo_root(path: StrOrPath) -> bool:
 def is_in_git_repo(path: StrOrPath) -> bool:
     """Indicate if a given path is in a git repo directory."""
     try:
-        git("-C", path, "rev-parse", "--show-toplevel")
+        get_git()("-C", path, "rev-parse", "--show-toplevel")
         return True
     except (OSError, ProcessExecutionError):
         return False
@@ -48,8 +61,10 @@ def is_in_git_repo(path: StrOrPath) -> bool:
 def is_git_shallow_repo(path: StrOrPath) -> bool:
     """Indicate if a given path is a git shallow repo directory."""
     try:
-        git("-C", path, "rev-parse", "--is-shallow-repository")
-        return True
+        return (
+            get_git()("-C", path, "rev-parse", "--is-shallow-repository").strip()
+            == "true"
+        )
     except (OSError, ProcessExecutionError):
         return False
 
@@ -60,8 +75,8 @@ def is_git_bundle(path: Path) -> bool:
         path = path.resolve()
     with TemporaryDirectory(prefix=f"{__name__}.is_git_bundle.") as dirname:
         with local.cwd(dirname):
-            git("init")
-            return bool(git["bundle", "verify", path] & TF)
+            get_git()("init")
+            return bool(get_git()["bundle", "verify", path] & TF)
 
 
 def get_repo(url: str) -> OptStr:
@@ -109,6 +124,7 @@ def checkout_latest_tag(local_repo: StrOrPath, use_prereleases: OptBool = False)
         use_prereleases:
             If `False`, skip prerelease git tags.
     """
+    git = get_git()
     with local.cwd(local_repo):
         all_tags = filter(valid_version, git("tag").split())
         if not use_prereleases:
@@ -142,10 +158,12 @@ def clone(url: str, ref: OptStr = None) -> str:
         ref:
             Reference to checkout. For Git repos, defaults to `HEAD`.
     """
+    git = get_git()
+    git_version = get_git_version()
     location = mkdtemp(prefix=f"{__name__}.clone.")
     _clone = git["clone", "--no-checkout", url, location]
     # Faster clones if possible
-    if GIT_VERSION >= Version("2.27"):
+    if git_version >= Version("2.27"):
         url_match = re.match("(file://)?(.*)", url)
         if url_match is not None:
             file_url = url_match.groups()[-1]
@@ -160,8 +178,8 @@ def clone(url: str, ref: OptStr = None) -> str:
         else:
             _clone = _clone["--filter=blob:none"]
     _clone()
-
-    if not ref and os.path.exists(url) and Path(url).is_dir():
+    # Include dirty changes if checking out a local HEAD
+    if ref in {None, "HEAD"} and os.path.exists(url) and Path(url).is_dir():
         is_dirty = False
         with local.cwd(url):
             is_dirty = bool(git("status", "--porcelain").strip())
@@ -183,7 +201,7 @@ def clone(url: str, ref: OptStr = None) -> str:
                 )
 
     with local.cwd(location):
-        git("checkout", ref or "HEAD")
+        git("checkout", "-f", ref or "HEAD")
         git("submodule", "update", "--checkout", "--init", "--recursive", "--force")
 
     return location

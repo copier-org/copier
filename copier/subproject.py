@@ -3,24 +3,18 @@
 A *subproject* is a project that gets rendered and/or updated with Copier.
 """
 
-import sys
+from dataclasses import field
+from functools import cached_property
 from pathlib import Path
-from typing import Optional
+from typing import Callable, List, Optional
 
 import yaml
-from plumbum.cmd import git
 from plumbum.machines import local
 from pydantic.dataclasses import dataclass
 
 from .template import Template
 from .types import AbsolutePath, AnyByStrDict, VCSTypes
-from .vcs import is_in_git_repo
-
-# HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
-if sys.version_info >= (3, 8):
-    from functools import cached_property
-else:
-    from backports.cached_property import cached_property
+from .vcs import get_git, is_in_git_repo
 
 
 @dataclass
@@ -38,6 +32,8 @@ class Subproject:
     local_abspath: AbsolutePath
     answers_relpath: Path = Path(".copier-answers.yml")
 
+    _cleanup_hooks: List[Callable] = field(default_factory=list, init=False)
+
     def is_dirty(self) -> bool:
         """Indicate if the local template root is dirty.
 
@@ -45,8 +41,13 @@ class Subproject:
         """
         if self.vcs == "git":
             with local.cwd(self.local_abspath):
-                return bool(git("status", "--porcelain").strip())
+                return bool(get_git()("status", "--porcelain").strip())
         return False
+
+    def _cleanup(self):
+        """Remove temporary files and folders created by the subproject."""
+        for method in self._cleanup_hooks:
+            method()
 
     @property
     def _raw_answers(self) -> AnyByStrDict:
@@ -73,7 +74,9 @@ class Subproject:
         last_url = self.last_answers.get("_src_path")
         last_ref = self.last_answers.get("_commit")
         if last_url:
-            return Template(url=last_url, ref=last_ref)
+            result = Template(url=last_url, ref=last_ref)
+            self._cleanup_hooks.append(result._cleanup)
+            return result
 
     @cached_property
     def vcs(self) -> Optional[VCSTypes]:

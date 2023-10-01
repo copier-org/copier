@@ -4,7 +4,7 @@ from typing import Mapping
 
 import pytest
 
-from copier.main import run_auto
+from copier.main import run_copy
 from copier.template import DEFAULT_EXCLUDE
 from copier.types import StrOrPath
 
@@ -14,7 +14,7 @@ from .helpers import PROJECT_TEMPLATE, build_file_tree
 def test_exclude_recursive(tmp_path: Path) -> None:
     """Copy is done properly when excluding recursively."""
     src = f"{PROJECT_TEMPLATE}_exclude"
-    run_auto(src, tmp_path)
+    run_copy(src, tmp_path)
     assert not (tmp_path / "bad").exists()
     assert not (tmp_path / "bad").is_dir()
 
@@ -22,7 +22,7 @@ def test_exclude_recursive(tmp_path: Path) -> None:
 def test_exclude_recursive_negate(tmp_path: Path) -> None:
     """Copy is done properly when copy_me.txt is the sole file copied."""
     src = f"{PROJECT_TEMPLATE}_exclude_negate"
-    run_auto(src, tmp_path)
+    run_copy(src, tmp_path)
     assert (tmp_path / "copy_me.txt").exists()
     assert (tmp_path / "copy_me.txt").is_file()
     assert not (tmp_path / "do_not_copy_me.txt").exists()
@@ -31,7 +31,7 @@ def test_exclude_recursive_negate(tmp_path: Path) -> None:
 def test_config_exclude(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree({src / "copier.yml": "_exclude: ['*.txt']", src / "aaaa.txt": ""})
-    run_auto(str(src), dst, quiet=True)
+    run_copy(str(src), dst, quiet=True)
     assert not (dst / "aaaa.txt").exists()
     assert (dst / "copier.yml").exists()
 
@@ -39,7 +39,7 @@ def test_config_exclude(tmp_path_factory: pytest.TempPathFactory) -> None:
 def test_config_exclude_extended(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree({src / "copier.yml": "_exclude: ['*.txt']", src / "aaaa.txt": ""})
-    run_auto(str(src), dst, quiet=True, exclude=["*.yml"])
+    run_copy(str(src), dst, quiet=True, exclude=["*.yml"])
     assert not (dst / "aaaa.txt").exists()
     assert not (dst / "copier.yml").exists()
 
@@ -49,7 +49,7 @@ def test_config_include(tmp_path_factory: pytest.TempPathFactory) -> None:
     build_file_tree(
         {src / "copier.yml": "_exclude: ['!.svn']", src / ".svn" / "hello": ""}
     )
-    run_auto(str(src), dst, quiet=True)
+    run_copy(str(src), dst, quiet=True)
     assert (dst / ".svn" / "hello").exists()
     assert (dst / "copier.yml").exists()
 
@@ -92,7 +92,7 @@ def test_path_filter(tmp_path_factory: pytest.TempPathFactory) -> None:
             **{(src / key): str(value) for key, value in file_excluded.items()},
         }
     )
-    run_auto(str(src), dst)
+    run_copy(str(src), dst)
     for key, value in file_excluded.items():
         assert (dst / key).exists() != value
 
@@ -111,24 +111,24 @@ def test_config_exclude_with_subdirectory(
             src / "template" / "copier.yml": "",
         }
     )
-    run_auto(str(src), dst, quiet=True)
+    run_copy(str(src), dst, quiet=True)
     assert (dst / "copier.yml").exists()
 
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {src / "copier.yml": "_subdirectory: '.'", src / "template" / "copier.yml": ""}
     )
-    run_auto(str(src), dst, quiet=True)
+    run_copy(str(src), dst, quiet=True)
     assert not (dst / "template" / "copier.yml").exists()
 
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {src / "copier.yml": "_subdirectory: ''", src / "template" / "copier.yml": ""}
     )
-    run_auto(str(src), dst, quiet=True)
+    run_copy(str(src), dst, quiet=True)
     assert not (dst / "template" / "copier.yml").exists()
 
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree({src / "copier.yml": "", src / "template" / "copier.yml": ""})
-    run_auto(str(src), dst, quiet=True)
+    run_copy(str(src), dst, quiet=True)
     assert not (dst / "template" / "copier.yml").exists()
