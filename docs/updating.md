@@ -6,9 +6,9 @@ common use cases for that, including but not limited to
 1. Update the answers to previous questions
 
     Questions can be reanswered to fit the latest requirements of the generated
-    projects. This is helpful, especially when the template includes optional tools
-    that fit into different phases of a project. In that case, template consumers are
-    able to activate the optional tools gradually when the project matures.
+    projects. This is helpful, especially when the template includes optional tools that
+    fit into different phases of a project. In that case, template consumers are able to
+    activate the optional tools gradually when the project matures.
 
 1. Sync updates from evolved templates
 
