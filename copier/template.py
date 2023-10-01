@@ -501,9 +501,13 @@ class Template:
             return None
         try:
             with local.cwd(self.local_abspath):
-                # Leverage dunamai by default; usually it gets best results
+                # Leverage dunamai by default; usually it gets best results.
+                # `dunamai.Version.from_git` needs `Pattern.DefaultUnprefixed`
+                # to be PEP440 compliant on version reading
                 return Version(
-                    dunamai.Version.from_git().serialize(style=dunamai.Style.Pep440)
+                    dunamai.Version.from_git(
+                        pattern=dunamai.Pattern.DefaultUnprefixed
+                    ).serialize(style=dunamai.Style.Pep440)
                 )
         except ValueError:
             # A fully descriptive commit can be easily detected converted into a

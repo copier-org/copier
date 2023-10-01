@@ -22,6 +22,7 @@ from .helpers import (
     assert_file,
     build_file_tree,
     filecmp,
+    git_save,
     render,
 )
 
@@ -67,6 +68,53 @@ def test_copy_with_non_version_tags(tmp_path_factory: pytest.TempPathFactory) ->
         unsafe=True,
         vcs_ref="HEAD",
     )
+
+
+@pytest.mark.parametrize(
+    "tag2, use_prereleases, expected_version",
+    [
+        ("1.2.3.post1", True, "2"),
+        ("1.2.4.dev1", True, "2"),
+        ("1.2.3.post1", False, "2"),
+        ("1.2.4.dev1", False, "1"),
+    ],
+)
+@pytest.mark.parametrize("prefix", ["", "v"])
+def test_tag_autodetect_v_prefix_optional(
+    tmp_path_factory: pytest.TempPathFactory,
+    tag2: str,
+    use_prereleases: bool,
+    expected_version,
+    prefix: str,
+) -> None:
+    """Tags with and without `v` prefix should work the same."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "version.txt"): "1",
+            (
+                src / "{{_copier_conf.answers_file}}.jinja"
+            ): "{{ _copier_answers|to_nice_yaml -}}",
+        }
+    )
+    # One stable tag
+    git_save(src, tag=f"{prefix}1.2.3")
+    # One pre or post release tag
+    (src / "version.txt").write_text("2")
+    git_save(src, tag=f"{prefix}{tag2}")
+    # One untagged change
+    (src / "version.txt").write_text("3")
+    git_save(src)
+    # Copy, leaving latest tag auto-detection
+    copier.run_copy(
+        str(src),
+        dst,
+        use_prereleases=use_prereleases,
+        defaults=True,
+        unsafe=True,
+    )
+    # Check it works as expected
+    assert (dst / "version.txt").read_text() == expected_version
 
 
 def test_copy_with_non_version_tags_and_vcs_ref(
