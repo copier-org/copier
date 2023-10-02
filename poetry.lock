@@ -871,6 +871,25 @@ tomli = ">=1.2.2"
 poetry-plugin = ["poetry (>=1.0,<2.0)"]
 
 [[package]]
+name = "poetry-dynamic-versioning"
+version = "1.1.0"
+description = "Plugin for Poetry to enable dynamic versioning based on VCS tags"
+optional = false
+python-versions = ">=3.7,<4.0"
+files = [
+    {file = "poetry_dynamic_versioning-1.1.0-py3-none-any.whl", hash = "sha256:a851469a05ed88d9b8c91ecbdce16d9d6c96bb5bebe2c4ceba9c00d019455797"},
+    {file = "poetry_dynamic_versioning-1.1.0.tar.gz", hash = "sha256:283a6976bf6b31cb46146843e9e28f46ec1b71efd733aca163326486c06b1fd6"},
+]
+
+[package.dependencies]
+dunamai = ">=1.18.0,<2.0.0"
+jinja2 = ">=2.11.1,<4"
+tomlkit = ">=0.4"
+
+[package.extras]
+plugin = ["poetry (>=1.2.0,<2.0.0)"]
+
+[[package]]
 name = "pre-commit"
 version = "3.4.0"
 description = "A framework for managing and maintaining multi-language pre-commit hooks."
@@ -1451,6 +1470,17 @@ files = [
 ]
 
 [[package]]
+name = "tomlkit"
+version = "0.12.1"
+description = "Style preserving TOML library"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "tomlkit-0.12.1-py3-none-any.whl", hash = "sha256:712cbd236609acc6a3e2e97253dfc52d4c2082982a88f61b640ecf0817eab899"},
+    {file = "tomlkit-0.12.1.tar.gz", hash = "sha256:38e1ff8edb991273ec9f6181244a6a391ac30e9f5098e7535640ea6be97a7c86"},
+]
+
+[[package]]
 name = "types-backports"
 version = "0.1.3"
 description = "Typing stubs for backports"
@@ -1610,4 +1640,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<4.0"
-content-hash = "9f3d3d55a43377f22b10d0e96b668edf494800bf5ff62e86aa273e75ccf5ba07"
+content-hash = "517104b0dfbad3b24e9daa657146c5b7d2814594a45c8d4188be7cd6f637d7ba"
