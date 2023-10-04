@@ -17,7 +17,7 @@ from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.validation import ValidationError
 from pydantic import ConfigDict, Field, field_validator
 from pydantic.dataclasses import dataclass
-from pydantic_core.core_schema import FieldValidationInfo
+from pydantic_core.core_schema import ValidationInfo
 from pygments.lexers.data import JsonLexer, YamlLexer
 from questionary.prompts.common import Choice
 
@@ -191,7 +191,7 @@ class Question:
 
     @field_validator("type")
     @classmethod
-    def _check_type(cls, v: str, info: FieldValidationInfo):
+    def _check_type(cls, v: str, info: ValidationInfo):
         if v == "":
             default_type_name = type(info.data.get("default")).__name__
             v = default_type_name if default_type_name in CAST_STR_TO_NATIVE else "yaml"
@@ -199,7 +199,7 @@ class Question:
 
     @field_validator("secret")
     @classmethod
-    def _check_secret_question_default_value(cls, v: bool, info: FieldValidationInfo):
+    def _check_secret_question_default_value(cls, v: bool, info: ValidationInfo):
         if v and info.data["default"] is MISSING:
             raise ValueError("Secret question requires a default value")
         return v

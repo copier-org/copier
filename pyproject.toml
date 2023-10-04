@@ -36,7 +36,7 @@ jinja2-ansible-filters = ">=1.3.1"
 packaging = ">=23.0"
 pathspec = ">=0.9.0"
 plumbum = ">=1.6.9"
-pydantic = ">=2.0.3"
+pydantic = ">=2.4.2"
 pygments = ">=2.7.1"
 pyyaml = ">=5.3.1"
 pyyaml-include = ">=1.2"
@@ -66,6 +66,13 @@ optional = true
 markdown-exec = ">=1.3.0"
 mkdocs-material = ">=8.2,<10.0.0"
 mkdocstrings = { version = ">=0.19.0", extras = ["python"] }
+
+[tool.poetry.group.build]
+# Helper group just for helping nix to build properly
+optional = true
+
+[tool.poetry.group.build.dependencies]
+poetry-dynamic-versioning = ">=1.1.0"
 
 [tool.poe.tasks.clean]
 script = "devtasks:clean"
@@ -131,5 +138,5 @@ update_changelog_on_bump = true
 version = "8.3.0"
 
 [build-system]
-requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning"]
+requires = ["poetry-core>=1.7.0", "poetry-dynamic-versioning>=1.1.0"]
 build-backend = "poetry_dynamic_versioning.backend"
