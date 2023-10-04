@@ -48,6 +48,9 @@
             name = "copier-${version}";
             projectDir = ./.;
 
+            # Trick poetry-dynamic-versioning into using our version
+            POETRY_DYNAMIC_VERSIONING_BYPASS = version;
+
             # Test configuration
             propagatedNativeBuildInputs = [pkgs.git];
             pythonImportsCheck = ["copier"];
