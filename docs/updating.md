@@ -61,7 +61,18 @@ setting you use.
 
 ## Preventing Commit of Merge Conflicts
 
-If you use `--conflict rej` (the default):
+If you use `--conflict inline` (the default) then you need to check for conflicts marks in your files: 
+```yaml title=".pre-commit-config.yaml"
+repos:
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v4.3.0
+      hooks:
+          # Prevent committing inline conflict markers
+          - id: check-merge-conflict
+            args: [--assume-in-merge]
+```
+
+If you use `--conflict rej` Then you need to reject all the generated `.rej` files:
 
 ```yaml title=".pre-commit-config.yaml"
 repos:
@@ -70,15 +81,9 @@ repos:
           # Prevent committing .rej files
           - id: forbidden-files
             name: forbidden files
-            entry: found Copier update rejection files; review them and remove them
+            entry: found Copier update rejection files; review and remove them before merging.
             language: fail
             files: "\\.rej$"
-    - repo: https://github.com/pre-commit/pre-commit-hooks
-      rev: v4.3.0
-      hooks:
-          # Prevent committing inline conflict markers
-          - id: check-merge-conflict
-            args: [--assume-in-merge]
 ```
 
 ## Never change the answers file manually
