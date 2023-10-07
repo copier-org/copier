@@ -50,6 +50,7 @@ copier --help-all
 """
 
 import sys
+from os import PathLike
 from pathlib import Path
 from textwrap import dedent
 
@@ -108,7 +109,7 @@ class CopierApp(cli.Application):
 class _Subcommand(cli.Application):
     """Base class for Copier subcommands."""
 
-    def __init__(self, executable):
+    def __init__(self, executable: PathLike) -> None:
         self.data: AnyByStrDict = {}
         super().__init__(executable)
 
