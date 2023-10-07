@@ -53,8 +53,8 @@ extra_css:
 
 markdown_extensions:
   - admonition
-  - codehilite:
-      guess_lang: false
+  - pymdownx.highlight:
+      use_pygments: true
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
