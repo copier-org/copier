@@ -1,10 +1,12 @@
 import platform
 import sys
-from typing import Optional, Tuple
+from typing import Iterator, Optional, Tuple
 
 import pytest
 from coverage.tracer import CTracer
 from pexpect.popen_spawn import PopenSpawn
+from plumbum import local
+from pytest_gitconfig import GitConfig
 
 from .helpers import Spawn
 
@@ -32,3 +34,30 @@ def spawn() -> Spawn:
         return PopenSpawn(cmd, timeout, logfile=sys.stderr.buffer)
 
     return _spawn
+
+
+@pytest.fixture(scope="session", autouse=True)
+def default_gitconfig(default_gitconfig: GitConfig) -> GitConfig:
+    """
+    Use a clean and isolated default gitconfig avoiding user settings to break some tests.
+
+    Add plumbum support to the original session-scoped fixture.
+    """
+    # local.env is a snapshot frozen at Python startup requiring its own monkeypatching
+    for var in list(local.env.keys()):
+        if var.startswith("GIT_"):
+            del local.env[var]
+    local.env["GIT_CONFIG_GLOBAL"] = str(default_gitconfig)
+    default_gitconfig.set({"core.autocrlf": "input"})
+    return default_gitconfig
+
+
+@pytest.fixture
+def gitconfig(gitconfig: GitConfig) -> Iterator[GitConfig]:
+    """
+    Use a clean and isolated gitconfig to test some specific user settings.
+
+    Add plumbum support to the original function-scoped fixture.
+    """
+    with local.env(GIT_CONFIG_GLOBAL=str(gitconfig)):
+        yield gitconfig

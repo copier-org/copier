@@ -4,6 +4,7 @@ from shutil import copy2, copytree
 import pytest
 from plumbum import local
 from plumbum.cmd import git
+from pytest_gitconfig import GitConfig
 
 import copier
 from copier.errors import DirtyLocalWarning
@@ -50,7 +51,31 @@ def test_copy_dirty_head(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("init")
         git("add", "tracked")
         git("commit", "-m1")
-    copier.run_copy(str(src), dst, vcs_ref="HEAD")
+    with pytest.warns(DirtyLocalWarning):
+        copier.run_copy(str(src), dst, vcs_ref="HEAD")
+    assert (dst / "tracked").exists()
+    assert (dst / "untracked").exists()
+
+
+def test_copy_dirty_head_with_gpg(
+    tmp_path_factory: pytest.TempPathFactory, gitconfig: GitConfig
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "tracked": "",
+            src / "untracked": "",
+        }
+    )
+    with local.cwd(src):
+        git("init")
+        git("add", "tracked")
+        git("commit", "-m1")
+    gitconfig.set({"user.signinkey": "123456", "commit.gpgsign": "true"})
+
+    with pytest.warns(DirtyLocalWarning):
+        copier.run_copy(str(src), dst, vcs_ref="HEAD")
+
     assert (dst / "tracked").exists()
     assert (dst / "untracked").exists()
 
@@ -141,3 +166,52 @@ def test_update(tmp_path_factory: pytest.TempPathFactory) -> None:
     # HACK https://github.com/copier-org/copier/issues/461
     # TODO test file deletion on update
     # assert not (dst / "to_delete.txt").exists()
+
+
+def test_update_with_gpg_sign(
+    tmp_path_factory: pytest.TempPathFactory, gitconfig: GitConfig
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    build_file_tree(
+        {
+            (src / ".copier-answers.yml.jinja"): (
+                """\
+                # Changes here will be overwritten by Copier
+                {{ _copier_answers|to_nice_yaml }}
+                """
+            ),
+            (src / "copier.yml"): (
+                """\
+                _envops:
+                    "keep_trailing_newline": True
+                """
+            ),
+            (src / "aaaa.txt"): (
+                """
+                Lorem ipsum
+                """
+            ),
+        }
+    )
+
+    with local.cwd(src):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m", "first commit on src")
+
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+
+    with local.cwd(src):
+        Path("test_file.txt").write_text("Test content")
+        Path("aaaa.txt").write_text("dolor sit amet")
+
+    # dst must be vcs-tracked to use run_update
+    with local.cwd(dst):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m", "first commit on dst")
+
+    gitconfig.set({"user.signinkey": "123456", "commit.gpgsign": "true"})
+    with pytest.warns(DirtyLocalWarning):
+        run_update(dst, defaults=True, overwrite=True)

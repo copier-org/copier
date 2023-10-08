@@ -194,6 +194,7 @@ def clone(url: str, ref: OptStr = None) -> str:
                     "-m",
                     "Copier automated commit for draft changes",
                     "--no-verify",
+                    "--no-gpg-sign",
                 )
                 warn(
                     "Dirty template changes included automatically.",
