@@ -1,9 +1,10 @@
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Tuple, Union
+from typing import Any, Dict, List, Mapping, Protocol, Tuple, Union
 
 import pexpect
 import pytest
 import yaml
+from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
 from plumbum.cmd import git
 
@@ -20,6 +21,12 @@ from .helpers import (
     expect_prompt,
     git_save,
 )
+
+try:
+    from typing import TypeAlias  # type: ignore[attr-defined]
+except ImportError:
+    from typing_extensions import TypeAlias
+
 
 MARIO_TREE: Mapping[StrOrPath, Union[str, bytes]] = {
     "copier.yml": (
@@ -785,3 +792,163 @@ def test_required_choice_question(
         "_src_path": str(src),
         "question": expected_answer,
     }
+
+
+QuestionType: TypeAlias = str
+QuestionChoices: TypeAlias = Union[List[Any], Dict[str, Any]]
+ParsedValues: TypeAlias = List[Any]
+
+_CHOICES: Dict[str, Tuple[QuestionType, QuestionChoices, ParsedValues]] = {
+    "str": ("str", ["one", "two", "three"], ["one", "two", "three"]),
+    "int": ("int", [1, 2, 3], [1, 2, 3]),
+    "int-label-list": ("int", [["one", 1], ["two", 2], ["three", 3]], [1, 2, 3]),
+    "int-label-dict": ("int", {"1. one": 1, "2. two": 2, "3. three": 3}, [1, 2, 3]),
+    "float": ("float", [1.0, 2.0, 3.0], [1.0, 2.0, 3.0]),
+    "json": ("json", ["[1]", "[2]", "[3]"], [[1], [2], [3]]),
+    "yaml": ("yaml", ["- 1", "- 2", "- 3"], [[1], [2], [3]]),
+}
+CHOICES = [pytest.param(*specs, id=id) for id, specs in _CHOICES.items()]
+
+
+class QuestionTreeFixture(Protocol):
+    def __call__(self, **kwargs) -> Tuple[Path, Path]:
+        ...
+
+
+@pytest.fixture
+def question_tree(tmp_path_factory: pytest.TempPathFactory) -> QuestionTreeFixture:
+    def builder(**question) -> Tuple[Path, Path]:
+        src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+        build_file_tree(
+            {
+                (src / "copier.yml"): yaml.dump(
+                    {
+                        "_envops": BRACKET_ENVOPS,
+                        "_templates_suffix": SUFFIX_TMPL,
+                        "question": question,
+                    }
+                ),
+                (src / "[[ _copier_conf.answers_file ]].tmpl"): (
+                    "[[ _copier_answers|to_nice_yaml ]]"
+                ),
+            }
+        )
+        return src, dst
+
+    return builder
+
+
+class CopierFixture(Protocol):
+    def __call__(self, *args, **kwargs) -> PopenSpawn:
+        ...
+
+
+@pytest.fixture
+def copier(spawn: Spawn) -> CopierFixture:
+    """Multiple choices are properly remembered and selected in TUI when updating."""
+
+    def fixture(*args, **kwargs) -> PopenSpawn:
+        return spawn(COPIER_PATH + args, **kwargs)
+
+    return fixture
+
+
+@pytest.mark.parametrize("type_name, choices, values", CHOICES)
+def test_multiselect_choices_question_single_answer(
+    question_tree: QuestionTreeFixture,
+    copier: CopierFixture,
+    type_name: QuestionType,
+    choices: QuestionChoices,
+    values: ParsedValues,
+) -> None:
+    src, dst = question_tree(type=type_name, choices=choices, multiselect=True)
+    tui = copier("copy", str(src), str(dst), timeout=10)
+    expect_prompt(tui, "question", type_name)
+    tui.send(" ")  # select 1
+    tui.sendline()
+    tui.expect_exact(pexpect.EOF)
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    assert answers["question"] == values[:1]
+
+
+@pytest.mark.parametrize("type_name, choices, values", CHOICES)
+def test_multiselect_choices_question_multiple_answers(
+    question_tree: QuestionTreeFixture,
+    copier: CopierFixture,
+    type_name: QuestionType,
+    choices: QuestionChoices,
+    values: ParsedValues,
+) -> None:
+    src, dst = question_tree(type=type_name, choices=choices, multiselect=True)
+    tui = copier("copy", str(src), str(dst), timeout=10)
+    expect_prompt(tui, "question", type_name)
+    tui.send(" ")  # select 0
+    tui.send(Keyboard.Down)
+    tui.send(" ")  # select 1
+    tui.sendline()
+    tui.expect_exact(pexpect.EOF)
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    assert answers["question"] == values[:2]
+
+
+@pytest.mark.parametrize("type_name, choices, values", CHOICES)
+def test_multiselect_choices_question_with_default(
+    question_tree: QuestionTreeFixture,
+    copier: CopierFixture,
+    type_name: QuestionType,
+    choices: QuestionChoices,
+    values: ParsedValues,
+) -> None:
+    src, dst = question_tree(
+        type=type_name, choices=choices, multiselect=True, default=values
+    )
+    tui = copier("copy", str(src), str(dst), timeout=10)
+    expect_prompt(tui, "question", type_name)
+    tui.send(" ")  # toggle first
+    tui.sendline()
+    tui.expect_exact(pexpect.EOF)
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    assert answers["question"] == values[1:]
+
+
+@pytest.mark.parametrize("type_name, choices, values", CHOICES)
+def test_update_multiselect_choices(
+    question_tree: QuestionTreeFixture,
+    copier: CopierFixture,
+    type_name: QuestionType,
+    choices: QuestionChoices,
+    values: ParsedValues,
+) -> None:
+    """Multiple choices are properly remembered and selected in TUI when updating."""
+    src, dst = question_tree(
+        type=type_name, choices=choices, multiselect=True, default=values
+    )
+
+    with local.cwd(src):
+        git("init")
+        git("add", ".")
+        git("commit", "-m one")
+        git("tag", "v1")
+
+    # Copy
+    tui = copier("copy", str(src), str(dst), timeout=10)
+    expect_prompt(tui, "question", type_name)
+    tui.send(" ")  # toggle first
+    tui.sendline()
+    tui.expect_exact(pexpect.EOF)
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    assert answers["question"] == values[1:]
+
+    with local.cwd(dst):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+
+    # Update
+    tui = copier("update", str(dst), timeout=10)
+    expect_prompt(tui, "question", type_name)
+    tui.send(" ")  # toggle first
+    tui.sendline()
+    tui.expect_exact(pexpect.EOF)
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    assert answers["question"] == values

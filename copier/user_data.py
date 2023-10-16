@@ -127,6 +127,10 @@ class Question:
             Selections available for the user if the question requires them.
             Can be templated.
 
+        multiselect:
+            Indicates if the question supports multiple answers.
+            Only supported by choices type.
+
         default:
             Default value presented to the user to make it easier to respond.
             Can be templated.
@@ -173,6 +177,7 @@ class Question:
     answers: AnswersMap
     jinja_env: SandboxedEnvironment
     choices: Union[Sequence[Any], Dict[Any, Any]] = field(default_factory=list)
+    multiselect: bool = False
     default: Any = MISSING
     help: str = ""
     multiline: Union[str, bool] = False
@@ -215,6 +220,8 @@ class Question:
                 f'to question "{self.var_name}" of type "{type_name}"'
             )
         try:
+            if self.multiselect and isinstance(answer, list):
+                return [type_fn(item) for item in answer]
             return type_fn(answer)
         except (TypeError, AttributeError) as error:
             # JSON or YAML failed because it wasn't a string; no need to convert
@@ -253,9 +260,11 @@ class Question:
             return MISSING
         # If there are choices, return the one that matches the expressed default
         if self.choices:
-            for choice in self._formatted_choices:
-                if choice.value == default:
-                    return choice
+            # questionary checkbox use Choice.checked for multiple default
+            if not self.multiselect:
+                for choice in self._formatted_choices:
+                    if choice.value == default:
+                        return choice
             return None
         # Yes/No questions expect and return bools
         if isinstance(default, bool) and self.get_type_name() == "bool":
@@ -278,6 +287,7 @@ class Question:
         """Obtain choices rendered and properly formatted."""
         result = []
         choices = self.choices
+        default = self.get_default()
         if isinstance(self.choices, dict):
             choices = list(self.choices.items())
         for choice in choices:
@@ -297,11 +307,18 @@ class Question:
                     raise KeyError("Property 'value' is required")
                 if "validator" in value and not isinstance(value["validator"], str):
                     raise ValueError("Property 'validator' must be a string")
+
                 disabled = self.render_value(value.get("validator", ""))
                 value = value["value"]
             # The value can be templated
             value = self.render_value(value)
-            c = Choice(name, value, disabled=disabled)
+            checked = (
+                self.multiselect
+                and isinstance(default, list)
+                and self.cast_answer(value) in default
+                or None
+            )
+            c = Choice(name, value, disabled=disabled, checked=checked)
             # Try to cast the value according to the question's type to raise
             # an error in case the value is incompatible.
             self.cast_answer(c.value)
@@ -347,7 +364,7 @@ class Question:
             if default is MISSING:
                 result["default"] = False
         if self.choices:
-            questionary_type = "select"
+            questionary_type = "checkbox" if self.multiselect else "select"
             result["choices"] = self._formatted_choices
         if questionary_type == "input":
             if self.secret:
@@ -419,6 +436,12 @@ class Question:
 
     def parse_answer(self, answer: Any) -> Any:
         """Parse the answer according to the question's type."""
+        if self.multiselect:
+            return [self._parse_answer(a) for a in answer]
+        return self._parse_answer(answer)
+
+    def _parse_answer(self, answer: Any) -> Any:
+        """Parse a single answer according to the question's type."""
         ans = self.cast_answer(answer)
         choices = self._formatted_choices
         if not choices:
