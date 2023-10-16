@@ -604,6 +604,7 @@ def test_file_removed(tmp_path_factory: pytest.TempPathFactory) -> None:
                 Path("dir 3", "subdir 3", "3.txt"): "content 3",
                 Path("dir 4", "subdir 4", "4.txt"): "content 4",
                 Path("dir 5", "subdir 5", "5.txt"): "content 5",
+                "toignore.txt": "should survive update",
             }
         )
         git("init")
@@ -632,6 +633,7 @@ def test_file_removed(tmp_path_factory: pytest.TempPathFactory) -> None:
     assert (dst / "dir 3" / "subdir 3" / "3.txt").is_file()
     assert (dst / "dir 4" / "subdir 4" / "4.txt").is_file()
     assert (dst / "dir 5" / "subdir 5" / "5.txt").is_file()
+    assert (dst / "toignore.txt").is_file()
     assert (dst / "I.txt").is_file()
     assert (dst / "dir II" / "II.txt").is_file()
     assert (dst / "dir 3" / "subdir III" / "III.txt").is_file()
@@ -649,6 +651,9 @@ def test_file_removed(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("tag", "2")
     # Subproject updates
     with local.cwd(dst):
+        Path(".gitignore").write_text("toignore.txt")
+        git("add", ".gitignore")
+        git("commit", "-m", "ignore file")
         with pytest.raises(
             UserMessageError, match="Enable overwrite to update a subproject."
         ):
@@ -661,6 +666,7 @@ def test_file_removed(tmp_path_factory: pytest.TempPathFactory) -> None:
     assert (dst / "dir 3" / "subdir III" / "III.txt").is_file()
     assert (dst / "dir 4" / "subdir 4" / "IV.txt").is_file()
     assert (dst / "6.txt").is_file()
+    assert (dst / "toignore.txt").is_file()
     # Check what must not exist
     assert not (dst / "1.txt").exists()
     assert not (dst / "dir 2").exists()
