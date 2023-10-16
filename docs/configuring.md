@@ -150,6 +150,8 @@ Supported keys:
                 Some array: "[str, keeps, this, as, a, str]"
         ```
 
+-   **multiselect**: When set to `true`, allows multiple choices. The answer will be a
+    `list[T]` instead of a `T` where `T` is of type `type`.
 -   **default**: Leave empty to force the user to answer. Provide a default to save them
     from typing it if it's quite common. When using `choices`, the default must be the
     choice _value_, not its _key_, and it must match its _type_. If values are quite
