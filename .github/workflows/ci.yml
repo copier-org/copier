@@ -41,9 +41,6 @@ jobs:
         run: |
           echo "C:\msys64\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           rm C:\msys64\usr\bin\bash.exe
-      - run: git config --global user.name copier-ci
-      - run: git config --global user.email copier@copier
-      - run: git config --global core.autocrlf input
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Needs all tags to compute dynamic version
