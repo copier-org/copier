@@ -8,23 +8,23 @@ the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/)
 
 ### BREAKING CHANGE
 
-- Changes the return code for unsafe template error from
-2 to 4 to avoid return code collision with Plumbum's `SwitchError` type
-errors which use return code 2.
+-   Changes the return code for unsafe template error from 2 to 4 to avoid return code
+    collision with Plumbum's `SwitchError` type errors which use return code 2.
 
 ### Feat
 
-- allow overriding data file with CLI arguments (#1332)
-- **cli**: read answers from yaml file (#1325)
+-   allow overriding data file with CLI arguments (#1332)
+-   **cli**: read answers from yaml file (#1325)
 
 ### Fix
 
-- **vcs**: prevent local clone from being stuck by gpg prompts (#1360)
-- **pydantic**: compatible with 2.4+, solving `FieldValidationInfo` warning (#1342)
-- fix answer validation for `type: str` questions
-- version guess from tags that don't start with `v`, but are still PEP440 compliant (#1048)
-- **cli**: use return code 4 for unsafe template error
-- **nix**: detect build version appropriately
+-   **vcs**: prevent local clone from being stuck by gpg prompts (#1360)
+-   **pydantic**: compatible with 2.4+, solving `FieldValidationInfo` warning (#1342)
+-   fix answer validation for `type: str` questions
+-   version guess from tags that don't start with `v`, but are still PEP440 compliant
+    (#1048)
+-   **cli**: use return code 4 for unsafe template error
+-   **nix**: detect build version appropriately
 
 ## v8.3.0 (2023-09-05)
 
