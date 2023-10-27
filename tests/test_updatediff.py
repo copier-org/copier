@@ -340,7 +340,7 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
                         hooks:
                         -   id: prettier
                     -   repo: https://github.com/commitizen-tools/commitizen
-                        rev: v2.42.1
+                        rev: v3.12.0
                         hooks:
                         -   id: commitizen
                     -   repo: local
