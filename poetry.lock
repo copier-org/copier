@@ -890,13 +890,13 @@ poetry-plugin = ["poetry (>=1.0,<2.0)"]
 
 [[package]]
 name = "poetry-dynamic-versioning"
-version = "1.1.0"
+version = "1.1.1"
 description = "Plugin for Poetry to enable dynamic versioning based on VCS tags"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "poetry_dynamic_versioning-1.1.0-py3-none-any.whl", hash = "sha256:a851469a05ed88d9b8c91ecbdce16d9d6c96bb5bebe2c4ceba9c00d019455797"},
-    {file = "poetry_dynamic_versioning-1.1.0.tar.gz", hash = "sha256:283a6976bf6b31cb46146843e9e28f46ec1b71efd733aca163326486c06b1fd6"},
+    {file = "poetry_dynamic_versioning-1.1.1-py3-none-any.whl", hash = "sha256:c62127584be46613938595c309034775cbe4772b0b93740dbd70dcb90d8d1396"},
+    {file = "poetry_dynamic_versioning-1.1.1.tar.gz", hash = "sha256:514583297394bcb6ca5b3b0cdd831229b1fc95e0d21e24b9302b5d1a677aa4ee"},
 ]
 
 [package.dependencies]
