@@ -19,7 +19,7 @@ from pydantic import StrictBool
 
 from .types import IntSeq
 
-colorama.init()
+colorama.just_fix_windows_console()
 
 
 class Style:
