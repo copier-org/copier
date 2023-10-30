@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.0.1 (2023-10-30)
+
+### Fix
+
+-   don't produce output when imported with `$FORCE_COLOR=1` env
+
 ## v9.0.0 (2023-10-22)
 
 ### BREAKING CHANGE
