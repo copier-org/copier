@@ -2,8 +2,11 @@ from pathlib import Path
 from stat import S_IREAD
 from tempfile import TemporaryDirectory
 
+import pytest
 from plumbum.cmd import git
 from poethepoet.app import PoeThePoet
+
+from copier.tools import normalize_git_path
 
 
 def test_types() -> None:
@@ -27,3 +30,16 @@ def test_temporary_directory_with_git_repo_deletion() -> None:
     with TemporaryDirectory() as tmp_dir:
         git("init")
     assert not Path(tmp_dir).exists()
+
+
+@pytest.mark.parametrize(
+    ("path", "normalized"),
+    [
+        ("readme.md", "readme.md"),
+        ('quo\\"tes', 'quo"tes'),
+        ('"surrounded"', "surrounded"),
+        ("m4\\303\\2424\\303\\2614a", "m4â4ñ4a"),
+    ],
+)
+def test_normalizing_git_paths(path: str, normalized: str) -> None:
+    assert normalize_git_path(path) == normalized
