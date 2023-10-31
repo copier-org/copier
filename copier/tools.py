@@ -3,6 +3,7 @@
 import errno
 import os
 import platform
+import re
 import stat
 import sys
 from contextlib import suppress
@@ -177,3 +178,24 @@ def readlink(link: Path) -> Path:
         return link.readlink()
     else:
         return Path(os.readlink(link))
+
+
+_re_octal = re.compile(r"\\([0-9]{3})\\([0-9]{3})")
+
+
+def _re_octal_replace(match: re.Match) -> str:
+    return bytes([int(match.group(1), 8), int(match.group(2), 8)]).decode("utf8")
+
+
+def normalize_git_path(path: str) -> str:
+    # A filename like âñ will be reported by Git
+    # as "\\303\\242\\303\\261" (octal notation).
+    # This can be disabled with `git config core.quotepath off`.
+
+    # Remove surrounding quotes
+    if path[0] == path[-1] == '"':
+        path = path[1:-1]
+    # Repair double-quotes
+    path = path.replace('\\"', '"')
+    # Convert octal to utf8
+    return _re_octal.sub(_re_octal_replace, path)

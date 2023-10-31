@@ -45,7 +45,7 @@ from .errors import (
 )
 from .subproject import Subproject
 from .template import Task, Template
-from .tools import OS, Style, printf, readlink
+from .tools import OS, Style, normalize_git_path, printf, readlink
 from .types import (
     MISSING,
     AnyByStrDict,
@@ -903,11 +903,18 @@ class Worker:
                 if self.conflict == "inline":
                     status = git("status", "--porcelain").strip().splitlines()
                     for line in status:
-                        # Find merge rejections
-                        if not (line.startswith("?? ") and line.endswith(".rej")):
+                        # Filter merge rejections (part 1/2)
+                        if not line.startswith("?? "):
                             continue
-                        # FIXME Test with a file named '`â ñ"', see it fail, fix it
-                        fname = line[3:-4]
+                        # Remove "?? " prefix
+                        fname = line[3:]
+                        # Normalize name
+                        fname = normalize_git_path(fname)
+                        # Filter merge rejections (part 2/2)
+                        if not fname.endswith(".rej"):
+                            continue
+                        # Remove ".rej" suffix
+                        fname = fname[:-4]
                         # Undo possible non-rejected chunks
                         git("checkout", "--", fname)
                         # 3-way-merge the file directly
