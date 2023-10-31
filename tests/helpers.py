@@ -149,3 +149,16 @@ def git_save(
         git("commit", "-m", message)
         if tag:
             git("tag", tag)
+
+
+def git_init(message="hello world") -> None:
+    """Initialize a Git repository with a first commit.
+
+    Args:
+        message: The first commit message.
+    """
+    git("init")
+    git("config", "user.name", "Copier Test")
+    git("config", "user.email", "test@copier")
+    git("add", ".")
+    git("commit", "-m", message)
