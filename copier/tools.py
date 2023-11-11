@@ -11,7 +11,7 @@ from enum import Enum
 from importlib.metadata import version
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Callable, Literal, Optional, TextIO, Tuple, Union, cast
+from typing import Any, Callable, Literal, Optional, TextIO, Tuple, Type, Union, cast
 
 import colorama
 from packaging.version import Version
@@ -148,7 +148,10 @@ def force_str_end(original_str: str, end: str = "\n") -> str:
 
 
 def handle_remove_readonly(
-    func: Callable, path: str, exc: Tuple[BaseException, OSError, TracebackType]
+    func: Callable,
+    path: str,
+    # TODO: Change this union to simply `BaseException` when Python 3.11 support is dropped
+    exc: Union[BaseException, Tuple[Type[BaseException], BaseException, TracebackType]],
 ) -> None:
     """Handle errors when trying to remove read-only files through `shutil.rmtree`.
 
@@ -158,9 +161,11 @@ def handle_remove_readonly(
     Arguments:
         func: An OS-dependant function used to remove a file.
         path: The path to the file to remove.
-        exc: A `sys.exc_info()` object.
+        exc: An exception (Python >= 3.12) or `sys.exc_info()` object.
     """
-    excvalue = exc[1]
+    # TODO: Change to `excvalue = exc` when Python 3.11 support is dropped
+    excvalue = cast(OSError, exc if isinstance(exc, BaseException) else exc[1])
+
     if func in (os.rmdir, os.remove, os.unlink) and excvalue.errno == errno.EACCES:
         os.chmod(path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)  # 0777
         func(path)
