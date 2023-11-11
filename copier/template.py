@@ -1,5 +1,6 @@
 """Tools related to template management."""
 import re
+import sys
 from collections import ChainMap, defaultdict
 from contextlib import suppress
 from dataclasses import field
@@ -198,11 +199,18 @@ class Template:
     def _cleanup(self) -> None:
         temp_clone = self._temp_clone()
         if temp_clone:
-            rmtree(
-                temp_clone,
-                ignore_errors=False,
-                onerror=handle_remove_readonly,
-            )
+            if sys.version_info >= (3, 12):
+                rmtree(
+                    temp_clone,
+                    ignore_errors=False,
+                    onexc=handle_remove_readonly,
+                )
+            else:
+                rmtree(
+                    temp_clone,
+                    ignore_errors=False,
+                    onerror=handle_remove_readonly,
+                )
 
     def _temp_clone(self) -> Optional[Path]:
         """Get the path to the temporary clone of the template.
