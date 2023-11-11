@@ -1,6 +1,6 @@
 """Tools related to template management."""
-import sys
 import re
+import sys
 from collections import ChainMap, defaultdict
 from contextlib import suppress
 from dataclasses import field
