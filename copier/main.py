@@ -373,9 +373,10 @@ class Worker:
         dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
         if dst_relpath != Path(".") and self.match_exclude(dst_relpath):
             return False
+        previous_is_symlink = dst_abspath.is_symlink()
         try:
             previous_content: Union[bytes, Path]
-            if is_symlink:
+            if previous_is_symlink:
                 previous_content = readlink(dst_abspath)
             else:
                 previous_content = dst_abspath.read_bytes()
@@ -394,7 +395,9 @@ class Worker:
                 raise
         except IsADirectoryError:
             assert is_dir
-        if is_dir or previous_content == expected_contents:
+        if is_dir or (
+            previous_content == expected_contents and previous_is_symlink == is_symlink
+        ):
             printf(
                 "identical",
                 dst_relpath,
@@ -573,6 +576,10 @@ class Worker:
             return
         if not self.pretend:
             dst_abspath.parent.mkdir(parents=True, exist_ok=True)
+            if dst_abspath.is_symlink():
+                # Writing to a symlink just writes to its target, so if we want to
+                # replace a symlink with a file we have to unlink it first
+                dst_abspath.unlink()
             dst_abspath.write_bytes(new_content)
             dst_abspath.chmod(src_mode)
 

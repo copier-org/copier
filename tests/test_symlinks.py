@@ -293,6 +293,67 @@ def test_update_symlink(tmp_path_factory: pytest.TempPathFactory) -> None:
     assert readlink(dst / "symlink.txt") == Path("bbbb.txt")
 
 
+def test_update_file_to_symlink(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    build_file_tree(
+        {
+            src
+            / ".copier-answers.yml.jinja": """\
+                # Changes here will be overwritten by Copier
+                {{ _copier_answers|to_nice_yaml }}
+            """,
+            src
+            / "copier.yml": """\
+                _preserve_symlinks: true
+            """,
+            src
+            / "aaaa.txt": """
+                Lorem ipsum
+            """,
+            src
+            / "bbbb.txt": """
+                dolor sit amet
+            """,
+            src / "cccc.txt": Path("./aaaa.txt"),
+        }
+    )
+
+    with local.cwd(src):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m", "first commit on src")
+
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+
+    with local.cwd(src):
+        # test updating a symlink
+        os.remove("bbbb.txt")
+        os.symlink("aaaa.txt", "bbbb.txt")
+        os.remove("cccc.txt")
+        with open("cccc.txt", "w+") as f:
+            f.write("Lorem ipsum")
+
+    # dst must be vcs-tracked to use run_update
+    with local.cwd(dst):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m", "first commit on dst")
+
+    # make sure changes have not yet propagated
+    assert not (dst / "bbbb.txt").is_symlink()
+    assert (dst / "cccc.txt").is_symlink()
+
+    with pytest.warns(DirtyLocalWarning):
+        run_update(dst, defaults=True, overwrite=True)
+
+    # make sure changes propagate after update
+    assert (dst / "bbbb.txt").is_symlink()
+    assert readlink(dst / "bbbb.txt") == Path("aaaa.txt")
+    assert not (dst / "cccc.txt").is_symlink()
+    assert (dst / "cccc.txt").read_text() == "Lorem ipsum"
+
+
 def test_exclude_symlink(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     # Prepare repo bundle
