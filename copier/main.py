@@ -895,8 +895,15 @@ class Worker:
             # Try to apply cached diff into final destination
             with local.cwd(subproject_top):
                 apply_cmd = git["apply", "--reject", "--exclude", self.answers_relpath]
+                ignored_files = git["status", "--ignored", "--porcelain"]()
+                # returns "!! file1\n !! file2\n"
+                # extra_exclude will contain: ["file1", file2"]
+                extra_exclude = [
+                    filename.split("!! ").pop()
+                    for filename in ignored_files.splitlines()
+                ]
                 for skip_pattern in chain(
-                    self.skip_if_exists, self.template.skip_if_exists
+                    self.skip_if_exists, self.template.skip_if_exists, extra_exclude
                 ):
                     apply_cmd = apply_cmd["--exclude", skip_pattern]
                 (apply_cmd << diff)(retcode=None)
