@@ -37,20 +37,32 @@ nix bundle --bundler github:NixOS/bundlers#toDockerImage \
 docker load < python*copier*.tar.gz
 ```
 
+## How to create computed values?
+
+Combine `default` and `when: false`.
+
+!!! example
+
+    ```yaml title="copier.yaml"
+    copyright_year:
+        type: int
+        default: 2024
+
+    next_year:
+        type: int
+        default: "{{ copyright_year + 1 }}" # This computes the value
+        when: false # This makes sure it isn't asked nor stored
+    ```
+
+See [advanced prompt formatting docs][advanced-prompt-formatting]. If you need more
+power, see [below][how-can-i-alter-the-context-before-rendering-the-project].
+
 ## How can I alter the context before rendering the project?
 
-Similar questions:
-
--   **How can I add/remove variables to/from the rendering context?**
--   **How to infer context variables based on the users answers, without prompting
-    users?**
-
-Answer:
-
-**Use the [`ContextHook` extension][context-hook].**
-
-The [`ContextHook` extension][context-hook] lets you modify the context used to render
-templates, so that you can add, change or remove variables.
+**Use the [`ContextHook` extension][context-hook].** It lets you modify the context used
+to render templates, so that you can add, change or remove variables. Since it is a
+Python extension, you have the full power of Python at your fingertips, at the cost of
+having to mark the template as [unsafe][].
 
 [context-hook]:
     https://github.com/copier-org/copier-templates-extensions#context-hook-extension
