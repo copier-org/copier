@@ -915,6 +915,7 @@ class Worker:
                     apply_cmd = apply_cmd["--exclude", skip_pattern]
                 (apply_cmd << diff)(retcode=None)
                 if self.conflict == "inline":
+                    conflicted = []
                     status = git("status", "--porcelain").strip().splitlines()
                     for line in status:
                         # Filter merge rejections (part 1/2)
@@ -947,6 +948,27 @@ class Worker:
                         )
                         # Remove rejection witness
                         Path(f"{fname}.rej").unlink()
+                        # Store file name for marking it as unmerged after the loop
+                        conflicted.append(fname)
+                    # Forcefully mark files with conflict markers as unmerged,
+                    # see SO post: https://stackoverflow.com/questions/77391627/
+                    # and Git docs: https://git-scm.com/docs/git-update-index#_using_index_info.
+                    # For each file with conflict markers, we update the index to add
+                    # higher order versions of their paths, without entries for resolved contents.
+                    if conflicted:
+                        input_lines = []
+                        for line in (
+                            git("ls-files", "--stage", *conflicted).strip().splitlines()
+                        ):
+                            perms_sha_mode, path = line.split("\t")
+                            perms, sha, _ = perms_sha_mode.split()
+                            input_lines.append(f"0 {'0' * 40}\t{path}")
+                            for mode in (1, 2, 3):
+                                input_lines.append(f"{perms} {sha} {mode}\t{path}")
+                        (
+                            git["update-index", "--index-info"]
+                            << "\n".join(input_lines)
+                        )()
             # Trigger recursive removal of deleted files in last template version
             _remove_old_files(subproject_top, compared)
 
