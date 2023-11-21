@@ -28,7 +28,7 @@ copier = "copier.__main__:copier_app_run"
 
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0" # HACK https://github.com/PyCQA/isort/issues/1945
-colorama = ">=0.4.6"
+colorama = ">=0.4.3"
 decorator = ">=5.1.1"
 dunamai = ">=1.7.0"
 funcy = ">=1.17"
