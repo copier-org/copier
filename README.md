@@ -98,7 +98,7 @@ To generate a project from the template:
 Copier is composed of these main concepts:
 
 1. **Templates**. They lay out how to generate the subproject.
-1. **Questionaries**. They are configured in the template. Answers are used to generate
+1. **Questionnaires**. They are configured in the template. Answers are used to generate
    projects.
 1. **Projects**. This is where your real program lives. But it is usually generated
    and/or updated from a template.
