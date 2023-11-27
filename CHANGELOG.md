@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.1.0 (2023-11-27)
+
+### Feat
+
+-   Conflicts on updates now appear as git merge conflicts, also on VSCode
+-   **choices**: support questionary checkbox for multiple choices using
+    `multiselect: true`.
+
+### Fix
+
+-   mark package as typed
+-   Normalize paths obtained from Git commands output
+-   don't crash when update replaces file with symlink (or vice versa) (#1409)
+-   keep git-ignored files on update (#1373)
+-   address deprecation warning in `shutil.rmtree(onerror=...)` (#1401)
+
 ## v9.0.1 (2023-10-30)
 
 ### Fix
