@@ -125,7 +125,7 @@ jobs:
       - run: copier --version
 
       # Run nix checks
-      - run: nix flake check -L
+      - run: nix flake check -L --accept-flake-config
 
   publish:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')

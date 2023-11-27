@@ -20,7 +20,7 @@
       flake = false;
     };
     flake-utils.url = github:numtide/flake-utils;
-    nixpkgs.url = github:NixOS/nixpkgs/release-23.05;
+    nixpkgs.url = github:NixOS/nixpkgs/release-23.11;
     poetry2nix.url = github:nix-community/poetry2nix;
     poetry2nix.inputs.nixpkgs.follows = "nixpkgs";
   };
@@ -35,7 +35,7 @@
       // flake-utils.lib.eachDefaultSystem (system: let
         pkgs = import nixpkgs {
           inherit system;
-          overlays = [poetry2nix.overlay];
+          overlays = [poetry2nix.overlays.default];
         };
         lastRelease = (pkgs.lib.importTOML ./pyproject.toml).tool.commitizen.version;
         version = "${lastRelease}.dev${self.sourceInfo.lastModifiedDate}+nix-git-${self.sourceInfo.shortRev or "dirty"}";
