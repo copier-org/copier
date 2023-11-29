@@ -371,8 +371,6 @@ class Worker:
         assert not dst_relpath.is_absolute()
         assert not expected_contents or not is_dir, "Dirs cannot have expected content"
         dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
-        if dst_relpath != Path(".") and self.match_exclude(dst_relpath):
-            return False
         previous_is_symlink = dst_abspath.is_symlink()
         try:
             previous_content: Union[bytes, Path]
@@ -676,6 +674,9 @@ class Worker:
                 part = Path(part).name
             rendered_parts.append(part)
         result = Path(*rendered_parts)
+        # Skip excluded paths.
+        if result != Path(".") and self.match_exclude(relpath):
+            return None
         if not is_template:
             templated_sibling = (
                 self.template.local_abspath
