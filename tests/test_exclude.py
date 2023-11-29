@@ -132,3 +132,52 @@ def test_config_exclude_with_subdirectory(
     build_file_tree({src / "copier.yml": "", src / "template" / "copier.yml": ""})
     run_copy(str(src), dst, quiet=True)
     assert not (dst / "template" / "copier.yml").exists()
+
+
+def test_config_exclude_copieryml_without_templates_suffix(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                """\
+                _subdirectory: .
+                _templates_suffix: ""
+                _envops:
+                    block_start_string: "[?"
+                    block_end_string: "?]"
+                """
+            ),
+        }
+    )
+    run_copy(str(src), dst, quiet=True)
+    assert not (dst / "copier.yml").exists()
+
+
+def test_config_exclude_file_with_bad_jinja_syntax_without_templates_suffix(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                """\
+                _subdirectory: .
+                _templates_suffix: ""
+                _exclude:
+                    - copier.yml
+                    - exclude-me.txt
+                """
+            ),
+            (src / "exclude-me.txt"): (
+                """\
+                "{%" is malformed Jinja syntax but it doesn't matter because
+                this file is excluded
+                """
+            ),
+        }
+    )
+    run_copy(str(src), dst, quiet=True)
+    assert not (dst / "copier.yml").exists()
+    assert not (dst / "exclude-me.txt").exists()
