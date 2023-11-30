@@ -114,6 +114,14 @@ def test_config_exclude_with_subdirectory(
     run_copy(str(src), dst, quiet=True)
     assert (dst / "copier.yml").exists()
 
+
+def test_config_exclude_with_subdirectory_dot(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """Default excludes are applied when subdirectory is `.`."""
+    # Make sure the file under test is in the list of default excludes
+    assert "copier.yml" in DEFAULT_EXCLUDE
+
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {src / "copier.yml": "_subdirectory: '.'", src / "template" / "copier.yml": ""}
@@ -121,12 +129,28 @@ def test_config_exclude_with_subdirectory(
     run_copy(str(src), dst, quiet=True)
     assert not (dst / "template" / "copier.yml").exists()
 
+
+def test_config_exclude_with_subdirectory_empty_string(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """Default excludes are applied when subdirectory is `""`."""
+    # Make sure the file under test is in the list of default excludes
+    assert "copier.yml" in DEFAULT_EXCLUDE
+
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {src / "copier.yml": "_subdirectory: ''", src / "template" / "copier.yml": ""}
     )
     run_copy(str(src), dst, quiet=True)
     assert not (dst / "template" / "copier.yml").exists()
+
+
+def test_config_exclude_without_subdirectory(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """Default excludes are applied when no subdirectory is specified."""
+    # Make sure the file under test is in the list of default excludes
+    assert "copier.yml" in DEFAULT_EXCLUDE
 
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree({src / "copier.yml": "", src / "template" / "copier.yml": ""})
