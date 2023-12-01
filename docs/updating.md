@@ -107,7 +107,7 @@ copier update --defaults
 ```
 
 If you want to change just one question, and leave all others untouched, and don't want
-to go through the whole questionary again:
+to go through the whole questionnaire again:
 
 ```shell
 copier update --defaults --data updated_question="my new answer"

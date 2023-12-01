@@ -55,7 +55,7 @@ they become available to the project template.
     your_email: ""
     ```
 
-    Will result in a questionary similar to:
+    Will result in a questionnaire similar to:
 
     <pre style="font-weight: bold">
     🎤 name_of_the_project
@@ -1357,7 +1357,7 @@ This allows you to keep separate the template metadata and the template code.
         1.  Ignore instructions for projects generated with the template.
 
     However, it is true that the value of this option can itself be templated. This would
-    let you have different templates that all use the same questionary, and the used
+    let you have different templates that all use the same questionnaire, and the used
     template would be saved as an answer. It would let the user update safely and change
     that option in the future.
 

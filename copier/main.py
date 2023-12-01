@@ -108,7 +108,7 @@ class Worker:
             Specify the VCS tag/commit to use in the template.
 
         data:
-            Answers to the questionary defined in the template.
+            Answers to the questionnaire defined in the template.
 
         exclude:
             User-chosen additional [file exclusion patterns][exclude].
@@ -407,7 +407,7 @@ class Worker:
         return self._solve_render_conflict(dst_relpath)
 
     def _ask(self) -> None:
-        """Ask the questions of the questionary and record their answers."""
+        """Ask the questions of the questionnaire and record their answers."""
         result = AnswersMap(
             user_defaults=self.user_defaults,
             init=self.data,
