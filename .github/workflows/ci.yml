@@ -45,7 +45,7 @@ jobs:
         with:
           fetch-depth: 0 # Needs all tags to compute dynamic version
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Get full Python version
@@ -138,7 +138,7 @@ jobs:
         with:
           fetch-depth: 0 # Needs all tags to compute dynamic version
       - name: Set up Python 3.10
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.10"
       - name: Get full Python version
