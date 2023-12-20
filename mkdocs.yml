@@ -33,6 +33,10 @@ theme:
     - navigation.top
     - navigation.tracking
   palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
       primary: deep orange
@@ -46,7 +50,7 @@ theme:
       accent: orange
       toggle:
         icon: material/weather-night
-        name: Switch to light mode
+        name: Switch to system preference
 
 extra_css:
   - css/mkdocstrings.css
