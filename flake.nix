@@ -14,7 +14,7 @@
     ];
   };
   inputs = {
-    devenv.url = "github:cachix/devenv/v0.5";
+    devenv.url = "github:cachix/devenv/latest";
     flake-compat = {
       url = github:edolstra/flake-compat;
       flake = false;
@@ -91,16 +91,15 @@
 
                 # IDE integration tools
                 alejandra
-                black
                 commitizen
-                isort
                 mypy
                 nodePackages.prettier
+                ruff
+                taplo
               ];
               difftastic.enable = true;
               pre-commit.hooks = {
                 alejandra.enable = true;
-                black.enable = true;
                 commitizen.enable = true;
                 editorconfig-checker.enable = true;
                 editorconfig-checker.excludes = [
@@ -108,8 +107,6 @@
                   "\.noeof\."
                   "\.bundle$"
                 ];
-                flake8.enable = true;
-                isort.enable = true;
                 prettier.enable = true;
                 prettier.excludes = [
                   # Those files have wrong syntax and would fail
@@ -118,6 +115,8 @@
                   # HACK https://github.com/prettier/prettier/issues/9430
                   "^tests/demo"
                 ];
+                ruff.enable = true;
+                taplo.enable = true;
               };
             }
           ];

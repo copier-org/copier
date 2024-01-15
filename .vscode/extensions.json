@@ -1,7 +1,7 @@
 {
   "recommendations": [
+    "charliermarsh.ruff",
     "esbenp.prettier-vscode",
-    "ms-python.black-formatter",
     "ms-python.python",
     "editorconfig.editorconfig",
     "bpruitt-goddard.mermaid-markdown-syntax-highlighting"

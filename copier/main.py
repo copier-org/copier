@@ -624,7 +624,7 @@ class Worker:
         """Recursively render a folder.
 
         Args:
-            src_path:
+            src_abspath:
                 Folder to be rendered. It must be an absolute path within
                 the template.
         """
