@@ -84,16 +84,18 @@ repos:
           # Prevent committing .rej files
           - id: forbidden-files
             name: forbidden files
-            entry: found Copier update rejection files; review and remove them before merging.
+            description:
+                found Copier update rejection files; review and remove them before
+                merging.
             language: fail
             files: "\\.rej$"
 ```
 
 !!! note
 
-    For shared project that use both "rej" and "inline" depending on the user,
-    you can add both repo to you `pre-commit-config.yaml` file, making sure that none
-    of these files are committed.
+    For projects that use both `rej` and `inline` depending on each user's preference,
+    you can add both hooks to your `pre-commit-config.yaml` file, making sure that no
+    unresolved merge conflicts are committed.
 
 ## Never change the answers file manually
 
