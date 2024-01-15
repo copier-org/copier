@@ -68,7 +68,7 @@ jobs:
           python -m pip install poetry poetry-dynamic-versioning
           poetry install --with dev,docs -v
       - name: Run pytest
-        run: poetry run poe test --cov=./ --cov-report=xml -ra .
+        run: poetry run poe coverage
       - name: Upload coverage to Codecov
         continue-on-error: true
         uses: codecov/codecov-action@v3

@@ -81,8 +81,8 @@ script = "devtasks:clean"
 help = "remove build/python artifacts"
 
 [tool.poe.tasks.coverage]
-cmd = "pytest --cov-report html --cov copier copier tests"
-help = "generate an HTML report of the coverage"
+cmd = "pytest -p pytest_cov --cov --cov-report=html --cov-report=xml --cov-append"
+help = "generate an HTML+XML report of the coverage"
 
 [tool.poe.tasks.dev-setup]
 script = "devtasks:dev_setup"
@@ -128,9 +128,27 @@ add_ignore = ["D105", "D107"]
 
 [tool.pytest.ini_options]
 addopts = "-n auto -ra"
+testpaths = [
+    "copier/",
+    "tests/",
+]
 markers = [
     "impure: needs network or is not 100% reproducible"
 ]
+
+[tool.coverage.run]
+source = [
+    "copier/",
+    "tests/",
+]
+omit = [
+    "*/demo*/*",
+]
+disable_warnings = [
+    "couldnt-parse",
+    "no-data-collected",
+]
+
 
 [tool.commitizen]
 annotated_tag = true
