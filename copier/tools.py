@@ -20,7 +20,12 @@ from pydantic import StrictBool
 
 from .types import IntSeq
 
-colorama.just_fix_windows_console()
+try:
+    colorama_init = colorama.just_fix_windows_console
+except AttributeError:  # pragma: no cover
+    colorama_init = colorama.init
+
+colorama_init()
 
 
 class Style:
