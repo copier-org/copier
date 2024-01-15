@@ -1,5 +1,4 @@
-"""
-Command line entrypoint. This module declares the Copier CLI applications.
+"""Command line entrypoint. This module declares the Copier CLI applications.
 
 Basically, there are 3 different commands you can run:
 
@@ -197,8 +196,7 @@ class _Subcommand(cli.Application):
         self.data.update(updates_without_cli_overrides)
 
     def _worker(self, src_path: OptStr = None, dst_path: str = ".", **kwargs) -> Worker:
-        """
-        Run Copier's internal API using CLI switches.
+        """Run Copier's internal API using CLI switches.
 
         Arguments:
             src_path: The source path of the template to generate the project from.

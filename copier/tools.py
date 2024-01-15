@@ -193,10 +193,17 @@ def _re_octal_replace(match: re.Match) -> str:
 
 
 def normalize_git_path(path: str) -> str:
-    # A filename like âñ will be reported by Git
-    # as "\\303\\242\\303\\261" (octal notation).
-    # This can be disabled with `git config core.quotepath off`.
+    r"""Convert weird characters returned by Git to normal UTF-8 path strings.
 
+    A filename like âñ will be reported by Git as "\\303\\242\\303\\261" (octal notation).
+    This can be disabled with `git config core.quotepath off`.
+
+    Args:
+        path: The Git path to normalize.
+
+    Returns:
+        str: The normalized Git path.
+    """
     # Remove surrounding quotes
     if path[0] == path[-1] == '"':
         path = path[1:-1]

@@ -2,21 +2,17 @@
   "editor.formatOnSave": true,
   "python.testing.pytestEnabled": true,
   "markdown.extension.toc.updateOnSave": false,
-  "python.formatting.provider": "none",
-  "python.linting.pylintEnabled": false,
-  "python.linting.flake8Enabled": true,
-  "python.linting.mypyEnabled": true,
   "[python]": {
-    "editor.formatOnSave": true,
-    "editor.formatOnSaveMode": "file",
-    "editor.defaultFormatter": "ms-python.black-formatter"
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+      "source.organizeImports": "explicit"
+    },
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true
   },
   "[markdown]": {
     "editor.formatOnSave": true,
     "editor.formatOnSaveMode": "file",
     "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "python.autoComplete.extraPaths": ["__pypackages__/3.9/lib"],
-  "python.analysis.extraPaths": ["__pypackages__/3.9/lib"],
-  "python.pythonPath": ".venv/bin/python"
+  }
 }

@@ -124,7 +124,7 @@ def test_invalid_config_data(
 ) -> None:
     template = Template(conf_path)
     with pytest.raises(InvalidConfigFileError):
-        template.config_data
+        template.config_data # noqa: B018
     if check_err:
         _, err = capsys.readouterr()
         assert check_err(err)
@@ -198,7 +198,7 @@ def test_config_data_empty() -> None:
 def test_multiple_config_file_error() -> None:
     template = Template("tests/demo_multi_config")
     with pytest.raises(MultipleConfigFilesError):
-        template.config_data
+        template.config_data # noqa: B018
 
 
 # ConfigData

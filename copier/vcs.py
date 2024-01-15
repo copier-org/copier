@@ -17,7 +17,7 @@ from .types import OptBool, OptStr, OptStrOrPath, StrOrPath
 
 
 def get_git(context_dir: OptStrOrPath = None) -> LocalCommand:
-    """Gets `git` command, or fails if it's not available"""
+    """Gets `git` command, or fails if it's not available."""
     command = local["git"]
     if context_dir:
         command = command["-C", context_dir]
@@ -25,6 +25,7 @@ def get_git(context_dir: OptStrOrPath = None) -> LocalCommand:
 
 
 def get_git_version() -> Version:
+    """Get the installed git version."""
     git = get_git()
 
     return Version(re.findall(r"\d+\.\d+\.\d+", git("version"))[0])

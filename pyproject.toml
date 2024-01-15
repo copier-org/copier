@@ -5,15 +5,15 @@ version = "0.0.0"
 description = "A library for rendering project templates."
 license = "MIT"
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
 ]
 authors = ["Ben Felder <ben@felder.io>"]
 homepage = "https://github.com/copier-org/copier"
@@ -109,28 +109,28 @@ enable = true
 style = "pep440"
 vcs = "git"
 
-[tool.black]
-target-version = ["py38"]
+[tool.ruff.lint]
+extend-select = ["B", "D", "E", "F", "I", "UP"]
+extend-ignore = ['B028', "B904", "D105", "D107", "E501"]
 
-[tool.isort]
-profile = "black"
-combine_as_imports = true
-known_first_party = ["copier"]
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+known-first-party = ["copier"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.mypy]
 ignore_missing_imports = true
 plugins = ["pydantic.mypy"]
 warn_no_return = false
 
-[tool.pydocstyle]
-match_dir = "^copier"
-add_ignore = ["D105", "D107"]
-
 [tool.pytest.ini_options]
 addopts = "-n auto -ra"
-markers = [
-    "impure: needs network or is not 100% reproducible"
-]
+markers = ["impure: needs network or is not 100% reproducible"]
 
 [tool.commitizen]
 annotated_tag = true
