@@ -89,6 +89,12 @@ repos:
             files: "\\.rej$"
 ```
 
+!!! note
+
+    For shared project that use both "rej" and "inline" depending on the user,
+    you can add both repo to you `pre-commit-config.yaml` file, making sure that none
+    of these files are committed.
+
 ## Never change the answers file manually
 
 !!! important
