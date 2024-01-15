@@ -27,7 +27,7 @@ copier = "copier.__main__:copier_app_run"
 "Bug Tracker" = "https://github.com/copier-org/copier/issues"
 
 [tool.poetry.dependencies]
-python = ">=3.8,<4.0" # HACK https://github.com/PyCQA/isort/issues/1945
+python = ">=3.8"
 colorama = ">=0.4.6"
 decorator = ">=5.1.1"
 dunamai = ">=1.7.0"
