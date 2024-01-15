@@ -61,7 +61,9 @@ setting you use.
 
 ## Preventing Commit of Merge Conflicts
 
-If you use `--conflict inline` (the default) then you need to check for conflicts marks in your files: 
+If you use `--conflict inline` (the default) then you need to check for conflicts
+markers in your files:
+
 ```yaml title=".pre-commit-config.yaml"
 repos:
     - repo: https://github.com/pre-commit/pre-commit-hooks
