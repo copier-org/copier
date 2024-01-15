@@ -72,7 +72,8 @@ repos:
             args: [--assume-in-merge]
 ```
 
-If you use `--conflict rej` Then you need to reject all the generated `.rej` files:
+If you use `--conflict rej` then you need to review and remove all generated `.rej`
+files:
 
 ```yaml title=".pre-commit-config.yaml"
 repos:
