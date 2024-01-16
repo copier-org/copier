@@ -84,7 +84,7 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
         loader_class=_Loader, base_dir=conf_path.parent
     )
 
-    with open(conf_path) as f:
+    with conf_path.open("rb") as f:
         try:
             flattened_result = lflatten(yaml.load_all(f, Loader=_Loader))
         except yaml.parser.ParserError as e:
