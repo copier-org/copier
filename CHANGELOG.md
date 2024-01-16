@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.1.1 (2024-01-16)
+
+### Fix
+
+-   don't fail in systems with windows 1252 encoding (probably)
+-   skip excluded paths before rendering
+
 ## v9.1.0 (2023-11-27)
 
 ### Feat
