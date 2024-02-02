@@ -420,23 +420,16 @@ templates.
         - "pyproject.toml"
     ```
 
-The structure of includes is quite restrictive: they must come at the top of the yaml
-file, and end with `---` on a new line.
+The syntax of a single include is:
 
-!!! example
+```yaml
+---
+!include filename.yml
+---
+```
 
-    This is an _invalid_ copier.yml file:
-
-    ```yaml title="copier-invalid.yml"
-    version:
-        type: str
-        help: What is the version of your Python project?
-    
-    !include copier-other.yml
-    ```
-
-    This is invalid twice over: we haven't put the `!include` directive at the top
-    of the file, and we haven't included `---` in a new line after it.
+the `---` on new lines are essential, but you don't need to duplicate them if you have
+two `!include` directives.
 
 !!! hint
 
