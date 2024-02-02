@@ -383,19 +383,7 @@ cannot use Jinja templating in your answers.
 The `copier.yml` file supports multiple documents as well as using the `!include` tag to
 include settings and questions from other YAML files. This allows you to split up a
 larger `copier.yml` and enables you to reuse common partial sections from your
-templates. When multiple documents are used, care has to be taken with questions and
-settings that are defined in more than one document:
-
--   A question with the same name overwrites definitions from an earlier document.
--   Settings given in multiple documents for `exclude`, `skip_if_exists`,
-    `jinja_extensions` and `secret_questions` are concatenated.
--   Other settings (such as `tasks` or `migrations`) overwrite previous definitions for
-    these settings.
-
-!!! hint
-
-    You can use [Git submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
-    to sanely include shared code into templates.
+templates.
 
 !!! example
 
@@ -431,6 +419,43 @@ settings that are defined in more than one document:
     _skip_if_exists:
         - "pyproject.toml"
     ```
+
+The structure of includes is quite restrictive: they must come at the top of the yaml
+file, and end with `---` on a new line.
+
+!!! example
+
+    This is an _invalid_ copier.yml file:
+
+    ```yaml title="copier-invalid.yml"
+    version:
+        type: str
+        help: What is the version of your Python project?
+    
+    !include copier-other.yml
+    ```
+
+    This is invalid twice over: we haven't put the `!include` directive at the top
+    of the file, and we haven't included `---` in a new line after it.
+
+!!! hint
+
+    When working with multiple documents, you can use [`exclude`][exclude]
+    to exclude them from the rendered project.
+
+When multiple documents are used, care has to be taken with questions and
+settings that are defined in more than one document:
+
+-   A question with the same name overwrites definitions from an earlier document.
+-   Settings given in multiple documents for `exclude`, `skip_if_exists`,
+    `jinja_extensions` and `secret_questions` are concatenated.
+-   Other settings (such as `tasks` or `migrations`) overwrite previous definitions for
+    these settings.
+
+!!! hint
+
+    You can use [Git submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
+    to sanely include shared code into templates.
 
 ## Conditional files and directories
 
