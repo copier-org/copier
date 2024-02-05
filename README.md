@@ -92,6 +92,7 @@ To generate a project from the template:
     # Or "gl:" as a shortcut of "https://gitlab.com/"
     run_copy("gl:copier-org/copier.git", "path/to/destination")
     ```
+If `path/to/destination` doesn't exist, `copier` will create the directory in both cases.
 
 ## Basic concepts
 

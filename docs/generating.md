@@ -18,6 +18,8 @@ Or within Python code:
 copier.run_copy("path/to/project/template", "path/to/destination")
 ```
 
+If `path/to/destination` doesn't exist, `copier` will both create and populate the directory with the generated files. Note that this will raise an error if the destination is read-only.
+
 The "template" parameter can be a local path, an URL, or a shortcut URL:
 
 -   GitHub: `gh:namespace/project`
