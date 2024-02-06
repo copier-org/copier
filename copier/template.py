@@ -1,13 +1,14 @@
 """Tools related to template management."""
 import re
 import sys
+import warnings
 from collections import ChainMap, defaultdict
 from contextlib import suppress
 from dataclasses import field
 from functools import cached_property
 from pathlib import Path
 from shutil import rmtree
-from typing import List, Literal, Mapping, Optional, Sequence, Set, Tuple
+from typing import Any, Dict, List, Literal, Mapping, Optional, Sequence, Set, Tuple
 from warnings import warn
 
 import dunamai
@@ -149,10 +150,24 @@ class Task:
 
         extra_env:
             Additional environment variables to set while executing the command.
+
+        extra_context:
+            Additional jinja variables to be used while rendering the command, condition
+            and wokrking directory
+
+        condition:
+            The condition when a conditional task runs
+
+        working_directory:
+            The directory from inside where to execute the task.
+            If None the project directory will be used.
     """
 
     cmd: Union[str, Sequence[str]]
     extra_env: Env = field(default_factory=dict)
+    extra_context: Dict[str, Any] = field(default_factory=dict)
+    condition: str = field(default="true")
+    working_directory: str = field(default=".")
 
 
 @dataclass
@@ -372,17 +387,44 @@ class Template:
             "VERSION_PEP440_FROM": str(from_template.version),
             "VERSION_PEP440_TO": str(self.version),
         }
+        extra_context = { "_" + key.lower(): value for key, value in extra_env.items()}
         migration: dict
         for migration in self._raw_config.get("_migrations", []):
-            current = parse(migration["version"])
-            if self.version >= current > from_template.version:
-                extra_env = {
-                    **extra_env,
-                    "VERSION_CURRENT": migration["version"],
-                    "VERSION_PEP440_CURRENT": str(current),
-                }
-                for cmd in migration.get(stage, []):
-                    result.append(Task(cmd=cmd, extra_env=extra_env))
+            if any(key in migration for key in ("before", "after")):
+                # Legacy configuration format
+                warnings.warn("This migration configuration is deprecated. Please switch to the new format")
+                current = parse(migration["version"])
+                if self.version >= current > from_template.version:
+                    extra_env = {
+                        **extra_env,
+                        "VERSION_CURRENT": migration["version"],
+                        "VERSION_PEP440_CURRENT": str(current),
+                    }
+                    for cmd in migration.get(stage, []):
+                        result.append(Task(cmd=cmd, extra_env=extra_env))
+            else:
+                # New configuration format
+                if isinstance(migration, (str, list)):
+                    result.append(Task(cmd=migration, extra_env=extra_env, extra_context=extra_context))
+
+                else:
+                    condition = migration.get("when", "true")
+                    working_directory = migration.get("working_directory", ".")
+                    if "version" in migration:
+                        current = parse(migration["version"])
+                        if not (self.version >= current > from_template.version):
+                            continue
+
+                        extra_env = {
+                            **extra_env,
+                            "VERSION_CURRENT": migration["version"],
+                            "VERSION_PEP440_CURRENT": str(current),
+                        }
+                        extra_context = {"_" + key.lower(): value for key, value in
+                                        extra_env.items()}
+
+                    result.append(Task(cmd=migration["command"], extra_env=extra_env, extra_context=extra_context, condition=condition, working_directory=working_directory))
+
         return result
 
     @cached_property
@@ -448,10 +490,16 @@ class Template:
 
         See [tasks][].
         """
-        return [
-            Task(cmd=cmd, extra_env={"STAGE": "task"})
-            for cmd in self.config_data.get("tasks", [])
-        ]
+        extra_env = {"STAGE": "task"}
+        extra_context = { "_" + key.lower(): value for key, value in extra_env.items()}
+        tasks = []
+        for task in self.config_data.get("tasks", []):
+            if isinstance(task, (str, list)):
+                tasks.append(Task(cmd=task, extra_env=extra_env))
+            elif isinstance(task, dict):
+                tasks.append(Task(cmd=task["command"], extra_env=extra_env, extra_context=extra_context, condition=task.get("when", "true"), working_directory=task.get("working_directory", ".")))
+
+        return tasks
 
     @cached_property
     def templates_suffix(self) -> str:

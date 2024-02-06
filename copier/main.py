@@ -45,7 +45,7 @@ from .errors import (
 )
 from .subproject import Subproject
 from .template import Task, Template
-from .tools import OS, Style, normalize_git_path, printf, readlink
+from .tools import OS, Style, cast_to_bool, normalize_git_path, printf, readlink
 from .types import (
     MISSING,
     AnyByStrDict,
@@ -265,13 +265,17 @@ class Worker:
             tasks: The list of tasks to run.
         """
         for i, task in enumerate(tasks):
+            if not cast_to_bool(self._render_string(task.condition, task.extra_context)):
+                continue
+
             task_cmd = task.cmd
             if isinstance(task_cmd, str):
-                task_cmd = self._render_string(task_cmd)
+                task_cmd = self._render_string(task_cmd, task.extra_context)
                 use_shell = True
             else:
-                task_cmd = [self._render_string(str(part)) for part in task_cmd]
+                task_cmd = [self._render_string(str(part), task.extra_context) for part in task_cmd]
                 use_shell = False
+
             if not self.quiet:
                 print(
                     colors.info
@@ -280,7 +284,12 @@ class Worker:
                 )
             if self.pretend:
                 continue
-            with local.cwd(self.subproject.local_abspath), local.env(**task.extra_env):
+
+            working_directory = (
+                    self.subproject.local_abspath / Path(self._render_string(task.working_directory, task.extra_context))
+            ).absolute()
+
+            with local.cwd(working_directory), local.env(**task.extra_env):
                 subprocess.run(task_cmd, shell=use_shell, check=True, env=local.env)
 
     def _render_context(self) -> Mapping:
@@ -686,15 +695,18 @@ class Worker:
                 return None
         return result
 
-    def _render_string(self, string: str) -> str:
+    def _render_string(self, string: str, extra_context: Optional[AnyByStrDict] = None) -> str:
         """Render one templated string.
 
         Args:
             string:
                 The template source string.
+
+            extra_context:
+                Additional variables to use for rendering the template
         """
         tpl = self.jinja_env.from_string(string)
-        return tpl.render(**self._render_context())
+        return tpl.render(**self._render_context(), **(extra_context or {}))
 
     @cached_property
     def subproject(self) -> Subproject:

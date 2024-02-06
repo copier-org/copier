@@ -1,0 +1,35 @@
+_templates_suffix: .tmpl
+_envops:
+  autoescape: false
+  block_end_string: "%]"
+  block_start_string: "[%"
+  comment_end_string: "#]"
+  comment_start_string: "[#"
+  keep_trailing_newline: true
+  variable_end_string: "]]"
+  variable_start_string: "[["
+
+_exclude:
+  - tasks.py
+  - migrations.py
+  - .git
+
+_tasks:
+  - "python [[ _copier_conf.src_path / 'tasks.py' ]] 1"
+  - [python, "[[ _copier_conf.src_path / 'tasks.py' ]]", "2"]
+
+_migrations:
+  # This migration is never executed because it's the 1st version copied, and
+  # migrations are only executed when updating
+  - version: v1.0.0
+    before:
+      - &mig
+        - "[[ _copier_conf.src_path / 'migrations.py' ]]"
+        - "[[ _copier_conf|to_json ]]"
+    after:
+      - *mig
+  - version: v2
+    before: [*mig]
+    after:
+      - *mig
+      - "rm delete-in-migration-$VERSION_CURRENT.txt"
