@@ -111,7 +111,7 @@ style = "pep440"
 vcs = "git"
 
 [tool.ruff.lint]
-extend-select = ["B", "D", "E", "F", "I", "UP"]
+extend-select = ["B", "D", "E", "F", "I", "PGH", "UP"]
 extend-ignore = ['B028', "B904", "D105", "D107", "E501"]
 
 [tool.ruff.lint.per-file-ignores]
