@@ -675,7 +675,7 @@ class Worker:
             rendered_parts.append(part)
         result = Path(*rendered_parts)
         # Skip excluded paths.
-        if result != Path(".") and self.match_exclude(relpath):
+        if result != Path(".") and self.match_exclude(result):
             return None
         if not is_template:
             templated_sibling = (
