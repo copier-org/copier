@@ -205,3 +205,28 @@ def test_config_exclude_file_with_bad_jinja_syntax_without_templates_suffix(
     run_copy(str(src), dst, quiet=True)
     assert not (dst / "copier.yml").exists()
     assert not (dst / "exclude-me.txt").exists()
+
+
+def test_config_exclude_with_templated_path(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                """\
+                _exclude:
+                    - "*"
+                    - "!keep-me.txt"
+
+                filename_keep: keep-me.txt
+                filename_exclude: exclude-me.txt
+                """
+            ),
+            (src / "{{ filename_keep }}.jinja"): "",
+            (src / "{{ filename_exclude }}.jinja"): "",
+        }
+    )
+    run_copy(str(src), dst, defaults=True, quiet=True)
+    assert (dst / "keep-me.txt").exists()
+    assert not (dst / "exclude-me.txt").exists()
