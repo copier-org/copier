@@ -47,8 +47,9 @@ CLI help generated from `copier --help-all`:
 copier --help-all
 ```
 """
+from __future__ import annotations
 
-import functools
+import inspect
 import sys
 from os import PathLike
 from pathlib import Path
@@ -68,7 +69,6 @@ P = ParamSpec("P")
 
 
 def _handle_exceptions(method: Callable[P, int]) -> Callable[P, int]:
-    @functools.wraps(method)
     def inner(*args: P.args, **kwargs: P.kwargs) -> int:
         try:
             try:
@@ -82,6 +82,9 @@ def _handle_exceptions(method: Callable[P, int]) -> Callable[P, int]:
             print(colors.red | "\n".join(error.args), file=sys.stderr)
             # DOCS https://github.com/copier-org/copier/issues/1328#issuecomment-1723214165
             return 0b100
+
+    # See https://github.com/copier-org/copier/pull/1513
+    inner.__signature__ = inspect.signature(method, eval_str=True)  # type: ignore[attr-defined]
 
     return inner
 
