@@ -84,18 +84,20 @@ class CopierApp(cli.Application):
     """The Copier CLI application."""
 
     DESCRIPTION = "Create a new project from a template."
-    DESCRIPTION_MORE = dedent(
-        """\
-            Docs in https://copier.readthedocs.io/
-
-            """
-    ) + (
-        colors.yellow
-        | dedent(
+    DESCRIPTION_MORE = (
+        dedent(
             """\
+            Docs in https://copier.readthedocs.io/
+            """
+        )
+        + (
+            colors.yellow
+            | dedent(
+                """\
                 WARNING! Use only trusted project templates, as they might
                 execute code with the same level of access as your user.\n
                 """
+            )
         )
     )
     VERSION = copier_version()
