@@ -76,7 +76,7 @@ def printf(
     if not style:
         return action + _msg
 
-    out = style + [action] + Style.RESET + [INDENT, _msg]  # type: ignore
+    out = style + [action] + Style.RESET + [INDENT, _msg]  # type: ignore[operator]
     print(*out, sep="", file=file_)
     return None  # HACK: Satisfy MyPy
 
