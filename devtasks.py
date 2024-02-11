@@ -60,7 +60,7 @@ def lint(recycle_container=False):
     try:
         local["nix"].with_cwd(HERE)[args] & TEE
     except CommandNotFound:
-        _logger.warn("Nix not found; fallback to a container")
+        _logger.warning("Nix not found; fallback to a container")
         runner = local.get("podman", "docker")
         try:
             (
