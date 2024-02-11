@@ -84,7 +84,10 @@ def _handle_exceptions(method: Callable[P, int]) -> Callable[P, int]:
             return 0b100
 
     # See https://github.com/copier-org/copier/pull/1513
-    inner.__signature__ = inspect.signature(method, eval_str=True)  # type: ignore[attr-defined]
+    if sys.version_info >= (3, 10):
+        inner.__signature__ = inspect.signature(method, eval_str=True)  # type: ignore[attr-defined]
+    else:
+        inner.__signature__ = inspect.signature(method)  # type: ignore[attr-defined]
 
     return inner
 
