@@ -703,7 +703,7 @@ class Worker:
                 The template source string.
 
             extra_context:
-                Additional variables to use for rendering the template
+                Additional variables to use for rendering the template.
         """
         tpl = self.jinja_env.from_string(string)
         return tpl.render(**self._render_context(), **(extra_context or {}))

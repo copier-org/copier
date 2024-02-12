@@ -152,15 +152,15 @@ class Task:
             Additional environment variables to set while executing the command.
 
         extra_context:
-            Additional jinja variables to be used while rendering the command, condition
-            and wokrking directory
+            Additional Jinja variables to be used while rendering the command, condition
+            and working directory.
 
         condition:
-            The condition when a conditional task runs
+            The condition when a conditional task runs.
 
         working_directory:
             The directory from inside where to execute the task.
-            If None the project directory will be used.
+            If `None`, the project directory will be used.
     """
 
     cmd: Union[str, Sequence[str]]

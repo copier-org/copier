@@ -1157,8 +1157,8 @@ Migrations are like [tasks][tasks], but each item can have additional keys:
     through to trigger this migration. It is evaluated using [PEP 440][]. If not version
     is specified the migration will run on every update.
 -   **when** (optional): Specifies a condition that needs to hold for the task to run.
--   **working_directory** (optional): Specifies the directory in which the command
-    should be run. Defaults to the destination directory.
+-   **working_directory** (optional): Specifies the directory in which the command will
+    be run. Defaults to the destination directory.
 
 If a `str` or `List[str]` is given as a migrator it will be treated as `command` with
 all other items not present.
@@ -1181,7 +1181,7 @@ Migration processes will receive these environment variables:
 -   `$VERSION_TO`: [Git commit description][git describe] of the template as it will be
     after updating.
 -   `$VERSION_CURRENT`: The `version` detector as you indicated it when describing
-    migration tasks (Only when `version` is given).
+    migration tasks (only when `version` is given).
 -   `$VERSION_PEP440_FROM`, `$VERSION_PEP440_TO`, `$VERSION_PEP440_CURRENT`: Same as the
     above, but normalized into a standard [PEP 440][] version string indicator. If your
     scripts use these environment variables to perform migrations, you probably will
@@ -1199,7 +1199,7 @@ Migration processes will receive these environment variables:
       - invoke -r {{ _copier_conf.src_path }} -c migrations migrate $VERSION_FROM $VERSION_TO
       - version: v1.0.0
         command: rm ./old-folder
-        when: "{{ stage == 'before' }}"
+        when: "{{ _stage == 'before' }}"
     ```
 
 ### `min_copier_version`
@@ -1404,10 +1404,10 @@ They run ordered, and with the `$STAGE=task` variable in their environment.
 
 If a `dict` is given it can contain the following items:
 
--   **command**: The task command to run
+-   **command**: The task command to run.
 -   **when** (optional): Specifies a condition that needs to hold for the task to run.
--   **working_directory** (optional): Specifies the directory in which the command
-    should be run. Defaults to the destination directory.
+-   **working_directory** (optional): Specifies the directory in which the command will
+    be run. Defaults to the destination directory.
 
 If a `str` or `List[str]` is given as a task it will be treated as `command` with all
 other items not present.
