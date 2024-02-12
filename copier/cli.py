@@ -47,7 +47,6 @@ CLI help generated from `copier --help-all`:
 copier --help-all
 ```
 """
-
 import sys
 from os import PathLike
 from pathlib import Path
@@ -61,6 +60,10 @@ from .errors import UnsafeTemplateError, UserMessageError
 from .main import Worker
 from .tools import copier_version
 from .types import AnyByStrDict, OptStr, StrSeq
+
+__all__ = [
+    "CopierApp",
+]
 
 
 def handle_exceptions(method: Callable[[], None]) -> int:
@@ -84,20 +87,17 @@ class CopierApp(cli.Application):
     """The Copier CLI application."""
 
     DESCRIPTION = "Create a new project from a template."
-    DESCRIPTION_MORE = (
-        dedent(
-            """\
+    DESCRIPTION_MORE = dedent(
+        """\
             Docs in https://copier.readthedocs.io/
             """
-        )
-        + (
-            colors.yellow
-            | dedent(
-                """\
+    ) + (
+        colors.yellow
+        | dedent(
+            """\
                 WARNING! Use only trusted project templates, as they might
                 execute code with the same level of access as your user.\n
                 """
-            )
         )
     )
     VERSION = copier_version()
@@ -258,14 +258,18 @@ class CopierCopySubApp(_Subcommand):
             destination_path:
                 Where to generate the new subproject. It must not exist or be empty.
         """
-        with self._worker(
-            template_src,
-            destination_path,
-            cleanup_on_error=self.cleanup_on_error,
-            defaults=self.force or self.defaults,
-            overwrite=self.force or self.overwrite,
-        ) as worker:
-            return handle_exceptions(worker.run_copy)
+
+        def inner() -> None:
+            with self._worker(
+                template_src,
+                destination_path,
+                cleanup_on_error=self.cleanup_on_error,
+                defaults=self.force or self.defaults,
+                overwrite=self.force or self.overwrite,
+            ) as worker:
+                worker.run_copy()
+
+        return handle_exceptions(inner)
 
 
 @CopierApp.subcommand("recopy")
@@ -323,13 +327,17 @@ class CopierRecopySubApp(_Subcommand):
                 The subproject must exist. If not specified, the currently
                 working directory is used.
         """
-        with self._worker(
-            dst_path=destination_path,
-            defaults=self.force or self.defaults,
-            overwrite=self.force or self.overwrite,
-            skip_answered=self.skip_answered,
-        ) as worker:
-            return handle_exceptions(worker.run_recopy)
+
+        def inner() -> None:
+            with self._worker(
+                dst_path=destination_path,
+                defaults=self.force or self.defaults,
+                overwrite=self.force or self.overwrite,
+                skip_answered=self.skip_answered,
+            ) as worker:
+                worker.run_recopy()
+
+        return handle_exceptions(inner)
 
 
 @CopierApp.subcommand("update")
@@ -393,12 +401,16 @@ class CopierUpdateSubApp(_Subcommand):
                 The subproject must exist. If not specified, the currently
                 working directory is used.
         """
-        with self._worker(
-            dst_path=destination_path,
-            conflict=self.conflict,
-            context_lines=self.context_lines,
-            defaults=self.defaults,
-            skip_answered=self.skip_answered,
-            overwrite=True,
-        ) as worker:
-            return handle_exceptions(worker.run_update)
+
+        def inner() -> None:
+            with self._worker(
+                dst_path=destination_path,
+                conflict=self.conflict,
+                context_lines=self.context_lines,
+                defaults=self.defaults,
+                skip_answered=self.skip_answered,
+                overwrite=True,
+            ) as worker:
+                worker.run_update()
+
+        return handle_exceptions(inner)
