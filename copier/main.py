@@ -286,7 +286,7 @@ class Worker:
                 continue
 
             working_directory = (
-                    self.subproject.local_abspath / Path(self._render_string(task.working_directory, task.extra_context))
+                    self.subproject.local_abspath / Path(self._render_string(str(task.working_directory), task.extra_context))
             ).absolute()
 
             with local.cwd(working_directory), local.env(**task.extra_env):

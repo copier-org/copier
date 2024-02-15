@@ -166,8 +166,8 @@ class Task:
     cmd: Union[str, Sequence[str]]
     extra_env: Env = field(default_factory=dict)
     extra_context: Dict[str, Any] = field(default_factory=dict)
-    condition: str = field(default="true")
-    working_directory: str = field(default=".")
+    condition: str = "true"
+    working_directory: Path = Path(".")
 
 
 @dataclass
@@ -406,15 +406,13 @@ class Template:
                 # New configuration format
                 if isinstance(migration, (str, list)):
                     result.append(Task(cmd=migration, extra_env=extra_env, extra_context=extra_context))
-
                 else:
                     condition = migration.get("when", "true")
-                    working_directory = migration.get("working_directory", ".")
+                    working_directory = Path(migration.get("working_directory", "."))
                     if "version" in migration:
                         current = parse(migration["version"])
                         if not (self.version >= current > from_template.version):
                             continue
-
                         extra_env = {
                             **extra_env,
                             "VERSION_CURRENT": migration["version"],
@@ -497,8 +495,9 @@ class Template:
             if isinstance(task, (str, list)):
                 tasks.append(Task(cmd=task, extra_env=extra_env))
             elif isinstance(task, dict):
-                tasks.append(Task(cmd=task["command"], extra_env=extra_env, extra_context=extra_context, condition=task.get("when", "true"), working_directory=task.get("working_directory", ".")))
-
+                tasks.append(Task(cmd=task["command"], extra_env=extra_env, extra_context=extra_context, condition=task.get("when", "true"), working_directory=Path(task.get("working_directory", "."))))
+            else:
+                raise NotImplementedError("Unsupported tasks format")
         return tasks
 
     @cached_property
