@@ -1173,19 +1173,24 @@ version_. They will also only run when updating (not when copying for the 1st ti
 If the migrations definition contains Jinja code, it will be rendered with the same
 context as the rest of the template.
 
-Migration processes will receive these environment variables:
+There are a number of additional variables available for templating of migrations. Those
+variables are also passed to the migration process as environment variables. Migration
+processes will receive a number of these environment variables:
 
--   `$STAGE`: Either `before` or `after`.
--   `$VERSION_FROM`: [Git commit description][git describe] of the template as it was
-    before updating.
--   `$VERSION_TO`: [Git commit description][git describe] of the template as it will be
-    after updating.
--   `$VERSION_CURRENT`: The `version` detector as you indicated it when describing
-    migration tasks (only when `version` is given).
--   `$VERSION_PEP440_FROM`, `$VERSION_PEP440_TO`, `$VERSION_PEP440_CURRENT`: Same as the
-    above, but normalized into a standard [PEP 440][] version string indicator. If your
-    scripts use these environment variables to perform migrations, you probably will
-    prefer to use these variables.
+-   `_stage`/`$STAGE`: Either `before` or `after`.
+-   `_version_from`/`$VERSION_FROM`: [Git commit description][git describe] of the
+    template as it was before updating.
+-   `_version_to`/`$VERSION_TO`: [Git commit description][git describe] of the template
+    as it will be after updating.
+-   `_version_current`/`$VERSION_CURRENT`: The `version` detector as you indicated it
+    when describing migration tasks (only when `version` is given).
+-   `_version_pep440_from`/`$VERSION_PEP440_FROM`,
+    `_version_pep440_to`/`$VERSION_PEP440_TO`,
+    `_version_pep440_current`/`$VERSION_PEP440_CURRENT`: Same as the above, but
+    normalized into a standard [PEP 440][] version. In Jinja templates these are
+    represented as `packaging.version.Version` objectc and allow access to their
+    attributes. As environment variables they are represented as strings. If you use
+    variables to perform migrations, you probably will prefer to use these variables.
 
 [git describe]: https://git-scm.com/docs/git-describe
 [pep 440]: https://www.python.org/dev/peps/pep-0440/
@@ -1196,7 +1201,7 @@ Migration processes will receive these environment variables:
     _migrations:
       # {{ _copier_conf.src_path }} points to the path where the template was
       # cloned, so it can be helpful to run migration scripts stored there.
-      - invoke -r {{ _copier_conf.src_path }} -c migrations migrate $VERSION_FROM $VERSION_TO
+      - invoke -r {{ _copier_conf.src_path }} -c migrations migrate $STAGE $VERSION_FROM $VERSION_TO
       - version: v1.0.0
         command: rm ./old-folder
         when: "{{ _stage == 'before' }}"
