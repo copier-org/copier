@@ -26,10 +26,14 @@ _migrations:
     command: "false"
   - version: v2
     command: "rm delete-in-migration-$VERSION_CURRENT.txt"
+  - version: v2
+    command: "touch [[ _version_pep440_current.major ]].[[ _version_pep440_current.minor ]].[[ _version_pep440_current.micro ]].txt"
   - command: "mkdir hello"
     when: "[[ _stage == 'before' ]]"
   - command: "touch world"
     working_directory: "hello"
+    when: "[[ _stage == 'after' ]]"
   - command: "touch world2"
     working_directory: "[[ _copier_conf.dst_path ]]/hello"
+    when: "[[ _stage == 'after' ]]"
 

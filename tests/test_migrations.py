@@ -77,6 +77,7 @@ def test_migrations_and_tasks(tmp_path: Path, legacy_format) -> None:
         assert (dst / "hello").is_dir()
         assert (dst / "hello" / "world").is_file()
         assert (dst / "hello" / "world2").is_file()
+        assert (dst / "2.0.0.txt").is_file()
     answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers == {"_commit": "v2.0", "_src_path": str(src)}
 

@@ -265,15 +265,16 @@ class Worker:
             tasks: The list of tasks to run.
         """
         for i, task in enumerate(tasks):
-            if not cast_to_bool(self._render_string(task.condition, task.extra_context)):
+            extra_context = {f"_{k}": v for k, v in task.extra_vars.items()}
+            if not cast_to_bool(self._render_string(task.condition, extra_context)):
                 continue
 
             task_cmd = task.cmd
             if isinstance(task_cmd, str):
-                task_cmd = self._render_string(task_cmd, task.extra_context)
+                task_cmd = self._render_string(task_cmd, extra_context)
                 use_shell = True
             else:
-                task_cmd = [self._render_string(str(part), task.extra_context) for part in task_cmd]
+                task_cmd = [self._render_string(str(part), extra_context) for part in task_cmd]
                 use_shell = False
 
             if not self.quiet:
@@ -286,10 +287,13 @@ class Worker:
                 continue
 
             working_directory = (
-                    self.subproject.local_abspath / Path(self._render_string(str(task.working_directory), task.extra_context))
+                    # We can't use _render_path here, as that function has special handling for files in the template
+                    self.subproject.local_abspath / Path(self._render_string(str(task.working_directory), extra_context))
             ).absolute()
 
-            with local.cwd(working_directory), local.env(**task.extra_env):
+            extra_env = {k.upper(): str(v) for k, v in task.extra_vars.items()}
+            print(extra_env)
+            with local.cwd(working_directory), local.env(**extra_env):
                 subprocess.run(task_cmd, shell=use_shell, check=True, env=local.env)
 
     def _render_context(self) -> Mapping:
