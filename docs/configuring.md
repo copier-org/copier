@@ -1207,6 +1207,21 @@ processes will receive a number of these environment variables:
         when: "{{ _stage == 'before' }}"
     ```
 
+In copier versions before v10.0.0 a different configuration format had to be used. This
+format is still available, but will raise a warning when used.
+
+Each item in the list is a `dict` with the following keys:
+
+-   **version**: Indicates the version that the template update has to go through to
+    trigger this migration. It is evaluated using [PEP 440][].
+-   **before** (optional): Commands to execute before performing the update. The answers
+    file is reloaded after running migrations in this stage, to let you migrate answer
+    values.
+-   **after** (optional): Commands to execute after performing the update.
+
+The migration variables mentioned above are available as environment variables, but
+can't be used in jinja templates.
+
 ### `min_copier_version`
 
 -   Format: `str`
