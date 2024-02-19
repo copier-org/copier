@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Protocol, Tuple, Union
+from typing import Any, Dict, List, Mapping, Protocol, Union
 
 import pexpect
 import pytest
@@ -28,7 +30,7 @@ except ImportError:
     from typing_extensions import TypeAlias
 
 
-MARIO_TREE: Mapping[StrOrPath, Union[str, bytes]] = {
+MARIO_TREE: Mapping[StrOrPath, str | bytes] = {
     "copier.yml": (
         f"""\
         _templates_suffix: {SUFFIX_TMPL}
@@ -53,7 +55,7 @@ MARIO_TREE: Mapping[StrOrPath, Union[str, bytes]] = {
     "[[ _copier_conf.answers_file ]].tmpl": "[[_copier_answers|to_nice_yaml]]",
 }
 
-MARIO_TREE_WITH_NEW_FIELD: Mapping[StrOrPath, Union[str, bytes]] = {
+MARIO_TREE_WITH_NEW_FIELD: Mapping[StrOrPath, str | bytes] = {
     "copier.yml": (
         f"""\
         _templates_suffix: {SUFFIX_TMPL}
@@ -95,7 +97,7 @@ def test_copy_default_advertised(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
     name: str,
-    args: Tuple[str, ...],
+    args: tuple[str, ...],
 ) -> None:
     """Test that the questions for the user are OK"""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -163,7 +165,7 @@ def test_update_skip_answered(
     spawn: Spawn,
     name: str,
     update_action: str,
-    args: Tuple[str, ...],
+    args: tuple[str, ...],
 ) -> None:
     """Test that the questions for the user are OK"""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -226,7 +228,7 @@ def test_update_with_new_field_in_new_version_skip_answered(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
     name: str,
-    args: Tuple[str, ...],
+    args: tuple[str, ...],
 ) -> None:
     """Test that the questions for the user are OK"""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -328,8 +330,8 @@ def test_update_with_new_field_in_new_version_skip_answered(
 def test_when(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
-    question_1: Union[str, int, float, bool],
-    question_2_when: Union[bool, str],
+    question_1: str | int | float | bool,
+    question_2_when: bool | str,
     asks: bool,
 ) -> None:
     """Test that the 2nd question is skipped or not, properly."""
@@ -483,11 +485,7 @@ def test_multiline(
 def test_update_choice(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
-    choices: Union[
-        List[int],
-        List[List[Union[str, int]]],  # actually `List[Tuple[str, int]]`
-        Dict[str, int],
-    ],
+    choices: list[int] | list[list[str | int]] | dict[str, int],
 ) -> None:
     """Choices are properly remembered and selected in TUI when updating."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -685,7 +683,7 @@ def test_required_text_question(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
     type_name: str,
-    expected_answer: Union[str, None, ValueError],
+    expected_answer: str | None | ValueError,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
@@ -762,7 +760,7 @@ def test_required_choice_question(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
     type_name: str,
-    choices: List[Any],
+    choices: list[Any],
     expected_answer: Any,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -798,7 +796,7 @@ QuestionType: TypeAlias = str
 QuestionChoices: TypeAlias = Union[List[Any], Dict[str, Any]]
 ParsedValues: TypeAlias = List[Any]
 
-_CHOICES: Dict[str, Tuple[QuestionType, QuestionChoices, ParsedValues]] = {
+_CHOICES: dict[str, tuple[QuestionType, QuestionChoices, ParsedValues]] = {
     "str": ("str", ["one", "two", "three"], ["one", "two", "three"]),
     "int": ("int", [1, 2, 3], [1, 2, 3]),
     "int-label-list": ("int", [["one", 1], ["two", 2], ["three", 3]], [1, 2, 3]),
@@ -811,13 +809,13 @@ CHOICES = [pytest.param(*specs, id=id) for id, specs in _CHOICES.items()]
 
 
 class QuestionTreeFixture(Protocol):
-    def __call__(self, **kwargs) -> Tuple[Path, Path]:
+    def __call__(self, **kwargs) -> tuple[Path, Path]:
         ...
 
 
 @pytest.fixture
 def question_tree(tmp_path_factory: pytest.TempPathFactory) -> QuestionTreeFixture:
-    def builder(**question) -> Tuple[Path, Path]:
+    def builder(**question) -> tuple[Path, Path]:
         src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
         build_file_tree(
             {

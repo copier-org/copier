@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import filecmp
 import json
 import os
@@ -6,7 +8,7 @@ import textwrap
 from enum import Enum
 from hashlib import sha1
 from pathlib import Path
-from typing import Mapping, Optional, Protocol, Tuple, Union
+from typing import Mapping, Protocol
 
 from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
@@ -59,7 +61,7 @@ SUFFIX_TMPL = ".tmpl"
 
 
 class Spawn(Protocol):
-    def __call__(self, cmd: Tuple[str, ...], *, timeout: Optional[int]) -> PopenSpawn:
+    def __call__(self, cmd: tuple[str, ...], *, timeout: int | None) -> PopenSpawn:
         ...
 
 
@@ -94,9 +96,7 @@ def assert_file(tmp_path: Path, *path: str) -> None:
     assert filecmp.cmp(p1, p2)
 
 
-def build_file_tree(
-    spec: Mapping[StrOrPath, Union[str, bytes, Path]], dedent: bool = True
-):
+def build_file_tree(spec: Mapping[StrOrPath, str | bytes | Path], dedent: bool = True):
     """Builds a file tree based on the received spec.
 
     Params:
@@ -134,7 +134,7 @@ def expect_prompt(
 
 
 def git_save(
-    dst: StrOrPath = ".", message: str = "Test commit", tag: Optional[str] = None
+    dst: StrOrPath = ".", message: str = "Test commit", tag: str | None = None
 ):
     """Save the current repo state in git.
 

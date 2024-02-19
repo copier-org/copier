@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Optional
 
 import pytest
 
@@ -33,7 +34,7 @@ def template_path(tmp_path_factory: pytest.TempPathFactory) -> str:
 
 @pytest.mark.parametrize("answers_file", [None, ".changed-by-user.yml"])
 def test_answersfile_templating(
-    template_path: str, tmp_path: Path, answers_file: Optional[str]
+    template_path: str, tmp_path: Path, answers_file: str | None
 ) -> None:
     """
     Test copier behaves properly when _answers_file contains a template
