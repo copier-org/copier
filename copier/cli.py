@@ -47,6 +47,7 @@ CLI help generated from `copier --help-all`:
 copier --help-all
 ```
 """
+
 import sys
 from os import PathLike
 from pathlib import Path
