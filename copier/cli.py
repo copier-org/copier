@@ -61,12 +61,8 @@ from .main import Worker
 from .tools import copier_version
 from .types import AnyByStrDict, OptStr, StrSeq
 
-__all__ = [
-    "CopierApp",
-]
 
-
-def handle_exceptions(method: Callable[[], None]) -> int:
+def _handle_exceptions(method: Callable[[], None]) -> int:
     """Handle keyboard interruption while running a method."""
     try:
         try:
@@ -87,17 +83,20 @@ class CopierApp(cli.Application):
     """The Copier CLI application."""
 
     DESCRIPTION = "Create a new project from a template."
-    DESCRIPTION_MORE = dedent(
-        """\
+    DESCRIPTION_MORE = (
+        dedent(
+            """\
             Docs in https://copier.readthedocs.io/
             """
-    ) + (
-        colors.yellow
-        | dedent(
-            """\
+        )
+        + (
+            colors.yellow
+            | dedent(
+                """\
                 WARNING! Use only trusted project templates, as they might
                 execute code with the same level of access as your user.\n
                 """
+            )
         )
     )
     VERSION = copier_version()
@@ -269,7 +268,7 @@ class CopierCopySubApp(_Subcommand):
             ) as worker:
                 worker.run_copy()
 
-        return handle_exceptions(inner)
+        return _handle_exceptions(inner)
 
 
 @CopierApp.subcommand("recopy")
@@ -337,7 +336,7 @@ class CopierRecopySubApp(_Subcommand):
             ) as worker:
                 worker.run_recopy()
 
-        return handle_exceptions(inner)
+        return _handle_exceptions(inner)
 
 
 @CopierApp.subcommand("update")
@@ -413,4 +412,4 @@ class CopierUpdateSubApp(_Subcommand):
             ) as worker:
                 worker.run_update()
 
-        return handle_exceptions(inner)
+        return _handle_exceptions(inner)
