@@ -87,6 +87,7 @@ class CopierApp(cli.Application):
         dedent(
             """\
             Docs in https://copier.readthedocs.io/
+
             """
         )
         + (
