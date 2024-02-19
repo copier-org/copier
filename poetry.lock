@@ -239,17 +239,6 @@ tomli = {version = "*", optional = true, markers = "python_full_version <= \"3.1
 toml = ["tomli"]
 
 [[package]]
-name = "decorator"
-version = "5.1.1"
-description = "Decorators for Humans"
-optional = false
-python-versions = ">=3.5"
-files = [
-    {file = "decorator-5.1.1-py3-none-any.whl", hash = "sha256:b8c3f85900b9dc423225913c5aace94729fe1fa9763b38939a95226f02d37186"},
-    {file = "decorator-5.1.1.tar.gz", hash = "sha256:637996211036b6385ef91435e4fae22989472f9d571faba8927ba8253acbc330"},
-]
-
-[[package]]
 name = "distlib"
 version = "0.3.7"
 description = "Distribution utilities"
@@ -1504,17 +1493,6 @@ files = [
 ]
 
 [[package]]
-name = "types-decorator"
-version = "5.1.8.20240106"
-description = "Typing stubs for decorator"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "types-decorator-5.1.8.20240106.tar.gz", hash = "sha256:32ff92b33615060d23b9d3760124bdb3506c4aa8d9eb50963cf1a3c20b9ecbbf"},
-    {file = "types_decorator-5.1.8.20240106-py3-none-any.whl", hash = "sha256:14d21e6a0755dbb8f301f2f532b3eab5148f433c69dad2d98bf5bd2b3a2ef4e7"},
-]
-
-[[package]]
 name = "types-psutil"
 version = "5.9.5.20240205"
 description = "Typing stubs for psutil"
@@ -1652,4 +1630,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8"
-content-hash = "68ae53c03a93971c92d62fdd18a7635f2b9a7d2a42317b781777412020227e01"
+content-hash = "e77e027798e8d257d07fee377fb2581be217bbcd761326d043f3b5006e6e870f"

@@ -52,9 +52,9 @@ import sys
 from os import PathLike
 from pathlib import Path
 from textwrap import dedent
+from typing import Callable
 
 import yaml
-from decorator import decorator
 from plumbum import cli, colors
 
 from .errors import UnsafeTemplateError, UserMessageError
@@ -63,12 +63,11 @@ from .tools import copier_version
 from .types import AnyByStrDict, OptStr, StrSeq
 
 
-@decorator
-def handle_exceptions(method, *args, **kwargs):
+def _handle_exceptions(method: Callable[[], None]) -> int:
     """Handle keyboard interruption while running a method."""
     try:
         try:
-            return method(*args, **kwargs)
+            method()
         except KeyboardInterrupt:
             raise UserMessageError("Execution stopped by user")
     except UserMessageError as error:
@@ -78,6 +77,7 @@ def handle_exceptions(method, *args, **kwargs):
         print(colors.red | "\n".join(error.args), file=sys.stderr)
         # DOCS https://github.com/copier-org/copier/issues/1328#issuecomment-1723214165
         return 0b100
+    return 0
 
 
 class CopierApp(cli.Application):
@@ -247,7 +247,6 @@ class CopierCopySubApp(_Subcommand):
         help="Overwrite files that already exist, without asking.",
     )
 
-    @handle_exceptions
     def main(self, template_src: str, destination_path: str) -> int:
         """Call [run_copy][copier.main.Worker.run_copy].
 
@@ -260,15 +259,18 @@ class CopierCopySubApp(_Subcommand):
             destination_path:
                 Where to generate the new subproject. It must not exist or be empty.
         """
-        with self._worker(
-            template_src,
-            destination_path,
-            cleanup_on_error=self.cleanup_on_error,
-            defaults=self.force or self.defaults,
-            overwrite=self.force or self.overwrite,
-        ) as worker:
-            worker.run_copy()
-        return 0
+
+        def inner() -> None:
+            with self._worker(
+                template_src,
+                destination_path,
+                cleanup_on_error=self.cleanup_on_error,
+                defaults=self.force or self.defaults,
+                overwrite=self.force or self.overwrite,
+            ) as worker:
+                worker.run_copy()
+
+        return _handle_exceptions(inner)
 
 
 @CopierApp.subcommand("recopy")
@@ -315,7 +317,6 @@ class CopierRecopySubApp(_Subcommand):
         help="Skip questions that have already been answered",
     )
 
-    @handle_exceptions
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
         """Call [run_recopy][copier.main.Worker.run_recopy].
 
@@ -327,14 +328,17 @@ class CopierRecopySubApp(_Subcommand):
                 The subproject must exist. If not specified, the currently
                 working directory is used.
         """
-        with self._worker(
-            dst_path=destination_path,
-            defaults=self.force or self.defaults,
-            overwrite=self.force or self.overwrite,
-            skip_answered=self.skip_answered,
-        ) as worker:
-            worker.run_recopy()
-        return 0
+
+        def inner() -> None:
+            with self._worker(
+                dst_path=destination_path,
+                defaults=self.force or self.defaults,
+                overwrite=self.force or self.overwrite,
+                skip_answered=self.skip_answered,
+            ) as worker:
+                worker.run_recopy()
+
+        return _handle_exceptions(inner)
 
 
 @CopierApp.subcommand("update")
@@ -387,7 +391,6 @@ class CopierUpdateSubApp(_Subcommand):
         help="Skip questions that have already been answered",
     )
 
-    @handle_exceptions
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
         """Call [run_update][copier.main.Worker.run_update].
 
@@ -399,13 +402,16 @@ class CopierUpdateSubApp(_Subcommand):
                 The subproject must exist. If not specified, the currently
                 working directory is used.
         """
-        with self._worker(
-            dst_path=destination_path,
-            conflict=self.conflict,
-            context_lines=self.context_lines,
-            defaults=self.defaults,
-            skip_answered=self.skip_answered,
-            overwrite=True,
-        ) as worker:
-            worker.run_update()
-        return 0
+
+        def inner() -> None:
+            with self._worker(
+                dst_path=destination_path,
+                conflict=self.conflict,
+                context_lines=self.context_lines,
+                defaults=self.defaults,
+                skip_answered=self.skip_answered,
+                overwrite=True,
+            ) as worker:
+                worker.run_update()
+
+        return _handle_exceptions(inner)
