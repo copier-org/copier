@@ -18,7 +18,9 @@ Or within Python code:
 copier.run_copy("path/to/project/template", "path/to/destination")
 ```
 
-If `path/to/destination` doesn't exist, Copier will create the directory and populate it with the generated files. If `path/to/destination` exists, it must be writable (not read-only).
+If `path/to/destination` doesn't exist, Copier will create the directory and populate it
+with the generated files. If `path/to/destination` exists, it must be writable (not
+read-only).
 
 The "template" parameter can be a local path, an URL, or a shortcut URL:
 
