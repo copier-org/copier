@@ -15,13 +15,11 @@ def template_path(tmp_path_factory: pytest.TempPathFactory) -> str:
     root = tmp_path_factory.mktemp("template")
     build_file_tree(
         {
-            root
-            / "{{ _copier_conf.answers_file }}.jinja": """\
+            root / "{{ _copier_conf.answers_file }}.jinja": """\
                 # Changes here will be overwritten by Copier
                 {{ _copier_answers|to_nice_yaml }}
                 """,
-            root
-            / "copier.yml": """\
+            root / "copier.yml": """\
                 _answers_file: ".copier-answers-{{ module_name }}.yml"
 
                 module_name:
