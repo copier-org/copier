@@ -61,7 +61,8 @@ def test_question_with_invalid_type(tmp_path_factory: pytest.TempPathFactory) ->
     src, dst = map(tmp_path_factory.mktemp, ["src", "dst"])
     build_file_tree(
         {
-            src / "copier.yaml": """
+            src
+            / "copier.yaml": """
                 bad:
                     type: invalid
                     default: 1
@@ -78,7 +79,8 @@ def test_answer_with_invalid_type(tmp_path_factory: pytest.TempPathFactory) -> N
     src, dst = map(tmp_path_factory.mktemp, ["src", "dst"])
     build_file_tree(
         {
-            src / "copier.yaml": """
+            src
+            / "copier.yaml": """
                 bad:
                     type: int
                     default: null

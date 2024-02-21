@@ -19,7 +19,8 @@ def test_copy_symlink(tmp_path_factory: pytest.TempPathFactory) -> None:
     repo.mkdir()
     build_file_tree(
         {
-            repo / "copier.yaml": """\
+            repo
+            / "copier.yaml": """\
             _preserve_symlinks: true
             """,
             repo / "target.txt": "Symlink target",
@@ -53,7 +54,8 @@ def test_copy_symlink_templated_name(tmp_path_factory: pytest.TempPathFactory) -
     repo.mkdir()
     build_file_tree(
         {
-            repo / "copier.yaml": """\
+            repo
+            / "copier.yaml": """\
             _preserve_symlinks: true
             symlink_name: symlink
             """,
@@ -90,7 +92,8 @@ def test_copy_symlink_templated_target(
     repo.mkdir()
     build_file_tree(
         {
-            repo / "copier.yaml": """\
+            repo
+            / "copier.yaml": """\
             _preserve_symlinks: true
             target_name: target
             """,
@@ -131,7 +134,8 @@ def test_copy_symlink_missing_target(tmp_path_factory: pytest.TempPathFactory) -
     repo.mkdir()
     build_file_tree(
         {
-            repo / "copier.yaml": """\
+            repo
+            / "copier.yaml": """\
             _preserve_symlinks: true
             """,
             repo / "symlink.txt": Path("target.txt"),
@@ -167,7 +171,8 @@ def test_option_preserve_symlinks_false(
     repo.mkdir()
     build_file_tree(
         {
-            repo / "copier.yaml": """\
+            repo
+            / "copier.yaml": """\
             _preserve_symlinks: false
             """,
             repo / "target.txt": "Symlink target",
@@ -202,7 +207,8 @@ def test_option_preserve_symlinks_default(
     repo.mkdir()
     build_file_tree(
         {
-            repo / "copier.yaml": """\
+            repo
+            / "copier.yaml": """\
             """,
             repo / "target.txt": "Symlink target",
             repo / "symlink.txt": Path("target.txt"),
@@ -232,17 +238,21 @@ def test_update_symlink(tmp_path_factory: pytest.TempPathFactory) -> None:
 
     build_file_tree(
         {
-            src / ".copier-answers.yml.jinja": """\
+            src
+            / ".copier-answers.yml.jinja": """\
                 # Changes here will be overwritten by Copier
                 {{ _copier_answers|to_nice_yaml }}
             """,
-            src / "copier.yml": """\
+            src
+            / "copier.yml": """\
                 _preserve_symlinks: true
             """,
-            src / "aaaa.txt": """
+            src
+            / "aaaa.txt": """
                 Lorem ipsum
             """,
-            src / "bbbb.txt": """
+            src
+            / "bbbb.txt": """
                 dolor sit amet
             """,
             src / "symlink.txt": Path("./aaaa.txt"),
@@ -288,17 +298,21 @@ def test_update_file_to_symlink(tmp_path_factory: pytest.TempPathFactory) -> Non
 
     build_file_tree(
         {
-            src / ".copier-answers.yml.jinja": """\
+            src
+            / ".copier-answers.yml.jinja": """\
                 # Changes here will be overwritten by Copier
                 {{ _copier_answers|to_nice_yaml }}
             """,
-            src / "copier.yml": """\
+            src
+            / "copier.yml": """\
                 _preserve_symlinks: true
             """,
-            src / "aaaa.txt": """
+            src
+            / "aaaa.txt": """
                 Lorem ipsum
             """,
-            src / "bbbb.txt": """
+            src
+            / "bbbb.txt": """
                 dolor sit amet
             """,
             src / "cccc.txt": Path("./aaaa.txt"),
@@ -347,7 +361,8 @@ def test_exclude_symlink(tmp_path_factory: pytest.TempPathFactory) -> None:
     repo.mkdir()
     build_file_tree(
         {
-            repo / "copier.yaml": """\
+            repo
+            / "copier.yaml": """\
             _preserve_symlinks: true
             """,
             repo / "target.txt": "Symlink target",
@@ -379,7 +394,8 @@ def test_pretend_symlink(tmp_path_factory: pytest.TempPathFactory) -> None:
     repo.mkdir()
     build_file_tree(
         {
-            repo / "copier.yaml": """\
+            repo
+            / "copier.yaml": """\
             _preserve_symlinks: true
             """,
             repo / "target.txt": "Symlink target",
@@ -411,7 +427,8 @@ def test_copy_symlink_none_path(tmp_path_factory: pytest.TempPathFactory) -> Non
     repo.mkdir()
     build_file_tree(
         {
-            repo / "copier.yaml": """\
+            repo
+            / "copier.yaml": """\
             _preserve_symlinks: true
             render: false
             """,
