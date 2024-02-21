@@ -344,7 +344,7 @@ class Question:
         """Render and obtain the placeholder."""
         return self.render_value(self.placeholder)
 
-    def get_questionary_structure(self) -> AnyByStrDict:
+    def get_questionary_structure(self) -> AnyByStrDict:  # noqa: C901
         """Get the question in a format that the questionary lib understands."""
         lexer = None
         result: AnyByStrDict = {

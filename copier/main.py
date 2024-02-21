@@ -823,7 +823,7 @@ class Worker:
         self._apply_update()
         self._print_message(self.template.message_after_update)
 
-    def _apply_update(self):
+    def _apply_update(self):  # noqa: C901
         git = get_git()
         subproject_top = Path(
             git(
