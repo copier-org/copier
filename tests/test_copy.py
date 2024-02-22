@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import platform
 import stat
 import sys
@@ -5,7 +7,7 @@ from contextlib import nullcontext as does_not_raise
 from decimal import Decimal
 from enum import Enum
 from pathlib import Path
-from typing import Any, ContextManager, List
+from typing import Any, ContextManager
 
 import pytest
 import yaml
@@ -800,7 +802,7 @@ def test_required_question_without_data(
     ],
 )
 def test_required_choice_question_without_data(
-    tmp_path_factory: pytest.TempPathFactory, type_name: str, choices: List[Any]
+    tmp_path_factory: pytest.TempPathFactory, type_name: str, choices: list[Any]
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(

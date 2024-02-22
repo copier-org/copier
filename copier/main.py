@@ -1,4 +1,5 @@
 """Main functions and classes, used to generate or update projects."""
+from __future__ import annotations
 
 import os
 import platform
@@ -15,13 +16,9 @@ from tempfile import TemporaryDirectory
 from typing import (
     Callable,
     Iterable,
-    List,
     Literal,
     Mapping,
-    Optional,
     Sequence,
-    Set,
-    Union,
     get_args,
 )
 from unicodedata import normalize
@@ -169,9 +166,9 @@ class Worker:
             See [unsafe][]
     """
 
-    src_path: Optional[str] = None
+    src_path: str | None = None
     dst_path: Path = Path(".")
-    answers_file: Optional[RelativePath] = None
+    answers_file: RelativePath | None = None
     vcs_ref: OptStr = None
     data: AnyByStrDict = field(default_factory=dict)
     exclude: StrSeq = ()
@@ -189,7 +186,7 @@ class Worker:
     skip_answered: bool = False
 
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
-    _cleanup_hooks: List[Callable] = field(default_factory=list, init=False)
+    _cleanup_hooks: list[Callable] = field(default_factory=list, init=False)
 
     def __enter__(self):
         """Allow using worker as a context manager."""
@@ -215,7 +212,7 @@ class Worker:
         """Check whether a template uses unsafe features."""
         if self.unsafe:
             return
-        features: Set[str] = set()
+        features: set[str] = set()
         if self.template.jinja_extensions:
             features.add("jinja_extensions")
         if self.template.tasks:
@@ -353,7 +350,7 @@ class Worker:
         dst_relpath: Path,
         is_dir: bool = False,
         is_symlink: bool = False,
-        expected_contents: Union[bytes, Path] = b"",
+        expected_contents: bytes | Path = b"",
     ) -> bool:
         """Determine if a file or directory can be rendered.
 
@@ -373,7 +370,7 @@ class Worker:
         dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
         previous_is_symlink = dst_abspath.is_symlink()
         try:
-            previous_content: Union[bytes, Path]
+            previous_content: bytes | Path
             if previous_is_symlink:
                 previous_content = readlink(dst_abspath)
             else:
@@ -646,7 +643,7 @@ class Worker:
             else:
                 self._render_file(file)
 
-    def _render_path(self, relpath: Path) -> Optional[Path]:
+    def _render_path(self, relpath: Path) -> Path | None:
         """Render one relative path.
 
         Args:
@@ -1010,7 +1007,7 @@ class Worker:
 def run_copy(
     src_path: str,
     dst_path: StrOrPath = ".",
-    data: Optional[AnyByStrDict] = None,
+    data: AnyByStrDict | None = None,
     **kwargs,
 ) -> Worker:
     """Copy a template to a destination, from zero.
@@ -1027,7 +1024,7 @@ def run_copy(
 
 
 def run_recopy(
-    dst_path: StrOrPath = ".", data: Optional[AnyByStrDict] = None, **kwargs
+    dst_path: StrOrPath = ".", data: AnyByStrDict | None = None, **kwargs
 ) -> Worker:
     """Update a subproject from its template, discarding subproject evolution.
 
@@ -1044,7 +1041,7 @@ def run_recopy(
 
 def run_update(
     dst_path: StrOrPath = ".",
-    data: Optional[AnyByStrDict] = None,
+    data: AnyByStrDict | None = None,
     **kwargs,
 ) -> Worker:
     """Update a subproject, from its template.

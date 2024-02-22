@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import platform
 from pathlib import Path
 from shutil import rmtree
 from textwrap import dedent
-from typing import Literal, Optional
+from typing import Literal
 
 import pexpect
 import pytest
@@ -559,7 +561,7 @@ def test_skip_update(tmp_path_factory: pytest.TempPathFactory) -> None:
     "answers_file", [None, ".copier-answers.yml", ".custom.copier-answers.yaml"]
 )
 def test_overwrite_answers_file_always(
-    tmp_path_factory: pytest.TempPathFactory, answers_file: Optional[str]
+    tmp_path_factory: pytest.TempPathFactory, answers_file: str | None
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     with local.cwd(src):

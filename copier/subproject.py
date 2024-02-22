@@ -2,11 +2,12 @@
 
 A *subproject* is a project that gets rendered and/or updated with Copier.
 """
+from __future__ import annotations
 
 from dataclasses import field
 from functools import cached_property
 from pathlib import Path
-from typing import Callable, List, Optional
+from typing import Callable
 
 import yaml
 from plumbum.machines import local
@@ -32,7 +33,7 @@ class Subproject:
     local_abspath: AbsolutePath
     answers_relpath: Path = Path(".copier-answers.yml")
 
-    _cleanup_hooks: List[Callable] = field(default_factory=list, init=False)
+    _cleanup_hooks: list[Callable] = field(default_factory=list, init=False)
 
     def is_dirty(self) -> bool:
         """Indicate if the local template root is dirty.
@@ -69,7 +70,7 @@ class Subproject:
         }
 
     @cached_property
-    def template(self) -> Optional[Template]:
+    def template(self) -> Template | None:
         """Template, as it was used the last time."""
         last_url = self.last_answers.get("_src_path")
         last_ref = self.last_answers.get("_commit")
@@ -79,7 +80,7 @@ class Subproject:
             return result
 
     @cached_property
-    def vcs(self) -> Optional[VCSTypes]:
+    def vcs(self) -> VCSTypes | None:
         """VCS type of the subproject."""
         if is_in_git_repo(self.local_abspath):
             return "git"

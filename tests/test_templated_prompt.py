@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import json
 from datetime import datetime
-from typing import Optional, Sequence, Type, Union
+from typing import Sequence
 
 import pexpect
 import pytest
@@ -149,8 +151,8 @@ def test_templated_prompt(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
     questions_data: AnyByStrDict,
-    expected_value: Union[str, int],
-    expected_outputs: Sequence[Union[str, Prompt]],
+    expected_value: str | int,
+    expected_outputs: Sequence[str | Prompt],
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     questions_combined = {**main_question, **questions_data}
@@ -254,7 +256,7 @@ def test_templated_prompt_builtins(tmp_path_factory: pytest.TempPathFactory) -> 
 def test_templated_prompt_invalid(
     tmp_path_factory: pytest.TempPathFactory,
     questions: AnyByStrDict,
-    raises: Optional[Type[BaseException]],
+    raises: type[BaseException] | None,
     returns: str,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))

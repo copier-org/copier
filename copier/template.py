@@ -1,4 +1,6 @@
 """Tools related to template management."""
+from __future__ import annotations
+
 import re
 import sys
 from collections import ChainMap, defaultdict
@@ -7,7 +9,7 @@ from dataclasses import field
 from functools import cached_property
 from pathlib import Path
 from shutil import rmtree
-from typing import List, Literal, Mapping, Optional, Sequence, Set, Tuple
+from typing import Literal, Mapping, Sequence
 from warnings import warn
 
 import dunamai
@@ -31,7 +33,7 @@ from .types import AnyByStrDict, Env, OptStr, StrSeq, Union, VCSTypes
 from .vcs import checkout_latest_tag, clone, get_git, get_repo
 
 # Default list of files in the template to exclude from the rendered project
-DEFAULT_EXCLUDE: Tuple[str, ...] = (
+DEFAULT_EXCLUDE: tuple[str, ...] = (
     "copier.yaml",
     "copier.yml",
     "~*",
@@ -45,7 +47,7 @@ DEFAULT_EXCLUDE: Tuple[str, ...] = (
 DEFAULT_TEMPLATES_SUFFIX = ".jinja"
 
 
-def filter_config(data: AnyByStrDict) -> Tuple[AnyByStrDict, AnyByStrDict]:
+def filter_config(data: AnyByStrDict) -> tuple[AnyByStrDict, AnyByStrDict]:
     """Separates config and questions data."""
     config_data: AnyByStrDict = {}
     questions_data = {}
@@ -212,7 +214,7 @@ class Template:
                     onerror=handle_remove_readonly,
                 )
 
-    def _temp_clone(self) -> Optional[Path]:
+    def _temp_clone(self) -> Path | None:
         """Get the path to the temporary clone of the template.
 
         If the template hasn't yet been cloned, or if it was a local template,
@@ -297,7 +299,7 @@ class Template:
         return result
 
     @cached_property
-    def exclude(self) -> Tuple[str, ...]:
+    def exclude(self) -> tuple[str, ...]:
         """Get exclusions specified in the template, or default ones.
 
         See [exclude][].
@@ -310,7 +312,7 @@ class Template:
         )
 
     @cached_property
-    def jinja_extensions(self) -> Tuple[str, ...]:
+    def jinja_extensions(self) -> tuple[str, ...]:
         """Get Jinja2 extensions specified in the template, or `()`.
 
         See [jinja_extensions][].
@@ -350,7 +352,7 @@ class Template:
         return result
 
     def migration_tasks(
-        self, stage: Literal["before", "after"], from_template: "Template"
+        self, stage: Literal["before", "after"], from_template: Template
     ) -> Sequence[Task]:
         """Get migration objects that match current version spec.
 
@@ -362,7 +364,7 @@ class Template:
             stage: A valid stage name to find tasks for.
             from_template: Original template, from which we are migrating.
         """
-        result: List[Task] = []
+        result: list[Task] = []
         if not (self.version and from_template.version):
             return result
         extra_env: Env = {
@@ -386,7 +388,7 @@ class Template:
         return result
 
     @cached_property
-    def min_copier_version(self) -> Optional[Version]:
+    def min_copier_version(self) -> Version | None:
         """Get minimal copier version for the template and validates it.
 
         See [min_copier_version][].
@@ -409,7 +411,7 @@ class Template:
         return result
 
     @cached_property
-    def secret_questions(self) -> Set[str]:
+    def secret_questions(self) -> set[str]:
         """Get names of secret questions from the template.
 
         These questions shouldn't be saved into the answers file.
@@ -503,7 +505,7 @@ class Template:
         return get_repo(self.url) or self.url
 
     @cached_property
-    def version(self) -> Optional[Version]:
+    def version(self) -> Version | None:
         """PEP440-compliant version object."""
         if self.vcs != "git" or not self.commit:
             return None
@@ -531,7 +533,7 @@ class Template:
             return None
 
     @cached_property
-    def vcs(self) -> Optional[VCSTypes]:
+    def vcs(self) -> VCSTypes | None:
         """Get VCS system used by the template, if any."""
         if get_repo(self.url):
             return "git"

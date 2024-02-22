@@ -1,4 +1,5 @@
 """Some utility functions."""
+from __future__ import annotations
 
 import errno
 import os
@@ -12,7 +13,7 @@ from enum import Enum
 from importlib.metadata import version
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Callable, Literal, Optional, TextIO, Tuple, Type, Union, cast
+from typing import Any, Callable, Literal, TextIO, cast
 
 import colorama
 from packaging.version import Version
@@ -36,7 +37,7 @@ class Style:
 INDENT = " " * 2
 HLINE = "-" * 42
 
-OS: Optional[Literal["linux", "macos", "windows"]] = cast(
+OS: Literal["linux", "macos", "windows"] | None = cast(
     Any,
     {
         "Linux": "linux",
@@ -63,11 +64,11 @@ def copier_version() -> Version:
 def printf(
     action: str,
     msg: Any = "",
-    style: Optional[IntSeq] = None,
+    style: IntSeq | None = None,
     indent: int = 10,
-    quiet: Union[bool, StrictBool] = False,
+    quiet: bool | StrictBool = False,
     file_: TextIO = sys.stdout,
-) -> Optional[str]:
+) -> str | None:
     """Print string with common format."""
     if quiet:
         return None  # HACK: Satisfy MyPy
@@ -152,7 +153,7 @@ def handle_remove_readonly(
     func: Callable,
     path: str,
     # TODO: Change this union to simply `BaseException` when Python 3.11 support is dropped
-    exc: Union[BaseException, Tuple[Type[BaseException], BaseException, TracebackType]],
+    exc: BaseException | tuple[type[BaseException], BaseException, TracebackType],
 ) -> None:
     """Handle errors when trying to remove read-only files through `shutil.rmtree`.
 

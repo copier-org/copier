@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal
 
 import pytest
 
@@ -79,7 +81,7 @@ def test_pretend_mode(tmp_path_factory: pytest.TempPathFactory) -> None:
 def test_os_specific_tasks(
     tmp_path_factory: pytest.TempPathFactory,
     monkeypatch: pytest.MonkeyPatch,
-    os: Optional[Literal["linux", "macos", "windows"]],
+    os: Literal["linux", "macos", "windows"] | None,
     filename: str,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))

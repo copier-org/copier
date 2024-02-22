@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import platform
 import sys
-from typing import Iterator, Optional, Tuple
+from typing import Iterator
 
 import pytest
 from coverage.tracer import CTracer
@@ -21,7 +23,7 @@ def spawn() -> Spawn:
             "pexpect fails on Windows",
         )
 
-    def _spawn(cmd: Tuple[str, ...], *, timeout: Optional[int] = None) -> PopenSpawn:
+    def _spawn(cmd: tuple[str, ...], *, timeout: int | None = None) -> PopenSpawn:
         # Disable subprocess timeout if debugging (except coverage), for commodity
         # See https://stackoverflow.com/a/67065084/1468388
         tracer = getattr(sys, "gettrace", lambda: None)()
