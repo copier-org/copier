@@ -435,7 +435,9 @@ class Worker:
                 answer = question.parse_answer(result.init[var_name])
                 # Try to validate the answer value if the question has a
                 # validator.
-                question.validate_answer(answer)
+                err_msg = question.validate_answer(answer)
+                if err_msg:
+                    raise ValueError(err_msg)
                 # At this point, the answer value is valid. Do not ask the
                 # question again, but set answer as the user's answer instead.
                 result.user[var_name] = answer

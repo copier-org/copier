@@ -10,13 +10,12 @@ from functools import cached_property
 from hashlib import sha512
 from os import urandom
 from pathlib import Path
-from typing import Any, Callable, Mapping, Sequence
+from typing import Any, Callable, Literal, Mapping, Sequence
 
 import yaml
 from jinja2 import UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
 from prompt_toolkit.lexers import PygmentsLexer
-from prompt_toolkit.validation import ValidationError
 from pydantic import ConfigDict, Field, field_validator
 from pydantic.dataclasses import dataclass
 from pydantic_core.core_schema import ValidationInfo
@@ -346,6 +345,14 @@ class Question:
 
     def get_questionary_structure(self) -> AnyByStrDict:  # noqa: C901
         """Get the question in a format that the questionary lib understands."""
+
+        def _validate(answer: str) -> str | Literal[True]:
+            try:
+                ans = self.parse_answer(answer)
+            except Exception:
+                return "Invalid input"
+            return self.validate_answer(ans) or True
+
         lexer = None
         result: AnyByStrDict = {
             "filter": self.cast_answer,
@@ -381,7 +388,8 @@ class Question:
             placeholder = self.get_placeholder()
             if placeholder:
                 result["placeholder"] = placeholder
-            result["validate"] = self.validate_answer
+        if questionary_type in {"input", "checkbox"}:
+            result["validate"] = _validate
         result.update({"type": questionary_type})
         return result
 
@@ -398,20 +406,15 @@ class Question:
         """Get the value for multiline."""
         return cast_to_bool(self.render_value(self.multiline))
 
-    def validate_answer(self, answer) -> bool:
+    def validate_answer(self, answer: Any) -> str:
         """Validate user answer."""
         try:
-            ans = self.parse_answer(answer)
-        except Exception:
-            return False
-
-        try:
-            err_msg = self.render_value(self.validator, {self.var_name: ans}).strip()
+            err_msg = self.render_value(self.validator, {self.var_name: answer}).strip()
         except Exception as error:
-            raise ValidationError(message=str(error)) from error
+            return str(error)
         if err_msg:
-            raise ValidationError(message=err_msg)
-        return True
+            return err_msg
+        return ""
 
     def get_when(self) -> bool:
         """Get skip condition for question."""
