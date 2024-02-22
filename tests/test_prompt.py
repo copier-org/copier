@@ -950,3 +950,25 @@ def test_update_multiselect_choices(
     tui.expect_exact(pexpect.EOF)
     answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers["question"] == values
+
+
+def test_multiselect_choices_validator(
+    question_tree: QuestionTreeFixture, copier: CopierFixture
+) -> None:
+    """Multiple choices are validated."""
+    src, dst = question_tree(
+        type="str",
+        choices=["one", "two", "three"],
+        multiselect=True,
+        validator=("[%- if not question -%]At least one choice required[%- endif -%]"),
+    )
+
+    tui = copier("copy", str(src), str(dst), timeout=10)
+    expect_prompt(tui, "question", "str")
+    tui.sendline()
+    tui.expect_exact("At least one choice required")
+    tui.send(" ")  # select "one"
+    tui.sendline()
+    tui.expect_exact(pexpect.EOF)
+    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    assert answers["question"] == ["one"]

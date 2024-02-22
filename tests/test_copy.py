@@ -13,7 +13,6 @@ import pytest
 import yaml
 from plumbum import local
 from plumbum.cmd import git
-from prompt_toolkit.validation import ValidationError
 
 import copier
 from copier import run_copy
@@ -449,7 +448,7 @@ def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> N
                 "validator": "[% if q <= 0 %]must be positive[% endif %]",
             },
             "0",
-            pytest.raises(ValidationError),
+            pytest.raises(ValueError),
         ),
         (
             {
@@ -478,7 +477,7 @@ def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> N
                 "validator": "[% if q|length < 3 %]too short[% endif %]",
             },
             "ab",
-            pytest.raises(ValidationError),
+            pytest.raises(ValueError),
         ),
         (
             {
@@ -700,12 +699,22 @@ def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> N
             "1",
             pytest.raises(ValueError, match="Property 'validator' must be a string"),
         ),
+        (
+            {
+                "type": "str",
+                "choices": ["one", "two", "three"],
+                "multiselect": True,
+                "validator": "[% if not q %]At least one choice required[% endif %]",
+            },
+            [],
+            pytest.raises(ValueError, match="At least one choice required"),
+        ),
     ],
 )
 def test_validate_init_data(
     tmp_path_factory: pytest.TempPathFactory,
     spec: AnyByStrDict,
-    value: str,
+    value: Any,
     expected: ContextManager[None],
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
