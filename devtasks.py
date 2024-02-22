@@ -42,7 +42,7 @@ def dev_setup():
         local["poetry"]("install")
 
 
-def lint(recycle_container=False):
+def lint(_recycle_container=False):
     """Lint and format the project."""
     args = [
         "--extra-experimental-features",
