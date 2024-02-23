@@ -42,7 +42,7 @@ def dev_setup():
         local["poetry"]("install")
 
 
-def lint(recycle_container=False):
+def lint():
     """Lint and format the project."""
     args = [
         "--extra-experimental-features",
@@ -60,7 +60,7 @@ def lint(recycle_container=False):
     try:
         local["nix"].with_cwd(HERE)[args] & TEE
     except CommandNotFound:
-        _logger.warn("Nix not found; fallback to a container")
+        _logger.warning("Nix not found; fallback to a container")
         runner = local.get("podman", "docker")
         try:
             (

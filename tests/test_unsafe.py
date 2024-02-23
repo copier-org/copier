@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from contextlib import nullcontext as does_not_raise
-from typing import ContextManager, Union
+from typing import ContextManager
 
 import pytest
 import yaml
@@ -325,7 +327,7 @@ def test_update(
 def test_update_cli(
     tmp_path_factory: pytest.TempPathFactory,
     capsys: pytest.CaptureFixture[str],
-    unsafe: Union[bool, str],
+    unsafe: bool | str,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ["src", "dst"])
     unsafe_args = [unsafe] if unsafe else []

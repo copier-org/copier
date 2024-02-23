@@ -38,9 +38,7 @@ def template_path_with_dot_config(
         root = tmp_path_factory.mktemp("template")
         build_file_tree(
             {
-                root
-                / config_folder
-                / "{{ _copier_conf.answers_file }}.jinja": """\
+                root / config_folder / "{{ _copier_conf.answers_file }}.jinja": """\
                     # Changes here will be overwritten by Copier
                     {{ _copier_answers|to_nice_yaml }}
                     """,

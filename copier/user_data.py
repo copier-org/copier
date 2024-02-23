@@ -1,4 +1,6 @@
 """Functions used to load user data."""
+from __future__ import annotations
+
 import json
 import warnings
 from collections import ChainMap
@@ -8,7 +10,7 @@ from functools import cached_property
 from hashlib import sha512
 from os import urandom
 from pathlib import Path
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Set, Union
+from typing import Any, Callable, Mapping, Sequence
 
 import yaml
 from jinja2 import UndefinedError
@@ -84,7 +86,7 @@ class AnswersMap:
     """
 
     # Private
-    hidden: Set[str] = field(default_factory=set, init=False)
+    hidden: set[str] = field(default_factory=set, init=False)
 
     # Public
     user: AnyByStrDict = field(default_factory=dict)
@@ -176,16 +178,16 @@ class Question:
     var_name: str
     answers: AnswersMap
     jinja_env: SandboxedEnvironment
-    choices: Union[Sequence[Any], Dict[Any, Any]] = field(default_factory=list)
+    choices: Sequence[Any] | dict[Any, Any] = field(default_factory=list)
     multiselect: bool = False
     default: Any = MISSING
     help: str = ""
-    multiline: Union[str, bool] = False
+    multiline: str | bool = False
     placeholder: str = ""
     secret: bool = False
     type: str = Field(default="", validate_default=True)
     validator: str = ""
-    when: Union[str, bool] = True
+    when: str | bool = True
 
     @field_validator("var_name")
     @classmethod
@@ -246,7 +248,7 @@ class Question:
         result = self.cast_answer(result)
         return result
 
-    def get_default_rendered(self) -> Union[bool, str, Choice, None, MissingType]:
+    def get_default_rendered(self) -> bool | str | Choice | None | MissingType:
         """Get default answer rendered for the questionary lib.
 
         The questionary lib expects some specific data types, and returns
@@ -416,7 +418,7 @@ class Question:
         return cast_to_bool(self.render_value(self.when))
 
     def render_value(
-        self, value: Any, extra_answers: Optional[AnyByStrDict] = None
+        self, value: Any, extra_answers: AnyByStrDict | None = None
     ) -> str:
         """Render a single templated value using Jinja.
 

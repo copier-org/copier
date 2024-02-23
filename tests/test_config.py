@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable
 
 import pytest
 from plumbum import local
@@ -120,7 +122,7 @@ def test_invalid_yaml(capsys: pytest.CaptureFixture[str]) -> None:
 def test_invalid_config_data(
     capsys: pytest.CaptureFixture[str],
     conf_path: str,
-    check_err: Optional[Callable[[str], bool]],
+    check_err: Callable[[str], bool] | None,
 ) -> None:
     template = Template(conf_path)
     with pytest.raises(InvalidConfigFileError):
@@ -231,7 +233,7 @@ def test_missing_template(tmp_path: Path) -> None:
         copier.run_copy("./i_do_not_exist", tmp_path)
 
 
-def is_subdict(small: Dict[Any, Any], big: Dict[Any, Any]) -> bool:
+def is_subdict(small: dict[Any, Any], big: dict[Any, Any]) -> bool:
     return {**big, **small} == big
 
 
@@ -263,7 +265,7 @@ def test_worker_good_data(tmp_path: Path) -> None:
     ],
 )
 def test_worker_config_precedence(
-    tmp_path: Path, test_input: AnyByStrDict, expected_exclusions: Tuple[str, ...]
+    tmp_path: Path, test_input: AnyByStrDict, expected_exclusions: tuple[str, ...]
 ) -> None:
     conf = copier.Worker(dst_path=tmp_path, vcs_ref="HEAD", **test_input)
     assert expected_exclusions == conf.all_exclusions
