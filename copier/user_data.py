@@ -439,7 +439,11 @@ class Question:
     def parse_answer(self, answer: Any) -> Any:
         """Parse the answer according to the question's type."""
         if self.multiselect:
-            return [self._parse_answer(a) for a in answer]
+            answer = [self._parse_answer(a) for a in answer]
+            choices = (
+                self.cast_answer(choice.value) for choice in self._formatted_choices
+            )
+            return [choice for choice in choices if choice in answer]
         return self._parse_answer(answer)
 
     def _parse_answer(self, answer: Any) -> Any:
