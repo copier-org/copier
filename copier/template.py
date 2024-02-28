@@ -7,9 +7,9 @@ from collections import ChainMap, defaultdict
 from contextlib import suppress
 from dataclasses import field
 from functools import cached_property
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from shutil import rmtree
-from typing import Literal, Mapping, Sequence
+from typing import Any, Literal, Mapping, Sequence
 from warnings import warn
 
 import dunamai
@@ -19,7 +19,6 @@ from funcy import lflatten
 from packaging.version import Version, parse
 from plumbum.machines import local
 from pydantic.dataclasses import dataclass
-from yamlinclude import YamlIncludeConstructor
 
 from .errors import (
     InvalidConfigFileError,
@@ -82,9 +81,18 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
     class _Loader(yaml.FullLoader):
         """Intermediate class to avoid monkey-patching main loader."""
 
-    YamlIncludeConstructor.add_to_loader_class(
-        loader_class=_Loader, base_dir=conf_path.parent
-    )
+    def _include(loader: yaml.Loader, node: yaml.Node) -> Any:
+        if not isinstance(node, yaml.ScalarNode):
+            raise ValueError(f"Unsupported YAML node: {node!r}")
+        include_file = str(loader.construct_scalar(node))
+        if PurePosixPath(include_file).is_absolute():
+            raise ValueError("YAML include file path must be a relative path")
+        return [
+            yaml.load(path.read_bytes(), Loader=type(loader))
+            for path in conf_path.parent.glob(include_file)
+        ]
+
+    _Loader.add_constructor("!include", _include)
 
     with conf_path.open("rb") as f:
         try:
