@@ -217,6 +217,41 @@ def test_empty_section(tmp_path: Path) -> None:
     }
 
 
+def test_include_path_must_be_relative(tmp_path: Path) -> None:
+    """Include path must not be a relative path."""
+    build_file_tree(
+        {
+            (tmp_path / "copier.yml"): (
+                """\
+                !include /absolute/path/to/common.yml
+                """
+            ),
+        }
+    )
+    template = Template(str(tmp_path))
+    with pytest.raises(
+        ValueError, match="YAML include file path must be a relative path"
+    ):
+        template.config_data  # noqa: B018
+
+
+@pytest.mark.parametrize("include_value", ["[]", "{}"])
+def test_include_value_must_be_scalar_node(tmp_path: Path, include_value: str) -> None:
+    """Include value must be a YAML scalar node."""
+    build_file_tree(
+        {
+            (tmp_path / "copier.yml"): (
+                f"""\
+                !include {include_value}
+                """
+            ),
+        }
+    )
+    template = Template(str(tmp_path))
+    with pytest.raises(ValueError, match=r"^Unsupported YAML node:"):
+        template.config_data  # noqa: B018
+
+
 def test_config_data_empty() -> None:
     template = Template("tests/demo_config_empty")
     assert template.config_data == {}
