@@ -191,6 +191,32 @@ def test_valid_multi_section(tmp_path: Path) -> None:
     }
 
 
+def test_empty_section(tmp_path: Path) -> None:
+    """Empty sections are ignored."""
+    build_file_tree(
+        {
+            (tmp_path / "copier.yml"): (
+                """\
+                ---
+                ---
+
+                ---
+                your_age:
+                    type: int
+                your_name:
+                    type: str
+                ---
+                """
+            ),
+        }
+    )
+    template = Template(str(tmp_path))
+    assert template.questions_data == {
+        "your_age": {"type": "int"},
+        "your_name": {"type": "str"},
+    }
+
+
 def test_config_data_empty() -> None:
     template = Template("tests/demo_config_empty")
     assert template.config_data == {}
