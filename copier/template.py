@@ -88,7 +88,7 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
 
     with conf_path.open("rb") as f:
         try:
-            flattened_result = lflatten(yaml.load_all(f, Loader=_Loader))
+            flattened_result = lflatten(filter(None, yaml.load_all(f, Loader=_Loader)))
         except yaml.parser.ParserError as e:
             raise InvalidConfigFileError(conf_path, quiet) from e
 
