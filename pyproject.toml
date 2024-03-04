@@ -140,6 +140,20 @@ ignore_missing_imports = true
 plugins = ["pydantic.mypy"]
 warn_no_return = false
 
+[[tool.mypy.overrides]]
+module = [
+  "copier.subproject",
+  "copier.template",
+  "copier.tools",
+  "copier.user_data",
+  "copier.vcs",
+]
+warn_return_any = false
+
+[[tool.mypy.overrides]]
+module = ["tests.test_cli", "tests.test_prompt"]
+disable_error_code = ["no-untyped-def"]
+
 [tool.pytest.ini_options]
 addopts = "-n auto -ra"
 markers = ["impure: needs network or is not 100% reproducible"]
