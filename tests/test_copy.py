@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import filecmp
 import platform
 import stat
 import sys
@@ -24,7 +25,6 @@ from .helpers import (
     PROJECT_TEMPLATE,
     assert_file,
     build_file_tree,
-    filecmp,
     git_save,
     render,
 )
@@ -87,7 +87,7 @@ def test_tag_autodetect_v_prefix_optional(
     tmp_path_factory: pytest.TempPathFactory,
     tag2: str,
     use_prereleases: bool,
-    expected_version,
+    expected_version: str,
     prefix: str,
 ) -> None:
     """Tags with and without `v` prefix should work the same."""

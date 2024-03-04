@@ -14,7 +14,17 @@ from itertools import chain
 from pathlib import Path
 from shutil import rmtree
 from tempfile import TemporaryDirectory
-from typing import Any, Callable, Iterable, Literal, Mapping, Sequence, get_args
+from types import TracebackType
+from typing import (
+    Any,
+    Callable,
+    Iterable,
+    Literal,
+    Mapping,
+    Sequence,
+    get_args,
+    overload,
+)
 from unicodedata import normalize
 
 from jinja2.loaders import FileSystemLoader
@@ -180,13 +190,28 @@ class Worker:
     skip_answered: bool = False
 
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
-    _cleanup_hooks: list[Callable] = field(default_factory=list, init=False)
+    _cleanup_hooks: list[Callable[[], None]] = field(default_factory=list, init=False)
 
     def __enter__(self) -> Worker:
         """Allow using worker as a context manager."""
         return self
 
-    def __exit__(self, type, value, traceback) -> None:
+    @overload
+    def __exit__(self, type: None, value: None, traceback: None) -> None:
+        ...
+
+    @overload
+    def __exit__(
+        self, type: type[BaseException], value: BaseException, traceback: TracebackType
+    ) -> None:
+        ...
+
+    def __exit__(
+        self,
+        type: type[BaseException] | None,
+        value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
         """Clean up garbage files after worker usage ends."""
         if value is not None:
             # exception was raised from code inside context manager:
