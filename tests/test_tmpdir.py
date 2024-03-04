@@ -44,7 +44,7 @@ def test_api(
     template_path: str,
     tmp_path_factory: pytest.TempPathFactory,
     monkeypatch: pytest.MonkeyPatch,
-):
+) -> None:
     tmp, dst = map(tmp_path_factory.mktemp, ["tmp", "dst"])
     _git = git["-C", dst]
     # Mock tmp dir to assert it ends up clean
@@ -73,7 +73,7 @@ def test_cli(
     template_path: str,
     tmp_path_factory: pytest.TempPathFactory,
     monkeypatch: pytest.MonkeyPatch,
-):
+) -> False:
     tmp, dst = map(tmp_path_factory.mktemp, ["tmp", "dst"])
     _git = git["-C", dst]
     # Mock tmp dir to assert it ends up clean

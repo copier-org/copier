@@ -150,7 +150,7 @@ def force_str_end(original_str: str, end: str = "\n") -> str:
 
 
 def handle_remove_readonly(
-    func: Callable,
+    func: Callable[[str], None],
     path: str,
     # TODO: Change this union to simply `BaseException` when Python 3.11 support is dropped
     exc: BaseException | tuple[type[BaseException], BaseException, TracebackType],

@@ -28,7 +28,7 @@ from .errors import (
     UnsupportedVersionError,
 )
 from .tools import copier_version, handle_remove_readonly
-from .types import AnyByStrDict, Env, OptStr, StrSeq, Union, VCSTypes
+from .types import AnyByStrDict, Env, OptStr, StrSeq, VCSTypes
 from .vcs import checkout_latest_tag, clone, get_git, get_repo
 
 # Default list of files in the template to exclude from the rendered project
@@ -157,7 +157,7 @@ class Task:
             Additional environment variables to set while executing the command.
     """
 
-    cmd: Union[str, Sequence[str]]
+    cmd: str | Sequence[str]
     extra_env: Env = field(default_factory=dict)
 
 

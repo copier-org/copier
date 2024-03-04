@@ -45,7 +45,7 @@ class Subproject:
                 return bool(get_git()("status", "--porcelain").strip())
         return False
 
-    def _cleanup(self):
+    def _cleanup(self) -> None:
         """Remove temporary files and folders created by the subproject."""
         for method in self._cleanup_hooks:
             method()

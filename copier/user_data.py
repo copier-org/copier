@@ -190,14 +190,14 @@ class Question:
 
     @field_validator("var_name")
     @classmethod
-    def _check_var_name(cls, v: str):
+    def _check_var_name(cls, v: str) -> str:
         if v in DEFAULT_DATA:
             raise ValueError("Invalid question name")
         return v
 
     @field_validator("type")
     @classmethod
-    def _check_type(cls, v: str, info: ValidationInfo):
+    def _check_type(cls, v: str, info: ValidationInfo) -> str:
         if v == "":
             default_type_name = type(info.data.get("default")).__name__
             v = default_type_name if default_type_name in CAST_STR_TO_NATIVE else "yaml"

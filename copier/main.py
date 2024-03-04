@@ -1,4 +1,5 @@
 """Main functions and classes, used to generate or update projects."""
+
 from __future__ import annotations
 
 import os
@@ -13,7 +14,7 @@ from itertools import chain
 from pathlib import Path
 from shutil import rmtree
 from tempfile import TemporaryDirectory
-from typing import Callable, Iterable, Literal, Mapping, Sequence, get_args
+from typing import Any, Callable, Iterable, Literal, Mapping, Sequence, get_args
 from unicodedata import normalize
 
 from jinja2.loaders import FileSystemLoader
@@ -181,11 +182,11 @@ class Worker:
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
     _cleanup_hooks: list[Callable] = field(default_factory=list, init=False)
 
-    def __enter__(self):
+    def __enter__(self) -> Worker:
         """Allow using worker as a context manager."""
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, type, value, traceback) -> None:
         """Clean up garbage files after worker usage ends."""
         if value is not None:
             # exception was raised from code inside context manager:
@@ -196,7 +197,7 @@ class Worker:
         # otherwise clean up and let any exception bubble up
         self._cleanup()
 
-    def _cleanup(self):
+    def _cleanup(self) -> None:
         """Execute all stored cleanup methods."""
         for method in self._cleanup_hooks:
             method()
@@ -226,7 +227,7 @@ class Worker:
         if message and not self.quiet:
             print(self._render_string(message), file=sys.stderr)
 
-    def _answers_to_remember(self) -> Mapping:
+    def _answers_to_remember(self) -> Mapping[str, Any]:
         """Get only answers that will be remembered in the copier answers file."""
         # All internal values must appear first
         answers: AnyByStrDict = {}
@@ -273,7 +274,7 @@ class Worker:
             with local.cwd(self.subproject.local_abspath), local.env(**task.extra_env):
                 subprocess.run(task_cmd, shell=use_shell, check=True, env=local.env)
 
-    def _render_context(self) -> Mapping:
+    def _render_context(self) -> Mapping[str, Any]:
         """Produce render context for Jinja."""
         # Backwards compatibility
         # FIXME Remove it?
@@ -305,7 +306,7 @@ class Worker:
         spec = PathSpec.from_lines("gitwildmatch", normalized_patterns)
         return spec.match_file
 
-    def _solve_render_conflict(self, dst_relpath: Path):
+    def _solve_render_conflict(self, dst_relpath: Path) -> bool:
         """Properly solve render conflicts.
 
         It can ask the user if running in interactive mode.
@@ -766,7 +767,7 @@ class Worker:
                 f"from `{self.subproject.answers_relpath}`."
             )
         with replace(self, src_path=self.subproject.template.url) as new_worker:
-            return new_worker.run_copy()
+            new_worker.run_copy()
 
     def run_update(self) -> None:
         """Update a subproject that was already generated.
@@ -818,7 +819,7 @@ class Worker:
         self._apply_update()
         self._print_message(self.template.message_after_update)
 
-    def _apply_update(self):  # noqa: C901
+    def _apply_update(self) -> None:  # noqa: C901
         git = get_git()
         subproject_top = Path(
             git(
@@ -971,7 +972,7 @@ class Worker:
             self.template.migration_tasks("after", self.subproject.template)
         )
 
-    def _git_initialize_repo(self):
+    def _git_initialize_repo(self) -> None:
         """Initialize a git repository in the current directory."""
         git = get_git()
         git("init", retcode=None)

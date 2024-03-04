@@ -3,7 +3,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from jinja2.ext import Environment, Extension
+from jinja2 import Environment
+from jinja2.ext import Extension
 
 import copier
 
