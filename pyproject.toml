@@ -135,6 +135,7 @@ known-first-party = ["copier"]
 convention = "google"
 
 [tool.mypy]
+strict = true
 ignore_missing_imports = true
 plugins = ["pydantic.mypy"]
 warn_no_return = false
