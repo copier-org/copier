@@ -52,7 +52,7 @@ import sys
 from os import PathLike
 from pathlib import Path
 from textwrap import dedent
-from typing import Callable
+from typing import Any, Callable
 
 import yaml
 from plumbum import cli, colors
@@ -84,21 +84,18 @@ class CopierApp(cli.Application):
     """The Copier CLI application."""
 
     DESCRIPTION = "Create a new project from a template."
-    DESCRIPTION_MORE = (
-        dedent(
-            """\
+    DESCRIPTION_MORE = dedent(
+        """\
             Docs in https://copier.readthedocs.io/
 
             """
-        )
-        + (
-            colors.yellow
-            | dedent(
-                """\
+    ) + (
+        colors.yellow
+        | dedent(
+            """\
                 WARNING! Use only trusted project templates, as they might
                 execute code with the same level of access as your user.\n
                 """
-            )
         )
     )
     VERSION = copier_version()
@@ -108,7 +105,7 @@ class CopierApp(cli.Application):
 class _Subcommand(cli.Application):
     """Base class for Copier subcommands."""
 
-    def __init__(self, executable: PathLike) -> None:
+    def __init__(self, executable: PathLike[str]) -> None:
         self.data: AnyByStrDict = {}
         super().__init__(executable)
 
@@ -195,7 +192,9 @@ class _Subcommand(cli.Application):
         }
         self.data.update(updates_without_cli_overrides)
 
-    def _worker(self, src_path: OptStr = None, dst_path: str = ".", **kwargs) -> Worker:
+    def _worker(
+        self, src_path: OptStr = None, dst_path: str = ".", **kwargs: Any
+    ) -> Worker:
         """Run Copier's internal API using CLI switches.
 
         Arguments:

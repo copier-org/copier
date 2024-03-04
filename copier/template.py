@@ -289,7 +289,7 @@ class Template:
         return result
 
     @cached_property
-    def envops(self) -> Mapping:
+    def envops(self) -> Mapping[str, Any]:
         """Get the Jinja configuration specified in the template, or default values.
 
         See [envops][].

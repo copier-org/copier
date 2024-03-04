@@ -33,7 +33,7 @@ class Subproject:
     local_abspath: AbsolutePath
     answers_relpath: Path = Path(".copier-answers.yml")
 
-    _cleanup_hooks: list[Callable] = field(default_factory=list, init=False)
+    _cleanup_hooks: list[Callable[[], None]] = field(default_factory=list, init=False)
 
     def is_dirty(self) -> bool:
         """Indicate if the local template root is dirty.

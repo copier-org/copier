@@ -205,7 +205,9 @@ class Question:
 
     @field_validator("secret")
     @classmethod
-    def _check_secret_question_default_value(cls, v: bool, info: ValidationInfo):
+    def _check_secret_question_default_value(
+        cls, v: bool, info: ValidationInfo
+    ) -> bool:
         if v and info.data["default"] is MISSING:
             raise ValueError("Secret question requires a default value")
         return v
@@ -491,7 +493,7 @@ def load_answersfile_data(
         return {}
 
 
-CAST_STR_TO_NATIVE: Mapping[str, Callable] = {
+CAST_STR_TO_NATIVE: Mapping[str, Callable[[str], Any]] = {
     "bool": cast_to_bool,
     "float": float,
     "int": int,

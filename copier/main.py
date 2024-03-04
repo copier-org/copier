@@ -1030,7 +1030,7 @@ def run_copy(
     src_path: str,
     dst_path: StrOrPath = ".",
     data: AnyByStrDict | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> Worker:
     """Copy a template to a destination, from zero.
 
@@ -1046,7 +1046,7 @@ def run_copy(
 
 
 def run_recopy(
-    dst_path: StrOrPath = ".", data: AnyByStrDict | None = None, **kwargs
+    dst_path: StrOrPath = ".", data: AnyByStrDict | None = None, **kwargs: Any
 ) -> Worker:
     """Update a subproject from its template, discarding subproject evolution.
 
@@ -1064,7 +1064,7 @@ def run_recopy(
 def run_update(
     dst_path: StrOrPath = ".",
     data: AnyByStrDict | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> Worker:
     """Update a subproject, from its template.
 
@@ -1079,7 +1079,7 @@ def run_update(
     return worker
 
 
-def _remove_old_files(prefix: Path, cmp: dircmp, rm_common: bool = False) -> None:
+def _remove_old_files(prefix: Path, cmp: dircmp[str], rm_common: bool = False) -> None:
     """Remove files and directories only found in "old" template.
 
     This is an internal helper method used to process a comparison of 2
