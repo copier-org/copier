@@ -378,7 +378,7 @@ class Template:
             "VERSION_PEP440_FROM": str(from_template.version),
             "VERSION_PEP440_TO": str(self.version),
         }
-        migration: dict
+        migration: dict[str, Any]
         for migration in self._raw_config.get("_migrations", []):
             current = parse(migration["version"])
             if self.version >= current > from_template.version:

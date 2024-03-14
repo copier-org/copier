@@ -866,8 +866,8 @@ class Worker:
                 data=self.subproject.last_answers,
                 defaults=True,
                 quiet=True,
-                src_path=self.subproject.template.url,
-                vcs_ref=self.subproject.template.commit,
+                src_path=self.subproject.template.url,  # type: ignore[union-attr]
+                vcs_ref=self.subproject.template.commit,  # type: ignore[union-attr]
             ) as old_worker:
                 old_worker.run_copy()
             # Extract diff between temporary destination and real destination
@@ -889,7 +889,7 @@ class Worker:
                     diff = diff_cmd("--inter-hunk-context=0")
             # Run pre-migration tasks
             self._execute_tasks(
-                self.template.migration_tasks("before", self.subproject.template)
+                self.template.migration_tasks("before", self.subproject.template)  # type: ignore[arg-type]
             )
             # Clear last answers cache to load possible answers migration, if skip_answered flag is not set
             if self.skip_answered is False:
@@ -911,10 +911,10 @@ class Worker:
             with replace(
                 self,
                 dst_path=new_copy / subproject_subdir,
-                data=self.answers.combined,
+                data=self.answers.combined,  # type: ignore[arg-type]
                 defaults=True,
                 quiet=True,
-                src_path=self.subproject.template.url,
+                src_path=self.subproject.template.url,  # type: ignore[union-attr]
             ) as new_worker:
                 new_worker.run_copy()
             compared = dircmp(old_copy, new_copy)
@@ -994,7 +994,7 @@ class Worker:
 
         # Run post-migration tasks
         self._execute_tasks(
-            self.template.migration_tasks("after", self.subproject.template)
+            self.template.migration_tasks("after", self.subproject.template)  # type: ignore[arg-type]
         )
 
     def _git_initialize_repo(self) -> None:

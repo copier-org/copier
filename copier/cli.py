@@ -80,7 +80,7 @@ def _handle_exceptions(method: Callable[[], None]) -> int:
     return 0
 
 
-class CopierApp(cli.Application):
+class CopierApp(cli.Application):  # type: ignore[misc]
     """The Copier CLI application."""
 
     DESCRIPTION = "Create a new project from a template."
@@ -102,7 +102,7 @@ class CopierApp(cli.Application):
     CALL_MAIN_IF_NESTED_COMMAND = False
 
 
-class _Subcommand(cli.Application):
+class _Subcommand(cli.Application):  # type: ignore[misc]
     """Base class for Copier subcommands."""
 
     def __init__(self, executable: PathLike[str]) -> None:
@@ -155,7 +155,7 @@ class _Subcommand(cli.Application):
         ),
     )
 
-    @cli.switch(
+    @cli.switch(  # type: ignore[misc]
         ["-d", "--data"],
         str,
         "VARIABLE=VALUE",
@@ -173,7 +173,7 @@ class _Subcommand(cli.Application):
             key, value = arg.split("=", 1)
             self.data[key] = value
 
-    @cli.switch(
+    @cli.switch(  # type: ignore[misc]
         ["--data-file"],
         cli.ExistingFile,
         help="Load data from a YAML file",

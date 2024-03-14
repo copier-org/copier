@@ -4,7 +4,7 @@ from shutil import copy2, copytree
 import pytest
 from plumbum import local
 from plumbum.cmd import git
-from pytest_gitconfig import GitConfig
+from pytest_gitconfig import GitConfig  # type: ignore[attr-defined]
 
 import copier
 from copier.errors import DirtyLocalWarning
