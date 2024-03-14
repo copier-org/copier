@@ -189,7 +189,7 @@ def readlink(link: Path) -> Path:
 _re_octal = re.compile(r"\\([0-9]{3})\\([0-9]{3})")
 
 
-def _re_octal_replace(match: re.Match) -> str:
+def _re_octal_replace(match: re.Match[str]) -> str:
     return bytes([int(match.group(1), 8), int(match.group(2), 8)]).decode("utf8")
 
 
