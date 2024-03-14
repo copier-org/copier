@@ -49,9 +49,10 @@ copier --help-all
 """
 
 import sys
+from os import PathLike
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Callable
+from typing import Any, Callable
 
 import yaml
 from plumbum import cli, colors
@@ -60,9 +61,6 @@ from .errors import UnsafeTemplateError, UserMessageError
 from .main import Worker
 from .tools import copier_version
 from .types import AnyByStrDict, OptStr, StrSeq
-
-if TYPE_CHECKING:
-    from os import PathLike
 
 
 def _handle_exceptions(method: Callable[[], None]) -> int:
@@ -107,7 +105,7 @@ class CopierApp(cli.Application):  # type: ignore[misc]
 class _Subcommand(cli.Application):  # type: ignore[misc]
     """Base class for Copier subcommands."""
 
-    def __init__(self, executable: PathLike[str]) -> None:
+    def __init__(self, executable: "PathLike[str]") -> None:
         self.data: AnyByStrDict = {}
         super().__init__(executable)
 
