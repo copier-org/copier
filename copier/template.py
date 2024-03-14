@@ -108,12 +108,8 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
         "_skip_if_exists",
     ):
         for result in flattened_result:
-            try:
-                values = result[option]
-            except KeyError:
-                pass
-            else:
-                merged_options[option].extend(values)
+            if option in result:
+                merged_options[option].extend(result[option])
 
     return dict(ChainMap(dict(merged_options), *reversed(flattened_result)))
 
@@ -391,8 +387,10 @@ class Template:
                     "VERSION_CURRENT": migration["version"],
                     "VERSION_PEP440_CURRENT": str(current),
                 }
-                for cmd in migration.get(stage, []):
-                    result.append(Task(cmd=cmd, extra_env=extra_env))
+                result.extend(
+                    Task(cmd=cmd, extra_env=extra_env)
+                    for cmd in migration.get(stage, [])
+                )
         return result
 
     @cached_property
