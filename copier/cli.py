@@ -49,10 +49,9 @@ copier --help-all
 """
 
 import sys
-from os import PathLike
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 import yaml
 from plumbum import cli, colors
@@ -61,6 +60,9 @@ from .errors import UnsafeTemplateError, UserMessageError
 from .main import Worker
 from .tools import copier_version
 from .types import AnyByStrDict, OptStr, StrSeq
+
+if TYPE_CHECKING:
+    from os import PathLike
 
 
 def _handle_exceptions(method: Callable[[], None]) -> int:
