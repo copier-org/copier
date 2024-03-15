@@ -19,21 +19,17 @@ _tasks:
   - [python, "[[ _copier_conf.src_path / 'tasks.py' ]]", "2"]
 
 _migrations:
-  - ["[[ _copier_conf.src_path / 'migrations.py' ]]", "[[ _copier_conf|to_json ]]"]
   # This migration is never executed because it's the 1st version copied, and
   # migrations are only executed when updating
   - version: v1.0.0
-    command: "false"
+    before:
+      - &mig
+        - "[[ _copier_conf.src_path / 'migrations.py' ]]"
+        - "[[ _copier_conf|to_json ]]"
+    after:
+      - *mig
   - version: v2
-    command: "rm delete-in-migration-$VERSION_CURRENT.txt"
-  - version: v2
-    command: "touch [[ _version_pep440_current.major ]].[[ _version_pep440_current.minor ]].[[ _version_pep440_current.micro ]].txt"
-  - command: "mkdir hello"
-    when: "[[ _stage == 'before' ]]"
-  - command: "touch world"
-    working_directory: "hello"
-    when: "[[ _stage == 'after' ]]"
-  - command: "touch world2"
-    working_directory: "[[ _copier_conf.dst_path ]]/hello"
-    when: "[[ _stage == 'after' ]]"
-
+    before: [*mig]
+    after:
+      - *mig
+      - "rm delete-in-migration-$VERSION_CURRENT.txt"

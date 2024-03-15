@@ -14,6 +14,7 @@ from copier.errors import UserMessageError
 from .helpers import BRACKET_ENVOPS_JSON, PROJECT_TEMPLATE, build_file_tree
 
 SRC = Path(f"{PROJECT_TEMPLATE}_migrations").absolute()
+SRC_LEGACY = Path(f"{PROJECT_TEMPLATE}_legacy_migrations").absolute()
 
 
 # This fails on windows CI because, when the test tries to execute
@@ -26,11 +27,12 @@ SRC = Path(f"{PROJECT_TEMPLATE}_migrations").absolute()
     reason="Windows ignores shebang?",
     strict=True,
 )
-def test_migrations_and_tasks(tmp_path: Path) -> None:
+@pytest.mark.parametrize("legacy_format", (True, False))
+def test_migrations_and_tasks(tmp_path: Path, legacy_format) -> None:
     """Check migrations and tasks are run properly."""
     # Convert demo_migrations in a git repository with 2 versions
     src, dst = tmp_path / "src", tmp_path / "dst"
-    copytree(SRC, src)
+    copytree(SRC_LEGACY if legacy_format else SRC, src)
     with local.cwd(src):
         git("init")
         git("config", "user.name", "Copier Test")
@@ -66,10 +68,16 @@ def test_migrations_and_tasks(tmp_path: Path) -> None:
     assert not (dst / "delete-in-migration-v2.txt").exists()
     assert not (dst / "migrations.py").exists()
     assert not (dst / "tasks.py").exists()
-    assert (dst / "v1.0.0-v2-v2.0-before.json").is_file()
-    assert (dst / "v1.0.0-v2-v2.0-after.json").is_file()
-    assert (dst / "PEP440-1.0.0-2-2.0-before.json").is_file()
-    assert (dst / "PEP440-1.0.0-2-2.0-after.json").is_file()
+    assert (dst / "v1.0.0-v2.0-before.json").is_file()
+    assert (dst / "v1.0.0-v2.0-after.json").is_file()
+    assert (dst / "PEP440-1.0.0-2.0-before.json").is_file()
+    assert (dst / "PEP440-1.0.0-2.0-after.json").is_file()
+    if not legacy_format:
+        # This tests working_directory support, which was only added with the new format
+        assert (dst / "hello").is_dir()
+        assert (dst / "hello" / "world").is_file()
+        assert (dst / "hello" / "world2").is_file()
+        assert (dst / "2.0.0.txt").is_file()
     answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers == {"_commit": "v2.0", "_src_path": str(src)}
 
