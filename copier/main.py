@@ -13,14 +13,7 @@ from itertools import chain
 from pathlib import Path
 from shutil import rmtree
 from tempfile import TemporaryDirectory
-from typing import (
-    Callable,
-    Iterable,
-    Literal,
-    Mapping,
-    Sequence,
-    get_args,
-)
+from typing import Callable, Iterable, Literal, Mapping, Sequence, get_args
 from unicodedata import normalize
 
 from jinja2.loaders import FileSystemLoader
@@ -963,8 +956,9 @@ class Worker:
                             perms_sha_mode, path = line.split("\t")
                             perms, sha, _ = perms_sha_mode.split()
                             input_lines.append(f"0 {'0' * 40}\t{path}")
-                            for mode in (1, 2, 3):
-                                input_lines.append(f"{perms} {sha} {mode}\t{path}")
+                            input_lines.extend(
+                                f"{perms} {sha} {mode}\t{path}" for mode in (1, 2, 3)
+                            )
                         (
                             git["update-index", "--index-info"]
                             << "\n".join(input_lines)
