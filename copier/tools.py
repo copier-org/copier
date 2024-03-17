@@ -1,4 +1,5 @@
 """Some utility functions."""
+
 from __future__ import annotations
 
 import errno
@@ -27,11 +28,11 @@ colorama.just_fix_windows_console()
 class Style:
     """Common color styles."""
 
-    OK: IntSeq = [colorama.Fore.GREEN, colorama.Style.BRIGHT]
-    WARNING: IntSeq = [colorama.Fore.YELLOW, colorama.Style.BRIGHT]
-    IGNORE: IntSeq = [colorama.Fore.CYAN]
-    DANGER: IntSeq = [colorama.Fore.RED, colorama.Style.BRIGHT]
-    RESET: IntSeq = [colorama.Fore.RESET, colorama.Style.RESET_ALL]
+    OK = [colorama.Fore.GREEN, colorama.Style.BRIGHT]
+    WARNING = [colorama.Fore.YELLOW, colorama.Style.BRIGHT]
+    IGNORE = [colorama.Fore.CYAN]
+    DANGER = [colorama.Fore.RED, colorama.Style.BRIGHT]
+    RESET = [colorama.Fore.RESET, colorama.Style.RESET_ALL]
 
 
 INDENT = " " * 2
