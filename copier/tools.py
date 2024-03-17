@@ -14,7 +14,7 @@ from enum import Enum
 from importlib.metadata import version
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Callable, Literal, Sequence, TextIO, cast
+from typing import Any, Callable, Literal, TextIO, cast
 
 import colorama
 from packaging.version import Version
@@ -63,7 +63,7 @@ def copier_version() -> Version:
 def printf(
     action: str,
     msg: Any = "",
-    style: Sequence[str] | None = None,
+    style: list[str] | None = None,
     indent: int = 10,
     quiet: bool | StrictBool = False,
     file_: TextIO = sys.stdout,
@@ -76,7 +76,7 @@ def printf(
     if not style:
         return action + _msg
 
-    out = style + [action] + Style.RESET + [INDENT, _msg]  # type: ignore[operator]
+    out = style + [action] + Style.RESET + [INDENT, _msg]
     print(*out, sep="", file=file_)
     return None
 
