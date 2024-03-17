@@ -14,13 +14,11 @@ from enum import Enum
 from importlib.metadata import version
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Callable, Literal, TextIO, cast
+from typing import Any, Callable, Literal, Sequence, TextIO, cast
 
 import colorama
 from packaging.version import Version
 from pydantic import StrictBool
-
-from .types import IntSeq
 
 colorama.just_fix_windows_console()
 
@@ -65,14 +63,14 @@ def copier_version() -> Version:
 def printf(
     action: str,
     msg: Any = "",
-    style: IntSeq | None = None,
+    style: Sequence[str] | None = None,
     indent: int = 10,
     quiet: bool | StrictBool = False,
     file_: TextIO = sys.stdout,
 ) -> str | None:
     """Print string with common format."""
     if quiet:
-        return None  # HACK: Satisfy MyPy
+        return None
     _msg = str(msg)
     action = action.rjust(indent, " ")
     if not style:
@@ -80,7 +78,7 @@ def printf(
 
     out = style + [action] + Style.RESET + [INDENT, _msg]  # type: ignore[operator]
     print(*out, sep="", file=file_)
-    return None  # HACK: Satisfy MyPy
+    return None
 
 
 def printf_exception(
