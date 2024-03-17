@@ -29,7 +29,7 @@ from .errors import (
     UnsupportedVersionError,
 )
 from .tools import copier_version, handle_remove_readonly
-from .types import AnyByStrDict, Env, OptStr, StrSeq, VCSTypes
+from .types import AnyByStrDict, Env, StrSeq, VCSTypes
 from .vcs import checkout_latest_tag, clone, get_git, get_repo
 
 # Default list of files in the template to exclude from the rendered project
@@ -200,7 +200,7 @@ class Template:
     """
 
     url: str
-    ref: OptStr = None
+    ref: str | None = None
     use_prereleases: bool = False
 
     def _cleanup(self) -> None:
@@ -265,17 +265,19 @@ class Template:
         return result
 
     @cached_property
-    def commit(self) -> OptStr:  # type: ignore[return]
+    def commit(self) -> str | None:
         """If the template is VCS-tracked, get its commit description."""
         if self.vcs == "git":
             with local.cwd(self.local_abspath):
                 return get_git()("describe", "--tags", "--always").strip()
+        return None
 
     @cached_property
-    def commit_hash(self) -> OptStr:  # type: ignore[return]
+    def commit_hash(self) -> str | None:
         """If the template is VCS-tracked, get its commit full hash."""
         if self.vcs == "git":
             return get_git()("-C", self.local_abspath, "rev-parse", "HEAD").strip()
+        return None
 
     @cached_property
     def config_data(self) -> AnyByStrDict:
