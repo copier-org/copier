@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 from pathlib import Path
 from textwrap import dedent
 
 import pytest
 
 import copier
-from copier.types import OptStr
 from copier.user_data import load_answersfile_data
 
 from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree
@@ -52,7 +53,9 @@ def template_path(tmp_path_factory: pytest.TempPathFactory) -> str:
 
 
 @pytest.mark.parametrize("answers_file", [None, ".changed-by-user.yaml"])
-def test_answersfile(template_path: str, tmp_path: Path, answers_file: OptStr) -> None:
+def test_answersfile(
+    template_path: str, tmp_path: Path, answers_file: str | None
+) -> None:
     """Test copier behaves properly when using an answersfile."""
     round_file = tmp_path / "round.txt"
 

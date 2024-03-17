@@ -25,7 +25,7 @@ from questionary.prompts.common import Choice
 
 from .errors import InvalidTypeError, UserMessageError
 from .tools import cast_to_bool, cast_to_str, force_str_end
-from .types import MISSING, AnyByStrDict, MissingType, OptStr, OptStrOrPath, StrOrPath
+from .types import MISSING, AnyByStrDict, MissingType, OptStrOrPath, StrOrPath
 
 
 # TODO Remove these two functions as well as DEFAULT_DATA in a future release
@@ -109,7 +109,7 @@ class AnswersMap:
             )
         )
 
-    def old_commit(self) -> OptStr:
+    def old_commit(self) -> str | None:
         """Commit when the project was updated from this template the last time."""
         return self.last.get("_commit")
 

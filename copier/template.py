@@ -29,7 +29,7 @@ from .errors import (
     UnsupportedVersionError,
 )
 from .tools import copier_version, handle_remove_readonly
-from .types import AnyByStrDict, Env, StrSeq, VCSTypes
+from .types import AnyByStrDict, Env, VCSTypes
 from .vcs import checkout_latest_tag, clone, get_git, get_repo
 
 # Default list of files in the template to exclude from the rendered project
@@ -432,7 +432,7 @@ class Template:
         return result
 
     @cached_property
-    def skip_if_exists(self) -> StrSeq:
+    def skip_if_exists(self) -> Sequence[str]:
         """Get skip patterns from the template.
 
         These files will never be rewritten when rendering the template.

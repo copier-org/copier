@@ -48,11 +48,13 @@ copier --help-all
 ```
 """
 
+from __future__ import annotations
+
 import sys
 from os import PathLike
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, Callable
+from typing import Any, Callable, Iterable
 
 import yaml
 from plumbum import cli, colors
@@ -60,7 +62,7 @@ from plumbum import cli, colors
 from .errors import UnsafeTemplateError, UserMessageError
 from .main import Worker
 from .tools import copier_version
-from .types import AnyByStrDict, OptStr, StrSeq
+from .types import AnyByStrDict
 
 
 def _handle_exceptions(method: Callable[[], None]) -> int:
@@ -105,7 +107,7 @@ class CopierApp(cli.Application):  # type: ignore[misc]
 class _Subcommand(cli.Application):  # type: ignore[misc]
     """Base class for Copier subcommands."""
 
-    def __init__(self, executable: "PathLike[str]") -> None:
+    def __init__(self, executable: PathLike[str]) -> None:
         self.data: AnyByStrDict = {}
         super().__init__(executable)
 
@@ -162,7 +164,7 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
         list=True,
         help="Make VARIABLE available as VALUE when rendering the template",
     )
-    def data_switch(self, values: StrSeq) -> None:
+    def data_switch(self, values: Iterable[str]) -> None:
         """Update [data][] with provided values.
 
         Arguments:
@@ -193,7 +195,7 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
         self.data.update(updates_without_cli_overrides)
 
     def _worker(
-        self, src_path: OptStr = None, dst_path: str = ".", **kwargs: Any
+        self, src_path: str | None = None, dst_path: str = ".", **kwargs: Any
     ) -> Worker:
         """Run Copier's internal API using CLI switches.
 

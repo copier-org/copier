@@ -47,15 +47,7 @@ from .errors import (
 from .subproject import Subproject
 from .template import Task, Template
 from .tools import OS, Style, normalize_git_path, printf, readlink
-from .types import (
-    MISSING,
-    AnyByStrDict,
-    JSONSerializable,
-    OptStr,
-    RelativePath,
-    StrOrPath,
-    StrSeq,
-)
+from .types import MISSING, AnyByStrDict, JSONSerializable, RelativePath, StrOrPath
 from .user_data import DEFAULT_DATA, AnswersMap, Question
 from .vcs import get_git
 
@@ -173,11 +165,11 @@ class Worker:
     src_path: str | None = None
     dst_path: Path = Path(".")
     answers_file: RelativePath | None = None
-    vcs_ref: OptStr = None
+    vcs_ref: str | None = None
     data: AnyByStrDict = field(default_factory=dict)
-    exclude: StrSeq = ()
+    exclude: Sequence[str] = ()
     use_prereleases: bool = False
-    skip_if_exists: StrSeq = ()
+    skip_if_exists: Sequence[str] = ()
     cleanup_on_error: bool = True
     defaults: bool = False
     user_defaults: AnyByStrDict = field(default_factory=dict)
@@ -197,14 +189,12 @@ class Worker:
         return self
 
     @overload
-    def __exit__(self, type: None, value: None, traceback: None) -> None:
-        ...
+    def __exit__(self, type: None, value: None, traceback: None) -> None: ...
 
     @overload
     def __exit__(
         self, type: type[BaseException], value: BaseException, traceback: TracebackType
-    ) -> None:
-        ...
+    ) -> None: ...
 
     def __exit__(
         self,
@@ -494,7 +484,7 @@ class Worker:
         return Path(template.render(**self.answers.combined))
 
     @cached_property
-    def all_exclusions(self) -> StrSeq:
+    def all_exclusions(self) -> Sequence[str]:
         """Combine default, template and user-chosen exclusions."""
         return self.template.exclude + tuple(self.exclude)
 

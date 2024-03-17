@@ -17,7 +17,7 @@ from prompt_toolkit.input.ansi_escape_sequences import REVERSE_ANSI_SEQUENCES
 from prompt_toolkit.keys import Keys
 
 import copier
-from copier.types import OptStr, StrOrPath
+from copier.types import StrOrPath
 
 PROJECT_TEMPLATE = Path(__file__).parent / "demo"
 
@@ -61,8 +61,7 @@ SUFFIX_TMPL = ".tmpl"
 
 
 class Spawn(Protocol):
-    def __call__(self, cmd: tuple[str, ...], *, timeout: int | None) -> PopenSpawn:
-        ...
+    def __call__(self, cmd: tuple[str, ...], *, timeout: int | None) -> PopenSpawn: ...
 
 
 class Keyboard(str, Enum):
@@ -124,7 +123,7 @@ def build_file_tree(
 
 
 def expect_prompt(
-    tui: PopenSpawn, name: str, expected_type: str, help: OptStr = None
+    tui: PopenSpawn, name: str, expected_type: str, help: str | None = None
 ) -> None:
     """Check that we get a prompt in the standard form"""
     if help:

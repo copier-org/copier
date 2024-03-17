@@ -11,7 +11,7 @@ from pexpect.popen_spawn import PopenSpawn
 
 from copier import Worker
 from copier.errors import InvalidTypeError
-from copier.types import AnyByStrDict, OptStr
+from copier.types import AnyByStrDict
 
 from .helpers import (
     BRACKET_ENVOPS,
@@ -32,7 +32,7 @@ main_question = {
 
 
 class Prompt:
-    def __init__(self, name: str, format: str, help: OptStr = None) -> None:
+    def __init__(self, name: str, format: str, help: str | None = None) -> None:
         self.name = name
         self.format = format
         self.help = help
