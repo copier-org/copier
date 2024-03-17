@@ -1,4 +1,5 @@
 """Tools related to template management."""
+
 from __future__ import annotations
 
 import re
@@ -264,14 +265,14 @@ class Template:
         return result
 
     @cached_property
-    def commit(self) -> OptStr:
+    def commit(self) -> OptStr:  # type: ignore[return]
         """If the template is VCS-tracked, get its commit description."""
         if self.vcs == "git":
             with local.cwd(self.local_abspath):
                 return get_git()("describe", "--tags", "--always").strip()
 
     @cached_property
-    def commit_hash(self) -> OptStr:
+    def commit_hash(self) -> OptStr:  # type: ignore[return]
         """If the template is VCS-tracked, get its commit full hash."""
         if self.vcs == "git":
             return get_git()("-C", self.local_abspath, "rev-parse", "HEAD").strip()
@@ -543,3 +544,4 @@ class Template:
         """Get VCS system used by the template, if any."""
         if get_repo(self.url):
             return "git"
+        return None

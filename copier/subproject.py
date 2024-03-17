@@ -2,6 +2,7 @@
 
 A *subproject* is a project that gets rendered and/or updated with Copier.
 """
+
 from __future__ import annotations
 
 from dataclasses import field
@@ -78,9 +79,11 @@ class Subproject:
             result = Template(url=last_url, ref=last_ref)
             self._cleanup_hooks.append(result._cleanup)
             return result
+        return None
 
     @cached_property
     def vcs(self) -> VCSTypes | None:
         """VCS type of the subproject."""
         if is_in_git_repo(self.local_abspath):
             return "git"
+        return None
