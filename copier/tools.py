@@ -28,11 +28,11 @@ colorama.just_fix_windows_console()
 class Style:
     """Common color styles."""
 
-    OK: ClassVar[IntSeq] = [colorama.Fore.GREEN, colorama.Style.BRIGHT]
-    WARNING: ClassVar[IntSeq] = [colorama.Fore.YELLOW, colorama.Style.BRIGHT]
-    IGNORE: ClassVar[IntSeq] = [colorama.Fore.CYAN]
-    DANGER: ClassVar[IntSeq] = [colorama.Fore.RED, colorama.Style.BRIGHT]
-    RESET: ClassVar[IntSeq] = [colorama.Fore.RESET, colorama.Style.RESET_ALL]
+    OK: ClassVar[list[str]] = [colorama.Fore.GREEN, colorama.Style.BRIGHT]
+    WARNING: ClassVar[list[str]] = [colorama.Fore.YELLOW, colorama.Style.BRIGHT]
+    IGNORE: ClassVar[list[str]] = [colorama.Fore.CYAN]
+    DANGER: ClassVar[list[str]] = [colorama.Fore.RED, colorama.Style.BRIGHT]
+    RESET: ClassVar[list[str]] = [colorama.Fore.RESET, colorama.Style.RESET_ALL]
 
 
 INDENT = " " * 2
