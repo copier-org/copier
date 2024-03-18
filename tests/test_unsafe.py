@@ -345,7 +345,7 @@ def test_update_cli(
         git("tag", "v1")
 
     _, retcode = CopierApp.run(
-        ["copier", "copy", str(src), str(dst)] + unsafe_args,
+        ["copier", "copy", str(src), str(dst), *unsafe_args],
         exit=False,
     )
     assert retcode == 0
@@ -368,12 +368,7 @@ def test_update_cli(
         git("tag", "v2")
 
     _, retcode = CopierApp.run(
-        [
-            "copier",
-            "update",
-            str(dst),
-        ]
-        + unsafe_args,
+        ["copier", "update", str(dst), *unsafe_args],
         exit=False,
     )
     if unsafe:

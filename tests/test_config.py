@@ -126,7 +126,7 @@ def test_invalid_config_data(
 ) -> None:
     template = Template(conf_path)
     with pytest.raises(InvalidConfigFileError):
-        template.config_data # noqa: B018
+        template.config_data  # noqa: B018
     if check_err:
         _, err = capsys.readouterr()
         assert check_err(err)
@@ -261,7 +261,7 @@ def test_config_data_empty() -> None:
 def test_multiple_config_file_error() -> None:
     template = Template("tests/demo_multi_config")
     with pytest.raises(MultipleConfigFilesError):
-        template.config_data # noqa: B018
+        template.config_data  # noqa: B018
 
 
 # ConfigData
@@ -295,7 +295,7 @@ def test_missing_template(tmp_path: Path) -> None:
 
 
 def is_subdict(small: dict[Any, Any], big: dict[Any, Any]) -> bool:
-    return {**big, **small} == big
+    return big == {**big, **small}
 
 
 def test_worker_good_data(tmp_path: Path) -> None:
@@ -316,7 +316,7 @@ def test_worker_good_data(tmp_path: Path) -> None:
         # func_args > defaults
         (
             {"src_path": ".", "exclude": ["aaa"]},
-            tuple(DEFAULT_EXCLUDE) + ("aaa",),
+            (*tuple(DEFAULT_EXCLUDE), "aaa"),
         ),
         # func_args > user_data
         (

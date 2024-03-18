@@ -1,4 +1,5 @@
 """Some utility functions."""
+
 from __future__ import annotations
 
 import errno
@@ -13,7 +14,7 @@ from enum import Enum
 from importlib.metadata import version
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Callable, Literal, TextIO, cast
+from typing import Any, Callable, ClassVar, Literal, TextIO, cast
 
 import colorama
 from packaging.version import Version
@@ -27,11 +28,11 @@ colorama.just_fix_windows_console()
 class Style:
     """Common color styles."""
 
-    OK: IntSeq = [colorama.Fore.GREEN, colorama.Style.BRIGHT]
-    WARNING: IntSeq = [colorama.Fore.YELLOW, colorama.Style.BRIGHT]
-    IGNORE: IntSeq = [colorama.Fore.CYAN]
-    DANGER: IntSeq = [colorama.Fore.RED, colorama.Style.BRIGHT]
-    RESET: IntSeq = [colorama.Fore.RESET, colorama.Style.RESET_ALL]
+    OK: ClassVar[IntSeq] = [colorama.Fore.GREEN, colorama.Style.BRIGHT]
+    WARNING: ClassVar[IntSeq] = [colorama.Fore.YELLOW, colorama.Style.BRIGHT]
+    IGNORE: ClassVar[IntSeq] = [colorama.Fore.CYAN]
+    DANGER: ClassVar[IntSeq] = [colorama.Fore.RED, colorama.Style.BRIGHT]
+    RESET: ClassVar[IntSeq] = [colorama.Fore.RESET, colorama.Style.RESET_ALL]
 
 
 INDENT = " " * 2
@@ -64,22 +65,22 @@ def copier_version() -> Version:
 def printf(
     action: str,
     msg: Any = "",
-    style: IntSeq | None = None,
+    style: list[str] | None = None,
     indent: int = 10,
     quiet: bool | StrictBool = False,
     file_: TextIO = sys.stdout,
 ) -> str | None:
     """Print string with common format."""
     if quiet:
-        return None  # HACK: Satisfy MyPy
+        return None
     _msg = str(msg)
     action = action.rjust(indent, " ")
     if not style:
         return action + _msg
 
-    out = style + [action] + Style.RESET + [INDENT, _msg]  # type: ignore[operator]
+    out = [*style, action, *Style.RESET, INDENT, _msg]
     print(*out, sep="", file=file_)
-    return None  # HACK: Satisfy MyPy
+    return None
 
 
 def printf_exception(
@@ -87,7 +88,7 @@ def printf_exception(
 ) -> None:
     """Print exception with common format."""
     if not quiet:
-        print("", file=sys.stderr)
+        print(file=sys.stderr)
         printf(action, msg=msg, style=Style.DANGER, indent=indent, file_=sys.stderr)
         print(HLINE, file=sys.stderr)
         print(e, file=sys.stderr)
