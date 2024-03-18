@@ -316,7 +316,7 @@ def test_worker_good_data(tmp_path: Path) -> None:
         # func_args > defaults
         (
             {"src_path": ".", "exclude": ["aaa"]},
-            (*tuple(DEFAULT_EXCLUDE), "aaa"),
+            (*DEFAULT_EXCLUDE, "aaa"),
         ),
         # func_args > user_data
         (
