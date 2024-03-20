@@ -166,7 +166,7 @@ def test_templated_prompt(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn((*COPIER_PATH, "copy", str(src), str(dst)), timeout=10)
     expect_prompt(tui, "main", "str")
     tui.expect_exact(main_default)
     tui.sendline()
@@ -356,7 +356,7 @@ def test_templated_prompt_with_conditional_choices(
         }
     )
     tui = spawn(
-        COPIER_PATH + ("copy", f"--data=cloud={cloud}", str(src), str(dst)),
+        (*COPIER_PATH, "copy", f"--data=cloud={cloud}", str(src), str(dst)),
         timeout=10,
     )
     expect_prompt(tui, "iac", "str", help="Which IaC tool do you use?")

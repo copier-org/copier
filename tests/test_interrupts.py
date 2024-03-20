@@ -34,9 +34,10 @@ def test_keyboard_interrupt(
     )
     worker = Worker(str(src), dst, defaults=False)
 
-    with patch("copier.main.unsafe_prompt", side_effect=side_effect):
-        with pytest.raises(KeyboardInterrupt):
-            worker.run_copy()
+    with patch("copier.main.unsafe_prompt", side_effect=side_effect), pytest.raises(
+        KeyboardInterrupt
+    ):
+        worker.run_copy()
 
 
 def test_multiple_questions_interrupt(tmp_path_factory: pytest.TempPathFactory) -> None:

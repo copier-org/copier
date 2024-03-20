@@ -146,7 +146,7 @@ def test_messages_with_inline_text(
 
     # copy
     if interactive:
-        tui = spawn(COPIER_PATH + ("copy", "-r", "v1", str(src), str(dst)), timeout=10)
+        tui = spawn((*COPIER_PATH, "copy", "-r", "v1", str(src), str(dst)), timeout=10)
         expect_prompt(tui, "project_name", "str")
         tui.sendline("myproj")
         tui.expect_exact(pexpect.EOF)
@@ -161,12 +161,12 @@ def test_messages_with_inline_text(
         Project\ myproj\ successfully\ created\s*$
         """,
         err,
-        flags=re.S | re.X,
+        flags=re.DOTALL | re.VERBOSE,
     )
 
     # recopy
     if interactive:
-        tui = spawn(COPIER_PATH + ("recopy", "-r", "v1", str(dst)), timeout=10)
+        tui = spawn((*COPIER_PATH, "recopy", "-r", "v1", str(dst)), timeout=10)
         expect_prompt(tui, "project_name", "str")
         tui.sendline("_new")
         tui.expect_exact(pexpect.EOF)
@@ -181,7 +181,7 @@ def test_messages_with_inline_text(
         Project\ myproj_new\ successfully\ created\s*$
         """,
         err,
-        flags=re.S | re.X,
+        flags=re.DOTALL | re.VERBOSE,
     )
 
     with local.cwd(dst):
@@ -194,7 +194,7 @@ def test_messages_with_inline_text(
 
     # update
     if interactive:
-        tui = spawn(COPIER_PATH + ("update", str(dst)), timeout=10)
+        tui = spawn((*COPIER_PATH, "update", str(dst)), timeout=10)
         expect_prompt(tui, "project_name", "str")
         tui.sendline("_update")
         tui.expect_exact(pexpect.EOF)
@@ -209,7 +209,7 @@ def test_messages_with_inline_text(
         Project\ myproj_new_update\ successfully\ updated\s*$
         """,
         err,
-        flags=re.S | re.X,
+        flags=re.DOTALL | re.VERBOSE,
     )
 
 
@@ -286,7 +286,7 @@ def test_messages_with_included_text(
 
     # copy
     if interactive:
-        tui = spawn(COPIER_PATH + ("copy", "-r", "v1", str(src), str(dst)), timeout=10)
+        tui = spawn((*COPIER_PATH, "copy", "-r", "v1", str(src), str(dst)), timeout=10)
         expect_prompt(tui, "project_name", "str")
         tui.sendline("myproj")
         tui.expect_exact(pexpect.EOF)
@@ -301,12 +301,12 @@ def test_messages_with_included_text(
         Project\ myproj\ successfully\ created\s*$
         """,
         err,
-        flags=re.S | re.X,
+        flags=re.DOTALL | re.VERBOSE,
     )
 
     # recopy
     if interactive:
-        tui = spawn(COPIER_PATH + ("recopy", "-r", "v1", str(dst)), timeout=10)
+        tui = spawn((*COPIER_PATH, "recopy", "-r", "v1", str(dst)), timeout=10)
         expect_prompt(tui, "project_name", "str")
         tui.sendline("_new")
         tui.expect_exact(pexpect.EOF)
@@ -321,7 +321,7 @@ def test_messages_with_included_text(
         Project\ myproj_new\ successfully\ created\s*$
         """,
         err,
-        flags=re.S | re.X,
+        flags=re.DOTALL | re.VERBOSE,
     )
 
     with local.cwd(dst):
@@ -334,7 +334,7 @@ def test_messages_with_included_text(
 
     # update
     if interactive:
-        tui = spawn(COPIER_PATH + ("update", str(dst)), timeout=10)
+        tui = spawn((*COPIER_PATH, "update", str(dst)), timeout=10)
         expect_prompt(tui, "project_name", "str")
         tui.sendline("_update")
         tui.expect_exact(pexpect.EOF)
@@ -349,7 +349,7 @@ def test_messages_with_included_text(
         Project\ myproj_new_update\ successfully\ updated\s*$
         """,
         err,
-        flags=re.S | re.X,
+        flags=re.DOTALL | re.VERBOSE,
     )
 
 
@@ -406,7 +406,7 @@ def test_messages_quiet(
     # copy
     if interactive:
         tui = spawn(
-            COPIER_PATH + ("copy", "--quiet", "-r", "v1", str(src), str(dst)),
+            (*COPIER_PATH, "copy", "--quiet", "-r", "v1", str(src), str(dst)),
             timeout=10,
         )
         expect_prompt(tui, "project_name", "str")
@@ -425,7 +425,7 @@ def test_messages_quiet(
     # recopy
     if interactive:
         tui = spawn(
-            COPIER_PATH + ("recopy", "--quiet", "-r", "v1", str(dst)), timeout=10
+            (*COPIER_PATH, "recopy", "--quiet", "-r", "v1", str(dst)), timeout=10
         )
         expect_prompt(tui, "project_name", "str")
         tui.sendline("_new")
@@ -448,7 +448,7 @@ def test_messages_quiet(
 
     # update
     if interactive:
-        tui = spawn(COPIER_PATH + ("update", "--quiet", str(dst)), timeout=10)
+        tui = spawn((*COPIER_PATH, "update", "--quiet", str(dst)), timeout=10)
         expect_prompt(tui, "project_name", "str")
         tui.sendline("_update")
         tui.expect_exact(pexpect.EOF)
