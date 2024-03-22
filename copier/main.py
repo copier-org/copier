@@ -162,6 +162,9 @@ class Worker:
 
         skip_answered:
             When `True`, skip questions that have already been answered.
+
+        skip_tasks:
+            When `True`, skip template tasks execution.
     """
 
     src_path: str | None = None
@@ -182,6 +185,7 @@ class Worker:
     context_lines: PositiveInt = 3
     unsafe: bool = False
     skip_answered: bool = False
+    skip_tasks: bool = False
 
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
     _cleanup_hooks: list[Callable[[], None]] = field(default_factory=list, init=False)
@@ -766,7 +770,8 @@ class Worker:
             if not self.quiet:
                 # TODO Unify printing tools
                 print("")  # padding space
-            self._execute_tasks(self.template.tasks)
+            if not self.skip_tasks:
+                self._execute_tasks(self.template.tasks)
         except Exception:
             if not was_existing and self.cleanup_on_error:
                 rmtree(self.subproject.local_abspath)

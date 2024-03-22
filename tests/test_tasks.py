@@ -53,6 +53,23 @@ def test_copy_tasks(template_path: str, tmp_path: Path) -> None:
     assert (tmp_path / "pyfile").is_file()
 
 
+def test_copy_skip_tasks(template_path: str, tmp_path: Path) -> None:
+    copier.run_copy(
+        template_path,
+        tmp_path,
+        quiet=True,
+        defaults=True,
+        overwrite=True,
+        unsafe=True,
+        skip_tasks=True,
+    )
+    assert not (tmp_path / "hello").exists()
+    assert not (tmp_path / "hello").is_dir()
+    assert not (tmp_path / "hello" / "world").exists()
+    assert not (tmp_path / "bye").is_file()
+    assert not (tmp_path / "pyfile").is_file()
+
+
 def test_pretend_mode(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
