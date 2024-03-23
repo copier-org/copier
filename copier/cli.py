@@ -48,13 +48,11 @@ copier --help-all
 ```
 """
 
-from __future__ import annotations
-
 import sys
 from os import PathLike
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, Callable, Iterable
+from typing import Any, Callable, Iterable, Optional
 
 import yaml
 from plumbum import cli, colors
@@ -198,7 +196,7 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
         self.data.update(updates_without_cli_overrides)
 
     def _worker(
-        self, src_path: str | None = None, dst_path: str = ".", **kwargs: Any
+        self, src_path: Optional[str] = None, dst_path: str = ".", **kwargs: Any  # noqa: FA100
     ) -> Worker:
         """Run Copier's internal API using CLI switches.
 
