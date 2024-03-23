@@ -108,7 +108,7 @@ class CopierApp(cli.Application):  # type: ignore[misc]
 class _Subcommand(cli.Application):  # type: ignore[misc]
     """Base class for Copier subcommands."""
 
-    def __init__(self, executable: PathLike[str]) -> None:
+    def __init__(self, executable: "PathLike[str]") -> None:
         self.data: AnyByStrDict = {}
         super().__init__(executable)
 
