@@ -19,19 +19,17 @@ import colorama
 from packaging.version import Version
 from pydantic import StrictBool
 
-from .types import IntSeq
-
 colorama.just_fix_windows_console()
 
 
 class Style:
     """Common color styles."""
 
-    OK: IntSeq = [colorama.Fore.GREEN, colorama.Style.BRIGHT]
-    WARNING: IntSeq = [colorama.Fore.YELLOW, colorama.Style.BRIGHT]
-    IGNORE: IntSeq = [colorama.Fore.CYAN]
-    DANGER: IntSeq = [colorama.Fore.RED, colorama.Style.BRIGHT]
-    RESET: IntSeq = [colorama.Fore.RESET, colorama.Style.RESET_ALL]
+    OK = [colorama.Fore.GREEN, colorama.Style.BRIGHT]
+    WARNING = [colorama.Fore.YELLOW, colorama.Style.BRIGHT]
+    IGNORE = [colorama.Fore.CYAN]
+    DANGER = [colorama.Fore.RED, colorama.Style.BRIGHT]
+    RESET = [colorama.Fore.RESET, colorama.Style.RESET_ALL]
 
 
 INDENT = " " * 2
@@ -64,22 +62,22 @@ def copier_version() -> Version:
 def printf(
     action: str,
     msg: Any = "",
-    style: IntSeq | None = None,
+    style: list[str] | None = None,
     indent: int = 10,
     quiet: bool | StrictBool = False,
     file_: TextIO = sys.stdout,
 ) -> str | None:
     """Print string with common format."""
     if quiet:
-        return None  # HACK: Satisfy MyPy
+        return None
     _msg = str(msg)
     action = action.rjust(indent, " ")
     if not style:
         return action + _msg
 
-    out = style + [action] + Style.RESET + [INDENT, _msg]  # type: ignore[operator]
+    out = style + [action] + Style.RESET + [INDENT, _msg]
     print(*out, sep="", file=file_)
-    return None  # HACK: Satisfy MyPy
+    return None
 
 
 def printf_exception(
@@ -150,7 +148,7 @@ def force_str_end(original_str: str, end: str = "\n") -> str:
 
 
 def handle_remove_readonly(
-    func: Callable,
+    func: Callable[[str], None],
     path: str,
     # TODO: Change this union to simply `BaseException` when Python 3.11 support is dropped
     exc: BaseException | tuple[type[BaseException], BaseException, TracebackType],
@@ -189,7 +187,7 @@ def readlink(link: Path) -> Path:
 _re_octal = re.compile(r"\\([0-9]{3})\\([0-9]{3})")
 
 
-def _re_octal_replace(match: re.Match) -> str:
+def _re_octal_replace(match: re.Match[str]) -> str:
     return bytes([int(match.group(1), 8), int(match.group(2), 8)]).decode("utf8")
 
 

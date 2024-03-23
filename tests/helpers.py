@@ -8,7 +8,7 @@ import textwrap
 from enum import Enum
 from hashlib import sha1
 from pathlib import Path
-from typing import Mapping, Protocol
+from typing import Any, Mapping, Protocol
 
 from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
@@ -17,7 +17,7 @@ from prompt_toolkit.input.ansi_escape_sequences import REVERSE_ANSI_SEQUENCES
 from prompt_toolkit.keys import Keys
 
 import copier
-from copier.types import OptStr, StrOrPath
+from copier.types import StrOrPath
 
 PROJECT_TEMPLATE = Path(__file__).parent / "demo"
 
@@ -61,8 +61,7 @@ SUFFIX_TMPL = ".tmpl"
 
 
 class Spawn(Protocol):
-    def __call__(self, cmd: tuple[str, ...], *, timeout: int | None) -> PopenSpawn:
-        ...
+    def __call__(self, cmd: tuple[str, ...], *, timeout: int | None) -> PopenSpawn: ...
 
 
 class Keyboard(str, Enum):
@@ -85,7 +84,7 @@ class Keyboard(str, Enum):
     Backspace = ControlH
 
 
-def render(tmp_path: Path, **kwargs) -> None:
+def render(tmp_path: Path, **kwargs: Any) -> None:
     kwargs.setdefault("quiet", True)
     copier.run_copy(str(PROJECT_TEMPLATE), tmp_path, data=DATA, **kwargs)
 
@@ -96,7 +95,9 @@ def assert_file(tmp_path: Path, *path: str) -> None:
     assert filecmp.cmp(p1, p2)
 
 
-def build_file_tree(spec: Mapping[StrOrPath, str | bytes | Path], dedent: bool = True):
+def build_file_tree(
+    spec: Mapping[StrOrPath, str | bytes | Path], dedent: bool = True
+) -> None:
     """Builds a file tree based on the received spec.
 
     Params:
@@ -122,7 +123,7 @@ def build_file_tree(spec: Mapping[StrOrPath, str | bytes | Path], dedent: bool =
 
 
 def expect_prompt(
-    tui: PopenSpawn, name: str, expected_type: str, help: OptStr = None
+    tui: PopenSpawn, name: str, expected_type: str, help: str | None = None
 ) -> None:
     """Check that we get a prompt in the standard form"""
     if help:
@@ -135,7 +136,7 @@ def expect_prompt(
 
 def git_save(
     dst: StrOrPath = ".", message: str = "Test commit", tag: str | None = None
-):
+) -> None:
     """Save the current repo state in git.
 
     Args:
@@ -151,7 +152,7 @@ def git_save(
             git("tag", tag)
 
 
-def git_init(message="hello world") -> None:
+def git_init(message: str = "hello world") -> None:
     """Initialize a Git repository with a first commit.
 
     Args:

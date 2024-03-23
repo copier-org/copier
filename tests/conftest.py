@@ -8,7 +8,7 @@ import pytest
 from coverage.tracer import CTracer
 from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
-from pytest_gitconfig import GitConfig
+from pytest_gitconfig.plugin import GitConfig
 
 from .helpers import Spawn
 

@@ -1490,6 +1490,28 @@ files = [
 ]
 
 [[package]]
+name = "types-colorama"
+version = "0.4.15.20240311"
+description = "Typing stubs for colorama"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types-colorama-0.4.15.20240311.tar.gz", hash = "sha256:a28e7f98d17d2b14fb9565d32388e419f4108f557a7d939a66319969b2b99c7a"},
+    {file = "types_colorama-0.4.15.20240311-py3-none-any.whl", hash = "sha256:6391de60ddc0db3f147e31ecb230006a6823e81e380862ffca1e4695c13a0b8e"},
+]
+
+[[package]]
+name = "types-docutils"
+version = "0.20.0.20240317"
+description = "Typing stubs for docutils"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types-docutils-0.20.0.20240317.tar.gz", hash = "sha256:23657aab0de58634d111914b677b1855867f16cd9a9ea110254e23b48653e1a8"},
+    {file = "types_docutils-0.20.0.20240317-py3-none-any.whl", hash = "sha256:4f11b3986b74f39169313ab528ffac101c45fca9c36c4cd22dbeec6143c99b7f"},
+]
+
+[[package]]
 name = "types-psutil"
 version = "5.9.5.20240316"
 description = "Typing stubs for psutil"
@@ -1501,6 +1523,21 @@ files = [
 ]
 
 [[package]]
+name = "types-pygments"
+version = "2.17.0.20240310"
+description = "Typing stubs for Pygments"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types-Pygments-2.17.0.20240310.tar.gz", hash = "sha256:b1d97e905ce36343c7283b0319182ae6d4f967188f361f45502a18ae43e03e1f"},
+    {file = "types_Pygments-2.17.0.20240310-py3-none-any.whl", hash = "sha256:b101ca9448aaff52af6966506f1fdd73b1e60a79b8a79a8bace3366cbf1f7ed9"},
+]
+
+[package.dependencies]
+types-docutils = "*"
+types-setuptools = "*"
+
+[[package]]
 name = "types-pyyaml"
 version = "6.0.12.20240311"
 description = "Typing stubs for PyYAML"
@@ -1509,6 +1546,17 @@ python-versions = ">=3.8"
 files = [
     {file = "types-PyYAML-6.0.12.20240311.tar.gz", hash = "sha256:a9e0f0f88dc835739b0c1ca51ee90d04ca2a897a71af79de9aec5f38cb0a5342"},
     {file = "types_PyYAML-6.0.12.20240311-py3-none-any.whl", hash = "sha256:b845b06a1c7e54b8e5b4c683043de0d9caf205e7434b3edc678ff2411979b8f6"},
+]
+
+[[package]]
+name = "types-setuptools"
+version = "69.2.0.20240317"
+description = "Typing stubs for setuptools"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types-setuptools-69.2.0.20240317.tar.gz", hash = "sha256:b607c4c48842ef3ee49dc0c7fe9c1bad75700b071e1018bb4d7e3ac492d47048"},
+    {file = "types_setuptools-69.2.0.20240317-py3-none-any.whl", hash = "sha256:cf91ff7c87ab7bf0625c3f0d4d90427c9da68561f3b0feab77977aaf0bbf7531"},
 ]
 
 [[package]]
@@ -1627,4 +1675,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8"
-content-hash = "9ddfce4f522dfba028be8e3eafee5d34651d1f81ba23af0b6c6d7643bf59cb5e"
+content-hash = "265a53c7c9ecff7e83f12d4ebd4732a5f7f5f23a6775aa30c146a526d018a87d"

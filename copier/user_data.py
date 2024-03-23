@@ -24,7 +24,7 @@ from questionary.prompts.common import Choice
 
 from .errors import InvalidTypeError, UserMessageError
 from .tools import cast_to_bool, cast_to_str, force_str_end
-from .types import MISSING, AnyByStrDict, MissingType, OptStr, OptStrOrPath, StrOrPath
+from .types import MISSING, AnyByStrDict, MissingType, OptStrOrPath, StrOrPath
 
 
 # TODO Remove these two functions as well as DEFAULT_DATA in a future release
@@ -108,7 +108,7 @@ class AnswersMap:
             )
         )
 
-    def old_commit(self) -> OptStr:
+    def old_commit(self) -> str | None:
         """Commit when the project was updated from this template the last time."""
         return self.last.get("_commit")
 
@@ -190,14 +190,14 @@ class Question:
 
     @field_validator("var_name")
     @classmethod
-    def _check_var_name(cls, v: str):
+    def _check_var_name(cls, v: str) -> str:
         if v in DEFAULT_DATA:
             raise ValueError("Invalid question name")
         return v
 
     @field_validator("type")
     @classmethod
-    def _check_type(cls, v: str, info: ValidationInfo):
+    def _check_type(cls, v: str, info: ValidationInfo) -> str:
         if v == "":
             default_type_name = type(info.data.get("default")).__name__
             v = default_type_name if default_type_name in CAST_STR_TO_NATIVE else "yaml"
@@ -205,7 +205,9 @@ class Question:
 
     @field_validator("secret")
     @classmethod
-    def _check_secret_question_default_value(cls, v: bool, info: ValidationInfo):
+    def _check_secret_question_default_value(
+        cls, v: bool, info: ValidationInfo
+    ) -> bool:
         if v and info.data["default"] is MISSING:
             raise ValueError("Secret question requires a default value")
         return v
@@ -491,7 +493,7 @@ def load_answersfile_data(
         return {}
 
 
-CAST_STR_TO_NATIVE: Mapping[str, Callable] = {
+CAST_STR_TO_NATIVE: Mapping[str, Callable[[str], Any]] = {
     "bool": cast_to_bool,
     "float": float,
     "int": int,

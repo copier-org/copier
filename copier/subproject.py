@@ -33,7 +33,7 @@ class Subproject:
     local_abspath: AbsolutePath
     answers_relpath: Path = Path(".copier-answers.yml")
 
-    _cleanup_hooks: list[Callable] = field(default_factory=list, init=False)
+    _cleanup_hooks: list[Callable[[], None]] = field(default_factory=list, init=False)
 
     def is_dirty(self) -> bool:
         """Indicate if the local template root is dirty.
@@ -45,7 +45,7 @@ class Subproject:
                 return bool(get_git()("status", "--porcelain").strip())
         return False
 
-    def _cleanup(self):
+    def _cleanup(self) -> None:
         """Remove temporary files and folders created by the subproject."""
         for method in self._cleanup_hooks:
             method()
@@ -78,9 +78,11 @@ class Subproject:
             result = Template(url=last_url, ref=last_ref)
             self._cleanup_hooks.append(result._cleanup)
             return result
+        return None
 
     @cached_property
     def vcs(self) -> VCSTypes | None:
         """VCS type of the subproject."""
         if is_in_git_repo(self.local_abspath):
             return "git"
+        return None

@@ -52,7 +52,7 @@ import sys
 from os import PathLike
 from pathlib import Path
 from textwrap import dedent
-from typing import Callable
+from typing import Any, Callable, Iterable, Optional
 
 import yaml
 from plumbum import cli, colors
@@ -60,7 +60,7 @@ from plumbum import cli, colors
 from .errors import UnsafeTemplateError, UserMessageError
 from .main import Worker
 from .tools import copier_version
-from .types import AnyByStrDict, OptStr, StrSeq
+from .types import AnyByStrDict
 
 
 def _handle_exceptions(method: Callable[[], None]) -> int:
@@ -80,7 +80,7 @@ def _handle_exceptions(method: Callable[[], None]) -> int:
     return 0
 
 
-class CopierApp(cli.Application):
+class CopierApp(cli.Application):  # type: ignore[misc]
     """The Copier CLI application."""
 
     DESCRIPTION = "Create a new project from a template."
@@ -105,10 +105,10 @@ class CopierApp(cli.Application):
     CALL_MAIN_IF_NESTED_COMMAND = False
 
 
-class _Subcommand(cli.Application):
+class _Subcommand(cli.Application):  # type: ignore[misc]
     """Base class for Copier subcommands."""
 
-    def __init__(self, executable: PathLike) -> None:
+    def __init__(self, executable: "PathLike[str]") -> None:
         self.data: AnyByStrDict = {}
         super().__init__(executable)
 
@@ -158,14 +158,14 @@ class _Subcommand(cli.Application):
         ),
     )
 
-    @cli.switch(
+    @cli.switch(  # type: ignore[misc]
         ["-d", "--data"],
         str,
         "VARIABLE=VALUE",
         list=True,
         help="Make VARIABLE available as VALUE when rendering the template",
     )
-    def data_switch(self, values: StrSeq) -> None:
+    def data_switch(self, values: Iterable[str]) -> None:
         """Update [data][] with provided values.
 
         Arguments:
@@ -176,7 +176,7 @@ class _Subcommand(cli.Application):
             key, value = arg.split("=", 1)
             self.data[key] = value
 
-    @cli.switch(
+    @cli.switch(  # type: ignore[misc]
         ["--data-file"],
         cli.ExistingFile,
         help="Load data from a YAML file",
@@ -195,7 +195,9 @@ class _Subcommand(cli.Application):
         }
         self.data.update(updates_without_cli_overrides)
 
-    def _worker(self, src_path: OptStr = None, dst_path: str = ".", **kwargs) -> Worker:
+    def _worker(
+        self, src_path: Optional[str] = None, dst_path: str = ".", **kwargs: Any  # noqa: FA100
+    ) -> Worker:
         """Run Copier's internal API using CLI switches.
 
         Arguments:

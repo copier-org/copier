@@ -9,7 +9,7 @@ _logger = logging.getLogger(__name__)
 HERE = Path(__file__).parent
 
 
-def clean():
+def clean() -> None:
     """Clean build, test or other process artifacts from the project workspace."""
     build_artefacts = (
         "build/",
@@ -35,14 +35,14 @@ def clean():
                 matching_path.unlink()
 
 
-def dev_setup():
+def dev_setup() -> None:
     """Set up a development environment."""
     with local.cwd(HERE):
         local["direnv"]("allow")
         local["poetry"]("install")
 
 
-def lint():
+def lint() -> None:
     """Lint and format the project."""
     args = [
         "--extra-experimental-features",
