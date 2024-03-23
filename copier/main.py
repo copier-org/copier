@@ -1,5 +1,4 @@
 """Main functions and classes, used to generate or update projects."""
-
 from __future__ import annotations
 
 import os

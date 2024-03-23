@@ -2,7 +2,6 @@
 
 A *subproject* is a project that gets rendered and/or updated with Copier.
 """
-
 from __future__ import annotations
 
 from dataclasses import field
