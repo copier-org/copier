@@ -157,6 +157,11 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
             "Allow templates with unsafe features (Jinja extensions, migrations, tasks)"
         ),
     )
+    skip_tasks = cli.Flag(
+        ["-T", "--skip-tasks"],
+        default=False,
+        help="Skip template tasks execution",
+    )
 
     @cli.switch(  # type: ignore[misc]
         ["-d", "--data"],

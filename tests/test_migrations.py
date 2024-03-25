@@ -26,7 +26,8 @@ SRC = Path(f"{PROJECT_TEMPLATE}_migrations").absolute()
     reason="Windows ignores shebang?",
     strict=True,
 )
-def test_migrations_and_tasks(tmp_path: Path) -> None:
+@pytest.mark.parametrize("skip_tasks", [True, False])
+def test_migrations_and_tasks(tmp_path: Path, skip_tasks: bool) -> None:
     """Check migrations and tasks are run properly."""
     # Convert demo_migrations in a git repository with 2 versions
     src, dst = tmp_path / "src", tmp_path / "dst"
@@ -41,10 +42,20 @@ def test_migrations_and_tasks(tmp_path: Path) -> None:
         git("commit", "--allow-empty", "-m2")
         git("tag", "v2.0")
     # Copy it in v1
-    run_copy(src_path=str(src), dst_path=dst, vcs_ref="v1.0.0", unsafe=True)
+    run_copy(
+        src_path=str(src),
+        dst_path=dst,
+        vcs_ref="v1.0.0",
+        unsafe=True,
+        skip_tasks=skip_tasks,
+    )
     # Check copy was OK
-    assert (dst / "created-with-tasks.txt").read_text() == "task 1\ntask 2\n"
-    assert not (dst / "delete-in-tasks.txt").exists()
+    if skip_tasks:
+        assert not (dst / "created-with-tasks.txt").exists()
+        assert (dst / "delete-in-tasks.txt").exists()
+    else:
+        assert (dst / "created-with-tasks.txt").read_text() == "task 1\ntask 2\n"
+        assert not (dst / "delete-in-tasks.txt").exists()
     assert (dst / "delete-in-migration-v2.txt").is_file()
     assert not (dst / "migrations.py").exists()
     assert not (dst / "tasks.py").exists()
@@ -54,15 +65,22 @@ def test_migrations_and_tasks(tmp_path: Path) -> None:
     assert answers == {"_commit": "v1.0.0", "_src_path": str(src)}
     # Save changes in downstream repo
     with local.cwd(dst):
+        git("init")
         git("add", ".")
         git("config", "user.name", "Copier Test")
         git("config", "user.email", "test@copier")
         git("commit", "-m1")
     # Update it to v2
-    run_update(dst_path=dst, defaults=True, overwrite=True, unsafe=True)
+    run_update(
+        dst_path=dst, defaults=True, overwrite=True, unsafe=True, skip_tasks=skip_tasks
+    )
     # Check update was OK
-    assert (dst / "created-with-tasks.txt").read_text() == "task 1\ntask 2\n" * 2
-    assert not (dst / "delete-in-tasks.txt").exists()
+    if skip_tasks:
+        assert not (dst / "created-with-tasks.txt").exists()
+        assert (dst / "delete-in-tasks.txt").exists()
+    else:
+        assert (dst / "created-with-tasks.txt").read_text() == "task 1\ntask 2\n" * 2
+        assert not (dst / "delete-in-tasks.txt").exists()
     assert not (dst / "delete-in-migration-v2.txt").exists()
     assert not (dst / "migrations.py").exists()
     assert not (dst / "tasks.py").exists()
