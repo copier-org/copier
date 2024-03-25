@@ -159,6 +159,9 @@ class Worker:
             When `True`, allow usage of unsafe templates.
 
             See [unsafe][]
+
+        skip_answered:
+            When `True`, skip questions that have already been answered.
     """
 
     src_path: str | None = None
