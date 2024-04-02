@@ -1313,7 +1313,7 @@ Skip template tasks execution, if set to `True`.
 
 !!! note
 
-    It only skip tasks, not migration tasks.
+    It only skips tasks, not migration tasks.
 
 !!! question "Does it imply `--trust` ?"
 
