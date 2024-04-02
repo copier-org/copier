@@ -59,9 +59,14 @@ BRACKET_ENVOPS = {
 BRACKET_ENVOPS_JSON = json.dumps(BRACKET_ENVOPS)
 SUFFIX_TMPL = ".tmpl"
 
+COPIER_ANSWERS_FILE: Mapping[StrOrPath, str | bytes | Path] = {
+    "{{ _copier_conf.answers_file }}.jinja": ("{{ _copier_answers|tojson }}")
+}
+
 
 class Spawn(Protocol):
-    def __call__(self, cmd: tuple[str, ...], *, timeout: int | None) -> PopenSpawn: ...
+    def __call__(self, cmd: tuple[str, ...], *, timeout: int | None) -> PopenSpawn:
+        ...
 
 
 class Keyboard(str, Enum):
@@ -135,7 +140,10 @@ def expect_prompt(
 
 
 def git_save(
-    dst: StrOrPath = ".", message: str = "Test commit", tag: str | None = None
+    dst: StrOrPath = ".",
+    message: str = "Test commit",
+    tag: str | None = None,
+    allow_empty: bool = False,
 ) -> None:
     """Save the current repo state in git.
 
@@ -143,11 +151,12 @@ def git_save(
         dst: Path to the repo to save.
         message: Commit message.
         tag: Tag to create, optionally.
+        allow_empty: Allow creating a commit with no changes
     """
     with local.cwd(dst):
         git("init")
         git("add", ".")
-        git("commit", "-m", message)
+        git("commit", "-m", message, *(["--allow-empty"] if allow_empty else []))
         if tag:
             git("tag", tag)
 

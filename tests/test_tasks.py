@@ -21,15 +21,21 @@ def template_path(tmp_path_factory: pytest.TempPathFactory) -> str:
                 _envops: {BRACKET_ENVOPS_JSON}
 
                 other_file: bye
+                condition: true
 
                 # This tests two things:
                 # 1. That the tasks are being executed in the destination folder; and
                 # 2. That the tasks are being executed in order, one after another
                 _tasks:
-                    - mkdir hello
-                    - cd hello && touch world
-                    - touch [[ other_file ]]
-                    - ["[[ _copier_python ]]", "-c", "open('pyfile', 'w').close()"]
+                    -   mkdir hello
+                    -   command: touch world
+                        working_directory: ./hello
+                    -   touch [[ other_file ]]
+                    -   ["[[ _copier_python ]]", "-c", "open('pyfile', 'w').close()"]
+                    -   command: touch true
+                        when: "[[ condition ]]"
+                    -   command: touch false
+                        when: "[[ not condition ]]"
                 """
             )
         }
@@ -38,7 +44,12 @@ def template_path(tmp_path_factory: pytest.TempPathFactory) -> str:
 
 
 def test_render_tasks(template_path: str, tmp_path: Path) -> None:
-    copier.run_copy(template_path, tmp_path, data={"other_file": "custom"}, unsafe=True)
+    copier.run_copy(
+        template_path,
+        tmp_path,
+        data={"other_file": "custom", "condition": "true"},
+        unsafe=True,
+    )
     assert (tmp_path / "custom").is_file()
 
 
@@ -51,6 +62,8 @@ def test_copy_tasks(template_path: str, tmp_path: Path) -> None:
     assert (tmp_path / "hello" / "world").exists()
     assert (tmp_path / "bye").is_file()
     assert (tmp_path / "pyfile").is_file()
+    assert (tmp_path / "true").is_file()
+    assert not (tmp_path / "false").exists()
 
 
 def test_copy_skip_tasks(template_path: str, tmp_path: Path) -> None:
