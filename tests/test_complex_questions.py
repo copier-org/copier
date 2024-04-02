@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from collections import deque
 from pathlib import Path
@@ -11,7 +13,6 @@ from plumbum import local
 from plumbum.cmd import git
 
 from copier import run_copy, run_update
-from copier.types import OptStr
 
 from .helpers import (
     BRACKET_ENVOPS,
@@ -122,7 +123,7 @@ def check_invalid(
     name: str,
     format: str,
     invalid_value: str,
-    help: OptStr = None,
+    help: str | None = None,
     err: str = "Invalid input",
 ) -> None:
     """Check that invalid input is reported correctly"""

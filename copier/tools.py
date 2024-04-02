@@ -20,8 +20,6 @@ import colorama
 from packaging.version import Version
 from pydantic import StrictBool
 
-from .types import IntSeq
-
 colorama.just_fix_windows_console()
 
 
@@ -151,7 +149,7 @@ def force_str_end(original_str: str, end: str = "\n") -> str:
 
 
 def handle_remove_readonly(
-    func: Callable,
+    func: Callable[[str], None],
     path: str,
     # TODO: Change this union to simply `BaseException` when Python 3.11 support is dropped
     exc: BaseException | tuple[type[BaseException], BaseException, TracebackType],
@@ -190,7 +188,7 @@ def readlink(link: Path) -> Path:
 _re_octal = re.compile(r"\\([0-9]{3})\\([0-9]{3})")
 
 
-def _re_octal_replace(match: re.Match) -> str:
+def _re_octal_replace(match: re.Match[str]) -> str:
     return bytes([int(match.group(1), 8), int(match.group(2), 8)]).decode("utf8")
 
 

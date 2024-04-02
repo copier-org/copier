@@ -28,7 +28,7 @@ from .errors import (
     UnsupportedVersionError,
 )
 from .tools import copier_version, handle_remove_readonly
-from .types import AnyByStrDict, Env, OptStr, StrSeq, Union, VCSTypes
+from .types import AnyByStrDict, Env, VCSTypes
 from .vcs import checkout_latest_tag, clone, get_git, get_repo
 
 # Default list of files in the template to exclude from the rendered project
@@ -157,7 +157,7 @@ class Task:
             Additional environment variables to set while executing the command.
     """
 
-    cmd: Union[str, Sequence[str]]
+    cmd: str | Sequence[str]
     extra_env: Env = field(default_factory=dict)
 
 
@@ -199,7 +199,7 @@ class Template:
     """
 
     url: str
-    ref: OptStr = None
+    ref: str | None = None
     use_prereleases: bool = False
 
     def _cleanup(self) -> None:
@@ -264,17 +264,19 @@ class Template:
         return result
 
     @cached_property
-    def commit(self) -> OptStr:
+    def commit(self) -> str | None:
         """If the template is VCS-tracked, get its commit description."""
         if self.vcs == "git":
             with local.cwd(self.local_abspath):
                 return get_git()("describe", "--tags", "--always").strip()
+        return None
 
     @cached_property
-    def commit_hash(self) -> OptStr:
+    def commit_hash(self) -> str | None:
         """If the template is VCS-tracked, get its commit full hash."""
         if self.vcs == "git":
             return get_git()("-C", self.local_abspath, "rev-parse", "HEAD").strip()
+        return None
 
     @cached_property
     def config_data(self) -> AnyByStrDict:
@@ -289,7 +291,7 @@ class Template:
         return result
 
     @cached_property
-    def envops(self) -> Mapping:
+    def envops(self) -> Mapping[str, Any]:
         """Get the Jinja configuration specified in the template, or default values.
 
         See [envops][].
@@ -378,7 +380,7 @@ class Template:
             "VERSION_PEP440_FROM": str(from_template.version),
             "VERSION_PEP440_TO": str(self.version),
         }
-        migration: dict
+        migration: dict[str, Any]
         for migration in self._raw_config.get("_migrations", []):
             current = parse(migration["version"])
             if self.version >= current > from_template.version:
@@ -429,7 +431,7 @@ class Template:
         return result
 
     @cached_property
-    def skip_if_exists(self) -> StrSeq:
+    def skip_if_exists(self) -> Sequence[str]:
         """Get skip patterns from the template.
 
         These files will never be rewritten when rendering the template.
@@ -543,3 +545,4 @@ class Template:
         """Get VCS system used by the template, if any."""
         if get_repo(self.url):
             return "git"
+        return None

@@ -1,4 +1,5 @@
 """Utilities related to VCS."""
+from __future__ import annotations
 
 import os
 import re
@@ -14,7 +15,7 @@ from plumbum import TF, ProcessExecutionError, colors, local
 from plumbum.machines import LocalCommand
 
 from .errors import DirtyLocalWarning, ShallowCloneWarning
-from .types import OptBool, OptStr, OptStrOrPath, StrOrPath
+from .types import OptBool, OptStrOrPath, StrOrPath
 
 
 def get_git(context_dir: OptStrOrPath = None) -> LocalCommand:
@@ -82,7 +83,7 @@ def is_git_bundle(path: Path) -> bool:
         return bool(get_git()["bundle", "verify", path] & TF)
 
 
-def get_repo(url: str) -> OptStr:
+def get_repo(url: str) -> str | None:
     """Transform `url` into a git-parseable origin URL.
 
     Args:
@@ -148,7 +149,7 @@ def checkout_latest_tag(local_repo: StrOrPath, use_prereleases: OptBool = False)
         return latest_tag
 
 
-def clone(url: str, ref: OptStr = None) -> str:
+def clone(url: str, ref: str | None = None) -> str:
     """Clone repo into some temporary destination.
 
     Includes dirty changes for local templates by copying into a temp

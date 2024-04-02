@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Protocol, Union
 
@@ -24,10 +25,10 @@ from .helpers import (
     git_save,
 )
 
-try:
-    from typing import TypeAlias  # type: ignore[attr-defined]
-except ImportError:
+if sys.version_info < (3, 10):
     from typing_extensions import TypeAlias
+else:
+    from typing import TypeAlias
 
 
 MARIO_TREE: Mapping[StrOrPath, str | bytes] = {

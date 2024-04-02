@@ -29,7 +29,7 @@ GOOD_ENV_OPS = {
 }
 
 
-def git_init(message="hello world") -> None:
+def git_init(message: str = "hello world") -> None:
     git("init")
     git("config", "user.name", "Copier Test")
     git("config", "user.email", "test@copier")
