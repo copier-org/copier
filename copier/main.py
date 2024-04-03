@@ -765,7 +765,7 @@ class Worker:
             self._render_folder(src_abspath)
             if not self.quiet:
                 # TODO Unify printing tools
-                print("")  # padding space
+                print()  # padding space
             self._execute_tasks(self.template.tasks)
         except Exception:
             if not was_existing and self.cleanup_on_error:
@@ -774,7 +774,7 @@ class Worker:
         self._print_message(self.template.message_after_copy)
         if not self.quiet:
             # TODO Unify printing tools
-            print("")  # padding space
+            print()  # padding space
 
     def run_recopy(self) -> None:
         """Update a subproject, keeping answers but discarding evolution."""

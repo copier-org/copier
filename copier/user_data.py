@@ -316,9 +316,9 @@ class Question:
             # The value can be templated
             value = self.render_value(value)
             checked = (
-                self.multiselect
+                (self.multiselect
                 and isinstance(default, list)
-                and self.cast_answer(value) in default
+                and self.cast_answer(value) in default)
                 or None
             )
             c = Choice(name, value, disabled=disabled, checked=checked)

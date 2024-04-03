@@ -1,4 +1,5 @@
 """Development helper tasks."""
+
 import logging
 import shutil
 from pathlib import Path
@@ -25,7 +26,7 @@ def clean() -> None:
         "**/*.pyc",
         "**/*.pyo",
     )
-    project_dir = Path(".").resolve()
+    project_dir = Path.cwd()
     for pattern in build_artefacts + python_artefacts:
         for matching_path in project_dir.glob(pattern):
             print(f"Deleting {matching_path}")

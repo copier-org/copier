@@ -243,7 +243,7 @@ class Template:
         conf_paths = [
             p
             for p in self.local_abspath.glob("copier.*")
-            if p.is_file() and re.match(r"\.ya?ml", p.suffix, re.I)
+            if p.is_file() and re.match(r"\.ya?ml", p.suffix, re.IGNORECASE)
         ]
         if len(conf_paths) > 1:
             raise MultipleConfigFilesError(conf_paths)

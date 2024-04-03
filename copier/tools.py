@@ -1,4 +1,5 @@
 """Some utility functions."""
+
 from __future__ import annotations
 
 import errno
@@ -13,7 +14,7 @@ from enum import Enum
 from importlib.metadata import version
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Callable, Literal, TextIO, cast
+from typing import Any, Callable, ClassVar, Literal, TextIO, cast
 
 import colorama
 from packaging.version import Version
@@ -25,11 +26,11 @@ colorama.just_fix_windows_console()
 class Style:
     """Common color styles."""
 
-    OK = [colorama.Fore.GREEN, colorama.Style.BRIGHT]
-    WARNING = [colorama.Fore.YELLOW, colorama.Style.BRIGHT]
-    IGNORE = [colorama.Fore.CYAN]
-    DANGER = [colorama.Fore.RED, colorama.Style.BRIGHT]
-    RESET = [colorama.Fore.RESET, colorama.Style.RESET_ALL]
+    OK: ClassVar[list[str]] = [colorama.Fore.GREEN, colorama.Style.BRIGHT]
+    WARNING: ClassVar[list[str]] = [colorama.Fore.YELLOW, colorama.Style.BRIGHT]
+    IGNORE: ClassVar[list[str]] = [colorama.Fore.CYAN]
+    DANGER: ClassVar[list[str]] = [colorama.Fore.RED, colorama.Style.BRIGHT]
+    RESET: ClassVar[list[str]] = [colorama.Fore.RESET, colorama.Style.RESET_ALL]
 
 
 INDENT = " " * 2
@@ -75,7 +76,7 @@ def printf(
     if not style:
         return action + _msg
 
-    out = style + [action] + Style.RESET + [INDENT, _msg]
+    out = [*style, action, *Style.RESET, INDENT, _msg]
     print(*out, sep="", file=file_)
     return None
 
@@ -85,7 +86,7 @@ def printf_exception(
 ) -> None:
     """Print exception with common format."""
     if not quiet:
-        print("", file=sys.stderr)
+        print(file=sys.stderr)
         printf(action, msg=msg, style=Style.DANGER, indent=indent, file_=sys.stderr)
         print(HLINE, file=sys.stderr)
         print(e, file=sys.stderr)
