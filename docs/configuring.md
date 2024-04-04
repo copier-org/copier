@@ -1317,7 +1317,7 @@ Skip template [tasks][tasks] execution, if set to `True`.
 
 !!! question "Does it imply `--trust`?"
 
-    This flag does not imply `--trust`, and will do nothing if not used with.
+    This flag does not imply [`--trust`][unsafe], and will do nothing if not used with.
 
 ### `subdirectory`
 
