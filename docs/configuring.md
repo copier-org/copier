@@ -1315,7 +1315,7 @@ Skip template tasks execution, if set to `True`.
 
     It only skips tasks, not migration tasks.
 
-!!! question "Does it imply `--trust` ?"
+!!! question "Does it imply `--trust`?"
 
     This flag does not imply `--trust`, and will do nothing if not used with.
 
