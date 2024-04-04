@@ -1309,7 +1309,7 @@ exist.
 -   CLI Flags: `-T`, `--skip-tasks`
 -   Default value: `False`
 
-Skip template tasks execution, if set to `True`.
+Skip template [tasks][tasks] execution, if set to `True`.
 
 !!! note
 
