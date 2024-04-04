@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.2.0 (2024-04-04)
+
+### Feat
+
+-   **tasks**: add support for skipping tasks (#1561)
+-   add support for validating multi-select choice answers
+
+### Fix
+
+-   ignore empty YAML documents in `copier.yml`
+-   preserve choices order in answers to multi-select choice questions
+-   **exclude**: apply exclude matcher to rendered path
+
+### Refactor
+
+-   drop `pyyaml-include` dependency and reimplement relevant features
+
+### Perf
+
+-   apply `PERF` lint rules fixes (#1556)
+
 ## v9.1.1 (2024-01-16)
 
 ### Fix
