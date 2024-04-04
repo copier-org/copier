@@ -1303,6 +1303,22 @@ exist.
     {{999999999999999999999999999999999|ans_random|hash('sha512')}}
     ```
 
+### `skip_tasks`
+
+-   Format: `bool`
+-   CLI Flags: `-T`, `--skip-tasks`
+-   Default value: `False`
+
+Skip template [tasks][tasks] execution, if set to `True`.
+
+!!! note
+
+    It only skips [tasks][tasks], not [migration tasks][migrations].
+
+!!! question "Does it imply `--trust`?"
+
+    This flag does not imply [`--trust`][unsafe], and will do nothing if not used with.
+
 ### `subdirectory`
 
 -   Format: `str`
