@@ -13,6 +13,7 @@ import copier
 from copier.errors import InvalidConfigFileError, MultipleConfigFilesError
 from copier.template import DEFAULT_EXCLUDE, Task, Template, load_template_config
 from copier.types import AnyByStrDict
+from copier.user_data import load_answersfile_data
 
 from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree
 
@@ -614,3 +615,51 @@ def test_secret_question_requires_default_value(
     build_file_tree({src / "copier.yml": config})
     with pytest.raises(ValueError, match="Secret question requires a default value"):
         copier.run_copy(str(src), dst)
+
+
+def test_falsy_when_doesnt_modify_previous_answer(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(
+            {
+                (src / "copier.yaml"): (
+                    """\
+                    initial_question:
+                        type: str
+                        default: "..."
+                        when: "{{initial_question is not defined}}"
+                    """
+                ),
+                (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                    """\
+                    # Changes here will be overwritten by Copier
+                    {{ _copier_answers|to_nice_yaml }}
+                    """
+                ),
+            }
+        )
+        git_init()
+
+    copier.run_copy(
+        str(src),
+        dst,
+        defaults=True,
+        overwrite=True,
+    )
+
+    with local.cwd(dst):
+        git_init()
+
+    answers = load_answersfile_data(dst)
+    assert "initial_question" in answers
+
+    copier.run_update(
+        dst,
+        defaults=True,
+        overwrite=True,
+    )
+
+    answers = load_answersfile_data(dst)
+    assert "initial_question" in answers
