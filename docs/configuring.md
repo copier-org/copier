@@ -176,16 +176,17 @@ Supported keys:
     will be rendered with the combined answers as variables; it should render _nothing_
     if the value is valid, and an error message to show to the user otherwise.
 
--   **when**: Condition that, if `false`, skips the question.
+-   **when**: Condition that, if `false`, skips the question and doesn't record an answer.
 
-    If it is a boolean, it is used directly. Setting it to `false` is useful for
-    creating a computed value.
+    If it is a boolean, it is used directly.
 
-    If it is a string, it is converted to boolean using a parser similar to YAML, but
+    If it is a string, it is converted to a boolean using a parser similar to YAML, but
     only for boolean values. The string can be [templated][prompt-templating].
 
-    If a question is skipped, its answer is not recorded, but its default value is
+    If a question is skipped, its previous answer or default value is
     available in the render context.
+
+    Setting it to `false` together with default value is useful for creating a computed value.
 
     !!! example
 
@@ -198,6 +199,12 @@ Supported keys:
             choices:
                 - GPLv3
                 - Public domain
+
+        year_of_first_publication:
+            type: str
+            # ask when running `copier copy`
+            # skip this question when running `copier update` in the future
+            when: "{{ year_of_creation is not defined }}"
 
         copyright_holder:
             type: str
