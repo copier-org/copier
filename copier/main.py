@@ -1,4 +1,5 @@
 """Main functions and classes, used to generate or update projects."""
+
 from __future__ import annotations
 
 import os
@@ -440,7 +441,8 @@ class Worker:
             # Skip a question when the skip condition is met.
             if not question.get_when():
                 # Omit its answer from the answers file.
-                result.hide(var_name)
+                if var_name not in result.last:
+                    result.hide(var_name)
                 # Skip immediately to the next question when it has no default
                 # value.
                 if question.default is MISSING:
