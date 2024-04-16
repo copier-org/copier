@@ -6,7 +6,6 @@ from typing import Any, Callable
 
 import pytest
 from plumbum import local
-from plumbum.cmd import git
 from pydantic import ValidationError
 
 import copier
@@ -14,7 +13,7 @@ from copier.errors import InvalidConfigFileError, MultipleConfigFilesError
 from copier.template import DEFAULT_EXCLUDE, Task, Template, load_template_config
 from copier.types import AnyByStrDict
 
-from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree
+from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree, git_init
 
 GOOD_ENV_OPS = {
     "autoescape": True,
@@ -27,14 +26,6 @@ GOOD_ENV_OPS = {
     "comment_end_string": "#>",
     "comment_start_string": "<#",
 }
-
-
-def git_init(message: str = "hello world") -> None:
-    git("init")
-    git("config", "user.name", "Copier Test")
-    git("config", "user.email", "test@copier")
-    git("add", ".")
-    git("commit", "-m", message)
 
 
 def test_config_data_is_loaded_from_file() -> None:
