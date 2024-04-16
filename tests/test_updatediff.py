@@ -1076,3 +1076,220 @@ def test_conflicted_files_are_marked_unmerged(
             line.startswith("UU") and normalize_git_path(line[3:]) == filename
             for line in lines
         )
+
+
+def test_update_with_new_file_in_template_and_project(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": (
+                    "{{ _copier_answers|to_yaml }}"
+                ),
+            }
+        )
+        git_init("v1")
+        git("tag", "v1")
+
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    assert "_commit: v1" in (dst / ".copier-answers.yml").read_text()
+
+    with local.cwd(dst):
+        git_init("v1")
+        Path(".gitlab-ci.yml").write_text(
+            dedent(
+                """\
+                tests:
+                    stage: test
+                    script:
+                        - ./test.sh
+
+                pages:
+                    stage: deploy
+                    script:
+                        - ./deploy.sh
+                """
+            )
+        )
+        git("add", ".")
+        git("commit", "-m", "v2")
+
+    with local.cwd(src):
+        Path(".gitlab-ci.yml.jinja").write_text(
+            dedent(
+                """\
+                tests:
+                    stage: test
+                    script:
+                        - ./test.sh --slow
+                """
+            )
+        )
+        git("add", ".")
+        git("commit", "-m", "v2")
+        git("tag", "v2")
+
+    run_update(dst_path=dst, defaults=True, overwrite=True, conflict="inline")
+    assert "_commit: v2" in (dst / ".copier-answers.yml").read_text()
+    assert (dst / ".gitlab-ci.yml").read_text() == dedent(
+        """\
+        tests:
+            stage: test
+            script:
+        <<<<<<< before updating
+                - ./test.sh
+
+        pages:
+            stage: deploy
+            script:
+                - ./deploy.sh
+        =======
+                - ./test.sh --slow
+        >>>>>>> after updating
+        """
+    )
+
+
+def test_update_with_new_file_in_template_and_project_via_migration(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """Merge conflicts are yielded when both template and project add same file.
+
+    The project adds content to `.gitlab-ci.yml` on top of what template v1 provides.
+    In a template v2, `.gitlab-ci.yml.jinja` is moved to `.gitlab/ci/main.yml.jinja`
+    and `.gitlab-ci.yml.jinja` now includes the generated `.gitlab/ci/main.yml`. To
+    retain the project's changes/additions to `.gitlab-ci.yml`, a pre-update migration
+    task copies `.gitlab-ci.yml` (containing those changes/additions) to
+    `.gitlab/ci/main.yml` and stages it, then Copier applies template v2's version of
+    that file (which was also moved there, but Git doesn't recognize it as status `R`
+    but as `A`).
+    """
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": (
+                    "{{ _copier_answers|to_yaml }}"
+                ),
+                ".gitlab-ci.yml.jinja": (
+                    """\
+                    tests:
+                        stage: test
+                        script:
+                            - ./test.sh
+                    """
+                ),
+            }
+        )
+        git_init("v1")
+        git("tag", "v1")
+
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    assert "_commit: v1" in (dst / ".copier-answers.yml").read_text()
+    assert (dst / ".gitlab-ci.yml").exists()
+
+    with local.cwd(dst):
+        with Path(".gitlab-ci.yml").open(mode="at") as f:
+            f.write(
+                dedent(
+                    """\
+
+                    pages:
+                        stage: deploy
+                        script:
+                            - ./deploy.sh
+                    """
+                )
+            )
+        git_init("v1")
+
+    with local.cwd(src):
+        old_file = Path(".gitlab-ci.yml.jinja")
+        new_file = Path(".gitlab", "ci", "main.yml.jinja")
+        new_file.parent.mkdir(parents=True)
+        # Move `.gitlab-ci.yml.jinja` to `.gitlab/ci/main.yml.jinja`
+        git("mv", old_file, new_file)
+        # Make a small modification in `.gitlab/ci/main.yml.jinja`
+        new_file.write_text(new_file.read_text().replace("test.sh", "test.sh --slow"))
+        # Include `.gitlab/ci/main.yml.jinja` in `.gitlab-ci.yml.jinja`
+        old_file.write_text(
+            dedent(
+                """\
+                include:
+                    - local: .gitlab/ci/main.yml
+                """
+            )
+        )
+        # Add a pre-migration that copies `.gitlab-ci.yml` to
+        # `.gitlab/ci/main.yml` and stages it, so that the user changes made in
+        # the project are retained after moving the file.
+        build_file_tree(
+            {
+                "copier.yml": (
+                    """\
+                    _migrations:
+                    -   version: v2
+                        before:
+                        -    "{{ _copier_python }} {{ _copier_conf.src_path / 'migrate.py' }}"
+                    """
+                ),
+                "migrate.py": (
+                    """\
+                    from pathlib import Path
+                    from plumbum.cmd import git
+
+                    f = Path(".gitlab", "ci", "main.yml")
+                    f.parent.mkdir(parents=True)
+                    f.write_text(Path(".gitlab-ci.yml").read_text())
+                    git("add", f)
+                    """
+                ),
+            }
+        )
+        git("add", ".")
+        git("commit", "-m", "v2")
+        git("tag", "v2")
+
+    run_update(
+        dst_path=dst, defaults=True, overwrite=True, conflict="inline", unsafe=True
+    )
+    assert "_commit: v2" in (dst / ".copier-answers.yml").read_text()
+    assert (dst / ".gitlab-ci.yml").read_text() == dedent(
+        """\
+        <<<<<<< before updating
+        tests:
+            stage: test
+            script:
+                - ./test.sh
+
+        pages:
+            stage: deploy
+            script:
+                - ./deploy.sh
+        =======
+        include:
+            - local: .gitlab/ci/main.yml
+        >>>>>>> after updating
+        """
+    )
+    assert (dst / ".gitlab" / "ci" / "main.yml").read_text() == dedent(
+        """\
+        tests:
+            stage: test
+            script:
+        <<<<<<< before updating
+                - ./test.sh
+
+        pages:
+            stage: deploy
+            script:
+                - ./deploy.sh
+        =======
+                - ./test.sh --slow
+        >>>>>>> after updating
+        """
+    )
