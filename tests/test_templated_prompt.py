@@ -352,7 +352,6 @@ def test_templated_prompt_with_conditional_choices(
                             validator: "{% if cloud != 'GCP' %}Requires GCP{% endif %}"
                 """
             ),
-            (src / "result.jinja"): "{{question}}",
         }
     )
     tui = spawn(
