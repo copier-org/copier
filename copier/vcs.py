@@ -103,9 +103,9 @@ def get_repo(url: str) -> str | None:
 
     if url.endswith(GIT_POSTFIX) or url.startswith(GIT_PREFIX):
         if url.startswith("git+"):
-            url = url[4:]
-        elif url.startswith("https://") and not url.endswith(GIT_POSTFIX):
-            url = "".join((url, GIT_POSTFIX))
+            return url[4:]
+        if url.startswith("https://") and not url.endswith(GIT_POSTFIX):
+            return "".join((url, GIT_POSTFIX))
         return url
 
     url_path = Path(url)
