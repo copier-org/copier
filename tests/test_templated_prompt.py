@@ -8,6 +8,8 @@ import pexpect
 import pytest
 import yaml
 from pexpect.popen_spawn import PopenSpawn
+from plumbum import local
+from plumbum.cmd import git
 
 from copier import Worker
 from copier.errors import InvalidTypeError
@@ -18,9 +20,11 @@ from .helpers import (
     BRACKET_ENVOPS_JSON,
     COPIER_PATH,
     SUFFIX_TMPL,
+    Keyboard,
     Spawn,
     build_file_tree,
     expect_prompt,
+    git_init,
 )
 
 main_default = "copier"
@@ -362,6 +366,84 @@ def test_templated_prompt_with_conditional_choices(
     for iac in iac_choices:
         tui.expect_exact(iac)
     tui.sendline()
+
+
+def test_templated_prompt_update_previous_answer_disabled(
+    tmp_path_factory: pytest.TempPathFactory, spawn: Spawn
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                """\
+                cloud:
+                    type: str
+                    help: Which cloud provider do you use?
+                    choices:
+                        - Any
+                        - AWS
+                        - Azure
+                        - GCP
+                iac:
+                    type: str
+                    help: Which IaC tool do you use?
+                    choices:
+                        Terraform: tf
+                        Cloud Formation:
+                            value: cf
+                            validator: "{% if cloud != 'AWS' %}Requires AWS{% endif %}"
+                        Azure Resource Manager:
+                            value: arm
+                            validator: "{% if cloud != 'Azure' %}Requires Azure{% endif %}"
+                        Deployment Manager:
+                            value: dm
+                            validator: "{% if cloud != 'GCP' %}Requires GCP{% endif %}"
+                """
+            ),
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+        }
+    )
+
+    with local.cwd(src):
+        git_init("v1")
+        git("tag", "v1")
+
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    expect_prompt(tui, "cloud", "str", help="Which cloud provider do you use?")
+    tui.sendline(Keyboard.Down)  # select "AWS"
+    expect_prompt(tui, "iac", "str", help="Which IaC tool do you use?")
+    tui.sendline(Keyboard.Down)  # select "Cloud Formation"
+    tui.expect_exact(pexpect.EOF)
+
+    answers_file = dst / ".copier-answers.yml"
+
+    assert answers_file.exists()
+    assert yaml.safe_load(answers_file.read_text()) == {
+        "_src_path": str(src),
+        "_commit": "v1",
+        "cloud": "AWS",
+        "iac": "cf",
+    }
+
+    with local.cwd(dst):
+        git_init("v1")
+
+    tui = spawn(COPIER_PATH + ("update", str(dst)), timeout=10)
+    expect_prompt(tui, "cloud", "str", help="Which cloud provider do you use?")
+    tui.sendline(Keyboard.Down)  # select "Azure"
+    expect_prompt(tui, "iac", "str", help="Which IaC tool do you use?")
+    tui.sendline()  # select "Terraform" (first supported)
+    tui.expect_exact(pexpect.EOF)
+
+    assert answers_file.exists()
+    assert yaml.safe_load(answers_file.read_text()) == {
+        "_src_path": str(src),
+        "_commit": "v1",
+        "cloud": "Azure",
+        "iac": "tf",
+    }
 
 
 def test_multiselect_choices_with_templated_default_value(

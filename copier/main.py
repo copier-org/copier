@@ -418,7 +418,7 @@ class Worker:
             return True
         return self._solve_render_conflict(dst_relpath)
 
-    def _ask(self) -> None:
+    def _ask(self) -> None:  # noqa: C901
         """Ask the questions of the questionnaire and record their answers."""
         result = AnswersMap(
             user_defaults=self.user_defaults,
@@ -434,8 +434,18 @@ class Worker:
                 var_name=var_name,
                 **details,
             )
+            # Delete last answer if it cannot be parsed or validated, so a new
+            # valid answer can be provided.
+            if var_name in result.last:
+                try:
+                    answer = question.parse_answer(result.last[var_name])
+                except Exception:
+                    del result.last[var_name]
+                else:
+                    if question.validate_answer(answer):
+                        del result.last[var_name]
+            # Skip a question when the user already answered it.
             if self.skip_answered and var_name in result.last:
-                # Skip a question when the user already answered it.
                 continue
             # Skip a question when the skip condition is met.
             if not question.get_when():
