@@ -167,8 +167,7 @@ def clone(url: str, ref: str | None = None) -> str:
     _clone = git["clone", "--no-checkout", url, location]
     # Faster clones if possible
     if git_version >= Version("2.27"):
-        url_match = re.match("(file://)?(.*)", url)
-        if url_match is not None:
+        if url_match := re.match("(file://)?(.*)", url):
             file_url = url_match.groups()[-1]
         else:
             file_url = url

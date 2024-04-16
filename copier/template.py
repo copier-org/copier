@@ -203,8 +203,7 @@ class Template:
     use_prereleases: bool = False
 
     def _cleanup(self) -> None:
-        temp_clone = self._temp_clone()
-        if temp_clone:
+        if temp_clone := self._temp_clone():
             if sys.version_info >= (3, 12):
                 rmtree(
                     temp_clone,
@@ -226,11 +225,10 @@ class Template:
         """
         if "local_abspath" not in self.__dict__:
             return None
-        clone_path = self.local_abspath
         original_path = Path(self.url).expanduser()
         with suppress(OSError):  # triggered for URLs on Windows
             original_path = original_path.resolve()
-        if clone_path != original_path:
+        if (clone_path := self.local_abspath) != original_path:
             return clone_path
         return None
 
