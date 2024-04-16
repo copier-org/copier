@@ -11,7 +11,7 @@ from filecmp import dircmp
 from functools import cached_property, partial
 from itertools import chain
 from pathlib import Path
-from shutil import rmtree
+from shutil import copytree, ignore_patterns, rmtree
 from tempfile import TemporaryDirectory
 from types import TracebackType
 from typing import (
@@ -853,8 +853,12 @@ class Worker:
         subproject_subdir = self.subproject.local_abspath.relative_to(subproject_top)
 
         with TemporaryDirectory(
-            prefix=f"{__name__}.old_copy."
-        ) as old_copy, TemporaryDirectory(prefix=f"{__name__}.new_copy.") as new_copy:
+            prefix=f"{__name__}.old_copy.",
+        ) as old_copy, TemporaryDirectory(
+            prefix=f"{__name__}.new_copy.",
+        ) as new_copy, TemporaryDirectory(
+            prefix=f"{__name__}.dst_copy.",
+        ) as dst_copy:
             # Copy old template into a temporary destination
             with replace(
                 self,
@@ -866,27 +870,23 @@ class Worker:
                 vcs_ref=self.subproject.template.commit,  # type: ignore[union-attr]
             ) as old_worker:
                 old_worker.run_copy()
-            # Extract diff between temporary destination and real destination
-            with local.cwd(old_copy):
-                self._git_initialize_repo()
-                git("remote", "add", "real_dst", "file://" + str(subproject_top))
-                git("fetch", "--depth=1", "real_dst", "HEAD")
-                diff_cmd = git[
-                    "diff-tree", f"--unified={self.context_lines}", "HEAD...FETCH_HEAD"
-                ]
-                try:
-                    diff = diff_cmd("--inter-hunk-context=-1")
-                except ProcessExecutionError:
-                    print(
-                        colors.warn
-                        | "Make sure Git >= 2.24 is installed to improve updates.",
-                        file=sys.stderr,
-                    )
-                    diff = diff_cmd("--inter-hunk-context=0")
             # Run pre-migration tasks
             self._execute_tasks(
                 self.template.migration_tasks("before", self.subproject.template)  # type: ignore[arg-type]
             )
+            # Create a copy of the real destination after applying migrations
+            # but before performing any further update for extracting the diff
+            # between the temporary destination of the old template and the
+            # real destination later.
+            with local.cwd(dst_copy):
+                copytree(
+                    subproject_top,
+                    ".",
+                    symlinks=True,
+                    ignore=ignore_patterns("/.git"),
+                    dirs_exist_ok=True,
+                )
+                self._git_initialize_repo()
             # Clear last answers cache to load possible answers migration, if skip_answered flag is not set
             if self.skip_answered is False:
                 self.answers = AnswersMap()
@@ -913,6 +913,49 @@ class Worker:
                 src_path=self.subproject.template.url,  # type: ignore[union-attr]
             ) as new_worker:
                 new_worker.run_copy()
+            with local.cwd(new_copy):
+                self._git_initialize_repo()
+            # Extract diff between temporary destination and (copy from above)
+            # real destination with some special handling of newly added files
+            # in both the poject and the template.
+            with local.cwd(old_copy):
+                self._git_initialize_repo()
+                git("remote", "add", "dst_copy", "file://" + str(dst_copy))
+                git("fetch", "--depth=1", "dst_copy", "HEAD:dst_copy")
+                git("remote", "add", "new_copy", "file://" + str(new_copy))
+                git("fetch", "--depth=1", "new_copy", "HEAD:new_copy")
+                # Create an empty file in the temporary destination when the
+                # same file was added in *both* the project and the temporary
+                # destination of the new template. With this minor change, the
+                # diff between the temporary destination and the real
+                # destination for such files will use the "update file mode"
+                # instead of the "new file mode" which avoids deleting the file
+                # content previously added in the project.
+                diff_added_cmd = git[
+                    "diff-tree", "-r", "--diff-filter=A", "--name-only"
+                ]
+                for filename in (
+                    set(diff_added_cmd("HEAD...dst_copy").splitlines())
+                ) & set(diff_added_cmd("HEAD...new_copy").splitlines()):
+                    f = Path(filename)
+                    f.parent.mkdir(parents=True, exist_ok=True)
+                    f.touch(Path(dst_copy, filename).stat().st_mode)
+                    git("add", filename)
+                self._git_commit("add new empty files")
+                # Extract diff between temporary destination and real
+                # destination
+                diff_cmd = git[
+                    "diff-tree", f"--unified={self.context_lines}", "HEAD...dst_copy"
+                ]
+                try:
+                    diff = diff_cmd("--inter-hunk-context=-1")
+                except ProcessExecutionError:
+                    print(
+                        colors.warn
+                        | "Make sure Git >= 2.24 is installed to improve updates.",
+                        file=sys.stderr,
+                    )
+                    diff = diff_cmd("--inter-hunk-context=0")
             compared = dircmp(old_copy, new_copy)
             # Try to apply cached diff into final destination
             with local.cwd(subproject_top):
@@ -998,6 +1041,10 @@ class Worker:
         git = get_git()
         git("init", retcode=None)
         git("add", ".")
+        self._git_commit()
+
+    def _git_commit(self, message: str = "dumb commit") -> None:
+        git = get_git()
         git("config", "user.name", "Copier")
         git("config", "user.email", "copier@copier")
         # 1st commit could fail if any pre-commit hook reformats code
@@ -1006,7 +1053,7 @@ class Worker:
             "commit",
             "--allow-empty",
             "-am",
-            "dumb commit 1",
+            f"{message} 1",
             "--no-gpg-sign",
             retcode=None,
         )
@@ -1014,7 +1061,7 @@ class Worker:
             "commit",
             "--allow-empty",
             "-am",
-            "dumb commit 2",
+            f"{message} 2",
             "--no-gpg-sign",
             "--no-verify",
         )
