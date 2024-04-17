@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import filecmp
 import platform
 import stat
@@ -9,11 +10,14 @@ from decimal import Decimal
 from enum import Enum
 from pathlib import Path
 from typing import Any, ContextManager
+from time import sleep
 
 import pytest
 import yaml
 from plumbum import local
 from plumbum.cmd import git
+
+
 
 import copier
 from copier import run_copy
@@ -295,6 +299,16 @@ def test_skip_if_exists(tmp_path: Path) -> None:
     assert (tmp_path / "a.noeof.txt").read_text() == "SKIPPED"
     assert (tmp_path / "b.noeof.txt").read_text() == "SKIPPED"
     assert (tmp_path / "meh" / "c.noeof.txt").read_text() == "SKIPPED"
+
+
+def test_timestamp_identical(tmp_path: Path) -> None:
+    copier.run_copy(str(Path("tests", "demo_skip_dst")), tmp_path)
+    modification_time_before = os.path.getmtime(tmp_path / "a.noeof.txt")
+    sleep(2)
+    copier.run_copy(str(Path("tests", "demo_skip_dst")), tmp_path)
+    modification_time_after = os.path.getmtime(tmp_path / "a.noeof.txt")
+
+    assert modification_time_before == modification_time_after
 
 
 def test_skip_if_exists_rendered_patterns(tmp_path: Path) -> None:
