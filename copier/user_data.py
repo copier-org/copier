@@ -432,7 +432,11 @@ class Question:
             template = self.jinja_env.from_string(value)
         except TypeError:
             # value was not a string
-            return value
+            return (
+                [self.render_value(item) for item in value]
+                if isinstance(value, list)
+                else value
+            )
         try:
             return template.render({**self.answers.combined, **(extra_answers or {})})
         except UndefinedError as error:

@@ -362,3 +362,65 @@ def test_templated_prompt_with_conditional_choices(
     for iac in iac_choices:
         tui.expect_exact(iac)
     tui.sendline()
+
+
+def test_multiselect_choices_with_templated_default_value(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                """\
+                python_version:
+                    type: str
+                    help: What version of python are you targeting?
+                    default: "3.11"
+                    choices:
+                        - "3.8"
+                        - "3.9"
+                        - "3.10"
+                        - "3.11"
+                        - "3.12"
+
+                github_runner_python_version:
+                    type: str
+                    help: Which Python versions do you want to use on your Github Runner?
+                    default: ["{{ python_version }}"]
+                    multiselect: true
+                    choices:
+                        - "3.8"
+                        - "3.9"
+                        - "3.10"
+                        - "3.11"
+                        - "3.12"
+                """
+            ),
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+        }
+    )
+
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    expect_prompt(
+        tui, "python_version", "str", help="What version of python are you targeting?"
+    )
+    tui.sendline()  # select `3.11" (default value)
+    expect_prompt(
+        tui,
+        "github_runner_python_version",
+        "str",
+        help="Which Python versions do you want to use on your Github Runner?",
+    )
+    tui.sendline()  # select "[3.11]" (default value)
+    tui.expect_exact(pexpect.EOF)
+
+    answers_file = dst / ".copier-answers.yml"
+    assert answers_file.exists()
+    assert yaml.safe_load(answers_file.read_text()) == {
+        "_src_path": str(src),
+        "python_version": "3.11",
+        "github_runner_python_version": ["3.11"],
+    }
