@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import os
 import filecmp
+import os
 import platform
 import stat
 import sys
