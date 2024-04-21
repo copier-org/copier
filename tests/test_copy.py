@@ -307,8 +307,8 @@ def test_timestamp_identical(tmp_path: Path) -> None:
     modification_time_after = os.path.getmtime(tmp_path / "a.noeof.txt")
 
     assert modification_time_before == modification_time_after
-    
-    
+
+
 def test_skip_if_exists_rendered_patterns(tmp_path: Path) -> None:
     copier.run_copy("tests/demo_skip_dst", tmp_path)
     copier.run_copy(
