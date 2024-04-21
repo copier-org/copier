@@ -415,7 +415,7 @@ class Worker:
                 quiet=self.quiet,
                 file_=sys.stderr,
             )
-            return True
+            return is_dir
         return self._solve_render_conflict(dst_relpath)
 
     def _ask(self) -> None:  # noqa: C901
