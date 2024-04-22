@@ -84,7 +84,7 @@ repos:
           # Prevent committing .rej files
           - id: forbidden-files
             name: forbidden files
-            description:
+            entry:
                 found Copier update rejection files; review and remove them before
                 merging.
             language: fail
