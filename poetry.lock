@@ -265,13 +265,13 @@ packaging = ">=20.9"
 
 [[package]]
 name = "eval-type-backport"
-version = "0.1.3"
+version = "0.2.0"
 description = "Like `typing._eval_type`, but lets older Python versions use newer typing features."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "eval_type_backport-0.1.3-py3-none-any.whl", hash = "sha256:519d2a993b3da286df9f90e17f503f66435106ad870cf26620c5720e2158ddf2"},
-    {file = "eval_type_backport-0.1.3.tar.gz", hash = "sha256:d83ee225331dfa009493cec1f3608a71550b515ee4749abe78da14e3c5e314f5"},
+    {file = "eval_type_backport-0.2.0-py3-none-any.whl", hash = "sha256:ac2f73d30d40c5a30a80b8739a789d6bb5e49fdffa66d7912667e2015d9c9933"},
+    {file = "eval_type_backport-0.2.0.tar.gz", hash = "sha256:68796cfbc7371ebf923f03bdf7bef415f3ec098aeced24e054b253a0e78f7b37"},
 ]
 
 [package.extras]
@@ -1675,4 +1675,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8"
-content-hash = "265a53c7c9ecff7e83f12d4ebd4732a5f7f5f23a6775aa30c146a526d018a87d"
+content-hash = "41b7fbb4703f2afaa5077f1dec8627f435a61aeaffeaae4ccb5b45f963c7fda0"
