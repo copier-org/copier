@@ -33,6 +33,19 @@ jobs:
           - ubuntu-latest
           - windows-latest
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        # HACK: Use macOS 13 for Python 3.8 and 3.9, as `macos-latest` (macOS 14+) does
+        # not offer binaries for these Python versions. Remove this temporary solution
+        # once binaries become available or when these Python versions reach EOL.
+        exclude:
+          - os: macos-latest
+            python-version: "3.8"
+          - os: macos-latest
+            python-version: "3.9"
+        include:
+          - os: macos-13
+            python-version: "3.8"
+          - os: macos-13
+            python-version: "3.9"
     runs-on: ${{ matrix.os }}
     steps:
       # HACK https://github.com/actions/cache/issues/315
@@ -59,10 +72,15 @@ jobs:
           path: |
             .cache
             .venv
+          # prettier-ignore
           key:
-            cache|${{ runner.os }}|${{ steps.full-python-version.outputs.version }}|${{
-            hashFiles('pyproject.toml') }}|${{ hashFiles('poetry.lock') }}|${{
-            hashFiles('.pre-commit-config.yaml') }}
+            cache-
+            ${{ runner.os }}-
+            ${{ runner.arch }}-
+            ${{ steps.full-python-version.outputs.version }}-
+            ${{ hashFiles('pyproject.toml') }}-
+            ${{ hashFiles('poetry.lock') }}-
+            ${{ hashFiles('.pre-commit-config.yaml') }}
       - name: Install dependencies
         run: |
           python -m pip install poetry poetry-dynamic-versioning
@@ -113,9 +131,12 @@ jobs:
             .devenv
             .direnv
             .venv
+          # prettier-ignore
           key:
-            direnv|${{ runner.os }}|${{ hashFiles('pyproject.toml', '*.lock', '*.nix')
-            }}
+            direnv-
+            ${{ runner.os }}-
+            ${{ runner.arch }}-
+            ${{ hashFiles('pyproject.toml', '*.lock', '*.nix') }}
 
       # Check direnv works as expected
       - uses: JRMurr/direnv-nix-action@v3
@@ -151,10 +172,15 @@ jobs:
           path: |
             .cache
             .venv
+          # prettier-ignore
           key:
-            cache|${{ runner.os }}|${{ steps.full-python-version.outputs.version }}|${{
-            hashFiles('pyproject.toml') }}|${{ hashFiles('poetry.lock') }}|${{
-            hashFiles('.pre-commit-config.yaml') }}
+            cache-
+            ${{ runner.os }}-
+            ${{ runner.arch }}-
+            ${{ steps.full-python-version.outputs.version }}-
+            ${{ hashFiles('pyproject.toml') }}-
+            ${{ hashFiles('poetry.lock') }}-
+            ${{ hashFiles('.pre-commit-config.yaml') }}
       - name: Install dependencies
         shell: bash
         run: |
