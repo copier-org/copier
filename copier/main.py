@@ -461,7 +461,7 @@ class Worker:
                 # Try to validate the answer value if the question has a
                 # validator.
                 if err_msg := question.validate_answer(answer):
-                    raise ValueError(err_msg)
+                    raise ValueError(f"Validation error for question '{var_name}': {err_msg}")
                 # At this point, the answer value is valid. Do not ask the
                 # question again, but set answer as the user's answer instead.
                 result.user[var_name] = answer
