@@ -139,6 +139,56 @@ inspiration!
 
 If you want your template to appear in that list, just add the topic to it! 🏷
 
+## Show your support
+
+If you're using Copier, consider adding the Copier badge to your project's `README.md`:
+
+```md
+[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-orange.json)](https://github.com/copier-org/copier)
+```
+
+...or `README.rst`:
+
+```rst
+.. image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-orange.json
+    :target: https://github.com/copier-org/copier
+    :alt: Copier
+```
+
+...or, as HTML:
+
+```html
+<a href="https://github.com/copier-org/copier"
+    ><img
+        src="(https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-orange.json"
+        alt="Copier"
+        style="max-width:100%;"
+/></a>
+```
+
+### Copier badge variations
+
+1. Badge Grayscale Border
+   [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-border.json)](https://github.com/copier-org/copier)
+
+2. Badge Grayscale Inverted Border Orange
+   [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-orange.json)](https://github.com/copier-org/copier)
+
+3. Badge Grayscale Inverted Border Red
+   [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-red.json)](https://github.com/copier-org/copier)
+
+4. Badge Grayscale Inverted Border Teal
+   [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-teal.json)](https://github.com/copier-org/copier)
+
+5. Badge Grayscale Inverted Border
+   [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border.json)](https://github.com/copier-org/copier)
+
+6. Black Badge
+   [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/black-badge.json)](https://github.com/copier-org/copier)
+
+7. Badge Grayscale Inverted Border Purple
+   [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)
+
 ## Credits
 
 Special thanks go to [jpsca](https://github.com/jpsca) for originally creating `Copier`.
