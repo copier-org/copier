@@ -1,186 +1,0 @@
-Script started on 2024-04-27 13:10:31+01:00 [TERM="xterm-256color" TTY="/dev/pts/2" COLUMNS="150" LINES="32"]
-^C[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ ^C[?2004l[?2004h[?2004l
-[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ ^C[?2004l[?2004h[?2004l
-[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ clear
-[?2004l[H[2J[3J[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ cleargit commit -m "fix workflow"add .[K[3Pcode[C[C[3@git add[C[Ccommit -m "fix workflow"clear[K[Kclear[K[tool.poetry]
-name = "copier"
-# This version is a placeholder autoupdated by poetry-dynamic-versioning
-version = "0.0.0"
-description = "A library for rendering project templates."
-license = "MIT"
-classifiers = [
-  "Development Status :: 5 - Production/Stable",
-  "Intended Audience :: Developers",
-  "License :: OSI Approved :: MIT License",
-  "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.8",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-]
-authors = ["Ben Felder <ben@felder.io>"]
-homepage = "https://github.com/copier-org/copier"
-repository = "https://github.com/copier-org/copier"
-readme = "README.md"
-
-[tool.poetry.scripts]
-copier = "copier.__main__:copier_app_run"
-
-[tool.poetry.urls]
-"Bug Tracker" = "https://github.com/copier-org/copier/issues"
-
-[tool.poetry.dependencies]
-python = ">=3.8"
-colorama = ">=0.4.6"
-# HACK Remove markers when https://github.com/mtkennerly/dunamai/issues/74 is fixed
-dunamai = { version = ">=1.7.0", markers = "python_version < '4'" }funcy = ">=1.17"jinja2 = ">=3.1.3"jinja2-ansible-filters = ">=1.3.1"packaging = ">=23.0"pathspec = ">=0.9.0"plumbum = ">=1.6.9"pydantic = ">=2.4.2"pygments = ">=2.7.1"pyyaml = ">=5.3.1"questionary = ">=1.8.1"typing-extensions = { version = ">=3.7.4,<5.0.0", python = "<3.9" }eval-type-backport = { version = ">=0.1.3,<0.3.0", python = "<3.10" }[tool.poetry.group.dev]optional = true[tool.poetry.group.dev.dependencies]mypy = ">=0.931"pexpect = ">=4.8.0"poethepoet = ">=0.12.3"pre-commit = ">=2.17.0"pytest = ">=7.2.0"pytest-cov = ">=3.0.0"pytest-gitconfig = ">=0.6.0"pytest-xdist = ">=2.5.0"types-backports = ">=0.1.3"types-colorama = ">=0.4"types-psutil = "*"types-pygments = ">=2.17"types-pyyaml = ">=6.0.4"[tool.poetry.group.docs]optional = true[tool.poetry.group.docs.dependencies]markdown-exec = ">=1.3.0"mkdocs-material = ">=8.2,<10.0.0"mkdocstrings = { version = ">=0.19.0", extras = ["python"] }[tool.poetry.group.build]# Helper group just for helping nix to build properlyoptional = true[tool.poetry.group.build.dependencies]poetry-dynamic-versioning = { version = ">=1.1.0", markers = "python_version < '4'" }[tool.poe.tasks.clean]script = "devtasks:clean"help = "remove build/python artifacts"[tool.poe.tasks.coverage]cmd = "pytest --cov-report html --cov copier copier tests"help = "generate an HTML report of the coverage"[tool.poe.tasks.dev-setup]script = "devtasks:dev_setup"help = "set up local development environment"[7m[tool.poe.tasks.docs][27m[7mcmd = "mkdocs serve"[27m[7mhelp = "start local docs server"[27m[7m[tool.poe.tasks.lint][27m[7mscript = "devtasks:lint"[27m[7mhelp = "check (and auto-fix) style with pre-commit"[27m[7m[tool.poe.tasks.test][27m[7mcmd = "pytest --color=yes"[27m[7mhelp = "run tests"[27m[7m[tool.poe.tasks.types][27m[7mcmd = "mypy ."[27m[7mhelp = "run the type (mypy) checker on the codebase"[27m[7m[tool.poetry-dynamic-versioning][27m[7menable = true[27m[7mstyle = "pep440"[27m[7mvcs = "git"[27m[7m[tool.commitizen][27m[7mannotated_tag = true[27m[7mchangelog_incremental = true[27m[7mtag_format = "v$version"[27m[7mupdate_changelog_on_bump = true[27m[7mversion = "9.2.0"[27m[7m[build-system][27m[7mrequires = ["poetry-core>=1.7.0", "poetry-dynamic-versioning>=1.1.0"][27m[7mbuild-backend = "poetry_dynamic_versioning.backend"[27m^C[?2004l[?2004h[?2004l
-[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ ^C[?2004l[?2004h[?2004l
-[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ ^C[?2004l[?2004h[?2004l
-[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ ^C[?2004l[?2004h[?2004l
-[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ clwar
-[?2004lCommand 'clwar' not found, did you mean:
-  command 'clear' from deb ncurses-bin (6.3-2ubuntu0.1)
-Try: sudo apt install <deb name>
-[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ clear
-[?2004l[H[2J[3J[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ clearwareargit commit -m "fix workflow"add .[K[3Pcode[C[Cgit pushcommit -m "fix workflow"add .[K[4Pcleargit pushoush[3Pcleargit commit -m "fix workflow"add .[K[3Pcode[C[C[3@git add[C[Ccommit -m "fix workflow"clear[Kgit oushpush[3Pcleargit add .commit -m "fix workflow"push[K[2Pcode .[3@git add[C[Ccommit -m "fix workflow"clear[Kwarear[Kpoer[Ktry install
-[?2004l
-  [31;1mRuntimeError[0m
-
-  [1mThe Poetry configuration is invalid:
-    - Additional properties are not allowed ('group' was unexpected)
-  [0m
-
-  at [32m/usr/lib/python3/dist-packages/poetry/core/factory.py[0m:[1m43[0m in [36mcreate_poetry[0m
-      [39;2m 39[0m[39;2m│[0m [39m            message [0m[39;2m= [0m[33;1m""[0m
-      [39;2m 40[0m[39;2m│[0m [33;1m            [0m[35;1mfor [0m[39merror [0m[35;1min [0m[39mcheck_result[0m[39;2m[[0m[33;1m"errors"[0m[39;2m]:[0m
-      [39;2m 41[0m[39;2m│[0m [39m                message [0m[39;2m+= [0m[33;1m"  - {}\n"[0m[39;2m.[0m[39;1mformat[0m[39;2m([0m[39merror[0m[39;2m)[0m
-      [39;2m 42[0m[39;2m│[0m 
-    [31;1m→[0m [39;1m 43[0m[39;2m│[0m [39m            [0m[35;1mraise [0m[39;1mRuntimeError[0m[39;2m([0m[33;1m"The Poetry configuration is invalid:\n" [0m[39;2m+ [0m[39mmessage[0m[39;2m)[0m
-      [39;2m 44[0m[39;2m│[0m 
-      [39;2m 45[0m[39;2m│[0m [39m        [0m[39;2;3m# Load package[0m
-      [39;2m 46[0m[39;2m│[0m [39m        name [0m[39;2m= [0m[39mlocal_config[0m[39;2m[[0m[33;1m"name"[0m[39;2m][0m
-      [39;2m 47[0m[39;2m│[0m [39;2m        [0m[39mversion [0m[39;2m= [0m[39mlocal_config[0m[39;2m[[0m[33;1m"version"[0m[39;2m][0m
-[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ poetry install
-[?2004l
-  [31;1mRuntimeError[0m
-
-  [1mThe Poetry configuration is invalid:
-    - Additional properties are not allowed ('group' was unexpected)
-  [0m
-
-  at [32m/usr/lib/python3/dist-packages/poetry/core/factory.py[0m:[1m43[0m in [36mcreate_poetry[0m
-      [39;2m 39[0m[39;2m│[0m [39m            message [0m[39;2m= [0m[33;1m""[0m
-      [39;2m 40[0m[39;2m│[0m [33;1m            [0m[35;1mfor [0m[39merror [0m[35;1min [0m[39mcheck_result[0m[39;2m[[0m[33;1m"errors"[0m[39;2m]:[0m
-      [39;2m 41[0m[39;2m│[0m [39m                message [0m[39;2m+= [0m[33;1m"  - {}\n"[0m[39;2m.[0m[39;1mformat[0m[39;2m([0m[39merror[0m[39;2m)[0m
-      [39;2m 42[0m[39;2m│[0m 
-    [31;1m→[0m [39;1m 43[0m[39;2m│[0m [39m            [0m[35;1mraise [0m[39;1mRuntimeError[0m[39;2m([0m[33;1m"The Poetry configuration is invalid:\n" [0m[39;2m+ [0m[39mmessage[0m[39;2m)[0m
-      [39;2m 44[0m[39;2m│[0m 
-      [39;2m 45[0m[39;2m│[0m [39m        [0m[39;2;3m# Load package[0m
-      [39;2m 46[0m[39;2m│[0m [39m        name [0m[39;2m= [0m[39mlocal_config[0m[39;2m[[0m[33;1m"name"[0m[39;2m][0m
-      [39;2m 47[0m[39;2m│[0m [39;2m        [0m[39mversion [0m[39;2m= [0m[39mlocal_config[0m[39;2m[[0m[33;1m"version"[0m[39;2m][0m
-[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ poe test
-[?2004lCommand 'poe' not found, did you mean:
-  command 'poke' from snap poke (4.0)
-  command 'poke' from deb poke (2.1+dfsg-2)
-  command 'toe' from deb ncurses-bin (6.3-2ubuntu0.1)
-  command 'pom' from deb bsdgames (2.17-29)
-  command 'poa' from deb poa (2.0+20060928-8)
-  command 'pee' from deb moreutils (0.66-1)
-  command 'joe' from deb joe (4.6-1build2)
-  command 'joe' from deb joe-jupp (3.1.40-1)
-  command 'pon' from deb ppp (2.4.9-1+1ubuntu3)
-  command 'poet' from deb libpoet-perl (0.16-1.1)
-See 'snap info <snapname>' for additional versions.
-[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ git chechout -b main
-[?2004lgit: 'chechout' is not a git command. See 'git --help'.
-
-The most similar command is
-	checkout
-[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ git chechout -b main[1P[1@k[C[C[C[C[C[C[C[C[C[C
-[?2004lSwitched to a new branch 'main'
-[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ clear
-[?2004l[H[2J[3J[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ cleargit checkout -b main[K[K[K[Kerror [K-message-not-clear-enough
-[?2004lSwitched to a new branch 'error-message-not-clear-enough'
-[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ clear
-[?2004l[H[2J[3J[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ git add [K[K[K[Kstatus
-[?2004lOn branch error-message-not-clear-enough
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
-  (use "git restore <file>..." to discard changes in working directory)
-	[31mmodified:   copier/main.py[m
-
-Untracked files:
-  (use "git add <file>..." to include in what will be committed)
-	[31m=[m
-
-no changes added to commit (use "git add" and/or "git commit -a")
-[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ git add copier/main.py 
-[?2004l[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ clear
-[?2004l[H[2J[3J[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ git commit -m "handle error message correctly"
-[?2004l[error-message-not-clear-enough b3295a0] handle error message correctly
- 1 file changed, 1 insertion(+), 1 deletion(-)
-[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ git push
-[?2004lfatal: The current branch error-message-not-clear-enough has no upstream branch.
-To push the current branch and set the remote as upstream, use
-
-    git push --set-upstream origin error-message-not-clear-enough
-
-[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ [7mgit push --set-upstream origin error-message-not-clear-enough[27mgit push --set-upstream origin error-message-not-clear-enough
-[?2004lUsername for 'https://github.com': itz-salerm  mm
-Password for 'https://itz-salemm@github.com': 
-[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ git push --set-upstream origin error-message-not-clear-enough[Kcommit -m "handle error message correctly"clear[Kgit add copier/main.py status[K[5Pcleargit checkout -b error-message-not-clear-enoughclear[Kgit checkout -b main
-[?2004lfatal: A branch named 'main' already exists.
-[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ git checkout -b main[1Pmain[1Pmain[1Pmain
-[?2004lSwitched to branch 'main'
-[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ clear
-[?2004l[H[2J[3J[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ git pull
-[?2004lremote: Enumerating objects: 18, done.[K
-remote: Counting objects:   5% (1/18)[Kremote: Counting objects:  11% (2/18)[Kremote: Counting objects:  16% (3/18)[Kremote: Counting objects:  22% (4/18)[Kremote: Counting objects:  27% (5/18)[Kremote: Counting objects:  33% (6/18)[Kremote: Counting objects:  38% (7/18)[Kremote: Counting objects:  44% (8/18)[Kremote: Counting objects:  50% (9/18)[Kremote: Counting objects:  55% (10/18)[Kremote: Counting objects:  61% (11/18)[Kremote: Counting objects:  66% (12/18)[Kremote: Counting objects:  72% (13/18)[Kremote: Counting objects:  77% (14/18)[Kremote: Counting objects:  83% (15/18)[Kremote: Counting objects:  88% (16/18)[Kremote: Counting objects:  94% (17/18)[Kremote: Counting objects: 100% (18/18)[Kremote: Counting objects: 100% (18/18), done.[K
-remote: Compressing objects:   6% (1/15)[Kremote: Compressing objects:  13% (2/15)[Kremote: Compressing objects:  20% (3/15)[Kremote: Compressing objects:  26% (4/15)[Kremote: Compressing objects:  33% (5/15)[Kremote: Compressing objects:  40% (6/15)[Kremote: Compressing objects:  46% (7/15)[Kremote: Compressing objects:  53% (8/15)[Kremote: Compressing objects:  60% (9/15)[Kremote: Compressing objects:  66% (10/15)[Kremote: Compressing objects:  73% (11/15)[Kremote: Compressing objects:  80% (12/15)[Kremote: Compressing objects:  86% (13/15)[Kremote: Compressing objects:  93% (14/15)[Kremote: Compressing objects: 100% (15/15)[Kremote: Compressing objects: 100% (15/15), done.[K
-Unpacking objects:   5% (1/18)remote: Total 18 (delta 10), reused 4 (delta 3), pack-reused 0[K
-Unpacking objects:  11% (2/18)Unpacking objects:  16% (3/18)Unpacking objects:  22% (4/18)Unpacking objects:  27% (5/18)Unpacking objects:  33% (6/18)Unpacking objects:  38% (7/18)Unpacking objects:  44% (8/18)Unpacking objects:  50% (9/18)Unpacking objects:  55% (10/18)Unpacking objects:  61% (11/18)Unpacking objects:  66% (12/18)Unpacking objects:  72% (13/18)Unpacking objects:  77% (14/18)Unpacking objects:  83% (15/18)Unpacking objects:  88% (16/18)Unpacking objects:  94% (17/18)Unpacking objects: 100% (18/18)Unpacking objects: 100% (18/18), 44.87 KiB | 168.00 KiB/s, done.
-From https://github.com/itz-salemm/copier
-   85311ec..741e28a  master     -> origin/master
-There is no tracking information for the current branch.
-Please specify which branch you want to merge with.
-See git-pull(1) for details.
-
-    git pull <remote> <branch>
-
-If you wish to set tracking information for this branch you can do so with:
-
-    git branch --set-upstream-to=origin/<branch> main
-
-[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ git brancj[Kh -d error-message-not-clear-enough 
-[?2004lerror: The branch 'error-message-not-clear-enough' is not fully merged.
-If you are sure you want to delete it, run 'git branch -D error-message-not-clear-enough'.
-[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ git branch -d error-message-not-clear-enough [1P[1@D
-[?2004lDeleted branch error-message-not-clear-enough (was b3295a0).
-[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ clear
-[?2004l[H[2J[3J[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ git cleargit branch -D error-message-not-clear-enough d[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cpull[K[3Pcleargit checkout main-b mainpush --set-upstream origin error-message-not-clear-enough[Kcommit -m "handle error message correctly"clear[Kgit add copier/main.py status[K[5Pcleargit statusadd copier/main.py clear[Kgit commit -m "handle error message correctly"push[K --set-upstream origin error-message-not-clear-enoughcheckout -b main[K[3Pmainclear[Kgit pullbranch -d error-message-not-clear-enough D[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cclear[K[1Pgit cleargit branch -D error-message-not-clear-enough d[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cpull[K[3Pcleargit checkout main-b mainpush --set-upstream origin error-message-not-clear-enough[Kcommit -m "handle error message correctly"clear[Kgit add copier/main.py status[K[5Pcleargit checkout -b error-message-not-clear-enough
-[?2004lSwitched to a new branch 'error-message-not-clear-enough'
-[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ git checkout -b error-message-not-clear-enoughclear[Kgit branch -D error-message-not-clear-enough d[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cpull[K[3Pcleargit pullbranch -d error-message-not-clear-enough D[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cclear[Kgit checkout -b error-message-not-clear-enough[Kclear
-[?2004l[H[2J[3J[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ git add copier/main.py 
-[?2004l[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ git commit -m "handled error e[Km[Kmessage coreec[K[K[Krectly"
-[?2004l[error-message-not-clear-enough 24f0edb] handled error message correctly
- 1 file changed, 1 insertion(+), 1 deletion(-)
-[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ clear
-[?2004l[H[2J[3J[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ git push ot[Krigin error-message-not-clear-enough 
-[?2004lUsername for 'https://github.com': itz-salemm
-Password for 'https://itz-salemm@github.com': 
-Enumerating objects: 7, done.
-Counting objects:  14% (1/7)Counting objects:  28% (2/7)Counting objects:  42% (3/7)Counting objects:  57% (4/7)Counting objects:  71% (5/7)Counting objects:  85% (6/7)Counting objects: 100% (7/7)Counting objects: 100% (7/7), done.
-Delta compression using up to 4 threads
-Compressing objects:  25% (1/4)Compressing objects:  50% (2/4)Compressing objects:  75% (3/4)Compressing objects: 100% (4/4)Compressing objects: 100% (4/4), done.
-Writing objects:  25% (1/4)Writing objects:  50% (2/4)Writing objects:  75% (3/4)Writing objects: 100% (4/4)Writing objects: 100% (4/4), 432 bytes | 432.00 KiB/s, done.
-Total 4 (delta 3), reused 0 (delta 0), pack-reused 0
-remote: Resolving deltas:   0% (0/3)[Kremote: Resolving deltas:  33% (1/3)[Kremote: Resolving deltas:  66% (2/3)[Kremote: Resolving deltas: 100% (3/3)[Kremote: Resolving deltas: 100% (3/3), completed with 3 local objects.[K
-remote: 
-remote: Create a pull request for 'error-message-not-clear-enough' on GitHub by visiting:[K
-remote:      https://github.com/itz-salemm/copier/pull/new/error-message-not-clear-enough[K
-remote: 
-To https://github.com/itz-salemm/copier.git
- * [new branch]      error-message-not-clear-enough -> error-message-not-clear-enough
-[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ clear
-[?2004l[H[2J[3J[?2004h]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ [K]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ [K]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdynamic@dynamic[00m:[01;34m~/Desktop/Persona/Open-Source/Working/copier[00m$ [K]0;dynamic@dynamic: ~/Desktop/Persona/Open-Source/Working/copier[01;32mdyn
