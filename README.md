@@ -157,14 +157,11 @@ If you're using Copier, consider adding the Copier badge to your project's `READ
 
 ...or, as HTML:
 
+<!-- prettier-ignore-start -->
 ```html
-<a href="https://github.com/copier-org/copier"
-    ><img
-        src="(https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-orange.json"
-        alt="Copier"
-        style="max-width:100%;"
-/></a>
+<a href="https://github.com/copier-org/copier"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-orange.json" alt="Copier" style="max-width:100%;"/></a>
 ```
+<!-- prettier-ignore-end -->
 
 ### Copier badge variations
 
