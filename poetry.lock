@@ -1541,13 +1541,13 @@ files = [
 
 [[package]]
 name = "types-pygments"
-version = "2.17.0.20240310"
+version = "2.18.0.20240506"
 description = "Typing stubs for Pygments"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "types-Pygments-2.17.0.20240310.tar.gz", hash = "sha256:b1d97e905ce36343c7283b0319182ae6d4f967188f361f45502a18ae43e03e1f"},
-    {file = "types_Pygments-2.17.0.20240310-py3-none-any.whl", hash = "sha256:b101ca9448aaff52af6966506f1fdd73b1e60a79b8a79a8bace3366cbf1f7ed9"},
+    {file = "types-Pygments-2.18.0.20240506.tar.gz", hash = "sha256:4b4c37812c87bbde687dbf27adf5bac593745a321e57f678dbc311571ba2ac9d"},
+    {file = "types_Pygments-2.18.0.20240506-py3-none-any.whl", hash = "sha256:11c90bc1737c9af55e5569558b88df7c2233e12325cb516215f722271444e91d"},
 ]
 
 [package.dependencies]
