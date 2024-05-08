@@ -10,4 +10,5 @@ build:
   jobs:
     post_install:
       - pip install poetry
+      - poetry self add "poetry-dynamic-versioning[plugin]"
       - VIRTUAL_ENV=$READTHEDOCS_VIRTUALENV_PATH poetry install --with docs
