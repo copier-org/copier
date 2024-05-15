@@ -1146,43 +1146,55 @@ Like [`message_before_copy`][message_after_copy] but printed before
 
 ### `migrations`
 
--   Format: `List[dict]`
+-   Format: `List[str|List[str]|dict]`
 -   CLI flags: N/A
 -   Default value: `[]`
 
-Migrations are like [tasks][tasks], but each item in the list is a `dict` with these
-keys:
+Migrations are like [tasks][tasks], but each item can have additional keys:
 
--   **version**: Indicates the version that the template update has to go through to
-    trigger this migration. It is evaluated using [PEP 440][].
--   **before** (optional): Commands to execute before performing the update. The answers
-    file is reloaded after running migrations in this stage, to let you migrate answer
-    values.
--   **after** (optional): Commands to execute after performing the update.
+-   **command**: The migration command to run
+-   **version** (optional): Indicates the version that the template update has to go
+    through to trigger this migration. It is evaluated using [PEP 440][]. If no version
+    is specified the migration will run on every update.
+-   **when** (optional): Specifies a condition that needs to hold for the task to run.
+    By default, a migration will run in the after upgrade stage.
+-   **working_directory** (optional): Specifies the directory in which the command will
+    be run. Defaults to the destination directory.
+
+If a `str` or `List[str]` is given as a migrator it will be treated as `command` with
+all other items not present.
 
 Migrations will run in the same order as declared here (so you could even run a
 migration for a higher version before running a migration for a lower version if the
 higher one is declared before and the update passes through both).
 
-They will only run when _new version >= declared version > old version_. And only when
-updating (not when copying for the 1st time).
+When `version` is given they will only run when _new version >= declared version > old
+version_. Your template will only be marked as [unsafe][unsafe] if this condition is
+true. Migrations will also only run when updating (not when copying for the 1st time).
 
 If the migrations definition contains Jinja code, it will be rendered with the same
 context as the rest of the template.
 
-Migration processes will receive these environment variables:
+There are a number of additional variables available for templating of migrations. Those
+variables are also passed to the migration process as environment variables. Migration
+processes will receive these variables:
 
--   `$STAGE`: Either `before` or `after`.
--   `$VERSION_FROM`: [Git commit description][git describe] of the template as it was
-    before updating.
--   `$VERSION_TO`: [Git commit description][git describe] of the template as it will be
-    after updating.
--   `$VERSION_CURRENT`: The `version` detector as you indicated it when describing
-    migration tasks.
--   `$VERSION_PEP440_FROM`, `$VERSION_PEP440_TO`, `$VERSION_PEP440_CURRENT`: Same as the
-    above, but normalized into a standard [PEP 440][] version string indicator. If your
-    scripts use these environment variables to perform migrations, you probably will
-    prefer to use these variables.
+-   `_stage`/`$STAGE`: Either `before` or `after`.
+-   `_version_from`/`$VERSION_FROM`: [Git commit description][git describe] of the
+    template as it was before updating.
+-   `_version_to`/`$VERSION_TO`: [Git commit description][git describe] of the template
+    as it will be after updating.
+-   `_version_current`/`$VERSION_CURRENT`: The `version` detector as you indicated it
+    when describing migration tasks (only when `version` is given).
+-   `_version_pep440_from`/`$VERSION_PEP440_FROM`,
+    `_version_pep440_to`/`$VERSION_PEP440_TO`,
+    `_version_pep440_current`/`$VERSION_PEP440_CURRENT`: Same as the above, but
+    normalized into a standard [PEP 440][] version. In Jinja templates these are
+    represented as
+    [packaging.version.Version](https://packaging.pypa.io/en/stable/version.html#packaging.version.Version)
+    objects and allow access to their attributes. As environment variables they are
+    represented as strings. If you use variables to perform migrations, you probably
+    will prefer to use these variables.
 
 [git describe]: https://git-scm.com/docs/git-describe
 [pep 440]: https://www.python.org/dev/peps/pep-0440/
@@ -1191,14 +1203,28 @@ Migration processes will receive these environment variables:
 
     ```yaml title="copier.yml"
     _migrations:
-        - version: v1.0.0
-          before:
-              - rm ./old-folder
-          after:
-              # {{ _copier_conf.src_path }} points to the path where the template was
-              # cloned, so it can be helpful to run migration scripts stored there.
-              - invoke -r {{ _copier_conf.src_path }} -c migrations migrate $VERSION_CURRENT
+      # {{ _copier_conf.src_path }} points to the path where the template was
+      # cloned, so it can be helpful to run migration scripts stored there.
+      - invoke -r {{ _copier_conf.src_path }} -c migrations migrate $STAGE $VERSION_FROM $VERSION_TO
+      - version: v1.0.0
+        command: rm ./old-folder
+        when: "{{ _stage == 'before' }}"
     ```
+
+In Copier versions before v9.3.0 a different configuration format had to be used. This
+format is still available, but will raise a warning when used.
+
+Each item in the list is a `dict` with the following keys:
+
+-   **version**: Indicates the version that the template update has to go through to
+    trigger this migration. It is evaluated using [PEP 440][].
+-   **before** (optional): Commands to execute before performing the update. The answers
+    file is reloaded after running migrations in this stage, to let you migrate answer
+    values.
+-   **after** (optional): Commands to execute after performing the update.
+
+The migration variables mentioned above are available as environment variables, but
+can't be used in jinja templates.
 
 ### `min_copier_version`
 
@@ -1408,13 +1434,23 @@ This allows you to keep separate the template metadata and the template code.
 
 ### `tasks`
 
--   Format: `List[str|List[str]]`
+-   Format: `List[str|List[str]|dict]`
 -   CLI flags: N/A
 -   Default value: `[]`
 
 Commands to execute after generating or updating a project from your template.
 
 They run ordered, and with the `$STAGE=task` variable in their environment.
+
+If a `dict` is given it can contain the following items:
+
+-   **command**: The task command to run.
+-   **when** (optional): Specifies a condition that needs to hold for the task to run.
+-   **working_directory** (optional): Specifies the directory in which the command will
+    be run. Defaults to the destination directory.
+
+If a `str` or `List[str]` is given as a task it will be treated as `command` with all
+other items not present.
 
 !!! example
 
@@ -1430,12 +1466,10 @@ They run ordered, and with the `$STAGE=task` variable in their environment.
         # Your script can be run by the same Python environment used to run Copier
         - ["{{ _copier_python }}", task.py]
         # OS-specific task (supported values are "linux", "macos", "windows" and `None`)
-        - >-
-          {% if _copier_conf.os in ['linux', 'macos'] %}
-          rm {{ name_of_the_project }}/README.md
-          {% elif _copier_conf.os == 'windows' %}
-          Remove-Item {{ name_of_the_project }}/README.md
-          {% endif %}
+        - command: rm {{ name_of_the_project }}/README.md
+          when: "{{ _copier_conf.os in  ['linux', 'macos'] }}"
+        - command: Remove-Item {{ name_of_the_project }}\\README.md
+          when: "{{ _copier_conf.os == 'windows' }}"
     ```
 
     Note: the example assumes you use [Invoke](https://www.pyinvoke.org/) as

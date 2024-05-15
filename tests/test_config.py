@@ -33,8 +33,8 @@ def test_config_data_is_loaded_from_file() -> None:
     assert tpl.exclude == ("exclude1", "exclude2")
     assert tpl.skip_if_exists == ["skip_if_exists1", "skip_if_exists2"]
     assert tpl.tasks == [
-        Task(cmd="touch 1", extra_env={"STAGE": "task"}),
-        Task(cmd="touch 2", extra_env={"STAGE": "task"}),
+        Task(cmd="touch 1", extra_vars={"stage": "task"}),
+        Task(cmd="touch 2", extra_vars={"stage": "task"}),
     ]
 
 
@@ -296,8 +296,8 @@ def test_worker_good_data(tmp_path: Path) -> None:
     assert conf.all_exclusions == ("exclude1", "exclude2")
     assert conf.template.skip_if_exists == ["skip_if_exists1", "skip_if_exists2"]
     assert conf.template.tasks == [
-        Task(cmd="touch 1", extra_env={"STAGE": "task"}),
-        Task(cmd="touch 2", extra_env={"STAGE": "task"}),
+        Task(cmd="touch 1", extra_vars={"stage": "task"}),
+        Task(cmd="touch 2", extra_vars={"stage": "task"}),
     ]
 
 

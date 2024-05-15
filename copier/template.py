@@ -28,7 +28,7 @@ from .errors import (
     UnsupportedVersionError,
 )
 from .tools import copier_version, handle_remove_readonly
-from .types import AnyByStrDict, Env, VCSTypes
+from .types import AnyByStrDict, VCSTypes
 from .vcs import checkout_latest_tag, clone, get_git, get_repo
 
 # Default list of files in the template to exclude from the rendered project
@@ -153,12 +153,26 @@ class Task:
         cmd:
             Command to execute.
 
-        extra_env:
-            Additional environment variables to set while executing the command.
+        extra_vars:
+            Additional variables for the task.
+            Will be available as Jinja variables for rendering of `cmd`, `condition`
+            and `working_directory` and as environment variables while the task is
+            running.
+            As Jinja variables they will be prefixed by an underscore, while as
+            environment variables they will be upper cased.
+
+        condition:
+            The condition when a conditional task runs.
+
+        working_directory:
+            The directory from inside where to execute the task.
+            If `None`, the project directory will be used.
     """
 
     cmd: str | Sequence[str]
-    extra_env: Env = field(default_factory=dict)
+    extra_vars: dict[str, Any] = field(default_factory=dict)
+    condition: str | bool = True
+    working_directory: Path = Path(".")
 
 
 @dataclass
@@ -370,27 +384,64 @@ class Template:
         """
         result: list[Task] = []
         if not (self.version and from_template.version):
-            return result
-        extra_env: Env = {
-            "STAGE": stage,
-            "VERSION_FROM": str(from_template.commit),
-            "VERSION_TO": str(self.commit),
-            "VERSION_PEP440_FROM": str(from_template.version),
-            "VERSION_PEP440_TO": str(self.version),
+            return []
+        extra_vars: dict[str, Any] = {
+            "stage": stage,
+            "version_from": from_template.commit,
+            "version_to": self.commit,
+            "version_pep440_from": from_template.version,
+            "version_pep440_to": self.version,
         }
         migration: dict[str, Any]
         for migration in self._raw_config.get("_migrations", []):
-            current = parse(migration["version"])
-            if self.version >= current > from_template.version:
-                extra_env = {
-                    **extra_env,
-                    "VERSION_CURRENT": migration["version"],
-                    "VERSION_PEP440_CURRENT": str(current),
-                }
-                result.extend(
-                    Task(cmd=cmd, extra_env=extra_env)
-                    for cmd in migration.get(stage, [])
+            if any(key in migration for key in ("before", "after")):
+                # Legacy configuration format
+                warn(
+                    "This migration configuration is deprecated. Please switch to the new format.",
+                    category=DeprecationWarning,
                 )
+                current = parse(migration["version"])
+                if self.version >= current > from_template.version:
+                    extra_vars = {
+                        **extra_vars,
+                        "version_current": migration["version"],
+                        "version_pep440_current": current,
+                    }
+                    result.extend(
+                        Task(cmd=cmd, extra_vars=extra_vars)
+                        for cmd in migration.get(stage, [])
+                    )
+            else:
+                # New configuration format
+                if isinstance(migration, (str, list)):
+                    result.append(
+                        Task(
+                            cmd=migration,
+                            extra_vars=extra_vars,
+                            condition='{{ _stage == "after" }}',
+                        )
+                    )
+                else:
+                    condition = migration.get("when", '{{ _stage == "after" }}')
+                    working_directory = Path(migration.get("working_directory", "."))
+                    if "version" in migration:
+                        current = parse(migration["version"])
+                        if not (self.version >= current > from_template.version):
+                            continue
+                        extra_vars = {
+                            **extra_vars,
+                            "version_current": migration["version"],
+                            "version_pep440_current": current,
+                        }
+                    result.append(
+                        Task(
+                            cmd=migration["command"],
+                            extra_vars=extra_vars,
+                            condition=condition,
+                            working_directory=working_directory,
+                        )
+                    )
+
         return result
 
     @cached_property
@@ -456,10 +507,21 @@ class Template:
 
         See [tasks][].
         """
-        return [
-            Task(cmd=cmd, extra_env={"STAGE": "task"})
-            for cmd in self.config_data.get("tasks", [])
-        ]
+        extra_vars = {"stage": "task"}
+        tasks = []
+        for task in self.config_data.get("tasks", []):
+            if isinstance(task, dict):
+                tasks.append(
+                    Task(
+                        cmd=task["command"],
+                        extra_vars=extra_vars,
+                        condition=task.get("when", "true"),
+                        working_directory=Path(task.get("working_directory", ".")),
+                    )
+                )
+            else:
+                tasks.append(Task(cmd=task, extra_vars=extra_vars))
+        return tasks
 
     @cached_property
     def templates_suffix(self) -> str:
