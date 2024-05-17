@@ -98,6 +98,19 @@
                 taplo
               ];
               difftastic.enable = true;
+              languages.python = {
+                enable = true;
+                poetry = {
+                  enable = true;
+                  install = {
+                    enable = true;
+                    installRootPackage = true;
+                    groups = ["dev" "docs"];
+                  };
+                  activate.enable = true;
+                  package = pkgs.poetry;
+                };
+              };
               pre-commit.hooks = {
                 alejandra.enable = true;
                 commitizen.enable = true;
