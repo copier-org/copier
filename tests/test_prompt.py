@@ -810,8 +810,7 @@ CHOICES = [pytest.param(*specs, id=id) for id, specs in _CHOICES.items()]
 
 
 class QuestionTreeFixture(Protocol):
-    def __call__(self, **kwargs) -> tuple[Path, Path]:
-        ...
+    def __call__(self, **kwargs) -> tuple[Path, Path]: ...
 
 
 @pytest.fixture
@@ -838,8 +837,7 @@ def question_tree(tmp_path_factory: pytest.TempPathFactory) -> QuestionTreeFixtu
 
 
 class CopierFixture(Protocol):
-    def __call__(self, *args, **kwargs) -> PopenSpawn:
-        ...
+    def __call__(self, *args, **kwargs) -> PopenSpawn: ...
 
 
 @pytest.fixture

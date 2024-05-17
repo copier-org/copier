@@ -17,8 +17,7 @@ from copier.types import AnyByStrDict
 from .helpers import build_file_tree
 
 
-class JinjaExtension(Extension):
-    ...
+class JinjaExtension(Extension): ...
 
 
 @pytest.mark.parametrize(
