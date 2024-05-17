@@ -142,6 +142,15 @@
                   types_or = ["python" "pyi"];
                   require_serial = true;
                 };
+                poetry-ruff-format = {
+                  enable = true;
+                  name = "ruff-format";
+                  description = "Run 'ruff format' for extremely fast Python formatting";
+                  entry = "''${pkgs.poetry}/bin/poetry run -C $DEVENV_ROOT ruff format --force-exclude";
+                  language = "system";
+                  types_or = ["python" "pyi"];
+                  require_serial = true;
+                };
                 taplo.enable = true;
               };
             }
