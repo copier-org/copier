@@ -47,6 +47,12 @@
             inherit python version;
             name = "copier-${version}";
             projectDir = ./.;
+            overrides = pkgs.poetry2nix.overrides.withDefaults (final: prev: {
+              # Use official `ruff` package from pypi.org
+              ruff = prev.ruff.override {
+                preferWheel = true;
+              };
+            });
 
             # Trick poetry-dynamic-versioning into using our version
             POETRY_DYNAMIC_VERSIONING_BYPASS = version;
@@ -94,7 +100,6 @@
                 commitizen
                 mypy
                 nodePackages.prettier
-                ruff
                 taplo
               ];
               difftastic.enable = true;
@@ -128,7 +133,15 @@
                   # HACK https://github.com/prettier/prettier/issues/9430
                   "^tests/demo"
                 ];
-                ruff.enable = true;
+                poetry-ruff = {
+                  enable = true;
+                  name = "ruff";
+                  description = "Run 'ruff' for extremely fast Python linting";
+                  entry = "''${pkgs.poetry}/bin/poetry run -C $DEVENV_ROOT ruff check --force-exclude --fix --exit-non-zero-on-fix";
+                  language = "system";
+                  types_or = ["python" "pyi"];
+                  require_serial = true;
+                };
                 taplo.enable = true;
               };
             }
