@@ -494,13 +494,13 @@ testing = ["coverage", "pyyaml"]
 
 [[package]]
 name = "markdown-exec"
-version = "1.8.1"
+version = "1.8.2"
 description = "Utilities to execute code blocks in Markdown files."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "markdown_exec-1.8.1-py3-none-any.whl", hash = "sha256:63c769ebf202b1c1f97822c72e4467d39e151b741aeb94758b3de20066ed3b5f"},
-    {file = "markdown_exec-1.8.1.tar.gz", hash = "sha256:1fe4e344f3dc000dd7e764ab1ee21d14e4e15c91afc8c6d35f18d694693eb696"},
+    {file = "markdown_exec-1.8.2-py3-none-any.whl", hash = "sha256:559e9a092db62751ecac1bd45e4a1ef5123b5dee3ffdf56ba2d85833052b06b8"},
+    {file = "markdown_exec-1.8.2.tar.gz", hash = "sha256:6c491f3b530b9d86875be903b4b3d67b643e3a0063a6c65fe849d3aaf3ca12a9"},
 ]
 
 [package.dependencies]
