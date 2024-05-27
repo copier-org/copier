@@ -113,7 +113,7 @@ Copier targets these main human audiences:
 > Copier doesn't replace the DRY principle... but sometimes you simply can't be
 > DRY and you need a DRYing machine...
 
-1.  **Template consumers**. Programmers that want to start a new project quickly, or
+2.  **Template consumers**. Programmers that want to start a new project quickly, or
     that want to evolve it comfortably.
 
 Non-humans should be happy also by using Copier's CLI or API, as long as their
