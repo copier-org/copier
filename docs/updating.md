@@ -208,3 +208,25 @@ your answers from the last update.
 Of course, the experience will be less satisfactory. The new template will override any
 changes found in your local project. But you can use a Git diff tool to overcome that.
 After doing this, further updates generally keep on working as usual.
+
+### Aborting an update
+
+When you're not happy with the result of a `copier update` run or unsure about adding
+the introduced changes to your code base, specifically when you have unpleasant
+conflicts, it's not 100% obvious how to get back to the previously clean copy of your
+branch. The following strategies won't work:
+
+-   `git checkout <branch>` – error: you need to resolve your current index first
+-   `git checkout .` – error: path '\<filename>' is unmerged
+-   `git merge --abort` – fatal: There is no merge to abort (MERGE_HEAD missing)
+
+Here is what you can do using Git in the terminal to throw away all changes:
+
+```shell
+git reset           # throw away merge conflict information
+git checkout .      # restore modified files
+git clean -d -i     # remove untracked files and folders
+```
+
+If you want fine-grained control to restore files selectively, read the output of the
+`git status` command attentively. It shows all the commands you may need as hints!
