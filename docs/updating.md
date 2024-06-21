@@ -216,9 +216,9 @@ the introduced changes to your code base, specifically when you have unpleasant
 conflicts, it's not 100% obvious how to get back to the previously clean copy of your
 branch. The following strategies won't work:
 
--   `git checkout <branch>` – error: you need to resolve your current index first
--   `git checkout .` – error: path '\<filename>' is unmerged
--   `git merge --abort` – fatal: There is no merge to abort (MERGE_HEAD missing)
+-   `git checkout <branch>` – _error: you need to resolve your current index first_
+-   `git checkout .` – _error: path '&lt;filename&gt;' is unmerged_
+-   `git merge --abort` – _fatal: There is no merge to abort (MERGE_HEAD missing)_
 
 Here is what you can do using Git in the terminal to throw away all changes:
 
