@@ -15,13 +15,10 @@
   };
   inputs = {
     devenv.url = "github:cachix/devenv/latest";
-    flake-compat = {
-      url = github:edolstra/flake-compat;
-      flake = false;
-    };
-    flake-utils.url = github:numtide/flake-utils;
-    nixpkgs.url = github:NixOS/nixpkgs/release-23.11;
-    poetry2nix.url = github:nix-community/poetry2nix;
+    flake-compat.url = "https://flakehub.com/f/edolstra/flake-compat/1.*.tar.gz";
+    flake-utils.url = "https://flakehub.com/f/numtide/flake-utils/0.1.*.tar.gz";
+    nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/*.tar.gz";
+    poetry2nix.url = "github:nix-community/poetry2nix";
     poetry2nix.inputs.nixpkgs.follows = "nixpkgs";
   };
 
