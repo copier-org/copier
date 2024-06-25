@@ -153,7 +153,8 @@ meaningful in the changelog, then please don't use one of those categories.
 
 If you're a maintainer and you want to merge a PR that will produce a confusing
 changelog, then please squash the PR on merge, and change the commit message to make it
-meaningful. Remember to [respect co-autorship](https://docs.github.com/en/pull-requests/committing-changes-to-your-project/creating-and-editing-commits/creating-a-commit-with-multiple-authors)
+meaningful. Remember to
+[respect co-autorship](https://docs.github.com/en/pull-requests/committing-changes-to-your-project/creating-and-editing-commits/creating-a-commit-with-multiple-authors)
 when squashing, especially if multiple authors were involved.
 
 If the last commit is pushed back by `github-actions[bot]` and named
