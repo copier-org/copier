@@ -63,6 +63,26 @@ your host environment:
     environment.
 -   [Direnv](https://direnv.net/) to load that environment automatically in your shell.
 
+### Without Nix
+
+For some reasons you might want to avoid installing Nix in your system. Maybe you don't
+have enough permissions, you work on Windows, or you just don't want to add yet another
+package manager to your system. We believe Nix is awesome enough so as to be the default
+tool for almost any developer, but we respect your choice.
+
+You can use standard Python tooling such as [Poetry][] and a valid Python installation
+installed in an imperative manner of your choice.
+
+However, you won't be able to auto-lint or auto-format code without Nix. If you don't
+have Nix installed but you have Docker or Podman, you can run `poe lint` and get similar
+results. It will use a container to install Nix, and Nix to install the formatters.
+
+If you still don't have Docker or Podman, don't worry. You can push your changes without
+formatting. As long as you give Copier maintainers permissions to change your PR, a bot
+will kindly auto-format code for you and push it back to your branch.
+
+[Poetry]: https://python-poetry.org/
+
 ## Get Started!
 
 Ready to contribute? Here's how to set up the project for local development.
@@ -83,9 +103,8 @@ Ready to contribute? Here's how to set up the project for local development.
     ```
 
     Direnv will take some time to load for the 1st time. It will download all
-    development dependencies, including [Poetry](https://python-poetry.org/), and it
-    will use it to create a virtualenv and install Copier with all its development
-    dependencies too.
+    development dependencies, including [Poetry][], and it will use it to create a
+    virtualenv and install Copier with all its development dependencies too.
 
 1.  Create a branch for local development:
 
@@ -130,11 +149,20 @@ our [changelog](CHANGELOG.md). Changes that are included there are of type `fix`
 and `refactor`; also `BREAKING CHANGE:` trailers will appear. If your change is not
 meaningful in the changelog, then please don't use one of those categories.
 
+### Maintainer notes
+
 If you're a maintainer and you want to merge a PR that will produce a confusing
 changelog, then please squash the PR on merge, and change the commit message to make it
 meaningful. Remember to
 [respect co-autorship](https://docs.github.com/en/pull-requests/committing-changes-to-your-project/creating-and-editing-commits/creating-a-commit-with-multiple-authors)
 when squashing, especially if multiple authors were involved.
+
+If the last commit is pushed back by `github-actions[bot]` and named
+`style: autoformat with pre-commit`, it's most likely an automatic reformatting commit
+done by the CI.
+[Those kind of commits cannot trigger other workflows](https://docs.github.com/en/actions/using-workflows/triggering-a-workflow#triggering-a-workflow-from-a-workflow).
+Thus, to be able to re-run CI, close and reopen the PR. Consider squashing on merge if
+possible and practical.
 
 ## Tips
 
