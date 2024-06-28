@@ -73,7 +73,6 @@ def test_copy_skip_tasks(template_path: str, tmp_path: Path) -> None:
         quiet=True,
         defaults=True,
         overwrite=True,
-        unsafe=True,
         skip_tasks=True,
     )
     assert not (tmp_path / "hello").exists()
