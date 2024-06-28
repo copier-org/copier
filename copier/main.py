@@ -241,7 +241,7 @@ class Worker:
         features: set[str] = set()
         if self.template.jinja_extensions:
             features.add("jinja_extensions")
-        if self.template.tasks:
+        if self.template.tasks and not self.skip_tasks:
             features.add("tasks")
         if mode == "update" and self.subproject.template:
             if self.subproject.template.jinja_extensions:
