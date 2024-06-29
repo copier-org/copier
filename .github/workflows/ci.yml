@@ -134,15 +134,6 @@ jobs:
           cache-store: "false"
       - run: copier --version
 
-      # Autoformat and try to push back changes
-      - run: pre-commit run -a
-        continue-on-error: true
-      - uses: stefanzweifel/git-auto-commit-action@v5
-        continue-on-error: true
-        with:
-          commit_message: "style: autoformat with pre-commit"
-          commit_options: --no-verify
-
       # Run nix checks
       - run: nix flake check -L --accept-flake-config --impure
 

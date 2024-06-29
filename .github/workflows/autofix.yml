@@ -1,0 +1,34 @@
+name: autofix.ci # needed to securely identify the workflow
+
+on:
+  pull_request:
+  push:
+    branches: ["master"]
+permissions:
+  contents: read
+
+jobs:
+  autofix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Install Nix and set up Cachix
+      - uses: cachix/install-nix-action@V27
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+      - uses: cachix/cachix-action@v15
+        with:
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          extraPullNames: devenv
+          name: copier
+          pushFilter: (-source$|nixpkgs\.tar\.gz$)
+
+      # Autoformat and try to push back changes
+      - run: nix develop --impure -c pre-commit run -a --show-diff-on-failure
+        continue-on-error: true
+      # HACK https://github.com/autofix-ci/action/pull/15
+      - run: nix develop --impure -c pre-commit uninstall -t pre-commit -t commit-msg
+      - uses: autofix-ci/action@v1.3
+        with:
+          commit-message: "style: autoformat with pre-commit"
