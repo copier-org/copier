@@ -51,7 +51,6 @@ mypy = ">=0.931"
 pexpect = ">=4.8.0"
 poethepoet = ">=0.12.3"
 pre-commit = ">=2.17.0"
-pyclean = ">=3.0.0"
 pytest = ">=7.2.0"
 pytest-cov = ">=3.0.0"
 pytest-gitconfig = ">=0.6.0"
@@ -76,10 +75,6 @@ optional = true
 
 [tool.poetry.group.build.dependencies]
 poetry-dynamic-versioning = { version = ">=1.1.0", markers = "python_version < '4'" }
-
-[tool.poe.tasks.clean]
-cmd = "pyclean . --debris --verbose"
-help = "remove Python bytecode and build artifacts"
 
 [tool.poe.tasks.coverage]
 cmd = "pytest --cov-report html --cov copier copier tests"

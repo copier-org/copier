@@ -975,17 +975,6 @@ files = [
 ]
 
 [[package]]
-name = "pyclean"
-version = "3.0.0"
-description = "Pure Python cross-platform pyclean. Clean up your Python bytecode."
-optional = false
-python-versions = ">=3.5"
-files = [
-    {file = "pyclean-3.0.0-py3-none-any.whl", hash = "sha256:a1d8114991cf09994bc511cd0b050f3e398ae2bc8bfc0bbd1bdbec8ba048e6dd"},
-    {file = "pyclean-3.0.0.tar.gz", hash = "sha256:a48be7afd512b1923a7b9decc1219bbbe2d73199c939b46c936448f904a180ce"},
-]
-
-[[package]]
 name = "pydantic"
 version = "2.7.4"
 description = "Data validation using Python type hints"
@@ -1701,4 +1690,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8"
-content-hash = "30064fe7e1705b6e3586518165b841e33327cdf72c52e2b7242e01a895443ec3"
+content-hash = "e9f5b300ab32886155c864b53e3d0e1dcf7cfdd7ed12567cf781cdf5e2edaaa8"
