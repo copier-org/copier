@@ -76,10 +76,6 @@ optional = true
 [tool.poetry.group.build.dependencies]
 poetry-dynamic-versioning = { version = ">=1.1.0", markers = "python_version < '4'" }
 
-[tool.poe.tasks.clean]
-script = "devtasks:clean"
-help = "remove build/python artifacts"
-
 [tool.poe.tasks.coverage]
 cmd = "pytest --cov-report html --cov copier copier tests"
 help = "generate an HTML report of the coverage"

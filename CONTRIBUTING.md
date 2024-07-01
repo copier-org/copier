@@ -121,6 +121,12 @@ Ready to contribute? Here's how to set up the project for local development.
     poe lint
     ```
 
+1.  Optionally, use pyclean to remove Python bytecode and build artifacts, e.g.
+
+    ```shell
+    pipx run pyclean . --debris --verbose
+    ```
+
 1.  Commit your changes and push your branch to GitHub:
 
     ```shell
