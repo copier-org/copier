@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.3.0 (2024-07-01)
+
+### Feat
+
+-   add simpler migrations configuration syntax (#1510)
+
+### Fix
+
+-   **tasks**: do not consider unsafe if they are being skipped
+-   add context information to answer validation error message (#1609)
+-   do not overwrite identical files (#1576)
+-   **updating**: unset invalid last answers
+-   render `default` list items for multi-select choice questions
+-   **updating**: yield merge conflict when both template and project add same file
+
 ## v9.2.0 (2024-04-04)
 
 ### Feat
