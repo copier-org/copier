@@ -222,6 +222,7 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
             vcs_ref=self.vcs_ref,
             use_prereleases=self.prereleases,
             unsafe=self.unsafe,
+            skip_tasks=self.skip_tasks,
             **kwargs,
         )
 
