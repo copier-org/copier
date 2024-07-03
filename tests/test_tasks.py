@@ -4,8 +4,10 @@ from pathlib import Path
 from typing import Literal
 
 import pytest
+import yaml
 
 import copier
+from copier.cli import CopierApp
 
 from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree
 
@@ -80,6 +82,24 @@ def test_copy_skip_tasks(template_path: str, tmp_path: Path) -> None:
     assert not (tmp_path / "hello" / "world").exists()
     assert not (tmp_path / "bye").is_file()
     assert not (tmp_path / "pyfile").is_file()
+
+
+@pytest.mark.parametrize("skip_tasks", [False, True])
+def test_copy_cli_skip_tasks(
+    tmp_path_factory: pytest.TempPathFactory,
+    skip_tasks: bool,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ["src", "dst"])
+    build_file_tree(
+        {(src / "copier.yaml"): yaml.safe_dump({"_tasks": ["touch task.txt"]})}
+    )
+    _, retcode = CopierApp.run(
+        ["copier", "copy", "--UNSAFE", *(["--skip-tasks"] if skip_tasks else []), str(src), str(dst)],
+        exit=False,
+    )
+
+    assert retcode == 0
+    assert (dst / "task.txt").exists() is (not skip_tasks)
 
 
 def test_pretend_mode(tmp_path_factory: pytest.TempPathFactory) -> None:
