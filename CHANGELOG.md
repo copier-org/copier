@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.3.1 (2024-07-03)
+
+### Fix
+
+-   pass `--skip-tasks` flag to worker (#1688)
+
 ## v9.3.0 (2024-07-01)
 
 ### Feat
