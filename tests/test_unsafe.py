@@ -113,9 +113,6 @@ def test_copy_cli(
         assert "Template uses potentially unsafe feature: tasks." in err
 
 
-
-
-
 @pytest.mark.parametrize(
     ("spec_old", "spec_new", "expected"),
     [
