@@ -97,7 +97,6 @@ def test_copy_cli_skip_tasks(
         ["copier", "copy", "--UNSAFE", *(["--skip-tasks"] if skip_tasks else []), str(src), str(dst)],
         exit=False,
     )
-
     assert retcode == 0
     assert (dst / "task.txt").exists() is (not skip_tasks)
 
