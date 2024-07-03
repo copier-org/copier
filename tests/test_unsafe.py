@@ -113,6 +113,28 @@ def test_copy_cli(
         assert "Template uses potentially unsafe feature: tasks." in err
 
 
+@pytest.mark.parametrize("skip_tasks", [False, True])
+def test_copy_cli_skip_tasks(
+    tmp_path_factory: pytest.TempPathFactory,
+    skip_tasks: bool,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ["src", "dst"])
+    build_file_tree(
+        {(src / "copier.yaml"): yaml.safe_dump({"_tasks": ["touch task.txt"]})}
+    )
+    _, retcode = CopierApp.run(
+        ["copier", "copy", "--UNSAFE", *(["--skip-tasks"] if skip_tasks else []), str(src), str(dst)],
+        exit=False,
+    )
+
+    assert retcode == 0
+
+    if skip_tasks:
+        assert not (dst / "task.txt").exists()
+    else:
+        assert (dst / "task.txt").exists()
+
+
 @pytest.mark.parametrize(
     ("spec_old", "spec_new", "expected"),
     [
