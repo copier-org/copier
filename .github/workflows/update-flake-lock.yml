@@ -16,5 +16,6 @@ jobs:
         uses: DeterminateSystems/update-flake-lock@main
         with:
           commit-msg: "build(flake): update lock"
+          pr-title: "build(flake): update lock"
           pr-labels: |
             dependencies
