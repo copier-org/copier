@@ -1478,3 +1478,43 @@ def test_update_with_new_file_in_template_and_project_via_migration(
         >>>>>>> after updating
         """
     )
+
+
+def test_update_with_separate_git_directory(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst, dst_git_dir = map(tmp_path_factory.mktemp, ("src", "dst", "dst_git_dir"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "version.txt": "v1",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+            }
+        )
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "v1")
+
+    run_copy(str(src), dst, overwrite=True)
+    assert "_commit: v1" in (dst / ".copier-answers.yml").read_text()
+
+    with local.cwd(dst):
+        git("init", "--separate-git-dir", dst_git_dir)
+        # Add a file to make sure the subproject's tree object is different from
+        # that of the fresh copy from the old template version; otherwise, we
+        # cannot test the linking of local (temporary) repositories for
+        # borrowing Git objects.
+        build_file_tree({"foo.txt": "bar"})
+        git("add", ".")
+        git("commit", "-m1")
+
+    with local.cwd(src):
+        build_file_tree({"version.txt": "v2"})
+        git("add", ".")
+        git("commit", "-m2")
+        git("tag", "v2")
+
+    run_update(dst, overwrite=True)
+    assert "_commit: v2" in (dst / ".copier-answers.yml").read_text()
