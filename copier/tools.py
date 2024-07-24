@@ -232,3 +232,38 @@ def escape_git_path(path: str) -> str:
         lambda match: "".join(f"\\{whitespace}" for whitespace in match.group()),
         path,
     )
+
+
+def get_git_objects_dir(path: Path) -> Path:
+    """Get the absolute path of a Git repository's objects directory."""
+    # FIXME: A lazy import is currently necessary to avoid circular imports with
+    # `errors.py`.
+    from .vcs import get_git
+
+    git = get_git()
+    return Path(
+        git(
+            "-C",
+            path,
+            "rev-parse",
+            "--path-format=absolute",
+            "--git-path",
+            "objects",
+        ).strip()
+    )
+
+
+def set_git_alternates(*repos: Path, path: Path = Path(".")) -> None:
+    """Set Git alternates to borrow Git objects from other repositories.
+
+    Alternates are paths of other repositories' object directories written to
+    `$GIT_DIR/objects/info/alternates` and delimited by the newline character.
+
+    Args:
+        *repos: The paths of repositories from which to borrow Git objects.
+        path: The path of the repository where to set Git alternates. Defaults
+            to the current working directory.
+    """
+    alternates_file = get_git_objects_dir(path) / "info" / "alternates"
+    alternates_file.parent.mkdir(parents=True, exist_ok=True)
+    alternates_file.write_bytes(b"\n".join(map(bytes, map(get_git_objects_dir, repos))))
