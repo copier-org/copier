@@ -4,7 +4,6 @@ from pathlib import Path
 import pytest
 from packaging.version import Version
 from plumbum import local
-from plumbum.cmd import git
 
 import copier
 from copier.errors import (
@@ -13,7 +12,7 @@ from copier.errors import (
     UnsupportedVersionError,
 )
 
-from .helpers import build_file_tree
+from .helpers import build_file_tree, git
 
 
 @pytest.fixture(scope="module")
@@ -64,8 +63,6 @@ def test_minimum_version_update(
 
     with local.cwd(tmp_path):
         git("init")
-        git("config", "user.name", "Copier Test")
-        git("config", "user.email", "test@copier")
         git("add", ".")
         git("commit", "-m", "hello world")
 

@@ -9,7 +9,6 @@ import pytest
 import yaml
 from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
-from plumbum.cmd import git
 
 from copier import Worker
 from copier.errors import InvalidTypeError
@@ -24,6 +23,7 @@ from .helpers import (
     Spawn,
     build_file_tree,
     expect_prompt,
+    git,
     git_init,
 )
 

@@ -17,10 +17,18 @@ from plumbum.machines import LocalCommand
 from .errors import DirtyLocalWarning, ShallowCloneWarning
 from .types import OptBool, OptStrOrPath, StrOrPath
 
+GIT_USER_NAME = "Copier"
+GIT_USER_EMAIL = "copier@copier"
+
 
 def get_git(context_dir: OptStrOrPath = None) -> LocalCommand:
     """Gets `git` command, or fails if it's not available."""
-    command = local["git"]
+    command = local["git"].with_env(
+        GIT_AUTHOR_NAME=GIT_USER_NAME,
+        GIT_AUTHOR_EMAIL=GIT_USER_EMAIL,
+        GIT_COMMITTER_NAME=GIT_USER_NAME,
+        GIT_COMMITTER_EMAIL=GIT_USER_EMAIL,
+    )
     if context_dir:
         command = command["-C", context_dir]
     return command

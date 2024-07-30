@@ -10,7 +10,6 @@ import pexpect
 import pytest
 import yaml
 from plumbum import local
-from plumbum.cmd import git
 
 from copier.cli import CopierApp
 from copier.errors import UserMessageError
@@ -24,6 +23,7 @@ from .helpers import (
     SUFFIX_TMPL,
     Spawn,
     build_file_tree,
+    git,
     git_init,
 )
 
@@ -185,9 +185,6 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
     # Init destination as a new independent git repo
     with local.cwd(target):
         git("init")
-        # Configure git in case you're running in CI
-        git("config", "user.name", "Copier Test")
-        git("config", "user.email", "test@copier")
         # Commit changes
         git("add", ".")
         commit("-m", "hello world")

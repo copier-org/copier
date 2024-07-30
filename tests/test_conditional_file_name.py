@@ -1,12 +1,11 @@
 import pexpect
 import pytest
 from plumbum import local
-from plumbum.cmd import git
 from pytest import TempPathFactory
 
 import copier
 
-from .helpers import COPIER_PATH, Spawn, build_file_tree, expect_prompt
+from .helpers import COPIER_PATH, Spawn, build_file_tree, expect_prompt, git
 
 
 def test_render_conditional(tmp_path_factory: TempPathFactory) -> None:

@@ -6,11 +6,10 @@ from typing import Callable, Generator
 import pytest
 import yaml
 from plumbum import local
-from plumbum.cmd import git
 
 from copier.cli import CopierApp
 
-from .helpers import COPIER_CMD, build_file_tree
+from .helpers import COPIER_CMD, build_file_tree, git
 
 
 @pytest.fixture(scope="module")

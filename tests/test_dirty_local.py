@@ -3,14 +3,13 @@ from shutil import copy2, copytree
 
 import pytest
 from plumbum import local
-from plumbum.cmd import git
 from pytest_gitconfig.plugin import GitConfig
 
 import copier
 from copier.errors import DirtyLocalWarning
 from copier.main import run_copy, run_update
 
-from .helpers import DATA, PROJECT_TEMPLATE, build_file_tree
+from .helpers import DATA, PROJECT_TEMPLATE, build_file_tree, git
 
 
 def test_copy(tmp_path_factory: pytest.TempPathFactory) -> None:

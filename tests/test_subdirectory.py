@@ -5,11 +5,10 @@ from typing import Literal
 import pytest
 import yaml
 from plumbum import local
-from plumbum.cmd import git
 
 import copier
 
-from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree, git_init
+from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree, git, git_init
 
 
 @pytest.fixture(scope="module")

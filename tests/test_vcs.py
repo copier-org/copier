@@ -7,11 +7,12 @@ import pytest
 import yaml
 from packaging.version import Version
 from plumbum import local
-from plumbum.cmd import git
 
 from copier import Worker, run_copy, run_update
 from copier.errors import ShallowCloneWarning
 from copier.vcs import checkout_latest_tag, clone, get_git_version, get_repo
+
+from .helpers import git
 
 
 def test_get_repo() -> None:

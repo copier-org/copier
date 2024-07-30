@@ -10,7 +10,6 @@ import pytest
 import yaml
 from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
-from plumbum.cmd import git
 
 from copier import run_copy, run_update
 
@@ -23,6 +22,7 @@ from .helpers import (
     Spawn,
     build_file_tree,
     expect_prompt,
+    git,
 )
 
 BLK_START = BRACKET_ENVOPS["block_start_string"]

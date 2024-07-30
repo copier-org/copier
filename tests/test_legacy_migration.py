@@ -6,12 +6,11 @@ from shutil import copytree
 import pytest
 import yaml
 from plumbum import local
-from plumbum.cmd import git
 
 from copier import run_copy, run_update
 from copier.errors import UserMessageError
 
-from .helpers import BRACKET_ENVOPS_JSON, PROJECT_TEMPLATE, build_file_tree
+from .helpers import BRACKET_ENVOPS_JSON, PROJECT_TEMPLATE, build_file_tree, git
 
 SRC = Path(f"{PROJECT_TEMPLATE}_legacy_migrations").absolute()
 
@@ -33,8 +32,6 @@ def test_migrations_and_tasks(tmp_path: Path, skip_tasks: bool) -> None:
     copytree(SRC, src)
     with local.cwd(src):
         git("init")
-        git("config", "user.name", "Copier Test")
-        git("config", "user.email", "test@copier")
         git("add", ".")
         git("commit", "-m1")
         git("tag", "v1.0.0")
@@ -66,8 +63,6 @@ def test_migrations_and_tasks(tmp_path: Path, skip_tasks: bool) -> None:
     with local.cwd(dst):
         git("init")
         git("add", ".")
-        git("config", "user.name", "Copier Test")
-        git("config", "user.email", "test@copier")
         git("commit", "-m1")
     # Update it to v2
     run_update(

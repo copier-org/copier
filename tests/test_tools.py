@@ -3,10 +3,11 @@ from stat import S_IREAD
 from tempfile import TemporaryDirectory
 
 import pytest
-from plumbum.cmd import git
 from poethepoet.app import PoeThePoet
 
 from copier.tools import normalize_git_path
+
+from .helpers import git
 
 
 def test_types() -> None:

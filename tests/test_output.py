@@ -4,12 +4,11 @@ from pathlib import Path
 import pexpect
 import pytest
 from plumbum import local
-from plumbum.cmd import git
 
 from copier.errors import InvalidTypeError
 from copier.main import run_copy, run_recopy, run_update
 
-from .helpers import COPIER_PATH, Spawn, build_file_tree, expect_prompt, render
+from .helpers import COPIER_PATH, Spawn, build_file_tree, expect_prompt, git, render
 
 
 def test_output(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:

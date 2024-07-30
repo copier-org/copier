@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import platform
 import sys
-from typing import Iterator
+from typing import Any, Iterator
 
 import pytest
 from coverage.tracer import CTracer
 from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
-from pytest_gitconfig.plugin import GitConfig
+from pytest_gitconfig.plugin import DELETE, GitConfig
 
 from .helpers import Spawn
 
@@ -36,6 +36,18 @@ def spawn() -> Spawn:
         return PopenSpawn(cmd, timeout, logfile=sys.stderr.buffer)
 
     return _spawn
+
+
+@pytest.fixture(scope="session")
+def default_git_user_name() -> Any:
+    """Unset the default Git user name."""
+    return DELETE
+
+
+@pytest.fixture(scope="session")
+def default_git_user_email() -> Any:
+    """Unset the default Git user email."""
+    return DELETE
 
 
 @pytest.fixture(scope="session", autouse=True)
