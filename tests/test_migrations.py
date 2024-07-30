@@ -3,7 +3,6 @@ from pathlib import Path
 import pytest
 import yaml
 from plumbum import local
-from plumbum.cmd import git
 
 from copier import run_copy, run_update
 from copier.errors import UnsafeTemplateError, UserMessageError
@@ -12,6 +11,7 @@ from .helpers import (
     COPIER_ANSWERS_FILE,
     PROJECT_TEMPLATE,
     build_file_tree,
+    git,
     git_save,
 )
 

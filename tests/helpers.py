@@ -12,9 +12,11 @@ from typing import Any, Mapping, Protocol
 
 from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
-from plumbum.cmd import git
+from plumbum.cmd import git as _git
+from plumbum.machines import LocalCommand
 from prompt_toolkit.input.ansi_escape_sequences import REVERSE_ANSI_SEQUENCES
 from prompt_toolkit.keys import Keys
+from pytest_gitconfig.plugin import DEFAULT_GIT_USER_EMAIL, DEFAULT_GIT_USER_NAME
 
 import copier
 from copier.types import StrOrPath
@@ -139,6 +141,14 @@ def expect_prompt(
             tui.expect_exact(f"({expected_type})")
 
 
+git: LocalCommand = _git.with_env(
+    GIT_AUTHOR_NAME=DEFAULT_GIT_USER_NAME,
+    GIT_AUTHOR_EMAIL=DEFAULT_GIT_USER_EMAIL,
+    GIT_COMMITTER_NAME=DEFAULT_GIT_USER_NAME,
+    GIT_COMMITTER_EMAIL=DEFAULT_GIT_USER_EMAIL,
+)
+
+
 def git_save(
     dst: StrOrPath = ".",
     message: str = "Test commit",
@@ -168,7 +178,5 @@ def git_init(message: str = "hello world") -> None:
         message: The first commit message.
     """
     git("init")
-    git("config", "user.name", "Copier Test")
-    git("config", "user.email", "test@copier")
     git("add", ".")
     git("commit", "-m", message)

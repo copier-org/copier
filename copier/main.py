@@ -1104,8 +1104,6 @@ class Worker:
 
     def _git_commit(self, message: str = "dumb commit") -> None:
         git = get_git()
-        git("config", "user.name", "Copier")
-        git("config", "user.email", "copier@copier")
         # 1st commit could fail if any pre-commit hook reformats code
         # 2nd commit uses --no-verify to disable pre-commit-like checks
         git(
@@ -1124,8 +1122,6 @@ class Worker:
             "--no-gpg-sign",
             "--no-verify",
         )
-        git("config", "--unset", "user.name")
-        git("config", "--unset", "user.email")
 
 
 def run_copy(

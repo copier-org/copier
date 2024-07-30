@@ -3,13 +3,12 @@ from pathlib import Path
 
 import pytest
 from plumbum import local
-from plumbum.cmd import git
 
 from copier import run_copy, run_update
 from copier.errors import DirtyLocalWarning
 from copier.tools import readlink
 
-from .helpers import build_file_tree
+from .helpers import build_file_tree, git
 
 
 def test_copy_symlink(tmp_path_factory: pytest.TempPathFactory) -> None:

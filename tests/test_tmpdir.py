@@ -1,12 +1,11 @@
 from pathlib import Path
 
 import pytest
-from plumbum.cmd import git
 
 from copier.cli import CopierApp
 from copier.main import run_copy, run_recopy, run_update
 
-from .helpers import build_file_tree
+from .helpers import build_file_tree, git
 
 
 @pytest.fixture(scope="module")

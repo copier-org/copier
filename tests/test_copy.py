@@ -15,7 +15,6 @@ from typing import Any, ContextManager
 import pytest
 import yaml
 from plumbum import local
-from plumbum.cmd import git
 
 import copier
 from copier import run_copy
@@ -27,6 +26,7 @@ from .helpers import (
     PROJECT_TEMPLATE,
     assert_file,
     build_file_tree,
+    git,
     git_save,
     render,
 )
