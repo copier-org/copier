@@ -554,6 +554,80 @@ def test_skip_update(tmp_path_factory: pytest.TempPathFactory) -> None:
     assert not (dst / "skip_me.rej").exists()
 
 
+def test_skip_update_deleted(tmp_path_factory: pytest.TempPathFactory) -> None:
+    """
+    Ensure that ``skip_if_exists`` does not interfere with
+    deleted paths during updates (i.e. they stay deleted).
+    Issue #1718
+    """
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yaml": "_skip_if_exists: [skip_me]",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "skip_me": "1",
+                "another_file": "foobar",
+            }
+        )
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "1.0.0")
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    skip_me = dst / "skip_me"
+    answers_file = dst / ".copier-answers.yml"
+    answers = yaml.safe_load(answers_file.read_text())
+    assert skip_me.read_text() == "1"
+    assert answers["_commit"] == "1.0.0"
+    skip_me.unlink()
+    with local.cwd(dst):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+    run_update(dst, skip_answered=True, overwrite=True)
+    assert not (dst / "skip_me").exists()
+
+
+def test_update_deleted_path(tmp_path_factory: pytest.TempPathFactory) -> None:
+    """
+    Ensure that deleted paths are not regenerated during updates,
+    even if the template has changes in that path.
+    Issue #1721
+    """
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yaml": "_skip_if_exists: [skip_me]",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "updated_file": "foo",
+                "another_file": "foobar",
+            }
+        )
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "1.0.0")
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    updated_file = dst / "updated_file"
+    answers_file = dst / ".copier-answers.yml"
+    answers = yaml.safe_load(answers_file.read_text())
+    assert updated_file.read_text() == "foo"
+    assert answers["_commit"] == "1.0.0"
+    updated_file.unlink()
+    with local.cwd(dst):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+    with local.cwd(src):
+        build_file_tree({"updated_file": "bar"})
+        git("commit", "-am2")
+        git("tag", "2.0.0")
+    run_update(dst, skip_answered=True, overwrite=True)
+    assert not (dst / "updated_file").exists()
+
+
 @pytest.mark.parametrize(
     "answers_file", [None, ".copier-answers.yml", ".custom.copier-answers.yaml"]
 )
