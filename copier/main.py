@@ -11,7 +11,7 @@ from filecmp import dircmp
 from functools import cached_property, partial
 from itertools import chain
 from pathlib import Path
-from shutil import copytree, ignore_patterns, rmtree
+from shutil import rmtree
 from tempfile import TemporaryDirectory
 from types import TracebackType
 from typing import (
@@ -915,9 +915,7 @@ class Worker:
             prefix=f"{__name__}.old_copy.",
         ) as old_copy, TemporaryDirectory(
             prefix=f"{__name__}.new_copy.",
-        ) as new_copy, TemporaryDirectory(
-            prefix=f"{__name__}.dst_copy.",
-        ) as dst_copy:
+        ) as new_copy:
             # Copy old template into a temporary destination
             with replace(
                 self,
@@ -933,19 +931,10 @@ class Worker:
             self._execute_tasks(
                 self.template.migration_tasks("before", self.subproject.template)  # type: ignore[arg-type]
             )
-            # Create a copy of the real destination after applying migrations
-            # but before performing any further update for extracting the diff
-            # between the temporary destination of the old template and the
-            # real destination later.
-            with local.cwd(dst_copy):
-                copytree(
-                    subproject_top,
-                    ".",
-                    symlinks=True,
-                    ignore=ignore_patterns("/.git"),
-                    dirs_exist_ok=True,
-                )
-                self._git_initialize_repo()
+            # Create a Git tree object from the current (possibly dirty) index
+            # and keep the object reference.
+            with local.cwd(subproject_top):
+                subproject_head = git("write-tree").strip()
             # Clear last answers cache to load possible answers migration, if skip_answered flag is not set
             if self.skip_answered is False:
                 self.answers = AnswersMap()
@@ -974,15 +963,12 @@ class Worker:
                 new_worker.run_copy()
             with local.cwd(new_copy):
                 self._git_initialize_repo()
-            # Extract diff between temporary destination and (copy from above)
-            # real destination with some special handling of newly added files
-            # in both the poject and the template.
+                new_copy_head = git("rev-parse", "HEAD").strip()
+            # Extract diff between temporary destination and real destination
+            # with some special handling of newly added files in both the poject
+            # and the template.
             with local.cwd(old_copy):
                 self._git_initialize_repo()
-                git("remote", "add", "dst_copy", "file://" + str(dst_copy))
-                git("fetch", "--depth=1", "dst_copy", "HEAD:dst_copy")
-                git("remote", "add", "new_copy", "file://" + str(new_copy))
-                git("fetch", "--depth=1", "new_copy", "HEAD:new_copy")
                 # Create an empty file in the temporary destination when the
                 # same file was added in *both* the project and the temporary
                 # destination of the new template. With this minor change, the
@@ -990,21 +976,30 @@ class Worker:
                 # destination for such files will use the "update file mode"
                 # instead of the "new file mode" which avoids deleting the file
                 # content previously added in the project.
-                diff_added_cmd = git[
-                    "diff-tree", "-r", "--diff-filter=A", "--name-only"
-                ]
+                diff_tree_cmd = git["diff-tree"].with_env(
+                    # See https://git-scm.com/docs/git#Documentation/git.txt-codeGITALTERNATEOBJECTDIRECTORIEScode
+                    GIT_ALTERNATE_OBJECT_DIRECTORIES=(
+                        ";" if OS == "windows" else ":"
+                    ).join(
+                        [
+                            str(subproject_top / ".git" / "objects"),
+                            str(Path(new_copy) / ".git" / "objects"),
+                        ]
+                    )
+                )
+                diff_added_cmd = diff_tree_cmd["-r", "--diff-filter=A", "--name-only"]
                 for filename in (
-                    set(diff_added_cmd("HEAD...dst_copy").splitlines())
-                ) & set(diff_added_cmd("HEAD...new_copy").splitlines()):
+                    set(diff_added_cmd("HEAD", subproject_head).splitlines())
+                ) & set(diff_added_cmd("HEAD", new_copy_head).splitlines()):
                     f = Path(filename)
                     f.parent.mkdir(parents=True, exist_ok=True)
-                    f.touch(Path(dst_copy, filename).stat().st_mode)
+                    f.touch((subproject_top / filename).stat().st_mode)
                     git("add", filename)
                 self._git_commit("add new empty files")
                 # Extract diff between temporary destination and real
                 # destination
-                diff_cmd = git[
-                    "diff-tree", f"--unified={self.context_lines}", "HEAD...dst_copy"
+                diff_cmd = diff_tree_cmd[
+                    f"--unified={self.context_lines}", "HEAD", subproject_head
                 ]
                 try:
                     diff = diff_cmd("--inter-hunk-context=-1")
