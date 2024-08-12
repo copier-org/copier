@@ -69,6 +69,9 @@ from .vcs import get_git
 _T = TypeVar("_T")
 
 
+Operation = Literal["copy", "recopy", "update"]
+
+
 @dataclass(config=ConfigDict(extra="forbid"))
 class Worker:
     """Copier process state manager.
@@ -204,6 +207,7 @@ class Worker:
     unsafe: bool = False
     skip_answered: bool = False
     skip_tasks: bool = False
+    operation: Operation = "copy"
 
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
     _cleanup_hooks: list[Callable[[], None]] = field(default_factory=list, init=False)
@@ -243,7 +247,7 @@ class Worker:
         for method in self._cleanup_hooks:
             method()
 
-    def _check_unsafe(self, mode: Literal["copy", "update"]) -> None:
+    def _check_unsafe(self, mode: Operation) -> None:
         """Check whether a template uses unsafe features."""
         if self.unsafe:
             return
@@ -588,7 +592,7 @@ class Worker:
     @cached_property
     def match_exclude(self) -> Callable[[Path], bool]:
         """Get a callable to match paths against all exclusions."""
-        return self._path_matcher(self.all_exclusions)
+        return self._path_matcher(map(self._render_string, self.all_exclusions))
 
     @cached_property
     def match_skip(self) -> Callable[[Path], bool]:
@@ -861,7 +865,7 @@ class Worker:
                 "Cannot recopy because cannot obtain old template references "
                 f"from `{self.subproject.answers_relpath}`."
             )
-        with replace(self, src_path=self.subproject.template.url) as new_worker:
+        with replace(self, src_path=self.subproject.template.url, operation="recopy") as new_worker:
             new_worker.run_copy()
 
     def run_update(self) -> None:
@@ -911,8 +915,10 @@ class Worker:
             print(
                 f"Updating to template version {self.template.version}", file=sys.stderr
             )
-        self._apply_update()
-        self._print_message(self.template.message_after_update)
+        with replace(self, operation="update") as worker:
+            worker._apply_update()
+            worker._print_message(worker.template.message_after_update)
+            self.answers = worker.answers
 
     def _apply_update(self) -> None:  # noqa: C901
         git = get_git()
