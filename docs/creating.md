@@ -146,6 +146,16 @@ The current phase, one of `"prompt"`,`"tasks"`, `"migrate"` or `"render"`.
     You may encounter this phase when rendering outside of those phases,
     when rendering lazily (and the phase notion can be irrelevant) or when testing.
 
+## Variables (context-dependent)
+
+Some variables are only available in select contexts:
+
+### `_operation`
+
+The current operation, either `"copy"` or `"update"`.
+
+Availability: [`exclude`](configuring.md#exclude), [`tasks`](configuring.md#tasks)
+
 ## Variables (context-specific)
 
 Some rendering contexts provide variables unique to them:

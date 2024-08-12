@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from contextlib import contextmanager
 from contextvars import ContextVar
 from enum import Enum
@@ -24,6 +25,11 @@ from typing import (
 
 from pydantic import AfterValidator
 
+if sys.version_info >= (3, 10):
+    from typing import ParamSpec as ParamSpec
+else:
+    from typing_extensions import ParamSpec as ParamSpec
+
 # simple types
 StrOrPath = Union[str, Path]
 AnyByStrDict = Dict[str, Any]
@@ -44,6 +50,7 @@ VCSTypes = Literal["git"]
 Env = Mapping[str, str]
 MissingType = NewType("MissingType", object)
 MISSING = MissingType(object())
+Operation = Literal["copy", "update"]
 
 
 # Validators
