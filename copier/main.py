@@ -947,6 +947,9 @@ class Worker:
                 git("fetch", "--depth=1", "real_dst", "HEAD")
                 # Save a list of files that were intentionally removed in the generated
                 # project to avoid recreating them during the update.
+                # Files listed in `skip_if_exists` should only be skipped if they exist.
+                # They should even be recreated if deleted intentionally.
+                # This was discussed in issue #1718.
                 files_removed = git(
                     "diff-tree",
                     "-r",
@@ -956,7 +959,17 @@ class Worker:
                 ).splitlines()
                 exclude_plus_removed = list(
                     set(self.exclude).union(
-                        map(escape_git_path, map(normalize_git_path, files_removed))
+                        map(
+                            escape_git_path,
+                            map(
+                                normalize_git_path,
+                                (
+                                    path
+                                    for path in files_removed
+                                    if not self.match_skip(path)
+                                ),
+                            ),
+                        )
                     )
                 )
             # Create a copy of the real destination after applying migrations

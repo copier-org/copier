@@ -9,7 +9,6 @@ from typing import Literal
 import pexpect
 import pytest
 import yaml
-from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 from plumbum import local
 
 from copier.cli import CopierApp
@@ -558,34 +557,41 @@ def test_skip_update(tmp_path_factory: pytest.TempPathFactory) -> None:
 @pytest.mark.parametrize(
     "file_name",
     (
-        "normal_file",
+        "skip_normal_file",
         pytest.param(
-            "unicode_âñ",
+            "skip_unicode_âñ",
             marks=pytest.mark.xfail(
                 platform.system() in {"Darwin", "Windows"},
                 reason="OS without proper UTF-8 filesystem.",
             ),
         ),
-        "file with whitespace",
-        " leading_whitespace",
-        "trailing_whitespace ",
-        "   multi_whitespace   ",
+        "skip file with whitespace",
+        " skip_leading_whitespace",
+        "skip_trailing_whitespace ",
+        "   skip_multi_whitespace   ",
         pytest.param(
-            "\tother_whitespace\t\\t",
+            "\tskip_other_whitespace\t\\t",
             marks=pytest.mark.skipif(
                 platform.system() == "Windows",
                 reason="Disallowed characters in file name",
             ),
         ),
         pytest.param(
-            "back\\space",
+            "\a\f\n\t\vskip_control\a\f\n\t\vcharacters\v\t\n\f\a",
             marks=pytest.mark.skipif(
                 platform.system() == "Windows",
                 reason="Disallowed characters in file name",
             ),
         ),
         pytest.param(
-            "!special",
+            "skip_back\\slash",
+            marks=pytest.mark.skipif(
+                platform.system() == "Windows",
+                reason="Disallowed characters in file name",
+            ),
+        ),
+        pytest.param(
+            "!skip_special",
             marks=pytest.mark.skipif(
                 platform.system() == "Windows",
                 reason="Disallowed characters in file name",
@@ -597,15 +603,16 @@ def test_skip_update_deleted(
     file_name: str, tmp_path_factory: pytest.TempPathFactory
 ) -> None:
     """
-    Ensure that ``skip_if_exists`` does not interfere with
-    deleted paths during updates (i.e. they stay deleted).
-    Issue #1718
+    Ensure that paths in ``skip_if_exists`` are always recreated
+    if they are absent before updating.
+    This was discussed in issue #1718.
     """
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
     with local.cwd(src):
         build_file_tree(
             {
-                "copier.yaml": f"_skip_if_exists: ['{GitWildMatchPattern.escape(file_name)}']",
+                "copier.yaml": "_skip_if_exists: ['*skip*']",
                 "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
                 file_name: "1",
                 "another_file": "foobar",
@@ -627,7 +634,8 @@ def test_skip_update_deleted(
         git("add", ".")
         git("commit", "-m1")
     run_update(dst, overwrite=True)
-    assert not skip_me.exists()
+    assert skip_me.exists()
+    assert skip_me.read_text() == "1"
 
 
 @pytest.mark.parametrize(
@@ -669,7 +677,7 @@ def test_skip_update_deleted(
             ),
         ),
         pytest.param(
-            "back\\space",
+            "back\\slash",
             marks=pytest.mark.skipif(
                 platform.system() == "Windows",
                 reason="Disallowed characters in file name",
@@ -683,7 +691,7 @@ def test_skip_update_deleted(
             ),
         ),
         pytest.param(
-            "not_wildmatch*",
+            "dont_wildmatch*",
             marks=pytest.mark.skipif(
                 platform.system() == "Windows",
                 reason="Disallowed characters in file name",
@@ -706,7 +714,7 @@ def test_update_deleted_path(
                 "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
                 file_name: "foo",
                 "another_file": "foobar",
-                "not_wildmatch": "bar",
+                "dont_wildmatch": "bar",
             }
         )
         git("init")
@@ -715,10 +723,10 @@ def test_update_deleted_path(
         git("tag", "1.0.0")
     run_copy(str(src), dst, defaults=True, overwrite=True)
     updated_file = dst / file_name
-    not_wildmatch = dst / "not_wildmatch"
+    dont_wildmatch = dst / "dont_wildmatch"
     answers_file = dst / ".copier-answers.yml"
     answers = yaml.safe_load(answers_file.read_text())
-    assert not_wildmatch.read_text() == "bar"
+    assert dont_wildmatch.read_text() == "bar"
     assert updated_file.read_text() == "foo"
     assert answers["_commit"] == "1.0.0"
     updated_file.unlink()
@@ -727,12 +735,12 @@ def test_update_deleted_path(
         git("add", ".")
         git("commit", "-m1")
     with local.cwd(src):
-        build_file_tree({file_name: "bar", "not_wildmatch": "baz"})
+        build_file_tree({file_name: "bar", "dont_wildmatch": "baz"})
         git("commit", "-am2")
         git("tag", "2.0.0")
     run_update(dst, overwrite=True)
-    assert not_wildmatch.exists()
-    assert not_wildmatch.read_text() == "baz"
+    assert dont_wildmatch.exists()
+    assert dont_wildmatch.read_text() == "baz"
     assert not updated_file.exists()
 
 

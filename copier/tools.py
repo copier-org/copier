@@ -213,10 +213,18 @@ def normalize_git_path(path: str) -> str:
 
 
 def escape_git_path(path: str) -> str:
+    """Escape paths that will be used as literal gitwildmatch patterns.
+
+    If the path was returned by a Git command, it should be unescaped completely.
+    ``normalize_git_path`` can be used for this purpose.
+
+    Args:
+        path: The Git path to escape.
+
+    Returns:
+        str: The escaped Git path.
     """
-    Escape paths that will be used as literal gitwildmatch patterns.
-    The paths should be unescaped completely, as done by ``normalize_git_path``."""
-    # GitwWildMatchPattern.escape does not escape backslashes
+    # GitWildMatchPattern.escape does not escape backslashes
     # or trailing whitespace.
     path = path.replace("\\", "\\\\")
     path = GitWildMatchPattern.escape(path)
