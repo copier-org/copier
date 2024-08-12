@@ -1290,3 +1290,64 @@ def test_update_with_new_file_in_template_and_project_via_migration(
         >>>>>>> after updating
         """
     )
+
+
+
+def test_exclude_on_update(tmp_path_factory: pytest.TempPathFactory) -> None:
+    # Template in v1 has a file with a single line;
+    # in v2 it changes that line.
+    # Meanwhile, downstream project appended contents to the first line.
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    filename = "README.md"
+
+    # First, create the template with an initial file
+    build_file_tree(
+        {
+            (src / filename): "upstream version 1",
+            (src / "copier.yaml"): f"_exclude_on_update: ['{filename}']",
+            (src / "{{_copier_conf.answers_file}}.jinja"): (
+                "{{_copier_answers|to_nice_yaml}}"
+            ),
+        }
+    )
+    with local.cwd(src):
+        git_init("hello template")
+        git("tag", "v1")
+
+    # Generate the project a first time, assert the file exists
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    assert (dst / filename).exists()
+    assert "_commit: v1" in (dst / ".copier-answers.yml").read_text()
+
+    # Start versioning the generated project
+    with local.cwd(dst):
+        git_init("hello project")
+
+        # After first commit, change the file, commit again
+        Path(filename).write_text("upstream version 1 + downstream")
+        git("commit", "-am", "updated file")
+
+    # Now change the template
+    with local.cwd(src):
+        # Update the file
+        Path(filename).write_text("upstream version 2")
+
+        # Commit the changes
+        git("add", ".", "-A")
+        git("commit", "-m", "change line in file")
+        git("tag", "v2")
+
+    # Finally, update the generated project
+    run_update(dst_path=dst, defaults=True, overwrite=True, conflict="inline")
+    assert "_commit: v2" in (dst / ".copier-answers.yml").read_text()
+
+    # Assert that the file still exists, and was left untouched
+    assert (dst / filename).exists()
+
+    expected_contents = dedent(
+        """\
+        upstream version 1 + downstream
+        """
+    )
+    assert (dst / filename).read_text().splitlines() == expected_contents.splitlines()
+    assert not (dst / f"{filename}.rej").exists()
