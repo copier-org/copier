@@ -893,6 +893,23 @@ The CLI option can be passed several times to add several patterns.
         copier copy --exclude '*' --exclude '!file-i-want' ./template ./destination
         ```
 
+### `exclude_on_update`
+
+-   Format: `List[str]`
+-   CLI flags: N/A
+-   Default value: `[]`
+
+Excluded files applied only on update command.
+
+!!! example
+
+    ```yaml title="copier.yml"
+    _exclude_on_update:
+        - "pre-commit.sample"
+        - "myfile.example"
+        - "*.dummy"
+    ```
+
 ### `force`
 
 -   Format: `bool`

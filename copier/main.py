@@ -954,6 +954,7 @@ class Worker:
             # Do a normal update in final destination
             with replace(
                 self,
+                exclude=self.exclude + self.template.exclude_on_update,
                 # Files can change due to the historical diff, and those
                 # changes are not detected in this process, so it's better to
                 # say nothing than lie.
@@ -968,6 +969,7 @@ class Worker:
                 dst_path=new_copy / subproject_subdir,
                 data=self.answers.combined,  # type: ignore[arg-type]
                 defaults=True,
+                exclude=self.exclude + self.template.exclude_on_update,
                 quiet=True,
                 src_path=self.subproject.template.url,  # type: ignore[union-attr]
             ) as new_worker:

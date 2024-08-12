@@ -328,6 +328,14 @@ class Template:
                 DEFAULT_EXCLUDE if Path(self.subdirectory) == Path(".") else [],
             )
         )
+    
+    @cached_property
+    def exclude_on_update(self) -> tuple[str, ...]:
+        """Get update exclusions specified in the template.
+
+        See [exclude_on_update][].
+        """
+        return tuple(self.config_data.get("exclude_on_update"))
 
     @cached_property
     def jinja_extensions(self) -> tuple[str, ...]:
