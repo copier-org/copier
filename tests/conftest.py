@@ -12,6 +12,10 @@ from pytest_gitconfig.plugin import DELETE, GitConfig
 
 from .helpers import Spawn
 
+pytest_plugins = [
+    "tests.templates",
+]
+
 
 @pytest.fixture
 def spawn() -> Spawn:
