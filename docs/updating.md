@@ -186,6 +186,16 @@ As you can see here, `copier` does several things:
 -   Finally, it re-applies the previously obtained diff and then runs the
     post-migrations.
 
+### Handling of deleted paths
+
+Template-based files/directories that were deleted in the generated project
+are automatically excluded from updates. If you want to recover such a file
+later on, you can run `copier recopy` and recommit it to your repository.
+Subsequent updates for the path will then be respected again.
+
+An exception to this behavior applies to paths that are matched by `skip_if_exists`.
+Their presence is always ensured, even during an `update` operation.
+
 ### Recover from a broken update
 
 Usually Copier will replay the last project generation without problems. However,
