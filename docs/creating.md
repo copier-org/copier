@@ -136,6 +136,16 @@ variable:
 
 The name of the project root directory.
 
+## Variables (context-dependent)
+
+Some variables are only available in select contexts:
+
+### `_operation`
+
+The current operation, either `"copy"` or `"update"`.
+
+Availability: [`exclude`](configuring.md#exclude), [`tasks`](configuring.md#tasks)
+
 ## Variables (context-specific)
 
 Some rendering contexts provide variables unique to them:
