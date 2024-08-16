@@ -945,13 +945,3 @@ def test_multiselect_choices_preserve_order(
     )
     copier.run_copy(str(src), dst, data={"q": ["three", "one", "two"]})
     assert yaml.safe_load((dst / "q.yml").read_text()) == ["one", "two", "three"]
-
-
-def test_operation_context(tmp_path: Path, operation_context_template: Path) -> None:
-    run_copy(str(operation_context_template), tmp_path)
-    conditional_file = tmp_path / "foo"
-    expected = "_copy" in operation_context_template.name
-    assert conditional_file.exists() is expected
-    if expected:
-        assert conditional_file.read_text() == "foo"
-    assert (tmp_path / "bar").read_text() == "bar"

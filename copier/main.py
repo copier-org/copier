@@ -591,7 +591,7 @@ class Worker:
     @cached_property
     def match_exclude(self) -> Callable[[Path], bool]:
         """Get a callable to match paths against all exclusions."""
-        return self._path_matcher(self.all_exclusions)
+        return self._path_matcher(map(self._render_string, self.all_exclusions))
 
     @cached_property
     def match_skip(self) -> Callable[[Path], bool]:

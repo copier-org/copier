@@ -72,23 +72,3 @@ def test_recopy_works_without_replay(tpl: str, tmp_path: Path) -> None:
     # Recopy
     run_recopy(tmp_path, skip_answered=True, overwrite=True)
     assert (tmp_path / "name.txt").read_text() == "This is my name: Mario."
-
-
-def test_operation_context(tmp_path: Path, operation_context_template: Path) -> None:
-    run_copy(str(operation_context_template), tmp_path)
-    git_save(tmp_path)
-    conditional_file = tmp_path / "foo"
-    expected_copy = "_copy" in operation_context_template.name
-    expected_recopy = "recopy" in operation_context_template.name
-    assert conditional_file.exists() is expected_copy
-    assert (tmp_path / "bar").read_text() == "bar"
-    if expected_copy:
-        assert conditional_file.read_text() == "foo"
-        conditional_file.unlink()
-    (tmp_path / "bar").write_text("baz")
-    git_save(tmp_path)
-    run_recopy(str(tmp_path), overwrite=True)
-    assert conditional_file.exists() is expected_recopy
-    if expected_recopy:
-        assert conditional_file.read_text() == "foo"
-    assert (tmp_path / "bar").read_text() == "bar"

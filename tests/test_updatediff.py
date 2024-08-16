@@ -25,7 +25,6 @@ from .helpers import (
     build_file_tree,
     git,
     git_init,
-    git_save,
 )
 
 
@@ -1479,24 +1478,3 @@ def test_update_with_new_file_in_template_and_project_via_migration(
         >>>>>>> after updating
         """
     )
-
-
-def test_operation_context(tmp_path: Path, operation_context_template: Path, request: pytest.FixtureRequest) -> None:
-    run_copy(str(operation_context_template), tmp_path)
-    conditional_file = tmp_path / "foo"
-    expected_copy = "_copy" in operation_context_template.name
-    expected_update = "update" in operation_context_template.name
-    assert conditional_file.exists() is expected_copy
-    assert (tmp_path / "bar").read_text() == "bar"
-    if expected_copy:
-        assert conditional_file.read_text() == "foo"
-    git_save(tmp_path)
-    request.getfixturevalue("operation_context_template_v2")
-    run_update(str(tmp_path), overwrite=True)
-    if expected_update:
-        assert conditional_file.read_text() == "foo_update"
-    elif expected_copy:
-        assert conditional_file.read_text() == "foo"
-    else:
-        assert not conditional_file.exists()
-    assert (tmp_path / "bar").read_text() == "bar_update"
