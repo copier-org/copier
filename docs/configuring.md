@@ -1313,8 +1313,8 @@ configuring `secret: true` in the [advanced prompt format][advanced-prompt-forma
 -   Default value: `[]`
 
 [Patterns][patterns-syntax] for files/folders that must be skipped only if they already
-exist, but always be present. If they do not exist in a project
-during an `update` operation, they will be recreated.
+exist, but always be present. If they do not exist in a project during an `update`
+operation, they will be recreated.
 
 !!! example
 
