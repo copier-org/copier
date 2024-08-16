@@ -949,7 +949,6 @@ class Worker:
                 # project to avoid recreating them during the update.
                 # Files listed in `skip_if_exists` should only be skipped if they exist.
                 # They should even be recreated if deleted intentionally.
-                # This was discussed in issue #1718.
                 files_removed = git(
                     "diff-tree",
                     "-r",

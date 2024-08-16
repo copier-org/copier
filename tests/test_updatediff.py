@@ -605,7 +605,6 @@ def test_skip_update_deleted(
     """
     Ensure that paths in ``skip_if_exists`` are always recreated
     if they are absent before updating.
-    This was discussed in issue #1718.
     """
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
@@ -705,7 +704,6 @@ def test_update_deleted_path(
     """
     Ensure that deleted paths are not regenerated during updates,
     even if the template has changes in that path.
-    Issue #1721
     """
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     with local.cwd(src):
