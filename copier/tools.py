@@ -17,6 +17,7 @@ from typing import Any, Callable, Literal, TextIO, cast
 
 import colorama
 from packaging.version import Version
+from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 from pydantic import StrictBool
 
 colorama.just_fix_windows_console()
@@ -184,17 +185,14 @@ def readlink(link: Path) -> Path:
         return Path(os.readlink(link))
 
 
-_re_octal = re.compile(r"\\([0-9]{3})\\([0-9]{3})")
-
-
-def _re_octal_replace(match: re.Match[str]) -> str:
-    return bytes([int(match.group(1), 8), int(match.group(2), 8)]).decode("utf8")
+_re_whitespace = re.compile(r"^\s+|\s+$")
 
 
 def normalize_git_path(path: str) -> str:
     r"""Convert weird characters returned by Git to normal UTF-8 path strings.
 
     A filename like âñ will be reported by Git as "\\303\\242\\303\\261" (octal notation).
+    Similarly, a filename like "<tab>foo\b<lf>ar" will be reported as "\tfoo\\b\nar".
     This can be disabled with `git config core.quotepath off`.
 
     Args:
@@ -208,5 +206,29 @@ def normalize_git_path(path: str) -> str:
         path = path[1:-1]
     # Repair double-quotes
     path = path.replace('\\"', '"')
+    # Unescape escape characters
+    path = path.encode("latin-1", "backslashreplace").decode("unicode-escape")
     # Convert octal to utf8
-    return _re_octal.sub(_re_octal_replace, path)
+    return path.encode("latin-1", "backslashreplace").decode("utf-8")
+
+
+def escape_git_path(path: str) -> str:
+    """Escape paths that will be used as literal gitwildmatch patterns.
+
+    If the path was returned by a Git command, it should be unescaped completely.
+    ``normalize_git_path`` can be used for this purpose.
+
+    Args:
+        path: The Git path to escape.
+
+    Returns:
+        str: The escaped Git path.
+    """
+    # GitWildMatchPattern.escape does not escape backslashes
+    # or trailing whitespace.
+    path = path.replace("\\", "\\\\")
+    path = GitWildMatchPattern.escape(path)
+    return _re_whitespace.sub(
+        lambda match: "".join(f"\\{whitespace}" for whitespace in match.group()),
+        path,
+    )

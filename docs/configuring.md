@@ -1312,8 +1312,9 @@ configuring `secret: true` in the [advanced prompt format][advanced-prompt-forma
 -   CLI flags: `-s`, `--skip`
 -   Default value: `[]`
 
-[Patterns][patterns-syntax] for files/folders that must be skipped if they already
-exist.
+[Patterns][patterns-syntax] for files/folders that must be skipped only if they already
+exist, but always be present. If they do not exist in a project during an `update`
+operation, they will be recreated.
 
 !!! example
 

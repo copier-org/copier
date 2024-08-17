@@ -46,7 +46,15 @@ from .errors import (
 )
 from .subproject import Subproject
 from .template import Task, Template
-from .tools import OS, Style, cast_to_bool, normalize_git_path, printf, readlink
+from .tools import (
+    OS,
+    Style,
+    cast_to_bool,
+    escape_git_path,
+    normalize_git_path,
+    printf,
+    readlink,
+)
 from .types import (
     MISSING,
     AnyByStrDict,
@@ -933,6 +941,36 @@ class Worker:
             self._execute_tasks(
                 self.template.migration_tasks("before", self.subproject.template)  # type: ignore[arg-type]
             )
+            with local.cwd(old_copy):
+                self._git_initialize_repo()
+                git("remote", "add", "real_dst", "file://" + str(subproject_top))
+                git("fetch", "--depth=1", "real_dst", "HEAD")
+                # Save a list of files that were intentionally removed in the generated
+                # project to avoid recreating them during the update.
+                # Files listed in `skip_if_exists` should only be skipped if they exist.
+                # They should even be recreated if deleted intentionally.
+                files_removed = git(
+                    "diff-tree",
+                    "-r",
+                    "--diff-filter=D",
+                    "--name-only",
+                    "HEAD...FETCH_HEAD",
+                ).splitlines()
+                exclude_plus_removed = list(
+                    set(self.exclude).union(
+                        map(
+                            escape_git_path,
+                            map(
+                                normalize_git_path,
+                                (
+                                    path
+                                    for path in files_removed
+                                    if not self.match_skip(path)
+                                ),
+                            ),
+                        )
+                    )
+                )
             # Create a copy of the real destination after applying migrations
             # but before performing any further update for extracting the diff
             # between the temporary destination of the old template and the
@@ -954,6 +992,8 @@ class Worker:
             # Do a normal update in final destination
             with replace(
                 self,
+                # Don't regenerate intentionally deleted paths
+                exclude=exclude_plus_removed,
                 # Files can change due to the historical diff, and those
                 # changes are not detected in this process, so it's better to
                 # say nothing than lie.
@@ -970,6 +1010,7 @@ class Worker:
                 defaults=True,
                 quiet=True,
                 src_path=self.subproject.template.url,  # type: ignore[union-attr]
+                exclude=exclude_plus_removed,
             ) as new_worker:
                 new_worker.run_copy()
             with local.cwd(new_copy):
@@ -978,7 +1019,6 @@ class Worker:
             # real destination with some special handling of newly added files
             # in both the poject and the template.
             with local.cwd(old_copy):
-                self._git_initialize_repo()
                 git("remote", "add", "dst_copy", "file://" + str(dst_copy))
                 git("fetch", "--depth=1", "dst_copy", "HEAD:dst_copy")
                 git("remote", "add", "new_copy", "file://" + str(new_copy))

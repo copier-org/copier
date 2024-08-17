@@ -555,6 +555,194 @@ def test_skip_update(tmp_path_factory: pytest.TempPathFactory) -> None:
 
 
 @pytest.mark.parametrize(
+    "file_name",
+    (
+        "skip_normal_file",
+        pytest.param(
+            "skip_unicode_âñ",
+            marks=pytest.mark.xfail(
+                platform.system() in {"Darwin", "Windows"},
+                reason="OS without proper UTF-8 filesystem.",
+            ),
+        ),
+        "skip file with whitespace",
+        " skip_leading_whitespace",
+        "skip_trailing_whitespace ",
+        "   skip_multi_whitespace   ",
+        pytest.param(
+            "\tskip_other_whitespace\t\\t",
+            marks=pytest.mark.skipif(
+                platform.system() == "Windows",
+                reason="Disallowed characters in file name",
+            ),
+        ),
+        pytest.param(
+            "\a\f\n\t\vskip_control\a\f\n\t\vcharacters\v\t\n\f\a",
+            marks=pytest.mark.skipif(
+                platform.system() == "Windows",
+                reason="Disallowed characters in file name",
+            ),
+        ),
+        pytest.param(
+            "skip_back\\slash",
+            marks=pytest.mark.skipif(
+                platform.system() == "Windows",
+                reason="Disallowed characters in file name",
+            ),
+        ),
+        pytest.param(
+            "!skip_special",
+            marks=pytest.mark.skipif(
+                platform.system() == "Windows",
+                reason="Disallowed characters in file name",
+            ),
+        ),
+    ),
+)
+def test_skip_update_deleted(
+    file_name: str, tmp_path_factory: pytest.TempPathFactory
+) -> None:
+    """
+    Ensure that paths in ``skip_if_exists`` are always recreated
+    if they are absent before updating.
+    """
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yaml": "_skip_if_exists: ['*skip*']",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                file_name: "1",
+                "another_file": "foobar",
+            }
+        )
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "1.0.0")
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    skip_me = dst / file_name
+    answers_file = dst / ".copier-answers.yml"
+    answers = yaml.safe_load(answers_file.read_text())
+    assert skip_me.read_text() == "1"
+    assert answers["_commit"] == "1.0.0"
+    skip_me.unlink()
+    with local.cwd(dst):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+    run_update(dst, overwrite=True)
+    assert skip_me.exists()
+    assert skip_me.read_text() == "1"
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    (
+        "normal_file",
+        pytest.param(
+            "unicode_âñ",
+            marks=pytest.mark.xfail(
+                platform.system() in {"Darwin", "Windows"},
+                reason="OS without proper UTF-8 filesystem.",
+            ),
+        ),
+        "file with whitespace",
+        " leading_whitespace",
+        "trailing_whitespace ",
+        "   multi_whitespace   ",
+        pytest.param(
+            "\tother_whitespace\t\\t",
+            marks=pytest.mark.skipif(
+                platform.system() == "Windows",
+                reason="Disallowed characters in file name",
+            ),
+        ),
+        pytest.param(
+            # This param accounts for some limitations that would
+            # otherwise make the test fail:
+            #   * \r in path segment names is converted to \n by Jinja rendering,
+            #     hence the rendered file would be named differently altogether.
+            #   * The pathspec lib does not account for different kinds of escaped
+            #     whitespace at the end of the pattern, only a space.
+            #     If there are control characters at the end of the string
+            #     that would be stripped by .strip(), the pattern would end
+            #     in the backslash that should have escaped it.
+            "\a\f\n\t\vcontrol\a\f\n\t\vcharacters\v\t\n\f\a",
+            marks=pytest.mark.skipif(
+                platform.system() == "Windows",
+                reason="Disallowed characters in file name",
+            ),
+        ),
+        pytest.param(
+            "back\\slash",
+            marks=pytest.mark.skipif(
+                platform.system() == "Windows",
+                reason="Disallowed characters in file name",
+            ),
+        ),
+        pytest.param(
+            "!special",
+            marks=pytest.mark.skipif(
+                platform.system() == "Windows",
+                reason="Disallowed characters in file name",
+            ),
+        ),
+        pytest.param(
+            "dont_wildmatch*",
+            marks=pytest.mark.skipif(
+                platform.system() == "Windows",
+                reason="Disallowed characters in file name",
+            ),
+        ),
+    ),
+)
+def test_update_deleted_path(
+    file_name: str, tmp_path_factory: pytest.TempPathFactory
+) -> None:
+    """
+    Ensure that deleted paths are not regenerated during updates,
+    even if the template has changes in that path.
+    """
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                file_name: "foo",
+                "another_file": "foobar",
+                "dont_wildmatch": "bar",
+            }
+        )
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "1.0.0")
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    updated_file = dst / file_name
+    dont_wildmatch = dst / "dont_wildmatch"
+    answers_file = dst / ".copier-answers.yml"
+    answers = yaml.safe_load(answers_file.read_text())
+    assert dont_wildmatch.read_text() == "bar"
+    assert updated_file.read_text() == "foo"
+    assert answers["_commit"] == "1.0.0"
+    updated_file.unlink()
+    with local.cwd(dst):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+    with local.cwd(src):
+        build_file_tree({file_name: "bar", "dont_wildmatch": "baz"})
+        git("commit", "-am2")
+        git("tag", "2.0.0")
+    run_update(dst, overwrite=True)
+    assert dont_wildmatch.exists()
+    assert dont_wildmatch.read_text() == "baz"
+    assert not updated_file.exists()
+
+
+@pytest.mark.parametrize(
     "answers_file", [None, ".copier-answers.yml", ".custom.copier-answers.yaml"]
 )
 def test_overwrite_answers_file_always(
