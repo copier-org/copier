@@ -480,9 +480,6 @@ class Worker:
                 else:
                     if question.validate_answer(answer):
                         del result.last[var_name]
-            # Skip a question when the user already answered it.
-            if self.skip_answered and var_name in result.last:
-                continue
             # Skip a question when the skip condition is met.
             if not question.get_when():
                 # Omit its answer from the answers file.
@@ -501,6 +498,9 @@ class Worker:
                 # At this point, the answer value is valid. Do not ask the
                 # question again, but set answer as the user's answer instead.
                 result.user[var_name] = answer
+                continue
+            # Skip a question when the user already answered it.
+            if self.skip_answered and var_name in result.last:
                 continue
 
             # Display TUI and ask user interactively only without --defaults
