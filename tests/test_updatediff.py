@@ -1518,3 +1518,31 @@ def test_update_with_separate_git_directory(
 
     run_update(dst, overwrite=True)
     assert "_commit: v2" in (dst / ".copier-answers.yml").read_text()
+
+
+def test_update_with_skip_answered_and_new_answer(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yml": "boolean: false",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+            }
+        )
+        git_init("v1")
+        git("tag", "v1")
+
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    answers_file = dst / ".copier-answers.yml"
+    answers = yaml.safe_load(answers_file.read_text())
+    assert answers["boolean"] is False
+
+    with local.cwd(dst):
+        git_init("v1")
+
+    run_update(dst, data={"boolean": "true"}, skip_answered=True, overwrite=True)
+    answers = yaml.safe_load(answers_file.read_text())
+    assert answers["boolean"] is True

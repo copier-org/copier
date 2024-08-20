@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+import yaml
 from plumbum import local
 
 from copier import run_copy, run_recopy
@@ -72,3 +73,28 @@ def test_recopy_works_without_replay(tpl: str, tmp_path: Path) -> None:
     # Recopy
     run_recopy(tmp_path, skip_answered=True, overwrite=True)
     assert (tmp_path / "name.txt").read_text() == "This is my name: Mario."
+
+
+def test_recopy_with_skip_answered_and_new_answer(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "copier.yml": "boolean: false",
+            src / "{{ _copier_conf.answers_file }}.jinja": (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+        }
+    )
+    git_save(src)
+    # First copy
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    git_save(dst)
+    answers_file = dst / ".copier-answers.yml"
+    answers = yaml.safe_load(answers_file.read_text())
+    assert answers["boolean"] is False
+    # Recopy with different answer and `skip_answered=True`
+    run_recopy(dst, data={"boolean": "true"}, skip_answered=True, overwrite=True)
+    answers = yaml.safe_load(answers_file.read_text())
+    assert answers["boolean"] is True
