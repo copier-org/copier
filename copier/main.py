@@ -547,6 +547,7 @@ class Worker:
         paths = [str(self.template.local_abspath)]
         loader = FileSystemLoader(paths)
         default_extensions = [
+            "jinja2_slug.SlugExtension",
             "jinja2_ansible_filters.AnsibleCoreFiltersExtension",
         ]
         extensions = default_extensions + list(self.template.jinja_extensions)

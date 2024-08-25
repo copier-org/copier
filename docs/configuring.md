@@ -985,7 +985,6 @@ on them, so they are always installed when Copier is installed.
     ```yaml title="copier.yml"
     _jinja_extensions:
         - jinja_markdown.MarkdownExtension
-        - jinja2_slug.SlugExtension
         - jinja2_time.TimeExtension
     ```
 

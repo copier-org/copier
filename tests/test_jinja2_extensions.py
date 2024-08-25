@@ -40,7 +40,7 @@ def test_default_jinja2_extensions(tmp_path: Path) -> None:
     copier.run_copy(str(PROJECT_TEMPLATE) + "_extensions_default", tmp_path)
     super_file = tmp_path / "super_file.md"
     assert super_file.exists()
-    assert super_file.read_text() == "path\n"
+    assert super_file.read_text() == "path\n\nmy-cool-name\n"
 
 
 def test_additional_jinja2_extensions(tmp_path: Path) -> None:

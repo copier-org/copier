@@ -27,12 +27,15 @@ copier = "copier.__main__:copier_app_run"
 "Bug Tracker" = "https://github.com/copier-org/copier/issues"
 
 [tool.poetry.dependencies]
-python = ">=3.8"
+python = ">=3.8,<4.0"
 colorama = ">=0.4.6"
 dunamai = ">=1.7.0"
 funcy = ">=1.17"
 jinja2 = ">=3.1.4"
 jinja2-ansible-filters = ">=1.3.1"
+# The most recent release of jinja2-slug on PyPi is out of date
+# and sets an upper bound of 2.x for jinja2
+jinja2-slug = { git = "https://github.com/xsteadfastx/jinja2-slug", rev = "97104e2" }
 packaging = ">=23.0"
 pathspec = ">=0.9.0"
 plumbum = ">=1.6.9"
