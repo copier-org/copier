@@ -99,4 +99,4 @@ Copier includes:
     -   It contains the current commit hash from the template in
         `{{ _copier_conf.vcs_ref_hash }}`.
     -   Contains Operating System-specific directory separator under `sep` key.
-    -   It also contains the current `operation` (`copy` | `recopy` | `update`).
+    -   It also contains the current `operation` (`copy` | `update`).
