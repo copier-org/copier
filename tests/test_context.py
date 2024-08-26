@@ -36,7 +36,8 @@ def test_operation_in_context_matches(
     with local.cwd(dst):
         git_save()
     getattr(copier, f"run_{operation}")(str(dst), overwrite=True)
-    assert ctx_file.read_text() == operation
+    expected = "copy" if operation == "recopy" else operation
+    assert ctx_file.read_text() == expected
 
 
 def test_exclude_templating_with_operation(tmp_path_factory: pytest.TempPathFactory) -> None:
