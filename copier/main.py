@@ -69,7 +69,7 @@ from .vcs import get_git
 _T = TypeVar("_T")
 
 
-Operation = Literal["copy", "recopy", "update"]
+Operation = Literal["copy", "update"]
 
 
 @dataclass(config=ConfigDict(extra="forbid"))
@@ -864,7 +864,7 @@ class Worker:
                 "Cannot recopy because cannot obtain old template references "
                 f"from `{self.subproject.answers_relpath}`."
             )
-        with replace(self, src_path=self.subproject.template.url, operation="recopy") as new_worker:
+        with replace(self, src_path=self.subproject.template.url) as new_worker:
             new_worker.run_copy()
 
     def run_update(self) -> None:
