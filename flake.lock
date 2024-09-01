@@ -3,18 +3,9 @@
     "cachix": {
       "inputs": {
         "devenv": "devenv_2",
-        "flake-compat": [
-          "devenv",
-          "flake-compat"
-        ],
-        "nixpkgs": [
-          "devenv",
-          "nixpkgs"
-        ],
-        "pre-commit-hooks": [
-          "devenv",
-          "pre-commit-hooks"
-        ]
+        "flake-compat": ["devenv", "flake-compat"],
+        "nixpkgs": ["devenv", "nixpkgs"],
+        "pre-commit-hooks": ["devenv", "pre-commit-hooks"]
       },
       "locked": {
         "lastModified": 1712055811,
@@ -55,19 +46,11 @@
     },
     "devenv_2": {
       "inputs": {
-        "flake-compat": [
-          "devenv",
-          "cachix",
-          "flake-compat"
-        ],
+        "flake-compat": ["devenv", "cachix", "flake-compat"],
         "nix": "nix",
         "nixpkgs": "nixpkgs",
         "poetry2nix": "poetry2nix",
-        "pre-commit-hooks": [
-          "devenv",
-          "cachix",
-          "pre-commit-hooks"
-        ]
+        "pre-commit-hooks": ["devenv", "cachix", "pre-commit-hooks"]
       },
       "locked": {
         "lastModified": 1708704632,
@@ -203,11 +186,7 @@
     },
     "gitignore": {
       "inputs": {
-        "nixpkgs": [
-          "devenv",
-          "pre-commit-hooks",
-          "nixpkgs"
-        ]
+        "nixpkgs": ["devenv", "pre-commit-hooks", "nixpkgs"]
       },
       "locked": {
         "lastModified": 1709087332,
@@ -226,12 +205,7 @@
     "nix": {
       "inputs": {
         "flake-compat": "flake-compat",
-        "nixpkgs": [
-          "devenv",
-          "cachix",
-          "devenv",
-          "nixpkgs"
-        ],
+        "nixpkgs": ["devenv", "cachix", "devenv", "nixpkgs"],
         "nixpkgs-regression": "nixpkgs-regression"
       },
       "locked": {
@@ -251,13 +225,7 @@
     },
     "nix-github-actions": {
       "inputs": {
-        "nixpkgs": [
-          "devenv",
-          "cachix",
-          "devenv",
-          "poetry2nix",
-          "nixpkgs"
-        ]
+        "nixpkgs": ["devenv", "cachix", "devenv", "poetry2nix", "nixpkgs"]
       },
       "locked": {
         "lastModified": 1688870561,
@@ -275,10 +243,7 @@
     },
     "nix-github-actions_2": {
       "inputs": {
-        "nixpkgs": [
-          "poetry2nix",
-          "nixpkgs"
-        ]
+        "nixpkgs": ["poetry2nix", "nixpkgs"]
       },
       "locked": {
         "lastModified": 1703863825,
@@ -296,14 +261,8 @@
     },
     "nix_2": {
       "inputs": {
-        "flake-compat": [
-          "devenv",
-          "flake-compat"
-        ],
-        "nixpkgs": [
-          "devenv",
-          "nixpkgs"
-        ],
+        "flake-compat": ["devenv", "flake-compat"],
+        "nixpkgs": ["devenv", "nixpkgs"],
         "nixpkgs-regression": "nixpkgs-regression_2"
       },
       "locked": {
@@ -419,12 +378,7 @@
       "inputs": {
         "flake-utils": "flake-utils",
         "nix-github-actions": "nix-github-actions",
-        "nixpkgs": [
-          "devenv",
-          "cachix",
-          "devenv",
-          "nixpkgs"
-        ]
+        "nixpkgs": ["devenv", "cachix", "devenv", "nixpkgs"]
       },
       "locked": {
         "lastModified": 1692876271,
@@ -444,9 +398,7 @@
       "inputs": {
         "flake-utils": "flake-utils_4",
         "nix-github-actions": "nix-github-actions_2",
-        "nixpkgs": [
-          "nixpkgs"
-        ],
+        "nixpkgs": ["nixpkgs"],
         "systems": "systems_5",
         "treefmt-nix": "treefmt-nix"
       },
@@ -466,16 +418,10 @@
     },
     "pre-commit-hooks": {
       "inputs": {
-        "flake-compat": [
-          "devenv",
-          "flake-compat"
-        ],
+        "flake-compat": ["devenv", "flake-compat"],
         "flake-utils": "flake-utils_2",
         "gitignore": "gitignore",
-        "nixpkgs": [
-          "devenv",
-          "nixpkgs"
-        ],
+        "nixpkgs": ["devenv", "nixpkgs"],
         "nixpkgs-stable": "nixpkgs-stable"
       },
       "locked": {
@@ -577,10 +523,7 @@
     },
     "treefmt-nix": {
       "inputs": {
-        "nixpkgs": [
-          "poetry2nix",
-          "nixpkgs"
-        ]
+        "nixpkgs": ["poetry2nix", "nixpkgs"]
       },
       "locked": {
         "lastModified": 1719749022,
