@@ -973,3 +973,28 @@ def test_multiselect_choices_validator(
     tui.expect_exact(pexpect.EOF)
     answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers["question"] == ["one"]
+
+
+def test_secret_validator(
+    question_tree: QuestionTreeFixture, copier: CopierFixture
+) -> None:
+    """Secret question answer is validated."""
+    default = "s3cret"
+    src, dst = question_tree(
+        type="str",
+        default=default,
+        secret=True,
+        validator="[% if question|length < 3 %]too short[% endif %]",
+    )
+
+    tui = copier("copy", str(src), str(dst), timeout=10)
+    expect_prompt(tui, "question", "str")
+    # Delete default value to fail validation
+    for _ in range(len(default)):
+        tui.send(Keyboard.Backspace)
+    tui.sendline()
+    tui.expect_exact("too short")
+    # Enter default value again to pass validation
+    tui.sendline(default)
+    tui.expect_exact("******")
+    tui.expect_exact(pexpect.EOF)

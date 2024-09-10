@@ -387,7 +387,7 @@ class Question:
             result["multiline"] = self.get_multiline()
             if placeholder := self.get_placeholder():
                 result["placeholder"] = placeholder
-        if questionary_type in {"input", "checkbox"}:
+        if questionary_type in {"input", "checkbox", "password"}:
             result["validate"] = _validate
         result.update({"type": questionary_type})
         return result

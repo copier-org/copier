@@ -499,6 +499,15 @@ def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> N
             "abc",
             does_not_raise(),
         ),
+        (
+            {
+                "type": "str",
+                "secret": True,
+                "validator": "[% if q|length < 3 %]too short[% endif %]",
+            },
+            "",
+            pytest.raises(ValueError),
+        ),
         ({"type": "bool"}, "true", does_not_raise()),
         ({"type": "bool"}, "false", does_not_raise()),
         (
@@ -849,6 +858,15 @@ def test_required_choice_question_without_data(
         ("str", "1.0", does_not_raise()),
         ("str", 1.0, does_not_raise()),
         ("str", None, pytest.raises(TypeError)),
+        (
+            {
+                "type": "str",
+                "secret": True,
+                "validator": "[% if q|length < 3 %]too short[% endif %]",
+            },
+            "",
+            pytest.raises(ValueError),
+        ),
         ("int", 1, does_not_raise()),
         ("int", 1.0, does_not_raise()),
         ("int", "1", does_not_raise()),
