@@ -150,7 +150,7 @@ python_tested_versions:
 and then run the command with the `--data-file` argument:
 
 ```shell
-hatch run update-template --defaults  --data-file=`~/tmp/copier_answer.yaml
+copier update --defaults  --data-file=~/tmp/copier_answer.yaml
 ```
 
 ## How the update works
