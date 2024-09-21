@@ -129,29 +129,14 @@ to go through the whole questionnaire again:
 copier update --defaults --data updated_question="my new answer"
 ```
 
-Note: if that question is a multiselect base choice, e.g.:
-
+Note: it is not yet possible to update a multiselect base choice that way, for example a value that
+looks like this in the file `.copier-answers.yml`:
 ```yaml
 python_tested_versions:
     - "3.10"
     - "3.11"
 ```
-
-then you first need to create a file outside of the directory, e.g.
-`~/tmp/copier_answer.yaml`, with the content you want, e.g.:
-
-```yaml
-python_tested_versions:
-    - "3.10"
-    - "3.11"
-    - "3.12"
-```
-
-and then run the command with the `--data-file` argument:
-
-```shell
-copier update --defaults  --data-file=~/tmp/copier_answer.yaml
-```
+As a workaround, you need to use the `--data_file` option instead. See [here](https://copier.readthedocs.io/en/stable/configuring/#data_file) for usage information.
 
 ## How the update works
 
