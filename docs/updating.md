@@ -129,7 +129,7 @@ to go through the whole questionnaire again:
 copier update --defaults --data updated_question="my new answer"
 ```
 
-Note: it is not yet possible to update a multiselect base choice that way, for example a value that
+Note: it is not yet possible ([ref. issue](https://github.com/copier-org/copier/issues/1474)) to update a multiselect base choice that way, for example a value that
 looks like this in the file `.copier-answers.yml`:
 ```yaml
 python_tested_versions:
