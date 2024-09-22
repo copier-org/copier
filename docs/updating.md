@@ -129,6 +129,19 @@ to go through the whole questionnaire again:
 copier update --defaults --data updated_question="my new answer"
 ```
 
+You can achieve the same using a [data file][data_file]:
+
+```shell
+echo "updated_question: my new answer" > /tmp/data-file.yaml
+copier update --defaults --data-file /tmp/data-file.yaml
+```
+
+!!! note
+
+    Due to [issue #1474](https://github.com/copier-org/copier/issues/1474),
+    it is not yet possible to update a multiselect choice using ˋ--dataˋ.
+    Use ˋ--data-fileˋ instead for now.
+
 ## How the update works
 
 To understand how the updating process works, take a look at this diagram:
