@@ -129,7 +129,7 @@ to go through the whole questionnaire again:
 copier update --defaults --data updated_question="my new answer"
 ```
 
-You can achieve the same using a [data file][data file]:
+You can achieve the same using a [data file][data_file]:
 
 ˋˋˋshell
 echo "updated_question: my new answer" > /tmp/data-file.yml
