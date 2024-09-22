@@ -136,7 +136,7 @@ python_tested_versions:
     - "3.10"
     - "3.11"
 ```
-As a workaround, you need to use the `--data_file` option instead. See [here](https://copier.readthedocs.io/en/stable/configuring/#data_file) for usage information.
+As a workaround, for now you need to use [the `--data-file` option][data_file] instead.
 
 ## How the update works
 
