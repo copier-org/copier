@@ -212,12 +212,12 @@
         "systems": "systems_2"
       },
       "locked": {
-        "lastModified": 1710146030,
-        "narHash": "sha256-SZ5L6eA7HJ/nmkzGG7/ISclqe6oZdOZTNoesiInkXPQ=",
-        "rev": "b1d9ab70662946ef0850d488da1c9019f3a9752a",
-        "revCount": 92,
+        "lastModified": 1726560853,
+        "narHash": "sha256-X6rJYSESBVr3hBoH0WbKE5KvhPU5bloyZ2L4K60/fPQ=",
+        "rev": "c1dfcf08411b08f6b8615f7d8971a2bfa81d5e8a",
+        "revCount": 101,
         "type": "tarball",
-        "url": "https://api.flakehub.com/f/pinned/numtide/flake-utils/0.1.92%2Brev-b1d9ab70662946ef0850d488da1c9019f3a9752a/018e2ca5-e5a2-7f80-9261-445a8cecd4d7/source.tar.gz"
+        "url": "https://api.flakehub.com/f/pinned/numtide/flake-utils/0.1.101%2Brev-c1dfcf08411b08f6b8615f7d8971a2bfa81d5e8a/0191ff0c-3a46-7ad4-b5e7-9f6806881886/source.tar.gz"
       },
       "original": {
         "type": "tarball",
@@ -517,12 +517,12 @@
     },
     "nixpkgs_4": {
       "locked": {
-        "lastModified": 1726062281,
-        "narHash": "sha256-PyFVySdGj3enKqm8RQuo4v1KLJLmNLOq2yYOHsI6e2Q=",
-        "rev": "e65aa8301ba4f0ab8cb98f944c14aa9da07394f8",
-        "revCount": 635067,
+        "lastModified": 1726838390,
+        "narHash": "sha256-NmcVhGElxDbmEWzgXsyAjlRhUus/nEqPC5So7BOJLUM=",
+        "rev": "944b2aea7f0a2d7c79f72468106bc5510cbf5101",
+        "revCount": 635367,
         "type": "tarball",
-        "url": "https://api.flakehub.com/f/pinned/NixOS/nixpkgs/0.2405.635067%2Brev-e65aa8301ba4f0ab8cb98f944c14aa9da07394f8/0191efda-e9e3-7b0d-9d73-69665fd6ce0f/source.tar.gz"
+        "url": "https://api.flakehub.com/f/pinned/NixOS/nixpkgs/0.2405.635367%2Brev-944b2aea7f0a2d7c79f72468106bc5510cbf5101/019213de-4759-79c6-b638-0878c1fd0179/source.tar.gz"
       },
       "original": {
         "type": "tarball",
@@ -558,11 +558,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1726275961,
-        "narHash": "sha256-QMdPMN+I9pwuE7/9d5Dane0VwGxtoTVNWIp3TMSIrgI=",
+        "lastModified": 1726715047,
+        "narHash": "sha256-OUpbkEbpkRh91WX8XYq5rugIHhzJUS84qwvCd+HBer8=",
         "owner": "nix-community",
         "repo": "poetry2nix",
-        "rev": "9a04664289506c27ddbf098d98ce520155af574c",
+        "rev": "1f4d4dcab3ee4b6a674e9d9ca9c8d125c7811634",
         "type": "github"
       },
       "original": {
