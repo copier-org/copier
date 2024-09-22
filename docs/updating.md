@@ -129,18 +129,18 @@ to go through the whole questionnaire again:
 copier update --defaults --data updated_question="my new answer"
 ```
 
-Note: it is not yet possible
-([ref. issue](https://github.com/copier-org/copier/issues/1474)) to update a multiselect
-choice that way, for example a value that looks like this in the file
-`.copier-answers.yml`:
+You can achieve the same using a [data file][data file]:
 
-```yaml
-python_tested_versions:
-    - "3.10"
-    - "3.11"
-```
+ˋˋˋshell
+echo "updated_question: my new answer" > /tmp/data-file.yml
+copier update --defaults --data-file /tmp/data-file.yml
+ˋˋˋ
 
-As a workaround, for now you need to use [the `--data-file` option][data_file] instead.
+!!! note
+
+    Due to [issue #1474](https://github.com/copier-org/copier/issues/1474),
+    it is not yet possible to update a multiselect choice using ˋ--dataˋ.
+    Use ˋ--data-fileˋ instead for now.
 
 ## How the update works
 
