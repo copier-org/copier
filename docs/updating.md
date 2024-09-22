@@ -131,10 +131,8 @@ copier update --defaults --data updated_question="my new answer"
 
 You can achieve the same using a [data file][data_file]:
 
-ˋˋˋshell
-echo "updated_question: my new answer" > /tmp/data-file.yml
-copier update --defaults --data-file /tmp/data-file.yml
-ˋˋˋ
+ˋˋˋshell echo "updated_question: my new answer" > /tmp/data-file.yml copier update
+--defaults --data-file /tmp/data-file.yml ˋˋˋ
 
 !!! note
 
