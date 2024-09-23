@@ -1612,3 +1612,43 @@ def test_update_with_skip_answered_and_new_answer(
     run_update(dst, data={"boolean": "true"}, skip_answered=True, overwrite=True)
     answers = yaml.safe_load(answers_file.read_text())
     assert answers["boolean"] is True
+
+
+def test_update_dont_validate_computed_value(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yml": dedent(
+                    """\
+                    computed:
+                        type: str
+                        default: foo
+                        when: false
+                        validator: "This validator should never be rendered"
+                    """
+                ),
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+            }
+        )
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "v1")
+
+    run_copy(str(src), dst, overwrite=True)
+    answers_file = dst / ".copier-answers.yml"
+    answers = yaml.safe_load(answers_file.read_text())
+    assert "computed" not in answers
+
+    with local.cwd(dst):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+
+    run_update(dst, overwrite=True)
+    answers = yaml.safe_load(answers_file.read_text())
+    assert "computed" not in answers

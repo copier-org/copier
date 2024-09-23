@@ -1003,7 +1003,11 @@ class Worker:
             with replace(
                 self,
                 dst_path=new_copy / subproject_subdir,
-                data=self.answers.combined,  # type: ignore[arg-type]
+                data={
+                    k: v
+                    for k, v in self.answers.combined.items()
+                    if k not in self.answers.hidden
+                },
                 defaults=True,
                 quiet=True,
                 src_path=self.subproject.template.url,  # type: ignore[union-attr]
