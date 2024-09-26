@@ -59,6 +59,7 @@ from .types import (
     MISSING,
     AnyByStrDict,
     JSONSerializable,
+    Operation,
     RelativePath,
     StrOrPath,
 )
@@ -66,9 +67,6 @@ from .user_data import DEFAULT_DATA, AnswersMap, Question
 from .vcs import get_git
 
 _T = TypeVar("_T")
-
-
-Operation = Literal["copy", "update"]
 
 
 @dataclass(config=ConfigDict(extra="forbid"))

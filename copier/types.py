@@ -40,6 +40,7 @@ VCSTypes = Literal["git"]
 Env = Mapping[str, str]
 MissingType = NewType("MissingType", object)
 MISSING = MissingType(object())
+Operation = Literal["copy", "update"]
 
 
 # Validators
