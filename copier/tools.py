@@ -13,7 +13,7 @@ from enum import Enum
 from importlib.metadata import version
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Callable, Literal, TextIO, cast
+from typing import Any, Callable, Iterator, Literal, TextIO, cast
 
 import colorama
 from packaging.version import Version
@@ -256,3 +256,11 @@ def set_git_alternates(*repos: Path, path: Path = Path(".")) -> None:
     alternates_file = get_git_objects_dir(path) / "info" / "alternates"
     alternates_file.parent.mkdir(parents=True, exist_ok=True)
     alternates_file.write_bytes(b"\n".join(map(bytes, map(get_git_objects_dir, repos))))
+
+
+def scantree(path: str) -> Iterator[os.DirEntry[str]]:
+    """A recursive extension of `os.scandir`."""
+    for entry in os.scandir(path):
+        yield entry
+        if entry.is_dir(follow_symlinks=False):
+            yield from scantree(entry.path)
