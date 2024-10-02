@@ -53,6 +53,7 @@ from .tools import (
     escape_git_path,
     normalize_git_path,
     printf,
+    scantree,
     set_git_alternates,
 )
 from .types import (
@@ -599,23 +600,41 @@ class Worker:
             )
         )
 
-    def _render_file(self, src_abspath: Path) -> None:
+    def _render_template(self) -> None:
+        """Render the template in the subproject root."""
+        for src in scantree(str(self.template_copy_root)):
+            src_abspath = Path(src.path)
+            src_relpath = Path(src_abspath).relative_to(self.template.local_abspath)
+            dst_relpath = self._render_path(
+                Path(src_abspath).relative_to(self.template_copy_root)
+            )
+            if dst_relpath is None or self.match_exclude(dst_relpath):
+                continue
+            if src.is_symlink() and self.template.preserve_symlinks:
+                self._render_symlink(src_relpath, dst_relpath)
+            elif src.is_dir(follow_symlinks=False):
+                self._render_folder(dst_relpath)
+            else:
+                self._render_file(src_relpath, dst_relpath)
+
+    def _render_file(self, src_relpath: Path, dst_relpath: Path) -> None:
         """Render one file.
 
         Args:
-            src_abspath:
-                The absolute path to the file that will be rendered.
+            src_relpath:
+                File to be rendered. It must be a path relative to the template
+                root.
+            dst_relpath:
+                File to be created. It must be a path relative to the subproject
+                root.
         """
         # TODO Get from main.render_file()
-        assert src_abspath.is_absolute()
-        src_relpath = src_abspath.relative_to(self.template.local_abspath).as_posix()
-        src_renderpath = src_abspath.relative_to(self.template_copy_root)
-        dst_relpath = self._render_path(src_renderpath)
-        if dst_relpath is None:
-            return
-        if src_abspath.name.endswith(self.template.templates_suffix):
+        assert not src_relpath.is_absolute()
+        assert not dst_relpath.is_absolute()
+        src_abspath = self.template.local_abspath / src_relpath
+        if src_relpath.name.endswith(self.template.templates_suffix):
             try:
-                tpl = self.jinja_env.get_template(src_relpath)
+                tpl = self.jinja_env.get_template(src_relpath.as_posix())
             except UnicodeDecodeError:
                 if self.template.templates_suffix:
                     # suffix is not empty, re-raise
@@ -626,7 +645,7 @@ class Worker:
                 new_content = tpl.render(**self._render_context()).encode()
         else:
             new_content = src_abspath.read_bytes()
-        dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
+        dst_abspath = self.subproject.local_abspath / dst_relpath
         src_mode = src_abspath.stat().st_mode
         if not self._render_allowed(dst_relpath, expected_contents=new_content):
             return
@@ -639,21 +658,23 @@ class Worker:
             dst_abspath.write_bytes(new_content)
             dst_abspath.chmod(src_mode)
 
-    def _render_symlink(self, src_abspath: Path) -> None:
+    def _render_symlink(self, src_relpath: Path, dst_relpath: Path) -> None:
         """Render one symlink.
 
         Args:
-            src_abspath:
-                Symlink to be rendered. It must be an absolute path within
-                the template.
+            src_relpath:
+                Symlink to be rendered. It must be a path relative to the
+                template root.
+            dst_relpath:
+                Symlink to be created. It must be a path relative to the
+                subproject root.
         """
-        assert src_abspath.is_absolute()
-        src_relpath = src_abspath.relative_to(self.template_copy_root)
-        dst_relpath = self._render_path(src_relpath)
-        if dst_relpath is None:
+        assert not src_relpath.is_absolute()
+        assert not dst_relpath.is_absolute()
+        if dst_relpath is None or self.match_exclude(dst_relpath):
             return
-        dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
 
+        src_abspath = self.template.local_abspath / src_relpath
         src_target = src_abspath.readlink()
         if src_abspath.name.endswith(self.template.templates_suffix):
             dst_target = Path(self._render_string(str(src_target)))
@@ -668,9 +689,11 @@ class Worker:
             return
 
         if not self.pretend:
+            dst_abspath = self.subproject.local_abspath / dst_relpath
             # symlink_to doesn't overwrite existing files, so delete it first
             if dst_abspath.is_symlink() or dst_abspath.exists():
                 dst_abspath.unlink()
+            dst_abspath.parent.mkdir(parents=True, exist_ok=True)
             dst_abspath.symlink_to(dst_target)
             if sys.platform == "darwin":
                 # Only macOS supports permissions on symlinks.
@@ -678,31 +701,18 @@ class Worker:
                 src_mode = src_abspath.lstat().st_mode
                 dst_abspath.lchmod(src_mode)
 
-    def _render_folder(self, src_abspath: Path) -> None:
-        """Recursively render a folder.
+    def _render_folder(self, dst_relpath: Path) -> None:
+        """Create one folder (without content).
 
         Args:
-            src_abspath:
-                Folder to be rendered. It must be an absolute path within
-                the template.
+            dst_relpath:
+                Folder to be created. It must be a path relative to the
+                subproject root.
         """
-        assert src_abspath.is_absolute()
-        src_relpath = src_abspath.relative_to(self.template_copy_root)
-        dst_relpath = self._render_path(src_relpath)
-        if dst_relpath is None:
-            return
-        if not self._render_allowed(dst_relpath, is_dir=True):
-            return
-        dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
-        if not self.pretend:
+        assert not dst_relpath.is_absolute()
+        if not self.pretend and self._render_allowed(dst_relpath, is_dir=True):
+            dst_abspath = self.subproject.local_abspath / dst_relpath
             dst_abspath.mkdir(parents=True, exist_ok=True)
-        for file in src_abspath.iterdir():
-            if file.is_symlink() and self.template.preserve_symlinks:
-                self._render_symlink(file)
-            elif file.is_dir():
-                self._render_folder(file)
-            else:
-                self._render_file(file)
 
     def _render_path(self, relpath: Path) -> Path | None:
         """Render one relative path.
@@ -732,9 +742,6 @@ class Worker:
                 part = Path(part).name
             rendered_parts.append(part)
         result = Path(*rendered_parts)
-        # Skip excluded paths.
-        if result != Path(".") and self.match_exclude(result):
-            return None
         if not is_template:
             templated_sibling = (
                 self.template.local_abspath
@@ -824,7 +831,6 @@ class Worker:
         self._print_message(self.template.message_before_copy)
         self._ask()
         was_existing = self.subproject.local_abspath.exists()
-        src_abspath = self.template_copy_root
         try:
             if not self.quiet:
                 # TODO Unify printing tools
@@ -832,7 +838,7 @@ class Worker:
                     f"\nCopying from template version {self.template.version}",
                     file=sys.stderr,
                 )
-            self._render_folder(src_abspath)
+            self._render_template()
             if not self.quiet:
                 # TODO Unify printing tools
                 print("")  # padding space
