@@ -116,6 +116,41 @@ Supported keys:
         the message is shown. Choice validation is useful when the validity of a choice
         depends on the answer to a previous question.
 
+    !!! tip "Dynamic choices"
+
+        Choices can be created dynamically by using a templated string which renders
+        as valid list-style, dict-style, or tuple-style choices in YAML format. For
+        example:
+
+        ```yaml title="copier.yml"
+        language:
+            type: str
+            help: Which programming language do you use?
+            choices:
+                - python
+                - node
+
+        dependency_manager:
+            type: str
+            help: Which dependency manager do you use?
+            choices: |
+                {%- if language == "python" %}
+                - poetry
+                - pipenv
+                {%- else %}
+                - npm
+                - yarn
+                {%- endif %}
+        ```
+
+        Dynamic choices can be used as an alternative approach to conditional choices
+        via validators where dynamic choices hide disabled choices whereas choices
+        disabled via validators are visible with along with the validator's error
+        message but cannot be selected.
+
+        When combining dynamic choices with validators, make sure to escape the
+        validator template using `{% raw %}...{% endraw %}`.
+
     !!! warning
 
         You are able to use different types for each choice value, but it is not

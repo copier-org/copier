@@ -368,6 +368,63 @@ def test_templated_prompt_with_conditional_choices(
     tui.sendline()
 
 
+@pytest.mark.parametrize(
+    "cloud, iac_choices",
+    [
+        ("Any", ["Terraform"]),
+        ("AWS", ["Terraform", "Cloud Formation"]),
+        ("Azure", ["Terraform", "Azure Resource Manager"]),
+        ("GCP", ["Terraform", "Deployment Manager"]),
+    ],
+)
+def test_templated_prompt_with_templated_choices(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    cloud: str,
+    iac_choices: str,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                """\
+                cloud:
+                    type: str
+                    help: Which cloud provider do you use?
+                    choices:
+                        - Any
+                        - AWS
+                        - Azure
+                        - GCP
+
+                iac:
+                    type: str
+                    help: Which IaC tool do you use?
+                    choices: |
+                        Terraform: tf
+                        {%- if cloud == 'AWS' %}
+                        Cloud Formation: cf
+                        {%- endif %}
+                        {%- if cloud == 'Azure' %}
+                        Azure Resource Manager: arm
+                        {%- endif %}
+                        {%- if cloud == 'GCP' %}
+                        Deployment Manager: dm
+                        {%- endif %}
+                """
+            ),
+        }
+    )
+    tui = spawn(
+        COPIER_PATH + ("copy", f"--data=cloud={cloud}", str(src), str(dst)),
+        timeout=10,
+    )
+    expect_prompt(tui, "iac", "str", help="Which IaC tool do you use?")
+    for iac in iac_choices:
+        tui.expect_exact(iac)
+    tui.sendline()
+
+
 def test_templated_prompt_update_previous_answer_disabled(
     tmp_path_factory: pytest.TempPathFactory, spawn: Spawn
 ) -> None:
