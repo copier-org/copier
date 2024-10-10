@@ -177,7 +177,7 @@ class Question:
     var_name: str
     answers: AnswersMap
     jinja_env: SandboxedEnvironment
-    choices: Sequence[Any] | dict[Any, Any] = field(default_factory=list)
+    choices: Sequence[Any] | dict[Any, Any] | str = field(default_factory=list)
     multiselect: bool = False
     default: Any = MISSING
     help: str = ""
@@ -291,8 +291,10 @@ class Question:
         result = []
         choices = self.choices
         default = self.get_default()
-        if isinstance(self.choices, dict):
-            choices = list(self.choices.items())
+        if isinstance(choices, str):
+            choices = parse_yaml_string(self.render_value(self.choices))
+        if isinstance(choices, dict):
+            choices = list(choices.items())
         for choice in choices:
             # If a choice is a value pair
             if isinstance(choice, (tuple, list)):
