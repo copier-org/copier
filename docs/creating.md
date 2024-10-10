@@ -77,12 +77,10 @@ In addition to
 [all the features Jinja supports](https://jinja.palletsprojects.com/en/3.1.x/templates/),
 Copier includes:
 
--   All functions and filters from
-    [jinja2-ansible-filters](https://gitlab.com/dreamer-labs/libraries/jinja2-ansible-filters/).
-
-    -   This includes the `to_nice_yaml` filter, which is used extensively in our
-        context.
-
+-   Most of the
+    [Ansible filters](https://docs.ansible.com/ansible/2.3/playbooks_filters.html)
+    including the `to_nice_yaml` filter, which is used extensively in our context. See
+    the [`jinja_extensions`][] setting for more details.
 -   `_copier_answers` includes the current answers dict, but slightly modified to make
     it suitable to [autoupdate your project safely][the-copier-answersyml-file]:
     -   It doesn't contain secret answers.
