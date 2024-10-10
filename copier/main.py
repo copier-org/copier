@@ -44,6 +44,7 @@ from .errors import (
     UnsafeTemplateError,
     UserMessageError,
 )
+from .jinja_ext import CopierExtension
 from .subproject import Subproject
 from .template import Task, Template
 from .tools import (
@@ -547,9 +548,7 @@ class Worker:
         """
         paths = [str(self.template.local_abspath)]
         loader = FileSystemLoader(paths)
-        default_extensions = [
-            "jinja2_ansible_filters.AnsibleCoreFiltersExtension",
-        ]
+        default_extensions = [CopierExtension]
         extensions = default_extensions + list(self.template.jinja_extensions)
         # We want to minimize the risk of hidden malware in the templates
         # so we use the SandboxedEnvironment instead of the regular one.
