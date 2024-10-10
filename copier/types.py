@@ -21,6 +21,11 @@ if sys.version_info >= (3, 9):
 else:
     from typing_extensions import Annotated
 
+if sys.version_info >= (3, 11):
+    from typing import Self as Self
+else:
+    from typing_extensions import Self as Self
+
 # simple types
 StrOrPath = Union[str, Path]
 AnyByStrDict = Dict[str, Any]
@@ -40,6 +45,7 @@ VCSTypes = Literal["git"]
 Env = Mapping[str, str]
 MissingType = NewType("MissingType", object)
 MISSING = MissingType(object())
+Operation = Literal["copy", "update"]
 
 
 # Validators

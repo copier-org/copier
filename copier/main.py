@@ -60,7 +60,9 @@ from .types import (
     MISSING,
     AnyByStrDict,
     JSONSerializable,
+    Operation,
     RelativePath,
+    Self,
     StrOrPath,
 )
 from .user_data import DEFAULT_DATA, AnswersMap, Question
@@ -206,6 +208,7 @@ class Worker:
     skip_tasks: bool = False
 
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
+    operation: Operation = field(init=False, default="copy")
     _cleanup_hooks: list[Callable[[], None]] = field(default_factory=list, init=False)
 
     def __enter__(self) -> Worker:
@@ -243,7 +246,7 @@ class Worker:
         for method in self._cleanup_hooks:
             method()
 
-    def _check_unsafe(self, mode: Literal["copy", "update"]) -> None:
+    def _check_unsafe(self, mode: Operation) -> None:
         """Check whether a template uses unsafe features."""
         if self.unsafe:
             return
@@ -588,7 +591,7 @@ class Worker:
     @cached_property
     def match_exclude(self) -> Callable[[Path], bool]:
         """Get a callable to match paths against all exclusions."""
-        return self._path_matcher(self.all_exclusions)
+        return self._path_matcher(map(self._render_string, self.all_exclusions))
 
     @cached_property
     def match_skip(self) -> Callable[[Path], bool]:
@@ -810,6 +813,14 @@ class Worker:
         subdir = self._render_string(self.template.subdirectory) or ""
         return self.template.local_abspath / subdir
 
+    def replace(self, **kwargs: Any) -> Self:
+        """Wraps dataclasses.replace to support replacing the init=False operation field."""
+        operation = kwargs.pop("operation", self.operation)
+        new = replace(self, **kwargs)
+        if operation in ("copy", "update"):
+            new.operation = operation
+        return new
+
     # Main operations
     def run_copy(self) -> None:
         """Generate a subproject from zero, ignoring what was in the folder.
@@ -855,7 +866,7 @@ class Worker:
                 "Cannot recopy because cannot obtain old template references "
                 f"from `{self.subproject.answers_relpath}`."
             )
-        with replace(self, src_path=self.subproject.template.url) as new_worker:
+        with self.replace(src_path=self.subproject.template.url) as new_worker:
             new_worker.run_copy()
 
     def run_update(self) -> None:
@@ -905,8 +916,10 @@ class Worker:
             print(
                 f"Updating to template version {self.template.version}", file=sys.stderr
             )
-        self._apply_update()
-        self._print_message(self.template.message_after_update)
+        with self.replace(operation="update") as worker:
+            worker._apply_update()
+            worker._print_message(worker.template.message_after_update)
+            self.answers = worker.answers
 
     def _apply_update(self) -> None:  # noqa: C901
         git = get_git()
@@ -926,8 +939,7 @@ class Worker:
             prefix=f"{__name__}.new_copy.",
         ) as new_copy:
             # Copy old template into a temporary destination
-            with replace(
-                self,
+            with self.replace(
                 dst_path=old_copy / subproject_subdir,
                 data=self.subproject.last_answers,
                 defaults=True,
@@ -981,8 +993,7 @@ class Worker:
                 with suppress(AttributeError):
                     del self.subproject.last_answers
             # Do a normal update in final destination
-            with replace(
-                self,
+            with self.replace(
                 # Don't regenerate intentionally deleted paths
                 exclude=exclude_plus_removed,
                 # Files can change due to the historical diff, and those
@@ -994,10 +1005,9 @@ class Worker:
                 current_worker.run_copy()
                 self.answers = current_worker.answers
             # Render with the same answers in an empty dir to avoid pollution
-            with replace(
-                self,
+            with self.replace(
                 dst_path=new_copy / subproject_subdir,
-                data=self.answers.combined,  # type: ignore[arg-type]
+                data=self.answers.combined,
                 defaults=True,
                 quiet=True,
                 src_path=self.subproject.template.url,  # type: ignore[union-attr]
