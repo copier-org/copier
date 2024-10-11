@@ -174,17 +174,6 @@ def handle_remove_readonly(
         raise
 
 
-def readlink(link: Path) -> Path:
-    """A custom version of os.readlink/pathlib.Path.readlink.
-
-    pathlib.Path.readlink is what we ideally would want to use, but it is only available on python>=3.9.
-    """
-    if sys.version_info >= (3, 9):
-        return link.readlink()
-    else:
-        return Path(os.readlink(link))
-
-
 _re_whitespace = re.compile(r"^\s+|\s+$")
 
 

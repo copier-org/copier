@@ -53,7 +53,6 @@ from .tools import (
     escape_git_path,
     normalize_git_path,
     printf,
-    readlink,
     set_git_alternates,
 )
 from .types import (
@@ -423,7 +422,7 @@ class Worker:
         try:
             previous_content: bytes | Path
             if previous_is_symlink:
-                previous_content = readlink(dst_abspath)
+                previous_content = dst_abspath.readlink()
             else:
                 previous_content = dst_abspath.read_bytes()
         except FileNotFoundError:
@@ -655,7 +654,7 @@ class Worker:
             return
         dst_abspath = Path(self.subproject.local_abspath, dst_relpath)
 
-        src_target = readlink(src_abspath)
+        src_target = src_abspath.readlink()
         if src_abspath.name.endswith(self.template.templates_suffix):
             dst_target = Path(self._render_string(str(src_target)))
         else:
