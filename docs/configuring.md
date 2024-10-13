@@ -950,15 +950,52 @@ Overwrite files that already exist, without asking.
 Additional Jinja2 extensions to load in the Jinja2 environment. Extensions can add
 filters, global variables and functions, or tags to the environment.
 
-The following extensions are _always_ loaded:
+By default, most of the
+[Ansible filters](https://docs.ansible.com/ansible/2.3/playbooks_filters.html) are
+_always_ loaded:
 
--   [`jinja2_ansible_filters.AnsibleCoreFiltersExtension`](https://gitlab.com/dreamer-labs/libraries/jinja2-ansible-filters/):
-    this extension adds most of the
-    [Ansible filters](https://docs.ansible.com/ansible/2.3/playbooks_filters.html) to
-    the environment.
-
-You don't need to tell your template users to install these extensions: Copier depends
-on them, so they are always installed when Copier is installed.
+-   `ans_groupby`
+-   `ans_random`
+-   `b64decode`
+-   `b64encode`
+-   `basename`
+-   `bool`
+-   `checksum`
+-   `dirname`
+-   `expanduser`
+-   `expandvars`
+-   `extract`
+-   `fileglob`
+-   `flatten`
+-   `from_json`
+-   `from_yaml`
+-   `from_yaml_all`
+-   `hash`
+-   `mandatory`
+-   `md5`
+-   `quote`
+-   `random_mac`
+-   `realpath`
+-   `regex_escape`
+-   `regex_findall`
+-   `regex_replace`
+-   `regex_search`
+-   `relpath`
+-   `sha1`
+-   `shuffle`
+-   `splitext`
+-   `strftime`
+-   `ternary`
+-   `to_datetime`
+-   `to_json`
+-   `to_nice_json`
+-   `to_nice_yaml`
+-   `to_uuid`
+-   `to_yaml`
+-   `type_debug`
+-   `win_basename`
+-   `win_dirname`
+-   `win_splitdrive`
 
 !!! warning
 
