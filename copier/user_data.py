@@ -421,7 +421,7 @@ class Question:
 
     def render_value(
         self, value: Any, extra_answers: AnyByStrDict | None = None
-    ) -> str:
+    ) -> Any:
         """Render a single templated value using Jinja.
 
         If the value cannot be used as a template, it will be returned as is.
