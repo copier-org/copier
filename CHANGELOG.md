@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.4.0 (2024-10-15)
+
+### Fix
+
+-   **exclude**: support negative exclude matching child of excluded parent
+-   parse new answer when `--skip-answered` is used
+-   validate answers to secret questions
+-   **updating**: do not recreate deleted paths on update (#1719)
+-   support Git config without user identity
+
+### Refactor
+
+-   set default value for `keep_trailing_newline` more idiomatically
+-   drop support for Python 3.8
+
+### Perf
+
+-   **updating**: avoid creating subproject copy
+
 ## v9.3.1 (2024-07-03)
 
 ### Fix
