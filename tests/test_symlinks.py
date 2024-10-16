@@ -464,3 +464,18 @@ def test_recursive_symlink(tmp_path_factory: pytest.TempPathFactory) -> None:
     run_copy(str(src), dst, defaults=True, overwrite=True)
     assert (dst / "one" / "two" / "three" / "root").is_symlink()
     assert (dst / "one" / "two" / "three" / "root").readlink() == Path("../../../")
+
+
+def test_symlinked_dir_expanded(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "a_dir" / "a_file.txt": "some content",
+            src / "a_symlinked_dir": Path("a_dir"),
+            src / "a_nested" / "symlink": Path("../a_dir"),
+        }
+    )
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    assert (dst / "a_dir" / "a_file.txt").read_text() == "some content"
+    assert (dst / "a_symlinked_dir" / "a_file.txt").read_text() == "some content"
+    assert (dst / "a_nested" / "symlink" / "a_file.txt").read_text() == "some content"
