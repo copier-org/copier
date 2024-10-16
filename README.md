@@ -9,6 +9,7 @@
 [![PyPI](https://img.shields.io/pypi/v/copier?logo=pypi&logoColor=%23959DA5)](https://pypi.org/project/copier/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Documentation Status](https://img.shields.io/readthedocs/copier/latest?logo=readthedocs)](https://copier.readthedocs.io/en/latest)
+[![](https://img.shields.io/badge/Gurubase-Ask%20Copier%20Guru-006BFF)](https://gurubase.io/g/copier)
 
 A library and CLI app for rendering project templates.
 
