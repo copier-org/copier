@@ -858,6 +858,18 @@ to know available options.
 
 The CLI option can be passed several times to add several patterns.
 
+Each pattern can be templated using Jinja.
+
+!!! example
+
+    Templating `exclude` patterns using `_copier_conf.operation` allows to have files
+    that are rendered once during `copy`, but are never updated:
+
+    ```yaml
+    _exclude:
+        - '{%- if _copier_conf.operation == "update" -%}src/*_example.py{%- endif %}'
+    ```
+
 !!! info
 
     When you define this parameter in `copier.yml`, it will **replace** the default
@@ -1315,6 +1327,8 @@ configuring `secret: true` in the [advanced prompt format][advanced-prompt-forma
 [Patterns][patterns-syntax] for files/folders that must be skipped only if they already
 exist, but always be present. If they do not exist in a project during an `update`
 operation, they will be recreated.
+
+Each pattern can be templated using Jinja.
 
 !!! example
 
