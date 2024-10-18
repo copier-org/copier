@@ -1,8 +1,8 @@
 """Complex types, annotations, validators."""
 
-import sys
 from pathlib import Path
 from typing import (
+    Annotated,
     Any,
     Dict,
     Literal,
@@ -15,11 +15,6 @@ from typing import (
 )
 
 from pydantic import AfterValidator
-
-if sys.version_info >= (3, 9):
-    from typing import Annotated
-else:
-    from typing_extensions import Annotated
 
 # simple types
 StrOrPath = Union[str, Path]

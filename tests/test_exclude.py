@@ -230,3 +230,35 @@ def test_config_exclude_with_templated_path(
     run_copy(str(src), dst, defaults=True, quiet=True)
     assert (dst / "keep-me.txt").exists()
     assert not (dst / "exclude-me.txt").exists()
+
+
+def test_exclude_wildcard_negate_nested_file(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """Test wildcard exclude with negated nested file and symlink excludes."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                """\
+                _preserve_symlinks: true
+                _exclude:
+                    - "*"
+                    - "!/foo/keep-me.txt"
+                    - "!/foo/bar/keep-me-symlink.txt"
+                """
+            ),
+            (src / "exclude-me.txt"): "",
+            (src / "foo" / "keep-me.txt"): "",
+            (src / "foo" / "bar" / "keep-me-symlink.txt"): Path("..", "keep-me.txt"),
+        }
+    )
+    run_copy(str(src), dst)
+    assert (dst / "foo" / "keep-me.txt").exists()
+    assert (dst / "foo" / "keep-me.txt").is_file()
+    assert (dst / "foo" / "bar" / "keep-me-symlink.txt").exists()
+    assert (dst / "foo" / "bar" / "keep-me-symlink.txt").is_symlink()
+    assert (dst / "foo" / "bar" / "keep-me-symlink.txt").readlink() == Path(
+        "..", "keep-me.txt"
+    )
+    assert not (dst / "exclude-me.txt").exists()

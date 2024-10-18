@@ -6,7 +6,6 @@ from plumbum import local
 
 from copier import run_copy, run_update
 from copier.errors import DirtyLocalWarning
-from copier.tools import readlink
 
 from .helpers import build_file_tree, git
 
@@ -43,7 +42,7 @@ def test_copy_symlink(tmp_path_factory: pytest.TempPathFactory) -> None:
     assert os.path.exists(dst / "target.txt")
     assert os.path.exists(dst / "symlink.txt")
     assert os.path.islink(dst / "symlink.txt")
-    assert readlink(dst / "symlink.txt") == Path("target.txt")
+    assert (dst / "symlink.txt").readlink() == Path("target.txt")
 
 
 def test_copy_symlink_templated_name(tmp_path_factory: pytest.TempPathFactory) -> None:
@@ -79,7 +78,7 @@ def test_copy_symlink_templated_name(tmp_path_factory: pytest.TempPathFactory) -
     assert os.path.exists(dst / "target.txt")
     assert os.path.exists(dst / "symlink.txt")
     assert os.path.islink(dst / "symlink.txt")
-    assert readlink(dst / "symlink.txt") == Path("target.txt")
+    assert (dst / "symlink.txt").readlink() == Path("target.txt")
 
 
 def test_copy_symlink_templated_target(
@@ -119,11 +118,11 @@ def test_copy_symlink_templated_target(
 
     assert os.path.exists(dst / "symlink1.txt")
     assert os.path.islink(dst / "symlink1.txt")
-    assert readlink(dst / "symlink1.txt") == Path("target.txt")
+    assert (dst / "symlink1.txt").readlink() == Path("target.txt")
 
     assert not os.path.exists(dst / "symlink2.txt")
     assert os.path.islink(dst / "symlink2.txt")
-    assert readlink(dst / "symlink2.txt") == Path("{{ target_name }}.txt")
+    assert (dst / "symlink2.txt").readlink() == Path("{{ target_name }}.txt")
 
 
 def test_copy_symlink_missing_target(tmp_path_factory: pytest.TempPathFactory) -> None:
@@ -155,7 +154,7 @@ def test_copy_symlink_missing_target(tmp_path_factory: pytest.TempPathFactory) -
     )
 
     assert os.path.islink(dst / "symlink.txt")
-    assert readlink(dst / "symlink.txt") == Path("target.txt")
+    assert (dst / "symlink.txt").readlink() == Path("target.txt")
     assert not os.path.exists(
         dst / "symlink.txt"
     )  # exists follows symlinks, It returns False as the target doesn't exist
@@ -289,7 +288,7 @@ def test_update_symlink(tmp_path_factory: pytest.TempPathFactory) -> None:
     p2 = dst / "symlink.txt"
     assert p1.read_text() == p2.read_text()
 
-    assert readlink(dst / "symlink.txt") == Path("bbbb.txt")
+    assert (dst / "symlink.txt").readlink() == Path("bbbb.txt")
 
 
 def test_update_file_to_symlink(tmp_path_factory: pytest.TempPathFactory) -> None:
@@ -348,7 +347,7 @@ def test_update_file_to_symlink(tmp_path_factory: pytest.TempPathFactory) -> Non
 
     # make sure changes propagate after update
     assert (dst / "bbbb.txt").is_symlink()
-    assert readlink(dst / "bbbb.txt") == Path("aaaa.txt")
+    assert (dst / "bbbb.txt").readlink() == Path("aaaa.txt")
     assert not (dst / "cccc.txt").is_symlink()
     assert (dst / "cccc.txt").read_text() == "Lorem ipsum"
 
@@ -464,4 +463,19 @@ def test_recursive_symlink(tmp_path_factory: pytest.TempPathFactory) -> None:
     )
     run_copy(str(src), dst, defaults=True, overwrite=True)
     assert (dst / "one" / "two" / "three" / "root").is_symlink()
-    assert readlink(dst / "one" / "two" / "three" / "root") == Path("../../../")
+    assert (dst / "one" / "two" / "three" / "root").readlink() == Path("../../../")
+
+
+def test_symlinked_dir_expanded(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "a_dir" / "a_file.txt": "some content",
+            src / "a_symlinked_dir": Path("a_dir"),
+            src / "a_nested" / "symlink": Path("../a_dir"),
+        }
+    )
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    assert (dst / "a_dir" / "a_file.txt").read_text() == "some content"
+    assert (dst / "a_symlinked_dir" / "a_file.txt").read_text() == "some content"
+    assert (dst / "a_nested" / "symlink" / "a_file.txt").read_text() == "some content"
