@@ -1110,7 +1110,7 @@ class Worker:
                         # before storing the file name for marking it as unmerged after the loop.
                         with open(fname) as conflicts_candidate:
                             if any(
-                                line.rstrip() in ("<<<<<<< before updating", ">>>>>>> after updating")
+                                line.rstrip() in {"<<<<<<< before updating", ">>>>>>> after updating"}
                                 for line in conflicts_candidate
                             ):
                                 conflicted.append(fname)
