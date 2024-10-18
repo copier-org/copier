@@ -1105,8 +1105,15 @@ class Worker:
                         )
                         # Remove rejection witness
                         Path(f"{fname}.rej").unlink()
-                        # Store file name for marking it as unmerged after the loop
-                        conflicted.append(fname)
+                        # The 3-way merge might have resolved conflicts automatically,
+                        # so we need to check if the file contains conflict markers
+                        # before storing the file name for marking it as unmerged after the loop.
+                        with open(fname) as conflicts_candidate:
+                            if any(
+                                line.rstrip() in {"<<<<<<< before updating", ">>>>>>> after updating"}
+                                for line in conflicts_candidate
+                            ):
+                                conflicted.append(fname)
                     # Forcefully mark files with conflict markers as unmerged,
                     # see SO post: https://stackoverflow.com/questions/77391627/
                     # and Git docs: https://git-scm.com/docs/git-update-index#_using_index_info.
