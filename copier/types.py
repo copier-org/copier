@@ -1,5 +1,6 @@
 """Complex types, annotations, validators."""
 
+import sys
 from pathlib import Path
 from typing import (
     Annotated,
@@ -15,6 +16,11 @@ from typing import (
 )
 
 from pydantic import AfterValidator
+
+if sys.version_info >= (3, 11):
+    from typing import Self as Self
+else:
+    from typing_extensions import Self as Self
 
 # simple types
 StrOrPath = Union[str, Path]
@@ -35,6 +41,7 @@ VCSTypes = Literal["git"]
 Env = Mapping[str, str]
 MissingType = NewType("MissingType", object)
 MISSING = MissingType(object())
+Operation = Literal["copy", "update"]
 
 
 # Validators
