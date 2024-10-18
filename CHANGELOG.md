@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.4.1 (2024-10-18)
+
+### Fix
+
+-   restore support for `preserve_symlinks: false` for directories (#1820)
+
 ## v9.4.0 (2024-10-15)
 
 ### Fix
