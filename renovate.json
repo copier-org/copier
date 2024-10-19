@@ -4,5 +4,16 @@
   "lockFileMaintenance": {
     "enabled": true,
     "schedule": "every 4 week on Monday"
-  }
+  },
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "matchCategories": ["python"],
+      "addLabels": ["python"]
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "addLabels": ["github_actions"]
+    }
+  ]
 }
