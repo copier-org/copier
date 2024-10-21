@@ -12,6 +12,10 @@
       "https://copier.cachix.org"
       "https://devenv.cachix.org"
     ];
+
+    # HACK https://github.com/renovatebot/renovate/issues/29721
+    # TODO Remove these comments when fixed
+    # github:NixOS/nixpkgs/nixpkgs-24.05
   };
   inputs = {
     devenv.url = "github:cachix/devenv/latest";
