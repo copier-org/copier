@@ -17,6 +17,14 @@
     {
       "matchManagers": ["github-actions"],
       "addLabels": ["github_actions"]
+    },
+    {
+      "matchPackageNames": ["*"],
+      "semanticCommitType": "build"
+    },
+    {
+      "matchDepTypes": ["dependencies"],
+      "semanticCommitType": "fix"
     }
   ]
 }
