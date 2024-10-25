@@ -1652,3 +1652,55 @@ def test_update_dont_validate_computed_value(
     run_update(dst, overwrite=True)
     answers = yaml.safe_load(answers_file.read_text())
     assert "computed" not in answers
+
+
+def test_update_git_submodule(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst, submodule = map(tmp_path_factory.mktemp, ("src", "dst", "submodule"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "version.txt": "v1",
+            }
+        )
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "v1")
+
+    run_copy(str(src), submodule)
+
+    with local.cwd(submodule):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+
+    assert (submodule / ".copier-answers.yml").is_file()
+    assert (submodule / "version.txt").is_file()
+    assert (submodule / "version.txt").read_text() == "v1"
+
+    with local.cwd(dst):
+        git("init")
+        # See https://github.com/git/git/security/advisories/GHSA-3wp6-j8xr-qw85
+        # for more details on why we need to set `protocol.file.allow=always` to
+        # be able to clone a local submodule.
+        git("-c", "protocol.file.allow=always", "submodule", "add", submodule, "sub")
+        git("add", ".")
+        git("commit", "-m", "add submodule")
+
+    assert (dst / "sub" / ".copier-answers.yml").is_file()
+    assert (dst / "sub" / "version.txt").is_file()
+    assert (dst / "sub" / "version.txt").read_text() == "v1"
+
+    with local.cwd(src):
+        build_file_tree({"version.txt": "v2"})
+        git("add", ".")
+        git("commit", "-m2")
+        git("tag", "v2")
+
+    run_update(dst / "sub", overwrite=True)
+
+    assert (dst / "sub" / ".copier-answers.yml").is_file()
+    assert (dst / "sub" / "version.txt").is_file()
+    assert (dst / "sub" / "version.txt").read_text() == "v2"
