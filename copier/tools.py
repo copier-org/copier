@@ -230,16 +230,15 @@ def get_git_objects_dir(path: Path) -> Path:
     from .vcs import get_git
 
     git = get_git()
-    return Path(
+    return path.joinpath(
         git(
             "-C",
             path,
             "rev-parse",
-            "--path-format=absolute",
             "--git-path",
             "objects",
         ).strip()
-    )
+    ).absolute()
 
 
 def set_git_alternates(*repos: Path, path: Path = Path(".")) -> None:
