@@ -520,7 +520,7 @@ class Worker:
 
         self.answers = result
 
-    @cached_property
+    @property
     def answers_relpath(self) -> Path:
         """Obtain the proper relative path for the answers file.
 
