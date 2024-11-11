@@ -75,27 +75,58 @@ their usage.
 
 In addition to
 [all the features Jinja supports](https://jinja.palletsprojects.com/en/3.1.x/templates/),
-Copier includes:
+Copier provides all functions and filters from
+[jinja2-ansible-filters](https://gitlab.com/dreamer-labs/libraries/jinja2-ansible-filters/).
+This includes the `to_nice_yaml` filter, which is used extensively in our context.
 
--   All functions and filters from
-    [jinja2-ansible-filters](https://gitlab.com/dreamer-labs/libraries/jinja2-ansible-filters/).
+## Variables (global)
 
-    -   This includes the `to_nice_yaml` filter, which is used extensively in our
-        context.
+The following variables are always available in Jinja templates:
 
--   `_copier_answers` includes the current answers dict, but slightly modified to make
-    it suitable to [autoupdate your project safely][the-copier-answersyml-file]:
-    -   It doesn't contain secret answers.
-    -   It doesn't contain any data that is not easy to render to JSON or YAML.
-    -   It contains special keys like `_commit` and `_src_path`, indicating how the last
-        template update was done.
--   `_copier_conf` includes a representation of the current Copier
-    <!-- prettier-ignore -->
-    [Worker][copier.main.Worker] object, also slightly modified:
-    -   It only contains JSON-serializable data.
-    -   You can serialize it with `{{ _copier_conf|to_json }}`.
-    -   ⚠️ It contains secret answers inside its `.data` key.
-    -   Modifying it doesn't alter the current rendering configuration.
-    -   It contains the current commit hash from the template in
-        `{{ _copier_conf.vcs_ref_hash }}`.
-    -   Contains Operating System-specific directory separator under `sep` key.
+### `_copier_answers`
+
+`_copier_answers` includes the current answers dict, but slightly modified to make it
+suitable to [autoupdate your project safely][the-copier-answersyml-file]:
+
+-   It doesn't contain secret answers.
+-   It doesn't contain any data that is not easy to render to JSON or YAML.
+-   It contains special keys like `_commit` and `_src_path`, indicating how the last
+    template update was done.
+
+### `_copier_conf`
+
+`_copier_conf` includes a representation of the current Copier
+[Worker][copier.main.Worker] object, also slightly modified:
+
+-   It only contains JSON-serializable data.
+-   You can serialize it with `{{ _copier_conf|to_json }}`.
+-   ⚠️ It contains secret answers inside its `.data` key.
+-   Modifying it doesn't alter the current rendering configuration.
+
+Furthermore, the following keys are added:
+
+#### `_copier_conf.os`
+
+The detected Operating System, either `linux`, `macos`, `windows` or `None`.
+
+#### `_copier_conf.sep`
+
+The Operating System-specific directory separator.
+
+#### `_copier_conf.vcs_ref_hash`
+
+The current commit hash from the template.
+
+### `_copier_python`
+
+The absolute path of the Python interpreter running Copier.
+
+### `_folder_name`
+
+The name of the project root directory.
+
+## Variables (context-specific)
+
+Some rendering contexts provide variables unique to them:
+
+-   [`migrations`](configuring.md#migrations)
