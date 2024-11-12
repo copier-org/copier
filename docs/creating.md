@@ -105,15 +105,15 @@ suitable to [autoupdate your project safely][the-copier-answersyml-file]:
 
 Furthermore, the following keys are added:
 
-#### `_copier_conf.os`
+#### `os` { #\_copier_conf.os }
 
-The detected Operating System, either `linux`, `macos`, `windows` or `None`.
+The detected operating system, either `"linux"`, `"macos"`, `"windows"` or `None`.
 
-#### `_copier_conf.sep`
+#### `sep` { #\_copier_conf.sep }
 
-The Operating System-specific directory separator.
+The operating system-specific directory separator.
 
-#### `_copier_conf.vcs_ref_hash`
+#### `vcs_ref_hash` { #\_copier_conf.vcs_ref_hash }
 
 The current commit hash from the template.
 
