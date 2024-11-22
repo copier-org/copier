@@ -42,6 +42,7 @@ from .errors import (
     ExtensionNotFoundError,
     UnsafeTemplateError,
     UserMessageError,
+    YieldTagInFileError,
 )
 from .jinja_ext import YieldEnvironment, YieldExtension
 from .subproject import Subproject
@@ -615,6 +616,10 @@ class Worker:
                     self._render_folder(dst_relpath)
                 else:
                     self._render_file(src_relpath, dst_relpath, extra_context=ctx or {})
+                    if self.jinja_env.yield_context:
+                        raise YieldTagInFileError(
+                            f"File {src_relpath} contains a yield tag, but it was not allowed."
+                        )
 
     def _render_file(
         self,

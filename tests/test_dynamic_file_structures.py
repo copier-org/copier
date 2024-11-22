@@ -3,6 +3,7 @@ import warnings
 import pytest
 
 import copier
+from copier.errors import YieldTagInFileError
 from tests.helpers import build_file_tree
 
 
@@ -163,3 +164,25 @@ def test_folder_loop_dict_items(tmp_path_factory: pytest.TempPathFactory) -> Non
         unexpected_files = set(all_files) - set(expected_files)
 
         assert not unexpected_files, f"Unexpected files found: {unexpected_files}"
+
+
+def test_raise_yield_tag_in_file(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "copier.yml": "",
+            src
+            / "file.txt.jinja": "{% yield item from strings %}{{ item }}{% endyield %}",
+        }
+    )
+
+    with pytest.raises(YieldTagInFileError, match="file.txt.jinja"):
+        copier.run_copy(
+            str(src),
+            dst,
+            data={
+                "strings": ["a", "b", "c"],
+            },
+            defaults=True,
+            overwrite=True,
+        )
