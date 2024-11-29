@@ -1,4 +1,5 @@
 """Main functions and classes, used to generate or update projects."""
+
 from __future__ import annotations
 
 import os
@@ -214,14 +215,12 @@ class Worker:
         return self
 
     @overload
-    def __exit__(self, type: None, value: None, traceback: None) -> None:
-        ...
+    def __exit__(self, type: None, value: None, traceback: None) -> None: ...
 
     @overload
     def __exit__(
         self, type: type[BaseException], value: BaseException, traceback: TracebackType
-    ) -> None:
-        ...
+    ) -> None: ...
 
     def __exit__(
         self,
@@ -495,7 +494,9 @@ class Worker:
                 # Try to validate the answer value if the question has a
                 # validator.
                 if err_msg := question.validate_answer(answer):
-                    raise ValueError(f"Validation error for question '{var_name}': {err_msg}")
+                    raise ValueError(
+                        f"Validation error for question '{var_name}': {err_msg}"
+                    )
                 # At this point, the answer value is valid. Do not ask the
                 # question again, but set answer as the user's answer instead.
                 result.user[var_name] = answer
@@ -616,7 +617,7 @@ class Worker:
                     self._render_folder(dst_relpath)
                 else:
                     self._render_file(src_relpath, dst_relpath, extra_context=ctx or {})
-                    if self.jinja_env.yield_context:
+                    if self.jinja_env.yield_name:
                         raise YieldTagInFileError(
                             f"File {src_relpath} contains a yield tag, but it was not allowed."
                         )
@@ -730,7 +731,7 @@ class Worker:
     def _adjust_rendered_part(self, rendered_part: str) -> str:
         """Adjust the rendered part if necessary.
 
-        If {{ _copier_conf.answers_file }} becomes the full path,
+        If `{{ _copier_conf.answers_file }}` becomes the full path,
         restore part to be just the end leaf.
 
         Args:
@@ -776,15 +777,13 @@ class Worker:
 
         rendered_part = self._render_string(part, extra_context=extra_context)
 
-        yield_context = self.jinja_env.yield_context.copy()
-        if yield_context:
-            single_var = yield_context["single_var"]
-            looped_var = yield_context["looped_var"]
-
-            for value in looped_var:
-                new_context = {**extra_context, **{single_var: value}}
+        yield_name = self.jinja_env.yield_name
+        if yield_name:
+            for value in self.jinja_env.yield_iterable or ():
+                new_context = {**extra_context, **{yield_name: value}}
                 rendered_part = self._render_string(part, extra_context=new_context)
-                self.jinja_env.yield_context = {}
+                self.jinja_env.yield_name = None
+                self.jinja_env.yield_iterable = None
 
                 rendered_part = self._adjust_rendered_part(rendered_part)
 
@@ -1189,7 +1188,8 @@ class Worker:
                         # before storing the file name for marking it as unmerged after the loop.
                         with open(fname) as conflicts_candidate:
                             if any(
-                                line.rstrip() in {"<<<<<<< before updating", ">>>>>>> after updating"}
+                                line.rstrip()
+                                in {"<<<<<<< before updating", ">>>>>>> after updating"}
                                 for line in conflicts_candidate
                             ):
                                 conflicted.append(fname)

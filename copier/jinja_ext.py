@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Sequence
+from typing import Any, Callable, Iterable
 
 from jinja2 import nodes
 from jinja2.exceptions import UndefinedError
@@ -12,48 +12,49 @@ from jinja2.sandbox import SandboxedEnvironment
 
 
 class YieldEnvironment(SandboxedEnvironment):
-    """Jinja2 environment with a `yield_context` attribute.
+    """Jinja2 environment with attributes from the YieldExtension.
 
     This is simple environment class that extends the SandboxedEnvironment
     for use with the YieldExtension, mainly for avoiding type errors.
 
     We use the SandboxedEnvironment because we want to minimize the risk of hidden malware
-    in the templates so we use the SandboxedEnvironment instead of the regular one.
-    Of course we still have the post-copy tasks to worry about, but at least
+    in the templates. Of course we still have the post-copy tasks to worry about, but at least
     they are more visible to the final user.
     """
 
-    yield_context: dict[str, Any]
+    yield_name: str | None
+    yield_iterable: Iterable[Any] | None
 
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
-        self.extend(yield_context=dict())
+        self.extend(yield_name=None, yield_iterable=None)
 
 
 class YieldExtension(Extension):
-    """`Jinja2 extension for the `yield` tag.
+    """Jinja2 extension for the `yield` tag.
 
-    If `yield` tag is used in a template, this extension sets the `yield_context` attribute to the
-    jinja environment. `yield_context` is a dictionary with the following keys:
-    - `single_var`: The name of the variable that will be yielded.
-    - `looped_var`: The variable that will be looped over.
+    If `yield` tag is used in a template, this extension sets following attribute to the
+    jinja environment:
+    - `yield_name`: The name of the variable that will be yielded.
+    - `yield_iterable`: The variable that will be looped over.
 
-    Note that this extension just sets the `yield_context` attribute but renders template
-    as usual. It is caller's responsibility to use the `yield_context` attribute in the
-    template to generate the desired output.
+    Note that this extension just sets the attributes but renders template as usual.
+    It is caller's responsibility to use the `yield_context` attribute in the template to
+    generate the desired output.
 
-    Example:
-        template: "{% yield single_var from looped_var %}"
-        context: {"looped_var": [1, 2, 3], "single_var": "item"}
+    !!! example
 
-        then,
+        ```python
         >>> from copier.jinja_ext import YieldEnvironment, YieldExtension
         >>> env = YieldEnvironment(extensions=[YieldExtension])
         >>> template = env.from_string("{% yield single_var from looped_var %}{{ single_var }}{% endyield %}")
         >>> template.render({"looped_var": [1, 2, 3]})
         ''
-        >>> env.yield_context
-        {'single_var': 'single_var', 'looped_var': [1, 2, 3]}
+        >>> env.yield_name
+        'single_var'
+        >>> env.yield_iterable
+        [1, 2, 3]
+        ```
     """
 
     tags = {"yield"}
@@ -67,15 +68,15 @@ class YieldExtension(Extension):
         """Parse the `yield` tag."""
         lineno = next(parser.stream).lineno
 
-        single_var: nodes.Name = parser.parse_assign_target(name_only=True)
+        yield_name: nodes.Name = parser.parse_assign_target(name_only=True)
         parser.stream.expect("name:from")
-        looped_var = parser.parse_expression()
+        yield_iterable = parser.parse_expression()
         body = parser.parse_statements(("name:endyield",), drop_needle=True)
 
         return nodes.CallBlock(
             self.call_method(
                 "_yield_support",
-                [looped_var, nodes.Const(single_var.name)],
+                [yield_iterable, nodes.Const(yield_name.name)],
             ),
             [],
             [],
@@ -84,19 +85,15 @@ class YieldExtension(Extension):
         )
 
     def _yield_support(
-        self, looped_var: Sequence[Any], single_var_name: str, caller: Callable[[], str]
+        self, yield_iterable: Iterable[Any], yield_name: str, caller: Callable[[], str]
     ) -> str:
         """Support function for the yield tag.
 
-        Sets the yield context in the environment with the given
-        looped variable and single variable name, then calls the provided caller
-        function. If an UndefinedError is raised, it returns an empty string.
-
+        Sets the `yield_name` and `yield_iterable` attributes in the environment then calls
+        the provided caller function. If an UndefinedError is raised, it returns an empty string.
         """
-        self.environment.yield_context = {
-            "single_var": single_var_name,
-            "looped_var": looped_var,
-        }
+        self.environment.yield_name = yield_name
+        self.environment.yield_iterable = yield_iterable
 
         try:
             res = caller()
