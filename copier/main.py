@@ -617,10 +617,6 @@ class Worker:
                     self._render_folder(dst_relpath)
                 else:
                     self._render_file(src_relpath, dst_relpath, extra_context=ctx or {})
-                    if self.jinja_env.yield_name:
-                        raise YieldTagInFileError(
-                            f"File {src_relpath} contains a yield tag, but it was not allowed."
-                        )
 
     def _render_file(
         self,
@@ -657,6 +653,10 @@ class Worker:
                 new_content = tpl.render(
                     **self._render_context(), **(extra_context or {})
                 ).encode()
+                if self.jinja_env.yield_name:
+                    raise YieldTagInFileError(
+                        f"File {src_relpath} contains a yield tag, but it is not allowed."
+                    )
         else:
             new_content = src_abspath.read_bytes()
         dst_abspath = self.subproject.local_abspath / dst_relpath
