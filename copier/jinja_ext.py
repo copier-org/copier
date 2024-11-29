@@ -76,7 +76,7 @@ class YieldExtension(Extension):
         return nodes.CallBlock(
             self.call_method(
                 "_yield_support",
-                [yield_iterable, nodes.Const(yield_name.name)],
+                [nodes.Const(yield_name.name), yield_iterable],
             ),
             [],
             [],
@@ -85,7 +85,7 @@ class YieldExtension(Extension):
         )
 
     def _yield_support(
-        self, yield_iterable: Iterable[Any], yield_name: str, caller: Callable[[], str]
+        self, yield_name: str, yield_iterable: Iterable[Any], caller: Callable[[], str]
     ) -> str:
         """Support function for the yield tag.
 
