@@ -14,6 +14,7 @@ from .helpers import BRACKET_ENVOPS_JSON, PROJECT_TEMPLATE, build_file_tree, git
 
 SRC = Path(f"{PROJECT_TEMPLATE}_legacy_migrations").absolute()
 
+
 # This fails on windows CI because, when the test tries to execute
 # `migrations.py`, it doesn't understand that it should be interpreted
 # by python.exe. Or maybe it fails because CI is using Git bash instead
@@ -235,7 +236,11 @@ def test_prereleases(tmp_path_factory: pytest.TempPathFactory) -> None:
     # Update it with prereleases
     with pytest.deprecated_call():
         run_update(
-            dst_path=dst, defaults=True, overwrite=True, use_prereleases=True, unsafe=True
+            dst_path=dst,
+            defaults=True,
+            overwrite=True,
+            use_prereleases=True,
+            unsafe=True,
         )
     answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
     assert answers["_commit"] == "v2.0.0.alpha1"

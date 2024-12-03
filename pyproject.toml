@@ -131,6 +131,9 @@ known-first-party = ["copier"]
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
+[tool.ruff.lint.pyupgrade]
+keep-runtime-typing = true
+
 [tool.mypy]
 strict = true
 plugins = ["pydantic.mypy"]

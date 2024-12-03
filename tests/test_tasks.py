@@ -94,7 +94,14 @@ def test_copy_cli_skip_tasks(
         {(src / "copier.yaml"): yaml.safe_dump({"_tasks": ["touch task.txt"]})}
     )
     _, retcode = CopierApp.run(
-        ["copier", "copy", "--UNSAFE", *(["--skip-tasks"] if skip_tasks else []), str(src), str(dst)],
+        [
+            "copier",
+            "copy",
+            "--UNSAFE",
+            *(["--skip-tasks"] if skip_tasks else []),
+            str(src),
+            str(dst),
+        ],
         exit=False,
     )
     assert retcode == 0
