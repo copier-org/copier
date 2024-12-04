@@ -23,9 +23,9 @@ from pydantic_core.core_schema import ValidationInfo
 from pygments.lexers.data import JsonLexer, YamlLexer
 from questionary.prompts.common import Choice
 
-from .errors import InvalidTypeError, UserMessageError
+from .errors import InvalidTypeError, MissingFileWarning, UserMessageError
 from .tools import cast_to_bool, cast_to_str, force_str_end
-from .types import MISSING, AnyByStrDict, MissingType, OptStrOrPath, StrOrPath
+from .types import MISSING, AnyByStrDict, MissingType, StrOrPath
 
 
 # TODO Remove these two functions as well as DEFAULT_DATA in a future release
@@ -487,13 +487,16 @@ def parse_yaml_string(string: str) -> Any:
 
 def load_answersfile_data(
     dst_path: StrOrPath,
-    answers_file: OptStrOrPath = None,
+    answers_file: StrOrPath = ".copier-answers.yml",
 ) -> AnyByStrDict:
     """Load answers data from a `$dst_path/$answers_file` file if it exists."""
     try:
-        with open(Path(dst_path) / (answers_file or ".copier-answers.yml")) as fd:
+        with open(Path(dst_path) / answers_file) as fd:
             return yaml.safe_load(fd)
     except FileNotFoundError:
+        warnings.warn(
+            f"File not found; returning empty dict: {answers_file}", MissingFileWarning
+        )
         return {}
 
 

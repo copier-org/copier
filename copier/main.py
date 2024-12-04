@@ -38,6 +38,7 @@ from pydantic import ConfigDict, PositiveInt
 from pydantic.dataclasses import dataclass
 from pydantic_core import to_jsonable_python
 from questionary import unsafe_prompt
+from thunk_dict import ThunkDict
 
 from .errors import (
     CopierAnswersInterrupt,
@@ -64,10 +65,26 @@ from .types import (
     RelativePath,
     StrOrPath,
 )
-from .user_data import DEFAULT_DATA, AnswersMap, Question
+from .user_data import DEFAULT_DATA, AnswersMap, Question, load_answersfile_data
 from .vcs import get_git
 
 _T = TypeVar("_T")
+
+
+# HACK https://github.com/kevalii/thunk-dict/pull/1
+# TODO Remove when merged and use ThunkDict directly
+class _ThunkDict(ThunkDict):
+    def __init__(self, dictionary=None, *args, **kwargs):
+        class __LazyInternal__:
+            def release(self):
+                return self.value()
+
+            def __init__(self, item):
+                self.value = item
+
+        self.__LazyInternal__ = lambda: __LazyInternal__
+        super().__init__(dictionary, *args, **kwargs)
+        self.__LazyInternal__ = __LazyInternal__
 
 
 @dataclass(config=ConfigDict(extra="forbid"))
@@ -263,6 +280,25 @@ class Worker:
         if features:
             raise UnsafeTemplateError(sorted(features))
 
+    @cached_property
+    def _external_data(self) -> Mapping[str, Any]:
+        """Load external data lazily.
+
+        Result keys are used for rendering, and values are the parsed contents
+        of the YAML files specified in [external_data_files][].
+
+        Files will only be parsed lazily on 1st access. This helps avoiding
+        circular dependencies when the file name also comes from a variable.
+        """
+        return _ThunkDict(
+            {
+                name: lambda path=path: load_answersfile_data(
+                    self.dst_path, self._render_string(path)
+                )
+                for name, path in self.template.external_data_files.items()
+            }
+        )
+
     def _print_message(self, message: str) -> None:
         if message and not self.quiet:
             print(self._render_string(message), file=sys.stderr)
@@ -351,6 +387,7 @@ class Worker:
             **self.answers.combined,
             _copier_answers=self._answers_to_remember(),
             _copier_conf=conf,
+            _ext=self._external_data,
             _folder_name=self.subproject.local_abspath.name,
             _copier_python=sys.executable,
         )
