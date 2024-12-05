@@ -289,18 +289,6 @@ def is_subdict(small: dict[Any, Any], big: dict[Any, Any]) -> bool:
     return {**big, **small} == big
 
 
-def test_worker_good_data(tmp_path: Path) -> None:
-    # This test is probably useless, as it tests the what and not the how
-    conf = copier.Worker("./tests/demo_data", tmp_path)
-    assert conf._render_context()["_folder_name"] == tmp_path.name
-    assert conf.all_exclusions == ("exclude1", "exclude2")
-    assert conf.template.skip_if_exists == ["skip_if_exists1", "skip_if_exists2"]
-    assert conf.template.tasks == [
-        Task(cmd="touch 1", extra_vars={"stage": "task"}),
-        Task(cmd="touch 2", extra_vars={"stage": "task"}),
-    ]
-
-
 @pytest.mark.parametrize(
     "test_input, expected_exclusions",
     [

@@ -65,7 +65,7 @@ from .types import (
     RelativePath,
     StrOrPath,
 )
-from .user_data import DEFAULT_DATA, AnswersMap, Question, load_answersfile_data
+from .user_data import AnswersMap, Question, load_answersfile_data
 from .vcs import get_git
 
 _T = TypeVar("_T")
@@ -280,7 +280,6 @@ class Worker:
         if features:
             raise UnsafeTemplateError(sorted(features))
 
-    @cached_property
     def _external_data(self) -> Mapping[str, Any]:
         """Load external data lazily.
 
@@ -366,8 +365,13 @@ class Worker:
             with local.cwd(working_directory), local.env(**extra_env):
                 subprocess.run(task_cmd, shell=use_shell, check=True, env=local.env)
 
-    def _render_context(self) -> Mapping[str, Any]:
-        """Produce render context for Jinja."""
+    def _system_render_context(self) -> Mapping[str, Any]:
+        """System reserved render context.
+
+        Most keys start with `_` because they're reserved.
+
+        Resolution of computed values is deferred until used for the 1st time.
+        """
         # Backwards compatibility
         # FIXME Remove it?
         conf = asdict(self)
@@ -381,13 +385,9 @@ class Worker:
                 "os": OS,
             }
         )
-
         return dict(
-            DEFAULT_DATA,
-            **self.answers.combined,
-            _copier_answers=self._answers_to_remember(),
             _copier_conf=conf,
-            _ext=self._external_data,
+            _ext=self._external_data(),
             _folder_name=self.subproject.local_abspath.name,
             _copier_python=sys.executable,
         )
@@ -492,41 +492,42 @@ class Worker:
 
     def _ask(self) -> None:  # noqa: C901
         """Ask the questions of the questionnaire and record their answers."""
-        result = AnswersMap(
+        self.answers = AnswersMap(
             user_defaults=self.user_defaults,
             init=self.data,
             last=self.subproject.last_answers,
             metadata=self.template.metadata,
+            system=self._system_render_context(),
         )
 
         for var_name, details in self.template.questions_data.items():
             question = Question(
-                answers=result,
+                answers=self.answers,
                 jinja_env=self.jinja_env,
                 var_name=var_name,
                 **details,
             )
             # Delete last answer if it cannot be parsed or validated, so a new
             # valid answer can be provided.
-            if var_name in result.last:
+            if var_name in self.answers.last:
                 try:
-                    answer = question.parse_answer(result.last[var_name])
+                    answer = question.parse_answer(self.answers.last[var_name])
                 except Exception:
-                    del result.last[var_name]
+                    del self.answers.last[var_name]
                 else:
                     if question.validate_answer(answer):
-                        del result.last[var_name]
+                        del self.answers.last[var_name]
             # Skip a question when the skip condition is met.
             if not question.get_when():
                 # Omit its answer from the answers file.
-                result.hide(var_name)
+                self.answers.hide(var_name)
                 # Skip immediately to the next question when it has no default
                 # value.
                 if question.default is MISSING:
                     continue
-            if var_name in result.init:
+            if var_name in self.answers.init:
                 # Try to parse the answer value.
-                answer = question.parse_answer(result.init[var_name])
+                answer = question.parse_answer(self.answers.init[var_name])
                 # Try to validate the answer value if the question has a
                 # validator.
                 if err_msg := question.validate_answer(answer):
@@ -535,10 +536,10 @@ class Worker:
                     )
                 # At this point, the answer value is valid. Do not ask the
                 # question again, but set answer as the user's answer instead.
-                result.user[var_name] = answer
+                self.answers.user[var_name] = answer
                 continue
             # Skip a question when the user already answered it.
-            if self.skip_answered and var_name in result.last:
+            if self.skip_answered and var_name in self.answers.last:
                 continue
 
             # Display TUI and ask user interactively only without --defaults
@@ -553,10 +554,11 @@ class Worker:
                         answers={question.var_name: question.get_default()},
                     )[question.var_name]
             except KeyboardInterrupt as err:
-                raise CopierAnswersInterrupt(result, question, self.template) from err
-            result.user[var_name] = new_answer
-
-        self.answers = result
+                raise CopierAnswersInterrupt(
+                    self.answers, question, self.template
+                ) from err
+            self.answers.user[var_name] = new_answer
+        self.answers.system["_copier_answers"] = self._answers_to_remember()
 
     @property
     def answers_relpath(self) -> Path:
@@ -681,7 +683,7 @@ class Worker:
                 # suffix is empty, fallback to copy
                 new_content = src_abspath.read_bytes()
             else:
-                new_content = tpl.render(**self._render_context()).encode()
+                new_content = tpl.render(**self.answers.combined).encode()
         else:
             new_content = src_abspath.read_bytes()
         dst_abspath = self.subproject.local_abspath / dst_relpath
@@ -803,7 +805,7 @@ class Worker:
                 Additional variables to use for rendering the template.
         """
         tpl = self.jinja_env.from_string(string)
-        return tpl.render(**self._render_context(), **(extra_context or {}))
+        return tpl.render(**self.answers.combined, **(extra_context or {}))
 
     def _render_value(
         self, value: _T, extra_context: AnyByStrDict | None = None
@@ -1021,7 +1023,7 @@ class Worker:
                 )
             # Clear last answers cache to load possible answers migration, if skip_answered flag is not set
             if self.skip_answered is False:
-                self.answers = AnswersMap()
+                self.answers = AnswersMap(system=self._system_render_context())
                 with suppress(AttributeError):
                     del self.subproject.last_answers
             # Do a normal update in final destination
@@ -1037,6 +1039,7 @@ class Worker:
             ) as current_worker:
                 current_worker.run_copy()
                 self.answers = current_worker.answers
+                self.answers.system = self._system_render_context()
             # Render with the same answers in an empty dir to avoid pollution
             with replace(
                 self,
