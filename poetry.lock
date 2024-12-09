@@ -1524,6 +1524,17 @@ files = [
 ]
 
 [[package]]
+name = "thunk-dict"
+version = "0.1.1"
+description = "Memoized dictionaries"
+optional = false
+python-versions = "*"
+files = [
+    {file = "thunk_dict-0.1.1-py3-none-any.whl", hash = "sha256:c7bf022ae5b86cf9850753885afd064bf02729b26dfbcfe957b99ad2915bae3a"},
+    {file = "thunk_dict-0.1.1.tar.gz", hash = "sha256:fb2c60db3adbdef50fa7d6df2ba0a6cf2418a39a441e68f74ba8b18ea0a0008a"},
+]
+
+[[package]]
 name = "tomli"
 version = "2.0.2"
 description = "A lil' TOML parser"
@@ -1749,4 +1760,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9"
-content-hash = "ff0c17bbced2ef047a991d8a2905dcbba444ddae6b0a245be25e1b7d05db52d3"
+content-hash = "1ae4559822ba3f7460502d3e9b36c16d7a2cd75ef926fc482ac0dd041ff07c00"

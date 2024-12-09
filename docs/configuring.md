@@ -841,6 +841,53 @@ contains your data.
 
     Command line arguments passed via `--data` always take precedence over the data file.
 
+### `external_data_files`
+
+-   Format: `dict[str, str]`
+-   CLI flags: N/A
+-   Default value: `{}`
+
+This allows using preexisting data inside the rendering context. The data will be
+exposed under a special `_ext` variable.
+
+The format is a dict of strings, where:
+
+-   The dict key will be the namespace of the data under `_ext`.
+-   The dict value is the relative path (from the subproject destination) where the YAML
+    data file should be found.
+
+!!! example
+
+    If your template is
+    [a complement of another template][applying-multiple-templates-to-the-same-subproject],
+    you can access the other template's answers with a pattern similar to this:
+
+    ```yaml title="copier.yml"
+    # Child template defaults to a different answers file, to avoid conflicts
+    _answers_file: .copier-answers.child-tpl.yml
+
+    # Child template loads parent answers
+    _external_data_files:
+        # A static path. If missing, it will return an empty dict
+        secrets: git-ignored.~/secrets.yaml
+
+        # A dynamic path. Make sure you answer that question
+        # before the first access to the data (with _ext.parent_tpl)
+        parent_tpl: "{{ parent_tpl_answers_file }}"
+
+    # Ask user where they stored parent answers
+    parent_tpl_answers_file:
+        help: Where did you store answers of parent template?
+        default: .copier-answers.yml
+
+    # Use a parent answer as the default value for a child question
+    target_version:
+        help: What version are you deploying?
+        # We already answered the `parent_tpl_answers_file` question, so we can
+        # now correctly access the external data from `_ext.parent_tpl`
+        default: "{{ _ext.parent_tpl.target_version }}"
+    ```
+
 ### `envops`
 
 -   Format: `dict`
