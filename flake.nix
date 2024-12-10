@@ -68,6 +68,15 @@
                 PYTHONOPTIMIZE= \
                 pytest --color=yes -m 'not impure'
             '';
+
+            # HACK https://github.com/nix-community/poetry2nix/issues/1865
+            # Upstream is unmaintained, so we need downstream overrides
+            # TODO Contribute overrides upstream when possible
+            overrides = pkgs.poetry2nix.overrides.withDefaults (final: prev: {
+              lazystuff = prev.lazystuff.overridePythonAttrs (old: {
+                build-system = [final.setuptools];
+              });
+            });
           };
         in
           baseApp.overridePythonAttrs (old: {

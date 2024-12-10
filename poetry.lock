@@ -486,6 +486,20 @@ PyYAML = "*"
 test = ["pytest", "pytest-cov"]
 
 [[package]]
+name = "lazystuff"
+version = "1.2.0"
+description = "Lazy-ish list-like objects for streaming APIs."
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "lazystuff-1.2.0-py3-none-any.whl", hash = "sha256:c3ca77ae7442775adead0a216427f851290d749ad214386d46e3d9c745bad2af"},
+    {file = "lazystuff-1.2.0.tar.gz", hash = "sha256:9f38e15a2eaaf04ae673d439e1afaf0d150b6608f239637837e1b6057889cb0c"},
+]
+
+[package.extras]
+dev = ["Flake8-pyproject", "build", "flake8", "mypy", "pydocstyle", "pylint", "pytest", "pytest-cov", "sphinx", "sphinx-markdown-builder", "sphinx-rtd-theme", "twine", "vulture", "wheel"]
+
+[[package]]
 name = "markdown"
 version = "3.7"
 description = "Python implementation of John Gruber's Markdown."
@@ -1749,4 +1763,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9"
-content-hash = "ff0c17bbced2ef047a991d8a2905dcbba444ddae6b0a245be25e1b7d05db52d3"
+content-hash = "8d629d4f026ca76f386838cf9cbc46178f014c177062641868720a4761de1b63"
