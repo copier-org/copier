@@ -1704,3 +1704,67 @@ def test_update_git_submodule(tmp_path_factory: pytest.TempPathFactory) -> None:
     assert (dst / "sub" / ".copier-answers.yml").is_file()
     assert (dst / "sub" / "version.txt").is_file()
     assert (dst / "sub" / "version.txt").read_text() == "v2"
+
+
+def test_gitignore_file_unignored(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    env_file = ".env"
+    gitignore_file = ".gitignore"
+    answers_file = ".copier-answers.yml"
+
+    # Template in v1 has a file with a single line;
+    # in v2 it changes that line.
+    # Meanwhile, downstream project made the same change.
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    # First, create the template with an initial file
+    build_file_tree(
+        {
+            (src / gitignore_file): "",
+            (src / env_file): "",
+            (src / "{{_copier_conf.answers_file}}.jinja"): (
+                "{{_copier_answers|to_nice_yaml}}"
+            ),
+        }
+    )
+
+    with local.cwd(src):
+        git_init("hello template")
+        git("tag", "v1")
+
+    # Generate the project a first time, assert the file exists
+    run_copy(str(src), dst)
+    for f in (env_file, gitignore_file):
+        assert (dst / f).exists()
+    assert "_commit: v1" in (dst / answers_file).read_text()
+
+    # Start versioning the generated project
+    with local.cwd(dst):
+        git_init("hello project")
+
+    # Add a file to the `.gitignore` file
+    with local.cwd(src):
+        Path(gitignore_file).write_text(env_file)
+        git("commit", "-am", "ignore file")
+        git("tag", "v2")
+
+    # Update the generated project
+    run_update(dst_path=dst, overwrite=True)
+    assert "_commit: v2" in (dst / ".copier-answers.yml").read_text()
+
+    # Commit project changes.
+    with local.cwd(dst):
+        git("commit", "-am", "update to template v2")
+
+    # Remove the file previously added to `.gitignore`
+    with local.cwd(src):
+        Path(gitignore_file).write_text("")
+        git("commit", "-am", "un-ignore file")
+        git("tag", "v3")
+
+    # Update the generated project.
+    # This would fail if `git add` was called without the `--force` flag;
+    # Otherwise, it should succeed.
+    run_update(dst_path=dst, overwrite=True)
+    assert "_commit: v3" in (dst / ".copier-answers.yml").read_text()
