@@ -121,6 +121,10 @@ The current commit hash from the template.
 
 The absolute path of the Python interpreter running Copier.
 
+### `_ext`
+
+A dict of the data contained in [external_data_files][].
+
 ### `_folder_name`
 
 The name of the project root directory.
