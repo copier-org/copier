@@ -14,6 +14,7 @@ nav:
   - Reference:
       - cli.py: "reference/cli.md"
       - errors.py: "reference/errors.md"
+      - jinja_ext.py: "reference/jinja_ext.md"
       - main.py: "reference/main.md"
       - subproject.py: "reference/subproject.md"
       - template.py: "reference/template.md"
