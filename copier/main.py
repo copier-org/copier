@@ -1041,7 +1041,7 @@ class Worker:
                     f = Path(filename)
                     f.parent.mkdir(parents=True, exist_ok=True)
                     f.touch((subproject_top / filename).stat().st_mode)
-                    git("add", filename)
+                    git("add", "--force", filename)
                 self._git_commit("add new empty files")
                 # Extract diff between temporary destination and real
                 # destination
