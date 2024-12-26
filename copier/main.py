@@ -1138,11 +1138,19 @@ class Worker:
                             perms, sha, _ = perms_sha_mode.split()
                             input_lines.append(f"0 {'0' * 40}\t{path}")
                             input_lines.append(f"{perms} {sha} 1\t{path}")
-                            with suppress(ProcessExecutionError):  # File did not exist in previous version.
-                                old_sha = git("hash-object", "-w", old_path / path).strip()
+                            with suppress(
+                                ProcessExecutionError
+                            ):  # File did not exist in previous version.
+                                old_sha = git(
+                                    "hash-object", "-w", old_path / path
+                                ).strip()
                                 input_lines.append(f"{perms} {old_sha} 2\t{path}")
-                            with suppress(ProcessExecutionError):  # File was deleted in latest version.
-                                new_sha = git("hash-object", "-w", new_path / path).strip()
+                            with suppress(
+                                ProcessExecutionError
+                            ):  # File was deleted in latest version.
+                                new_sha = git(
+                                    "hash-object", "-w", new_path / path
+                                ).strip()
                                 input_lines.append(f"{perms} {new_sha} 3\t{path}")
                         (
                             git["update-index", "--index-info"]
