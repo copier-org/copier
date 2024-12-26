@@ -1142,14 +1142,18 @@ class Worker:
                                 # The following command will fail
                                 # if the file did not exist in the previous version.
                                 old_sha = git(
-                                    "hash-object", "-w", old_path / path
+                                    "hash-object",
+                                    "-w",
+                                    old_path / normalize_git_path(path),
                                 ).strip()
                                 input_lines.append(f"{perms} {old_sha} 2\t{path}")
                             with suppress(ProcessExecutionError):
                                 # The following command will fail
                                 # if the file was deleted in the latest version.
                                 new_sha = git(
-                                    "hash-object", "-w", new_path / path
+                                    "hash-object",
+                                    "-w",
+                                    new_path / normalize_git_path(path),
                                 ).strip()
                                 input_lines.append(f"{perms} {new_sha} 3\t{path}")
                         (
