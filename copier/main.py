@@ -1078,6 +1078,8 @@ class Worker:
                 (apply_cmd << diff)(retcode=None)
                 if self.conflict == "inline":
                     conflicted = []
+                    old_path = Path(old_copy)
+                    new_path = Path(new_copy)
                     status = git("status", "--porcelain").strip().splitlines()
                     for line in status:
                         # Filter merge rejections (part 1/2)
@@ -1104,8 +1106,8 @@ class Worker:
                             "-L",
                             "after updating",
                             fname,
-                            Path(old_copy) / fname,
-                            Path(new_copy) / fname,
+                            old_path / fname,
+                            new_path / fname,
                             retcode=None,
                         )
                         # Remove rejection witness
@@ -1120,11 +1122,13 @@ class Worker:
                                 for line in conflicts_candidate
                             ):
                                 conflicted.append(fname)
-                    # Forcefully mark files with conflict markers as unmerged,
-                    # see SO post: https://stackoverflow.com/questions/77391627/
+                    # We ran `git merge-file` outside of a regular merge operation,
+                    # which means no merge conflict is recorded in the index.
+                    # Only the usual stage 0 is recorded, with the hash of the current version.
+                    # We therefore update the index with the missing stages:
+                    # 1 = current (before updating), 2 = base (last update), 3 = other (after updating).
+                    # See this SO post: https://stackoverflow.com/questions/79309642/,
                     # and Git docs: https://git-scm.com/docs/git-update-index#_using_index_info.
-                    # For each file with conflict markers, we update the index to add
-                    # higher order versions of their paths, without entries for resolved contents.
                     if conflicted:
                         input_lines = []
                         for line in (
@@ -1133,9 +1137,13 @@ class Worker:
                             perms_sha_mode, path = line.split("\t")
                             perms, sha, _ = perms_sha_mode.split()
                             input_lines.append(f"0 {'0' * 40}\t{path}")
-                            input_lines.extend(
-                                f"{perms} {sha} {mode}\t{path}" for mode in (1, 2, 3)
-                            )
+                            input_lines.append(f"{perms} {sha} 1\t{path}")
+                            with suppress(ProcessExecutionError):  # File did not exist in previous version.
+                                old_sha = git("hash-object", "-w", old_path / path).strip()
+                                input_lines.append(f"{perms} {old_sha} 2\t{path}")
+                            with suppress(ProcessExecutionError):  # File was deleted in latest version.
+                                new_sha = git("hash-object", "-w", new_path / path).strip()
+                                input_lines.append(f"{perms} {new_sha} 3\t{path}")
                         (
                             git["update-index", "--index-info"]
                             << "\n".join(input_lines)
