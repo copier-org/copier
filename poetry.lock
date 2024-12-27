@@ -940,13 +940,13 @@ test = ["coverage[toml]", "paramiko", "psutil", "pytest (>=6.0)", "pytest-cov", 
 
 [[package]]
 name = "poethepoet"
-version = "0.31.1"
+version = "0.32.0"
 description = "A task runner that works well with poetry."
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "poethepoet-0.31.1-py3-none-any.whl", hash = "sha256:7fdfa0ac6074be9936723e7231b5bfaad2923e96c674a9857e81d326cf8ccdc2"},
-    {file = "poethepoet-0.31.1.tar.gz", hash = "sha256:d6b66074edf85daf115bb916eae0afd6387d19e1562e1c9ef7d61d5c585696aa"},
+    {file = "poethepoet-0.32.0-py3-none-any.whl", hash = "sha256:fba84c72d923feac228d1ea7734c5a54701f2e71fad42845f027c0fbf998a073"},
+    {file = "poethepoet-0.32.0.tar.gz", hash = "sha256:a700be02e932e1a8907ae630928fc769ea9a77986189ba6867e6e3fd8f60e5b7"},
 ]
 
 [package.dependencies]
