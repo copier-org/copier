@@ -330,6 +330,14 @@ class Template:
         )
 
     @cached_property
+    def external_data(self) -> dict[str, str]:
+        """Get external data files specified in the template.
+
+        See [external_data][].
+        """
+        return self.config_data.get("external_data", {})
+
+    @cached_property
     def jinja_extensions(self) -> tuple[str, ...]:
         """Get Jinja2 extensions specified in the template, or `()`.
 

@@ -143,3 +143,7 @@ class ShallowCloneWarning(UserWarning, CopierWarning):
 
 class MissingSettingsWarning(UserWarning, CopierWarning):
     """Settings path has been defined but file is missing."""
+
+
+class MissingFileWarning(UserWarning, CopierWarning):
+    """I still couldn't find what I'm looking for."""
