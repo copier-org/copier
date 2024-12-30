@@ -1606,13 +1606,13 @@ types-setuptools = "*"
 
 [[package]]
 name = "types-pyyaml"
-version = "6.0.12.20241221"
+version = "6.0.12.20241230"
 description = "Typing stubs for PyYAML"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "types_PyYAML-6.0.12.20241221-py3-none-any.whl", hash = "sha256:0657a4ff8411a030a2116a196e8e008ea679696b5b1a8e1a6aa8ebb737b34688"},
-    {file = "types_pyyaml-6.0.12.20241221.tar.gz", hash = "sha256:4f149aa893ff6a46889a30af4c794b23833014c469cc57cbc3ad77498a58996f"},
+    {file = "types_PyYAML-6.0.12.20241230-py3-none-any.whl", hash = "sha256:fa4d32565219b68e6dee5f67534c722e53c00d1cfc09c435ef04d7353e1e96e6"},
+    {file = "types_pyyaml-6.0.12.20241230.tar.gz", hash = "sha256:7f07622dbd34bb9c8b264fe860a17e0efcad00d50b5f27e93984909d9363498c"},
 ]
 
 [[package]]
