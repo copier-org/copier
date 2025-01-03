@@ -99,7 +99,12 @@ def test_file_loop(tmp_path_factory: pytest.TempPathFactory) -> None:
             str(src),
             dst,
             data={
-                "strings": ["a.txt", "b.txt", "c.txt", ""], # if rendred as '.jinja', it will not be created
+                "strings": [
+                    "a.txt",
+                    "b.txt",
+                    "c.txt",
+                    "",
+                ],  # if rendred as '.jinja', it will not be created
             },
             defaults=True,
             overwrite=True,
@@ -129,9 +134,21 @@ def test_folder_loop_dict_items(tmp_path_factory: pytest.TempPathFactory) -> Non
     )
 
     dicts = [
-        {"folder_name": "folder_a", "file_name": "file_a", "content": ['folder_a', 'file_a']},
-        {"folder_name": "folder_b", "file_name": "file_b", "content": ['folder_b', 'file_b']},
-        {"folder_name": "folder_c", "file_name": "file_c", "content": ['folder_c', 'file_c']},
+        {
+            "folder_name": "folder_a",
+            "file_name": "file_a",
+            "content": ["folder_a", "file_a"],
+        },
+        {
+            "folder_name": "folder_b",
+            "file_name": "file_b",
+            "content": ["folder_b", "file_b"],
+        },
+        {
+            "folder_name": "folder_c",
+            "file_name": "file_c",
+            "content": ["folder_c", "file_c"],
+        },
     ]
 
     with warnings.catch_warnings():
@@ -140,9 +157,7 @@ def test_folder_loop_dict_items(tmp_path_factory: pytest.TempPathFactory) -> Non
         copier.run_copy(
             str(src),
             dst,
-            data={
-                "dicts": dicts
-            },
+            data={"dicts": dicts},
             defaults=True,
             overwrite=True,
         )
