@@ -35,16 +35,17 @@ class YieldExtension(Extension):
 
     If `yield` tag is used in a template, this extension sets following attribute to the
     jinja environment:
+
     - `yield_name`: The name of the variable that will be yielded.
     - `yield_iterable`: The variable that will be looped over.
 
-    Note that this extension just sets the attributes but renders template as usual.
-    It is caller's responsibility to use the `yield_context` attribute in the template to
+    Note that this extension just sets the attributes but renders templates as usual.
+    It is the caller's responsibility to use the `yield_context` attribute in the template to
     generate the desired output.
 
     !!! example
 
-        ```python
+        ```pycon
         >>> from copier.jinja_ext import YieldEnvironment, YieldExtension
         >>> env = YieldEnvironment(extensions=[YieldExtension])
         >>> template = env.from_string("{% yield single_var from looped_var %}{{ single_var }}{% endyield %}")
