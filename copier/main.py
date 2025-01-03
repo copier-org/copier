@@ -775,12 +775,13 @@ class Worker:
         if not extra_context:
             extra_context = {}
 
+        # If the `part` has a yield tag, `self.jinja_env` will be set with the yield name and iterable
         rendered_part = self._render_string(part, extra_context=extra_context)
 
         yield_name = self.jinja_env.yield_name
         if yield_name:
             for value in self.jinja_env.yield_iterable or ():
-                new_context = {**extra_context, **{yield_name: value}}
+                new_context = {**extra_context, yield_name: value}
                 rendered_part = self._render_string(part, extra_context=new_context)
                 self.jinja_env.yield_name = None
                 self.jinja_env.yield_iterable = None
