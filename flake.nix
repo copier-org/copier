@@ -117,6 +117,7 @@
                   "^tests/demo"
                 ];
                 ruff.enable = true;
+                ruff-format.enable = true;
                 taplo.enable = true;
               };
             }

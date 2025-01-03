@@ -1,9 +1,9 @@
 {
   "recommendations": [
-    "charliermarsh.ruff",
-    "esbenp.prettier-vscode",
-    "ms-python.python",
+    "bpruitt-goddard.mermaid-markdown-syntax-highlighting",
     "editorconfig.editorconfig",
-    "bpruitt-goddard.mermaid-markdown-syntax-highlighting"
+    "elagil.pre-commit-helper",
+    "jnoortheen.nix-ide",
+    "ms-python.python"
   ]
 }

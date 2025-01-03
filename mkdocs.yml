@@ -58,6 +58,7 @@ extra_css:
 
 markdown_extensions:
   - admonition
+  - attr_list
   - pymdownx.highlight:
       use_pygments: true
   - pymdownx.superfences:

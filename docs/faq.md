@@ -103,15 +103,15 @@ class ContextUpdater(ContextHook):
     def hook(self, context):
         flavor = context["flavor"]  # user's answer to the "flavor" question
         return {
-            "isDocker": flavor == "docker"
-            "isK8s": flavor == "kubernetes"
-            "isInstances": flavor == "instances"
-            "isLite": flavor == "none"
-            "isNotDocker": flavor != "docker"
-            "isNotK8s": flavor != "kubernetes"
-            "isNotInstances": flavor != "instances"
-            "isNotLite": flavor != "none"
-            "hasContainers": flavor in {"docker", "kubernetes"}
+            "isDocker": flavor == "docker",
+            "isK8s": flavor == "kubernetes",
+            "isInstances": flavor == "instances",
+            "isLite": flavor == "none",
+            "isNotDocker": flavor != "docker",
+            "isNotK8s": flavor != "kubernetes",
+            "isNotInstances": flavor != "instances",
+            "isNotLite": flavor != "none",
+            "hasContainers": flavor in {"docker", "kubernetes"},
         }
 ```
 

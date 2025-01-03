@@ -84,21 +84,18 @@ class CopierApp(cli.Application):  # type: ignore[misc]
     """The Copier CLI application."""
 
     DESCRIPTION = "Create a new project from a template."
-    DESCRIPTION_MORE = (
-        dedent(
-            """\
+    DESCRIPTION_MORE = dedent(
+        """\
             Docs in https://copier.readthedocs.io/
 
             """
-        )
-        + (
-            colors.yellow
-            | dedent(
-                """\
+    ) + (
+        colors.yellow
+        | dedent(
+            """\
                 WARNING! Use only trusted project templates, as they might
                 execute code with the same level of access as your user.\n
                 """
-            )
         )
     )
     VERSION = copier_version()
@@ -108,7 +105,7 @@ class CopierApp(cli.Application):  # type: ignore[misc]
 class _Subcommand(cli.Application):  # type: ignore[misc]
     """Base class for Copier subcommands."""
 
-    def __init__(self, executable: "PathLike[str]") -> None:
+    def __init__(self, executable: PathLike[str]) -> None:
         self.data: AnyByStrDict = {}
         super().__init__(executable)
 
@@ -201,7 +198,10 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
         self.data.update(updates_without_cli_overrides)
 
     def _worker(
-        self, src_path: Optional[str] = None, dst_path: str = ".", **kwargs: Any  # noqa: FA100
+        self,
+        src_path: Optional[str] = None,
+        dst_path: str = ".",
+        **kwargs: Any,  # noqa: FA100
     ) -> Worker:
         """Run Copier's internal API using CLI switches.
 
