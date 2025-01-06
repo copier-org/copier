@@ -965,13 +965,13 @@ poetry-plugin = ["poetry (>=1.0,<2.0)"]
 
 [[package]]
 name = "poetry-dynamic-versioning"
-version = "1.4.1"
+version = "1.5.0"
 description = "Plugin for Poetry to enable dynamic versioning based on VCS tags"
 optional = false
 python-versions = "<4.0,>=3.7"
 files = [
-    {file = "poetry_dynamic_versioning-1.4.1-py3-none-any.whl", hash = "sha256:44866ccbf869849d32baed4fc5fadf97f786180d8efa1719c88bf17a471bd663"},
-    {file = "poetry_dynamic_versioning-1.4.1.tar.gz", hash = "sha256:21584d21ca405aa7d83d23d38372e3c11da664a8742995bdd517577e8676d0e1"},
+    {file = "poetry_dynamic_versioning-1.5.0-py3-none-any.whl", hash = "sha256:d111952266a5a6963bf3a44b757ff034810e09ff1580098022964e78a097765b"},
+    {file = "poetry_dynamic_versioning-1.5.0.tar.gz", hash = "sha256:68b25c26407cf0d13d51d5dc7fc45667bc041032fda42ce89401c4ce82917837"},
 ]
 
 [package.dependencies]
@@ -980,7 +980,7 @@ jinja2 = ">=2.11.1,<4"
 tomlkit = ">=0.4"
 
 [package.extras]
-plugin = ["poetry (>=1.2.0,<2.0.0)"]
+plugin = ["poetry (>=1.2.0)"]
 
 [[package]]
 name = "pre-commit"
