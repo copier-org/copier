@@ -64,9 +64,6 @@ class YieldExtension(Extension):
 
     environment: YieldEnvironment
 
-    def __init__(self, environment: YieldEnvironment):
-        super().__init__(environment)
-
     def preprocess(
         self, source: str, _name: str | None, _filename: str | None = None
     ) -> str:
