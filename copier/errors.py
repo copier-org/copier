@@ -116,6 +116,10 @@ class YieldTagInFileError(CopierError):
     """A yield tag is used in the file content, but it is not allowed."""
 
 
+class MultipleYieldTagsError(CopierError):
+    """Multiple yield tags are used in one path name, but it is not allowed."""
+
+
 # Warnings
 class CopierWarning(Warning):
     """Base class for all other Copier warnings."""

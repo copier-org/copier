@@ -3,7 +3,7 @@ import warnings
 import pytest
 
 import copier
-from copier.errors import YieldTagInFileError
+from copier.errors import MultipleYieldTagsError, YieldTagInFileError
 from tests.helpers import build_file_tree
 
 
@@ -192,6 +192,52 @@ def test_raise_yield_tag_in_file(tmp_path_factory: pytest.TempPathFactory) -> No
     )
 
     with pytest.raises(YieldTagInFileError, match="file.txt.jinja"):
+        copier.run_copy(
+            str(src),
+            dst,
+            data={
+                "strings": ["a", "b", "c"],
+            },
+            defaults=True,
+            overwrite=True,
+        )
+
+
+def test_raise_multiple_yield_tags(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    # multiple yield tags, not nested
+    file_name = "{% yield item1 from strings %}{{ item1 }}{% endyield %}{% yield item2 from strings %}{{ item2 }}{% endyield %}"
+
+    build_file_tree(
+        {
+            src / "copier.yml": "",
+            src / file_name: "",
+        }
+    )
+
+    with pytest.raises(MultipleYieldTagsError, match="item"):
+        copier.run_copy(
+            str(src),
+            dst,
+            data={
+                "strings": ["a", "b", "c"],
+            },
+            defaults=True,
+            overwrite=True,
+        )
+
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    # multiple yield tags, nested
+    file_name = "{% yield item1 from strings %}{% yield item2 from strings %}{{ item1 }}{{ item2 }}{% endyield %}{% endyield %}"
+
+    build_file_tree(
+        {
+            src / "copier.yml": "",
+            src / file_name: "",
+        }
+    )
+
+    with pytest.raises(MultipleYieldTagsError, match="item"):
         copier.run_copy(
             str(src),
             dst,

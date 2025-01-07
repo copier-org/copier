@@ -10,6 +10,8 @@ from jinja2.ext import Extension
 from jinja2.parser import Parser
 from jinja2.sandbox import SandboxedEnvironment
 
+from copier.errors import MultipleYieldTagsError
+
 
 class YieldEnvironment(SandboxedEnvironment):
     """Jinja2 environment with attributes from the YieldExtension.
@@ -65,6 +67,14 @@ class YieldExtension(Extension):
     def __init__(self, environment: YieldEnvironment):
         super().__init__(environment)
 
+    def preprocess(
+        self, source: str, _name: str | None, _filename: str | None = None
+    ) -> str:
+        """Preprocess hook to reset attributes before rendering."""
+        self.environment.yield_name = self.environment.yield_iterable = None
+
+        return source
+
     def parse(self, parser: Parser) -> nodes.Node:
         """Parse the `yield` tag."""
         lineno = next(parser.stream).lineno
@@ -93,6 +103,15 @@ class YieldExtension(Extension):
         Sets the `yield_name` and `yield_iterable` attributes in the environment then calls
         the provided caller function. If an UndefinedError is raised, it returns an empty string.
         """
+        if (
+            self.environment.yield_name is not None
+            or self.environment.yield_iterable is not None
+        ):
+            raise MultipleYieldTagsError(
+                "Attempted to parse the yield tag twice. Only one yield tag is allowed per path name.\n"
+                f'A yield tag with the name: "{self.environment.yield_name}" and iterable: "{self.environment.yield_iterable}" already exists.'
+            )
+
         self.environment.yield_name = yield_name
         self.environment.yield_iterable = yield_iterable
 

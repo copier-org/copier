@@ -783,9 +783,6 @@ class Worker:
             for value in self.jinja_env.yield_iterable or ():
                 new_context = {**extra_context, yield_name: value}
                 rendered_part = self._render_string(part, extra_context=new_context)
-                self.jinja_env.yield_name = None
-                self.jinja_env.yield_iterable = None
-
                 rendered_part = self._adjust_rendered_part(rendered_part)
 
                 # Skip if any part is rendered as an empty string
