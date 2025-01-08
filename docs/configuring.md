@@ -1013,6 +1013,8 @@ on them, so they are always installed when Copier is installed.
 
     # if Copier was installed with pipx
     pipx inject copier jinja2-time
+    # if Copier was installed with uv tool
+    uv tool install --with jinja2-time copier
     ```
 
 !!! example

@@ -126,6 +126,10 @@ Ready to contribute? Here's how to set up the project for local development.
     ```shell
     pipx run pyclean . --debris --verbose
     ```
+    or
+    ```shell
+    uv tool run pyclean . --debris --verbose
+    ```
 
 1.  Commit your changes and push your branch to GitHub:
 
