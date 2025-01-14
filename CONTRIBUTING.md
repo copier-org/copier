@@ -126,7 +126,9 @@ Ready to contribute? Here's how to set up the project for local development.
     ```shell
     pipx run pyclean . --debris --verbose
     ```
+
     or
+
     ```shell
     uvx pyclean . --debris --verbose
     ```
