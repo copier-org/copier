@@ -18,6 +18,7 @@ docs! We don't want to be biased, but it's easy that we tend to be:
 | Feature                                  | Copier                           | Cookiecutter                    | Yeoman        |
 | ---------------------------------------- | -------------------------------- | ------------------------------- | ------------- |
 | Can template file names                  | Yes                              | Yes                             | Yes           |
+| Can generate file structures in loops    | Yes                              | No                              | No            |
 | Configuration                            | Single YAML file[^1]             | Single JSON file                | JS module     |
 | Migrations                               | Yes                              | No                              | No            |
 | Programmed in                            | Python                           | Python                          | NodeJS        |
