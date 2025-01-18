@@ -130,3 +130,75 @@ The name of the project root directory.
 Some rendering contexts provide variables unique to them:
 
 -   [`migrations`](configuring.md#migrations)
+
+## Loop over lists to generate files and directories
+
+You can use the special `yield` tag in file and directory names to generate multiple
+files or directories based on a list of items.
+
+In the path name, `{% yield item from list_of_items %}{{ item }}{% endyield %}` will
+loop over the `list_of_items` and replace `{{ item }}` with each item in the list.
+
+A looped `{{ item }}` will be available in the scope of generated files and directories.
+
+```yaml title="copier.yml"
+commands:
+    type: yaml
+    multiselect: true
+    choices:
+        init:
+            value: &init
+                name: init
+                subcommands:
+                    - config
+                    - database
+        run:
+            value: &run
+                name: run
+                subcommands:
+                    - server
+                    - worker
+        deploy:
+            value: &deploy
+                name: deploy
+                subcommands:
+                    - staging
+                    - production
+    default: [*init, *run, *deploy]
+```
+
+```tree result="shell"
+commands
+    {% yield cmd from commands %}{{ cmd.name }}{% endyield %}
+        __init__.py
+        {% yield subcmd from cmd.subcommands %}{{ subcmd }}{% endyield %}.py.jinja
+```
+
+```python+jinja title="{% yield subcmd from cmd.subcommands %}{{ subcmd }}{% endyield %}.py.jinja"
+print("This is the `{{ subcmd }}` subcommand in the `{{ cmd.name }}` command")
+```
+
+If you answer with the default to the question, Copier will generate the following
+structure:
+
+```tree result="shell"
+commands
+    deploy
+        __init__.py
+        production.py
+        staging.py
+    init
+        __init__.py
+        config.py
+        database.py
+    run
+        __init__.py
+        server.py
+        worker.py
+```
+
+Where looped variables `cmd` and `subcmd` are rendered in generated files:
+
+```python title="commands/init/config.py"
+print("This is the `config` subcommand in the `init` command")
+```
