@@ -93,7 +93,7 @@ class Worker:
         src_path:
             String that can be resolved to a template path, be it local or remote.
 
-            See [copier.vcs.get_repo][].
+            See [copier.vcs.get_repo][] and [`shortcuts` setting][shortcuts]
 
             If it is `None`, then it means that you are
             [updating a project][updating-a-project], and the original
@@ -872,7 +872,10 @@ class Worker:
                 raise TypeError("Template not found")
             url = str(self.subproject.template.url)
         result = Template(
-            url=url, ref=self.vcs_ref, use_prereleases=self.use_prereleases
+            url=url,
+            ref=self.vcs_ref,
+            use_prereleases=self.use_prereleases,
+            settings=self.settings,
         )
         self._cleanup_hooks.append(result._cleanup)
         return result
