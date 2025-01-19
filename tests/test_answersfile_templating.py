@@ -118,3 +118,21 @@ def test_answersfile_templating_with_message_before_copy(
     assert answers["module_name"] == "mymodule"
     assert (dst / "result.txt").exists()
     assert (dst / "result.txt").read_text() == "mymodule"
+
+
+def test_answersfile_templating_phase(tmp_path_factory: pytest.TempPathFactory) -> None:
+    """
+    Ensure `_copier_phase` is available while render `answers_relpath`.
+    Not because it is directly useful, but because some extensions might need it.
+    """
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "copier.yml": """\
+                _answers_file: ".copier-answers-{{ _copier_phase }}.yml"
+                """,
+            src / "{{ _copier_conf.answers_file }}.jinja": "",
+        }
+    )
+    copier.run_copy(str(src), dst, overwrite=True, unsafe=True)
+    assert (dst / ".copier-answers-render.yml").exists()

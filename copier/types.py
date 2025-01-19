@@ -1,11 +1,17 @@
 """Complex types, annotations, validators."""
 
+from __future__ import annotations
+
+from contextlib import contextmanager
+from contextvars import ContextVar
+from enum import Enum
 from pathlib import Path
 from typing import (
     Annotated,
     Any,
     Callable,
     Dict,
+    Iterator,
     Literal,
     Mapping,
     MutableMapping,
@@ -75,3 +81,34 @@ class LazyDict:
         if key not in self.done:
             self.done[key] = self.pending[key]()
         return self.done[key]
+
+
+class Phase(str, Enum):
+    """The known execution phases."""
+
+    PROMPT = "prompt"
+    TASKS = "tasks"
+    MIGRATE = "migrate"
+    RENDER = "render"
+    UNDEFINED = "undefined"
+
+    def __str__(self) -> str:
+        return str(self.value)
+
+    @classmethod
+    @contextmanager
+    def use(cls, phase: Phase) -> Iterator[None]:
+        """Set the current phase for the duration of a context."""
+        token = _phase.set(phase)
+        try:
+            yield
+        finally:
+            _phase.reset(token)
+
+    @classmethod
+    def current(cls) -> Phase:
+        """Get the current phase."""
+        return _phase.get()
+
+
+_phase: ContextVar[Phase] = ContextVar("phase", default=Phase.UNDEFINED)
