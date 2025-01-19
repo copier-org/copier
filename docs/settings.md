@@ -54,3 +54,72 @@ trust:
 
     Locations ending with `/` will be matched as prefixes, trusting all templates starting with that path.
     Locations not ending with `/` will be matched exactly.
+
+## Shortcuts
+
+It is possible to define shortcuts in the `shortcuts` setting. It should be a dictionary
+where keys are the shortcut names and values are [copier.settings.Shortcut][] objects.
+
+```yaml
+shortcuts:
+    company:
+        url: "https://git.company.org"
+        suffix: true
+    local:
+        url: ~/project/templates
+        suffix: false
+```
+
+If suffix is `True` (default), the `.git` suffix will be appended to the URL if missing.
+
+A string can be used as short syntax instead of a full Shortcut object.
+
+This snippet is equivalent to the previous one:
+
+```yaml
+shortcuts:
+    company: "https://git.company.org"
+    local:
+        url: ~/project/templates
+        suffix: false
+```
+
+You can now write:
+
+```shell
+copier copy company:team/repo
+copier copy local:template
+```
+
+There are 2 default shortcuts always available unless you explicitely override them:
+
+```yaml
+shortcuts:
+    gh: "https://github.com/"
+    gl: "https://gitlab.com/"
+```
+
+!!! tip "Working with private repositories"
+
+    If you work with private GitHub or Gitlab repositories,
+    you might want to override those to force authenticated ssh access:
+
+    ```yaml
+    shortcuts:
+        gh: 'git@github.com:'
+        gl: 'git@gitlab.com:'
+    ```
+
+    Note the trailing `:` in the URL, it is required to make Git use the SSH protocol.
+    (`gh:user/repo` will be expanded into `git@github.com:user/repo.git`)
+
+!!! tip "Trusted locations and shortcuts"
+
+    Trusted locations can be defined using shortcuts.
+
+    ```yaml
+    trust:
+        - gh:user/repo
+        - gh:company/
+        - 'local:'
+    ```
