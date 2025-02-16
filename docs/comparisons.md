@@ -37,6 +37,7 @@ docs! We don't want to be biased, but it's easy that we tend to be:
 [ejs]: https://ejs.co/
 
 [^1]: The file itself can [include other YAML files][include-other-yaml-files].
+
 [^2]:
     Git repo is recommended to be able to use advanced features such as template tagging
     and smart updates.
@@ -50,6 +51,7 @@ docs! We don't want to be biased, but it's easy that we tend to be:
     and extract smart diffs between them.
 
 [^5]: Context hooks are provided through the [`ContextHook` extension][context-hook].
+
 [^6]: Updates are possible through [Cruft][cruft].
 
 [context-hook]:
