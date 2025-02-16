@@ -1260,8 +1260,8 @@ Migrations are like [tasks][tasks], but each item can have additional keys:
 
 -   **command**: The migration command to run
 -   **version** (optional): Indicates the version that the template update has to go
-    through to trigger this migration. It is evaluated using [PEP 440][]. If no version
-    is specified the migration will run on every update.
+    through to trigger this migration. It is evaluated using [PEP 440][]. If no version is
+    specified the migration will run on every update.
 -   **when** (optional): Specifies a condition that needs to hold for the task to run.
     By default, a migration will run in the after upgrade stage.
 -   **working_directory** (optional): Specifies the directory in which the command will
@@ -1295,12 +1295,11 @@ processes will receive these variables:
 -   `_version_pep440_from`/`$VERSION_PEP440_FROM`,
     `_version_pep440_to`/`$VERSION_PEP440_TO`,
     `_version_pep440_current`/`$VERSION_PEP440_CURRENT`: Same as the above, but
-    normalized into a standard [PEP 440][] version. In Jinja templates these are
-    represented as
-    [packaging.version.Version](https://packaging.pypa.io/en/stable/version.html#packaging.version.Version)
-    objects and allow access to their attributes. As environment variables they are
-    represented as strings. If you use variables to perform migrations, you probably
-    will prefer to use these variables.
+    normalized into a standard [PEP 440][] version. In Jinja templates these are represented
+    as [packaging.version.Version](https://packaging.pypa.io/en/stable/version.html#packaging.version.Version)
+    objects and allow access to their attributes. As environment variables they are represented
+    as strings. If you use variables to perform migrations, you probably will prefer to use
+    these variables.
 
 [git describe]: https://git-scm.com/docs/git-describe
 [pep 440]: https://www.python.org/dev/peps/pep-0440/
@@ -1340,8 +1339,8 @@ can't be used in jinja templates.
 
 Specifies the minimum required version of Copier to generate a project from this
 template. The version must be follow the [PEP 440][] syntax. Upon generating or updating
-a project, if the installed version of Copier is less than the required one, the
-generation will be aborted and an error will be shown to the user.
+a project, if the installed version of Copier is less than the required one, the generation
+will be aborted and an error will be shown to the user.
 
 !!! info
 
