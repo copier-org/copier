@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.5.0 (2025-02-17)
+
+### Feat
+
+-   **external_data**: load data from other YAML files
+-   **settings**: allow to define some trusted repositories or prefixes
+-   **settings**: add user settings support with `defaults` values (fix #235)
+-   add dynamic file structures in loop using yield-tag (#1855)
+-   add support for dynamic choices
+
+### Fix
+
+-   correctly record missing stages in index for merge conflicts (#1907)
+-   allow importing from a file that has a conditional name
+-   **updating**: don't crash when file is removed from template's `.gitignore` file
+    (#1886)
+-   **deps**: update dependency packaging to v24.2
+-   re-render answers file path when producing render context
+-   restore compatibility with Git prior to v2.31 (#1838)
+-   **updating**: don't validate computed values
+-   Don't mark files without conflict markers as unmerged (#1813)
+
 ## v9.4.1 (2024-10-18)
 
 ### Fix
