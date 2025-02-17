@@ -1768,3 +1768,36 @@ def test_gitignore_file_unignored(
     # Otherwise, it should succeed.
     run_update(dst_path=dst, overwrite=True)
     assert "_commit: v3" in (dst / ".copier-answers.yml").read_text()
+
+
+def test_update_with_answers_with_umlaut(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yml": (
+                    """\
+                    umlaut:
+                        type: str
+                    """
+                ),
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+            }
+        )
+        git_init("v1")
+        git("tag", "v1")
+
+    run_copy(str(src), dst, data={"umlaut": "äöü"}, overwrite=True)
+    answers_file = dst / ".copier-answers.yml"
+    answers = yaml.safe_load(answers_file.read_text("utf-8"))
+    assert answers["umlaut"] == "äöü"
+
+    with local.cwd(dst):
+        git_init("v1")
+
+    run_update(dst, skip_answered=True, overwrite=True)
+    answers = yaml.safe_load(answers_file.read_text("utf-8"))
+    assert answers["umlaut"] == "äöü"

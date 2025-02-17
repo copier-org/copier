@@ -56,7 +56,7 @@ class Subproject:
         """Get last answers, loaded raw as yaml."""
         try:
             return yaml.safe_load(
-                (self.local_abspath / self.answers_relpath).read_text()
+                (self.local_abspath / self.answers_relpath).read_text("utf-8")
             )
         except OSError:
             return {}
