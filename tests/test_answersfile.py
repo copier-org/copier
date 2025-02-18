@@ -222,3 +222,31 @@ def test_external_data(tmp_path_factory: pytest.TempPathFactory) -> None:
         "parent2": "P2",
         "child": "C1",
     }
+
+
+def test_external_data_with_umlaut(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                """\
+                _external_data:
+                    data: data.yml
+                ext_umlaut: "{{ _external_data.data.umlaut }}"
+                """
+            ),
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+        }
+    )
+    git_save(src, tag="v1")
+
+    (dst / "data.yml").write_text("umlaut: äöü", encoding="utf-8")
+
+    copier.run_copy(str(src), dst, defaults=True, overwrite=True)
+    answers = load_answersfile_data(dst, ".copier-answers.yml")
+    assert answers["ext_umlaut"] == "äöü"
