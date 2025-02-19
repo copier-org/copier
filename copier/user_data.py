@@ -519,15 +519,19 @@ def parse_yaml_string(string: str) -> Any:
 def load_answersfile_data(
     dst_path: StrOrPath,
     answers_file: StrOrPath = ".copier-answers.yml",
+    *,
+    warn_on_missing: bool = False,
 ) -> AnyByStrDict:
     """Load answers data from a `$dst_path/$answers_file` file if it exists."""
     try:
         with Path(dst_path, answers_file).open(encoding="utf-8") as fd:
             return yaml.safe_load(fd)
     except (FileNotFoundError, IsADirectoryError):
-        warnings.warn(
-            f"File not found; returning empty dict: {answers_file}", MissingFileWarning
-        )
+        if warn_on_missing:
+            warnings.warn(
+                f"File not found; returning empty dict: {answers_file}",
+                MissingFileWarning,
+            )
         return {}
 
 
