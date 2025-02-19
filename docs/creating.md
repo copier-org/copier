@@ -150,7 +150,7 @@ The current phase, one of `"prompt"`,`"tasks"`, `"migrate"` or `"render"`.
 
 Some variables are only available in select contexts:
 
-### `_operation`
+### `_copier_operation`
 
 The current operation, either `"copy"` or `"update"`.
 

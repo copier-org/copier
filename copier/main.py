@@ -356,7 +356,7 @@ class Worker:
         operation = _operation.get()
         for i, task in enumerate(tasks):
             extra_context = {f"_{k}": v for k, v in task.extra_vars.items()}
-            extra_context["_operation"] = operation
+            extra_context["_copier_operation"] = operation
 
             if not cast_to_bool(self._render_value(task.condition, extra_context)):
                 continue
@@ -656,7 +656,7 @@ class Worker:
         # Include the current operation in the rendering context.
         # Note: This method is a cached property, it needs to be regenerated
         # when reusing an instance in different contexts.
-        extra_context = {"_operation": _operation.get()}
+        extra_context = {"_copier_operation": _operation.get()}
         return self._path_matcher(
             self._render_string(exclusion, extra_context=extra_context)
             for exclusion in self.all_exclusions
