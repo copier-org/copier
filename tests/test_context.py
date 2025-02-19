@@ -14,11 +14,11 @@ def test_exclude_templating_with_operation(
 ) -> None:
     """
     Ensure it's possible to create one-off boilerplate files that are not
-    managed during updates via `_exclude` using the `_operation` context variable.
+    managed during updates via `_exclude` using the `_copier_operation` context variable.
     """
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
-    template = "{% if _operation == 'update' %}copy-only{% endif %}"
+    template = "{% if _copier_operation == 'update' %}copy-only{% endif %}"
     with local.cwd(src):
         build_file_tree(
             {
@@ -67,8 +67,8 @@ def test_task_templating_with_operation(
                 "copier.yml": (
                     f"""\
                     _tasks:
-                        -   command: echo {{{{ _operation }}}} >> {json.dumps(str(task_counter))}
-                            when: "{{{{ _operation == 'copy' }}}}"
+                        -   command: echo {{{{ _copier_operation }}}} >> {json.dumps(str(task_counter))}
+                            when: "{{{{ _copier_operation == 'copy' }}}}"
                     """
                 ),
                 "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
