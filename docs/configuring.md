@@ -966,12 +966,12 @@ Each pattern can be templated using Jinja.
 
 !!! example
 
-    Templating `exclude` patterns using `_operation` allows to have files
+    Templating `exclude` patterns using `_copier_operation` allows to have files
     that are rendered once during `copy`, but are never updated:
 
     ```yaml
     _exclude:
-        - "{% if _operation == 'update' -%}src/*_example.py{% endif %}"
+        - "{% if _copier_operation == 'update' -%}src/*_example.py{% endif %}"
     ```
 
 !!! info
@@ -1587,7 +1587,7 @@ other items not present.
         - ["{{ _copier_python }}", task.py]
         # Run a command during the initial copy operation only, excluding updates
         - command: ["{{ _copier_python }}", task.py]
-          when: "{{ _operation == 'copy' }}"
+          when: "{{ _copier_operation == 'copy' }}"
         # OS-specific task (supported values are "linux", "macos", "windows" and `None`)
         - command: rm {{ name_of_the_project }}/README.md
           when: "{{ _copier_conf.os in  ['linux', 'macos'] }}"
