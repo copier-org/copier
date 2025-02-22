@@ -72,7 +72,7 @@ class ExtensionNotFoundError(UserMessageError):
     """Extensions listed in the configuration could not be loaded."""
 
 
-class CopierAnswersInterrupt(CopierError, KeyboardInterrupt):
+class CopierAnswersInterruptError(CopierError, KeyboardInterrupt):
     """CopierAnswersInterrupt is raised during interactive question prompts.
 
     It typically follows a KeyboardInterrupt (i.e. ctrl-c) and provides an

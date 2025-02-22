@@ -131,7 +131,7 @@ def cast_to_bool(value: Any) -> bool:
         lower = value.lower()
         if lower in {"y", "yes", "t", "true", "on"}:
             return True
-        elif lower in {"n", "no", "f", "false", "off", "~", "null", "none"}:
+        if lower in {"n", "no", "f", "false", "off", "~", "null", "none"}:
             return False
     # Assume nothing
     return bool(value)

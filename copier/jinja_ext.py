@@ -60,7 +60,7 @@ class YieldExtension(Extension):
         ```
     """  # noqa: E501
 
-    tags = {"yield"}
+    tags = {"yield"}  # noqa: RUF012
 
     environment: YieldEnvironment
 

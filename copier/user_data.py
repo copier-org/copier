@@ -263,8 +263,7 @@ class Question:
                     result = self.render_value(
                         self.settings.defaults.get(self.var_name, self.default)
                     )
-        result = self.cast_answer(result)
-        return result
+        return self.cast_answer(result)
 
     def get_default_rendered(self) -> bool | str | Choice | None | MissingType:
         """Get default answer rendered for the questionary lib.

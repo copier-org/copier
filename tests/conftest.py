@@ -89,5 +89,4 @@ def config_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[Pat
 @pytest.fixture
 def settings_path(config_path: Path) -> Path:
     config_path.mkdir()
-    settings_path = config_path / "settings.yml"
-    return settings_path
+    return config_path / "settings.yml"
