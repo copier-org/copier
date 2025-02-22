@@ -54,10 +54,10 @@ def default_git_user_email() -> Any:
 
 @pytest.fixture(scope="session", autouse=True)
 def default_gitconfig(default_gitconfig: GitConfig) -> GitConfig:
-    """
-    Use a clean and isolated default gitconfig avoiding user settings to break some tests.
+    """Use a clean and isolated default gitconfig.
 
-    Add plumbum support to the original session-scoped fixture.
+    - Avoid user settings to break some tests.
+    - Add plumbum support to the original session-scoped fixture.
     """
     # local.env is a snapshot frozen at Python startup requiring its own monkeypatching
     for var in list(local.env.keys()):
@@ -70,8 +70,7 @@ def default_gitconfig(default_gitconfig: GitConfig) -> GitConfig:
 
 @pytest.fixture
 def gitconfig(gitconfig: GitConfig) -> Iterator[GitConfig]:
-    """
-    Use a clean and isolated gitconfig to test some specific user settings.
+    """Use a clean and isolated gitconfig to test some specific user settings.
 
     Add plumbum support to the original function-scoped fixture.
     """

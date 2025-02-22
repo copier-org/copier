@@ -86,7 +86,10 @@ def test_answer_with_invalid_type(tmp_path_factory: pytest.TempPathFactory) -> N
     )
     with pytest.raises(
         InvalidTypeError,
-        match='Invalid answer "None" of type "<class \'NoneType\'>" to question "bad" of type "int"',
+        match=(
+            'Invalid answer "None" of type "<class \'NoneType\'>" to question "bad" of '
+            'type "int"'
+        ),
     ):
         run_copy(str(src), dst, defaults=True, overwrite=True)
 
@@ -111,7 +114,7 @@ def test_messages_with_inline_text(
                 _message_after_copy: Project {{ project_name }} successfully created
                 _message_before_update: Updating on {{ _copier_conf.os }}
                 _message_after_update: Project {{ project_name }} successfully updated
-                """
+                """  # noqa: E501
             ),
             (src / "{{ _copier_conf.answers_file }}.jinja"): (
                 """\
@@ -370,7 +373,7 @@ def test_messages_quiet(
                 _message_after_copy: Project {{ project_name }} successfully created
                 _message_before_update: Updating on {{ _copier_conf.os }}
                 _message_after_update: Project {{ project_name }} successfully updated
-                """
+                """  # noqa: E501
             ),
             (src / "{{ _copier_conf.answers_file }}.jinja"): (
                 """\

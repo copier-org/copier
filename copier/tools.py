@@ -152,7 +152,8 @@ def force_str_end(original_str: str, end: str = "\n") -> str:
 def handle_remove_readonly(
     func: Callable[[str], None],
     path: str,
-    # TODO: Change this union to simply `BaseException` when Python 3.11 support is dropped
+    # TODO: Change this union to simply `BaseException` when Python 3.11 support is
+    # dropped
     exc: BaseException | tuple[type[BaseException], BaseException, TracebackType],
 ) -> None:
     """Handle errors when trying to remove read-only files through `shutil.rmtree`.
@@ -181,9 +182,9 @@ _re_whitespace = re.compile(r"^\s+|\s+$")
 def normalize_git_path(path: str) -> str:
     r"""Convert weird characters returned by Git to normal UTF-8 path strings.
 
-    A filename like âñ will be reported by Git as "\\303\\242\\303\\261" (octal notation).
-    Similarly, a filename like "<tab>foo\b<lf>ar" will be reported as "\tfoo\\b\nar".
-    This can be disabled with `git config core.quotepath off`.
+    A filename like âñ will be reported by Git as "\\303\\242\\303\\261" (octal
+    notation). Similarly, a filename like "<tab>foo\b<lf>ar" will be reported as
+    "\tfoo\\b\nar". This can be disabled with `git config core.quotepath off`.
 
     Args:
         path: The Git path to normalize.

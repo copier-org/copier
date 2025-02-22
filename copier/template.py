@@ -405,7 +405,10 @@ class Template:
             if any(key in migration for key in ("before", "after")):
                 # Legacy configuration format
                 warn(
-                    "This migration configuration is deprecated. Please switch to the new format.",
+                    (
+                        "This migration configuration is deprecated. Please switch to "
+                        "the new format."
+                    ),
                     category=DeprecationWarning,
                 )
                 current = parse(migration["version"])

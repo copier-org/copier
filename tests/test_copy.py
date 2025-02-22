@@ -977,7 +977,7 @@ def test_multiselect_choices_preserve_order(
         (
             """\
             choices: '[{% for c in ["one", "two", "three"] %}{{ c }}{% if not loop.last %},{% endif %}{% endfor %}]'
-            """
+            """  # noqa: E501
         ),
         (
             """\
@@ -1028,7 +1028,7 @@ def test_multiselect_choices_preserve_order(
                     value: {{ c }}
                     validator: "{% raw %}{% if false %}Validation error{% endif %}{% endraw %}"
                 {%- endfor %}
-            """
+            """  # noqa: E501
         ),
     ],
 )

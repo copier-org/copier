@@ -182,8 +182,8 @@ def clone(url: str, ref: str | None = None) -> str:
             file_url = url
         if is_git_shallow_repo(file_url):
             warn(
-                f"The repository '{url}' is a shallow clone, this might lead to unexpected "
-                "failure or unusually high resource consumption.",
+                f"The repository '{url}' is a shallow clone, this might lead to "
+                "unexpected failure or unusually high resource consumption.",
                 ShallowCloneWarning,
             )
         else:

@@ -68,8 +68,8 @@ def _handle_exceptions(method: Callable[[], None]) -> int:
     try:
         try:
             method()
-        except KeyboardInterrupt:
-            raise UserMessageError("Execution stopped by user")
+        except KeyboardInterrupt as error:
+            raise UserMessageError("Execution stopped by user") from error
     except UserMessageError as error:
         print(colors.red | "\n".join(error.args), file=sys.stderr)
         return 1
