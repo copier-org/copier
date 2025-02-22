@@ -260,7 +260,7 @@ class Template:
         ]
         if len(conf_paths) > 1:
             raise MultipleConfigFilesError(conf_paths)
-        elif len(conf_paths) == 1:
+        if len(conf_paths) == 1:
             return load_template_config(conf_paths[0])
         return {}
 

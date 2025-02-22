@@ -39,7 +39,7 @@ from pydantic_core import to_jsonable_python
 from questionary import unsafe_prompt
 
 from .errors import (
-    CopierAnswersInterrupt,
+    CopierAnswersInterruptError,
     ExtensionNotFoundError,
     UnsafeTemplateError,
     UserMessageError,
@@ -561,7 +561,7 @@ class Worker:
                         answers={question.var_name: question.get_default()},
                     )[question.var_name]
             except KeyboardInterrupt as err:
-                raise CopierAnswersInterrupt(
+                raise CopierAnswersInterruptError(
                     self.answers, question, self.template
                 ) from err
             self.answers.user[var_name] = new_answer

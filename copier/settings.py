@@ -39,7 +39,7 @@ class Settings(BaseModel):
         if settings_path.is_file():
             data = yaml.safe_load(settings_path.read_text())
             return cls.model_validate(data)
-        elif env_path:
+        if env_path:
             warnings.warn(
                 f"Settings file not found at {env_path}", MissingSettingsWarning
             )
