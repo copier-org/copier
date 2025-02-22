@@ -201,7 +201,7 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
         self,
         src_path: Optional[str] = None,
         dst_path: str = ".",
-        **kwargs: Any,  # noqa: FA100
+        **kwargs: Any,
     ) -> Worker:
         """Run Copier's internal API using CLI switches.
 

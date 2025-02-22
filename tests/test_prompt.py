@@ -110,7 +110,7 @@ def test_copy_default_advertised(
     with local.cwd(dst):
         # Copy the v1 template
         tui = spawn(
-            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1") + args, timeout=10
+            (*COPIER_PATH, "copy", str(src), ".", "--vcs-ref=v1", *args), timeout=10
         )
         # Check what was captured
         expect_prompt(tui, "in_love", "bool")
@@ -134,7 +134,7 @@ def test_copy_default_advertised(
         # Update subproject
         git_save()
         assert "_commit: v1" in Path(".copier-answers.yml").read_text()
-        tui = spawn(COPIER_PATH + ("update",), timeout=30)
+        tui = spawn((*COPIER_PATH, "update"), timeout=30)
         # Check what was captured
         expect_prompt(tui, "in_love", "bool")
         tui.expect_exact("(Y/n)")
@@ -178,7 +178,7 @@ def test_update_skip_answered(
     with local.cwd(dst):
         # Copy the v1 template
         tui = spawn(
-            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1") + args, timeout=10
+            (*COPIER_PATH, "copy", str(src), ".", "--vcs-ref=v1", *args), timeout=10
         )
         # Check what was captured
         expect_prompt(tui, "in_love", "bool")
@@ -202,8 +202,8 @@ def test_update_skip_answered(
         # Update subproject
         git_save()
         tui = spawn(
-            COPIER_PATH
-            + (
+            (
+                *COPIER_PATH,
                 update_action,
                 "--skip-answered",
             ),
@@ -241,7 +241,7 @@ def test_update_with_new_field_in_new_version_skip_answered(
     with local.cwd(dst):
         # Copy the v1 template
         tui = spawn(
-            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1") + args, timeout=10
+            (*COPIER_PATH, "copy", str(src), ".", "--vcs-ref=v1", *args), timeout=10
         )
         # Check what was captured
         expect_prompt(tui, "in_love", "bool")
@@ -265,8 +265,8 @@ def test_update_with_new_field_in_new_version_skip_answered(
         # Update subproject
         git_save()
         tui = spawn(
-            COPIER_PATH
-            + (
+            (
+                *COPIER_PATH,
                 "update",
                 "-A",
             ),
@@ -356,7 +356,7 @@ def test_when(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn((*COPIER_PATH, "copy", str(src), str(dst)), timeout=10)
     expect_prompt(tui, "question_1", type(question_1).__name__)
     tui.sendline()
     if asks:
@@ -394,7 +394,7 @@ def test_placeholder(tmp_path_factory: pytest.TempPathFactory, spawn: Spawn) -> 
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn((*COPIER_PATH, "copy", str(src), str(dst)), timeout=10)
     expect_prompt(tui, "question_1", "str")
     tui.expect_exact("answer 1")
     tui.sendline()
@@ -439,7 +439,7 @@ def test_multiline(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn((*COPIER_PATH, "copy", str(src), str(dst)), timeout=10)
     expect_prompt(tui, "question_1", "str")
     tui.expect_exact("answer 1")
     tui.sendline()
@@ -514,7 +514,7 @@ def test_update_choice(
         git("commit", "-m one")
         git("tag", "v1")
     # Copy
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn((*COPIER_PATH, "copy", str(src), str(dst)), timeout=10)
     expect_prompt(tui, "pick_one", "float")
     tui.sendline(Keyboard.Up)
     tui.expect_exact(pexpect.EOF)
@@ -526,8 +526,8 @@ def test_update_choice(
         git("commit", "-m1")
     # Update
     tui = spawn(
-        COPIER_PATH
-        + (
+        (
+            *COPIER_PATH,
             "update",
             str(dst),
         ),
@@ -575,7 +575,7 @@ def test_multiline_defaults(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn((*COPIER_PATH, "copy", str(src), str(dst)), timeout=10)
     expect_prompt(tui, "yaml_single", "yaml")
     # This test will always fail here, because python prompt toolkit gives
     # syntax highlighting to YAML and JSON outputs, encoded into terminal
@@ -620,7 +620,7 @@ def test_partial_interrupt(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn((*COPIER_PATH, "copy", str(src), str(dst)), timeout=10)
     expect_prompt(tui, "question_1", "str")
     tui.expect_exact("answer 1")
     # Answer the first question using the default.
@@ -660,7 +660,7 @@ def test_var_name_value_allowed(
         }
     )
     # Copy
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn((*COPIER_PATH, "copy", str(src), str(dst)), timeout=10)
     expect_prompt(tui, "value", "str")
     tui.expect_exact("string")
     tui.send(Keyboard.Alt + Keyboard.Enter)
@@ -701,7 +701,7 @@ def test_required_text_question(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn((*COPIER_PATH, "copy", str(src), str(dst)), timeout=10)
     expect_prompt(tui, "question", type_name)
     tui.expect_exact("")
     tui.sendline()
@@ -735,7 +735,7 @@ def test_required_bool_question(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn((*COPIER_PATH, "copy", str(src), str(dst)), timeout=10)
     expect_prompt(tui, "question", "bool")
     tui.expect_exact("(y/N)")
     tui.sendline()
@@ -782,7 +782,7 @@ def test_required_choice_question(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn((*COPIER_PATH, "copy", str(src), str(dst)), timeout=10)
     expect_prompt(tui, "question", type_name)
     tui.sendline()
     tui.expect_exact(pexpect.EOF)

@@ -359,7 +359,7 @@ def test_update_cli(
         settings_path.write_text(f"trust: ['{src}']")
 
     _, retcode = CopierApp.run(
-        ["copier", "copy", str(src), str(dst)] + unsafe_args,
+        ["copier", "copy", str(src), str(dst), *unsafe_args],
         exit=False,
     )
     assert retcode == 0
@@ -386,8 +386,8 @@ def test_update_cli(
             "copier",
             "update",
             str(dst),
-        ]
-        + unsafe_args,
+            *unsafe_args,
+        ],
         exit=False,
     )
     if unsafe or trusted_from_settings:

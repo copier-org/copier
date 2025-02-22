@@ -110,14 +110,20 @@ vcs = "git"
 extend-select = [
   "ARG",
   "B",
+  "C4",
   "C90",
   "D",
   "E",
   "F",
   "FA",
+  "FLY",
+  "FURB",
   "I",
   "PERF",
+  "PIE",
   "PGH",
+  "RUF",
+  "SIM",
   "UP",
 ]
 ignore = ["B028"]
