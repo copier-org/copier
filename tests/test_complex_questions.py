@@ -126,7 +126,7 @@ def check_invalid(
     help: str | None = None,
     err: str = "Invalid input",
 ) -> None:
-    """Check that invalid input is reported correctly"""
+    """Check that invalid input is reported correctly."""
     expect_prompt(tui, name, format, help)
     tui.sendline(invalid_value)
     tui.expect_exact(invalid_value)

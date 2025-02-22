@@ -548,8 +548,8 @@ def test_user_defaults(
                 """
             ),
         ),
-        # User provided defaults takes precedence over initial defaults and settings defaults.
-        # The output should remain unchanged following the update operation.
+        # User provided defaults takes precedence over initial defaults and settings
+        # defaults. The output should remain unchanged following the update operation.
         (
             {
                 "a_string": "foo",
