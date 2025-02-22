@@ -74,9 +74,8 @@ def test_requires_unsafe(tmp_path_factory: pytest.TempPathFactory) -> None:
 
     with local.cwd(src):
         git("tag", "v2")
-    with local.cwd(dst):
-        with pytest.raises(UnsafeTemplateError):
-            run_update(defaults=True, overwrite=True, unsafe=False)
+    with local.cwd(dst), pytest.raises(UnsafeTemplateError):
+        run_update(defaults=True, overwrite=True, unsafe=False)
 
     assert not (dst / "foo").exists()
 
@@ -513,7 +512,7 @@ def test_migration_jinja_variables(
 
     assert (dst / "vars.txt").is_file()
     raw_vars = (dst / "vars.txt").read_text().split("\n")
-    vars = map(lambda x: x.strip(), raw_vars)
+    vars = {x.strip() for x in raw_vars}
     for variable, value in variables.items():
         assert f"{variable}={value}" in vars
 

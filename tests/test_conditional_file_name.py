@@ -83,7 +83,7 @@ def test_answer_changes(
         git("tag", "v1")
 
     if interactive:
-        tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+        tui = spawn((*COPIER_PATH, "copy", str(src), str(dst)), timeout=10)
         expect_prompt(tui, "condition", "bool")
         tui.expect_exact("(y/N)")
         tui.sendline("y")
@@ -100,7 +100,7 @@ def test_answer_changes(
         git("commit", "-mv1")
 
     if interactive:
-        tui = spawn(COPIER_PATH + ("update", str(dst)), timeout=10)
+        tui = spawn((*COPIER_PATH, "update", str(dst)), timeout=10)
         expect_prompt(tui, "condition", "bool")
         tui.expect_exact("(Y/n)")
         tui.sendline("n")

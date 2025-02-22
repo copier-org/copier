@@ -390,13 +390,13 @@ class Worker:
                 "os": OS,
             }
         )
-        return dict(
-            _copier_answers=self._answers_to_remember(),
-            _copier_conf=conf,
-            _external_data=self._external_data(),
-            _folder_name=self.subproject.local_abspath.name,
-            _copier_python=sys.executable,
-        )
+        return {
+            "_copier_answers": self._answers_to_remember(),
+            "_copier_conf": conf,
+            "_external_data": self._external_data(),
+            "_folder_name": self.subproject.local_abspath.name,
+            "_copier_python": sys.executable,
+        }
 
     def _path_matcher(self, patterns: Iterable[str]) -> Callable[[Path], bool]:
         """Produce a function that matches against specified patterns."""
@@ -803,7 +803,7 @@ class Worker:
         context pairs.
         """
         if rendered_parts is None:
-            rendered_parts = tuple()
+            rendered_parts = ()
 
         if not parts:
             rendered_path = Path(*rendered_parts)
@@ -839,7 +839,7 @@ class Worker:
                     continue
 
                 yield from self._render_parts(
-                    parts, rendered_parts + (rendered_part,), new_context, is_template
+                    parts, (*rendered_parts, rendered_part), new_context, is_template
                 )
 
             return
@@ -851,7 +851,7 @@ class Worker:
         rendered_part = self._adjust_rendered_part(rendered_part)
 
         yield from self._render_parts(
-            parts, rendered_parts + (rendered_part,), extra_context, is_template
+            parts, (*rendered_parts, rendered_part), extra_context, is_template
         )
 
     def _render_path(self, relpath: Path) -> Iterable[tuple[Path, AnyByStrDict | None]]:
@@ -963,7 +963,7 @@ class Worker:
             self._render_template()
             if not self.quiet:
                 # TODO Unify printing tools
-                print("")  # padding space
+                print()  # padding space
             if not self.skip_tasks:
                 self._execute_tasks(self.template.tasks)
         except Exception:
@@ -973,7 +973,7 @@ class Worker:
         self._print_message(self.template.message_after_copy)
         if not self.quiet:
             # TODO Unify printing tools
-            print("")  # padding space
+            print()  # padding space
 
     def run_recopy(self) -> None:
         """Update a subproject, keeping answers but discarding evolution."""

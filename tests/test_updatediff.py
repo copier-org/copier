@@ -912,7 +912,7 @@ def test_update_inline_changed_answers_and_questions(
         git("tag", "2")
     # Init project
     if interactive:
-        tui = spawn(COPIER_PATH + ("copy", "-r1", str(src), str(dst)), timeout=10)
+        tui = spawn((*COPIER_PATH, "copy", "-r1", str(src), str(dst)), timeout=10)
         tui.expect_exact("b (bool)")
         tui.expect_exact("(y/N)")
         tui.send("y")
@@ -938,7 +938,7 @@ def test_update_inline_changed_answers_and_questions(
         git("commit", "-am2")
         # Update from template, inline, with answer changes
         if interactive:
-            tui = spawn(COPIER_PATH + ("update", "--conflict=inline"), timeout=10)
+            tui = spawn((*COPIER_PATH, "update", "--conflict=inline"), timeout=10)
             tui.expect_exact("b (bool)")
             tui.expect_exact("(Y/n)")
             tui.sendline()

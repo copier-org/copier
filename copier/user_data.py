@@ -349,9 +349,8 @@ class Question:
 
     def get_message(self) -> str:
         """Get the message that will be printed to the user."""
-        if self.help:
-            if rendered_help := self.render_value(self.help):
-                return force_str_end(rendered_help) + "  "
+        if self.help and (rendered_help := self.render_value(self.help)):
+            return force_str_end(rendered_help) + "  "
         # Otherwise, there's no help message defined.
         message = self.var_name
         if (answer_type := self.get_type_name()) != "str":
