@@ -169,7 +169,7 @@ def handle_remove_readonly(
     excvalue = cast(OSError, exc if isinstance(exc, BaseException) else exc[1])
 
     if func in (os.rmdir, os.remove, os.unlink) and excvalue.errno == errno.EACCES:
-        os.chmod(path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)  # 0777
+        Path(path).chmod(stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)  # 0777
         func(path)
     else:
         raise
@@ -242,7 +242,7 @@ def get_git_objects_dir(path: Path) -> Path:
     ).absolute()
 
 
-def set_git_alternates(*repos: Path, path: Path = Path(".")) -> None:
+def set_git_alternates(*repos: Path, path: Path = Path()) -> None:
     """Set Git alternates to borrow Git objects from other repositories.
 
     Alternates are paths of other repositories' object directories written to
