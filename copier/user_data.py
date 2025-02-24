@@ -44,7 +44,7 @@ def _now() -> datetime:
 def _make_secret() -> str:
     warnings.warn(
         "'make_secret' will be removed in a future release of Copier.\n"
-        "Please use this instead: {{ 999999999999999999999999999999999|ans_random|hash('sha512') }}\n"
+        "Please use this instead: {{ 999999999999999999999999999999999|ans_random|hash('sha512') }}\n"  # noqa: E501
         "random and hash filters documentation: https://docs.ansible.com/ansible/2.3/playbooks_filters.html",
         FutureWarning,
     )
@@ -263,8 +263,7 @@ class Question:
                     result = self.render_value(
                         self.settings.defaults.get(self.var_name, self.default)
                     )
-        result = self.cast_answer(result)
-        return result
+        return self.cast_answer(result)
 
     def get_default_rendered(self) -> bool | str | Choice | None | MissingType:
         """Get default answer rendered for the questionary lib.
@@ -349,9 +348,8 @@ class Question:
 
     def get_message(self) -> str:
         """Get the message that will be printed to the user."""
-        if self.help:
-            if rendered_help := self.render_value(self.help):
-                return force_str_end(rendered_help) + "  "
+        if self.help and (rendered_help := self.render_value(self.help)):
+            return force_str_end(rendered_help) + "  "
         # Otherwise, there's no help message defined.
         message = self.var_name
         if (answer_type := self.get_type_name()) != "str":
@@ -498,7 +496,7 @@ def parse_yaml_string(string: str) -> Any:
     try:
         return yaml.safe_load(string)
     except yaml.error.YAMLError as error:
-        raise ValueError(str(error))
+        raise ValueError(str(error)) from error
 
 
 def load_answersfile_data(

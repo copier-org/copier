@@ -51,7 +51,7 @@ def test_nested_folder_loop(tmp_path_factory: pytest.TempPathFactory) -> None:
             / "nested_folder_loop"
             / "{% yield string_item from strings %}{{ string_item }}{% endyield %}"
             / "{% yield integer_item from integers %}{{ integer_item }}{% endyield %}"
-            / "{{ string_item }}_{{ integer_item }}.txt.jinja": "Hello {{ string_item }} {{ integer_item }}",
+            / "{{ string_item }}_{{ integer_item }}.txt.jinja": "Hello {{ string_item }} {{ integer_item }}",  # noqa: E501
         }
     )
     with warnings.catch_warnings():
@@ -90,7 +90,7 @@ def test_file_loop(tmp_path_factory: pytest.TempPathFactory) -> None:
             src / "copier.yml": "",
             src
             / "file_loop"
-            / "{% yield string_item from strings %}{{ string_item }}{% endyield %}.jinja": "Hello {{ string_item }}",
+            / "{% yield string_item from strings %}{{ string_item }}{% endyield %}.jinja": "Hello {{ string_item }}",  # noqa: E501
         }
     )
     with warnings.catch_warnings():
@@ -128,8 +128,8 @@ def test_folder_loop_dict_items(tmp_path_factory: pytest.TempPathFactory) -> Non
             src / "copier.yml": "",
             src
             / "folder_loop_dict_items"
-            / "{% yield dict_item from dicts %}{{ dict_item.folder_name }}{% endyield %}"
-            / "{{ dict_item.file_name }}.txt.jinja": "Hello {{ '-'.join(dict_item.content) }}",
+            / "{% yield dict_item from dicts %}{{ dict_item.folder_name }}{% endyield %}"  # noqa: E501
+            / "{{ dict_item.file_name }}.txt.jinja": "Hello {{ '-'.join(dict_item.content) }}",  # noqa: E501
         }
     )
 
@@ -206,7 +206,7 @@ def test_raise_yield_tag_in_file(tmp_path_factory: pytest.TempPathFactory) -> No
 def test_raise_multiple_yield_tags(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     # multiple yield tags, not nested
-    file_name = "{% yield item1 from strings %}{{ item1 }}{% endyield %}{% yield item2 from strings %}{{ item2 }}{% endyield %}"
+    file_name = "{% yield item1 from strings %}{{ item1 }}{% endyield %}{% yield item2 from strings %}{{ item2 }}{% endyield %}"  # noqa: E501
 
     build_file_tree(
         {
@@ -228,7 +228,7 @@ def test_raise_multiple_yield_tags(tmp_path_factory: pytest.TempPathFactory) -> 
 
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     # multiple yield tags, nested
-    file_name = "{% yield item1 from strings %}{% yield item2 from strings %}{{ item1 }}{{ item2 }}{% endyield %}{% endyield %}"
+    file_name = "{% yield item1 from strings %}{% yield item2 from strings %}{{ item1 }}{{ item2 }}{% endyield %}{% endyield %}"  # noqa: E501
 
     build_file_tree(
         {

@@ -155,7 +155,7 @@ def test_external_data(tmp_path_factory: pytest.TempPathFactory) -> None:
                     parent2: "{{ parent2_answers }}"
                 parent2_answers: .parent2-answers.yml
                 name: "{{ _external_data.parent2.child | d(_external_data.parent1.child) }}"
-                """
+                """  # noqa: E501
             ),
             (child / "combined.json.jinja"): """\
                 {

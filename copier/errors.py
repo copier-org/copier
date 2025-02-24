@@ -72,7 +72,7 @@ class ExtensionNotFoundError(UserMessageError):
     """Extensions listed in the configuration could not be loaded."""
 
 
-class CopierAnswersInterrupt(CopierError, KeyboardInterrupt):
+class CopierAnswersInterruptError(CopierError, KeyboardInterrupt):
     """CopierAnswersInterrupt is raised during interactive question prompts.
 
     It typically follows a KeyboardInterrupt (i.e. ctrl-c) and provides an
@@ -108,7 +108,8 @@ class UnsafeTemplateError(CopierError):
         s = "s" if len(features) > 1 else ""
         super().__init__(
             f"Template uses potentially unsafe feature{s}: {', '.join(features)}.\n"
-            "If you trust this template, consider adding the `--trust` option when running `copier copy/update`."
+            "If you trust this template, consider adding the `--trust` option when "
+            "running `copier copy/update`."
         )
 
 

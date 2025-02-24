@@ -256,11 +256,11 @@ class Template:
         conf_paths = [
             p
             for p in self.local_abspath.glob("copier.*")
-            if p.is_file() and re.match(r"\.ya?ml", p.suffix, re.I)
+            if p.is_file() and re.match(r"\.ya?ml", p.suffix, re.IGNORECASE)
         ]
         if len(conf_paths) > 1:
             raise MultipleConfigFilesError(conf_paths)
-        elif len(conf_paths) == 1:
+        if len(conf_paths) == 1:
             return load_template_config(conf_paths[0])
         return {}
 
@@ -405,7 +405,10 @@ class Template:
             if any(key in migration for key in ("before", "after")):
                 # Legacy configuration format
                 warn(
-                    "This migration configuration is deprecated. Please switch to the new format.",
+                    (
+                        "This migration configuration is deprecated. Please switch to "
+                        "the new format."
+                    ),
                     category=DeprecationWarning,
                 )
                 current = parse(migration["version"])

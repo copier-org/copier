@@ -52,9 +52,10 @@ def lint() -> None:
             )
         except ProcessExecutionError:
             _logger.info(
-                "Couldn't create copier-lint-v1 container, probably because a previous one exists. "
-                "Remove it if you want to recycle it. Otherwise, this is OK."
+                "Couldn't create copier-lint-v1 container, probably because a previous "
+                "one exists. Remove it if you want to recycle it. Otherwise, this is "
+                "OK."
             )
         runner["container", "start", "--attach", "copier-lint-v1"] & TEE
     except ProcessExecutionError as error:
-        raise SystemExit(error.errno)
+        raise SystemExit(error.errno) from error

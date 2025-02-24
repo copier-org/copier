@@ -19,7 +19,7 @@ SRC = Path(f"{PROJECT_TEMPLATE}_migrations").absolute()
 
 
 def test_basic_migration(tmp_path_factory: pytest.TempPathFactory) -> None:
-    """Test a basic migration running on every version"""
+    """Test a basic migration running on every version."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
     with local.cwd(src):
@@ -50,7 +50,7 @@ def test_basic_migration(tmp_path_factory: pytest.TempPathFactory) -> None:
 
 
 def test_requires_unsafe(tmp_path_factory: pytest.TempPathFactory) -> None:
-    """Tests that migrations require the unsafe flag to be passed"""
+    """Tests that migrations require the unsafe flag to be passed."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
     with local.cwd(src):
@@ -74,15 +74,14 @@ def test_requires_unsafe(tmp_path_factory: pytest.TempPathFactory) -> None:
 
     with local.cwd(src):
         git("tag", "v2")
-    with local.cwd(dst):
-        with pytest.raises(UnsafeTemplateError):
-            run_update(defaults=True, overwrite=True, unsafe=False)
+    with local.cwd(dst), pytest.raises(UnsafeTemplateError):
+        run_update(defaults=True, overwrite=True, unsafe=False)
 
     assert not (dst / "foo").exists()
 
 
 def test_version_migration(tmp_path_factory: pytest.TempPathFactory) -> None:
-    """Test a migration running on a specific version"""
+    """Test a migration running on a specific version."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
     with local.cwd(src):
@@ -119,7 +118,7 @@ def test_version_migration(tmp_path_factory: pytest.TempPathFactory) -> None:
 
 
 def test_prerelease_version_migration(tmp_path_factory: pytest.TempPathFactory) -> None:
-    """Test if prerelease version migrations work"""
+    """Test if prerelease version migrations work."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
     versions = ["v2.dev0", "v2.dev2", "v2.a1", "v2.a2"]
@@ -183,7 +182,7 @@ def test_prerelease_version_migration(tmp_path_factory: pytest.TempPathFactory) 
 
 
 def test_migration_working_directory(tmp_path_factory: pytest.TempPathFactory) -> None:
-    """Test the working directory attribute of migrations"""
+    """Test the working directory attribute of migrations."""
     src, dst, workdir = map(tmp_path_factory.mktemp, ("src", "dst", "workdir"))
 
     with local.cwd(src):
@@ -219,7 +218,7 @@ def test_migration_working_directory(tmp_path_factory: pytest.TempPathFactory) -
 def test_migration_condition(
     tmp_path_factory: pytest.TempPathFactory, condition: bool
 ) -> None:
-    """Test the `when` argument of migrations"""
+    """Test the `when` argument of migrations."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
     with local.cwd(src):
@@ -251,7 +250,7 @@ def test_migration_condition(
 
 
 def test_pretend_migration(tmp_path_factory: pytest.TempPathFactory) -> None:
-    """Test that migrations aren't run in pretend mode"""
+    """Test that migrations aren't run in pretend mode."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
     with local.cwd(src):
@@ -282,7 +281,7 @@ def test_pretend_migration(tmp_path_factory: pytest.TempPathFactory) -> None:
 
 
 def test_skip_migration(tmp_path_factory: pytest.TempPathFactory) -> None:
-    """Test that migrations aren't run in pretend mode"""
+    """Test that migrations aren't run in pretend mode."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
     with local.cwd(src):
@@ -313,14 +312,15 @@ def test_skip_migration(tmp_path_factory: pytest.TempPathFactory) -> None:
 
 
 def test_migration_run_before(tmp_path_factory: pytest.TempPathFactory) -> None:
-    """Test running migrations in the before upgrade step"""
+    """Test running migrations in the before upgrade step."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
     with local.cwd(src):
         build_file_tree(
             {
                 **COPIER_ANSWERS_FILE,
-                # We replace an answer in the before step, so it will be used during update
+                # We replace an answer in the before step, so it will be used during
+                # update
                 "copier.yml": (
                     """
                     hello:
@@ -364,8 +364,8 @@ def test_migration_run_before(tmp_path_factory: pytest.TempPathFactory) -> None:
 def test_migration_run_after(
     tmp_path_factory: pytest.TempPathFactory, explicit: bool
 ) -> None:
-    """
-    Test running migrations in the before upgrade step
+    """Test running migrations in the before upgrade step.
+
     Also checks that this is the default behaviour if no `when` is given.
     """
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -404,7 +404,7 @@ def test_migration_run_after(
 def test_migration_env_variables(
     tmp_path_factory: pytest.TempPathFactory, with_version: bool
 ) -> None:
-    """Test that environment variables are passed to the migration commands"""
+    """Test that environment variables are passed to the migration commands."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
     variables = {
@@ -461,7 +461,7 @@ def test_migration_env_variables(
 def test_migration_jinja_variables(
     tmp_path_factory: pytest.TempPathFactory, with_version: bool
 ) -> None:
-    """Test that environment variables are passed to the migration commands"""
+    """Test that environment variables are passed to the migration commands."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
     variables = {
@@ -512,7 +512,7 @@ def test_migration_jinja_variables(
 
     assert (dst / "vars.txt").is_file()
     raw_vars = (dst / "vars.txt").read_text().split("\n")
-    vars = map(lambda x: x.strip(), raw_vars)
+    vars = {x.strip() for x in raw_vars}
     for variable, value in variables.items():
         assert f"{variable}={value}" in vars
 
