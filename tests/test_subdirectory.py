@@ -22,6 +22,13 @@ def template_path(tmp_path_factory: pytest.TempPathFactory) -> str:
             ),
             (root / "conf_project" / "conf_readme.md"): (
                 """\
+                # Template subdirectory
+
+                This is the template README.
+                """
+            ),
+            (root / "conf_project" / "conf_readme.md.tmpl"): (
+                """\
                 # Demo subdirectory
 
                 Generated using previous answers `_subdirectory` value.
@@ -29,6 +36,9 @@ def template_path(tmp_path_factory: pytest.TempPathFactory) -> str:
             ),
             (root / "conf_project" / "[[ _copier_conf.answers_file ]].tmpl"): (
                 "[[ _copier_answers|to_nice_yaml ]]"
+            ),
+            (root / "conf_project" / "[[ filename ]].tmpl"): (
+                "[[ filename ]] contents"
             ),
             (root / "copier.yml"): (
                 f"""\
@@ -41,6 +51,9 @@ def template_path(tmp_path_factory: pytest.TempPathFactory) -> str:
                         - api_project
                         - conf_project
                 _subdirectory: "[[ choose_subdir ]]"
+                filename:
+                    type: str
+                    default: mock_filename
                 """
             ),
         }
@@ -65,6 +78,18 @@ def test_copy_subdirectory_api_option(template_path: str, tmp_path: Path) -> Non
 def test_copy_subdirectory_config(template_path: str, tmp_path: Path) -> None:
     copier.run_copy(template_path, tmp_path, defaults=True, overwrite=True)
     assert (tmp_path / "conf_readme.md").exists()
+    assert not (tmp_path / "api_readme.md").exists()
+
+
+def test_copy_subdirectory_config_no_overwrite(
+    template_path: str, tmp_path: Path
+) -> None:
+    copier.run_copy(template_path, tmp_path, defaults=True, overwrite=False)
+    assert (tmp_path / "conf_readme.md").exists()
+    assert (tmp_path / "mock_filename").exists()
+    assert "mock_filename contents" in (tmp_path / "mock_filename").read_text()
+    assert "# Demo subdirectory" in (tmp_path / "conf_readme.md").read_text()
+    assert "# Template subdirectory" not in (tmp_path / "conf_readme.md").read_text()
     assert not (tmp_path / "api_readme.md").exists()
 
 
