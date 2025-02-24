@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import os
-import os.path
 import sys
 from contextlib import suppress
+from pathlib import Path
 
-with open("created-with-tasks.txt", "a", newline="\n") as cwt:
+with Path("created-with-tasks.txt").open("a", newline="\n") as cwt:
     cwt.write(" ".join([os.environ["STAGE"]] + sys.argv[1:]) + "\n")
     with suppress(FileNotFoundError):
-        os.unlink("delete-in-tasks.txt")
+        Path("delete-in-tasks.txt").unlink()

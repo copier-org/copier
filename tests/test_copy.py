@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import filecmp
-import os
 import platform
 import stat
 import sys
@@ -302,10 +301,10 @@ def test_skip_if_exists(tmp_path: Path) -> None:
 
 def test_timestamp_identical(tmp_path: Path) -> None:
     copier.run_copy(str(Path("tests", "demo_skip_dst")), tmp_path)
-    modification_time_before = os.path.getmtime(tmp_path / "a.noeof.txt")
+    modification_time_before = (tmp_path / "a.noeof.txt").stat().st_mtime
     sleep(2)
     copier.run_copy(str(Path("tests", "demo_skip_dst")), tmp_path)
-    modification_time_after = os.path.getmtime(tmp_path / "a.noeof.txt")
+    modification_time_after = (tmp_path / "a.noeof.txt").stat().st_mtime
 
     assert modification_time_before == modification_time_after
 

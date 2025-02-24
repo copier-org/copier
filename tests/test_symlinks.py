@@ -38,9 +38,9 @@ def test_copy_symlink(tmp_path_factory: pytest.TempPathFactory) -> None:
         vcs_ref="HEAD",
     )
 
-    assert os.path.exists(dst / "target.txt")
-    assert os.path.exists(dst / "symlink.txt")
-    assert os.path.islink(dst / "symlink.txt")
+    assert (dst / "target.txt").exists()
+    assert (dst / "symlink.txt").exists()
+    assert (dst / "symlink.txt").is_symlink()
     assert (dst / "symlink.txt").readlink() == Path("target.txt")
 
 
@@ -73,9 +73,9 @@ def test_copy_symlink_templated_name(tmp_path_factory: pytest.TempPathFactory) -
         vcs_ref="HEAD",
     )
 
-    assert os.path.exists(dst / "target.txt")
-    assert os.path.exists(dst / "symlink.txt")
-    assert os.path.islink(dst / "symlink.txt")
+    assert (dst / "target.txt").exists()
+    assert (dst / "symlink.txt").exists()
+    assert (dst / "symlink.txt").is_symlink()
     assert (dst / "symlink.txt").readlink() == Path("target.txt")
 
 
@@ -111,14 +111,13 @@ def test_copy_symlink_templated_target(
         vcs_ref="HEAD",
     )
 
-    assert os.path.exists(dst / "target.txt")
-
-    assert os.path.exists(dst / "symlink1.txt")
-    assert os.path.islink(dst / "symlink1.txt")
+    assert (dst / "target.txt").exists()
+    assert (dst / "symlink1.txt").exists()
+    assert (dst / "symlink1.txt").is_symlink()
     assert (dst / "symlink1.txt").readlink() == Path("target.txt")
 
-    assert not os.path.exists(dst / "symlink2.txt")
-    assert os.path.islink(dst / "symlink2.txt")
+    assert not (dst / "symlink2.txt").exists()
+    assert (dst / "symlink2.txt").is_symlink()
     assert (dst / "symlink2.txt").readlink() == Path("{{ target_name }}.txt")
 
 
@@ -149,11 +148,11 @@ def test_copy_symlink_missing_target(tmp_path_factory: pytest.TempPathFactory) -
         vcs_ref="HEAD",
     )
 
-    assert os.path.islink(dst / "symlink.txt")
+    assert (dst / "symlink.txt").is_symlink()
     assert (dst / "symlink.txt").readlink() == Path("target.txt")
-    assert not os.path.exists(
+    assert not (
         dst / "symlink.txt"
-    )  # exists follows symlinks, It returns False as the target doesn't exist
+    ).exists()  # exists follows symlinks, It returns False as the target doesn't exist
 
 
 def test_option_preserve_symlinks_false(
@@ -186,9 +185,9 @@ def test_option_preserve_symlinks_false(
         vcs_ref="HEAD",
     )
 
-    assert os.path.exists(dst / "target.txt")
-    assert os.path.exists(dst / "symlink.txt")
-    assert not os.path.islink(dst / "symlink.txt")
+    assert (dst / "target.txt").exists()
+    assert (dst / "symlink.txt").exists()
+    assert not (dst / "symlink.txt").is_symlink()
 
 
 def test_option_preserve_symlinks_default(
@@ -220,9 +219,9 @@ def test_option_preserve_symlinks_default(
         vcs_ref="HEAD",
     )
 
-    assert os.path.exists(dst / "target.txt")
-    assert os.path.exists(dst / "symlink.txt")
-    assert not os.path.islink(dst / "symlink.txt")
+    assert (dst / "target.txt").exists()
+    assert (dst / "symlink.txt").exists()
+    assert not (dst / "symlink.txt").is_symlink()
 
 
 def test_update_symlink(tmp_path_factory: pytest.TempPathFactory) -> None:
@@ -256,7 +255,7 @@ def test_update_symlink(tmp_path_factory: pytest.TempPathFactory) -> None:
 
     with local.cwd(src):
         # test updating a symlink
-        os.remove("symlink.txt")
+        Path("symlink.txt").unlink()
         os.symlink("bbbb.txt", "symlink.txt")
 
     # dst must be vcs-tracked to use run_update
@@ -312,10 +311,10 @@ def test_update_file_to_symlink(tmp_path_factory: pytest.TempPathFactory) -> Non
 
     with local.cwd(src):
         # test updating a symlink
-        os.remove("bbbb.txt")
+        Path("bbbb.txt").unlink()
         os.symlink("aaaa.txt", "bbbb.txt")
-        os.remove("cccc.txt")
-        with open("cccc.txt", "w+") as f:
+        Path("cccc.txt").unlink()
+        with Path("cccc.txt").open("w+") as f:
             f.write("Lorem ipsum")
 
     # dst must be vcs-tracked to use run_update
@@ -431,9 +430,9 @@ def test_copy_symlink_none_path(tmp_path_factory: pytest.TempPathFactory) -> Non
         vcs_ref="HEAD",
     )
 
-    assert os.path.exists(dst / "target.txt")
-    assert not os.path.exists(dst / "symlink.txt")
-    assert not os.path.islink(dst / "symlink.txt")
+    assert (dst / "target.txt").exists()
+    assert not (dst / "symlink.txt").exists()
+    assert not (dst / "symlink.txt").is_symlink()
 
 
 def test_recursive_symlink(tmp_path_factory: pytest.TempPathFactory) -> None:
