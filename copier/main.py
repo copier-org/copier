@@ -204,7 +204,7 @@ class Worker:
     """
 
     src_path: str | None = None
-    dst_path: Path = Path(".")
+    dst_path: Path = Path()
     answers_file: RelativePath | None = None
     vcs_ref: str | None = None
     data: AnyByStrDict = field(default_factory=dict)
@@ -1235,7 +1235,7 @@ class Worker:
                         # The 3-way merge might have resolved conflicts automatically,
                         # so we need to check if the file contains conflict markers
                         # before storing the file name for marking it as unmerged after the loop.
-                        with open(fname) as conflicts_candidate:
+                        with Path(fname).open() as conflicts_candidate:
                             if any(
                                 line.rstrip()
                                 in {"<<<<<<< before updating", ">>>>>>> after updating"}

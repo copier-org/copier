@@ -57,5 +57,5 @@ class Settings(BaseModel):
     def normalize(self, url: str) -> str:
         """Normalize an URL using user settings."""
         if url.startswith("~"):  # Only expand on str to avoid messing with URLs
-            url = expanduser(url)
+            url = expanduser(url)  # noqa: PTH111
         return url

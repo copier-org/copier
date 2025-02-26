@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import re
 import sys
 from contextlib import suppress
@@ -190,12 +189,12 @@ def clone(url: str, ref: str | None = None) -> str:
             _clone = _clone["--filter=blob:none"]
     _clone()
     # Include dirty changes if checking out a local HEAD
-    if ref in {None, "HEAD"} and os.path.exists(url) and Path(url).is_dir():
+    url_abspath = Path(url).absolute()
+    if ref in {None, "HEAD"} and url_abspath.is_dir():
         is_dirty = False
         with local.cwd(url):
             is_dirty = bool(git("status", "--porcelain").strip())
         if is_dirty:
-            url_abspath = Path(url).absolute()
             with local.cwd(location):
                 git("--git-dir=.git", f"--work-tree={url_abspath}", "add", "-A")
                 git(

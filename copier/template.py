@@ -173,7 +173,7 @@ class Task:
     cmd: str | Sequence[str]
     extra_vars: dict[str, Any] = field(default_factory=dict)
     condition: str | bool = True
-    working_directory: Path = Path(".")
+    working_directory: Path = Path()
 
 
 @dataclass
@@ -325,7 +325,7 @@ class Template:
         return tuple(
             self.config_data.get(
                 "exclude",
-                DEFAULT_EXCLUDE if Path(self.subdirectory) == Path(".") else [],
+                DEFAULT_EXCLUDE if Path(self.subdirectory) == Path() else [],
             )
         )
 

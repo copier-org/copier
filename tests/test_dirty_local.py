@@ -122,7 +122,7 @@ def test_update(tmp_path_factory: pytest.TempPathFactory) -> None:
         Path("test_file.txt").write_text("Test content")
 
         # test updating a file
-        with open("aaaa.txt", "a") as f:
+        with Path("aaaa.txt").open("a") as f:
             f.write("dolor sit amet")
 
         # test updating a symlink

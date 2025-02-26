@@ -12,7 +12,7 @@ from .helpers import git
 
 def test_types() -> None:
     """Ensure source code static typing."""
-    result = PoeThePoet(Path("."))(["types"])
+    result = PoeThePoet(Path())(["types"])
     assert result == 0
 
 

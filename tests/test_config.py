@@ -329,7 +329,7 @@ def test_flags_extra_fails() -> None:
     with pytest.raises(ValidationError):
         copier.Worker(  # type: ignore[call-arg]
             src_path="..",
-            dst_path=Path("."),
+            dst_path=Path(),
             i_am_not_a_member="and_i_do_not_belong_here",
         )
 

@@ -2,6 +2,7 @@
 import json
 import os
 import sys
+from pathlib import Path
 
 NAMES = (
     "{VERSION_FROM}-{VERSION_CURRENT}-{VERSION_TO}-{STAGE}.json",
@@ -9,5 +10,5 @@ NAMES = (
 )
 
 for name in NAMES:
-    with open(name.format(**os.environ), "w") as fd:
+    with Path(name.format(**os.environ)).open("w") as fd:
         json.dump(sys.argv, fd)

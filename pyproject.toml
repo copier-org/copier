@@ -118,6 +118,7 @@ extend-select = [
   "I",
   "PERF",
   "PGH",
+  "PTH",
   "UP",
 ]
 extend-ignore = ['B028', "B904", "D105", "D107", "E501"]
