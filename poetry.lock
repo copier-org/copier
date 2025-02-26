@@ -1578,17 +1578,6 @@ files = [
 ]
 
 [[package]]
-name = "types-psutil"
-version = "6.1.0.20241221"
-description = "Typing stubs for psutil"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "types_psutil-6.1.0.20241221-py3-none-any.whl", hash = "sha256:8498dbe13285a9ba7d4b2fa934c569cc380efc74e3dacdb34ae16d2cdf389ec3"},
-    {file = "types_psutil-6.1.0.20241221.tar.gz", hash = "sha256:600f5a36bd5e0eb8887f0e3f3ff2cf154d90690ad8123c8a707bba4ab94d3185"},
-]
-
-[[package]]
 name = "types-pygments"
 version = "2.19.0.20250219"
 description = "Typing stubs for Pygments"
@@ -1748,4 +1737,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9"
-content-hash = "3c9bb33fa0a43bd04125dbd879cef233ac4e3582431b3e06817f77bc9da84920"
+content-hash = "8778772793661c235a48d4ab2de8839426451f751ca66a79387790f5067c2794"
