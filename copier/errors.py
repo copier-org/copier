@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Sequence
+from subprocess import CompletedProcess
+from typing import TYPE_CHECKING, Self, Sequence
 
 from .tools import printf_exception
 from .types import PathSeq
@@ -120,6 +121,36 @@ class YieldTagInFileError(CopierError):
 
 class MultipleYieldTagsError(CopierError):
     """Multiple yield tags are used in one path name, but it is not allowed."""
+
+
+class TaskError(CopierError):
+    """Exception raised when a task fails."""
+
+    def __init__(
+        self,
+        task_command: str | Sequence[str],
+        returncode: int,
+        stdout: str | bytes | None,
+        stderr: str | bytes | None,
+    ):
+        self.task_command = task_command
+        self.returncode = returncode
+        self.stdout = stdout
+        self.stderr = stderr
+        message = f"Task {task_command!r} returned non-zero exit status {returncode}."
+        super().__init__(message)
+
+    @classmethod
+    def from_process(
+        cls, process: CompletedProcess[str] | CompletedProcess[bytes]
+    ) -> Self:
+        """Create a TaskError from a CompletedProcess."""
+        return cls(
+            task_command=process.args,
+            returncode=process.returncode,
+            stdout=process.stdout,
+            stderr=process.stderr,
+        )
 
 
 # Warnings
