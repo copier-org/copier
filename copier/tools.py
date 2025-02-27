@@ -14,7 +14,7 @@ from enum import Enum
 from importlib.metadata import version
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Callable, Iterator, Literal, TextIO, cast
+from typing import Any, Callable, ClassVar, Iterator, Literal, TextIO, cast
 
 import colorama
 from packaging.version import Version
@@ -27,11 +27,11 @@ colorama.just_fix_windows_console()
 class Style:
     """Common color styles."""
 
-    OK = [colorama.Fore.GREEN, colorama.Style.BRIGHT]
-    WARNING = [colorama.Fore.YELLOW, colorama.Style.BRIGHT]
-    IGNORE = [colorama.Fore.CYAN]
-    DANGER = [colorama.Fore.RED, colorama.Style.BRIGHT]
-    RESET = [colorama.Fore.RESET, colorama.Style.RESET_ALL]
+    OK: ClassVar[list[str]] = [colorama.Fore.GREEN, colorama.Style.BRIGHT]
+    WARNING: ClassVar[list[str]] = [colorama.Fore.YELLOW, colorama.Style.BRIGHT]
+    IGNORE: ClassVar[list[str]] = [colorama.Fore.CYAN]
+    DANGER: ClassVar[list[str]] = [colorama.Fore.RED, colorama.Style.BRIGHT]
+    RESET: ClassVar[list[str]] = [colorama.Fore.RESET, colorama.Style.RESET_ALL]
 
 
 INDENT = " " * 2
@@ -77,7 +77,7 @@ def printf(
     if not style:
         return action + _msg
 
-    out = style + [action] + Style.RESET + [INDENT, _msg]
+    out = [*style, action, *Style.RESET, INDENT, _msg]
     print(*out, sep="", file=file_)
     return None
 
@@ -87,7 +87,7 @@ def printf_exception(
 ) -> None:
     """Print exception with common format."""
     if not quiet:
-        print("", file=sys.stderr)
+        print(file=sys.stderr)
         printf(action, msg=msg, style=Style.DANGER, indent=indent, file_=sys.stderr)
         print(HLINE, file=sys.stderr)
         print(e, file=sys.stderr)
@@ -131,7 +131,7 @@ def cast_to_bool(value: Any) -> bool:
         lower = value.lower()
         if lower in {"y", "yes", "t", "true", "on"}:
             return True
-        elif lower in {"n", "no", "f", "false", "off", "~", "null", "none"}:
+        if lower in {"n", "no", "f", "false", "off", "~", "null", "none"}:
             return False
     # Assume nothing
     return bool(value)
@@ -152,7 +152,8 @@ def force_str_end(original_str: str, end: str = "\n") -> str:
 def handle_remove_readonly(
     func: Callable[[str], None],
     path: str,
-    # TODO: Change this union to simply `BaseException` when Python 3.11 support is dropped
+    # TODO: Change this union to simply `BaseException` when Python 3.11 support is
+    # dropped
     exc: BaseException | tuple[type[BaseException], BaseException, TracebackType],
 ) -> None:
     """Handle errors when trying to remove read-only files through `shutil.rmtree`.
@@ -181,9 +182,9 @@ _re_whitespace = re.compile(r"^\s+|\s+$")
 def normalize_git_path(path: str) -> str:
     r"""Convert weird characters returned by Git to normal UTF-8 path strings.
 
-    A filename like âñ will be reported by Git as "\\303\\242\\303\\261" (octal notation).
-    Similarly, a filename like "<tab>foo\b<lf>ar" will be reported as "\tfoo\\b\nar".
-    This can be disabled with `git config core.quotepath off`.
+    A filename like âñ will be reported by Git as "\\303\\242\\303\\261" (octal
+    notation). Similarly, a filename like "<tab>foo\b<lf>ar" will be reported as
+    "\tfoo\\b\nar". This can be disabled with `git config core.quotepath off`.
 
     Args:
         path: The Git path to normalize.

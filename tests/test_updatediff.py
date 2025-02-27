@@ -488,7 +488,7 @@ def test_update_from_tagged_to_head(tmp_path_factory: pytest.TempPathFactory) ->
     with local.cwd(src):
         build_file_tree(
             {
-                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",  # noqa: E501
                 "example": "1",
             }
         )
@@ -524,7 +524,7 @@ def test_skip_update(tmp_path_factory: pytest.TempPathFactory) -> None:
         build_file_tree(
             {
                 "copier.yaml": "_skip_if_exists: [skip_me]",
-                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",  # noqa: E501
                 "skip_me": "1",
             }
         )
@@ -602,9 +602,10 @@ def test_skip_update(tmp_path_factory: pytest.TempPathFactory) -> None:
 def test_skip_update_deleted(
     file_name: str, tmp_path_factory: pytest.TempPathFactory
 ) -> None:
-    """
-    Ensure that paths in ``skip_if_exists`` are always recreated
-    if they are absent before updating.
+    """Ensure paths in ``skip_if_exists`` are recreated if absent.
+
+    This ensures that paths specified in ``skip_if_exists`` are always recreated if they
+    are absent before updating.
     """
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
@@ -612,7 +613,7 @@ def test_skip_update_deleted(
         build_file_tree(
             {
                 "copier.yaml": "_skip_if_exists: ['*skip*']",
-                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",  # noqa: E501
                 file_name: "1",
                 "another_file": "foobar",
             }
@@ -701,15 +702,15 @@ def test_skip_update_deleted(
 def test_update_deleted_path(
     file_name: str, tmp_path_factory: pytest.TempPathFactory
 ) -> None:
-    """
-    Ensure that deleted paths are not regenerated during updates,
-    even if the template has changes in that path.
+    """Ensure that deleted paths are not regenerated during updates.
+
+    Even if the template has changes in that path.
     """
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     with local.cwd(src):
         build_file_tree(
             {
-                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",  # noqa: E501
                 file_name: "foo",
                 "another_file": "foobar",
                 "dont_wildmatch": "bar",
@@ -753,7 +754,7 @@ def test_overwrite_answers_file_always(
         build_file_tree(
             {
                 "copier.yaml": "question_1: true",
-                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",  # noqa: E501
                 "answer_1.jinja": "{{ question_1 }}",
             }
         )
@@ -787,7 +788,7 @@ def test_file_removed(tmp_path_factory: pytest.TempPathFactory) -> None:
     with local.cwd(src):
         build_file_tree(
             {
-                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",  # noqa: E501
                 "1.txt": "content 1",
                 Path("dir 2", "2.txt"): "content 2",
                 Path("dir 3", "subdir 3", "3.txt"): "content 3",
@@ -872,7 +873,7 @@ def test_update_inline_changed_answers_and_questions(
     with local.cwd(src):
         build_file_tree(
             {
-                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",  # noqa: E501
                 "copier.yml": "b: false",
                 "content.jinja": """\
                     aaa
@@ -911,7 +912,7 @@ def test_update_inline_changed_answers_and_questions(
         git("tag", "2")
     # Init project
     if interactive:
-        tui = spawn(COPIER_PATH + ("copy", "-r1", str(src), str(dst)), timeout=10)
+        tui = spawn((*COPIER_PATH, "copy", "-r1", str(src), str(dst)), timeout=10)
         tui.expect_exact("b (bool)")
         tui.expect_exact("(y/N)")
         tui.send("y")
@@ -937,7 +938,7 @@ def test_update_inline_changed_answers_and_questions(
         git("commit", "-am2")
         # Update from template, inline, with answer changes
         if interactive:
-            tui = spawn(COPIER_PATH + ("update", "--conflict=inline"), timeout=10)
+            tui = spawn((*COPIER_PATH, "update", "--conflict=inline"), timeout=10)
             tui.expect_exact("b (bool)")
             tui.expect_exact("(Y/n)")
             tui.sendline()
@@ -973,7 +974,7 @@ def test_update_in_repo_subdirectory(
     with local.cwd(src):
         build_file_tree(
             {
-                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",  # noqa: E501
                 "version.txt": "v1",
             }
         )
@@ -1054,7 +1055,7 @@ def test_update_needs_more_context(
     with local.cwd(src):
         build_file_tree(
             {
-                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",  # noqa: E501
                 "sample.py": dedent(
                     """\
                     def function_one():
@@ -1486,7 +1487,7 @@ def test_update_with_new_file_in_template_and_project_via_migration(
                     -   version: v2
                         before:
                         -    "{{ _copier_python }} {{ _copier_conf.src_path / 'migrate.py' }}"
-                    """
+                    """  # noqa: E501
                 ),
                 "migrate.py": (
                     """\
@@ -1555,7 +1556,7 @@ def test_update_with_separate_git_directory(
         build_file_tree(
             {
                 "version.txt": "v1",
-                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",  # noqa: E501
             }
         )
         git("init")
@@ -1595,7 +1596,7 @@ def test_update_with_skip_answered_and_new_answer(
         build_file_tree(
             {
                 "copier.yml": "boolean: false",
-                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",  # noqa: E501
             }
         )
         git_init("v1")
@@ -1631,7 +1632,7 @@ def test_update_dont_validate_computed_value(
                         validator: "This validator should never be rendered"
                     """
                 ),
-                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",  # noqa: E501
             }
         )
         git("init")
@@ -1660,7 +1661,7 @@ def test_update_git_submodule(tmp_path_factory: pytest.TempPathFactory) -> None:
     with local.cwd(src):
         build_file_tree(
             {
-                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",  # noqa: E501
                 "version.txt": "v1",
             }
         )
@@ -1784,7 +1785,7 @@ def test_update_with_answers_with_umlaut(
                         type: str
                     """
                 ),
-                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",  # noqa: E501
             }
         )
         git_init("v1")

@@ -68,8 +68,8 @@ def _handle_exceptions(method: Callable[[], None]) -> int:
     try:
         try:
             method()
-        except KeyboardInterrupt:
-            raise UserMessageError("Execution stopped by user")
+        except KeyboardInterrupt as error:
+            raise UserMessageError("Execution stopped by user") from error
     except UserMessageError as error:
         print(colors.red | "\n".join(error.args), file=sys.stderr)
         return 1
@@ -201,7 +201,7 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
         self,
         src_path: Optional[str] = None,
         dst_path: str = ".",
-        **kwargs: Any,  # noqa: FA100
+        **kwargs: Any,
     ) -> Worker:
         """Run Copier's internal API using CLI switches.
 

@@ -340,7 +340,7 @@ def test_missing_template(tmp_path: Path) -> None:
 
 
 def is_subdict(small: dict[Any, Any], big: dict[Any, Any]) -> bool:
-    return {**big, **small} == big
+    return big == {**big, **small}
 
 
 def test_worker_good_data(tmp_path: Path) -> None:
@@ -361,7 +361,7 @@ def test_worker_good_data(tmp_path: Path) -> None:
         # func_args > defaults
         (
             {"src_path": ".", "exclude": ["aaa"]},
-            tuple(DEFAULT_EXCLUDE) + ("aaa",),
+            (*DEFAULT_EXCLUDE, "aaa"),
         ),
         # func_args > user_data
         (
@@ -548,8 +548,8 @@ def test_user_defaults(
                 """
             ),
         ),
-        # User provided defaults takes precedence over initial defaults and settings defaults.
-        # The output should remain unchanged following the update operation.
+        # User provided defaults takes precedence over initial defaults and settings
+        # defaults. The output should remain unchanged following the update operation.
         (
             {
                 "a_string": "foo",

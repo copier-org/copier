@@ -109,21 +109,33 @@ vcs = "git"
 extend-select = [
   "ARG",
   "B",
+  "C4",
   "C90",
   "D",
   "E",
   "F",
   "FA",
+  "FLY",
+  "FURB",
   "I",
+  "ICN",
+  "ISC",
+  "N",
   "PERF",
+  "PIE",
   "PGH",
   "PTH",
+  "RET",
+  "RSE",
+  "RUF",
+  "SIM",
   "UP",
 ]
-extend-ignore = ['B028', "B904", "D105", "D107", "E501"]
+ignore = ["B028"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["D"]
+"tests/**" = ["D100", "D101", "D102", "D103", "D104", "D107"]
+"copier/errors.py" = ["D107"]
 
 [tool.ruff.lint.isort]
 combine-as-imports = true

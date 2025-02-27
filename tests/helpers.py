@@ -131,7 +131,7 @@ def build_file_tree(
 def expect_prompt(
     tui: PopenSpawn, name: str, expected_type: str, help: str | None = None
 ) -> None:
-    """Check that we get a prompt in the standard form"""
+    """Check that we get a prompt in the standard form."""
     if help:
         tui.expect_exact(help)
     else:

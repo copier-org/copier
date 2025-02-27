@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from copier import Worker
-from copier.errors import CopierAnswersInterrupt
+from copier.errors import CopierAnswersInterruptError
 
 from .helpers import build_file_tree
 
@@ -14,7 +14,7 @@ from .helpers import build_file_tree
         # We override the prompt method from questionary to raise this
         # exception and expect our surrounding machinery to re-raise
         # it as a CopierAnswersInterrupt.
-        CopierAnswersInterrupt(Mock(), Mock(), Mock()),
+        CopierAnswersInterruptError(Mock(), Mock(), Mock()),
         KeyboardInterrupt,
     ],
 )
@@ -34,9 +34,10 @@ def test_keyboard_interrupt(
     )
     worker = Worker(str(src), dst, defaults=False)
 
-    with patch("copier.main.unsafe_prompt", side_effect=side_effect):
-        with pytest.raises(KeyboardInterrupt):
-            worker.run_copy()
+    with patch("copier.main.unsafe_prompt", side_effect=side_effect), pytest.raises(
+        KeyboardInterrupt
+    ):
+        worker.run_copy()
 
 
 def test_multiple_questions_interrupt(tmp_path_factory: pytest.TempPathFactory) -> None:
@@ -65,7 +66,7 @@ def test_multiple_questions_interrupt(tmp_path_factory: pytest.TempPathFactory) 
             KeyboardInterrupt,
         ],
     ):
-        with pytest.raises(CopierAnswersInterrupt) as err:
+        with pytest.raises(CopierAnswersInterruptError) as err:
             worker.run_copy()
         assert err.value.answers.user == {
             "question1": "foobar",

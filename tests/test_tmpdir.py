@@ -17,7 +17,7 @@ def template_path(tmp_path_factory: pytest.TempPathFactory) -> str:
             root / "copier.yml": "favorite_app: Copier",
             root / "fav.txt.jinja": "{{ favorite_app }}",
             root
-            / "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+            / "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",  # noqa: E501
         }
     )
     _git = git["-C", root]

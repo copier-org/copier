@@ -84,10 +84,11 @@ def is_git_bundle(path: Path) -> bool:
     """Indicate if a path is a valid git bundle."""
     with suppress(OSError):
         path = path.resolve()
-    with TemporaryDirectory(prefix=f"{__name__}.is_git_bundle.") as dirname:
-        with local.cwd(dirname):
-            get_git()("init")
-            return bool(get_git()["bundle", "verify", path] & TF)
+    with TemporaryDirectory(prefix=f"{__name__}.is_git_bundle.") as dirname, local.cwd(
+        dirname
+    ):
+        get_git()("init")
+        return bool(get_git()["bundle", "verify", path] & TF)
 
 
 def get_repo(url: str) -> str | None:
@@ -113,7 +114,7 @@ def get_repo(url: str) -> str | None:
         if url.startswith("git+"):
             return url[4:]
         if url.startswith("https://") and not url.endswith(GIT_POSTFIX):
-            return "".join((url, GIT_POSTFIX))
+            return f"{url}{GIT_POSTFIX}"
         return url
 
     url_path = Path(url)
@@ -181,8 +182,8 @@ def clone(url: str, ref: str | None = None) -> str:
             file_url = url
         if is_git_shallow_repo(file_url):
             warn(
-                f"The repository '{url}' is a shallow clone, this might lead to unexpected "
-                "failure or unusually high resource consumption.",
+                f"The repository '{url}' is a shallow clone, this might lead to "
+                "unexpected failure or unusually high resource consumption.",
                 ShallowCloneWarning,
             )
         else:

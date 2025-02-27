@@ -19,15 +19,15 @@ class YieldEnvironment(SandboxedEnvironment):
     This is simple environment class that extends the SandboxedEnvironment
     for use with the YieldExtension, mainly for avoiding type errors.
 
-    We use the SandboxedEnvironment because we want to minimize the risk of hidden malware
-    in the templates. Of course we still have the post-copy tasks to worry about, but at least
-    they are more visible to the final user.
+    We use the SandboxedEnvironment because we want to minimize the risk of hidden
+    malware in the templates. Of course we still have the post-copy tasks to worry
+    about, but at least they are more visible to the final user.
     """
 
     yield_name: str | None
     yield_iterable: Iterable[Any] | None
 
-    def __init__(self, *args: Any, **kwargs: Any):
+    def __init__(self, *args: Any, **kwargs: Any):  # noqa: D107
         super().__init__(*args, **kwargs)
         self.extend(yield_name=None, yield_iterable=None)
 
@@ -58,9 +58,9 @@ class YieldExtension(Extension):
         >>> env.yield_iterable
         [1, 2, 3]
         ```
-    """
+    """  # noqa: E501
 
-    tags = {"yield"}
+    tags = {"yield"}  # noqa: RUF012
 
     environment: YieldEnvironment
 
@@ -97,16 +97,19 @@ class YieldExtension(Extension):
     ) -> str:
         """Support function for the yield tag.
 
-        Sets the `yield_name` and `yield_iterable` attributes in the environment then calls
-        the provided caller function. If an UndefinedError is raised, it returns an empty string.
+        Sets the `yield_name` and `yield_iterable` attributes in the environment then
+        calls the provided caller function. If an UndefinedError is raised, it returns
+        an empty string.
         """
         if (
             self.environment.yield_name is not None
             or self.environment.yield_iterable is not None
         ):
             raise MultipleYieldTagsError(
-                "Attempted to parse the yield tag twice. Only one yield tag is allowed per path name.\n"
-                f'A yield tag with the name: "{self.environment.yield_name}" and iterable: "{self.environment.yield_iterable}" already exists.'
+                "Attempted to parse the yield tag twice. Only one yield tag is allowed"
+                " per path name.\n"
+                f'A yield tag with the name: "{self.environment.yield_name}" and '
+                f'iterable: "{self.environment.yield_iterable}" already exists.'
             )
 
         self.environment.yield_name = yield_name

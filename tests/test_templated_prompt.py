@@ -170,7 +170,7 @@ def test_templated_prompt(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn((*COPIER_PATH, "copy", str(src), str(dst)), timeout=10)
     expect_prompt(tui, "main", "str")
     tui.expect_exact(main_default)
     tui.sendline()
@@ -208,7 +208,7 @@ def test_templated_prompt_custom_envops(
                 sentence:
                     type: str
                     default: "<% if powerlevel >= 9000 %>It's over 9000!<% else %>It's only << powerlevel >>...<% endif %>"
-                """
+                """  # noqa: E501
             ),
             (src / "result.jinja"): "<<sentence>>",
         }
@@ -354,12 +354,12 @@ def test_templated_prompt_with_conditional_choices(
                         Deployment Manager:
                             value: dm
                             validator: "{% if cloud != 'GCP' %}Requires GCP{% endif %}"
-                """
+                """  # noqa: E501
             ),
         }
     )
     tui = spawn(
-        COPIER_PATH + ("copy", f"--data=cloud={cloud}", str(src), str(dst)),
+        (*COPIER_PATH, "copy", f"--data=cloud={cloud}", str(src), str(dst)),
         timeout=10,
     )
     expect_prompt(tui, "iac", "str", help="Which IaC tool do you use?")
@@ -416,7 +416,7 @@ def test_templated_prompt_with_templated_choices(
         }
     )
     tui = spawn(
-        COPIER_PATH + ("copy", f"--data=cloud={cloud}", str(src), str(dst)),
+        (*COPIER_PATH, "copy", f"--data=cloud={cloud}", str(src), str(dst)),
         timeout=10,
     )
     expect_prompt(tui, "iac", "str", help="Which IaC tool do you use?")
@@ -455,7 +455,7 @@ def test_templated_prompt_update_previous_answer_disabled(
                         Deployment Manager:
                             value: dm
                             validator: "{% if cloud != 'GCP' %}Requires GCP{% endif %}"
-                """
+                """  # noqa: E501
             ),
             (src / "{{ _copier_conf.answers_file }}.jinja"): (
                 "{{ _copier_answers|to_nice_yaml }}"
@@ -467,7 +467,7 @@ def test_templated_prompt_update_previous_answer_disabled(
         git_init("v1")
         git("tag", "v1")
 
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn((*COPIER_PATH, "copy", str(src), str(dst)), timeout=10)
     expect_prompt(tui, "cloud", "str", help="Which cloud provider do you use?")
     tui.sendline(Keyboard.Down)  # select "AWS"
     expect_prompt(tui, "iac", "str", help="Which IaC tool do you use?")
@@ -487,7 +487,7 @@ def test_templated_prompt_update_previous_answer_disabled(
     with local.cwd(dst):
         git_init("v1")
 
-    tui = spawn(COPIER_PATH + ("update", str(dst)), timeout=10)
+    tui = spawn((*COPIER_PATH, "update", str(dst)), timeout=10)
     expect_prompt(tui, "cloud", "str", help="Which cloud provider do you use?")
     tui.sendline(Keyboard.Down)  # select "Azure"
     expect_prompt(tui, "iac", "str", help="Which IaC tool do you use?")
@@ -534,7 +534,7 @@ def test_multiselect_choices_with_templated_default_value(
                         - "3.10"
                         - "3.11"
                         - "3.12"
-                """
+                """  # noqa: E501
             ),
             (src / "{{ _copier_conf.answers_file }}.jinja"): (
                 "{{ _copier_answers|to_nice_yaml }}"
@@ -542,7 +542,7 @@ def test_multiselect_choices_with_templated_default_value(
         }
     )
 
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn((*COPIER_PATH, "copy", str(src), str(dst)), timeout=10)
     expect_prompt(
         tui, "python_version", "str", help="What version of python are you targeting?"
     )

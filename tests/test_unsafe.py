@@ -72,7 +72,10 @@ class JinjaExtension(Extension): ...
             },
             pytest.raises(
                 UnsafeTemplateError,
-                match="Template uses potentially unsafe features: jinja_extensions, tasks.",
+                match=(
+                    "Template uses potentially unsafe features: "
+                    "jinja_extensions, tasks."
+                ),
             ),
         ),
     ],
@@ -297,7 +300,7 @@ def test_update(
     with local.cwd(src):
         build_file_tree(
             {
-                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers | to_nice_yaml }}",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers | to_nice_yaml }}",  # noqa: E501
                 "copier.yaml": yaml.safe_dump(spec_old),
             }
         )
@@ -343,7 +346,7 @@ def test_update_cli(
     with local.cwd(src):
         build_file_tree(
             {
-                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers | to_nice_yaml }}",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers | to_nice_yaml }}",  # noqa: E501
                 "copier.yaml": "",
             }
         )
@@ -356,7 +359,7 @@ def test_update_cli(
         settings_path.write_text(f"trust: ['{src}']")
 
     _, retcode = CopierApp.run(
-        ["copier", "copy", str(src), str(dst)] + unsafe_args,
+        ["copier", "copy", str(src), str(dst), *unsafe_args],
         exit=False,
     )
     assert retcode == 0
@@ -383,8 +386,8 @@ def test_update_cli(
             "copier",
             "update",
             str(dst),
-        ]
-        + unsafe_args,
+            *unsafe_args,
+        ],
         exit=False,
     )
     if unsafe or trusted_from_settings:
