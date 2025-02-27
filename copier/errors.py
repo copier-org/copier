@@ -128,16 +128,16 @@ class TaskError(CopierError):
 
     def __init__(
         self,
-        task_command: str | Sequence[str],
+        command: str | Sequence[str],
         returncode: int,
         stdout: str | bytes | None,
         stderr: str | bytes | None,
     ):
-        self.task_command = task_command
+        self.command = command
         self.returncode = returncode
         self.stdout = stdout
         self.stderr = stderr
-        message = f"Task {task_command!r} returned non-zero exit status {returncode}."
+        message = f"Task {command!r} returned non-zero exit status {returncode}."
         super().__init__(message)
 
     @classmethod
@@ -146,7 +146,7 @@ class TaskError(CopierError):
     ) -> Self:
         """Create a TaskError from a CompletedProcess."""
         return cls(
-            task_command=process.args,
+            command=process.args,
             returncode=process.returncode,
             stdout=process.stdout,
             stderr=process.stderr,
