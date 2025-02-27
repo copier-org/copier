@@ -123,7 +123,7 @@ class MultipleYieldTagsError(CopierError):
     """Multiple yield tags are used in one path name, but it is not allowed."""
 
 
-class TaskError(CopierError):
+class TaskError(UserMessageError):
     """Exception raised when a task fails."""
 
     def __init__(
