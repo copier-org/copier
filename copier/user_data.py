@@ -5,13 +5,14 @@ from __future__ import annotations
 import json
 import warnings
 from collections import ChainMap
+from collections.abc import Mapping, Sequence
 from dataclasses import field
 from datetime import datetime
 from functools import cached_property
 from hashlib import sha512
 from os import urandom
 from pathlib import Path
-from typing import Any, Callable, Literal, Mapping, Sequence
+from typing import Any, Callable, Literal
 
 import yaml
 from jinja2 import UndefinedError
@@ -27,7 +28,13 @@ from copier.settings import Settings
 
 from .errors import InvalidTypeError, MissingFileWarning, UserMessageError
 from .tools import cast_to_bool, cast_to_str, force_str_end
-from .types import MISSING, AnyByStrDict, AnyByStrMutableMapping, MissingType, StrOrPath
+from .types import (
+    MISSING,
+    AnyByStrDict,
+    AnyByStrMutableMapping,
+    MissingType,
+    StrOrPath,
+)
 
 
 # TODO Remove these two functions as well as DEFAULT_DATA in a future release
