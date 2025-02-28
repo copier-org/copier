@@ -27,7 +27,14 @@ from copier.settings import Settings
 
 from .errors import InvalidTypeError, MissingFileWarning, UserMessageError
 from .tools import cast_to_bool, cast_to_str, force_str_end
-from .types import MISSING, AnyByStrDict, AnyByStrMutableMapping, MissingType, StrOrPath
+from .types import (
+    MISSING,
+    AnyByStrDict,
+    AnyByStrMutableMapping,
+    LazyDict,
+    MissingType,
+    StrOrPath,
+)
 
 
 # TODO Remove these two functions as well as DEFAULT_DATA in a future release
@@ -57,7 +64,7 @@ DEFAULT_DATA: AnyByStrDict = {
 }
 
 
-@dataclass
+@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
 class AnswersMap:
     """Object that gathers answers from different sources.
 
@@ -99,7 +106,7 @@ class AnswersMap:
     metadata: AnyByStrMutableMapping = field(default_factory=dict)
     last: AnyByStrMutableMapping = field(default_factory=dict)
     user_defaults: AnyByStrMutableMapping = field(default_factory=dict)
-    system: AnyByStrMutableMapping = field(default_factory=dict)
+    external: LazyDict = field(default_factory=LazyDict)
 
     @property
     def combined(self) -> Mapping[str, Any]:
@@ -111,7 +118,7 @@ class AnswersMap:
                 self.metadata,
                 self.last,
                 self.user_defaults,
-                self.system,
+                {"_external_data": self.external},
                 DEFAULT_DATA,
             )
         )

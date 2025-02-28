@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import (
     Annotated,
     Any,
+    Callable,
     Dict,
     Literal,
     Mapping,
@@ -60,3 +61,17 @@ def path_is_relative(value: Path) -> Path:
 
 AbsolutePath = Annotated[Path, AfterValidator(path_is_absolute)]
 RelativePath = Annotated[Path, AfterValidator(path_is_relative)]
+
+
+# HACK https://github.com/copier-org/copier/pull/1880#discussion_r1887491497
+class LazyDict:
+    """A dict where values are functions that get evaluated only once when requested."""
+
+    def __init__(self, **kwargs: Callable[[], Any]):
+        self.pending = kwargs
+        self.done: dict[str, Any] = {}
+
+    def __getitem__(self, key: str) -> Any:
+        if key not in self.done:
+            self.done[key] = self.pending[key]()
+        return self.done[key]

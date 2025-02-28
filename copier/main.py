@@ -64,6 +64,7 @@ from .types import (
     AnyByStrDict,
     AnyByStrMutableMapping,
     JSONSerializable,
+    LazyDict,
     RelativePath,
     StrOrPath,
 )
@@ -71,20 +72,6 @@ from .user_data import AnswersMap, Question, load_answersfile_data
 from .vcs import get_git
 
 _T = TypeVar("_T")
-
-
-# HACK https://github.com/copier-org/copier/pull/1880#discussion_r1887491497
-class _LazyDict:
-    """A dict where values are functions that get evaluated only once when requested."""
-
-    def __init__(self, **kwargs: Callable[[], Any]):
-        self.pending = kwargs
-        self.done: dict[str, Any] = {}
-
-    def __getitem__(self, key: str) -> Any:
-        if key not in self.done:
-            self.done[key] = self.pending[key]()
-        return self.done[key]
 
 
 @dataclass(config=ConfigDict(extra="forbid"))
@@ -281,7 +268,7 @@ class Worker:
         if features:
             raise UnsafeTemplateError(sorted(features))
 
-    def _external_data(self) -> _LazyDict:
+    def _external_data(self) -> LazyDict:
         """Load external data lazily.
 
         Result keys are used for rendering, and values are the parsed contents
@@ -290,7 +277,7 @@ class Worker:
         Files will only be parsed lazily on 1st access. This helps avoiding
         circular dependencies when the file name also comes from a variable.
         """
-        return _LazyDict(
+        return LazyDict(
             **{
                 name: lambda path=path: load_answersfile_data(
                     self.dst_path, self._render_string(path)
@@ -300,8 +287,6 @@ class Worker:
         )
 
     def _print_message(self, message: str) -> None:
-        # On first use, at least we need the system render context
-        self.answers.system = self._system_render_context()
         if message and not self.quiet:
             print(self._render_string(message), file=sys.stderr)
 
@@ -368,13 +353,8 @@ class Worker:
             with local.cwd(working_directory), local.env(**extra_env):
                 subprocess.run(task_cmd, shell=use_shell, check=True, env=local.env)
 
-    def _system_render_context(self) -> AnyByStrMutableMapping:
-        """System reserved render context.
-
-        Most keys start with `_` because they're reserved.
-
-        Resolution of computed values is deferred until used for the 1st time.
-        """
+    def _render_context(self) -> AnyByStrMutableMapping:
+        """Produce render context for Jinja."""
         # Backwards compatibility
         # FIXME Remove it?
         conf = asdict(self)
@@ -390,9 +370,9 @@ class Worker:
             }
         )
         return dict(
+            **self.answers.combined,
             _copier_answers=self._answers_to_remember(),
             _copier_conf=conf,
-            _external_data=self._external_data(),
             _folder_name=self.subproject.local_abspath.name,
             _copier_python=sys.executable,
         )
@@ -502,7 +482,7 @@ class Worker:
             init=self.data,
             last=self.subproject.last_answers,
             metadata=self.template.metadata,
-            system=self._system_render_context(),
+            external=self._external_data(),
         )
 
         for var_name, details in self.template.questions_data.items():
@@ -564,8 +544,9 @@ class Worker:
                     self.answers, question, self.template
                 ) from err
             self.answers.user[var_name] = new_answer
-        # Update system render context, which may depend on answers
-        self.answers.system = self._system_render_context()
+
+        # Reload external data, which may depend on answers
+        self.answers.external = self._external_data()
 
     @property
     def answers_relpath(self) -> Path:
@@ -696,7 +677,7 @@ class Worker:
                 new_content = src_abspath.read_bytes()
             else:
                 new_content = tpl.render(
-                    **self.answers.combined, **(extra_context or {})
+                    **self._render_context(), **(extra_context or {})
                 ).encode()
                 if self.jinja_env.yield_name:
                     raise YieldTagInFileError(
@@ -882,7 +863,7 @@ class Worker:
                 Additional variables to use for rendering the template.
         """
         tpl = self.jinja_env.from_string(string)
-        return tpl.render(**self.answers.combined, **(extra_context or {}))
+        return tpl.render(**self._render_context(), **(extra_context or {}))
 
     def _render_value(
         self, value: _T, extra_context: AnyByStrDict | None = None
@@ -1103,7 +1084,7 @@ class Worker:
                 )
             # Clear last answers cache to load possible answers migration, if skip_answered flag is not set
             if self.skip_answered is False:
-                self.answers = AnswersMap(system=self._system_render_context())
+                self.answers = AnswersMap(external=self._external_data())
                 with suppress(AttributeError):
                     del self.subproject.last_answers
             # Do a normal update in final destination
@@ -1119,7 +1100,7 @@ class Worker:
             ) as current_worker:
                 current_worker.run_copy()
                 self.answers = current_worker.answers
-                self.answers.system = self._system_render_context()
+                self.answers.external = self._external_data()
             # Render with the same answers in an empty dir to avoid pollution
             with replace(
                 self,
