@@ -41,6 +41,7 @@ from questionary import unsafe_prompt
 from .errors import (
     CopierAnswersInterrupt,
     ExtensionNotFoundError,
+    TaskError,
     UnsafeTemplateError,
     UserMessageError,
     YieldTagInFileError,
@@ -351,7 +352,9 @@ class Worker:
 
             extra_env = {k.upper(): str(v) for k, v in task.extra_vars.items()}
             with local.cwd(working_directory), local.env(**extra_env):
-                subprocess.run(task_cmd, shell=use_shell, check=True, env=local.env)
+                process = subprocess.run(task_cmd, shell=use_shell, env=local.env)
+                if process.returncode:
+                    raise TaskError.from_process(process)
 
     def _render_context(self) -> AnyByStrMutableMapping:
         """Produce render context for Jinja."""
