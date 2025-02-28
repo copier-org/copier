@@ -280,7 +280,9 @@ class Worker:
         return LazyDict(
             **{
                 name: lambda path=path: load_answersfile_data(
-                    self.dst_path, self._render_string(path)
+                    self.dst_path,
+                    self._render_string(path),
+                    warn_on_missing=True,
                 )
                 for name, path in self.template.external_data.items()
             }
