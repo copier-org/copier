@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 from pathlib import Path
 from subprocess import CompletedProcess
-from typing import TYPE_CHECKING, Self, Sequence
+from typing import TYPE_CHECKING, Sequence
 
 from .tools import printf_exception
 from .types import PathSeq
@@ -13,6 +14,11 @@ from .types import PathSeq
 if TYPE_CHECKING:  # always false
     from .template import Template
     from .user_data import AnswersMap, Question
+
+if sys.version_info < (3, 11):
+    from typing_extensions import Self
+else:
+    from typing import Self
 
 
 # Errors
