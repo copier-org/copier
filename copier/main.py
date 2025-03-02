@@ -65,6 +65,7 @@ from .types import (
     AnyByStrMutableMapping,
     JSONSerializable,
     LazyDict,
+    Phase,
     RelativePath,
     StrOrPath,
 )
@@ -277,10 +278,18 @@ class Worker:
         Files will only be parsed lazily on 1st access. This helps avoiding
         circular dependencies when the file name also comes from a variable.
         """
+
+        def _render(path: str) -> str:
+            with Phase.use(Phase.UNDEFINED):
+                return self._render_string(path)
+
+        # Given those values are lazily rendered on 1st access then cached
+        # the phase value is irrelevant and could be misleading.
+        # As a consequence it is explicitely set to "undefined".
         return LazyDict(
             **{
                 name: lambda path=path: load_answersfile_data(
-                    self.dst_path, self._render_string(path)
+                    self.dst_path, _render(path)
                 )
                 for name, path in self.template.external_data.items()
             }
@@ -375,6 +384,7 @@ class Worker:
             _copier_conf=conf,
             _folder_name=self.subproject.local_abspath.name,
             _copier_python=sys.executable,
+            _copier_phase=Phase.current(),
         )
 
     def _path_matcher(self, patterns: Iterable[str]) -> Callable[[Path], bool]:
@@ -560,7 +570,9 @@ class Worker:
         """
         path = self.answers_file or self.template.answers_relpath
         template = self.jinja_env.from_string(str(path))
-        return Path(template.render(**self.answers.combined))
+        return Path(
+            template.render(_copier_phase=Phase.current(), **self.answers.combined)
+        )
 
     @cached_property
     def all_exclusions(self) -> Sequence[str]:
@@ -928,7 +940,8 @@ class Worker:
         """
         self._check_unsafe("copy")
         self._print_message(self.template.message_before_copy)
-        self._ask()
+        with Phase.use(Phase.PROMPT):
+            self._ask()
         was_existing = self.subproject.local_abspath.exists()
         try:
             if not self.quiet:
@@ -937,12 +950,14 @@ class Worker:
                     f"\nCopying from template version {self.template.version}",
                     file=sys.stderr,
                 )
-            self._render_template()
+            with Phase.use(Phase.RENDER):
+                self._render_template()
             if not self.quiet:
                 # TODO Unify printing tools
                 print("")  # padding space
             if not self.skip_tasks:
-                self._execute_tasks(self.template.tasks)
+                with Phase.use(Phase.TASKS):
+                    self._execute_tasks(self.template.tasks)
         except Exception:
             if not was_existing and self.cleanup_on_error:
                 rmtree(self.subproject.local_abspath)
@@ -1044,9 +1059,10 @@ class Worker:
             ) as old_worker:
                 old_worker.run_copy()
             # Run pre-migration tasks
-            self._execute_tasks(
-                self.template.migration_tasks("before", self.subproject.template)  # type: ignore[arg-type]
-            )
+            with Phase.use(Phase.MIGRATE):
+                self._execute_tasks(
+                    self.template.migration_tasks("before", self.subproject.template)  # type: ignore[arg-type]
+                )
             # Create a Git tree object from the current (possibly dirty) index
             # and keep the object reference.
             with local.cwd(subproject_top):
@@ -1120,7 +1136,7 @@ class Worker:
                 self._git_initialize_repo()
                 new_copy_head = git("rev-parse", "HEAD").strip()
             # Extract diff between temporary destination and real destination
-            # with some special handling of newly added files in both the poject
+            # with some special handling of newly added files in both the project
             # and the template.
             with local.cwd(old_copy):
                 # Configure borrowing Git objects from the real destination and
@@ -1265,9 +1281,10 @@ class Worker:
             _remove_old_files(subproject_top, compared)
 
         # Run post-migration tasks
-        self._execute_tasks(
-            self.template.migration_tasks("after", self.subproject.template)  # type: ignore[arg-type]
-        )
+        with Phase.use(Phase.MIGRATE):
+            self._execute_tasks(
+                self.template.migration_tasks("after", self.subproject.template)  # type: ignore[arg-type]
+            )
 
     def _git_initialize_repo(self) -> None:
         """Initialize a git repository in the current directory."""

@@ -5,13 +5,14 @@ from __future__ import annotations
 import json
 import warnings
 from collections import ChainMap
+from collections.abc import Mapping, Sequence
 from dataclasses import field
 from datetime import datetime
 from functools import cached_property
 from hashlib import sha512
 from os import urandom
 from pathlib import Path
-from typing import Any, Callable, Literal, Mapping, Sequence
+from typing import Any, Callable, Literal
 
 import yaml
 from jinja2 import UndefinedError
@@ -33,6 +34,7 @@ from .types import (
     AnyByStrMutableMapping,
     LazyDict,
     MissingType,
+    Phase,
     StrOrPath,
 )
 
@@ -464,7 +466,13 @@ class Question:
                 else value
             )
         try:
-            return template.render({**self.answers.combined, **(extra_answers or {})})
+            return template.render(
+                {
+                    **self.answers.combined,
+                    **(extra_answers or {}),
+                    "_copier_phase": Phase.current(),
+                }
+            )
         except UndefinedError as error:
             raise UserMessageError(str(error)) from error
 

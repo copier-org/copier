@@ -250,3 +250,31 @@ def test_external_data_with_umlaut(
     copier.run_copy(str(src), dst, defaults=True, overwrite=True)
     answers = load_answersfile_data(dst, ".copier-answers.yml")
     assert answers["ext_umlaut"] == "äöü"
+
+
+def test_undefined_phase_in_external_data(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                """\
+                _external_data:
+                    data: '{{ _copier_phase }}.yml'
+                key: "{{ _external_data.data.key }}"
+                """
+            ),
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+        }
+    )
+    git_save(src, tag="v1")
+
+    (dst / "undefined.yml").write_text("key: value")
+
+    copier.run_copy(str(src), dst, defaults=True, overwrite=True)
+    answers = load_answersfile_data(dst, ".copier-answers.yml")
+    assert answers["key"] == "value"

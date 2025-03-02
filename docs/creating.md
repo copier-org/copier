@@ -136,6 +136,16 @@ variable:
 
 The name of the project root directory.
 
+### `_copier_phase`
+
+The current phase, one of `"prompt"`,`"tasks"`, `"migrate"` or `"render"`.
+
+!!! note
+
+    There is also an additional `"undefined"` phase used when not in any phase.
+    You may encounter this phase when rendering outside of those phases,
+    when rendering lazily (and the phase notion can be irrelevant) or when testing.
+
 ## Variables (context-specific)
 
 Some rendering contexts provide variables unique to them:
