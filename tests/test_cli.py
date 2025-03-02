@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import subprocess
 import sys
+from collections.abc import Generator
 from pathlib import Path
-from typing import Callable, Generator
+from typing import Callable
 
 import pytest
 import yaml
@@ -269,9 +272,9 @@ def test_read_utf_data_file(
         # Override the factor that determine the default encoding when opening files.
         # data.yml should be read correctly regardless of this value.
         if sys.version_info >= (3, 10):
-            m.setattr("io.text_encoding", lambda *args: "cp932")
+            m.setattr("io.text_encoding", lambda *_args: "cp932")
         else:
-            m.setattr("_bootlocale.getpreferredencoding", lambda *args: "cp932")
+            m.setattr("_bootlocale.getpreferredencoding", lambda *_args: "cp932")
 
         run_result = CopierApp.run(
             [
@@ -290,7 +293,7 @@ def test_read_utf_data_file(
         "text1": "\u3053\u3093\u306b\u3061\u306f",
         "text2": "\U0001f60e",
     }
-    with open(dst / ".copier-answers.yml", encoding="utf-8") as f:
+    with Path(dst / ".copier-answers.yml").open(encoding="utf-8") as f:
         content = f.read()
         actual_answers = yaml.safe_load(content)
     assert actual_answers == expected_answers
