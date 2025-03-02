@@ -290,7 +290,7 @@ def test_read_utf_data_file(
         "text1": "\u3053\u3093\u306b\u3061\u306f",
         "text2": "\U0001f60e",
     }
-    with open(dst / ".copier-answers.yml", "r", encoding="utf-8") as f:
+    with open(dst / ".copier-answers.yml", encoding="utf-8") as f:
         content = f.read()
         actual_answers = yaml.safe_load(content)
     assert actual_answers == expected_answers
