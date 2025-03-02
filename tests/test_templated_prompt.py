@@ -242,7 +242,9 @@ def test_templated_prompt_builtins(tmp_path_factory: pytest.TempPathFactory) -> 
             src / "make_secret.tmpl": "[[ question2 ]]",
         }
     )
-    Worker(str(src), dst, defaults=True, overwrite=True).run_copy()
+    with pytest.warns(FutureWarning) as warnings:
+        Worker(str(src), dst, defaults=True, overwrite=True).run_copy()
+    assert len([w for w in warnings if w.category is FutureWarning]) == 2
     that_now = datetime.fromisoformat((dst / "now").read_text())
     assert that_now <= datetime.utcnow()
     assert len((dst / "make_secret").read_text()) == 128
