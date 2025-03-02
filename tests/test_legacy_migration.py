@@ -66,9 +66,14 @@ def test_migrations_and_tasks(tmp_path: Path, skip_tasks: bool) -> None:
         git("add", ".")
         git("commit", "-m1")
     # Update it to v2
-    run_update(
-        dst_path=dst, defaults=True, overwrite=True, unsafe=True, skip_tasks=skip_tasks
-    )
+    with pytest.deprecated_call():
+        run_update(
+            dst_path=dst,
+            defaults=True,
+            overwrite=True,
+            unsafe=True,
+            skip_tasks=skip_tasks,
+        )
     # Check update was OK
     if skip_tasks:
         assert not (dst / "created-with-tasks.txt").exists()
