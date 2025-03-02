@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from contextlib import nullcontext as does_not_raise
+from contextlib import AbstractContextManager, nullcontext as does_not_raise
 from pathlib import Path
-from typing import ContextManager
 
 import pytest
 import yaml
@@ -47,9 +46,14 @@ class JinjaExtension(Extension): ...
                 "_migrations": [
                     {
                         "version": "v1",
-                        "before": ["touch v1-before.txt"],
-                        "after": ["touch v1-after.txt"],
-                    }
+                        "when": "{{ _stage == 'before' }}",
+                        "command": "touch v1-before.txt",
+                    },
+                    {
+                        "version": "v1",
+                        "when": "{{ _stage == 'after' }}",
+                        "command": "touch v1-after.txt",
+                    },
                 ]
             },
             does_not_raise(),
@@ -82,7 +86,7 @@ def test_copy(
     tmp_path_factory: pytest.TempPathFactory,
     unsafe: bool,
     spec: AnyByStrDict,
-    expected: ContextManager[None],
+    expected: AbstractContextManager[None],
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ["src", "dst"])
     build_file_tree({(src / "copier.yaml"): yaml.safe_dump(spec)})
@@ -166,9 +170,14 @@ def test_copy_cli(
                 "_migrations": [
                     {
                         "version": "v0",
-                        "before": ["touch v0-before.txt"],
-                        "after": ["touch v0-after.txt"],
-                    }
+                        "command": "touch v0-before.txt",
+                        "when": "{{ _stage == 'before' }}",
+                    },
+                    {
+                        "version": "v0",
+                        "command": "touch v0-after.txt",
+                        "when": "{{ _stage == 'after' }}",
+                    },
                 ]
             },
             does_not_raise(),
@@ -184,7 +193,8 @@ def test_copy_cli(
                     }
                 ]
             },
-            does_not_raise(),
+            # This case only exists on legacy migrations and raises a DeprecationWarning
+            pytest.deprecated_call(),
         ),
         (
             {},
@@ -192,7 +202,8 @@ def test_copy_cli(
                 "_migrations": [
                     {
                         "version": "v2",
-                        "before": ["touch v2-before.txt"],
+                        "when": "{{ _stage == 'before' }}",
+                        "command": "touch v2-before.txt",
                     }
                 ]
             },
@@ -207,7 +218,8 @@ def test_copy_cli(
                 "_migrations": [
                     {
                         "version": "v2",
-                        "after": ["touch v2-after.txt"],
+                        "when": "{{ _stage == 'after' }}",
+                        "command": "touch v2-after.txt",
                     }
                 ]
             },
@@ -222,9 +234,14 @@ def test_copy_cli(
                 "_migrations": [
                     {
                         "version": "v2",
-                        "before": ["touch v2-before.txt"],
-                        "after": ["touch v2-after.txt"],
-                    }
+                        "when": "{{ _stage == 'before' }}",
+                        "command": "touch v2-before.txt",
+                    },
+                    {
+                        "version": "v2",
+                        "when": "{{ _stage == 'after' }}",
+                        "command": "touch v2-after.txt",
+                    },
                 ]
             },
             pytest.raises(
@@ -268,9 +285,14 @@ def test_copy_cli(
                 "_migrations": [
                     {
                         "version": "v2",
-                        "before": ["touch v2-before.txt"],
-                        "after": ["touch v2-after.txt"],
-                    }
+                        "when": "{{ _stage == 'before' }}",
+                        "command": "touch v2-before.txt",
+                    },
+                    {
+                        "version": "v2",
+                        "when": "{{ _stage == 'after' }}",
+                        "command": "touch v2-after.txt",
+                    },
                 ],
                 "_jinja_extensions": ["tests.test_unsafe.JinjaExtension"],
             },
@@ -290,7 +312,7 @@ def test_update(
     unsafe: bool,
     spec_old: AnyByStrDict,
     spec_new: AnyByStrDict,
-    expected: ContextManager[None],
+    expected: AbstractContextManager[None],
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ["src", "dst"])
 
