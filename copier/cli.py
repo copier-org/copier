@@ -189,7 +189,7 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
         Arguments:
             path: The path to the YAML file to load.
         """
-        with Path(path).open() as f:
+        with Path(path).open("rb") as f:
             file_updates: AnyByStrDict = yaml.safe_load(f)
 
         updates_without_cli_overrides = {
