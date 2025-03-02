@@ -77,20 +77,23 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
                 author_name: Guybrush
                 _migrations:
                     -   version: v0.0.1
-                        before:
-                            - touch before-v0.0.1
-                        after:
-                            - touch after-v0.0.1
+                        when: "{{ _stage == 'before' }}"
+                        command: touch before-v0.0.1
+                    -   version: v0.0.1
+                        when: "{{ _stage == 'after' }}"
+                        command: touch after-v0.0.1
                     -   version: v0.0.2
-                        before:
-                            - touch before-v0.0.2
-                        after:
-                            - touch after-v0.0.2
+                        when: "{{ _stage == 'before' }}"
+                        command: touch before-v0.0.2
+                    -   version: v0.0.2
+                        when: "{{ _stage == 'after' }}"
+                        command: touch after-v0.0.2
                     -   version: v1.0.0
-                        before:
-                            - touch before-v1.0.0
-                        after:
-                            - touch after-v1.0.0
+                        when: "{{ _stage == 'before' }}"
+                        command: touch before-v1.0.0
+                    -   version: v1.0.0
+                        when: "{{ _stage == 'after' }}"
+                        command: touch after-v1.0.0
                 """
             ),
         }
@@ -110,20 +113,23 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
                 author_name: Elaine
                 _migrations:
                     -   version: v0.0.1
-                        before:
-                            - touch before-v0.0.1
-                        after:
-                            - touch after-v0.0.1
+                        when: "{{ _stage == 'before' }}"
+                        command: touch before-v0.0.1
+                    -   version: v0.0.1
+                        when: "{{ _stage == 'after' }}"
+                        command: touch after-v0.0.1
                     -   version: v0.0.2
-                        before:
-                            - touch before-v0.0.2
-                        after:
-                            - touch after-v0.0.2
+                        when: "{{ _stage == 'before' }}"
+                        command: touch before-v0.0.2
+                    -   version: v0.0.2
+                        when: "{{ _stage == 'after' }}"
+                        command: touch after-v0.0.2
                     -   version: v1.0.0
-                        before:
-                            - touch before-v1.0.0
-                        after:
-                            - touch after-v1.0.0
+                        when: "{{ _stage == 'before' }}"
+                        command: touch before-v1.0.0
+                    -   version: v1.0.0
+                        when: "{{ _stage == 'after' }}"
+                        command: touch after-v1.0.0
                 """
             ),
             (repo / "README.txt.jinja"): (
@@ -1484,8 +1490,8 @@ def test_update_with_new_file_in_template_and_project_via_migration(
                     """\
                     _migrations:
                     -   version: v2
-                        before:
-                        -    "{{ _copier_python }} {{ _copier_conf.src_path / 'migrate.py' }}"
+                        when: "{{ _stage == 'before' }}"
+                        command: "{{ _copier_python }} {{ _copier_conf.src_path / 'migrate.py' }}"
                     """
                 ),
                 "migrate.py": (
