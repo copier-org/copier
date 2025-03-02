@@ -52,14 +52,16 @@ def test_version_greater_than_required(
 ) -> None:
     monkeypatch.setattr("copier.__version__", "99.99.99")
     # assert no error
-    copier.run_copy(template_path, tmp_path)
+    with pytest.warns(OldTemplateWarning):
+        copier.run_copy(template_path, tmp_path)
 
 
 def test_minimum_version_update(
     template_path: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr("copier.__version__", "11.0.0")
-    copier.run_copy(template_path, tmp_path)
+    with pytest.warns(OldTemplateWarning):
+        copier.run_copy(template_path, tmp_path)
 
     with local.cwd(tmp_path):
         git("init")
@@ -76,7 +78,8 @@ def test_minimum_version_update(
 
     monkeypatch.setattr("copier.__version__", "99.99.99")
     # assert no error
-    copier.run_copy(template_path, tmp_path)
+    with pytest.warns(OldTemplateWarning):
+        copier.run_copy(template_path, tmp_path)
 
 
 def test_version_0_0_0_ignored(
