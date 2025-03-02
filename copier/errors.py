@@ -22,6 +22,12 @@ class CopierError(Exception):
 class UserMessageError(CopierError):
     """Exit the program giving a message to the user."""
 
+    def __init__(self, message: str):
+        self.message = message
+
+    def __str__(self) -> str:
+        return self.message
+
 
 class UnsupportedVersionError(UserMessageError):
     """Copier version does not support template version."""

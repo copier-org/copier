@@ -71,7 +71,7 @@ def _handle_exceptions(method: Callable[[], None]) -> int:
         except KeyboardInterrupt:
             raise UserMessageError("Execution stopped by user")
     except UserMessageError as error:
-        print(colors.red | "\n".join(error.args), file=sys.stderr)
+        print(colors.red | error.message, file=sys.stderr)
         return 1
     except UnsafeTemplateError as error:
         print(colors.red | "\n".join(error.args), file=sys.stderr)
