@@ -136,7 +136,7 @@ class MultipleYieldTagsError(CopierError):
     """Multiple yield tags are used in one path name, but it is not allowed."""
 
 
-class TaskError(UserMessageError, subprocess.CalledProcessError):
+class TaskError(subprocess.CalledProcessError, UserMessageError):
     """Exception raised when a task fails."""
 
     def __init__(
