@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import subprocess
 from pathlib import Path
 from subprocess import CompletedProcess
 from typing import TYPE_CHECKING, Self, Sequence
@@ -129,7 +130,7 @@ class MultipleYieldTagsError(CopierError):
     """Multiple yield tags are used in one path name, but it is not allowed."""
 
 
-class TaskError(UserMessageError):
+class TaskError(UserMessageError, subprocess.CalledProcessError):
     """Exception raised when a task fails."""
 
     def __init__(
@@ -139,12 +140,13 @@ class TaskError(UserMessageError):
         stdout: str | bytes | None,
         stderr: str | bytes | None,
     ):
-        self.command = command
-        self.returncode = returncode
-        self.stdout = stdout
-        self.stderr = stderr
-        message = f"Task {command!r} returned non-zero exit status {returncode}."
-        super().__init__(message)
+        subprocess.CalledProcessError.__init__(
+            self, returncode=returncode, cmd=command, output=stdout, stderr=stderr
+        )
+        UserMessageError.__init__(
+            self,
+            message=f"Task {command!r} returned non-zero exit status {returncode}.",
+        )
 
     @classmethod
     def from_process(
