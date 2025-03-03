@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 from textwrap import dedent
 
 import pytest
+import yaml
 
 import copier
 from copier.user_data import load_answersfile_data
@@ -250,6 +252,59 @@ def test_external_data_with_umlaut(
     copier.run_copy(str(src), dst, defaults=True, overwrite=True)
     answers = load_answersfile_data(dst, ".copier-answers.yml")
     assert answers["ext_umlaut"] == "äöü"
+
+
+@pytest.mark.parametrize(
+    "encoding",
+    ["utf-8", "utf-8-sig", "utf-16-le", "utf-16-be"],
+)
+def test_external_data_with_unicode_characters(
+    tmp_path_factory: pytest.TempPathFactory,
+    monkeypatch: pytest.MonkeyPatch,
+    encoding: str,
+) -> None:
+    def _encode(data: str) -> bytes:
+        if encoding.startswith("utf-16"):
+            data = f"\ufeff{data}"
+        return data.encode(encoding)
+
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                """\
+                _external_data:
+                    data: data.yml
+                foo: "{{ _external_data.data.foo }}"
+                bar: "{{ _external_data.data.bar }}"
+                """
+            ),
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+        }
+    )
+    git_save(src, tag="v1")
+
+    data = {
+        "foo": "\u3053\u3093\u306b\u3061\u306f",  # japanese hiragana
+        "bar": "\U0001f60e",  # smiling face with sunglasses
+    }
+    (dst / "data.yml").write_bytes(_encode(yaml.dump(data, allow_unicode=True)))
+
+    with monkeypatch.context() as m:
+        # Override the factor that determines the default encoding when opening files.
+        if sys.version_info >= (3, 10):
+            m.setattr("io.text_encoding", lambda *_args: "cp932")
+        else:
+            m.setattr("_bootlocale.getpreferredencoding", lambda *_args: "cp932")
+
+        copier.run_copy(str(src), dst, defaults=True, overwrite=True)
+
+    answers = load_answersfile_data(dst)
+    assert answers["foo"] == data["foo"]
+    assert answers["bar"] == data["bar"]
 
 
 def test_undefined_phase_in_external_data(

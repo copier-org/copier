@@ -522,7 +522,7 @@ def load_answersfile_data(
 ) -> AnyByStrDict:
     """Load answers data from a `$dst_path/$answers_file` file if it exists."""
     try:
-        with Path(dst_path, answers_file).open(encoding="utf-8") as fd:
+        with Path(dst_path, answers_file).open("rb") as fd:
             return yaml.safe_load(fd)
     except (FileNotFoundError, IsADirectoryError):
         warnings.warn(
