@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import pytest
+import yaml
 
 from copier.errors import MissingSettingsWarning
 from copier.settings import Settings
@@ -70,6 +72,39 @@ def test_settings_defined_but_missing(
 
     with pytest.warns(MissingSettingsWarning):
         Settings.from_file()
+
+
+@pytest.mark.parametrize(
+    "encoding",
+    ["utf-8", "utf-8-sig", "utf-16-le", "utf-16-be"],
+)
+def test_settings_from_utf_file(
+    settings_path: Path, monkeypatch: pytest.MonkeyPatch, encoding: str
+) -> None:
+    def _encode(data: str) -> bytes:
+        if encoding.startswith("utf-16"):
+            data = f"\ufeff{data}"
+        return data.encode(encoding)
+
+    defaults = {
+        "foo": "\u3053\u3093\u306b\u3061\u306f",  # japanese hiragana
+        "bar": "\U0001f60e",  # smiling face with sunglasses
+    }
+
+    settings_path.write_bytes(
+        _encode(yaml.dump({"defaults": defaults}, allow_unicode=True))
+    )
+
+    with monkeypatch.context() as m:
+        # Override the factor that determines the default encoding when opening files.
+        if sys.version_info >= (3, 10):
+            m.setattr("io.text_encoding", lambda *_args: "cp932")
+        else:
+            m.setattr("_bootlocale.getpreferredencoding", lambda *_args: "cp932")
+
+        settings = Settings.from_file()
+
+    assert settings.defaults == defaults
 
 
 @pytest.mark.parametrize(
