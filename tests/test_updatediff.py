@@ -1787,3 +1787,85 @@ def test_update_with_answers_with_umlaut(
     run_update(dst, skip_answered=True, overwrite=True)
     answers = load_answersfile_data(dst)
     assert answers["umlaut"] == "äöü"
+
+
+def test_conflict_on_update_with_unicode_in_content(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "copier.yml": "b: false",
+                "content.jinja": """\
+                    aaa🐍
+                    {%- if b %}
+                    bbb🐍
+                    {%- endif %}
+                    zzz🐍
+                    """,
+            },
+            encoding="utf-8",
+        )
+        git("init")
+        git("add", "-A")
+        git("commit", "-m1")
+        git("tag", "1")
+        build_file_tree(
+            {
+                "copier.yml": dedent(
+                    """\
+                    b: false
+                    c: false
+                    """
+                ),
+                "content.jinja": """\
+                    aaa🐍
+                    {%- if b %}
+                    bbb🐍
+                    {%- endif %}
+                    {%- if c %}
+                    ccc🐍
+                    {%- endif %}
+                    zzz🐍
+                    """,
+            },
+            encoding="utf-8",
+        )
+        git("commit", "-am2")
+        git("tag", "2")
+    # Init project
+    run_copy(str(src), dst, data={"b": True}, vcs_ref="1")
+    assert "ccc" not in (dst / "content").read_text(encoding="utf-8")
+    with local.cwd(dst):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m1")
+        # Project evolution
+        Path("content").write_text(
+            dedent(
+                """\
+                aaa🐍
+                bbb🐍
+                jjj🐍
+                zzz🐍
+                """
+            ),
+            encoding="utf-8",
+        )
+        git("commit", "-am2")
+        # Update from template, inline, with answer changes
+        run_update(data={"c": True}, defaults=True, overwrite=True, conflict="inline")
+        assert Path("content").read_text(encoding="utf-8") == dedent(
+            """\
+            aaa🐍
+            bbb🐍
+            <<<<<<< before updating
+            jjj🐍
+            =======
+            ccc🐍
+            >>>>>>> after updating
+            zzz🐍
+            """
+        )
