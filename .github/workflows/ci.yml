@@ -129,7 +129,7 @@ jobs:
             ${{ hashFiles('pyproject.toml', '*.lock', '*.nix') }}
 
       # Check direnv works as expected
-      - uses: JRMurr/direnv-nix-action@v3
+      - uses: JRMurr/direnv-nix-action@v4.2.0
         with:
           install-nix: "false"
           cache-store: "false"
