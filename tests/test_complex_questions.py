@@ -12,6 +12,7 @@ from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
 
 from copier import run_copy, run_update
+from copier.user_data import load_answersfile_data
 
 from .helpers import (
     BRACKET_ENVOPS,
@@ -570,11 +571,11 @@ def test_multi_template_answers(tmp_path_factory: pytest.TempPathFactory) -> Non
         git("add", "-A")
         git("commit", "-m2")
         # Check contents
-        answers1 = yaml.safe_load(Path(".copier-answers.yml").read_text())
+        answers1 = load_answersfile_data(".")
         assert answers1["_src_path"] == str(tpl1)
         assert answers1["q1"] == "a1"
         assert "q2" not in answers1
-        answers2 = yaml.safe_load(Path("two.yml").read_text())
+        answers2 = load_answersfile_data(".", "two.yml")
         assert answers2["_src_path"] == str(tpl2)
         assert answers2["q2"] == "a2"
         assert "q1" not in answers2
@@ -610,7 +611,7 @@ def test_omit_answer_for_skipped_question(
         }
     )
     run_copy(str(src), dst, defaults=True, data={"disabled": "hello"})
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers == {"_src_path": str(src)}
     context = yaml.safe_load((dst / "context.yml").read_text())
     assert context == {"disabled": "hello", "disabled_with_default": "hello"}
