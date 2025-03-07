@@ -4,12 +4,12 @@ from pathlib import Path
 from typing import Callable, Iterator, Sequence
 
 import pytest
-import yaml
 from packaging.version import Version
 from plumbum import local
 
 from copier import Worker, run_copy, run_update
 from copier.errors import ShallowCloneWarning
+from copier.user_data import load_answersfile_data
 from copier.vcs import checkout_latest_tag, clone, get_git_version, get_repo
 
 from .helpers import git
@@ -206,5 +206,5 @@ def test_select_latest_version_tag(
 
     assert (dst / filename).is_file()
     assert (dst / filename).read_text() == "v1.0.1"
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers["_commit"] == "v1.0.1"

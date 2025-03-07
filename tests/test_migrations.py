@@ -1,11 +1,11 @@
 from pathlib import Path
 
 import pytest
-import yaml
 from plumbum import local
 
 from copier import run_copy, run_update
 from copier.errors import UnsafeTemplateError, UserMessageError
+from copier.user_data import load_answersfile_data
 
 from .helpers import (
     COPIER_ANSWERS_FILE,
@@ -160,7 +160,7 @@ def test_prerelease_version_migration(tmp_path_factory: pytest.TempPathFactory) 
         # No pre-releases. Should update to v1.9
         run_update(defaults=True, overwrite=True, unsafe=True)
 
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers["_commit"] == "v1.9"
     assert (dst / "v1.9").exists()
     assert all(not (dst / version).exists() for version in versions)
@@ -170,7 +170,7 @@ def test_prerelease_version_migration(tmp_path_factory: pytest.TempPathFactory) 
         # With pre-releases. Should update to v2.a2
         run_update(defaults=True, overwrite=True, unsafe=True, use_prereleases=True)
 
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers["_commit"] == "v2.a2"
     assert (dst / "v1.9").exists()
     assert all((dst / version).exists() for version in versions)

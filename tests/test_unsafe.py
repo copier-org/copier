@@ -12,6 +12,7 @@ from copier.cli import CopierApp
 from copier.errors import UnsafeTemplateError
 from copier.main import run_copy, run_update
 from copier.types import AnyByStrDict
+from copier.user_data import load_answersfile_data
 
 from .helpers import build_file_tree, git
 
@@ -329,7 +330,7 @@ def test_update(
         git("tag", "v1")
 
     run_copy(str(src), dst, unsafe=True)
-    assert "_commit: v1" in (dst / ".copier-answers.yml").read_text()
+    assert load_answersfile_data(dst).get("_commit") == "v1"
 
     with local.cwd(dst):
         git("init")
@@ -382,7 +383,7 @@ def test_update_cli(
         exit=False,
     )
     assert retcode == 0
-    assert "_commit: v1" in (dst / ".copier-answers.yml").read_text()
+    assert load_answersfile_data(dst).get("_commit") == "v1"
     capsys.readouterr()
 
     with local.cwd(dst):

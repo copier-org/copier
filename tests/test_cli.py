@@ -11,6 +11,7 @@ import yaml
 from plumbum import local
 
 from copier.cli import CopierApp
+from copier.user_data import load_answersfile_data
 
 from .helpers import COPIER_CMD, build_file_tree, git
 
@@ -70,7 +71,7 @@ def test_good_cli_run(template_path: str, tmp_path: Path) -> None:
     assert a_txt.exists()
     assert a_txt.is_file()
     assert a_txt.read_text() == "EXAMPLE_CONTENT"
-    answers = yaml.safe_load((tmp_path / "altered-answers.yml").read_text())
+    answers = load_answersfile_data(tmp_path, "altered-answers.yml")
     assert answers["_src_path"] == template_path
 
 
@@ -126,7 +127,7 @@ def test_cli_data_parsed_by_question_type(
         exit=False,
     )
     assert run_result[1] == 0
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers["_src_path"] == str(src)
     assert answers["question"] == expected
 
@@ -165,7 +166,7 @@ def test_data_file_parsed_by_question_type(
         exit=False,
     )
     assert run_result[1] == 0
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers["_src_path"] == str(src)
     assert answers["question"] == "answer"
 
@@ -216,7 +217,7 @@ def test_data_cli_takes_precedence_over_data_file(
         exit=False,
     )
     assert run_result[1] == 0
-    actual_answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    actual_answers = load_answersfile_data(dst)
     expected_answers = {
         "_src_path": str(src),
         "question": answer_override,
@@ -293,10 +294,8 @@ def test_read_utf_data_file(
         "text1": "\u3053\u3093\u306b\u3061\u306f",
         "text2": "\U0001f60e",
     }
-    with Path(dst / ".copier-answers.yml").open(encoding="utf-8") as f:
-        content = f.read()
-        actual_answers = yaml.safe_load(content)
-    assert actual_answers == expected_answers
+    answers = load_answersfile_data(dst)
+    assert answers == expected_answers
 
 
 @pytest.mark.parametrize(
@@ -338,9 +337,7 @@ def test_good_cli_run_dot_config(
     assert a_txt.exists()
     assert a_txt.is_file()
     assert a_txt.read_text() == "EXAMPLE_CONTENT"
-    answers = yaml.safe_load(
-        (tmp_path / config_folder / "altered-answers.yml").read_text()
-    )
+    answers = load_answersfile_data(tmp_path / config_folder, "altered-answers.yml")
     assert answers["_src_path"] == src
 
     with local.cwd(str(tmp_path)):
@@ -410,7 +407,7 @@ def test_skip_filenotexists(template_path: str, tmp_path: Path) -> None:
     assert a_txt.exists()
     assert a_txt.is_file()
     assert a_txt.read_text() == "EXAMPLE_CONTENT"
-    answers = yaml.safe_load((tmp_path / "altered-answers.yml").read_text())
+    answers = load_answersfile_data(tmp_path, "altered-answers.yml")
     assert answers["_src_path"] == str(template_path)
 
 
@@ -435,5 +432,5 @@ def test_skip_fileexists(template_path: str, tmp_path: Path) -> None:
     assert a_txt.exists()
     assert a_txt.is_file()
     assert a_txt.read_text() == "PREVIOUS_CONTENT"
-    answers = yaml.safe_load((tmp_path / "altered-answers.yml").read_text())
+    answers = load_answersfile_data(tmp_path, "altered-answers.yml")
     assert answers["_src_path"] == str(template_path)

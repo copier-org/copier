@@ -4,11 +4,11 @@ from pathlib import Path
 from shutil import copytree
 
 import pytest
-import yaml
 from plumbum import local
 
 from copier import run_copy, run_update
 from copier.errors import UserMessageError
+from copier.user_data import load_answersfile_data
 
 from .helpers import BRACKET_ENVOPS_JSON, PROJECT_TEMPLATE, build_file_tree, git
 
@@ -58,7 +58,7 @@ def test_migrations_and_tasks(tmp_path: Path, skip_tasks: bool) -> None:
     assert not (dst / "tasks.py").exists()
     assert not list(dst.glob("*-before.txt"))
     assert not list(dst.glob("*-after.txt"))
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers == {"_commit": "v1.0.0", "_src_path": str(src)}
     # Save changes in downstream repo
     with local.cwd(dst):
@@ -88,7 +88,7 @@ def test_migrations_and_tasks(tmp_path: Path, skip_tasks: bool) -> None:
     assert (dst / "v1.0.0-v2-v2.0-after.json").is_file()
     assert (dst / "PEP440-1.0.0-2-2.0-before.json").is_file()
     assert (dst / "PEP440-1.0.0-2-2.0-after.json").is_file()
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers == {"_commit": "v2.0", "_src_path": str(src)}
 
 
@@ -216,7 +216,7 @@ def test_prereleases(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("tag", "v2.0.0.alpha1")
     # Copying with use_prereleases=False copies v1
     run_copy(src_path=str(src), dst_path=dst, defaults=True, overwrite=True)
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers["_commit"] == "v1.0.0"
     assert (dst / "version.txt").read_text() == "v1.0.0"
     assert not (dst / "v1.9").exists()
@@ -247,7 +247,7 @@ def test_prereleases(tmp_path_factory: pytest.TempPathFactory) -> None:
             use_prereleases=True,
             unsafe=True,
         )
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers["_commit"] == "v2.0.0.alpha1"
     assert (dst / "version.txt").read_text() == "v2.0.0.alpha1"
     assert (dst / "v1.9").exists()
@@ -281,7 +281,7 @@ def test_pretend_mode(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("tag", "v1")
 
     run_copy(str(src), dst)
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers["_commit"] == "v1"
 
     with local.cwd(dst):
@@ -313,7 +313,7 @@ def test_pretend_mode(tmp_path_factory: pytest.TempPathFactory) -> None:
 
     with pytest.deprecated_call():
         run_update(dst_path=dst, overwrite=True, pretend=True, unsafe=True)
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers["_commit"] == "v1"
     assert not (dst / "v2-before.txt").exists()
     assert not (dst / "v2-after.txt").exists()

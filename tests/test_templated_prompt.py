@@ -13,6 +13,7 @@ from plumbum import local
 from copier import Worker
 from copier.errors import InvalidTypeError
 from copier.types import AnyByStrDict
+from copier.user_data import load_answersfile_data
 
 from .helpers import (
     BRACKET_ENVOPS,
@@ -181,7 +182,7 @@ def test_templated_prompt(
             tui.expect_exact(output)
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers[question_name] == expected_value
 
 
@@ -476,10 +477,7 @@ def test_templated_prompt_update_previous_answer_disabled(
     tui.sendline(Keyboard.Down)  # select "Cloud Formation"
     tui.expect_exact(pexpect.EOF)
 
-    answers_file = dst / ".copier-answers.yml"
-
-    assert answers_file.exists()
-    assert yaml.safe_load(answers_file.read_text()) == {
+    assert load_answersfile_data(dst) == {
         "_src_path": str(src),
         "_commit": "v1",
         "cloud": "AWS",
@@ -496,8 +494,7 @@ def test_templated_prompt_update_previous_answer_disabled(
     tui.sendline()  # select "Terraform" (first supported)
     tui.expect_exact(pexpect.EOF)
 
-    assert answers_file.exists()
-    assert yaml.safe_load(answers_file.read_text()) == {
+    assert load_answersfile_data(dst) == {
         "_src_path": str(src),
         "_commit": "v1",
         "cloud": "Azure",
@@ -558,9 +555,7 @@ def test_multiselect_choices_with_templated_default_value(
     tui.sendline()  # select "[3.11]" (default value)
     tui.expect_exact(pexpect.EOF)
 
-    answers_file = dst / ".copier-answers.yml"
-    assert answers_file.exists()
-    assert yaml.safe_load(answers_file.read_text()) == {
+    assert load_answersfile_data(dst) == {
         "_src_path": str(src),
         "python_version": "3.11",
         "github_runner_python_version": ["3.11"],

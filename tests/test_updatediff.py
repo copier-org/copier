@@ -8,13 +8,13 @@ from typing import Literal
 
 import pexpect
 import pytest
-import yaml
 from plumbum import local
 
 from copier.cli import CopierApp
 from copier.errors import UserMessageError
 from copier.main import Worker, run_copy, run_update
 from copier.tools import normalize_git_path
+from copier.user_data import load_answersfile_data
 
 from .helpers import (
     BRACKET_ENVOPS_JSON,
@@ -154,7 +154,6 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
     # Generate repo bundle
     target = dst / "target"
     readme = target / "README.txt"
-    answers = target / ".copier-answers.yml"
     commit = git["commit", "--all"]
     # Run copier 1st time, with specific tag
     CopierApp.run(
@@ -170,15 +169,12 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
         exit=False,
     )
     # Check it's copied OK
-    assert answers.read_text() == dedent(
-        f"""\
-        # Changes here will be overwritten by Copier
-        _commit: v0.0.1
-        _src_path: {bundle}
-        author_name: Guybrush
-        project_name: to become a pirate\n
-        """
-    )
+    assert load_answersfile_data(target) == {
+        "_commit": "v0.0.1",
+        "_src_path": str(bundle),
+        "author_name": "Guybrush",
+        "project_name": "to become a pirate",
+    }
     assert readme.read_text() == dedent(
         """
         Let me introduce myself.
@@ -209,15 +205,12 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
         commit("-m", "I prefer grog")
         # Update target to latest tag and check it's updated in answers file
         CopierApp.run(["copier", "update", "--defaults", "--UNSAFE"], exit=False)
-        assert answers.read_text() == dedent(
-            f"""\
-            # Changes here will be overwritten by Copier
-            _commit: v0.0.2
-            _src_path: {bundle}
-            author_name: Guybrush
-            project_name: to become a pirate\n
-            """
-        )
+        assert load_answersfile_data(target) == {
+            "_commit": "v0.0.2",
+            "_src_path": str(bundle),
+            "author_name": "Guybrush",
+            "project_name": "to become a pirate",
+        }
         # Check migrations were executed properly
         assert not (target / "before-v0.0.1").is_file()
         assert not (target / "after-v0.0.1").is_file()
@@ -241,15 +234,12 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
         assert not (target / "before-v1.0.0").is_file()
         assert not (target / "after-v1.0.0").is_file()
         # Check it's updated OK
-        assert answers.read_text() == dedent(
-            f"""\
-            # Changes here will be overwritten by Copier
-            _commit: {last_commit}
-            _src_path: {bundle}
-            author_name: Guybrush
-            project_name: to become a pirate\n
-            """
-        )
+        assert load_answersfile_data(target) == {
+            "_commit": last_commit,
+            "_src_path": str(bundle),
+            "author_name": "Guybrush",
+            "project_name": "to become a pirate",
+        }
         assert readme.read_text() == dedent(
             """
             Let me introduce myself.
@@ -510,9 +500,8 @@ def test_update_from_tagged_to_head(tmp_path_factory: pytest.TempPathFactory) ->
     # Copy it without specifying version
     run_copy(src_path=str(src), dst_path=dst)
     example = dst / "example"
-    answers_file = dst / ".copier-answers.yml"
     assert example.read_text() == "1"
-    assert yaml.safe_load(answers_file.read_text())["_commit"] == "v1"
+    assert load_answersfile_data(dst)["_commit"] == "v1"
     # Build repo on copy
     with local.cwd(dst):
         git("init")
@@ -521,7 +510,7 @@ def test_update_from_tagged_to_head(tmp_path_factory: pytest.TempPathFactory) ->
     # Update project, it must let us do it
     run_update(dst, vcs_ref="HEAD", defaults=True, overwrite=True)
     assert example.read_text() == "2"
-    assert yaml.safe_load(answers_file.read_text())["_commit"] == f"v1-1-g{sha}"
+    assert load_answersfile_data(dst)["_commit"] == f"v1-1-g{sha}"
 
 
 def test_skip_update(tmp_path_factory: pytest.TempPathFactory) -> None:
@@ -540,8 +529,7 @@ def test_skip_update(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("tag", "1.0.0")
     run_copy(str(src), dst, defaults=True, overwrite=True)
     skip_me = dst / "skip_me"
-    answers_file = dst / ".copier-answers.yml"
-    answers = yaml.safe_load(answers_file.read_text())
+    answers = load_answersfile_data(dst)
     assert skip_me.read_text() == "1"
     assert answers["_commit"] == "1.0.0"
     skip_me.write_text("2")
@@ -554,7 +542,7 @@ def test_skip_update(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("commit", "-am2")
         git("tag", "2.0.0")
     run_update(dst, defaults=True, overwrite=True)
-    answers = yaml.safe_load(answers_file.read_text())
+    answers = load_answersfile_data(dst)
     assert skip_me.read_text() == "2"
     assert answers["_commit"] == "2.0.0"
     assert not (dst / "skip_me.rej").exists()
@@ -629,8 +617,7 @@ def test_skip_update_deleted(
         git("tag", "1.0.0")
     run_copy(str(src), dst, defaults=True, overwrite=True)
     skip_me = dst / file_name
-    answers_file = dst / ".copier-answers.yml"
-    answers = yaml.safe_load(answers_file.read_text())
+    answers = load_answersfile_data(dst)
     assert skip_me.read_text() == "1"
     assert answers["_commit"] == "1.0.0"
     skip_me.unlink()
@@ -728,8 +715,7 @@ def test_update_deleted_path(
     run_copy(str(src), dst, defaults=True, overwrite=True)
     updated_file = dst / file_name
     dont_wildmatch = dst / "dont_wildmatch"
-    answers_file = dst / ".copier-answers.yml"
-    answers = yaml.safe_load(answers_file.read_text())
+    answers = load_answersfile_data(dst)
     assert dont_wildmatch.read_text() == "bar"
     assert updated_file.read_text() == "foo"
     assert answers["_commit"] == "1.0.0"
@@ -779,9 +765,7 @@ def test_overwrite_answers_file_always(
         # When updating, the only thing to overwrite is the copier answers file,
         # which shouldn't ask, so also this shouldn't hang with overwrite=False
         run_update(defaults=True, overwrite=True, answers_file=answers_file)
-    answers = yaml.safe_load(
-        (dst / (answers_file or ".copier-answers.yml")).read_bytes()
-    )
+    answers = load_answersfile_data(dst, answers_file or ".copier-answers.yml")
     assert answers["question_1"] is True
     assert answers["_commit"] == "2"
     assert (dst / "answer_1").read_text() == "True"
@@ -1221,7 +1205,7 @@ def test_conflicted_files_are_marked_unmerged(
     # Generate the project a first time, assert the file exists
     run_copy(str(src), dst, defaults=True, overwrite=True)
     assert (dst / filename).exists()
-    assert "_commit: v1" in (dst / ".copier-answers.yml").read_text()
+    assert load_answersfile_data(dst).get("_commit") == "v1"
 
     # Start versioning the generated project
     with local.cwd(dst):
@@ -1243,7 +1227,7 @@ def test_conflicted_files_are_marked_unmerged(
 
     # Finally, update the generated project
     run_update(dst_path=dst, defaults=True, overwrite=True, conflict="inline")
-    assert "_commit: v2" in (dst / ".copier-answers.yml").read_text()
+    assert load_answersfile_data(dst).get("_commit") == "v2"
 
     # Assert that the file still exists, has inline conflict markers,
     # and is reported as "unmerged" by Git.
@@ -1295,7 +1279,7 @@ def test_3way_merged_files_without_conflicts_are_not_marked_unmerged(
     # Generate the project a first time, assert the file exists
     run_copy(str(src), dst, defaults=True, overwrite=True)
     assert (dst / filename).exists()
-    assert "_commit: v1" in (dst / ".copier-answers.yml").read_text()
+    assert load_answersfile_data(dst).get("_commit") == "v1"
 
     # Start versioning the generated project
     with local.cwd(dst):
@@ -1317,7 +1301,7 @@ def test_3way_merged_files_without_conflicts_are_not_marked_unmerged(
 
     # Finally, update the generated project
     run_update(dst_path=dst, defaults=True, overwrite=True, conflict="inline")
-    assert "_commit: v2" in (dst / ".copier-answers.yml").read_text()
+    assert load_answersfile_data(dst).get("_commit") == "v2"
 
     # Assert that the file still exists, does not have inline conflict markers,
     # and is not reported as "unmerged" by Git.
@@ -1352,7 +1336,7 @@ def test_update_with_new_file_in_template_and_project(
         git("tag", "v1")
 
     run_copy(str(src), dst, defaults=True, overwrite=True)
-    assert "_commit: v1" in (dst / ".copier-answers.yml").read_text()
+    assert load_answersfile_data(dst).get("_commit") == "v1"
 
     with local.cwd(dst):
         git_init("v1")
@@ -1390,7 +1374,7 @@ def test_update_with_new_file_in_template_and_project(
         git("tag", "v2")
 
     run_update(dst_path=dst, defaults=True, overwrite=True, conflict="inline")
-    assert "_commit: v2" in (dst / ".copier-answers.yml").read_text()
+    assert load_answersfile_data(dst).get("_commit") == "v2"
     assert (dst / ".gitlab-ci.yml").read_text() == dedent(
         """\
         tests:
@@ -1446,7 +1430,7 @@ def test_update_with_new_file_in_template_and_project_via_migration(
         git("tag", "v1")
 
     run_copy(str(src), dst, defaults=True, overwrite=True)
-    assert "_commit: v1" in (dst / ".copier-answers.yml").read_text()
+    assert load_answersfile_data(dst).get("_commit") == "v1"
     assert (dst / ".gitlab-ci.yml").exists()
 
     with local.cwd(dst):
@@ -1514,7 +1498,7 @@ def test_update_with_new_file_in_template_and_project_via_migration(
     run_update(
         dst_path=dst, defaults=True, overwrite=True, conflict="inline", unsafe=True
     )
-    assert "_commit: v2" in (dst / ".copier-answers.yml").read_text()
+    assert load_answersfile_data(dst).get("_commit") == "v2"
     assert (dst / ".gitlab-ci.yml").read_text() == dedent(
         """\
         <<<<<<< before updating
@@ -1570,7 +1554,7 @@ def test_update_with_separate_git_directory(
         git("tag", "v1")
 
     run_copy(str(src), dst, overwrite=True)
-    assert "_commit: v1" in (dst / ".copier-answers.yml").read_text()
+    assert load_answersfile_data(dst).get("_commit") == "v1"
 
     with local.cwd(dst):
         git("init", "--separate-git-dir", dst_git_dir)
@@ -1589,7 +1573,7 @@ def test_update_with_separate_git_directory(
         git("tag", "v2")
 
     run_update(dst, overwrite=True)
-    assert "_commit: v2" in (dst / ".copier-answers.yml").read_text()
+    assert load_answersfile_data(dst).get("_commit") == "v2"
 
 
 def test_update_with_skip_answered_and_new_answer(
@@ -1608,15 +1592,14 @@ def test_update_with_skip_answered_and_new_answer(
         git("tag", "v1")
 
     run_copy(str(src), dst, defaults=True, overwrite=True)
-    answers_file = dst / ".copier-answers.yml"
-    answers = yaml.safe_load(answers_file.read_text())
+    answers = load_answersfile_data(dst)
     assert answers["boolean"] is False
 
     with local.cwd(dst):
         git_init("v1")
 
     run_update(dst, data={"boolean": "true"}, skip_answered=True, overwrite=True)
-    answers = yaml.safe_load(answers_file.read_text())
+    answers = load_answersfile_data(dst)
     assert answers["boolean"] is True
 
 
@@ -1646,8 +1629,7 @@ def test_update_dont_validate_computed_value(
         git("tag", "v1")
 
     run_copy(str(src), dst, overwrite=True)
-    answers_file = dst / ".copier-answers.yml"
-    answers = yaml.safe_load(answers_file.read_text())
+    answers = load_answersfile_data(dst)
     assert "computed" not in answers
 
     with local.cwd(dst):
@@ -1656,7 +1638,7 @@ def test_update_dont_validate_computed_value(
         git("commit", "-m1")
 
     run_update(dst, overwrite=True)
-    answers = yaml.safe_load(answers_file.read_text())
+    answers = load_answersfile_data(dst)
     assert "computed" not in answers
 
 
@@ -1717,7 +1699,6 @@ def test_gitignore_file_unignored(
 ) -> None:
     env_file = ".env"
     gitignore_file = ".gitignore"
-    answers_file = ".copier-answers.yml"
 
     # Template in v1 has a file with a single line;
     # in v2 it changes that line.
@@ -1743,7 +1724,7 @@ def test_gitignore_file_unignored(
     run_copy(str(src), dst)
     for f in (env_file, gitignore_file):
         assert (dst / f).exists()
-    assert "_commit: v1" in (dst / answers_file).read_text()
+    assert load_answersfile_data(dst).get("_commit") == "v1"
 
     # Start versioning the generated project
     with local.cwd(dst):
@@ -1757,7 +1738,7 @@ def test_gitignore_file_unignored(
 
     # Update the generated project
     run_update(dst_path=dst, overwrite=True)
-    assert "_commit: v2" in (dst / ".copier-answers.yml").read_text()
+    assert load_answersfile_data(dst).get("_commit") == "v2"
 
     # Commit project changes.
     with local.cwd(dst):
@@ -1773,7 +1754,7 @@ def test_gitignore_file_unignored(
     # This would fail if `git add` was called without the `--force` flag;
     # Otherwise, it should succeed.
     run_update(dst_path=dst, overwrite=True)
-    assert "_commit: v3" in (dst / ".copier-answers.yml").read_text()
+    assert load_answersfile_data(dst).get("_commit") == "v3"
 
 
 def test_update_with_answers_with_umlaut(
@@ -1797,13 +1778,12 @@ def test_update_with_answers_with_umlaut(
         git("tag", "v1")
 
     run_copy(str(src), dst, data={"umlaut": "äöü"}, overwrite=True)
-    answers_file = dst / ".copier-answers.yml"
-    answers = yaml.safe_load(answers_file.read_text("utf-8"))
+    answers = load_answersfile_data(dst)
     assert answers["umlaut"] == "äöü"
 
     with local.cwd(dst):
         git_init("v1")
 
     run_update(dst, skip_answered=True, overwrite=True)
-    answers = yaml.safe_load(answers_file.read_text("utf-8"))
+    answers = load_answersfile_data(dst)
     assert answers["umlaut"] == "äöü"

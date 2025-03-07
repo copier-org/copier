@@ -3,10 +3,10 @@ from textwrap import dedent
 from typing import Literal
 
 import pytest
-import yaml
 from plumbum import local
 
 import copier
+from copier.user_data import load_answersfile_data
 
 from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree, git, git_init
 
@@ -172,9 +172,7 @@ def test_update_subdirectory_from_root_path(
             overwrite=True,
             answers_file=".custom.copier-answers.yaml",
         )
-    answers = yaml.safe_load(
-        (dst / "subfolder" / ".custom.copier-answers.yaml").read_bytes()
-    )
+    answers = load_answersfile_data(dst / "subfolder", ".custom.copier-answers.yaml")
     assert answers["_commit"] == "2"
     assert (dst / "subfolder" / "file1").read_text() == "version 2\nhello\na1\nbye\n"
 
@@ -229,7 +227,7 @@ def test_new_version_uses_subdirectory(
     # Generate the project a first time, assert the README exists
     copier.run_copy(str(src), dst, defaults=True, overwrite=True)
     assert (dst / "README.md").exists()
-    assert "_commit: v1" in (dst / ".copier-answers.yml").read_text()
+    assert load_answersfile_data(dst).get("_commit") == "v1"
 
     # Start versioning the generated project
     with local.cwd(dst):
@@ -262,7 +260,7 @@ def test_new_version_uses_subdirectory(
 
     # Finally, update the generated project
     copier.run_update(dst_path=dst, defaults=True, overwrite=True, conflict=conflict)
-    assert "_commit: v2" in (dst / ".copier-answers.yml").read_text()
+    assert load_answersfile_data(dst).get("_commit") == "v2"
 
     # Assert that the README still exists, and the conflicts were handled
     # correctly.

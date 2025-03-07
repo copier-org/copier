@@ -11,6 +11,7 @@ from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
 
 from copier.types import StrOrPath
+from copier.user_data import load_answersfile_data
 
 from .helpers import (
     BRACKET_ENVOPS,
@@ -130,10 +131,10 @@ def test_copy_default_advertised(
         tui.expect_exact(f"Bowser hates {name}")
         tui.sendline()
         tui.expect_exact(pexpect.EOF)
-        assert "_commit: v1" in Path(".copier-answers.yml").read_text()
+        assert load_answersfile_data(".").get("_commit") == "v1"
         # Update subproject
         git_save()
-        assert "_commit: v1" in Path(".copier-answers.yml").read_text()
+        assert load_answersfile_data(".").get("_commit") == "v1"
         tui = spawn(COPIER_PATH + ("update",), timeout=30)
         # Check what was captured
         expect_prompt(tui, "in_love", "bool")
@@ -149,7 +150,7 @@ def test_copy_default_advertised(
         tui.expect_exact(f"Bowser hates {name}")
         tui.sendline()
         tui.expect_exact(pexpect.EOF)
-        assert "_commit: v2" in Path(".copier-answers.yml").read_text()
+        assert load_answersfile_data(".").get("_commit") == "v2"
 
 
 @pytest.mark.parametrize(
@@ -198,7 +199,7 @@ def test_update_skip_answered(
         tui.expect_exact(f"Bowser hates {name}")
         tui.sendline()
         tui.expect_exact(pexpect.EOF)
-        assert "_commit: v1" in Path(".copier-answers.yml").read_text()
+        assert load_answersfile_data(".").get("_commit") == "v1"
         # Update subproject
         git_save()
         tui = spawn(
@@ -214,7 +215,7 @@ def test_update_skip_answered(
         tui.expect_exact("******")
         tui.sendline()
         tui.expect_exact(pexpect.EOF)
-        assert "_commit: v2" in Path(".copier-answers.yml").read_text()
+        assert load_answersfile_data(".").get("_commit") == "v2"
 
 
 @pytest.mark.parametrize(
@@ -261,7 +262,7 @@ def test_update_with_new_field_in_new_version_skip_answered(
         tui.expect_exact(f"Bowser hates {name}")
         tui.sendline()
         tui.expect_exact(pexpect.EOF)
-        assert "_commit: v1" in Path(".copier-answers.yml").read_text()
+        assert load_answersfile_data(".").get("_commit") == "v1"
         # Update subproject
         git_save()
         tui = spawn(
@@ -280,7 +281,7 @@ def test_update_with_new_field_in_new_version_skip_answered(
         tui.expect_exact("Luigi")
         tui.sendline()
         tui.expect_exact(pexpect.EOF)
-        assert "_commit: v2" in Path(".copier-answers.yml").read_text()
+        assert load_answersfile_data(".").get("_commit") == "v2"
 
 
 @pytest.mark.parametrize(
@@ -363,7 +364,7 @@ def test_when(
         expect_prompt(tui, "question_2", "yaml")
         tui.sendline()
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers == {
         "_src_path": str(src),
         "question_1": question_1,
@@ -402,7 +403,7 @@ def test_placeholder(tmp_path_factory: pytest.TempPathFactory, spawn: Spawn) -> 
     tui.expect_exact("Write something like answer 1, but better")
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers == {
         "_src_path": str(src),
         "question_1": "answer 1",
@@ -454,7 +455,7 @@ def test_multiline(
     expect_prompt(tui, "question_5", type_)
     tui.sendline('"answer 5"')
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     if type_ == "str":
         assert answers == {
             "_src_path": str(src),
@@ -518,7 +519,7 @@ def test_update_choice(
     expect_prompt(tui, "pick_one", "float")
     tui.sendline(Keyboard.Up)
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers["pick_one"] == 2.0
     with local.cwd(dst):
         git("init")
@@ -536,7 +537,7 @@ def test_update_choice(
     expect_prompt(tui, "pick_one", "float")
     tui.sendline(Keyboard.Down)
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers["pick_one"] == 3.0
 
 
@@ -595,7 +596,7 @@ def test_multiline_defaults(
     )
     tui.send(Keyboard.Alt + Keyboard.Enter)
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert (
         answers["yaml_single"]
         == answers["yaml_multi"]
@@ -666,7 +667,7 @@ def test_var_name_value_allowed(
     tui.send(Keyboard.Alt + Keyboard.Enter)
     tui.expect_exact(pexpect.EOF)
     # Check answers file
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers["value"] == "string"
 
 
@@ -710,7 +711,7 @@ def test_required_text_question(
         assert not (dst / ".copier-answers.yml").exists()
     else:
         tui.expect_exact(pexpect.EOF)
-        answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+        answers = load_answersfile_data(dst)
         assert answers == {
             "_src_path": str(src),
             "question": expected_answer,
@@ -740,7 +741,7 @@ def test_required_bool_question(
     tui.expect_exact("(y/N)")
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers == {
         "_src_path": str(src),
         "question": False,
@@ -786,7 +787,7 @@ def test_required_choice_question(
     expect_prompt(tui, "question", type_name)
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers == {
         "_src_path": str(src),
         "question": expected_answer,
@@ -864,7 +865,7 @@ def test_multiselect_choices_question_single_answer(
     tui.send(" ")  # select 1
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers["question"] == values[:1]
 
 
@@ -884,7 +885,7 @@ def test_multiselect_choices_question_multiple_answers(
     tui.send(" ")  # select 1
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers["question"] == values[:2]
 
 
@@ -904,7 +905,7 @@ def test_multiselect_choices_question_with_default(
     tui.send(" ")  # toggle first
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers["question"] == values[1:]
 
 
@@ -933,7 +934,7 @@ def test_update_multiselect_choices(
     tui.send(" ")  # toggle first
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers["question"] == values[1:]
 
     with local.cwd(dst):
@@ -947,7 +948,7 @@ def test_update_multiselect_choices(
     tui.send(" ")  # toggle first
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers["question"] == values
 
 
@@ -969,7 +970,7 @@ def test_multiselect_choices_validator(
     tui.send(" ")  # select "one"
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers["question"] == ["one"]
 
 

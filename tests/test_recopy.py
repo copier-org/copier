@@ -2,11 +2,11 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
-import yaml
 from plumbum import local
 
 from copier import run_copy, run_recopy
 from copier.cli import CopierApp
+from copier.user_data import load_answersfile_data
 from copier.vcs import get_git
 
 from .helpers import build_file_tree, git_save
@@ -92,12 +92,11 @@ def test_recopy_with_skip_answered_and_new_answer(
     # First copy
     run_copy(str(src), dst, defaults=True, overwrite=True)
     git_save(dst)
-    answers_file = dst / ".copier-answers.yml"
-    answers = yaml.safe_load(answers_file.read_text())
+    answers = load_answersfile_data(dst)
     assert answers["boolean"] is False
     # Recopy with different answer and `skip_answered=True`
     run_recopy(dst, data={"boolean": "true"}, skip_answered=True, overwrite=True)
-    answers = yaml.safe_load(answers_file.read_text())
+    answers = load_answersfile_data(dst)
     assert answers["boolean"] is True
 
 
@@ -125,10 +124,9 @@ def test_recopy_dont_validate_computed_value(
     # First copy
     run_copy(str(src), dst, defaults=True, overwrite=True)
     git_save(dst)
-    answers_file = dst / ".copier-answers.yml"
-    answers = yaml.safe_load(answers_file.read_text())
+    answers = load_answersfile_data(dst)
     assert "computed" not in answers
     # Recopy
     run_recopy(dst, overwrite=True)
-    answers = yaml.safe_load(answers_file.read_text())
+    answers = load_answersfile_data(dst)
     assert "computed" not in answers
