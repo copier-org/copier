@@ -1232,10 +1232,13 @@ class Worker:
                         # The 3-way merge might have resolved conflicts automatically,
                         # so we need to check if the file contains conflict markers
                         # before storing the file name for marking it as unmerged after the loop.
-                        with Path(fname).open() as conflicts_candidate:
+                        with Path(fname).open("rb") as conflicts_candidate:
                             if any(
                                 line.rstrip()
-                                in {"<<<<<<< before updating", ">>>>>>> after updating"}
+                                in {
+                                    b"<<<<<<< before updating",
+                                    b">>>>>>> after updating",
+                                }
                                 for line in conflicts_candidate
                             ):
                                 conflicted.append(fname)
