@@ -1,4 +1,3 @@
-import platform
 from pathlib import Path
 from typing import Mapping
 
