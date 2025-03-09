@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.6.0 (2025-03-09)
+
+### Feat
+
+-   Add `_copier_operation` variable (#1733)
+-   **context**: expose a `_copier_phase` context variable
+
+### Fix
+
+-   explicitly specify file encoding for windows (#2007)
+-   auto-detect encoding when reading external data file
+-   **settings**: auto-detect encoding when reading settings file
+-   **cli**: auto-detect encoding when reading unicode-encoded file specified with
+    `--data-file`
+-   expose only answers in question rendering context
+-   ignore `$file` if `$file.tmpl` exists when subdirectory is used
+-   decode external data file content explicitly as UTF-8
+-   decode answers file content explicitly as UTF-8
+
+### Refactor
+
+-   use common answers file loader
+
 ## v9.5.0 (2025-02-17)
 
 ### Feat
