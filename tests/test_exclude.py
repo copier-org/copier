@@ -1,3 +1,4 @@
+import platform
 from pathlib import Path
 from typing import Mapping
 
@@ -53,6 +54,11 @@ def test_config_include(tmp_path_factory: pytest.TempPathFactory) -> None:
     assert (dst / "copier.yml").exists()
 
 
+@pytest.mark.xfail(
+    condition=platform.system() == "Darwin",
+    reason="OS without proper UTF-8 filesystem.",
+    strict=True,
+)
 def test_path_filter(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     file_excluded: Mapping[StrOrPath, bool] = {
