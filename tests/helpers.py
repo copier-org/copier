@@ -102,7 +102,9 @@ def assert_file(tmp_path: Path, *path: str) -> None:
 
 
 def build_file_tree(
-    spec: Mapping[StrOrPath, str | bytes | Path], dedent: bool = True
+    spec: Mapping[StrOrPath, str | bytes | Path],
+    dedent: bool = True,
+    encoding: str = "utf-8",
 ) -> None:
     """Builds a file tree based on the received spec.
 
@@ -124,7 +126,8 @@ def build_file_tree(
                 assert isinstance(contents, str)
                 contents = textwrap.dedent(contents)
             mode = "wb" if binary else "w"
-            with path.open(mode) as fd:
+            enc = None if binary else encoding
+            with Path(path).open(mode, encoding=enc) as fd:
                 fd.write(contents)
 
 

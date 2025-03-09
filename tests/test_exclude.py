@@ -55,7 +55,7 @@ def test_config_include(tmp_path_factory: pytest.TempPathFactory) -> None:
 
 
 @pytest.mark.xfail(
-    condition=platform.system() in {"Darwin", "Windows"},
+    condition=platform.system() == "Darwin",
     reason="OS without proper UTF-8 filesystem.",
     strict=True,
 )
