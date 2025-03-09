@@ -974,6 +974,9 @@ Each pattern can be templated using Jinja.
         - "{% if _copier_operation == 'update' -%}src/*_example.py{% endif %}"
     ```
 
+    The difference with [skip_if_exists][] is that it will never be rendered during
+    an update, no matter if it exitsts or not.
+
 !!! info
 
     When you define this parameter in `copier.yml`, it will **replace** the default
