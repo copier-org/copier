@@ -523,20 +523,20 @@ testing = ["coverage", "pyyaml"]
 
 [[package]]
 name = "markdown-exec"
-version = "1.10.0"
+version = "1.10.1"
 description = "Utilities to execute code blocks in Markdown files."
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "markdown_exec-1.10.0-py3-none-any.whl", hash = "sha256:dea4e8b78a3fe7d8e664088ebaccbd4de51b65c45b9e0db9509a9bb4fce33192"},
-    {file = "markdown_exec-1.10.0.tar.gz", hash = "sha256:d1fa017995ef337ec59e7ce49fbf3e051145a62c3124ae687c17e987f1392cd0"},
+    {file = "markdown_exec-1.10.1-py3-none-any.whl", hash = "sha256:f038787a592c262bba7677d3540c340dbca235dc088c4e47d541c0d3c2d9f97c"},
+    {file = "markdown_exec-1.10.1.tar.gz", hash = "sha256:db1ec4b32c25720bbb418383ba8f8b3ee1a616d0b61090db51b845db1ad21c0d"},
 ]
 
 [package.dependencies]
 pymdown-extensions = ">=9"
 
 [package.extras]
-ansi = ["pygments-ansi-color"]
+ansi = ["pygments-ansi-color (>=0.3)"]
 
 [[package]]
 name = "markupsafe"
