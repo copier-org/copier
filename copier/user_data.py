@@ -34,7 +34,6 @@ from .types import (
     AnyByStrMutableMapping,
     LazyDict,
     MissingType,
-    Phase,
     StrOrPath,
 )
 
@@ -108,7 +107,7 @@ class AnswersMap:
     metadata: AnyByStrMutableMapping = field(default_factory=dict)
     last: AnyByStrMutableMapping = field(default_factory=dict)
     user_defaults: AnyByStrMutableMapping = field(default_factory=dict)
-    external: LazyDict = field(default_factory=LazyDict)
+    external: LazyDict[str, Any] = field(default_factory=LazyDict)
 
     @property
     def combined(self) -> Mapping[str, Any]:
@@ -146,6 +145,9 @@ class Question:
 
         answers:
             A map containing the answers provided by the user.
+
+        context:
+            A map containing the full rendering context.
 
         jinja_env:
             The Jinja environment used to rendering answers.
@@ -199,6 +201,7 @@ class Question:
 
     var_name: str
     answers: AnswersMap
+    context: Mapping[str, Any]
     jinja_env: SandboxedEnvironment
     settings: Settings = field(default_factory=Settings)
     choices: Sequence[Any] | dict[Any, Any] | str = field(default_factory=list)
@@ -453,7 +456,7 @@ class Question:
         """Render a single templated value using Jinja.
 
         If the value cannot be used as a template, it will be returned as is.
-        `extra_answers` are combined self `self.answers.combined` when rendering
+        `extra_answers` are combined with `self.context` when rendering
         the template.
         """
         try:
@@ -466,13 +469,7 @@ class Question:
                 else value
             )
         try:
-            return template.render(
-                {
-                    **self.answers.combined,
-                    **(extra_answers or {}),
-                    "_copier_phase": Phase.current(),
-                }
-            )
+            return template.render({**self.context, **(extra_answers or {})})
         except UndefinedError as error:
             raise UserMessageError(str(error)) from error
 

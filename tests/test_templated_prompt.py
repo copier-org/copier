@@ -579,3 +579,22 @@ def test_copier_phase_variable(
     tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
     expect_prompt(tui, "phase", "str")
     tui.expect_exact("prompt")
+
+
+def test_copier_conf_variable(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): """\
+                project_name:
+                    type: str
+                    default: "{{ _copier_conf.dst_path | basename }}"
+            """
+        }
+    )
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst / "test_project")), timeout=10)
+    expect_prompt(tui, "project_name", "str")
+    tui.expect_exact("test_project")

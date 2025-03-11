@@ -8,7 +8,7 @@ import subprocess
 import sys
 from contextlib import suppress
 from contextvars import ContextVar
-from dataclasses import asdict, field, replace
+from dataclasses import field, replace
 from filecmp import dircmp
 from functools import cached_property, partial, wraps
 from itertools import chain
@@ -295,7 +295,7 @@ class Worker:
         if features:
             raise UnsafeTemplateError(sorted(features))
 
-    def _external_data(self) -> LazyDict:
+    def _external_data(self) -> LazyDict[str, Any]:
         """Load external data lazily.
 
         Result keys are used for rendering, and values are the parsed contents
@@ -313,8 +313,8 @@ class Worker:
         # the phase value is irrelevant and could be misleading.
         # As a consequence it is explicitely set to "undefined".
         return LazyDict(
-            **{
-                name: lambda path=path: load_answersfile_data(
+            {
+                name: lambda path=path: load_answersfile_data(  # type: ignore[misc]
                     self.dst_path, _render(path), warn_on_missing=True
                 )
                 for name, path in self.template.external_data.items()
@@ -392,18 +392,31 @@ class Worker:
 
     def _render_context(self) -> AnyByStrMutableMapping:
         """Produce render context for Jinja."""
-        # Backwards compatibility
-        # FIXME Remove it?
-        conf = asdict(self)
-        conf.pop("_cleanup_hooks")
-        conf.pop("answers")
-        conf.update(
+        conf = LazyDict(
             {
-                "answers_file": self.answers_relpath,
-                "src_path": self.template.local_abspath,
-                "vcs_ref_hash": self.template.commit_hash,
-                "sep": os.sep,
-                "os": OS,
+                "src_path": lambda: self.template.local_abspath,
+                "dst_path": lambda: self.dst_path,
+                "answers_file": lambda: self.answers_relpath,
+                "vcs_ref": lambda: self.vcs_ref,
+                "vcs_ref_hash": lambda: self.template.commit_hash,
+                "data": lambda: self.data,
+                "settings": lambda: self.settings,
+                "exclude": lambda: self.exclude,
+                "use_prereleases": lambda: self.use_prereleases,
+                "skip_if_exists": lambda: self.skip_if_exists,
+                "cleanup_on_error": lambda: self.cleanup_on_error,
+                "defaults": lambda: self.defaults,
+                "user_defaults": lambda: self.user_defaults,
+                "overwrite": lambda: self.overwrite,
+                "pretend": lambda: self.pretend,
+                "quiet": lambda: self.quiet,
+                "conflict": lambda: self.conflict,
+                "context_lines": lambda: self.context_lines,
+                "unsafe": lambda: self.unsafe,
+                "skip_answered": lambda: self.skip_answered,
+                "skip_tasks": lambda: self.skip_tasks,
+                "sep": lambda: os.sep,
+                "os": lambda: OS,
             }
         )
         return dict(
@@ -526,6 +539,7 @@ class Worker:
         for var_name, details in self.template.questions_data.items():
             question = Question(
                 answers=self.answers,
+                context=self._render_context(),
                 jinja_env=self.jinja_env,
                 settings=self.settings,
                 var_name=var_name,
@@ -598,9 +612,7 @@ class Worker:
         """
         path = self.answers_file or self.template.answers_relpath
         template = self.jinja_env.from_string(str(path))
-        return Path(
-            template.render(_copier_phase=Phase.current(), **self.answers.combined)
-        )
+        return Path(template.render(self._render_context()))
 
     @cached_property
     def all_exclusions(self) -> Sequence[str]:
@@ -632,7 +644,11 @@ class Worker:
             )
         # patch the `to_json` filter to support Pydantic dataclasses
         env.filters["to_json"] = partial(
-            env.filters["to_json"], default=to_jsonable_python
+            env.filters["to_json"],
+            default=partial(
+                to_jsonable_python,
+                fallback=lambda v: dict(v) if isinstance(v, LazyDict) else v,
+            ),
         )
 
         # Add a global function to join filesystem paths.
