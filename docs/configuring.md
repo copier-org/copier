@@ -865,7 +865,7 @@ strings, where:
     _answers_file: .copier-answers.child-tpl.yml
 
     # Child template loads parent answers
-    _external_data_files:
+    _external_data:
         # A dynamic path. Make sure you answer that question
         # before the first access to the data (with `_external_data.parent_tpl`)
         parent_tpl: "{{ parent_tpl_answers_file }}"
@@ -890,7 +890,7 @@ strings, where:
 
     ```yaml
     # Template loads secrets from Git-ignored file
-    _external_data_files:
+    _external_data:
         # A static path. If missing, it will return an empty dict
         secrets: .secrets.yaml
 
