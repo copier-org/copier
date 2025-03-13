@@ -147,3 +147,10 @@ class MissingSettingsWarning(UserWarning, CopierWarning):
 
 class MissingFileWarning(UserWarning, CopierWarning):
     """I still couldn't find what I'm looking for."""
+
+
+class InteractiveSessionError(UserMessageError):
+    """An interactive session is required to run this program."""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(f"Interactive session required: {message}")

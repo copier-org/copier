@@ -32,16 +32,16 @@ from unicodedata import normalize
 from jinja2.loaders import FileSystemLoader
 from pathspec import PathSpec
 from plumbum import ProcessExecutionError, colors
-from plumbum.cli.terminal import ask
 from plumbum.machines import local
 from pydantic import ConfigDict, PositiveInt
 from pydantic.dataclasses import dataclass
 from pydantic_core import to_jsonable_python
-from questionary import unsafe_prompt
+from questionary import confirm, unsafe_prompt
 
 from .errors import (
     CopierAnswersInterrupt,
     ExtensionNotFoundError,
+    InteractiveSessionError,
     UnsafeTemplateError,
     UserMessageError,
     YieldTagInFileError,
@@ -466,7 +466,11 @@ class Worker:
                 file_=sys.stderr,
             )
             return True
-        return bool(ask(f" Overwrite {dst_relpath}?", default=True))
+        try:
+            answer = confirm(f" Overwrite {dst_relpath}?", default=True).unsafe_ask()
+        except EOFError as err:
+            raise InteractiveSessionError("Consider using `--overwrite`") from err
+        return bool(answer)
 
     def _render_allowed(
         self,
@@ -587,10 +591,15 @@ class Worker:
                     if new_answer is MISSING:
                         raise ValueError(f'Question "{var_name}" is required')
                 else:
-                    new_answer = unsafe_prompt(
-                        [question.get_questionary_structure()],
-                        answers={question.var_name: question.get_default()},
-                    )[question.var_name]
+                    try:
+                        new_answer = unsafe_prompt(
+                            [question.get_questionary_structure()],
+                            answers={question.var_name: question.get_default()},
+                        )[question.var_name]
+                    except EOFError as err:
+                        raise InteractiveSessionError(
+                            "Use `--defaults` and/or `--data`/`--data-file`"
+                        ) from err
             except KeyboardInterrupt as err:
                 raise CopierAnswersInterrupt(
                     self.answers, question, self.template
