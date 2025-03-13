@@ -1,6 +1,11 @@
 """Custom exceptions used by Copier."""
 
+from __future__ import annotations
+
+import subprocess
+import sys
 from pathlib import Path
+from subprocess import CompletedProcess
 from typing import TYPE_CHECKING, Sequence
 
 from .tools import printf_exception
@@ -10,6 +15,11 @@ if TYPE_CHECKING:  # always false
     from .template import Template
     from .user_data import AnswersMap, Question
 
+if sys.version_info < (3, 11):
+    from typing_extensions import Self
+else:
+    from typing import Self
+
 
 # Errors
 class CopierError(Exception):
@@ -18,6 +28,12 @@ class CopierError(Exception):
 
 class UserMessageError(CopierError):
     """Exit the program giving a message to the user."""
+
+    def __init__(self, message: str):
+        self.message = message
+
+    def __str__(self) -> str:
+        return self.message
 
 
 class UnsupportedVersionError(UserMessageError):
@@ -40,7 +56,7 @@ class InvalidConfigFileError(ConfigFileError):
 class MultipleConfigFilesError(ConfigFileError):
     """Both copier.yml and copier.yaml found, and that's an error."""
 
-    def __init__(self, conf_paths: "PathSeq"):
+    def __init__(self, conf_paths: PathSeq):
         msg = str(conf_paths)
         printf_exception(self, "MULTIPLE CONFIG FILES", msg=msg)
         super().__init__(msg)
@@ -93,7 +109,7 @@ class CopierAnswersInterrupt(CopierError, KeyboardInterrupt):
     """
 
     def __init__(
-        self, answers: "AnswersMap", last_question: "Question", template: "Template"
+        self, answers: AnswersMap, last_question: Question, template: Template
     ) -> None:
         self.answers = answers
         self.last_question = last_question
@@ -118,6 +134,37 @@ class YieldTagInFileError(CopierError):
 
 class MultipleYieldTagsError(CopierError):
     """Multiple yield tags are used in one path name, but it is not allowed."""
+
+
+class TaskError(subprocess.CalledProcessError, UserMessageError):
+    """Exception raised when a task fails."""
+
+    def __init__(
+        self,
+        command: str | Sequence[str],
+        returncode: int,
+        stdout: str | bytes | None,
+        stderr: str | bytes | None,
+    ):
+        subprocess.CalledProcessError.__init__(
+            self, returncode=returncode, cmd=command, output=stdout, stderr=stderr
+        )
+        UserMessageError.__init__(
+            self,
+            message=f"Task {command!r} returned non-zero exit status {returncode}.",
+        )
+
+    @classmethod
+    def from_process(
+        cls, process: CompletedProcess[str] | CompletedProcess[bytes]
+    ) -> Self:
+        """Create a TaskError from a CompletedProcess."""
+        return cls(
+            command=process.args,
+            returncode=process.returncode,
+            stdout=process.stdout,
+            stderr=process.stderr,
+        )
 
 
 # Warnings
