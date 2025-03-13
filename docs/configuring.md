@@ -1563,7 +1563,7 @@ This allows you to keep separate the template metadata and the template code.
 
 Commands to execute after generating or updating a project from your template.
 
-They run ordered, and with the `$STAGE=task` variable in their environment.
+They run ordered, and with the `$STAGE=task` variable in their environment. Beware that each command is run in its own subprocess.
 
 If a `dict` is given it can contain the following items:
 
@@ -1574,6 +1574,8 @@ If a `dict` is given it can contain the following items:
 
 If a `str` or `List[str]` is given as a task it will be treated as `command` with all
 other items not present.
+
+Refer to the example provided below for more information.
 
 !!! example
 
