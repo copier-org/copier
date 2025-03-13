@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import platform
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Protocol, Union
@@ -997,3 +999,53 @@ def test_secret_validator(
     tui.sendline(default)
     tui.expect_exact("******")
     tui.expect_exact(pexpect.EOF)
+
+
+# Related to https://github.com/prompt-toolkit/python-prompt-toolkit/issues/1243#issuecomment-706668723)
+@pytest.mark.xfail(
+    platform.system() == "Windows",
+    reason="prompt-toolkit in subprocess call fails on Windows",
+)
+def test_interactive_session_required_for_question_prompt(
+    question_tree: QuestionTreeFixture,
+) -> None:
+    """Answering a question prompt requires an interactive session."""
+    src, dst = question_tree(type="str")
+    process = subprocess.run(
+        (*COPIER_PATH, "copy", str(src), str(dst)),
+        stdin=subprocess.PIPE,  # Prevents interactive input
+        capture_output=True,
+        timeout=10,
+    )
+    assert process.returncode == 1
+    assert (
+        b"Interactive session required: Use `--defaults` and/or `--data`/`--data-file`"
+    ) in process.stderr
+
+
+# Related to https://github.com/prompt-toolkit/python-prompt-toolkit/issues/1243#issuecomment-706668723)
+@pytest.mark.xfail(
+    platform.system() == "Windows",
+    reason="prompt-toolkit in subprocess call fails on Windows",
+)
+def test_interactive_session_required_for_overwrite_prompt(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """Overwriting a file without `--overwrite` flag requires an interactive session."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "foo.txt.jinja"): "bar",
+            (dst / "foo.txt"): "baz",
+        }
+    )
+    process = subprocess.run(
+        (*COPIER_PATH, "copy", str(src), str(dst)),
+        stdin=subprocess.PIPE,  # Prevents interactive input
+        capture_output=True,
+        timeout=10,
+    )
+    assert process.returncode == 1
+    assert (
+        b"Interactive session required: Consider using `--overwrite`" in process.stderr
+    )
