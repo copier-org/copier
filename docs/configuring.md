@@ -1071,7 +1071,7 @@ filters, global variables and functions, or tags to the environment.
 
 The following extensions are _always_ loaded:
 
--   [`jinja2_ansible_filters.AnsibleCoreFiltersExtension`](https://gitlab.com/dreamer-labs/libraries/jinja2-ansible-filters/):
+-   [`jinja2_copier_extension.CopierExtension`](https://github.com/copier-org/jinja2-copier-extension):
     this extension adds most of the
     [Ansible filters](https://docs.ansible.com/ansible/2.3/playbooks_filters.html) to
     the environment.

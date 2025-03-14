@@ -49,6 +49,15 @@
             name = "copier-${version}";
             projectDir = ./.;
 
+            # HACK: https://github.com/nix-community/poetry2nix/issues/568#issuecomment-2563254176
+            overrides =
+              pkgs.poetry2nix.defaultPoetryOverrides.extend
+              (final: prev: {
+                jinja2-copier-extension = prev.jinja2-copier-extension.overridePythonAttrs (old: {
+                  buildInputs = (old.buildInputs or []) ++ [pkgs.python311Packages.hatchling];
+                });
+              });
+
             # Trick poetry-dynamic-versioning into using our version
             POETRY_DYNAMIC_VERSIONING_BYPASS = version;
 

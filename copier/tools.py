@@ -8,7 +8,6 @@ import platform
 import re
 import stat
 import sys
-from contextlib import suppress
 from decimal import Decimal
 from enum import Enum
 from importlib.metadata import version
@@ -17,6 +16,7 @@ from types import TracebackType
 from typing import Any, Callable, Iterator, Literal, TextIO, cast
 
 import colorama
+from jinja2_copier_extension._filters.types import do_bool
 from packaging.version import Version
 from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 from pydantic import StrictBool
@@ -110,31 +110,7 @@ def cast_to_str(value: Any) -> str:
     raise ValueError(f"Could not convert {value} to string")
 
 
-def cast_to_bool(value: Any) -> bool:
-    """Parse anything to bool.
-
-    Params:
-        value:
-            Anything to be casted to a bool. Tries to be as smart as possible.
-
-            1.  Cast to number. Then: 0 = False; anything else = True.
-            1.  Find [YAML booleans](https://yaml.org/type/bool.html),
-                [YAML nulls](https://yaml.org/type/null.html) or `none` in it
-                and use it appropriately.
-            1.  Cast to boolean using standard python `bool(value)`.
-    """
-    # Assume it's a number
-    with suppress(TypeError, ValueError):
-        return bool(float(value))
-    # Assume it's a string
-    with suppress(AttributeError):
-        lower = value.lower()
-        if lower in {"y", "yes", "t", "true", "on"}:
-            return True
-        elif lower in {"n", "no", "f", "false", "off", "~", "null", "none"}:
-            return False
-    # Assume nothing
-    return bool(value)
+cast_to_bool = do_bool
 
 
 def force_str_end(original_str: str, end: str = "\n") -> str:
