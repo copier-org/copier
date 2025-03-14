@@ -627,10 +627,7 @@ class Worker:
         """
         paths = [str(self.template.local_abspath)]
         loader = FileSystemLoader(paths)
-        default_extensions = [
-            "jinja2_ansible_filters.AnsibleCoreFiltersExtension",
-            YieldExtension,
-        ]
+        default_extensions = ["jinja2_copier_extension.CopierExtension", YieldExtension]
         extensions = default_extensions + list(self.template.jinja_extensions)
         try:
             env = YieldEnvironment(

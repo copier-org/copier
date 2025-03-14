@@ -17,6 +17,12 @@
     {
       "matchManagers": ["github-actions"],
       "addLabels": ["github_actions"]
+    },
+    {
+      "matchCategories": ["python"],
+      "matchDepNames": ["jinja2-copier-extension"],
+      "rangeStrategy": "replace",
+      "semanticCommitType": "fix"
     }
   ]
 }
