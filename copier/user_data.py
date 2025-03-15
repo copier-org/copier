@@ -404,7 +404,11 @@ class Question:
             if default is MISSING:
                 result["default"] = False
         if self.choices:
-            questionary_type = "checkbox" if self.multiselect else "select"
+            if self.multiselect:
+                questionary_type = "checkbox"
+                result["instruction"] = "(Use arrow keys to move, <space> (un)select, <a> (un)select all, <i> invert selection, <enter> confirm)"
+            else:
+                questionary_type = "select"
             result["choices"] = self._formatted_choices
         if questionary_type == "input":
             if self.secret:
