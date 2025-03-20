@@ -1,5 +1,7 @@
 """Custom exceptions used by Copier."""
 
+from __future__ import annotations
+
 from pathlib import Path
 from typing import TYPE_CHECKING, Sequence
 
@@ -40,7 +42,7 @@ class InvalidConfigFileError(ConfigFileError):
 class MultipleConfigFilesError(ConfigFileError):
     """Both copier.yml and copier.yaml found, and that's an error."""
 
-    def __init__(self, conf_paths: "PathSeq"):
+    def __init__(self, conf_paths: PathSeq):
         msg = str(conf_paths)
         printf_exception(self, "MULTIPLE CONFIG FILES", msg=msg)
         super().__init__(msg)
@@ -93,7 +95,7 @@ class CopierAnswersInterrupt(CopierError, KeyboardInterrupt):
     """
 
     def __init__(
-        self, answers: "AnswersMap", last_question: "Question", template: "Template"
+        self, answers: AnswersMap, last_question: Question, template: Template
     ) -> None:
         self.answers = answers
         self.last_question = last_question
