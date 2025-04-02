@@ -563,6 +563,10 @@ class Worker:
             if not question.get_when():
                 # Omit its answer from the answers file.
                 self.answers.hide(var_name)
+                # Delete last answers to re-compute the answer from the default
+                # value (if it exists).
+                if var_name in self.answers.last:
+                    del self.answers.last[var_name]
                 # Skip immediately to the next question when it has no default
                 # value.
                 if question.default is MISSING:
