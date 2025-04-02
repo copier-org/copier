@@ -1869,3 +1869,55 @@ def test_conflict_on_update_with_unicode_in_content(
             zzz🐍
             """
         )
+
+
+def test_conditional_computed_value(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    build_file_tree(
+        {
+            src / "copier.yml": (
+                """\
+                first:
+                    type: bool
+
+                second:
+                    type: bool
+                    default: "{{ first }}"
+                    when: "{{ first }}"
+                """
+            ),
+            src / "{{ _copier_conf.answers_file }}.jinja": (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+            src / "log.txt.jinja": "{{ first }} {{ second }}",
+        }
+    )
+    with local.cwd(src):
+        git_init("v1")
+        git("tag", "v1")
+
+    run_copy(str(src), dst, data={"first": True}, defaults=True)
+    answers = load_answersfile_data(dst)
+    assert answers["first"] is True
+    assert answers["second"] is True
+    assert (dst / "log.txt").read_text() == "True True"
+
+    with local.cwd(dst):
+        git_init("v1")
+
+    run_update(dst, data={"first": False}, overwrite=True)
+    answers = load_answersfile_data(dst)
+    assert answers["first"] is False
+    assert "second" not in answers
+    assert (dst / "log.txt").read_text() == "False False"
+
+    with local.cwd(dst):
+        git("add", ".")
+        git("commit", "-m", "v2")
+
+    run_update(dst, data={"first": True}, defaults=True, overwrite=True)
+    answers = load_answersfile_data(dst)
+    assert answers["first"] is True
+    assert answers["second"] is True
+    assert (dst / "log.txt").read_text() == "True True"

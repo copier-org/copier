@@ -130,3 +130,50 @@ def test_recopy_dont_validate_computed_value(
     run_recopy(dst, overwrite=True)
     answers = load_answersfile_data(dst)
     assert "computed" not in answers
+
+
+def test_conditional_computed_value(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    build_file_tree(
+        {
+            src / "copier.yml": (
+                """\
+                first:
+                    type: bool
+
+                second:
+                    type: bool
+                    default: "{{ first }}"
+                    when: "{{ first }}"
+                """
+            ),
+            src / "{{ _copier_conf.answers_file }}.jinja": (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+            src / "log.txt.jinja": "{{ first }} {{ second }}",
+        }
+    )
+    git_save(src)
+
+    run_copy(str(src), dst, data={"first": True}, defaults=True)
+    answers = load_answersfile_data(dst)
+    assert answers["first"] is True
+    assert answers["second"] is True
+    assert (dst / "log.txt").read_text() == "True True"
+
+    git_save(dst, "v1")
+
+    run_recopy(dst, data={"first": False}, overwrite=True)
+    answers = load_answersfile_data(dst)
+    assert answers["first"] is False
+    assert "second" not in answers
+    assert (dst / "log.txt").read_text() == "False False"
+
+    git_save(dst, "v2")
+
+    run_recopy(dst, data={"first": True}, defaults=True, overwrite=True)
+    answers = load_answersfile_data(dst)
+    assert answers["first"] is True
+    assert answers["second"] is True
+    assert (dst / "log.txt").read_text() == "True True"
