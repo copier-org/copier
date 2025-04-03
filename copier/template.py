@@ -509,13 +509,12 @@ class Template:
         """
         return self.config_data.get("subdirectory", "")
 
-    @cached_property
-    def tasks(self) -> Sequence[Task]:
+    def tasks(self, stage: Literal["before", "after"]) -> Sequence[Task]:
         """Get tasks defined in the template.
 
         See [tasks][].
         """
-        extra_vars = {"stage": "task"}
+        extra_vars = {"stage": stage}
         tasks = []
         for task in self.config_data.get("tasks", []):
             if isinstance(task, dict):
@@ -523,12 +522,18 @@ class Template:
                     Task(
                         cmd=task["command"],
                         extra_vars=extra_vars,
-                        condition=task.get("when", "true"),
+                        condition=task.get("when", "{{ _stage == 'after' }}"),
                         working_directory=Path(task.get("working_directory", ".")),
                     )
                 )
             else:
-                tasks.append(Task(cmd=task, extra_vars=extra_vars))
+                tasks.append(
+                    Task(
+                        cmd=task,
+                        extra_vars=extra_vars,
+                        condition="{{ _stage == 'after' }}",
+                    )
+                )
         return tasks
 
     @cached_property
