@@ -5,9 +5,9 @@ import pytest
 from plumbum import local
 
 from copier import run_copy, run_recopy
-from copier.cli import CopierApp
-from copier.user_data import load_answersfile_data
-from copier.vcs import get_git
+from copier._cli import CopierApp
+from copier._user_data import load_answersfile_data
+from copier._vcs import get_git
 
 from .helpers import build_file_tree, git_save
 

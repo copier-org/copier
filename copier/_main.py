@@ -36,20 +36,10 @@ from pydantic.dataclasses import dataclass
 from pydantic_core import to_jsonable_python
 from questionary import confirm, unsafe_prompt
 
-from .errors import (
-    CopierAnswersInterrupt,
-    ExtensionNotFoundError,
-    InteractiveSessionError,
-    TaskError,
-    UnsafeTemplateError,
-    UserMessageError,
-    YieldTagInFileError,
-)
-from .jinja_ext import YieldEnvironment, YieldExtension
-from .settings import Settings
-from .subproject import Subproject
-from .template import Task, Template
-from .tools import (
+from ._jinja_ext import YieldEnvironment, YieldExtension
+from ._subproject import Subproject
+from ._template import Task, Template
+from ._tools import (
     OS,
     Style,
     cast_to_bool,
@@ -59,7 +49,7 @@ from .tools import (
     scantree,
     set_git_alternates,
 )
-from .types import (
+from ._types import (
     MISSING,
     AnyByStrDict,
     AnyByStrMutableMapping,
@@ -71,8 +61,18 @@ from .types import (
     RelativePath,
     StrOrPath,
 )
-from .user_data import AnswersMap, Question, load_answersfile_data
-from .vcs import get_git
+from ._user_data import AnswersMap, Question, load_answersfile_data
+from ._vcs import get_git
+from .errors import (
+    CopierAnswersInterrupt,
+    ExtensionNotFoundError,
+    InteractiveSessionError,
+    TaskError,
+    UnsafeTemplateError,
+    UserMessageError,
+    YieldTagInFileError,
+)
+from .settings import Settings
 
 _T = TypeVar("_T")
 _P = ParamSpec("_P")

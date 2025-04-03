@@ -7,7 +7,7 @@ import pytest
 import yaml
 
 import copier
-from copier.cli import CopierApp
+from copier._cli import CopierApp
 
 from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree
 
@@ -161,7 +161,7 @@ def test_os_specific_tasks(
             )
         }
     )
-    monkeypatch.setattr("copier.main.OS", os)
+    monkeypatch.setattr("copier._main.OS", os)
     copier.run_copy(str(src), dst, unsafe=True)
     assert (dst / filename).exists()
 

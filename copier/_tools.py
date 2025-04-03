@@ -229,7 +229,7 @@ def get_git_objects_dir(path: Path) -> Path:
     """Get the absolute path of a Git repository's objects directory."""
     # FIXME: A lazy import is currently necessary to avoid circular imports with
     # `errors.py`.
-    from .vcs import get_git
+    from ._vcs import get_git
 
     git = get_git()
     return path.joinpath(

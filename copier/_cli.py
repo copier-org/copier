@@ -58,10 +58,10 @@ from typing import Any, Callable, Optional
 import yaml
 from plumbum import cli, colors
 
+from ._main import Worker
+from ._tools import copier_version
+from ._types import AnyByStrDict
 from .errors import UnsafeTemplateError, UserMessageError
-from .main import Worker
-from .tools import copier_version
-from .types import AnyByStrDict
 
 
 def _handle_exceptions(method: Callable[[], None]) -> int:

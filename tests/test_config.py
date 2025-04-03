@@ -10,9 +10,9 @@ from plumbum import local
 from pydantic import ValidationError
 
 import copier
+from copier._template import DEFAULT_EXCLUDE, Task, Template, load_template_config
+from copier._types import AnyByStrDict
 from copier.errors import InvalidConfigFileError, MultipleConfigFilesError
-from copier.template import DEFAULT_EXCLUDE, Task, Template, load_template_config
-from copier.types import AnyByStrDict
 
 from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree, git_init
 

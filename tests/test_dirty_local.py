@@ -6,8 +6,8 @@ from plumbum import local
 from pytest_gitconfig.plugin import GitConfig
 
 import copier
+from copier._main import run_copy, run_update
 from copier.errors import DirtyLocalWarning
-from copier.main import run_copy, run_update
 
 from .helpers import DATA, PROJECT_TEMPLATE, build_file_tree, git
 

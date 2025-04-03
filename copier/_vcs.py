@@ -14,8 +14,8 @@ from packaging.version import InvalidVersion, Version
 from plumbum import TF, ProcessExecutionError, colors, local
 from plumbum.machines import LocalCommand
 
+from ._types import OptBool, OptStrOrPath, StrOrPath
 from .errors import DirtyLocalWarning, ShallowCloneWarning
-from .types import OptBool, OptStrOrPath, StrOrPath
 
 GIT_USER_NAME = "Copier"
 GIT_USER_EMAIL = "copier@copier"

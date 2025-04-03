@@ -1,1 +1,1 @@
-::: copier.main
+::: copier._main

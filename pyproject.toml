@@ -135,6 +135,11 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = [
+  "copier._subproject",
+  "copier._template",
+  "copier._tools",
+  "copier._user_data",
+  "copier._vcs",
   "copier.subproject",
   "copier.template",
   "copier.tools",

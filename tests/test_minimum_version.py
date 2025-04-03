@@ -85,7 +85,7 @@ def test_minimum_version_update(
 def test_version_0_0_0_ignored(
     template_path: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr("copier.template.copier_version", lambda: Version("0.0.0"))
+    monkeypatch.setattr("copier._template.copier_version", lambda: Version("0.0.0"))
     # assert no error
     with warnings.catch_warnings():
         warnings.simplefilter("error")
