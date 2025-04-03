@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from copier.cli import CopierApp
-from copier.main import run_copy, run_recopy, run_update
+from copier._cli import CopierApp
+from copier._main import run_copy, run_recopy, run_update
 
 from .helpers import build_file_tree, git
 

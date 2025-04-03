@@ -13,10 +13,10 @@ from typing import Callable
 from plumbum.machines import local
 from pydantic.dataclasses import dataclass
 
-from .template import Template
-from .types import AbsolutePath, AnyByStrDict, VCSTypes
-from .user_data import load_answersfile_data
-from .vcs import get_git, is_in_git_repo
+from ._template import Template
+from ._types import AbsolutePath, AnyByStrDict, VCSTypes
+from ._user_data import load_answersfile_data
+from ._vcs import get_git, is_in_git_repo
 
 
 @dataclass

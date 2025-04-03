@@ -22,6 +22,9 @@ from packaging.version import Version, parse
 from plumbum.machines import local
 from pydantic.dataclasses import dataclass
 
+from ._tools import copier_version, handle_remove_readonly
+from ._types import AnyByStrDict, VCSTypes
+from ._vcs import checkout_latest_tag, clone, get_git, get_repo
 from .errors import (
     InvalidConfigFileError,
     MultipleConfigFilesError,
@@ -29,9 +32,6 @@ from .errors import (
     UnknownCopierVersionWarning,
     UnsupportedVersionError,
 )
-from .tools import copier_version, handle_remove_readonly
-from .types import AnyByStrDict, VCSTypes
-from .vcs import checkout_latest_tag, clone, get_git, get_repo
 
 # Default list of files in the template to exclude from the rendered project
 DEFAULT_EXCLUDE: tuple[str, ...] = (

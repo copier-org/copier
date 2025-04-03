@@ -10,11 +10,11 @@ import pexpect
 import pytest
 from plumbum import local
 
-from copier.cli import CopierApp
+from copier._cli import CopierApp
+from copier._main import Worker, run_copy, run_update
+from copier._tools import normalize_git_path
+from copier._user_data import load_answersfile_data
 from copier.errors import UserMessageError
-from copier.main import Worker, run_copy, run_update
-from copier.tools import normalize_git_path
-from copier.user_data import load_answersfile_data
 
 from .helpers import (
     BRACKET_ENVOPS_JSON,

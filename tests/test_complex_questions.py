@@ -12,7 +12,7 @@ from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
 
 from copier import run_copy, run_update
-from copier.user_data import load_answersfile_data
+from copier._user_data import load_answersfile_data
 
 from .helpers import (
     BRACKET_ENVOPS,

@@ -76,6 +76,10 @@
             ];
             prettier.enable = true;
             prettier.excludes = [
+              # Some API reference identifiers are dotted paths involving
+              # internal modules prefixed with `_` which are converted by
+              # Prettier to `\_`, making them invalid.
+              "^docs/reference/.+\.md$"
               # Those files have wrong syntax and would fail
               "^tests/demo_invalid/copier.yml$"
               "^tests/demo_transclude_invalid(_multi)?/demo/copier.yml$"

@@ -8,10 +8,11 @@ import pytest
 from packaging.version import Version
 from plumbum import local
 
-from copier import Worker, run_copy, run_update
+from copier import run_copy, run_update
+from copier._main import Worker
+from copier._user_data import load_answersfile_data
+from copier._vcs import checkout_latest_tag, clone, get_git_version, get_repo
 from copier.errors import ShallowCloneWarning
-from copier.user_data import load_answersfile_data
-from copier.vcs import checkout_latest_tag, clone, get_git_version, get_repo
 
 from .helpers import git
 

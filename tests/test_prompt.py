@@ -13,8 +13,8 @@ import yaml
 from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
 
-from copier.types import StrOrPath
-from copier.user_data import load_answersfile_data
+from copier._types import StrOrPath
+from copier._user_data import load_answersfile_data
 
 from .helpers import (
     BRACKET_ENVOPS,

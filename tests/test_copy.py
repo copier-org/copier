@@ -18,7 +18,7 @@ from plumbum import local
 
 import copier
 from copier import run_copy
-from copier.types import AnyByStrDict
+from copier._types import AnyByStrDict
 
 from .helpers import (
     BRACKET_ENVOPS,

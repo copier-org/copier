@@ -20,7 +20,7 @@ from prompt_toolkit.keys import Keys
 from pytest_gitconfig.plugin import DEFAULT_GIT_USER_EMAIL, DEFAULT_GIT_USER_NAME
 
 import copier
-from copier.types import StrOrPath
+from copier._types import StrOrPath
 
 PROJECT_TEMPLATE = Path(__file__).parent / "demo"
 

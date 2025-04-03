@@ -2,7 +2,7 @@ import pytest
 import yaml
 
 import copier
-from copier.types import AnyByStrDict
+from copier._types import AnyByStrDict
 
 from .helpers import build_file_tree
 

@@ -26,9 +26,8 @@ from questionary.prompts.common import Choice
 
 from copier.settings import Settings
 
-from .errors import InvalidTypeError, MissingFileWarning, UserMessageError
-from .tools import cast_to_bool, cast_to_str, force_str_end
-from .types import (
+from ._tools import cast_to_bool, cast_to_str, force_str_end
+from ._types import (
     MISSING,
     AnyByStrDict,
     AnyByStrMutableMapping,
@@ -36,6 +35,7 @@ from .types import (
     MissingType,
     StrOrPath,
 )
+from .errors import InvalidTypeError, MissingFileWarning, UserMessageError
 
 
 # TODO Remove these two functions as well as DEFAULT_DATA in a future release

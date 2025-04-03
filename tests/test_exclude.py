@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from copier.main import run_copy
-from copier.template import DEFAULT_EXCLUDE
-from copier.types import StrOrPath
+from copier._main import run_copy
+from copier._template import DEFAULT_EXCLUDE
+from copier._types import StrOrPath
 
 from .helpers import PROJECT_TEMPLATE, build_file_tree
 

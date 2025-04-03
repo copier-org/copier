@@ -5,7 +5,7 @@ Docs: https://copier.readthedocs.io/
 
 import importlib.metadata
 
-from .main import *  # noqa: F401,F403
+from ._main import *  # noqa: F401,F403
 
 try:
     __version__ = importlib.metadata.version(__name__)
