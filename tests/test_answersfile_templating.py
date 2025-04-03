@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 import copier
-from copier.user_data import load_answersfile_data
+from copier._user_data import load_answersfile_data
 
 from .helpers import build_file_tree
 

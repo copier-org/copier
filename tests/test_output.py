@@ -5,8 +5,8 @@ import pexpect
 import pytest
 from plumbum import local
 
+from copier._main import run_copy, run_recopy, run_update
 from copier.errors import InvalidTypeError
-from copier.main import run_copy, run_recopy, run_update
 
 from .helpers import COPIER_PATH, Spawn, build_file_tree, expect_prompt, git, render
 

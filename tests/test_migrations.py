@@ -4,8 +4,8 @@ import pytest
 from plumbum import local
 
 from copier import run_copy, run_update
+from copier._user_data import load_answersfile_data
 from copier.errors import UnsafeTemplateError, UserMessageError
-from copier.user_data import load_answersfile_data
 
 from .helpers import (
     COPIER_ANSWERS_FILE,
