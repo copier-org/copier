@@ -486,22 +486,21 @@ MarkupSafe = ">=2.0"
 i18n = ["Babel (>=2.7)"]
 
 [[package]]
-name = "jinja2-ansible-filters"
-version = "1.3.2"
-description = "A port of Ansible's jinja2 filters without requiring ansible core."
+name = "jinja2-copier-extension"
+version = "0.1.0"
+description = "Copier's built-in Jinja2 extension, inspired by Ansible, outsourced for you"
 optional = false
-python-versions = "*"
+python-versions = ">=3.9"
 files = [
-    {file = "jinja2-ansible-filters-1.3.2.tar.gz", hash = "sha256:07c10cf44d7073f4f01102ca12d9a2dc31b41d47e4c61ed92ef6a6d2669b356b"},
-    {file = "jinja2_ansible_filters-1.3.2-py3-none-any.whl", hash = "sha256:e1082f5564917649c76fed239117820610516ec10f87735d0338688800a55b34"},
+    {file = "jinja2_copier_extension-0.1.0-py3-none-any.whl", hash = "sha256:0b8756756d7258929e09ed3a7c9455255e560c7d70964291852863d0ee7ab858"},
+    {file = "jinja2_copier_extension-0.1.0.tar.gz", hash = "sha256:d28890855fa89d2c91c9cdaab36775c68137a96a33ca631b65bd18a17523a666"},
 ]
 
 [package.dependencies]
-Jinja2 = "*"
-PyYAML = "*"
+jinja2 = ">=3.0.0"
 
 [package.extras]
-test = ["pytest", "pytest-cov"]
+yaml = ["pyyaml (>=6.0.0)"]
 
 [[package]]
 name = "markdown"
@@ -1639,4 +1638,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9"
-content-hash = "8778772793661c235a48d4ab2de8839426451f751ca66a79387790f5067c2794"
+content-hash = "b1a256a2897cd66da1182dbeb7d15b454e4466da2f461cf3c6f1b41e8d08a9e1"
