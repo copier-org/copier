@@ -156,6 +156,20 @@ disable_error_code = ["no-untyped-def"]
 addopts = "-n auto -ra"
 markers = ["impure: needs network or is not 100% reproducible"]
 
+[tool.coverage.run]
+omit = [
+  # Ignore deprecated modules
+  "copier/cli.py",
+  "copier/jinja_ext.py",
+  "copier/main.py",
+  "copier/subproject.py",
+  "copier/template.py",
+  "copier/tools.py",
+  "copier/types.py",
+  "copier/user_data.py",
+  "copier/vcs.py",
+]
+
 [tool.commitizen]
 annotated_tag = true
 changelog_incremental = true

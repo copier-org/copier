@@ -10,6 +10,7 @@ from plumbum import local
 from pydantic import ValidationError
 
 import copier
+from copier._main import Worker
 from copier._template import DEFAULT_EXCLUDE, Task, Template, load_template_config
 from copier._types import AnyByStrDict
 from copier.errors import InvalidConfigFileError, MultipleConfigFilesError
@@ -322,12 +323,12 @@ def test_multiple_config_file_error() -> None:
 )
 def test_flags_bad_data(data: AnyByStrDict) -> None:
     with pytest.raises(ValidationError):
-        copier.Worker(**data)
+        Worker(**data)
 
 
 def test_flags_extra_fails() -> None:
     with pytest.raises(ValidationError):
-        copier.Worker(  # type: ignore[call-arg]
+        Worker(  # type: ignore[call-arg]
             src_path="..",
             dst_path=Path(),
             i_am_not_a_member="and_i_do_not_belong_here",
@@ -345,7 +346,7 @@ def is_subdict(small: dict[Any, Any], big: dict[Any, Any]) -> bool:
 
 def test_worker_good_data(tmp_path: Path) -> None:
     # This test is probably useless, as it tests the what and not the how
-    conf = copier.Worker("./tests/demo_data", tmp_path)
+    conf = Worker("./tests/demo_data", tmp_path)
     assert conf._render_context()["_folder_name"] == tmp_path.name
     assert conf.all_exclusions == ("exclude1", "exclude2")
     assert conf.template.skip_if_exists == ["skip_if_exists1", "skip_if_exists2"]
@@ -373,12 +374,12 @@ def test_worker_good_data(tmp_path: Path) -> None:
 def test_worker_config_precedence(
     tmp_path: Path, test_input: AnyByStrDict, expected_exclusions: tuple[str, ...]
 ) -> None:
-    conf = copier.Worker(dst_path=tmp_path, vcs_ref="HEAD", **test_input)
+    conf = Worker(dst_path=tmp_path, vcs_ref="HEAD", **test_input)
     assert expected_exclusions == conf.all_exclusions
 
 
 def test_config_data_transclusion() -> None:
-    config = copier.Worker("tests/demo_transclude/demo")
+    config = Worker("tests/demo_transclude/demo")
     assert config.all_exclusions == ("exclude1", "exclude2")
 
 

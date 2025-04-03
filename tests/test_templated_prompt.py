@@ -10,7 +10,7 @@ import yaml
 from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
 
-from copier import Worker
+from copier._main import Worker
 from copier._types import AnyByStrDict
 from copier._user_data import load_answersfile_data
 from copier.errors import InvalidTypeError
