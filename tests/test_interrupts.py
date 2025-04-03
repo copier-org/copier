@@ -2,7 +2,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from copier import Worker
+from copier._main import Worker
 from copier.errors import CopierAnswersInterrupt
 
 from .helpers import build_file_tree
