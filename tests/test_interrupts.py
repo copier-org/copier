@@ -2,7 +2,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from copier import Worker
+from copier._main import Worker
 from copier.errors import CopierAnswersInterrupt
 
 from .helpers import build_file_tree
@@ -34,7 +34,7 @@ def test_keyboard_interrupt(
     )
     worker = Worker(str(src), dst, defaults=False)
 
-    with patch("copier.main.unsafe_prompt", side_effect=side_effect):
+    with patch("copier._main.unsafe_prompt", side_effect=side_effect):
         with pytest.raises(KeyboardInterrupt):
             worker.run_copy()
 
@@ -58,7 +58,7 @@ def test_multiple_questions_interrupt(tmp_path_factory: pytest.TempPathFactory) 
     worker = Worker(str(src), dst, defaults=False)
 
     with patch(
-        "copier.main.unsafe_prompt",
+        "copier._main.unsafe_prompt",
         side_effect=[
             {"question1": "foobar"},
             {"question2": "yosemite"},

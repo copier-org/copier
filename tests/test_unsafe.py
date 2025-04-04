@@ -8,11 +8,11 @@ import yaml
 from jinja2.ext import Extension
 from plumbum import local
 
-from copier.cli import CopierApp
+from copier._cli import CopierApp
+from copier._main import run_copy, run_update
+from copier._types import AnyByStrDict
+from copier._user_data import load_answersfile_data
 from copier.errors import UnsafeTemplateError
-from copier.main import run_copy, run_update
-from copier.types import AnyByStrDict
-from copier.user_data import load_answersfile_data
 
 from .helpers import build_file_tree, git
 
