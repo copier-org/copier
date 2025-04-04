@@ -35,7 +35,7 @@ class Settings(BaseModel):
             if env_path:
                 settings_path = Path(env_path)
             else:
-                settings_path = user_config_path("copier") / "settings.yml"
+                settings_path = user_config_path(appname="copier", appauthor=False) / "settings.yml"
         if settings_path.is_file():
             data = yaml.safe_load(settings_path.read_bytes())
             return cls.model_validate(data)
