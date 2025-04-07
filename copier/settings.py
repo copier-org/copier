@@ -35,7 +35,20 @@ class Settings(BaseModel):
             if env_path:
                 settings_path = Path(env_path)
             else:
-                settings_path = user_config_path(appname="copier", appauthor=False) / "settings.yml"
+                settings_path = (
+                    user_config_path("copier", appauthor=False) / "settings.yml"
+                )
+                # NOTE: Remove after a sufficiently long deprecation period.
+                if OS == "windows":
+                    old_settings_path = user_config_path("copier") / "settings.yml"
+                    if old_settings_path.is_file():
+                        warnings.warn(
+                            f"Settings path {old_settings_path} is deprecated. "
+                            f"Please migrate to {settings_path}.",
+                            DeprecationWarning,
+                            stacklevel=2,
+                        )
+                        settings_path = old_settings_path
         if settings_path.is_file():
             data = yaml.safe_load(settings_path.read_bytes())
             return cls.model_validate(data)
