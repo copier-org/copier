@@ -5,7 +5,7 @@ from tempfile import TemporaryDirectory
 import pytest
 from poethepoet.app import PoeThePoet
 
-from copier.tools import normalize_git_path
+from copier._tools import normalize_git_path
 
 from .helpers import git
 
