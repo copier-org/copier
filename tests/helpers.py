@@ -5,10 +5,11 @@ import json
 import os
 import sys
 import textwrap
+from collections.abc import Mapping
 from enum import Enum
 from hashlib import sha1
 from pathlib import Path
-from typing import Any, Mapping, Protocol
+from typing import Any, Protocol
 
 from pexpect.popen_spawn import PopenSpawn
 from plumbum import local

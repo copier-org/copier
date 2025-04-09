@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import platform
 import sys
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 from unittest.mock import patch
 
 import pytest

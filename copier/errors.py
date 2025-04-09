@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import subprocess
 import sys
+from collections.abc import Sequence
 from pathlib import Path
 from subprocess import CompletedProcess
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING
 
 from .tools import printf_exception
 from .types import PathSeq

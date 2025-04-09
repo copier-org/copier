@@ -6,6 +6,7 @@ import os
 import platform
 import subprocess
 import sys
+from collections.abc import Iterable, Mapping, Sequence
 from contextlib import suppress
 from contextvars import ContextVar
 from dataclasses import field, replace
@@ -19,10 +20,7 @@ from types import TracebackType
 from typing import (
     Any,
     Callable,
-    Iterable,
     Literal,
-    Mapping,
-    Sequence,
     TypeVar,
     get_args,
     overload,
