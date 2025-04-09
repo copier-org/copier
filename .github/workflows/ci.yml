@@ -16,12 +16,11 @@ on:
 env:
   LANG: "en_US.utf-8"
   LC_ALL: "en_US.utf-8"
-  PIP_CACHE_DIR: ${{ github.workspace }}/.cache/pip
-  POETRY_CACHE_DIR: ${{ github.workspace }}/.cache/pypoetry
-  POETRY_VIRTUALENVS_IN_PROJECT: "true"
   PRE_COMMIT_HOME: ${{ github.workspace }}/.cache/pre-commit
   PYTEST_ADDOPTS: ${{ github.event.inputs.pytest_addopts }}
   PYTHONIOENCODING: "UTF-8"
+  # renovate: datasource=pypi depName=uv
+  UV_VERSION: "0.6.13"
 
 jobs:
   build:
@@ -35,46 +34,23 @@ jobs:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
     runs-on: ${{ matrix.os }}
     steps:
-      # HACK https://github.com/actions/cache/issues/315
-      - name: Enable msys binaries
-        if: ${{ runner.os == 'Windows' }}
-        run: |
-          echo "C:\msys64\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          rm C:\msys64\usr\bin\bash.exe
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Needs all tags to compute dynamic version
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: "true"
+          cache-suffix: ${{ matrix.python-version }}
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          allow-prereleases: true
-      - name: Get full Python version
-        id: full-python-version
-        shell: bash # Required for use of $GITHUB_OUTPUT in windows
-        run:
-          echo version=$(python -c "import sys; print('-'.join(str(v) for v in
-          sys.version_info))") >> $GITHUB_OUTPUT
-      - uses: actions/cache@v4
-        with:
-          path: |
-            .cache
-            .venv
-          # prettier-ignore
-          key:
-            cache-
-            ${{ runner.os }}-
-            ${{ runner.arch }}-
-            ${{ steps.full-python-version.outputs.version }}-
-            ${{ hashFiles('pyproject.toml') }}-
-            ${{ hashFiles('poetry.lock') }}-
-            ${{ hashFiles('.pre-commit-config.yaml') }}
       - name: Install dependencies
-        run: |
-          python -m pip install poetry poetry-dynamic-versioning
-          poetry install --with dev,docs -v
+        run: uv sync --frozen
       - name: Run pytest
-        run: poetry run poe test --cov=./ --cov-report=xml -ra .
+        run: uv run poe test --cov=./ --cov-report=xml -ra .
       - name: Upload coverage to Codecov
         continue-on-error: true
         uses: codecov/codecov-action@v5
@@ -102,25 +78,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Install Nix and set up Cachix
+      # Install Nix
       - uses: cachix/install-nix-action@v31
         with:
           nix_path: nixpkgs=channel:nixos-unstable
+      # Set up Cachix
       - uses: cachix/cachix-action@v16
         with:
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
           extraPullNames: devenv
           name: copier
           pushFilter: (-source$|nixpkgs\.tar\.gz$)
+      # Install devenv
+      - run: nix-env -iA devenv -f '<nixpkgs>'
 
-      # Cache for poetry venv when using direnv
+      # Cache for uv venv when using direnv
       - uses: actions/cache@v4
         with:
           path: |
             .cache
             .devenv
             .direnv
-            .venv
           # prettier-ignore
           key:
             direnv-
@@ -133,10 +111,10 @@ jobs:
         with:
           install-nix: "false"
           cache-store: "false"
-      - run: copier --version
+      - run: uv run copier --version
 
-      # Run nix checks
-      - run: nix flake check -L --accept-flake-config --impure
+      # Run tests
+      - run: devenv test
 
   publish:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
@@ -148,36 +126,18 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Needs all tags to compute dynamic version
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: "true"
+          cache-suffix: "3.13"
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - name: Get full Python version
-        id: full-python-version
-        run:
-          echo version=$(python -c "import sys; print('-'.join(str(v) for v in
-          sys.version_info))") >> $GITHUB_OUTPUT
-      - uses: actions/cache@v4
-        with:
-          path: |
-            .cache
-            .venv
-          # prettier-ignore
-          key:
-            cache-
-            ${{ runner.os }}-
-            ${{ runner.arch }}-
-            ${{ steps.full-python-version.outputs.version }}-
-            ${{ hashFiles('pyproject.toml') }}-
-            ${{ hashFiles('poetry.lock') }}-
-            ${{ hashFiles('.pre-commit-config.yaml') }}
-      - name: Install dependencies
-        shell: bash
-        run: |
-          python -m pip install poetry poetry-dynamic-versioning
       - name: Build dist
-        run: |
-          poetry build
+        run: uv build
       - name: Publish distribution 📦 to Test PyPI
         uses: pypa/gh-action-pypi-publish@master
         with:
