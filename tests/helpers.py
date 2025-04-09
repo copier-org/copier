@@ -38,7 +38,7 @@ COPIER_CMD = local.get(
     # HACK https://github.com/microsoft/vscode-python/issues/14222
     str(Path(sys.executable).parent / "copier.cmd"),
     str(Path(sys.executable).parent / "copier"),
-    # Poetry installs the executable as copier.cmd in Windows
+    # uv installs the executable as copier.cmd in Windows
     "copier.cmd",
     "copier",
 )
