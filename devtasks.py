@@ -13,7 +13,7 @@ def dev_setup() -> None:
     """Set up a development environment."""
     with local.cwd(HERE):
         local["direnv"]("allow")
-        local["poetry"]("install")
+        local["uv"]("sync", "--frozen")
 
 
 def lint() -> None:
