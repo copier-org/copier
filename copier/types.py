@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Iterator, Mapping, MutableMapping, Sequence
 from contextlib import contextmanager
 from contextvars import ContextVar
 from enum import Enum
@@ -11,14 +12,9 @@ from typing import (
     Annotated,
     Any,
     Callable,
-    Dict,
-    Iterator,
     Literal,
-    Mapping,
-    MutableMapping,
     NewType,
     Optional,
-    Sequence,
     TypeVar,
     Union,
 )
@@ -32,7 +28,7 @@ else:
 
 # simple types
 StrOrPath = Union[str, Path]
-AnyByStrDict = Dict[str, Any]
+AnyByStrDict = dict[str, Any]
 AnyByStrMutableMapping = MutableMapping[str, Any]
 
 # sequences

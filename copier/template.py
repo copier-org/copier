@@ -5,12 +5,13 @@ from __future__ import annotations
 import re
 import sys
 from collections import ChainMap, defaultdict
+from collections.abc import Mapping, Sequence
 from contextlib import suppress
 from dataclasses import field
 from functools import cached_property
 from pathlib import Path, PurePosixPath
 from shutil import rmtree
-from typing import Any, Literal, Mapping, Sequence
+from typing import Any, Literal
 from warnings import warn
 
 import dunamai

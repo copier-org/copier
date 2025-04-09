@@ -3,8 +3,9 @@ from __future__ import annotations
 import platform
 import subprocess
 import sys
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Protocol, Union
+from typing import Any, Protocol, Union
 
 import pexpect
 import pytest
@@ -797,8 +798,8 @@ def test_required_choice_question(
 
 
 QuestionType: TypeAlias = str
-QuestionChoices: TypeAlias = Union[List[Any], Dict[str, Any]]
-ParsedValues: TypeAlias = List[Any]
+QuestionChoices: TypeAlias = Union[list[Any], dict[str, Any]]
+ParsedValues: TypeAlias = list[Any]
 
 _CHOICES: dict[str, tuple[QuestionType, QuestionChoices, ParsedValues]] = {
     "str": ("str", ["one", "two", "three"], ["one", "two", "three"]),
