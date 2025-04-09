@@ -8,13 +8,14 @@ import platform
 import re
 import stat
 import sys
+from collections.abc import Iterator
 from contextlib import suppress
 from decimal import Decimal
 from enum import Enum
 from importlib.metadata import version
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Callable, Iterator, Literal, TextIO, cast
+from typing import Any, Callable, Literal, TextIO, cast
 
 import colorama
 from packaging.version import Version

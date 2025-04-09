@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING
 
 from .tools import printf_exception
 from .types import PathSeq

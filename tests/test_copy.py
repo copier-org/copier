@@ -4,13 +4,13 @@ import filecmp
 import platform
 import stat
 import sys
-from contextlib import nullcontext as does_not_raise
+from contextlib import AbstractContextManager, nullcontext as does_not_raise
 from decimal import Decimal
 from enum import Enum
 from pathlib import Path
 from textwrap import dedent, indent
 from time import sleep
-from typing import Any, ContextManager
+from typing import Any
 
 import pytest
 import yaml
@@ -736,7 +736,7 @@ def test_validate_init_data(
     tmp_path_factory: pytest.TempPathFactory,
     spec: AnyByStrDict,
     value: Any,
-    expected: ContextManager[None],
+    expected: AbstractContextManager[None],
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
@@ -924,7 +924,7 @@ def test_validate_default_value(
     tmp_path_factory: pytest.TempPathFactory,
     type_name: str,
     default: Any,
-    expected: ContextManager[None],
+    expected: AbstractContextManager[None],
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
