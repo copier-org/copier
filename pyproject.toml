@@ -1,9 +1,9 @@
-[tool.poetry]
+[project]
 name = "copier"
-# This version is a placeholder autoupdated by poetry-dynamic-versioning
-version = "0.0.0"
+dynamic = ["version"]
 description = "A library for rendering project templates."
-license = "MIT"
+license = { text = "MIT" }
+requires-python = ">=3.9"
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
@@ -15,66 +15,55 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
 ]
-authors = ["Ben Felder <ben@felder.io>"]
+authors = [{ name = "Ben Felder", email = "ben@felder.io" }]
+readme = "README.md"
+dependencies = [
+  "colorama>=0.4.6",
+  "dunamai>=1.7.0",
+  "funcy>=1.17",
+  "jinja2>=3.1.5",
+  "jinja2-ansible-filters>=1.3.1",
+  "packaging>=23.0",
+  "pathspec>=0.9.0",
+  "plumbum>=1.6.9",
+  "pydantic>=2.4.2",
+  "pygments>=2.7.1",
+  "pyyaml>=5.3.1",
+  "questionary>=1.8.1",
+  "eval-type-backport>=0.1.3,<0.3.0; python_version < '3.10'",
+  "platformdirs>=4.3.6",
+  "typing-extensions>=4.0.0,<5.0.0; python_version < '3.11'",
+]
+
+[project.urls]
 homepage = "https://github.com/copier-org/copier"
 repository = "https://github.com/copier-org/copier"
-readme = "README.md"
-
-[tool.poetry.scripts]
-copier = "copier.__main__:copier_app_run"
-
-[tool.poetry.urls]
 "Bug Tracker" = "https://github.com/copier-org/copier/issues"
 
-[tool.poetry.dependencies]
-python = ">=3.9"
-colorama = ">=0.4.6"
-dunamai = ">=1.7.0"
-funcy = ">=1.17"
-jinja2 = ">=3.1.5"
-jinja2-ansible-filters = ">=1.3.1"
-packaging = ">=23.0"
-pathspec = ">=0.9.0"
-plumbum = ">=1.6.9"
-pydantic = ">=2.4.2"
-pygments = ">=2.7.1"
-pyyaml = ">=5.3.1"
-questionary = ">=1.8.1"
-eval-type-backport = { version = ">=0.1.3,<0.3.0", python = "<3.10" }
-platformdirs = ">=4.3.6"
-typing-extensions = { version = ">=4.0.0,<5.0.0", python = "<3.11" }
+[project.scripts]
+copier = "copier.__main__:CopierApp.run"
 
-[tool.poetry.group.dev]
-optional = true
-
-[tool.poetry.group.dev.dependencies]
-mypy = ">=0.931"
-pexpect = ">=4.8.0"
-poethepoet = ">=0.12.3"
-pre-commit = ">=2.17.0"
-pytest = ">=7.2.0"
-pytest-cov = ">=3.0.0"
-pytest-gitconfig = ">=0.6.0"
-pytest-xdist = ">=2.5.0"
-types-backports = ">=0.1.3"
-types-colorama = ">=0.4"
-types-pygments = ">=2.17"
-types-pyyaml = ">=6.0.4"
-
-[tool.poetry.group.docs]
-optional = true
-
-[tool.poetry.group.docs.dependencies]
-markdown-exec = ">=1.3.0"
-mkdocs-material = ">=8.2,<10.0.0"
-mkdocstrings = { version = ">=0.19.0", extras = ["python"] }
-
-[tool.poetry.group.build]
-# Helper group just for helping nix to build properly
-optional = true
-
-[tool.poetry.group.build.dependencies]
-poetry-dynamic-versioning = { version = ">=1.1.0", markers = "python_version < '4'" }
+[dependency-groups]
+dev = [
+  "mypy>=0.931",
+  "pexpect>=4.8.0",
+  "poethepoet>=0.12.3",
+  "pre-commit>=2.17.0",
+  "pytest>=7.2.0",
+  "pytest-cov>=3.0.0",
+  "pytest-gitconfig>=0.6.0",
+  "pytest-xdist>=2.5.0",
+  "types-backports>=0.1.3",
+  "types-colorama>=0.4",
+  "types-pygments>=2.17",
+  "types-pyyaml>=6.0.4",
+  "typing-extensions>=3.10.0.0,<5.0.0; python_version < '<3.10'",
+]
+docs = [
+  "markdown-exec>=1.3.0",
+  "mkdocs-material>=8.2,<10.0.0",
+  "mkdocstrings[python]>=0.19.0",
+]
 
 [tool.poe.tasks.coverage]
 cmd = "pytest --cov-report html --cov copier copier tests"
@@ -99,11 +88,6 @@ help = "run tests"
 [tool.poe.tasks.types]
 cmd = "mypy ."
 help = "run the type (mypy) checker on the codebase"
-
-[tool.poetry-dynamic-versioning]
-enable = true
-style = "pep440"
-vcs = "git"
 
 [tool.ruff.lint]
 extend-select = [
@@ -174,6 +158,9 @@ tag_format = "v$version"
 update_changelog_on_bump = true
 version = "9.6.0"
 
+[tool.hatch.version]
+source = "vcs"
+
 [build-system]
-requires = ["poetry-core>=1.7.0", "poetry-dynamic-versioning>=1.1.0"]
-build-backend = "poetry_dynamic_versioning.backend"
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"

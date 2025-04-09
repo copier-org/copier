@@ -6,7 +6,7 @@
     {
       "label": "local docs server",
       "type": "process",
-      "command": "poetry",
+      "command": "uv",
       "args": ["run", "poe", "docs"],
       "problemMatcher": []
     }

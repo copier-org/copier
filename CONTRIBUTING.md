@@ -70,8 +70,8 @@ have enough permissions, you work on Windows, or you just don't want to add yet 
 package manager to your system. We believe Nix is awesome enough so as to be the default
 tool for almost any developer, but we respect your choice.
 
-You can use standard Python tooling such as [Poetry][] and a valid Python installation
-installed in an imperative manner of your choice.
+You can use standard Python tooling such as [uv][] and a valid Python installation
+installed in an imperative manner of your choice, e.g. using uv as well.
 
 However, you won't be able to auto-lint or auto-format code without Nix. If you don't
 have Nix installed but you have Docker or Podman, you can run `poe lint` and get similar
@@ -81,7 +81,7 @@ If you still don't have Docker or Podman, don't worry. You can push your changes
 formatting. As long as you give Copier maintainers permissions to change your PR, a bot
 will kindly auto-format code for you and push it back to your branch.
 
-[Poetry]: https://python-poetry.org/
+[uv]: https://docs.astral.sh/uv/
 
 ## Get Started!
 
@@ -103,7 +103,7 @@ Ready to contribute? Here's how to set up the project for local development.
     ```
 
     Direnv will take some time to load for the 1st time. It will download all
-    development dependencies, including [Poetry][], and it will use it to create a
+    development dependencies, including [uv][], and it will use it to create a
     virtualenv and install Copier with all its development dependencies too.
 
 1.  Create a branch for local development:
@@ -117,20 +117,20 @@ Ready to contribute? Here's how to set up the project for local development.
 1.  When you're done making changes, check that your changes pass all tests:
 
     ```shell
-    poe test
-    poe lint
+    uv run poe test
+    uv run poe lint
     ```
 
 1.  Optionally, use pyclean to remove Python bytecode and build artifacts, e.g.
 
     ```shell
-    pipx run pyclean . --debris --verbose
+    uvx pyclean . --debris --verbose
     ```
 
     or
 
     ```shell
-    uvx pyclean . --debris --verbose
+    pipx run pyclean . --debris --verbose
     ```
 
 1.  Commit your changes and push your branch to GitHub:
@@ -181,7 +181,7 @@ possible and practical.
 To run a subset of tests:
 
 ```shell
-poe test tests/the-tests-file.py
+uv run poe test tests/the-tests-file.py
 ```
 
 ## Nix binary cache
