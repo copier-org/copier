@@ -49,10 +49,11 @@ copier --help-all
 """
 
 import sys
+from collections.abc import Iterable
 from os import PathLike
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, Callable, Iterable, Optional
+from typing import Any, Callable, Optional
 
 import yaml
 from plumbum import cli, colors
