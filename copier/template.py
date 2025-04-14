@@ -168,12 +168,17 @@ class Task:
         working_directory:
             The directory from inside where to execute the task.
             If `None`, the project directory will be used.
+
+        failure_message:
+            If provided, show the message when a task fails.
+            If not provided, show the exception message from `subprocess`.
     """
 
     cmd: str | Sequence[str]
     extra_vars: dict[str, Any] = field(default_factory=dict)
     condition: str | bool = True
     working_directory: Path = Path()
+    failure_message: str | None = None
 
 
 @dataclass
@@ -525,6 +530,7 @@ class Template:
                         extra_vars=extra_vars,
                         condition=task.get("when", "true"),
                         working_directory=Path(task.get("working_directory", ".")),
+                        failure_message=task.get("failure_message"),
                     )
                 )
             else:

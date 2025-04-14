@@ -145,18 +145,23 @@ class TaskError(subprocess.CalledProcessError, UserMessageError):
         returncode: int,
         stdout: str | bytes | None,
         stderr: str | bytes | None,
+        message: str | None = None,
     ):
         subprocess.CalledProcessError.__init__(
             self, returncode=returncode, cmd=command, output=stdout, stderr=stderr
         )
-        UserMessageError.__init__(
-            self,
-            message=f"Task {command!r} returned non-zero exit status {returncode}.",
-        )
+        if not message:
+            message = subprocess.CalledProcessError.__str__(self)
+        UserMessageError.__init__(self, message=message)
+
+    def __str__(self) -> str:
+        return self.message
 
     @classmethod
     def from_process(
-        cls, process: CompletedProcess[str] | CompletedProcess[bytes]
+        cls,
+        process: CompletedProcess[str] | CompletedProcess[bytes],
+        message: str | None = None,
     ) -> Self:
         """Create a TaskError from a CompletedProcess."""
         return cls(
@@ -164,6 +169,7 @@ class TaskError(subprocess.CalledProcessError, UserMessageError):
             returncode=process.returncode,
             stdout=process.stdout,
             stderr=process.stderr,
+            message=message,
         )
 
 
