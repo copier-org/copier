@@ -28,6 +28,10 @@ class Settings(BaseModel):
         default_factory=set, description="List of trusted repositories or prefixes"
     )
 
+    def _default_settings_path() -> Path:
+        return user_config_path("copier", appauthor=False) / "settings.yml"
+
+
     @classmethod
     def from_file(cls, settings_path: Path | None = None) -> Settings:
         """Load settings from a file."""
@@ -36,8 +40,7 @@ class Settings(BaseModel):
             if env_path:
                 settings_path = Path(env_path)
             else:
-                settings_path = (
-                    user_config_path("copier", appauthor=False) / "settings.yml"
+                settings_path = _default_settings_path()
                 )
                 # NOTE: Remove after a sufficiently long deprecation period.
                 if OS == "windows":
