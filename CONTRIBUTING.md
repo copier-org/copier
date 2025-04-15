@@ -196,3 +196,32 @@ nix-shell -p cachix --run 'cachix use copier && cachix use devenv'
 
 If you use Nix Flakes, add `--accept-flake-config` to install our binary cache
 automatically.
+
+## How to create a new release
+
+This section is for maintainers. Since we use the
+[conventional commits](https://www.conventionalcommits.org/) standard, the easiest way
+to create a new release is to open Copier repo locally and run:
+
+```shell
+# Make sure you're in the last commit
+git checkout master
+git pull --tags
+
+# Create a new changelog entry and bump the version automatically
+cz bump --retry
+
+# Push it
+git push --tags
+```
+
+Now the tag is released, but GitHub won't display it in the releases page. For that:
+
+1. [Draft a new release](https://github.com/copier-org/copier/releases/new).
+1. Choose the tag you just pushed.
+1. Set the tag also as release title.
+1. Copy the just added changelog entry from [CHANGELOG](./CHANGELOG.md) and paste it as
+   a description.
+1. Enable "Set as the latest release".
+1. Optionally, enable "Create a discussion for this release".
+1. Click on "Publish release".
