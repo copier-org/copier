@@ -5,10 +5,11 @@ import json
 import os
 import sys
 import textwrap
+from collections.abc import Mapping
 from enum import Enum
 from hashlib import sha1
 from pathlib import Path
-from typing import Any, Mapping, Protocol
+from typing import Any, Protocol
 
 from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
@@ -38,7 +39,7 @@ COPIER_CMD = local.get(
     # HACK https://github.com/microsoft/vscode-python/issues/14222
     str(Path(sys.executable).parent / "copier.cmd"),
     str(Path(sys.executable).parent / "copier"),
-    # Poetry installs the executable as copier.cmd in Windows
+    # uv installs the executable as copier.cmd in Windows
     "copier.cmd",
     "copier",
 )

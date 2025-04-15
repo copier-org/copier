@@ -17,121 +17,86 @@
     # TODO Remove these comments when fixed
     # github:NixOS/nixpkgs/nixpkgs-24.05
   };
+
   inputs = {
-    devenv.url = "github:cachix/devenv/latest";
+    devenv.url = "github:cachix/devenv";
     flake-compat.url = "https://flakehub.com/f/edolstra/flake-compat/1.*.tar.gz";
-    flake-utils.url = "https://flakehub.com/f/numtide/flake-utils/0.1.*.tar.gz";
+    flake-parts.url = "github:hercules-ci/flake-parts";
     nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/*.tar.gz";
-    poetry2nix.url = "github:nix-community/poetry2nix";
-    poetry2nix.inputs.nixpkgs.follows = "nixpkgs";
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
 
-  outputs = inputs:
-    with inputs;
-      {
-        overlays.default = final: prev: {
-          copier = self.packages.${prev.system}.default;
-        };
-      }
-      // flake-utils.lib.eachDefaultSystem (system: let
-        pkgs = import nixpkgs {
-          inherit system;
-          overlays = [poetry2nix.overlays.default];
-        };
-        lastRelease = (pkgs.lib.importTOML ./pyproject.toml).tool.commitizen.version;
-        version = "${lastRelease}.dev${self.sourceInfo.lastModifiedDate}+nix-git-${self.sourceInfo.shortRev or "dirty"}";
-        python = pkgs.python311;
+  outputs = inputs @ {
+    flake-parts,
+    devenv,
+    nixpkgs,
+    nixpkgs-unstable,
+    ...
+  }:
+    flake-parts.lib.mkFlake {inherit inputs;} {
+      imports = [
+        inputs.devenv.flakeModule
+      ];
+      systems = nixpkgs.lib.systems.flakeExposed;
 
-        # Builders
-        copierApp = let
-          baseApp = pkgs.poetry2nix.mkPoetryApplication {
-            inherit python version;
-            name = "copier-${version}";
-            projectDir = ./.;
+      perSystem = {
+        config,
+        self',
+        inputs',
+        pkgs,
+        system,
+        ...
+      }: {
+        devenv.shells.default = {
+          languages.python.enable = true;
+          languages.python.package = pkgs.python311;
+          languages.python.uv.enable = true;
+          languages.python.uv.package = inputs'.nixpkgs-unstable.legacyPackages.uv;
+          languages.python.uv.sync.enable = true;
 
-            # Trick poetry-dynamic-versioning into using our version
-            POETRY_DYNAMIC_VERSIONING_BYPASS = version;
-
-            # Test configuration
-            propagatedNativeBuildInputs = [pkgs.git];
-            pythonImportsCheck = ["copier"];
-            doCheck = true;
-            installCheckPhase = ''
-              patchShebangs tests
-              env \
-                GIT_AUTHOR_EMAIL=copier@example.com \
-                GIT_AUTHOR_NAME=copier \
-                GIT_COMMITTER_EMAIL=copier@example.com \
-                GIT_COMMITTER_NAME=copier \
-                PATH=$out/bin:$PATH \
-                POETRY_VIRTUALENVS_PATH=$NIX_BUILD_TOP/virtualenvs \
-                PYTHONOPTIMIZE= \
-                pytest --color=yes -m 'not impure'
-            '';
-          };
-        in
-          baseApp.overridePythonAttrs (old: {
-            inherit version;
-            installCheckPhase = ''
-              ${old.installCheckPhase}
-
-              # Make sure version is properly patched in Nix build
-              test "$(copier --version)" != "copier 0.0.0"
-            '';
-          });
-        copierModule = python.pkgs.toPythonModule copierApp;
-      in rec {
-        devShells.default = devenv.lib.mkShell {
-          inherit inputs pkgs;
-          modules = [
-            {
-              packages = with pkgs; [
-                # Essential dev tools
-                poetry
-                python
-
-                # IDE integration tools
-                alejandra
-                commitizen
-                mypy
-                nodePackages.prettier
-                ruff
-                taplo
-              ];
-              difftastic.enable = true;
-              pre-commit.hooks = {
-                alejandra.enable = true;
-                commitizen.enable = true;
-                editorconfig-checker.enable = true;
-                editorconfig-checker.excludes = [
-                  "\.md$"
-                  "\.noeof\."
-                  "\.bundle$"
-                ];
-                prettier.enable = true;
-                prettier.excludes = [
-                  # Those files have wrong syntax and would fail
-                  "^tests/demo_invalid/copier.yml$"
-                  "^tests/demo_transclude_invalid(_multi)?/demo/copier.yml$"
-                  # HACK https://github.com/prettier/prettier/issues/9430
-                  "^tests/demo"
-                ];
-                ruff.enable = true;
-                ruff-format.enable = true;
-                taplo.enable = true;
-              };
-            }
+          packages = [
+            pkgs.alejandra
+            pkgs.commitizen
+            pkgs.mypy
+            pkgs.nodePackages.prettier
+            pkgs.ruff
+            pkgs.taplo
           ];
-        };
-        packages.default = copierModule;
-        apps =
-          builtins.mapAttrs
-          (name: value: flake-utils.lib.mkApp {drv = value;})
-          packages;
-        checks =
-          packages
-          // {
-            devenv-ci = devShells.default.ci;
+
+          difftastic.enable = true;
+
+          pre-commit.hooks = {
+            alejandra.enable = true;
+            commitizen.enable = true;
+            editorconfig-checker.enable = true;
+            editorconfig-checker.excludes = [
+              "\.md$"
+              "\.noeof\."
+              "\.bundle$"
+            ];
+            prettier.enable = true;
+            prettier.excludes = [
+              # Those files have wrong syntax and would fail
+              "^tests/demo_invalid/copier.yml$"
+              "^tests/demo_transclude_invalid(_multi)?/demo/copier.yml$"
+              # HACK https://github.com/prettier/prettier/issues/9430
+              "^tests/demo"
+            ];
+            ruff.enable = true;
+            ruff-format.enable = true;
+            taplo.enable = true;
           };
-      });
+
+          enterTest = ''
+            env \
+              GIT_AUTHOR_EMAIL=copier@example.com \
+              GIT_AUTHOR_NAME=copier \
+              GIT_COMMITTER_EMAIL=copier@example.com \
+              GIT_COMMITTER_NAME=copier \
+              PYTHONOPTIMIZE= \
+              uv run poe test
+          '';
+        };
+      };
+    };
 }
