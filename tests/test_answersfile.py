@@ -9,7 +9,7 @@ import pytest
 import yaml
 
 import copier
-from copier.user_data import load_answersfile_data
+from copier._user_data import load_answersfile_data
 
 from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree, git_save
 

@@ -5,12 +5,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Sequence
 
-from .tools import printf_exception
-from .types import PathSeq
+from ._tools import printf_exception
+from ._types import PathSeq
 
 if TYPE_CHECKING:  # always false
-    from .template import Template
-    from .user_data import AnswersMap, Question
+    from ._template import Template
+    from ._user_data import AnswersMap, Question
 
 
 # Errors

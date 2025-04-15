@@ -10,8 +10,8 @@ import pytest
 import yaml
 from plumbum import local
 
-from copier.cli import CopierApp
-from copier.user_data import load_answersfile_data
+from copier._cli import CopierApp
+from copier._user_data import load_answersfile_data
 
 from .helpers import COPIER_CMD, build_file_tree, git
 
