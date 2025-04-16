@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import sys
+import os
 from pathlib import Path
+import platform
 
 import pytest
 import yaml
@@ -25,10 +27,10 @@ def test_settings_from_default_location(settings_path: Path) -> None:
 
     assert settings.defaults == {"foo": "bar"}
 
-@pytest.mark.skipif(platform.system() != "Windows")
+@pytest.mark.skipif(platform.system() != "Windows", reason="Windows-only test")
 def test_default_windows_settings_path() -> None:
     settings = Settings()
-    assert settings._default_settings_path() = Path(os.getenv("USER_PROFILE"), "copier", "settings.yml")
+    assert settings._default_settings_path() == Path(os.getenv("USERPROFILE", default=""), "AppData", "Local", "copier", "settings.yml")
 
 
 @pytest.mark.usefixtures("config_path")
