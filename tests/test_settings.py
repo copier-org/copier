@@ -25,7 +25,7 @@ def test_settings_from_default_location(settings_path: Path) -> None:
 
     assert settings.defaults == {"foo": "bar"}
 
-@pytest.mark.skipif(OS != 'windows')
+@pytest.mark.skipif(platform.system() != "Windows")
 def test_default_windows_settings_path() -> None:
     settings = Settings()
     assert settings._default_settings_path() = Path(os.getenv("USER_PROFILE"), "copier", "settings.yml")
