@@ -12,7 +12,7 @@ standard configuration directory for your platform:
 
 !!! note
 
-    Windows only: `%USERPROFILE%\AppData\Local\copier\copier` was the standard configuration directory until v9.6.0. This standard configuration directory is deprecated and will removed in a future version.
+    Windows only: `%USERPROFILE%\AppData\Local\copier\copier` was the standard configuration directory until v9.6.0. This standard configuration directory is deprecated and will be removed in a future version.
 
 This location can be overridden by setting the `COPIER_SETTINGS_PATH` environment
 variable.
