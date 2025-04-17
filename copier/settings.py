@@ -13,6 +13,7 @@ from platformdirs import user_config_path
 from pydantic import BaseModel, Field
 
 from .errors import MissingSettingsWarning
+from .tools import OS
 
 ENV_VAR = "COPIER_SETTINGS_PATH"
 
@@ -27,6 +28,10 @@ class Settings(BaseModel):
         default_factory=set, description="List of trusted repositories or prefixes"
     )
 
+    @staticmethod
+    def _default_settings_path() -> Path:
+        return user_config_path("copier", appauthor=False) / "settings.yml"
+
     @classmethod
     def from_file(cls, settings_path: Path | None = None) -> Settings:
         """Load settings from a file."""
@@ -35,7 +40,19 @@ class Settings(BaseModel):
             if env_path:
                 settings_path = Path(env_path)
             else:
-                settings_path = user_config_path("copier") / "settings.yml"
+                settings_path = cls._default_settings_path()
+
+                # NOTE: Remove after a sufficiently long deprecation period.
+                if OS == "windows":
+                    old_settings_path = user_config_path("copier") / "settings.yml"
+                    if old_settings_path.is_file():
+                        warnings.warn(
+                            f"Settings path {old_settings_path} is deprecated. "
+                            f"Please migrate to {settings_path}.",
+                            DeprecationWarning,
+                            stacklevel=2,
+                        )
+                        settings_path = old_settings_path
         if settings_path.is_file():
             data = yaml.safe_load(settings_path.read_bytes())
             return cls.model_validate(data)

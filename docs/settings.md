@@ -10,6 +10,10 @@ standard configuration directory for your platform:
 -   `%USERPROFILE%\AppData\Local\copier` on Windows as defined in
     [Known folders](https://docs.microsoft.com/en-us/windows/win32/shell/known-folders)
 
+!!! note
+
+    Windows only: `%USERPROFILE%\AppData\Local\copier\copier` was the standard configuration directory until v9.6.0. This standard configuration directory is deprecated and will be removed in a future version.
+
 This location can be overridden by setting the `COPIER_SETTINGS_PATH` environment
 variable.
 
