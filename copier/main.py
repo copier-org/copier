@@ -42,6 +42,7 @@ from .errors import (
     CopierAnswersInterrupt,
     ExtensionNotFoundError,
     InteractiveSessionError,
+    TaskError,
     UnsafeTemplateError,
     UserMessageError,
     YieldTagInFileError,
@@ -388,7 +389,16 @@ class Worker:
 
             extra_env = {k[1:].upper(): str(v) for k, v in extra_context.items()}
             with local.cwd(working_directory), local.env(**extra_env):
-                subprocess.run(task_cmd, shell=use_shell, check=True, env=local.env)
+                process = subprocess.run(task_cmd, shell=use_shell, env=local.env)
+                if process.returncode:
+                    if task.failure_message:
+                        message = self._render_string(task.failure_message, extra_context)
+                    else:
+                        message = f"{task_cmd!r} returned non-zero exit status {process.returncode}"
+                    raise TaskError.from_process(
+                        process,
+                        message=f"Task {i + 1} failed: {message}.",
+                    )
 
     def _render_context(self) -> AnyByStrMutableMapping:
         """Produce render context for Jinja."""
