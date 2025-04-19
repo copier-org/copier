@@ -124,7 +124,7 @@ def test_pretend_mode(tmp_path_factory: pytest.TempPathFactory) -> None:
     copier.run_copy(str(src), dst, pretend=True, unsafe=True)
     assert not (dst / "created-by-task.txt").exists()
 
-Literal["linux", "macos", "windows"]
+
 @pytest.mark.parametrize(
     "os, filename",
     [

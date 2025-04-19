@@ -1602,7 +1602,7 @@ Refer to the example provided below for more information.
         - command: Remove-Item {{ name_of_the_project }}\\README.md
           when: "{{ _copier_conf.os == 'windows' }}"
         - command: finalize-project
-          failure_message: Coudln't finalize {{ name_of_the_project }}
+          failure_message: Couldn't finalize {{ name_of_the_project }}
     ```
 
     Note: the example assumes you use [Invoke](https://www.pyinvoke.org/) as

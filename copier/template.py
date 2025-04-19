@@ -170,8 +170,8 @@ class Task:
             If `None`, the project directory will be used.
 
         failure_message:
-            If provided, show the message when a task fails.
-            If not provided, show the exception message from `subprocess`.
+            Provides a message to pritn if the task fails.
+            If not provided, the subprocess exception message will be shown.
     """
 
     cmd: str | Sequence[str]
