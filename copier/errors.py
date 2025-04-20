@@ -149,10 +149,11 @@ class TaskError(subprocess.CalledProcessError, UserMessageError):
         subprocess.CalledProcessError.__init__(
             self, returncode=returncode, cmd=command, output=stdout, stderr=stderr
         )
-        UserMessageError.__init__(
-            self,
-            message=f"Task {command!r} returned non-zero exit status {returncode}.",
-        )
+        message = f"Task {command!r} returned non-zero exit status {returncode}."
+        if self.stderr:
+            stderr_str = self.stderr.decode() if isinstance(self.stderr, bytes) else self.stderr
+            message += f"\nStderr:\n{stderr_str.strip()}"
+        UserMessageError.__init__(self, message)
 
     @classmethod
     def from_process(
