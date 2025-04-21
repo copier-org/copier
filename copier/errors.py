@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import subprocess
+import sys
 from pathlib import Path
+from subprocess import CompletedProcess
 from typing import TYPE_CHECKING, Sequence
 
 from .tools import printf_exception
@@ -12,6 +15,11 @@ if TYPE_CHECKING:  # always false
     from .template import Template
     from .user_data import AnswersMap, Question
 
+if sys.version_info < (3, 11):
+    from typing_extensions import Self
+else:
+    from typing import Self
+
 
 # Errors
 class CopierError(Exception):
@@ -20,6 +28,12 @@ class CopierError(Exception):
 
 class UserMessageError(CopierError):
     """Exit the program giving a message to the user."""
+
+    def __init__(self, message: str):
+        self.message = message
+
+    def __str__(self) -> str:
+        return self.message
 
 
 class UnsupportedVersionError(UserMessageError):
@@ -120,6 +134,35 @@ class YieldTagInFileError(CopierError):
 
 class MultipleYieldTagsError(CopierError):
     """Multiple yield tags are used in one path name, but it is not allowed."""
+
+
+class TaskError(subprocess.CalledProcessError, UserMessageError):
+    """Exception raised when a task fails."""
+
+    def __init__(
+        self,
+        command: str | Sequence[str],
+        returncode: int,
+        stdout: str | bytes | None,
+        stderr: str | bytes | None,
+    ):
+        subprocess.CalledProcessError.__init__(
+            self, returncode=returncode, cmd=command, output=stdout, stderr=stderr
+        )
+        message = f"Task {command!r} returned non-zero exit status {returncode}."
+        UserMessageError.__init__(self, message)
+
+    @classmethod
+    def from_process(
+        cls, process: CompletedProcess[str] | CompletedProcess[bytes]
+    ) -> Self:
+        """Create a TaskError from a CompletedProcess."""
+        return cls(
+            command=process.args,
+            returncode=process.returncode,
+            stdout=process.stdout,
+            stderr=process.stderr,
+        )
 
 
 # Warnings
