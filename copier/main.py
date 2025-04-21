@@ -1023,6 +1023,9 @@ class Worker:
                     f"\nCopying from template version {self.template.version}",
                     file=sys.stderr,
                 )
+            if not self.skip_tasks:
+                with Phase.use(Phase.TASKS):
+                    self._execute_tasks(self.template.tasks("before"))
             with Phase.use(Phase.RENDER):
                 self._render_template()
             if not self.quiet:
@@ -1030,7 +1033,7 @@ class Worker:
                 print("")  # padding space
             if not self.skip_tasks:
                 with Phase.use(Phase.TASKS):
-                    self._execute_tasks(self.template.tasks)
+                    self._execute_tasks(self.template.tasks("after"))
         except Exception:
             if not was_existing and self.cleanup_on_error:
                 rmtree(self.subproject.local_abspath)
