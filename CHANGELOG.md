@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.7.0 (2025-04-22)
+
+### Feat
+
+-   raise new `TaskError` exception on task errors
+-   raise `InteractiveSessionError` when prompting in non-interactive environment
+
+### Fix
+
+-   **settings**: use `<CONFIG_ROOT>/copier` as settings directory on Windows (#2071)
+-   **updating**: ignore last answer of `when: false` questions
+-   restore access to full rendering context in prompt phase
+
+### Refactor
+
+-   re-expose API with deprecation warnings on non-public API imports
+-   rename internal modules with a `_` prefix
+
 ## v9.6.0 (2025-03-09)
 
 ### Feat
