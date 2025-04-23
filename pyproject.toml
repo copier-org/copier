@@ -175,7 +175,7 @@ annotated_tag = true
 changelog_incremental = true
 tag_format = "v$version"
 update_changelog_on_bump = true
-version = "9.7.0"
+version = "9.7.1"
 
 [tool.hatch.version]
 source = "vcs"

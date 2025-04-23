@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.7.1 (2025-04-23)
+
+### Refactor
+
+-   import from module `_tools` instead of `tools`
+
 ## v9.7.0 (2025-04-22)
 
 ### Feat
