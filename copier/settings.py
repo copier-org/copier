@@ -13,7 +13,7 @@ from platformdirs import user_config_path
 from pydantic import BaseModel, Field
 
 from .errors import MissingSettingsWarning
-from .tools import OS
+from ._tools import OS
 
 ENV_VAR = "COPIER_SETTINGS_PATH"
 
