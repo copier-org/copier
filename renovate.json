@@ -1,6 +1,10 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", ":semanticCommitTypeAll(build)"],
+  "extends": [
+    "config:recommended",
+    "customManagers:githubActionsVersions",
+    ":semanticCommitTypeAll(build)"
+  ],
   "nix": {
     "enabled": true
   },
