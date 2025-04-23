@@ -12,8 +12,8 @@ import yaml
 from platformdirs import user_config_path
 from pydantic import BaseModel, Field
 
-from .errors import MissingSettingsWarning
 from ._tools import OS
+from .errors import MissingSettingsWarning
 
 ENV_VAR = "COPIER_SETTINGS_PATH"
 
