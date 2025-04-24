@@ -48,7 +48,7 @@ def lint() -> None:
                     "docker.io/nixos/nix",
                     "bash",
                     "-c",
-                    f'git config --global --add safe.directory {HERE} && {shlex.join(["nix", *args])}',
+                    f"git config --global --add safe.directory {HERE} && {shlex.join(['nix', *args])}",
                 ]
                 & TEE
             )
