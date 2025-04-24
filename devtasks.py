@@ -1,6 +1,7 @@
 """Development helper tasks."""
 
 import logging
+import shlex
 from pathlib import Path
 
 from plumbum import TEE, CommandNotFound, ProcessExecutionError, local
@@ -24,7 +25,7 @@ def lint() -> None:
         "--accept-flake-config",
         "develop",
         "--impure",
-        HERE,
+        f"{HERE}",
         "--command",
         "pre-commit",
         "run",
@@ -45,8 +46,9 @@ def lint() -> None:
                     f"--volume={HERE}:{HERE}:rw,z",
                     f"--workdir={HERE}",
                     "docker.io/nixos/nix",
-                    "nix",
-                    args,
+                    "bash",
+                    "-c",
+                    f'git config --global --add safe.directory {HERE} && {shlex.join(["nix", *args])}',
                 ]
                 & TEE
             )
