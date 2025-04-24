@@ -125,8 +125,7 @@ def test_import_macro(
             (src / subdir / "slug-answer.txt.jinja"): "{{ slug }}",
             # File for testing the Jinja import statement as content.
             (src / subdir / "slug-from-macro.txt.jinja"): (
-                "{% from 'includes/slugify.jinja' import slugify %}"
-                "{{ slugify(name) }}"
+                "{% from 'includes/slugify.jinja' import slugify %}{{ slugify(name) }}"
             ),
             # File for testing the Jinja import statement in the file name.
             (
