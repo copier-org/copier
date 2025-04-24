@@ -230,7 +230,7 @@ def test_migration_condition(
                     f"""\
                     _migrations:
                     -   command: touch foo
-                        when: {'true' if condition else 'false'}
+                        when: {"true" if condition else "false"}
                     """
                 ),
             }
