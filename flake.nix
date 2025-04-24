@@ -44,30 +44,62 @@
         self',
         inputs',
         pkgs,
+        lib,
         system,
         ...
-      }: {
+      }: let
+        python = pkgs.python311;
+        uv = inputs'.nixpkgs-unstable.legacyPackages.uv;
+      in {
         devenv.shells.default = {
-          languages.python.enable = true;
-          languages.python.package = pkgs.python311;
-          languages.python.uv.enable = true;
-          languages.python.uv.package = inputs'.nixpkgs-unstable.legacyPackages.uv;
-          languages.python.uv.sync.enable = true;
+          languages.python = {
+            enable = true;
+            package = python;
+
+            uv = {
+              enable = true;
+              package = uv;
+              sync.enable = true;
+            };
+          };
+
+          env = {
+            # Force uv to use nixpkgs' Python interpreter
+            UV_PYTHON = python;
+            # Prevent uv from managing Python downloads
+            UV_PYTHON_DOWNLOADS = "never";
+          };
+
+          tasks = {
+            # Patch binaries to make them runnable on NixOS
+            # E.g.: https://github.com/astral-sh/ruff/issues/1699
+            "venv:patchelf" = {
+              exec = ''
+                for exe in ruff taplo; do
+                  ${lib.getExe pkgs.patchelf} --set-interpreter ${pkgs.stdenv.cc.bintools.dynamicLinker} $(uv run which $exe)
+                done;
+              '';
+              after = ["devenv:python:uv"];
+              before = ["devenv:enterShell"];
+            };
+          };
 
           packages = [
+            pkgs.git
             pkgs.alejandra
-            pkgs.commitizen
-            pkgs.mypy
             pkgs.nodePackages.prettier
-            pkgs.ruff
-            pkgs.taplo
           ];
 
           difftastic.enable = true;
 
+          pre-commit.gitPackage = pkgs.git;
           pre-commit.hooks = {
             alejandra.enable = true;
-            commitizen.enable = true;
+            commitizen = {
+              enable = true;
+              package = null;
+              entry = "uv run cz check --allow-abort --commit-msg-file";
+            };
             editorconfig-checker.enable = true;
             editorconfig-checker.excludes = [
               "\.md$"
@@ -86,9 +118,21 @@
               # HACK https://github.com/prettier/prettier/issues/9430
               "^tests/demo"
             ];
-            ruff.enable = true;
-            ruff-format.enable = true;
-            taplo.enable = true;
+            ruff = {
+              enable = true;
+              package = null;
+              entry = "uv run ruff check --fix";
+            };
+            ruff-format = {
+              enable = true;
+              package = null;
+              entry = "uv run ruff format";
+            };
+            taplo = {
+              enable = true;
+              package = null;
+              entry = "uv run taplo fmt";
+            };
           };
 
           enterTest = ''
