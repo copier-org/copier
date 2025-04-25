@@ -7,7 +7,7 @@ on:
 
 env:
   # renovate: datasource=pypi depName=uv
-  UV_VERSION: "0.6.16"
+  UV_VERSION: "0.6.17"
 
 jobs:
   build:
