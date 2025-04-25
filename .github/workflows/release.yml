@@ -24,6 +24,12 @@ jobs:
         with:
           version: ${{ env.UV_VERSION }}
 
+      # See https://peps.python.org/pep-0440/#local-version-identifiers
+      - name: Omit local version for publishing to test.pypi.org
+        run: >
+          echo SETUPTOOLS_SCM_OVERRIDES_FOR_COPIER='{local_scheme="no-local-version"}'
+          >> $GITHUB_ENV
+
       - name: Build project for distribution
         run: uv build
 
