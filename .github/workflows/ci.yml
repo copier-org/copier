@@ -19,7 +19,7 @@ env:
   PYTEST_ADDOPTS: ${{ github.event.inputs.pytest_addopts }}
   PYTHONIOENCODING: "UTF-8"
   # renovate: datasource=pypi depName=uv
-  UV_VERSION: "0.6.17"
+  UV_VERSION: "0.7.0"
 
 jobs:
   build:
