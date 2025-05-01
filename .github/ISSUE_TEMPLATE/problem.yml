@@ -104,6 +104,8 @@ body:
     attributes:
       label: Installation method
       options:
+        - uvx+pypi
+        - uvx+git
         - pipx+pypi
         - pipx+git
         - pip+pypi
