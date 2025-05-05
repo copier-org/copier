@@ -217,6 +217,9 @@ class Worker:
             When `True`, skip template tasks execution.
     """
 
+    # NOTE: attributes are fully documented in [creating.md](../docs/creating.md)
+    # make sure to update documentation upon any changes.
+
     src_path: str | None = None
     dst_path: Path = Path()
     answers_file: RelativePath | None = None
