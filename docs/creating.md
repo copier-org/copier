@@ -117,6 +117,10 @@ The operating system-specific directory separator.
 
 The current commit hash from the template.
 
+!!! note
+    See the table of [Copier Worker object _attributes_][copier.main.Worker] for a reference
+    of all attributes exposed by the `_copier_conf` global variable.
+
 ### `_copier_python`
 
 The absolute path of the Python interpreter running Copier.
