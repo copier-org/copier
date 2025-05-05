@@ -62,7 +62,7 @@ power, see [below][how-can-i-alter-the-context-before-rendering-the-project].
 When you want to ensure that a computed value is set or locked during project initialization,
 for example if you want to store a dynamically computed `copyright_year` but ensure that it doesn't
 change upon later Copier template updates, you can combine the `default` and `when: false`
-configuration while also explicitly saving the value into your `{{ _copier_conf.answers_file }}.jinja`.
+configuration while also explicitly dumping the value to yaml with the [answers_file](/configuring/#the-copier-answersyml-file).
 
 !!! example
 
