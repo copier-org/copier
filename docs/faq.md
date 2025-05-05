@@ -57,6 +57,27 @@ Combine `default` and `when: false`.
 See [advanced prompt formatting docs][advanced-prompt-formatting]. If you need more
 power, see [below][how-can-i-alter-the-context-before-rendering-the-project].
 
+## How to "lock" a computed value?
+
+When you want to ensure that a computed value is set or locked during project initialization,
+for example if you want to store a dynamically computed `copyright_year` but ensure that it doesn't
+change upon later copier template updates, you can combine the above `default` and `when:false`
+configuration while also explicitly saving the value into your `{{ _copier_conf.answers_file }}.jinja`.
+
+!!! example
+
+    ```yaml title="copier.yaml"
+    copyright_year:
+        type: str
+        default: "{{ copyright_year | default('%Y' | strftime) }}"
+        when: false
+    ```
+
+    ```yaml title="{{ _copier_conf.answers_file }}.jinja"
+    # Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+    {{ dict(_copier_answers, copyright_year=copyright_year) | to_nice_yaml -}}
+    ```
+
 ## How can I alter the context before rendering the project?
 
 **Use the [`ContextHook` extension][context-hook].** It lets you modify the context used
