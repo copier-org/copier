@@ -399,6 +399,11 @@ class CopierUpdateSubApp(_Subcommand):
         default=False,
         help="Skip questions that have already been answered",
     )
+    answers_only = cli.Flag(
+        ["-u", "--answers-only"],
+        default=False,
+        help="Only update copier answers, do not update the template version",
+    )
 
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
         """Call [run_update][copier.main.Worker.run_update].
@@ -419,6 +424,7 @@ class CopierUpdateSubApp(_Subcommand):
                 context_lines=self.context_lines,
                 defaults=self.defaults,
                 skip_answered=self.skip_answered,
+                update_answers_only=self.answers_only,
                 overwrite=True,
             ) as worker:
                 worker.run_update()
