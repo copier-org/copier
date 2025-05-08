@@ -95,31 +95,40 @@ suitable to [autoupdate your project safely][the-copier-answersyml-file]:
 
 ### `_copier_conf`
 
-`_copier_conf` includes a representation of the current Copier
-[Worker][copier.main.Worker] object, also slightly modified:
+`_copier_conf` includes a slightly modified representation of the 
+current Copier Worker object:
 
 -   It only contains JSON-serializable data.
 -   You can serialize it with `{{ _copier_conf|to_json }}`.
 -   ⚠️ It contains secret answers inside its `.data` key.
 -   Modifying it doesn't alter the current rendering configuration.
 
-Furthermore, the following keys are added:
+`_copier_conf` attributes:
 
-#### `os` { #\_copier_conf.os }
-
-The detected operating system, either `"linux"`, `"macos"`, `"windows"` or `None`.
-
-#### `sep` { #\_copier_conf.sep }
-
-The operating system-specific directory separator.
-
-#### `vcs_ref_hash` { #\_copier_conf.vcs_ref_hash }
-
-The current commit hash from the template.
-
-!!! note
-    See the table of [Copier Worker object _attributes_][copier.main.Worker] for a reference
-    of all attributes exposed by the `_copier_conf` global variable.
+| Name               | Type                       | Description |
+| ------------------ | -------------------------- | ----------- |
+| `answers_file`     | `RelativePath \| None`     | Indicates the path for [the answers file][the-copier-answersyml-file].\nThe path must be relative to `dst_path`.\nIf it is `None`, the default value will be obtained from [copier.template.Template.answers_relpath][]. |
+| `cleanup_on_error` | `bool`                     | Delete `dst_path` if there's an error? See [cleanup_on_error][]. |
+| `conflict`         | `Literal['inline', 'rej']` | One of `"inline"` (default) or `"rej"`. |
+| `context_lines`    | `PositiveInt`              | Lines of context to consider when solving conflicts in updates.\nWith more lines, context resolution is more accurate, but it will also produce more conflicts if your subproject has evolved.\nWith less lines, context resolution is less accurate, but it will respect better the evolution of your subproject. |
+| `data`             | `AnyByStrDict`             | Answers to the questionnaire defined in the template.\n⚠️ Contains secret answers. |
+| `defaults`         | `bool`                     | When `True`, use default answers to questions, which might be null if not specified.\nSee [defaults][]. |
+| `dst_path`         | `Path`                     | Destination path where to render the subproject. |
+| `exclude`          | `Sequence[str]`            | User-chosen additional [file exclusion patterns][exclude]. |
+| `os`               | `str`                      | The detected operating system, either `"linux"`, `"macos"`, `"windows"` or `None`. |
+| `overwrite`        | `bool`                     | When `True`, overwrite files that already exist, without asking.\nSee [overwrite][]. |
+| `pretend`          | `bool`                     | When `True`, produce no real rendering.\nSee [pretend][]. |
+| `quiet`            | `bool`                     | When `True`, disable all output.\nSee [quiet][]. |
+| `sep`              | `str`                      | The operating system-specific directory separator. |
+| `skip_answered`    | `bool`                     | When `True`, skip questions that have already been answered. |
+| `skip_if_exists`   | `Sequence[str]`            | User-chosen additional [file skip patterns][skip_if_exists]. |
+| `skip_tasks`       | `bool`                     | When `True`, skip [template tasks execution][tasks]. |
+| `src_path`         | `str \| None`              | String that can be resolved to a template path, be it local or remote.\nSee [copier.vcs.get_repo][].\nIf it is `None`, then it means that you are [updating a project][updating-a-project], and the original `src_path` will be obtained from [the answers file][the-copier-answersyml-file]. |
+| `use_prereleases`  | `bool`                     | Consider prereleases when detecting the _latest_ one?\nSee [use_prereleases][]. Has no effect if specifying [vcs_ref][] . |
+| `user_defaults`    | `AnyByStrDict`             | Specify user defaults that may override a template's defaults during question prompts. |
+| `unsafe`           | `bool`                     | When `True`, allow usage of unsafe templates.\nSee [unsafe][]. |
+| `vcs_ref`          | `str \| None`              | Specify the VCS tag/commit to use in the template. |
+| `vcs_ref_hash`     | `str`                      | The current commit hash from the template. |
 
 ### `_copier_python`
 
