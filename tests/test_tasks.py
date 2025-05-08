@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal
 
+from copier.errors import TaskError
 import pytest
 import yaml
 
@@ -180,3 +181,38 @@ def test_copier_phase_variable(tmp_path_factory: pytest.TempPathFactory) -> None
     )
     copier.run_copy(str(src), dst, unsafe=True)
     assert (dst / "tasks").exists()
+
+
+@pytest.mark.parametrize(
+    "task,failure_message,match,data",
+    [
+        ("false", "Oh, dear! The task failed", r"Task \d+ failed: Oh, dear! The task failed\.", None),
+        ("ls non-existing-directory", None, r"Task \d+ failed: 'ls non-existing-directory' returned non-zero exit status 2\.", None),
+        ("false", "{{ name }} blew up", r"Task \d+ failed: Wile E. Coyote blew up\.", {"name": "Wile E. Coyote"}),
+    ],
+)
+def test_task_failure_message(
+    tmp_path_factory: pytest.TempPathFactory,
+    task: str,
+    failure_message: str | None,
+    match: str,
+    data: dict[str, str] | None,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    yaml_dict = {
+        "_tasks": [
+            {
+                "command": task,
+            }
+        ]
+    }
+    if failure_message:
+        yaml_dict["_tasks"][0]["failure_message"] = failure_message
+
+    build_file_tree(
+        {
+            (src / "copier.yml"): yaml.safe_dump(yaml_dict)
+        }
+    )
+    with pytest.raises(TaskError, match=match):
+        copier.run_copy(str(src), dst, unsafe=True, data=data)
