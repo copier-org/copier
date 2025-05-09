@@ -1335,7 +1335,7 @@ class Worker:
                             perms_sha_mode, path = line.split("\t")
                             perms, sha, _ = perms_sha_mode.split()
                             input_lines.append(f"0 {'0' * 40}\t{path}")
-                            input_lines.append(f"{perms} {sha} 1\t{path}")
+                            input_lines.append(f"{perms} {sha} 2\t{path}")
                             with suppress(ProcessExecutionError):
                                 # The following command will fail
                                 # if the file did not exist in the previous version.
@@ -1344,7 +1344,7 @@ class Worker:
                                     "-w",
                                     old_path / normalize_git_path(path),
                                 ).strip()
-                                input_lines.append(f"{perms} {old_sha} 2\t{path}")
+                                input_lines.append(f"{perms} {old_sha} 1\t{path}")
                             with suppress(ProcessExecutionError):
                                 # The following command will fail
                                 # if the file was deleted in the latest version.
