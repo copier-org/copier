@@ -212,6 +212,10 @@ class Worker:
         skip_answered:
             When `True`, skip questions that have already been answered.
 
+        answers_only:
+            Only update the answers, use the template version that was
+            used in the last interaction.
+
         skip_tasks:
             When `True`, skip template tasks execution.
     """
@@ -235,6 +239,7 @@ class Worker:
     context_lines: PositiveInt = 3
     unsafe: bool = False
     skip_answered: bool = False
+    update_answers_only: bool = False
     skip_tasks: bool = False
 
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
@@ -971,7 +976,15 @@ class Worker:
 
     @cached_property
     def template(self) -> Template:
-        """Get related template."""
+        """Get related template.
+
+        If `update_answers_only` is set, return the template from the subproject
+        (with identical URL and commit).
+        """
+        if self.update_answers_only:
+            if self.subproject.template is None:
+                raise TypeError("Template not found")
+            return self.subproject.template
         url = self.src_path
         if not url:
             if self.subproject.template is None:
