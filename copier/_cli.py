@@ -400,7 +400,7 @@ class CopierUpdateSubApp(_Subcommand):
         help="Skip questions that have already been answered",
     )
     only_answers = cli.Flag(
-        ["-u", "--only-answers"],
+        ["-O", "--only-answers"],
         default=False,
         help="Only update copier answers, do not update the template version",
     )
