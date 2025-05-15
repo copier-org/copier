@@ -399,8 +399,8 @@ class CopierUpdateSubApp(_Subcommand):
         default=False,
         help="Skip questions that have already been answered",
     )
-    answers_only = cli.Flag(
-        ["-u", "--answers-only"],
+    only_answers = cli.Flag(
+        ["-u", "--only-answers"],
         default=False,
         help="Only update copier answers, do not update the template version",
     )
@@ -424,7 +424,7 @@ class CopierUpdateSubApp(_Subcommand):
                 context_lines=self.context_lines,
                 defaults=self.defaults,
                 skip_answered=self.skip_answered,
-                update_answers_only=self.answers_only,
+                update_answers_only=self.only_answers,
                 overwrite=True,
             ) as worker:
                 worker.run_update()

@@ -212,7 +212,7 @@ class Worker:
         skip_answered:
             When `True`, skip questions that have already been answered.
 
-        answers_only:
+        update_answers_only:
             Only update the answers, use the template version that was
             used in the last interaction.
 
