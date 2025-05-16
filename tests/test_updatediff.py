@@ -13,6 +13,7 @@ from plumbum import local
 from copier._cli import CopierApp
 from copier._main import Worker, run_copy, run_update
 from copier._tools import normalize_git_path
+from copier._types import VcsRef
 from copier._user_data import load_answersfile_data
 from copier.errors import UserMessageError
 
@@ -25,6 +26,7 @@ from .helpers import (
     build_file_tree,
     git,
     git_init,
+    git_save,
 )
 
 
@@ -1601,6 +1603,41 @@ def test_update_with_skip_answered_and_new_answer(
     run_update(dst, data={"boolean": "true"}, skip_answered=True, overwrite=True)
     answers = load_answersfile_data(dst)
     assert answers["boolean"] is True
+
+
+def test_update_only_answers(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    # TODO: parametrize
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yml": "boolean: false",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+            }
+        )
+        git_init("v1")
+        git("tag", "v1")
+
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    answers = load_answersfile_data(dst)
+    assert answers["boolean"] is False
+
+    with local.cwd(dst):
+        git_init("v1")
+
+    with local.cwd(src):
+        build_file_tree({"README.md": "# Template Update"})
+        git_save(message="update template", tag="v2")
+
+    run_update(dst, data={"boolean": "true"}, vcs_ref=VcsRef.CURRENT, overwrite=True)
+    answers = load_answersfile_data(dst)
+    assert answers["boolean"] is True
+
+    # assert that the README.md file was not created
+    assert not (dst / "README.md").exists()
 
 
 def test_update_dont_validate_computed_value(
