@@ -399,10 +399,10 @@ class CopierUpdateSubApp(_Subcommand):
         default=False,
         help="Skip questions that have already been answered",
     )
-    only_answers = cli.Flag(
-        ["--only-answers"],
+    keep_version = cli.Flag(
+        ["--keep-version"],
         default=False,
-        help="Only update answers, do not update the template version",
+        help="Do not update the template version and keep the current one.",
         excludes=["--vcs-ref"],
     )
 
@@ -417,7 +417,7 @@ class CopierUpdateSubApp(_Subcommand):
                 The subproject must exist. If not specified, the currently
                 working directory is used.
         """
-        if self.only_answers:
+        if self.keep_version:
             self.vcs_ref = VcsRef.CURRENT
 
         def inner() -> None:

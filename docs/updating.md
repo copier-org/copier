@@ -145,10 +145,10 @@ copier update --defaults --data-file /tmp/data-file.yaml
 If you want to update the answers to all questions, but not the template:
 
 ```shell
-copier update --only-answers
+copier update --keep-version
 ```
 
-The `--only-answers` flag is mutually exclusive with `--vcs-ref`.
+The `--keep-version` flag is mutually exclusive with `--vcs-ref`.
 
 ## How the update works
 

@@ -1606,7 +1606,7 @@ def test_update_with_skip_answered_and_new_answer(
 
 
 @pytest.mark.parametrize("cli", [True, False])
-def test_update_only_answers(
+def test_update_keep_version(
     tmp_path_factory: pytest.TempPathFactory,
     cli: bool,
 ) -> None:
@@ -1648,7 +1648,7 @@ def test_update_only_answers(
                     "update",
                     "--data",
                     "boolean=true",
-                    "--only-answers",
+                    "--keep-version",
                 ],
                 exit=False,
             )

@@ -1727,7 +1727,7 @@ _commit: v1.0.0
 
 The special value `VcsRef.CURRENT` is set to indicate that the template version should
 be identical to the version already present. It is set by the CLI when invoking
-`copier update --only-answers`.
+`copier update --keep-version`.
 
 By default, Copier will copy from the last release found in template Git tags, sorted as
 [PEP 440][].

@@ -380,7 +380,7 @@ def test_update_help() -> None:
     assert "-o, --conflict" in _help
     assert "copier update [SWITCHES] [destination_path=.]" in _help
     assert "--skip-answered" in _help
-    assert "--only-answers" in _help
+    assert "--keep-version" in _help
 
 
 def test_python_run() -> None:
