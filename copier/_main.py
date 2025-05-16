@@ -60,6 +60,7 @@ from ._types import (
     Phase,
     RelativePath,
     StrOrPath,
+    VcsRef,
 )
 from ._user_data import AnswersMap, Question, load_answersfile_data
 from ._vcs import get_git
@@ -212,10 +213,6 @@ class Worker:
         skip_answered:
             When `True`, skip questions that have already been answered.
 
-        update_answers_only:
-            Only update the answers, use the template version that was
-            used in the last interaction.
-
         skip_tasks:
             When `True`, skip template tasks execution.
     """
@@ -223,7 +220,7 @@ class Worker:
     src_path: str | None = None
     dst_path: Path = Path()
     answers_file: RelativePath | None = None
-    vcs_ref: str | None = None
+    vcs_ref: str | VcsRef | None = None
     data: AnyByStrDict = field(default_factory=dict)
     settings: Settings = field(default_factory=Settings.from_file)
     exclude: Sequence[str] = ()
@@ -239,7 +236,6 @@ class Worker:
     context_lines: PositiveInt = 3
     unsafe: bool = False
     skip_answered: bool = False
-    update_answers_only: bool = False
     skip_tasks: bool = False
 
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
@@ -976,23 +972,18 @@ class Worker:
 
     @cached_property
     def template(self) -> Template:
-        """Get related template.
-
-        If `update_answers_only` is set, return the template from the subproject
-        (with identical URL and commit).
-        """
-        if self.update_answers_only:
-            if self.subproject.template is None:
-                raise TypeError("Template not found")
-            return self.subproject.template
         url = self.src_path
         if not url:
             if self.subproject.template is None:
                 raise TypeError("Template not found")
             url = str(self.subproject.template.url)
-        result = Template(
-            url=url, ref=self.vcs_ref, use_prereleases=self.use_prereleases
-        )
+        if self.vcs_ref == VcsRef.CURRENT:
+            if self.subproject.template is None:
+                raise TypeError("Template not found")
+            ref = self.subproject.template.ref
+        else:
+            ref = self.vcs_ref
+        result = Template(url=url, ref=ref, use_prereleases=self.use_prereleases)
         self._cleanup_hooks.append(result._cleanup)
         return result
 

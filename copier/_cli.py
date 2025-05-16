@@ -403,6 +403,7 @@ class CopierUpdateSubApp(_Subcommand):
         ["-O", "--only-answers"],
         default=False,
         help="Only update copier answers, do not update the template version",
+        excludes=["--vcs-ref"],
     )
 
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
@@ -424,7 +425,6 @@ class CopierUpdateSubApp(_Subcommand):
                 context_lines=self.context_lines,
                 defaults=self.defaults,
                 skip_answered=self.skip_answered,
-                update_answers_only=self.only_answers,
                 overwrite=True,
             ) as worker:
                 worker.run_update()

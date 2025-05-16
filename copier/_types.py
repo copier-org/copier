@@ -6,7 +6,7 @@ import sys
 from collections.abc import Iterator, Mapping, MutableMapping, Sequence
 from contextlib import contextmanager
 from contextvars import ContextVar
-from enum import Enum
+from enum import Enum, auto
 from pathlib import Path
 from typing import (
     Annotated,
@@ -125,3 +125,10 @@ class Phase(str, Enum):
 
 
 _phase: ContextVar[Phase] = ContextVar("phase", default=Phase.UNDEFINED)
+
+
+class VcsRef(Enum):
+    CURRENT = auto()
+    """A special value to indicate that the current ref of the existing
+    template should be used.
+    """
