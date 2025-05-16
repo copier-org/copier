@@ -1426,6 +1426,19 @@ configuring `secret: true` in the [advanced prompt format][advanced-prompt-forma
     password: s3cr3t
     ```
 
+### `skip_answered`
+
+-   Format: `bool`
+-   CLI flags: `-A`, `--skip-answered` (only available in `copier update` subcommand)
+-   Default value: `False`
+
+When updating a project, skip asking questions that have already been answered and keep
+the recorded answer.
+
+!!! info
+
+    Not supported in `copier.yml`.
+
 ### `skip_if_exists`
 
 -   Format: `List[str]`
