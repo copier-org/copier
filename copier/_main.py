@@ -1061,9 +1061,9 @@ class Worker:
         with replace(self, src_path=self.subproject.template.url) as new_worker:
             new_worker.run_copy()
 
-    def _print_template_update_info(self) -> None:
+    def _print_template_update_info(self, subproject_template: Template) -> None:
         # TODO Unify printing tools
-        if not self.quiet and self.subproject.template.version == self.template.version:
+        if not self.quiet and subproject_template.version == self.template.version:
             print(f"Keeping template version {self.template.version}", file=sys.stderr)
         elif not self.quiet:
             print(
@@ -1113,7 +1113,7 @@ class Worker:
             # asking for confirmation
             raise UserMessageError("Enable overwrite to update a subproject.")
         self._print_message(self.template.message_before_update)
-        self._print_template_update_info()
+        self._print_template_update_info(self.subproject.template)
         with suppress(AttributeError):
             # We might have switched operation context, ensure the cached property
             # is regenerated to re-render templates.
