@@ -258,7 +258,7 @@ dev = [
     { name = "taplo", specifier = "==0.9.3" },
     { name = "types-backports", specifier = "==0.1.3" },
     { name = "types-colorama", specifier = "==0.4.15.20240311" },
-    { name = "types-pygments", specifier = "==2.19.0.20250514" },
+    { name = "types-pygments", specifier = "==2.19.0.20250516" },
     { name = "types-pyyaml", specifier = "==6.0.12.20250402" },
     { name = "typing-extensions", specifier = "==4.13.2" },
 ]
@@ -1381,14 +1381,14 @@ wheels = [
 
 [[package]]
 name = "types-pygments"
-version = "2.19.0.20250514"
+version = "2.19.0.20250516"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "types-docutils" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/53/35/1c3fd20ee277eab6314c4e964107b0cc434428a944f1ac6a51c30549fc74/types_pygments-2.19.0.20250514.tar.gz", hash = "sha256:a39eafb8ce0df126455a2aeba4924e8dbb19c01c20ec159341d49b3ddc61844b", size = 18489, upload-time = "2025-05-14T03:05:08.622Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/71/9a/c1ea3f59001e9d13b93ec8acf02c75b47832423f17471295b8ceebc48a65/types_pygments-2.19.0.20250516.tar.gz", hash = "sha256:b53fd07e197f0e7be38ee19598bd99c78be5ca5f9940849c843be74a2f81ab58", size = 18485, upload-time = "2025-05-16T03:09:30.05Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fb/4e/54dabf924b5b1ec9e018063f26ba03e8c9ed4d461bb88cd31c3fb5cd8b80/types_pygments-2.19.0.20250514-py3-none-any.whl", hash = "sha256:81b60d109390b9a369cb253b099ef8b1826cf7c30ddca8ff2819a64a17193a7c", size = 25595, upload-time = "2025-05-14T03:05:07.298Z" },
+    { url = "https://files.pythonhosted.org/packages/a7/0b/32ce3ad35983bf4f603c43cfb00559b37bb5ed90ac4ef9f1d5564b8e4034/types_pygments-2.19.0.20250516-py3-none-any.whl", hash = "sha256:db27de8b59591389cd7d14792483892c021c73b8389ef55fef40a48aa371fbcc", size = 25440, upload-time = "2025-05-16T03:09:29.185Z" },
 ]
 
 [[package]]
