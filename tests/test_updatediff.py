@@ -1605,10 +1605,11 @@ def test_update_with_skip_answered_and_new_answer(
     assert answers["boolean"] is True
 
 
+@pytest.mark.parametrize("cli", [True, False])
 def test_update_only_answers(
     tmp_path_factory: pytest.TempPathFactory,
+    cli: bool,
 ) -> None:
-    # TODO: parametrize
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
     with local.cwd(src):
@@ -1621,7 +1622,13 @@ def test_update_only_answers(
         git_init("v1")
         git("tag", "v1")
 
-    run_copy(str(src), dst, defaults=True, overwrite=True)
+    if cli:
+        CopierApp.run(
+            ["copier", "copy", str(src), str(dst), "--defaults", "--overwrite"],
+            exit=False,
+        )
+    else:
+        run_copy(str(src), dst, defaults=True, overwrite=True)
     answers = load_answersfile_data(dst)
     assert answers["boolean"] is False
 
@@ -1632,7 +1639,22 @@ def test_update_only_answers(
         build_file_tree({"README.md": "# Template Update"})
         git_save(message="update template", tag="v2")
 
-    run_update(dst, data={"boolean": "true"}, vcs_ref=VcsRef.CURRENT, overwrite=True)
+    if cli:
+        with local.cwd(dst):
+            CopierApp.run(
+                [
+                    "copier",
+                    "update",
+                    "--data",
+                    "boolean=true",
+                    "--only-answers",
+                ],
+                exit=False,
+            )
+    else:
+        run_update(
+            dst, data={"boolean": "true"}, vcs_ref=VcsRef.CURRENT, overwrite=True
+        )
     answers = load_answersfile_data(dst)
     assert answers["boolean"] is True
 
