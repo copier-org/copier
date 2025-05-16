@@ -1630,6 +1630,7 @@ def test_update_only_answers(
     else:
         run_copy(str(src), dst, defaults=True, overwrite=True)
     answers = load_answersfile_data(dst)
+    assert answers["_commit"] == "v1"
     assert answers["boolean"] is False
 
     with local.cwd(dst):
@@ -1656,6 +1657,7 @@ def test_update_only_answers(
             dst, data={"boolean": "true"}, vcs_ref=VcsRef.CURRENT, overwrite=True
         )
     answers = load_answersfile_data(dst)
+    assert answers["_commit"] == "v1"
     assert answers["boolean"] is True
 
     # assert that the README.md file was not created

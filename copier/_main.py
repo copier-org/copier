@@ -964,8 +964,8 @@ class Worker:
     def resolved_vcs_ref(self) -> str | None:
         """Get the resolved VCS reference to use.
 
-        This is either vcs_ref or the subproject template ref
-        if vcs_ref is CURRENT.
+        This is either `vcs_ref` or the subproject template ref
+        if `vcs_ref` is `VcsRef.CURRENT`.
         """
         if self.vcs_ref is VcsRef.CURRENT:
             if self.subproject.template is None:
@@ -1063,12 +1063,12 @@ class Worker:
 
     def _print_template_update_info(self, subproject_template: Template) -> None:
         # TODO Unify printing tools
-        if not self.quiet and subproject_template.version == self.template.version:
-            print(f"Keeping template version {self.template.version}", file=sys.stderr)
-        elif not self.quiet:
-            print(
-                f"Updating to template version {self.template.version}", file=sys.stderr
-            )
+        if not self.quiet:
+            if subproject_template.version == self.template.version:
+                message = f"Keeping template version {self.template.version}"
+            else:
+                message = f"Updating to template version {self.template.version}"
+            print(message, file=sys.stderr)
 
     @as_operation("update")
     def run_update(self) -> None:
