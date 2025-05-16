@@ -186,9 +186,9 @@ def test_copier_phase_variable(tmp_path_factory: pytest.TempPathFactory) -> None
 @pytest.mark.parametrize(
     "task,failure_message,match,data",
     [
-        ("false", "Oh, dear! The task failed", r"Task \d+ failed: Oh, dear! The task failed\.", None),
-        ("ls non-existing-directory", None, r"Task \d+ failed: 'ls non-existing-directory' returned non-zero exit status 2\.", None),
-        ("false", "{{ name }} blew up", r"Task \d+ failed: Wile E. Coyote blew up\.", {"name": "Wile E. Coyote"}),
+        ("false", "Oh, dear! The task failed", r"^Task \d+ failed: Oh, dear! The task failed\.$", None),
+        ("ls non-existing-directory", None, r"^Task \d+ failed: Command 'ls non-existing-directory' returned non-zero exit status 2\.$", None),
+        ("false", "{{ name }} blew up", r"^Task \d+ failed: Wile E. Coyote blew up\.$", {"name": "Wile E. Coyote"}),
     ],
 )
 def test_task_failure_message(

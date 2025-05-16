@@ -142,6 +142,7 @@ class TaskError(subprocess.CalledProcessError, UserMessageError):
 
     def __init__(
         self,
+        index: int,
         command: str | Sequence[str],
         returncode: int,
         stdout: str | bytes | None,
@@ -151,8 +152,11 @@ class TaskError(subprocess.CalledProcessError, UserMessageError):
         subprocess.CalledProcessError.__init__(
             self, returncode=returncode, cmd=command, output=stdout, stderr=stderr
         )
+        self.index = index
         if not message:
             message = subprocess.CalledProcessError.__str__(self)
+        message = message.rstrip(".")
+        message = f"Task {index + 1} failed: {message}."
         UserMessageError.__init__(self, message=message)
 
     def __str__(self) -> str:
@@ -162,10 +166,12 @@ class TaskError(subprocess.CalledProcessError, UserMessageError):
     def from_process(
         cls,
         process: CompletedProcess[str] | CompletedProcess[bytes],
+        index: int,
         message: str | None = None,
     ) -> Self:
         """Create a TaskError from a CompletedProcess."""
         return cls(
+            index,
             command=process.args,
             returncode=process.returncode,
             stdout=process.stdout,
