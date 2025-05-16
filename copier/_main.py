@@ -961,6 +961,19 @@ class Worker:
             return value
 
     @cached_property
+    def resolved_vcs_ref(self) -> str | None:
+        """Get the resolved VCS reference to use.
+
+        This is either vcs_ref or the subproject template ref
+        if vcs_ref is CURRENT.
+        """
+        if self.vcs_ref is VcsRef.CURRENT:
+            if self.subproject.template is None:
+                raise TypeError("Template not found")
+            return self.subproject.template.ref
+        return self.vcs_ref
+
+    @cached_property
     def subproject(self) -> Subproject:
         """Get related subproject."""
         result = Subproject(
@@ -977,12 +990,7 @@ class Worker:
             if self.subproject.template is None:
                 raise TypeError("Template not found")
             url = str(self.subproject.template.url)
-        if self.vcs_ref == VcsRef.CURRENT:
-            if self.subproject.template is None:
-                raise TypeError("Template not found")
-            ref = self.subproject.template.ref
-        else:
-            ref = self.vcs_ref
+        ref = self.resolved_vcs_ref
         result = Template(url=url, ref=ref, use_prereleases=self.use_prereleases)
         self._cleanup_hooks.append(result._cleanup)
         return result
@@ -1053,6 +1061,15 @@ class Worker:
         with replace(self, src_path=self.subproject.template.url) as new_worker:
             new_worker.run_copy()
 
+    def _print_template_update_info(self) -> None:
+        # TODO Unify printing tools
+        if not self.quiet and self.subproject.template.version == self.template.version:
+            print(f"Keeping template version {self.template.version}", file=sys.stderr)
+        elif not self.quiet:
+            print(
+                f"Updating to template version {self.template.version}", file=sys.stderr
+            )
+
     @as_operation("update")
     def run_update(self) -> None:
         """Update a subproject that was already generated.
@@ -1096,11 +1113,7 @@ class Worker:
             # asking for confirmation
             raise UserMessageError("Enable overwrite to update a subproject.")
         self._print_message(self.template.message_before_update)
-        if not self.quiet:
-            # TODO Unify printing tools
-            print(
-                f"Updating to template version {self.template.version}", file=sys.stderr
-            )
+        self._print_template_update_info()
         with suppress(AttributeError):
             # We might have switched operation context, ensure the cached property
             # is regenerated to re-render templates.
@@ -1212,6 +1225,7 @@ class Worker:
                 quiet=True,
                 src_path=self.subproject.template.url,  # type: ignore[union-attr]
                 exclude=exclude_plus_removed,
+                vcs_ref=self.resolved_vcs_ref,
             ) as new_worker:
                 new_worker.run_copy()
             with local.cwd(new_copy):

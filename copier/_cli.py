@@ -60,7 +60,7 @@ from plumbum import cli, colors
 
 from ._main import Worker
 from ._tools import copier_version
-from ._types import AnyByStrDict
+from ._types import AnyByStrDict, VcsRef
 from .errors import UnsafeTemplateError, UserMessageError
 
 
@@ -417,6 +417,8 @@ class CopierUpdateSubApp(_Subcommand):
                 The subproject must exist. If not specified, the currently
                 working directory is used.
         """
+        if self.only_answers:
+            self.vcs_ref = VcsRef.CURRENT
 
         def inner() -> None:
             with self._worker(
