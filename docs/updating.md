@@ -142,6 +142,14 @@ copier update --defaults --data-file /tmp/data-file.yaml
     it is not yet possible to update a multiselect choice using ˋ--dataˋ.
     Use ˋ--data-fileˋ instead for now.
 
+If you want to update the answers to all questions, but not the template:
+
+```shell
+copier update --keep-version
+```
+
+The `--keep-version` flag is mutually exclusive with `--vcs-ref`.
+
 ## How the update works
 
 To understand how the updating process works, take a look at this diagram:
