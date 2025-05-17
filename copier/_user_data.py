@@ -6,6 +6,7 @@ import json
 import warnings
 from collections import ChainMap
 from collections.abc import Mapping, Sequence
+from copy import deepcopy
 from dataclasses import field
 from datetime import datetime
 from functools import cached_property
@@ -275,7 +276,13 @@ class Question:
                     result = self.render_value(
                         self.settings.defaults.get(self.var_name, self.default)
                     )
-        result = self.cast_answer(result)
+        result = self.parse_answer(result)
+        # Computed values (i.e., `when: false`) are intentionally not validated
+        # at the moment.
+        # https://github.com/copier-org/copier/issues/1779#issuecomment-2365006990
+        # https://github.com/copier-org/copier/pull/1785
+        if self.get_when():
+            self.validate_answer(result)
         return result
 
     def get_default_rendered(self) -> bool | str | Choice | None | MissingType:
@@ -319,7 +326,6 @@ class Question:
         """Obtain choices rendered and properly formatted."""
         result = []
         choices = self.choices
-        default = self.get_default()
         if isinstance(choices, str):
             choices = parse_yaml_string(self.render_value(self.choices))
         if isinstance(choices, dict):
@@ -344,15 +350,7 @@ class Question:
 
                 disabled = self.render_value(value.get("validator", ""))
                 value = value["value"]
-            # The value can be templated
-            value = self.render_value(value)
-            checked = (
-                self.multiselect
-                and isinstance(default, list)
-                and self.cast_answer(value) in default
-                or None
-            )
-            c = Choice(name, value, disabled=disabled, checked=checked)
+            c = Choice(name, self.render_value(value), disabled=disabled)
             # Try to cast the value according to the question's type to raise
             # an error in case the value is incompatible.
             self.cast_answer(c.value)
@@ -382,7 +380,11 @@ class Question:
                 ans = self.parse_answer(answer)
             except Exception:
                 return "Invalid input"
-            return self.validate_answer(ans) or True
+            try:
+                self.validate_answer(ans)
+            except Exception as exc:
+                return str(exc)
+            return True
 
         lexer = None
         result: AnyByStrDict = {
@@ -405,7 +407,14 @@ class Question:
                 result["default"] = False
         if self.choices:
             questionary_type = "checkbox" if self.multiselect else "select"
-            result["choices"] = self._formatted_choices
+            choices = self._formatted_choices
+            # Select default choices for a multiselect question.
+            if self.multiselect and isinstance(
+                default_choices := self.get_default(), list
+            ):
+                for choice in (choices := deepcopy(choices)):
+                    choice.checked = self.cast_answer(choice.value) in default_choices
+            result["choices"] = choices
         if questionary_type == "input":
             if self.secret:
                 questionary_type = "password"
@@ -436,15 +445,16 @@ class Question:
         """Get the value for multiline."""
         return cast_to_bool(self.render_value(self.multiline))
 
-    def validate_answer(self, answer: Any) -> str:
+    def validate_answer(self, answer: Any) -> None:
         """Validate user answer."""
         try:
             err_msg = self.render_value(self.validator, {self.var_name: answer}).strip()
         except Exception as error:
-            return str(error)
+            err_msg = str(error)
         if err_msg:
-            return err_msg
-        return ""
+            raise ValueError(
+                f"Validation error for question '{self.var_name}': {err_msg}"
+            )
 
     def get_when(self) -> bool:
         """Get skip condition for question."""

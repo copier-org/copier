@@ -555,11 +555,9 @@ class Worker:
             if var_name in self.answers.last:
                 try:
                     answer = question.parse_answer(self.answers.last[var_name])
+                    question.validate_answer(answer)
                 except Exception:
                     del self.answers.last[var_name]
-                else:
-                    if question.validate_answer(answer):
-                        del self.answers.last[var_name]
             # Skip a question when the skip condition is met.
             if not question.get_when():
                 # Omit its answer from the answers file.
@@ -573,14 +571,10 @@ class Worker:
                 if question.default is MISSING:
                     continue
             if var_name in self.answers.init:
-                # Try to parse the answer value.
+                # Try to parse and validate (if the question has a validator)
+                # the answer value.
                 answer = question.parse_answer(self.answers.init[var_name])
-                # Try to validate the answer value if the question has a
-                # validator.
-                if err_msg := question.validate_answer(answer):
-                    raise ValueError(
-                        f"Validation error for question '{var_name}': {err_msg}"
-                    )
+                question.validate_answer(answer)
                 # At this point, the answer value is valid. Do not ask the
                 # question again, but set answer as the user's answer instead.
                 self.answers.user[var_name] = answer
