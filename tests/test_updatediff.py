@@ -1648,7 +1648,7 @@ def test_update_vcs_ref_current(
                     "update",
                     "--data",
                     "boolean=true",
-                    "--vcs-ref=:CURRENT",
+                    "--vcs-ref=:CURRENT:",
                 ],
                 exit=False,
             )

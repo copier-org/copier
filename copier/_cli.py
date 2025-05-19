@@ -135,7 +135,7 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
             "If you do not specify it, it will try to checkout the latest git tag, "
             "as sorted using the PEP 440 algorithm. If you want to checkout always "
             "the latest version, use `--vcs-ref=HEAD`. "
-            "Use the special value `:CURRENT` to refer to the current reference "
+            "Use the special value `:current:` to refer to the current reference "
             "of the template if it already exists."
         ),
     )
