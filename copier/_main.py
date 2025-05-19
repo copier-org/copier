@@ -399,7 +399,7 @@ class Worker:
                 "src_path": lambda: self.template.local_abspath,
                 "dst_path": lambda: self.dst_path,
                 "answers_file": lambda: self.answers_relpath,
-                "vcs_ref": lambda: self.vcs_ref,
+                "vcs_ref": lambda: self.resolved_vcs_ref,
                 "vcs_ref_hash": lambda: self.template.commit_hash,
                 "data": lambda: self.data,
                 "settings": lambda: self.settings,
