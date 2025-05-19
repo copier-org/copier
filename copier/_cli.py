@@ -134,7 +134,9 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
             "Git reference to checkout in `template_src`. "
             "If you do not specify it, it will try to checkout the latest git tag, "
             "as sorted using the PEP 440 algorithm. If you want to checkout always "
-            "the latest version, use `--vcs-ref=HEAD`."
+            "the latest version, use `--vcs-ref=HEAD`. "
+            "Use the special value `:CURRENT` to refer to the current reference "
+            "of the template if it already exists."
         ),
     )
     pretend = cli.Flag(["-n", "--pretend"], help="Run but do not make any changes")
@@ -220,7 +222,7 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
             skip_if_exists=self.skip,
             quiet=self.quiet,
             src_path=src_path,
-            vcs_ref=self.vcs_ref,
+            vcs_ref=VcsRef.try_parse(self.vcs_ref),
             use_prereleases=self.prereleases,
             unsafe=self.unsafe,
             skip_tasks=self.skip_tasks,
@@ -399,12 +401,6 @@ class CopierUpdateSubApp(_Subcommand):
         default=False,
         help="Skip questions that have already been answered",
     )
-    keep_version = cli.Flag(
-        ["--keep-version"],
-        default=False,
-        help="Do not update the template version and keep the current one.",
-        excludes=["--vcs-ref"],
-    )
 
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
         """Call [run_update][copier.main.Worker.run_update].
@@ -417,8 +413,6 @@ class CopierUpdateSubApp(_Subcommand):
                 The subproject must exist. If not specified, the currently
                 working directory is used.
         """
-        if self.keep_version:
-            self.vcs_ref = VcsRef.CURRENT
 
         def inner() -> None:
             with self._worker(
