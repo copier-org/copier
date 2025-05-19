@@ -95,6 +95,14 @@
           pre-commit.gitPackage = pkgs.git;
           pre-commit.hooks = {
             alejandra.enable = true;
+            codespell = {
+              enable = true;
+              package = null;
+              name = "codespell";
+              description = "Checks for common misspellings in text files.";
+              entry = "uv run codespell";
+              types = ["text"];
+            };
             commitizen = {
               enable = true;
               package = null;
