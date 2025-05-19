@@ -311,7 +311,7 @@ class Worker:
 
         # Given those values are lazily rendered on 1st access then cached
         # the phase value is irrelevant and could be misleading.
-        # As a consequence it is explicitely set to "undefined".
+        # As a consequence it is explicitly set to "undefined".
         return LazyDict(
             {
                 name: lambda path=path: load_answersfile_data(  # type: ignore[misc]
