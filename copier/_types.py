@@ -128,20 +128,7 @@ _phase: ContextVar[Phase] = ContextVar("phase", default=Phase.UNDEFINED)
 
 
 class VcsRef(Enum):
-    CURRENT = ":CURRENT:"
+    CURRENT = ":current:"
     """A special value to indicate that the current ref of the existing
     template should be used.
     """
-
-    @classmethod
-    def try_parse(cls, value: str | None) -> VcsRef | str | None:
-        """Try to parse a string into a special VcsRef value or return the string.
-
-        None is returned as is.
-        """
-        if value is None:
-            return None
-        try:
-            return cls(value.upper())
-        except ValueError:
-            return value
