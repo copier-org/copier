@@ -125,3 +125,10 @@ class Phase(str, Enum):
 
 
 _phase: ContextVar[Phase] = ContextVar("phase", default=Phase.UNDEFINED)
+
+
+class VcsRef(Enum):
+    CURRENT = ":current:"
+    """A special value to indicate that the current ref of the existing
+    template should be used.
+    """

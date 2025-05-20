@@ -59,8 +59,8 @@ import yaml
 from plumbum import cli, colors
 
 from ._main import Worker
-from ._tools import copier_version
-from ._types import AnyByStrDict
+from ._tools import copier_version, try_enum
+from ._types import AnyByStrDict, VcsRef
 from .errors import UnsafeTemplateError, UserMessageError
 
 
@@ -134,7 +134,9 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
             "Git reference to checkout in `template_src`. "
             "If you do not specify it, it will try to checkout the latest git tag, "
             "as sorted using the PEP 440 algorithm. If you want to checkout always "
-            "the latest version, use `--vcs-ref=HEAD`."
+            "the latest version, use `--vcs-ref=HEAD`. "
+            "Use the special value `:current:` to refer to the current reference "
+            "of the template if it already exists."
         ),
     )
     pretend = cli.Flag(["-n", "--pretend"], help="Run but do not make any changes")
@@ -220,7 +222,7 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
             skip_if_exists=self.skip,
             quiet=self.quiet,
             src_path=src_path,
-            vcs_ref=self.vcs_ref,
+            vcs_ref=try_enum(VcsRef, self.vcs_ref),
             use_prereleases=self.prereleases,
             unsafe=self.unsafe,
             skip_tasks=self.skip_tasks,

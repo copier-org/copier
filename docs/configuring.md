@@ -1721,7 +1721,7 @@ the `v2.0.0a1` tag unless this flag is enabled.
 
 ### `vcs_ref`
 
--   Format: `str`
+-   Format: `str | VcsRef`
 -   CLI flags: `-r`, `--vcs-ref`
 -   Default value: N/A (use latest release)
 
@@ -1738,8 +1738,10 @@ _commit: v1.0.0
 
     Not supported in `copier.yml`.
 
-By default, Copier will copy from the last release found in template Git tags, sorted as
-[PEP 440][].
+The special value `VcsRef.CURRENT` is set to indicate that the template version should
+be identical to the version already present. It is set when using `--vcs-ref=:current:`
+in the CLI. By default, Copier will copy from the last release found in template Git
+tags, sorted as [PEP 440][].
 
 ## Patterns syntax
 

@@ -15,7 +15,7 @@ from enum import Enum
 from importlib.metadata import version
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Callable, Literal, TextIO, cast
+from typing import Any, Callable, Literal, TextIO, TypeVar, cast
 
 import colorama
 from packaging.version import Version
@@ -265,3 +265,18 @@ def scantree(path: str, follow_symlinks: bool) -> Iterator[os.DirEntry[str]]:
         yield entry
         if entry.is_dir(follow_symlinks=follow_symlinks):
             yield from scantree(entry.path, follow_symlinks)
+
+
+_T = TypeVar("_T")
+_E = TypeVar("_E", bound=Enum)
+
+
+def try_enum(enum_type: type[_E], value: _T) -> _E | _T:
+    """Try to convert a value into an enum.
+
+    If the value is not a valid enum member, return the original value.
+    """
+    try:
+        return enum_type(value)
+    except ValueError:
+        return value
