@@ -290,7 +290,7 @@ class Question:
 
         The questionary lib expects some specific data types, and returns
         it when the user answers. Sometimes you need to compare the response
-        to the rendered one, or viceversa.
+        to the rendered one, or vice-versa.
 
         This helper allows such usages.
         """

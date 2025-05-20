@@ -975,7 +975,7 @@ Each pattern can be templated using Jinja.
     ```
 
     The difference with [skip_if_exists][] is that it will never be rendered during
-    an update, no matter if it exitsts or not.
+    an update, no matter if it exists or not.
 
 !!! info
 
@@ -1194,7 +1194,7 @@ The message is suppressed when Copier is run in [quiet mode][quiet].
 
            $ cd {{ _copier_conf.dst_path }}
 
-        2. Read "CONTRIBUING.md" and start coding.
+        2. Read "CONTRIBUTING.md" and start coding.
     ```
 
 ### `message_after_update`

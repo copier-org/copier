@@ -85,7 +85,7 @@ def test_answersfile_templating_with_message_before_copy(
 ) -> None:
     """Test templated `_answers_file` setting with `_message_before_copy`.
 
-    Checks that the tempated answers file name is rendered correctly while
+    Checks that the templated answers file name is rendered correctly while
     having printing a message before the "copy" operation, which uses the render
     context before including any answers from the questionnaire.
     """
