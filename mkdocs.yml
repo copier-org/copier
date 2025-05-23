@@ -12,6 +12,7 @@ nav:
   - Generating a project: "generating.md"
   - Updating a project: "updating.md"
   - Settings: "settings.md"
+  - Template Inheritance and Compostion: "inheritance_and_composition.md"
   - Reference:
       - cli.py: "reference/cli.md"
       - errors.py: "reference/errors.md"
