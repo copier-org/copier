@@ -17,6 +17,10 @@ functionalities of multiple templates, by adding some "glue code", and avoid rep
 
 <!-- TODO? (not sure if it relevant...) add an operational distinction between the two -->
 
+## Why copier does not natively support inheritance and composition?
+
+<!-- TODO: add content, re-use content from https://github.com/copier-org/copier/issues/934#issuecomment-1518964035 -->
+
 ## Solutions
 
 ### Git submodules + jinja template inheritance
