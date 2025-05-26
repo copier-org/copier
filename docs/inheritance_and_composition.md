@@ -1,6 +1,6 @@
 # Template Inheritance and Composition
 
-## What is Inheritace, what is Composition?
+## What is Inheritance, what is Composition?
 
 Template Inheritance is a way to create a new template based on an existing one. It
 allows you to reuse code and structure from the parent template while adding or
