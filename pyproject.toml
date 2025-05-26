@@ -54,7 +54,7 @@ dev = [
   "pytest==8.3.5",
   "pytest-cov==6.1.1",
   "pytest-gitconfig==0.7.0",
-  "pytest-xdist==3.6.1",
+  "pytest-xdist==3.7.0",
   "ruff==0.11.11",
   "taplo==0.9.3",
   "types-backports==0.1.3",
