@@ -12,9 +12,14 @@
     "enabled": true,
     "schedule": "every 4 week on Monday"
   },
-  "rangeStrategy": "replace",
+  "rangeStrategy": "update-lockfile",
   "labels": ["dependencies"],
   "packageRules": [
+    {
+      "matchManagers": ["pep621"],
+      "matchDepTypes": ["dependency-groups"],
+      "rangeStrategy": "pin"
+    },
     {
       "matchCategories": ["python"],
       "addLabels": ["python"]
