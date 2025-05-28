@@ -31,7 +31,7 @@ functionalities of multiple templates, by adding some "glue code", and avoid rep
 
 <!-- TODO: Add content-->
 
-### Leverage on copier task
+### Delegated `copier copy` calls via tasks
 
 <!-- TODO: Add content-->
 
