@@ -19,7 +19,8 @@ functionalities of multiple templates, by adding some "glue code", and avoid rep
 
 ## Why copier does not natively support inheritance and composition?
 
-<!-- TODO: add content, re-use content from https://github.com/copier-org/copier/issues/934#issuecomment-1518964035 -->
+Copier is made to bootstrap projects based on a template and keep them updated. In the
+**Unix philosophy**, that's the one thing it does well.
 
 ## Solutions
 
