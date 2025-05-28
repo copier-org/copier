@@ -34,3 +34,7 @@ functionalities of multiple templates, by adding some "glue code", and avoid rep
 ### Leverage on copier task
 
 <!-- TODO: Add content-->
+
+### Meta-templates
+
+<!-- TODO: Add content, see https://github.com/copier-org/copier/issues/934#issuecomment-1405492635-->
