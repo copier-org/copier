@@ -38,3 +38,7 @@ functionalities of multiple templates, by adding some "glue code", and avoid rep
 ### Meta-templates
 
 <!-- TODO: Add content, see https://github.com/copier-org/copier/issues/934#issuecomment-1405492635-->
+
+### Manually apply multiple templates
+
+<!-- TODO: Add content, see https://copier.readthedocs.io/en/stable/configuring/#applying-multiple-templates-to-the-same-subproject -->
