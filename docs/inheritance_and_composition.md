@@ -9,7 +9,7 @@ creating variations of a template without duplicating code.
 
 <!-- TODO: add an example of inheritance -->
 
-Template Composition, on the other hand, is a way to combine multiple templates,
+Template composition, on the other hand, is a way to combine multiple templates,
 independent of each other, into a single new template. In this way you can join the
 functionalities of multiple templates, by adding some "glue code", and avoid repetition.
 
