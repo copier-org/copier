@@ -2,10 +2,10 @@
 
 ## What is Inheritance, what is Composition?
 
-Template inheritance is a way to create a new (child) template based on an existing (parent) template. It
-allows you to reuse code and structure from the parent template while adding or
-overriding specific parts in the child template. This is useful for creating variations
-of a template without duplicating code.
+Template inheritance is a way to create a new (child) template based on an existing
+(parent) template. It allows you to reuse code and structure from the parent template
+while adding or overriding specific parts in the child template. This is useful for
+creating variations of a template without duplicating code.
 
 <!-- TODO: add an example of inheritance -->
 
