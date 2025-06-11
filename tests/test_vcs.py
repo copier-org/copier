@@ -12,7 +12,7 @@ from copier import run_copy, run_update
 from copier._main import Worker
 from copier._user_data import load_answersfile_data
 from copier._vcs import checkout_latest_tag, clone, get_git_version, get_repo
-from copier.errors import ShallowCloneWarning
+from copier.errors import DirtyLocalWarning, ShallowCloneWarning
 
 from .helpers import git
 
@@ -85,6 +85,26 @@ def test_local_clone() -> None:
     local_tmp = clone(tmp)
     assert local_tmp
     assert Path(local_tmp, "README.md").exists()
+    shutil.rmtree(local_tmp, ignore_errors=True)
+
+
+@pytest.mark.impure
+def test_local_dirty_clone() -> None:
+    tmp = clone("https://github.com/copier-org/autopretty.git")
+    assert tmp
+    assert Path(tmp, "copier.yml").exists()
+
+    with local.cwd(tmp):
+        Path("unknown.txt").write_text("hello world")
+        Path("README.md").write_text("override string!!")
+
+    with pytest.warns(DirtyLocalWarning):
+        local_tmp = clone(tmp)
+
+    assert local_tmp
+    assert Path(local_tmp, "unknown.txt").exists()
+    assert Path(local_tmp, "README.md").exists()
+    assert Path(local_tmp, "copier.yaml").exists()
     shutil.rmtree(local_tmp, ignore_errors=True)
 
 
