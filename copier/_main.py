@@ -40,6 +40,7 @@ from pydantic.dataclasses import dataclass
 from pydantic_core import to_jsonable_python
 from questionary import confirm, unsafe_prompt
 
+from ._deprecation import deprecate_answers_file_template_path
 from ._jinja_ext import YieldEnvironment, YieldExtension
 from ._subproject import Subproject
 from ._template import Task, Template
@@ -924,6 +925,8 @@ class Worker:
                 new_context = {**extra_context, yield_name: value}
                 rendered_part = self._render_string(part, extra_context=new_context)
                 if str(self.answers_relpath) == rendered_part:
+                    if rendered_parts:
+                        deprecate_answers_file_template_path()
                     yield self.answers_relpath, new_context
                     continue
 
@@ -942,6 +945,8 @@ class Worker:
             return
 
         if str(self.answers_relpath) == rendered_part:
+            if rendered_parts:
+                deprecate_answers_file_template_path()
             yield (self.answers_relpath, extra_context)
             return
 

@@ -200,6 +200,63 @@ def test_answersfile_with_custom_path(
     }
 
 
+def test_answersfile_template_in_subdirectory_is_deprecated(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """Test that the answers file template in a subdirectory is deprecated.
+
+    NOTE: The answers file is *not* rendered in the subdirectory but in the location
+    specified by:
+
+    1. The user-provided answers file location (via `-a,--answers-file` CLI flag or
+        equivalent API argument)
+    2. The `_answers_file` setting in `copier.yml`
+    3. The default answers file name and location at `.copier-answers.yml`
+    """
+    deprecated = pytest.deprecated_call(
+        match=(
+            r"Answers file template locations other than the template root "
+            r"directory are deprecated"
+        )
+    )
+    answers_file = Path(".copier-answers.yml")
+
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    build_file_tree(
+        {
+            (src / ".config" / "{{ _copier_conf.answers_file }}.jinja"): (
+                """\
+                # Changes here will be overwritten by Copier
+                {{ _copier_answers|to_nice_yaml }}
+                """
+            ),
+            (src / "version.txt.jinja"): "v1",
+        }
+    )
+    git_save(src, message="v1", tag="v1")
+
+    build_file_tree({(src / "version.txt.jinja"): "v2"})
+    git_save(src, message="v2", tag="v2")
+
+    with deprecated:
+        copier.run_copy(str(src), dst, vcs_ref="v1", overwrite=True)
+    assert (dst / "version.txt").read_text() == "v1"
+    assert load_answersfile_data(dst, answers_file) == {
+        "_src_path": str(src),
+        "_commit": "v1",
+    }
+    git_save(dst, message="v1")
+
+    with deprecated:
+        copier.run_update(dst, vcs_ref="v2", answers_file=answers_file, overwrite=True)
+    assert (dst / "version.txt").read_text() == "v2"
+    assert load_answersfile_data(dst, answers_file) == {
+        "_src_path": str(src),
+        "_commit": "v2",
+    }
+
+
 def test_external_data(tmp_path_factory: pytest.TempPathFactory) -> None:
     parent1, parent2, child, dst = map(
         tmp_path_factory.mktemp, ("parent1", "parent2", "child", "dst")
