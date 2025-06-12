@@ -133,6 +133,73 @@ def test_answersfile(
     assert "password_2" not in log
 
 
+@pytest.mark.parametrize(
+    "user_answers_file",
+    [
+        None,
+        Path(".copier-answers.user.yml"),
+        Path(".config", ".copier-answers.user.yml"),
+    ],
+)
+@pytest.mark.parametrize(
+    "template_answers_file",
+    [
+        None,
+        Path(".copier-answers.template.yml"),
+        Path(".config", ".copier-answers.template.yml"),
+    ],
+)
+def test_answersfile_with_custom_path(
+    tmp_path_factory: pytest.TempPathFactory,
+    template_answers_file: Path | None,
+    user_answers_file: Path | None,
+) -> None:
+    """Test specifying the answers file path via template or user setting."""
+    answers_file = (
+        user_answers_file or template_answers_file or Path(".copier-answers.yml")
+    )
+
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                f"_answers_file: {template_answers_file}"
+                if template_answers_file
+                else ""
+            ),
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                """\
+                # Changes here will be overwritten by Copier
+                {{ _copier_answers|to_nice_yaml }}
+                """
+            ),
+            (src / "version.txt.jinja"): "v1",
+        }
+    )
+    git_save(src, message="v1", tag="v1")
+
+    build_file_tree({(src / "version.txt.jinja"): "v2"})
+    git_save(src, message="v2", tag="v2")
+
+    copier.run_copy(
+        str(src), dst, vcs_ref="v1", answers_file=user_answers_file, overwrite=True
+    )
+    assert (dst / "version.txt").read_text() == "v1"
+    assert load_answersfile_data(dst, answers_file) == {
+        "_src_path": str(src),
+        "_commit": "v1",
+    }
+    git_save(dst, message="v1")
+
+    copier.run_update(dst, vcs_ref="v2", answers_file=answers_file, overwrite=True)
+    assert (dst / "version.txt").read_text() == "v2"
+    assert load_answersfile_data(dst, answers_file) == {
+        "_src_path": str(src),
+        "_commit": "v2",
+    }
+
+
 def test_external_data(tmp_path_factory: pytest.TempPathFactory) -> None:
     parent1, parent2, child, dst = map(
         tmp_path_factory.mktemp, ("parent1", "parent2", "child", "dst")
