@@ -368,7 +368,7 @@ class CopierUpdateSubApp(_Subcommand):
         from the last Copier execution, including the source template
         (it must be a key called `_src_path`).
 
-        If that file contains also `_commit`, and `destination_path` is a git
+        If that file contains also `_commit`, `_dst_commit` and `destination_path` is a git
         repository, this command will do its best to respect the diff that you have
         generated since the last `copier` execution. To avoid that, use `copier recopy`
         instead.

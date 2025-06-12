@@ -8,9 +8,16 @@ from plumbum import local
 
 from copier import run_copy, run_update
 from copier._user_data import load_answersfile_data
+from copier._vcs import get_current_commit
 from copier.errors import UserMessageError
 
-from .helpers import BRACKET_ENVOPS_JSON, PROJECT_TEMPLATE, build_file_tree, git
+from .helpers import (
+    BRACKET_ENVOPS_JSON,
+    PROJECT_TEMPLATE,
+    build_file_tree,
+    git,
+    git_save,
+)
 
 SRC = Path(f"{PROJECT_TEMPLATE}_legacy_migrations").absolute()
 
@@ -65,6 +72,7 @@ def test_migrations_and_tasks(tmp_path: Path, skip_tasks: bool) -> None:
         git("init")
         git("add", ".")
         git("commit", "-m1")
+        head = get_current_commit(dst)
     # Update it to v2
     with pytest.deprecated_call():
         run_update(
@@ -89,7 +97,7 @@ def test_migrations_and_tasks(tmp_path: Path, skip_tasks: bool) -> None:
     assert (dst / "PEP440-1.0.0-2-2.0-before.json").is_file()
     assert (dst / "PEP440-1.0.0-2-2.0-after.json").is_file()
     answers = load_answersfile_data(dst)
-    assert answers == {"_commit": "v2.0", "_src_path": str(src)}
+    assert answers == {"_commit": "v2.0", "_src_path": str(src), "_dst_commit": head}
 
 
 def test_pre_migration_modifies_answers(
@@ -230,9 +238,10 @@ def test_prereleases(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("add", ".")
         git("commit", "-mv1")
         # Update it without prereleases; nothing changes
-        with pytest.deprecated_call():
-            run_update(defaults=True, overwrite=True)
-        assert not git("status", "--porcelain")
+        run_update(defaults=True, overwrite=True)
+        # There is only one change because the _dst_commit is updated
+        assert git("status", "--porcelain=v1").strip() == "M .copier-answers.yml"
+        git_save()
     assert not (dst / "v1.9").exists()
     assert not (dst / "v2.dev0").exists()
     assert not (dst / "v2.dev2").exists()

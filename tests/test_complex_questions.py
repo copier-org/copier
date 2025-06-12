@@ -13,6 +13,7 @@ from plumbum import local
 
 from copier import run_copy, run_update
 from copier._user_data import load_answersfile_data
+from copier._vcs import get_current_commit
 
 from .helpers import (
     BRACKET_ENVOPS,
@@ -432,6 +433,7 @@ def test_tui_inherited_default(
         git("add", "--all")
         git("commit", "--message", "init project")
     # After a forced update, answers stay the same
+    result["_dst_commit"] = get_current_commit(dst)
     run_update(dst, defaults=True, overwrite=True)
     assert json.loads((dst / "answers.json").read_text()) == result
 

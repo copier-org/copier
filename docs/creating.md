@@ -90,8 +90,8 @@ suitable to [autoupdate your project safely][the-copier-answersyml-file]:
 
 -   It doesn't contain secret answers.
 -   It doesn't contain any data that is not easy to render to JSON or YAML.
--   It contains special keys like `_commit` and `_src_path`, indicating how the last
-    template update was done.
+-   It contains special keys like `_commit`, `_dst_commit` and `_src_path`, indicating
+    how the last template update was done.
 
 ### `_copier_conf`
 

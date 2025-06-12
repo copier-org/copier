@@ -195,6 +195,10 @@ class MissingFileWarning(UserWarning, CopierWarning):
     """I still couldn't find what I'm looking for."""
 
 
+class WorktreeCreationWarning(UserWarning, CopierWarning):
+    """Worktree creation failed, some replay actions might not be exact."""
+
+
 class InteractiveSessionError(UserMessageError):
     """An interactive session is required to run this program."""
 

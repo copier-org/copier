@@ -15,7 +15,8 @@ from copier._main import Worker, run_copy, run_update
 from copier._tools import normalize_git_path
 from copier._types import VcsRef
 from copier._user_data import load_answersfile_data
-from copier.errors import UserMessageError
+from copier._vcs import get_current_commit
+from copier.errors import UserMessageError, WorktreeCreationWarning
 
 from .helpers import (
     BRACKET_ENVOPS_JSON,
@@ -205,10 +206,12 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
             )
         )
         commit("-m", "I prefer grog")
+        head = get_current_commit(target)
         # Update target to latest tag and check it's updated in answers file
         CopierApp.run(["copier", "update", "--defaults", "--UNSAFE"], exit=False)
         assert load_answersfile_data(target) == {
             "_commit": "v0.0.2",
+            "_dst_commit": head,
             "_src_path": str(bundle),
             "author_name": "Guybrush",
             "project_name": "to become a pirate",
@@ -223,6 +226,7 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
         assert not (target / "before-v1.0.0").is_file()
         assert not (target / "after-v1.0.0").is_file()
         commit("-m", "Update template to v0.0.2")
+        head = get_current_commit(target)
         # Update target to latest commit, which is still untagged
         CopierApp.run(
             ["copier", "update", "--defaults", "--vcs-ref=HEAD"],
@@ -238,6 +242,7 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
         # Check it's updated OK
         assert load_answersfile_data(target) == {
             "_commit": last_commit,
+            "_dst_commit": head,
             "_src_path": str(bundle),
             "author_name": "Guybrush",
             "project_name": "to become a pirate",
@@ -260,7 +265,8 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
             ["copier", "update", "--defaults", "--vcs-ref=HEAD"],
             exit=False,
         )
-        assert not git("status", "--porcelain")
+        assert git("status", "--porcelain").strip() == "M .copier-answers.yml"
+        commit("-m", "Updated _dst_commit")
         # If I change an option, it updates properly
         run_update(
             data={"author_name": "Largo LaGrande", "project_name": "to steal a lot"},
@@ -447,14 +453,15 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
     git("clone", "--depth=1", f"file://{dst1}", dst2)
     with local.cwd(dst2):
         # Subproject re-updates just to change some values
-        run_update(
-            data={"what": "study"},
-            defaults=True,
-            overwrite=True,
-            conflict="rej",
-            context_lines=1,
-            unsafe=True,
-        )
+        with pytest.warns(WorktreeCreationWarning):
+            run_update(
+                data={"what": "study"},
+                defaults=True,
+                overwrite=True,
+                conflict="rej",
+                context_lines=1,
+                unsafe=True,
+            )
         git("commit", "-am", "chore: re-updated to change values after evolving")
         # Subproject evolution was respected up to sane possibilities.
         # In an ideal world, this file would be exactly the same as what's written
@@ -1982,3 +1989,83 @@ def test_conditional_computed_value(tmp_path_factory: pytest.TempPathFactory) ->
     assert answers["first"] is True
     assert answers["second"] is True
     assert (dst / "log.txt").read_text() == "True True"
+
+
+def test_external_data_update(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yml": dedent(
+                    """\
+                    _external_data:
+                        version: version-data.yml
+                    """
+                ),
+                "stuff.jinja": dedent(
+                    """\
+                    Prelude.
+                    {%- if _external_data.version.version | d(0) >= 2 %}
+                    Version 2 A.
+                    {%- endif %}
+                    End.
+                    """
+                ),
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+            }
+        )
+        git_save()
+    with local.cwd(dst):
+        # Init project when it's at version 1
+        build_file_tree({"version-data.yml": "version: 1"})
+        git_save()
+        head = git("describe", "--dirty", "--always").strip()
+        run_copy(str(src), ".", defaults=True, overwrite=True)
+        assert (dst / "stuff").read_text() == dedent(
+            """\
+            Prelude.
+            End.
+            """
+        )
+        git_save()
+        assert load_answersfile_data(dst)["_dst_commit"] == head
+        # Update project to version 2
+        build_file_tree({"version-data.yml": "version: 2"})
+        git_save()
+        head = git("describe", "--dirty", "--always").strip()
+        run_update(dst, defaults=True, overwrite=True)
+        assert (dst / "stuff").read_text() == dedent(
+            """\
+            Prelude.
+            Version 2 A.
+            End.
+            """
+        )
+        git_save()
+        assert load_answersfile_data(dst)["_dst_commit"] == head
+    # Update template to 2 B
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "stuff.jinja": dedent(
+                    """\
+                    Prelude.
+                    {%- if _external_data.version.version | d(0) >= 2 %}
+                    Version 2 B.
+                    {%- endif %}
+                    End.
+                    """
+                ),
+            }
+        )
+        git_save()
+    # Update project to version 2 B
+    with local.cwd(dst):
+        run_update(dst, defaults=True, overwrite=True)
+        assert (dst / "stuff").read_text() == dedent(
+            """\
+            Prelude.
+            Version 2 B.
+            End.
+            """
+        )

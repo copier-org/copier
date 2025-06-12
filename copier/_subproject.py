@@ -5,18 +5,20 @@ A *subproject* is a project that gets rendered and/or updated with Copier.
 
 from __future__ import annotations
 
+from contextlib import suppress
 from dataclasses import field
 from functools import cached_property
 from pathlib import Path
 from typing import Callable
 
+from plumbum import ProcessExecutionError
 from plumbum.machines import local
 from pydantic.dataclasses import dataclass
 
 from ._template import Template
 from ._types import AbsolutePath, AnyByStrDict, VCSTypes
 from ._user_data import load_answersfile_data
-from ._vcs import get_git, is_in_git_repo
+from ._vcs import get_current_commit, get_git, is_in_git_repo
 
 
 @dataclass
@@ -60,12 +62,19 @@ class Subproject:
             return {}
 
     @cached_property
+    def commit(self) -> str | None:
+        if self.vcs == "git":
+            with suppress(ProcessExecutionError):
+                return get_current_commit(self.local_abspath)
+        return None
+
+    @cached_property
     def last_answers(self) -> AnyByStrDict:
-        """Last answers, excluding private ones (except _src_path and _commit)."""
+        """Last answers, excluding private ones (except _src_path, _commit and _dst_commit)."""
         return {
             key: value
             for key, value in self._raw_answers.items()
-            if key in {"_src_path", "_commit"} or not key.startswith("_")
+            if key in {"_src_path", "_commit", "_dst_commit"} or not key.startswith("_")
         }
 
     @cached_property

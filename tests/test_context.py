@@ -84,6 +84,7 @@ def test_task_templating_with_operation(
         git_save()
 
     copier.run_recopy(dst, defaults=True, overwrite=True, unsafe=True)
+    git_save(dst)
     assert len(task_counter.read_text().splitlines()) == 2
 
     copier.run_update(dst, defaults=True, overwrite=True, unsafe=True)

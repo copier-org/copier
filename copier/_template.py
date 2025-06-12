@@ -24,7 +24,7 @@ from pydantic.dataclasses import dataclass
 
 from ._tools import copier_version, handle_remove_readonly
 from ._types import AnyByStrDict, VCSTypes
-from ._vcs import checkout_latest_tag, clone, get_git, get_repo
+from ._vcs import checkout_latest_tag, clone, get_current_commit, get_git, get_repo
 from .errors import (
     InvalidConfigFileError,
     MultipleConfigFilesError,
@@ -281,8 +281,7 @@ class Template:
     def commit(self) -> str | None:
         """If the template is VCS-tracked, get its commit description."""
         if self.vcs == "git":
-            with local.cwd(self.local_abspath):
-                return get_git()("describe", "--tags", "--always").strip()
+            return get_current_commit(self.local_abspath)
         return None
 
     @cached_property
@@ -365,18 +364,6 @@ class Template:
     def message_before_update(self) -> str:
         """Get message to print before update action specified in the template."""
         return self.config_data.get("message_before_update", "")
-
-    @cached_property
-    def metadata(self) -> AnyByStrDict:
-        """Get template metadata.
-
-        This data, if any, should be saved in the answers file to be able to
-        restore the template to this same state.
-        """
-        result: AnyByStrDict = {"_src_path": self.url}
-        if self.commit:
-            result["_commit"] = self.commit
-        return result
 
     def migration_tasks(
         self, stage: Literal["before", "after"], from_template: Template

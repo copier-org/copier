@@ -13,6 +13,7 @@ from plumbum import local
 from copier._main import Worker
 from copier._types import AnyByStrDict
 from copier._user_data import load_answersfile_data
+from copier._vcs import get_current_commit
 from copier.errors import InvalidTypeError
 
 from .helpers import (
@@ -486,6 +487,7 @@ def test_templated_prompt_update_previous_answer_disabled(
 
     with local.cwd(dst):
         git_init("v1")
+        head = get_current_commit()
 
     tui = spawn(COPIER_PATH + ("update", str(dst)), timeout=10)
     expect_prompt(tui, "cloud", "str", help="Which cloud provider do you use?")
@@ -497,6 +499,7 @@ def test_templated_prompt_update_previous_answer_disabled(
     assert load_answersfile_data(dst) == {
         "_src_path": str(src),
         "_commit": "v1",
+        "_dst_commit": head,
         "cloud": "Azure",
         "iac": "tf",
     }

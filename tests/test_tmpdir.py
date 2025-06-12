@@ -5,7 +5,7 @@ import pytest
 from copier._cli import CopierApp
 from copier._main import run_copy, run_recopy, run_update
 
-from .helpers import build_file_tree, git
+from .helpers import build_file_tree, git, git_save
 
 
 @pytest.fixture(scope="module")
@@ -62,6 +62,7 @@ def test_api(
     assert not (dst / "v2").exists()
     empty_dir(tmp)
     # Update
+    git_save(dst)
     run_update(dst, quiet=True, defaults=True, overwrite=True)
     assert (dst / "fav.txt").read_text() == "Copier"
     assert (dst / "v2").read_text() == "true"
@@ -102,6 +103,7 @@ def test_cli(
     assert not (dst / "v2").exists()
     empty_dir(tmp)
     # Update
+    git_save(dst)
     run_result = CopierApp.run(["copier", "update", "-fq", str(dst)], exit=False)
     assert run_result[1] == 0
     assert (dst / "fav.txt").read_text() == "Copier"

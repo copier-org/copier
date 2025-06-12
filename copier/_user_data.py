@@ -126,7 +126,7 @@ class AnswersMap:
         )
 
     def old_commit(self) -> str | None:
-        """Commit when the project was updated from this template the last time."""
+        """Template commit targeted when the project was updated the last time."""
         return self.last.get("_commit")
 
     def hide(self, key: str) -> None:

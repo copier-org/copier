@@ -10,6 +10,7 @@ import yaml
 
 import copier
 from copier._user_data import load_answersfile_data
+from copier._vcs import get_current_commit
 
 from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree, git_save
 
@@ -194,11 +195,13 @@ def test_external_data(tmp_path_factory: pytest.TempPathFactory) -> None:
         overwrite=True,
         answers_file=".parent2-answers.yml",
     )
+    head = get_current_commit(dst)
     git_save(dst)
     assert (dst / "parent2.txt").read_text() == "P2"
     expected_parent2_answers = {
         "_commit": "v1.0+parent2",
         "_src_path": str(parent2),
+        "_dst_commit": head,
         "name": "P2",
     }
     assert (
@@ -212,10 +215,12 @@ def test_external_data(tmp_path_factory: pytest.TempPathFactory) -> None:
         overwrite=True,
         answers_file=".child-answers.yml",
     )
+    head = get_current_commit(dst)
     git_save(dst)
     assert load_answersfile_data(dst, ".child-answers.yml") == {
         "_commit": "v1.0+child",
         "_src_path": str(child),
+        "_dst_commit": head,
         "name": "C1",
         "parent2_answers": ".parent2-answers.yml",
     }
