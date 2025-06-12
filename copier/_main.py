@@ -20,6 +20,8 @@ from types import TracebackType
 from typing import (
     Any,
     Callable,
+    Dict,
+    List,
     Literal,
     TypeVar,
     get_args,
@@ -27,6 +29,7 @@ from typing import (
 )
 from unicodedata import normalize
 
+import dpath
 from jinja2.loaders import FileSystemLoader
 from pathspec import PathSpec
 from plumbum import ProcessExecutionError, colors
@@ -60,6 +63,7 @@ from ._types import (
     Phase,
     RelativePath,
     StrOrPath,
+    unflatten,
     VcsRef,
 )
 from ._user_data import AnswersMap, Question, load_answersfile_data
@@ -340,8 +344,8 @@ class Worker:
             for (k, v) in self.answers.combined.items()
             if not k.startswith("_")
             and k not in self.answers.hidden
-            and k not in self.template.secret_questions
-            and k in self.template.questions_data
+            # and k not in self.template.secret_questions
+            and self.template.question_by_answer_key(k, lambda q: not q.get("secret", False)) is not None
             and isinstance(k, JSONSerializable)
             and isinstance(v, JSONSerializable)
         )
@@ -421,8 +425,9 @@ class Worker:
                 "os": lambda: OS,
             }
         )
+
         return dict(
-            **self.answers.combined,
+            **unflatten(self.answers.combined),
             _copier_answers=self._answers_to_remember(),
             _copier_conf=conf,
             _folder_name=self.subproject.local_abspath.name,
@@ -532,7 +537,7 @@ class Worker:
             return is_dir
         return self._solve_render_conflict(dst_relpath)
 
-    def _ask(self) -> None:  # noqa: C901
+    def _ask(self)-> None:  # noqa: C901
         """Ask the questions of the questionnaire and record their answers."""
         self.answers = AnswersMap(
             user_defaults=self.user_defaults,
@@ -542,15 +547,28 @@ class Worker:
             external=self._external_data(),
         )
 
-        for var_name, details in self.template.questions_data.items():
+        def process_question(var_name: str, details: Dict[str, Any], nesting_level: int = 0, silent: bool = False) -> None:
+            """Process a question and its possible nested questions recursively.
+
+            Args:
+                var_name: The variable name of the question
+                details: The question details
+                parent_path: Path of parent keys for context rendering
+            """
+
+            # Create the question object
             question = Question(
+                var_name=var_name,
                 answers=self.answers,
                 context=self._render_context(),
                 jinja_env=self.jinja_env,
                 settings=self.settings,
-                var_name=var_name,
+                nesting_level=nesting_level,
                 **details,
             )
+
+            has_sub_questions = question.get_type_name() == "dict"
+
             # Delete last answer if it cannot be parsed or validated, so a new
             # valid answer can be provided.
             if var_name in self.answers.last:
@@ -559,6 +577,10 @@ class Worker:
                     question.validate_answer(answer)
                 except Exception:
                     del self.answers.last[var_name]
+
+            if silent:
+                question.when = False
+
             # Skip a question when the skip condition is met.
             if not question.get_when():
                 # Omit its answer from the answers file.
@@ -570,7 +592,32 @@ class Worker:
                 # Skip immediately to the next question when it has no default
                 # value.
                 if question.default is MISSING:
-                    continue
+                    return
+
+                # If question has sub-questions and its default value is True, we need to process them but silently,
+                # just to get their defaults.
+                if has_sub_questions:
+                    if not question.get_default():
+                        return
+                    silent = True
+
+            # Handle dict type questions with items recursively
+            if has_sub_questions:
+                if not silent:
+                    # Show the help message for the dictionary
+                    unsafe_prompt(
+                        [question.get_questionary_structure()],
+                        style="bold"
+                    )
+
+                # Process each item in the dictionary recursively
+                for key, item_details in question.items.items():
+                    # Recursively process this nested item
+                    child_var_name = f"{var_name}.{key.replace('.','\\.')}"
+                    process_question(child_var_name, item_details, nesting_level + 1, silent)
+
+                return
+
             if var_name in self.answers.init:
                 # Try to parse and validate (if the question has a validator)
                 # the answer value.
@@ -579,12 +626,13 @@ class Worker:
                 # At this point, the answer value is valid. Do not ask the
                 # question again, but set answer as the user's answer instead.
                 self.answers.user[var_name] = answer
-                continue
-            # Skip a question when the user already answered it.
-            if self.skip_answered and var_name in self.answers.last:
-                continue
+                return
 
-            # Display TUI and ask user interactively only without --defaults
+            # Skip if already answered
+            if self.skip_answered and var_name in self.answers.last:
+                return
+
+            # Handle getting an answer
             try:
                 if self.defaults:
                     new_answer = question.get_default()
@@ -605,6 +653,10 @@ class Worker:
                     self.answers, question, self.template
                 ) from err
             self.answers.user[var_name] = new_answer
+
+        # Process all top-level questions
+        for var_name, details in self.template.questions_data.items():
+            process_question(var_name, details)
 
         # Reload external data, which may depend on answers
         self.answers.external = self._external_data()

@@ -13,7 +13,7 @@ from functools import cached_property
 from hashlib import sha512
 from os import urandom
 from pathlib import Path
-from typing import Any, Callable, Literal
+from typing import Any, Callable, Literal, List
 
 import yaml
 from jinja2 import UndefinedError
@@ -35,6 +35,7 @@ from ._types import (
     LazyDict,
     MissingType,
     StrOrPath,
+    unflatten
 )
 from .errors import InvalidTypeError, MissingFileWarning, UserMessageError
 
@@ -198,6 +199,11 @@ class Question:
             If it is a boolean, it is used directly. If it is a str, it is
             converted to boolean using a parser similar to YAML, but only for
             boolean values.
+
+        items:
+            For questions of type 'dict', contains a dictionary of sub-questions.
+            Each key in the dictionary will become a key in the resulting dictionary,
+            with values coming from answers to the sub-questions.
     """
 
     var_name: str
@@ -215,6 +221,8 @@ class Question:
     type: str = Field(default="", validate_default=True)
     validator: str = ""
     when: str | bool = True
+    nesting_level: int = 0
+    items: dict[str, dict[str, Any]] = field(default_factory=dict)
 
     @field_validator("var_name")
     @classmethod
@@ -262,6 +270,14 @@ class Question:
 
     def get_default(self) -> Any:
         """Get the default value for this question, casted to its expected type."""
+        if self.type == "dict":
+            # For dict type questions, the default value is used only to enable the processing of sub-questions
+            # default values, so it must be evaluable as a boolean expression.
+            if self.default is MISSING:
+                return False
+            return cast_to_bool(self.render_value(
+                self.settings.defaults.get(self.var_name, self.default)
+            ))
         try:
             result = self.answers.init[self.var_name]
         except KeyError:
@@ -360,13 +376,12 @@ class Question:
     def get_message(self) -> str:
         """Get the message that will be printed to the user."""
         if self.help:
-            if rendered_help := self.render_value(self.help):
-                return force_str_end(rendered_help) + "  "
+            return self.render_value(self.help)
         # Otherwise, there's no help message defined.
         message = self.var_name
         if (answer_type := self.get_type_name()) != "str":
             message += f" ({answer_type})"
-        return message + "\n  "
+        return message
 
     def get_placeholder(self) -> str:
         """Render and obtain the placeholder."""
@@ -374,6 +389,14 @@ class Question:
 
     def get_questionary_structure(self) -> AnyByStrDict:  # noqa: C901
         """Get the question in a format that the questionary lib understands."""
+        padding = " " * (self.nesting_level * 2) + " " if self.nesting_level else ""
+
+        if self.type == "dict":
+            return {
+                "type": "print",
+                "message": f"{padding} ▷ {self.get_message()}",
+                "when": lambda _: self.get_when(),
+            }
 
         def _validate(answer: str) -> str | Literal[True]:
             try:
@@ -386,13 +409,14 @@ class Question:
                 return str(exc)
             return True
 
+        msg = f"{force_str_end(self.get_message())}  {padding}"
         lexer = None
         result: AnyByStrDict = {
             "filter": self.cast_answer,
-            "message": self.get_message(),
+            "message": msg,
             "mouse_support": True,
             "name": self.var_name,
-            "qmark": "🕵️" if self.secret else "🎤",
+            "qmark": f"{padding}🕵️" if self.secret else f"{padding}🎤",
             "when": lambda _: self.get_when(),
         }
         default = self.get_default_rendered()
@@ -461,7 +485,7 @@ class Question:
         return cast_to_bool(self.render_value(self.when))
 
     def render_value(
-        self, value: Any, extra_answers: AnyByStrDict | None = None
+        self, value: Any, extra_answers: AnyByStrDict | AnyByStrMutableMapping | None = None
     ) -> Any:
         """Render a single templated value using Jinja.
 
@@ -479,7 +503,7 @@ class Question:
                 else value
             )
         try:
-            return template.render({**self.context, **(extra_answers or {})})
+            return template.render({**self.context, **unflatten(extra_answers or {})})
         except UndefinedError as error:
             raise UserMessageError(str(error)) from error
 
@@ -495,6 +519,18 @@ class Question:
 
     def _parse_answer(self, answer: Any) -> Any:
         """Parse a single answer according to the question's type."""
+        # For 'dict' type questions with sub-questions in 'items'
+        if self.get_type_name() == "dict":
+            # If it's not a dictionary, process its keys
+            if not isinstance(answer, dict):
+                raise InvalidTypeError(
+                    f'Invalid answer "{answer}" of type "{type(answer)}" '
+                    f'to question "{self.var_name}" of type dict'
+                )
+
+            # Perform parsing using the new parse_dict_items function
+            return self._parse_dict_answer(answer)
+
         ans = self.cast_answer(answer)
         choices = self._formatted_choices
         if not choices:
@@ -510,6 +546,54 @@ class Question:
             f"Invalid choice: {choice_error}" if choice_error else "Invalid choice"
         )
 
+    def _parse_dict_answer(self, answer: dict[str, Any]) -> dict[str, Any]:
+        """Parse a dictionary of question items.
+
+        This is used for the 'dict' type to process and validate a dictionary answer
+        based on item definitions.
+
+        Args:
+            answer: The dictionary answer to parse (from previous answers or CLI input)
+
+        Returns:
+            The parsed dictionary with values validated according to their types
+        """
+        result = {}
+
+        # If we don't have input data, return an empty dictionary
+        if not answer:
+            return {}
+
+        # For each key defined in items, extract and validate the corresponding value from the answer
+        for key, question_data in self.items.items():
+            if key not in answer:
+                # If the key doesn't exist in the answer, skip it
+                continue
+
+            item_var_name = f"{self.var_name}.{key.replace(".", "\\.")}"
+
+            # Create a temporary question to validate the value according to the defined type
+            question = Question(
+                var_name=item_var_name,
+                answers=self.answers,
+                context=self.context,
+                jinja_env=self.jinja_env,
+                settings=self.settings,
+                **question_data,
+            )
+
+            # Extract the value to parse
+            value = answer.get(key)
+
+            # Use the _parse_answer method of the question which handles
+            # all types of questions consistently, including sub-dictionaries
+            parsed_value = question._parse_answer(value)
+
+            # Store the parsed value in the result dictionary
+            result[key] = parsed_value
+
+        return result
+
 
 def parse_yaml_string(string: str) -> Any:
     """Parse a YAML string and raise a ValueError if parsing failed.
@@ -521,6 +605,14 @@ def parse_yaml_string(string: str) -> Any:
         return yaml.safe_load(string)
     except yaml.error.YAMLError as error:
         raise ValueError(str(error))
+
+# Parse a YAML string specifically as a dictionary
+def parse_dict_string(string: str) -> dict[str, Any]:
+    """Parse a YAML string as a dictionary and raise a ValueError if parsing failed or result isn't a dict."""
+    result = parse_yaml_string(string)
+    if not isinstance(result, dict):
+        raise ValueError("Input must be a dictionary")
+    return result
 
 
 def load_answersfile_data(
@@ -549,4 +641,5 @@ CAST_STR_TO_NATIVE: Mapping[str, Callable[[str], Any]] = {
     "json": json.loads,
     "str": cast_to_str,
     "yaml": parse_yaml_string,
+    "dict": parse_dict_string,
 }

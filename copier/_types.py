@@ -6,6 +6,7 @@ import sys
 from collections.abc import Iterator, Mapping, MutableMapping, Sequence
 from contextlib import contextmanager
 from contextvars import ContextVar
+import dpath
 from enum import Enum
 from pathlib import Path
 from typing import (
@@ -20,6 +21,8 @@ from typing import (
 )
 
 from pydantic import AfterValidator
+
+from ._tools import parse_dpath_path
 
 if sys.version_info >= (3, 10):
     from typing import ParamSpec as ParamSpec
@@ -132,3 +135,13 @@ class VcsRef(Enum):
     """A special value to indicate that the current ref of the existing
     template should be used.
     """
+
+def unflatten(
+    answers: Mapping[str, Any]
+) -> AnyByStrDict:
+    """Unflatten a dictionary with dot-separated keys."""
+    result: AnyByStrDict = {}
+    for key, value in answers.items():
+        path = parse_dpath_path(key)
+        dpath.new(result, path, value)
+    return result

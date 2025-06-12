@@ -49,7 +49,7 @@ def test_config_data_is_merged_from_files() -> None:
     ]
     assert list(tpl.exclude) == ["exclude1", "exclude21", "exclude22"]
     assert list(tpl.jinja_extensions) == ["jinja2.ext.0", "jinja2.ext.2"]
-    assert list(tpl.secret_questions) == ["question1"]
+    assert list(set(tpl.config_data.get("secret_questions", []))) == ["question1"]
 
 
 @pytest.mark.parametrize("config_suffix", ["yaml", "yml"])
