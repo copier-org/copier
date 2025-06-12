@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 import sys
-from contextlib import suppress
+from contextlib import contextmanager, suppress
 from pathlib import Path
 from tempfile import TemporaryDirectory, mkdtemp
 from warnings import warn
@@ -15,7 +15,7 @@ from plumbum import TF, ProcessExecutionError, colors, local
 from plumbum.machines import LocalCommand
 
 from ._types import OptBool, OptStrOrPath, StrOrPath
-from .errors import DirtyLocalWarning, ShallowCloneWarning
+from .errors import DirtyLocalWarning, ShallowCloneWarning, WorktreeCreationWarning
 
 GIT_USER_NAME = "Copier"
 GIT_USER_EMAIL = "copier@copier"
@@ -216,6 +216,53 @@ def clone(url: str, ref: str | None = None) -> str:
         git("submodule", "update", "--checkout", "--init", "--recursive", "--force")
 
     return location
+
+
+@contextmanager
+def tmp_worktree(
+    local_repo: StrOrPath,
+    ref: str,
+    detach: bool = False,
+    prefix: str = ".copier_worktree.",
+):
+    """Context manager to add a worktree to a local git repository and clean it up after use.
+
+    Args:
+        local_repo:
+            A git repository in the local filesystem.
+        ref:
+            Reference to checkout in the new worktree.
+        detach:
+            If `True`, the worktree will be detached from any branch.
+        prefix:
+            Prefix for the temporary worktree directory.
+    """
+    git = get_git(local_repo)
+    with TemporaryDirectory(prefix=prefix) as tmpdir:
+        worktree_path = Path(tmpdir).resolve()
+        add = git["worktree", "add", worktree_path, ref]
+        if detach:
+            add = add["--detach"]
+        try:
+            add()
+        except ProcessExecutionError as exc:
+            warn(
+                f"Failed to create worktree for {local_repo!r} at {worktree_path!r}: {exc}",
+                WorktreeCreationWarning,
+            )
+            yield None
+            return
+        try:
+            yield worktree_path
+        finally:
+            with suppress(Exception):
+                git("worktree", "remove", "--force", worktree_path)
+
+
+def get_current_commit(local_repo: StrOrPath = ".") -> str:
+    """Get the current commit hash of a local git repository."""
+    git = get_git(local_repo)
+    return git("describe", "--dirty", "--always", "--tags").strip()
 
 
 def valid_version(version_: str) -> bool:

@@ -7,7 +7,7 @@ import platform
 import subprocess
 import sys
 from collections.abc import Iterable, Mapping, Sequence
-from contextlib import suppress
+from contextlib import nullcontext, suppress
 from contextvars import ContextVar
 from dataclasses import field, replace
 from filecmp import dircmp
@@ -63,7 +63,7 @@ from ._types import (
     VcsRef,
 )
 from ._user_data import AnswersMap, Question, load_answersfile_data
-from ._vcs import get_git
+from ._vcs import get_git, tmp_worktree
 from .errors import (
     CopierAnswersInterrupt,
     ExtensionNotFoundError,
@@ -243,6 +243,7 @@ class Worker:
 
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
     _cleanup_hooks: list[Callable[[], None]] = field(default_factory=list, init=False)
+    _external_data_root: Path | None = None
 
     def __enter__(self) -> Worker:
         """Allow using worker as a context manager."""
@@ -315,10 +316,11 @@ class Worker:
         # Given those values are lazily rendered on 1st access then cached
         # the phase value is irrelevant and could be misleading.
         # As a consequence it is explicitly set to "undefined".
+        root = self._external_data_root or self.dst_path
         return LazyDict(
             {
                 name: lambda path=path: load_answersfile_data(  # type: ignore[misc]
-                    self.dst_path, _render(path), warn_on_missing=True
+                    root, _render(path), warn_on_missing=True
                 )
                 for name, path in self.template.external_data.items()
             }
@@ -334,7 +336,11 @@ class Worker:
         answers: AnyByStrDict = {}
         commit = self.template.commit
         src = self.template.url
-        for key, value in (("_commit", commit), ("_src_path", src)):
+        for key, value in (
+            ("_commit", commit),
+            ("_dst_commit", self.subproject.commit),
+            ("_src_path", src),
+        ):
             if value is not None:
                 answers[key] = value
         # Other data goes next
@@ -541,7 +547,7 @@ class Worker:
             user_defaults=self.user_defaults,
             init=self.data,
             last=self.subproject.last_answers,
-            metadata=self.template.metadata,
+            metadata=self.metadata,
             external=self._external_data(),
         )
 
@@ -699,6 +705,20 @@ class Worker:
                 tuple(chain(self.skip_if_exists, self.template.skip_if_exists)),
             )
         )
+
+    @cached_property
+    def metadata(self) -> AnyByStrDict:
+        """Get worker metadata.
+
+        This data, if any, should be saved in the answers file to be able to
+        restore the template to this same state.
+        """
+        result: AnyByStrDict = {"_src_path": self.template.url}
+        if self.template.commit:
+            result["_commit"] = self.template.commit
+        if self.subproject.commit:
+            result["_dst_commit"] = self.subproject.commit
+        return result
 
     def _render_template(self) -> None:
         """Render the template in the subproject root."""
@@ -1130,8 +1150,18 @@ class Worker:
             ).strip()
         )
         subproject_subdir = self.subproject.local_abspath.relative_to(subproject_top)
-
+        old_dst_commit = self.subproject.last_answers.get("_dst_commit")
+        worktree_context = (
+            tmp_worktree(
+                subproject_top,
+                old_dst_commit,
+                prefix=f"{__name__}.old_subproject.",
+            )
+            if old_dst_commit
+            else nullcontext()
+        )
         with (
+            worktree_context as old_subproject,
             TemporaryDirectory(
                 prefix=f"{__name__}.old_copy.",
             ) as old_copy,
@@ -1148,6 +1178,7 @@ class Worker:
                 quiet=True,
                 src_path=self.subproject.template.url,  # type: ignore[union-attr]
                 vcs_ref=self.subproject.template.commit,  # type: ignore[union-attr]
+                _external_data_root=old_subproject,
             ) as old_worker:
                 old_worker.run_copy()
             # Run pre-migration tasks
@@ -1223,6 +1254,7 @@ class Worker:
                 src_path=self.subproject.template.url,  # type: ignore[union-attr]
                 exclude=exclude_plus_removed,
                 vcs_ref=self.resolved_vcs_ref,
+                _external_data_root=self.dst_path,
             ) as new_worker:
                 new_worker.run_copy()
             with local.cwd(new_copy):
