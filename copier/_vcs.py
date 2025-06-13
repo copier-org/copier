@@ -21,6 +21,18 @@ GIT_USER_NAME = "Copier"
 GIT_USER_EMAIL = "copier@copier"
 
 
+def git_config_envs(config: tuple[tuple[str, str], ...]) -> dict[str, str]:
+    """Get environment variables for git configuration overrides."""
+    if not config:
+        return {}
+    envs = {
+        "GIT_CONFIG_COUNT": str(len(config)),
+    }
+    for i, (key, value) in enumerate(config):
+        envs[f"GIT_CONFIG_KEY_{i}"] = key
+        envs[f"GIT_CONFIG_VALUE_{i}"] = value
+    return envs
+
 def get_git(context_dir: OptStrOrPath = None) -> LocalCommand:
     """Gets `git` command, or fails if it's not available."""
     command = local["git"].with_env(
@@ -28,6 +40,7 @@ def get_git(context_dir: OptStrOrPath = None) -> LocalCommand:
         GIT_AUTHOR_EMAIL=GIT_USER_EMAIL,
         GIT_COMMITTER_NAME=GIT_USER_NAME,
         GIT_COMMITTER_EMAIL=GIT_USER_EMAIL,
+        **git_config_envs(GIT_CONFIG),
     )
     if context_dir:
         command = command["-C", context_dir]
@@ -49,7 +62,11 @@ REPLACEMENTS = (
     (re.compile(r"^gl:/?(.*\.git)$"), r"https://gitlab.com/\1"),
     (re.compile(r"^gl:/?(.*)$"), r"https://gitlab.com/\1.git"),
 )
-
+GIT_CONFIG = (
+    # Ignore global gitignore config which could potentially prevent template files
+    # from being copied.
+    ("core.excludesFile", ""),
+)
 
 def is_git_repo_root(path: StrOrPath) -> bool:
     """Indicate if a given path is a git repo root directory."""
