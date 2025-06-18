@@ -51,7 +51,7 @@ dev = [
   "pexpect==4.9.0",
   "poethepoet==0.35.0",
   "pre-commit==4.2.0",
-  "pytest==8.4.0",
+  "pytest==8.4.1",
   "pytest-cov==6.2.1",
   "pytest-gitconfig==0.7.0",
   "pytest-xdist==3.7.0",
