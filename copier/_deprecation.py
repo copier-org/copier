@@ -55,3 +55,15 @@ def deprecate_member(member: str, module: str, new_import: str) -> None:
         DeprecationWarning,
         stacklevel=3,
     )
+
+
+def deprecate_answers_file_template_path() -> None:
+    """Deprecate answers file template paths other than the template's root directory."""
+    warnings.warn(
+        "Answers file template locations other than the template root directory are "
+        "deprecated. Specify a non-default answers file name/location via the "
+        "`_answers_file` setting in the `copier.yaml` file instead. "
+        f"{_issue_note}",
+        DeprecationWarning,
+        stacklevel=3,
+    )
