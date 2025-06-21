@@ -12,9 +12,9 @@ from copier import run_copy, run_update
 from copier._main import Worker
 from copier._user_data import load_answersfile_data
 from copier._vcs import checkout_latest_tag, clone, get_git_version, get_repo
-from copier.errors import ShallowCloneWarning
+from copier.errors import DirtyLocalWarning, ShallowCloneWarning
 
-from .helpers import git
+from .helpers import build_file_tree, git, git_save
 
 
 def test_get_repo() -> None:
@@ -85,6 +85,26 @@ def test_local_clone() -> None:
     local_tmp = clone(tmp)
     assert local_tmp
     assert Path(local_tmp, "README.md").exists()
+    shutil.rmtree(local_tmp, ignore_errors=True)
+
+
+def test_local_dirty_clone(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src = tmp_path_factory.mktemp("src")
+    print(src)
+
+    build_file_tree({src / "version.txt": "0.1.0"})
+    git_save(src)
+
+    build_file_tree({src / "version.txt": "0.2.0", src / "README.md": "hello world"})
+
+    with pytest.warns(DirtyLocalWarning):
+        local_tmp = clone(str(src))
+
+    assert local_tmp
+    assert Path(local_tmp, "version.txt").exists()
+    assert Path(local_tmp, "version.txt").read_text() == "0.2.0"
+    assert Path(local_tmp, "README.md").exists()
+    assert Path(local_tmp, "README.md").read_text() == "hello world"
     shutil.rmtree(local_tmp, ignore_errors=True)
 
 
