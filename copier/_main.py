@@ -973,9 +973,10 @@ class Worker:
     @cached_property
     def subproject(self) -> Subproject:
         """Get related subproject."""
+        default_answers_file = Path(".copier-answers.yaml") if Path(".copier-answers.yaml").exists() else Path(".copier-answers.yml")
         result = Subproject(
             local_abspath=self.dst_path.absolute(),
-            answers_relpath=self.answers_file or Path(".copier-answers.yml"),
+            answers_relpath=self.answers_file or default_answers_file,
         )
         self._cleanup_hooks.append(result._cleanup)
         return result
