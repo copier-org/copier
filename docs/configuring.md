@@ -192,6 +192,25 @@ Supported keys:
     choice _value_, not its _key_, and it must match its _type_. If values are quite
     long, you can use
     [YAML anchors](https://confluence.atlassian.com/bitbucket/yaml-anchors-960154027.html).
+
+    !!! note "Dynamic default value of a multiselect choice question"
+
+        The default value of a multiselect choice question can be created dynamically by
+        using a templated string which renders a YAML-style list of choice values. List
+        items are parsed according to the question's `type` and don't need to be quoted
+        unless there is ambiguity with the surrounding list brackets. For example:
+
+        ```diff title="copier.yml"
+         brackets:
+             type: str
+             choices:
+                 - "["
+                 - "]"
+             multiselect: true
+        -    default: '[[, ]]'     # ❌ WRONG
+        +    default: '["[", "]"]' # ✔️ RIGHT
+        ```
+
 -   **secret**: When `true`, it hides the prompt displaying asterisks (`*****`) and
     doesn't save the answer in [the answers file][the-copier-answersyml-file]. When
     `true`, a default value is required.
