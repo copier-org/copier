@@ -427,6 +427,8 @@ class Question:
             result["multiline"] = self.get_multiline()
             if placeholder := self.get_placeholder():
                 result["placeholder"] = placeholder
+        if type_name == "path":
+            questionary_type = "path"
         if questionary_type in {"input", "checkbox", "password"}:
             result["validate"] = _validate
         result.update({"type": questionary_type})
@@ -593,4 +595,5 @@ CAST_STR_TO_NATIVE: Mapping[str, Callable[[str], Any]] = {
     "json": json.loads,
     "str": cast_to_str,
     "yaml": parse_yaml_string,
+    "path": str,
 }
