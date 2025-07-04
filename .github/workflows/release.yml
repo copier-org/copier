@@ -6,7 +6,7 @@ on:
     tags: ["*"]
 
 env:
-  # renovate: datasource=pypi depName=uv
+  # renovate: datasource=devbox depName=uv
   UV_VERSION: "0.7.15"
 
 jobs:

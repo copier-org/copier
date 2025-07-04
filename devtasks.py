@@ -1,7 +1,6 @@
 """Development helper tasks."""
 
 import logging
-import shlex
 from pathlib import Path
 
 from plumbum import TEE, CommandNotFound, ProcessExecutionError, local
@@ -20,22 +19,19 @@ def dev_setup() -> None:
 def lint() -> None:
     """Lint and format the project."""
     args = [
-        "--extra-experimental-features",
-        "nix-command flakes",
-        "--accept-flake-config",
-        "develop",
-        "--impure",
-        f"{HERE}",
-        "--command",
+        "run",
+        "--",
+        "uv",
+        "run",
         "pre-commit",
         "run",
         "--color=always",
         "--all-files",
     ]
     try:
-        local["nix"].with_cwd(HERE)[args] & TEE
+        local["devbox"].with_cwd(HERE)[args] & TEE
     except CommandNotFound:
-        _logger.warning("Nix not found; fallback to a container")
+        _logger.warning("Devbox not found; fallback to a container")
         runner = local.get("podman", "docker")
         try:
             (
@@ -45,11 +41,9 @@ def lint() -> None:
                     "--name=copier-lint-v1",
                     f"--volume={HERE}:{HERE}:rw,z",
                     f"--workdir={HERE}",
-                    "docker.io/nixos/nix",
-                    "bash",
-                    "-c",
-                    f"git config --global --add safe.directory {HERE} && {shlex.join(['nix', *args])}",
-                ]
+                    "docker.io/jetpackio/devbox:0.14.2",
+                    "devbox",
+                ][args]
                 & TEE
             )
         except ProcessExecutionError:

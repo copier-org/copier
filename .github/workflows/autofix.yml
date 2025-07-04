@@ -7,28 +7,28 @@ on:
 permissions:
   contents: read
 
+env:
+  # renovate: datasource=github-tags depName=devbox packageName=jetify-com/devbox
+  DEVBOX_VERSION: "0.14.2"
+
 jobs:
   autofix:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # Install Nix and set up Cachix
-      - uses: cachix/install-nix-action@v31
+      # Install Devbox
+      - name: Install devbox
+        uses: jetify-com/devbox-install-action@v0.13.0
         with:
-          nix_path: nixpkgs=channel:nixos-unstable
-      - uses: cachix/cachix-action@v16
-        with:
-          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-          extraPullNames: devenv
-          name: copier
-          pushFilter: (-source$|nixpkgs\.tar\.gz$)
+          devbox-version: ${{ env.DEVBOX_VERSION }}
+          enable-cache: "true"
 
       # Autoformat and try to push back changes
-      - run: nix develop --impure -c pre-commit run -a --show-diff-on-failure
+      - run: devbox run -- uv run pre-commit run -a --show-diff-on-failure
         continue-on-error: true
       # HACK https://github.com/autofix-ci/action/pull/15
-      - run: nix develop --impure -c pre-commit uninstall -t pre-commit -t commit-msg
+      - run: devbox run -- uv run pre-commit uninstall -t pre-commit -t commit-msg
       - uses: autofix-ci/action@v1.3
         with:
           commit-message: "style: autoformat with pre-commit"
