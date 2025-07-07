@@ -54,6 +54,10 @@ The recommended way is:
 1. Wait until the terminal that pops up is ready.
 1. Accept the direnv pop-ups that appear.
 
+For local development with a similar experience, we also offer a
+[VS Code dev container](https://code.visualstudio.com/docs/devcontainers/containers)
+integration.
+
 For local or more complex setups, continue reading.
 
 We use some tools as part of our development workflow which you'll need to install into
