@@ -5,7 +5,7 @@
     "editorconfig-checker@3.3.0",
     "git@2.49.0",
     "nodePackages.prettier@3.3.3",
-    "uv@0.7.17"
+    "uv@0.7.19"
   ],
   "env": {
     "GIT_EXTERNAL_DIFF": "difft"
