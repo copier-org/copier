@@ -9,6 +9,9 @@
     "enabled": true,
     "schedule": "every 4 week on Monday"
   },
+  "pyenv": {
+    "enabled": false
+  },
   "rangeStrategy": "update-lockfile",
   "labels": ["dependencies"],
   "packageRules": [
