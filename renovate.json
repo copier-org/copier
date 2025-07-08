@@ -22,6 +22,12 @@
       "rangeStrategy": "pin"
     },
     {
+      "description": "Don't update Prettier to v3.4.0+ because it breaks some Markdown syntax extensions (https://github.com/prettier/prettier/issues/16929)",
+      "matchDatasources": ["devbox"],
+      "matchPackageNames": ["prettier"],
+      "allowedVersions": "<3.4.0"
+    },
+    {
       "matchCategories": ["python"],
       "addLabels": ["python"]
     },
