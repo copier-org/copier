@@ -510,6 +510,12 @@ class Question:
     def parse_answer(self, answer: Any) -> Any:
         """Parse the answer according to the question's type."""
         if self.multiselect:
+            # If the answer to a multiselect question is a string (typically because
+            # the default value is templated), then it must be a serialized YAML-style
+            # list of choice items. Thus, we shallowly parse the outermost list first,
+            # then we parse the items according to the `type: <type>` field.
+            if isinstance(answer, str):
+                answer = parse_yaml_list(answer)
             answer = [self._parse_answer(a) for a in answer]
             choices = (
                 self.cast_answer(choice.value) for choice in self._formatted_choices
@@ -613,6 +619,44 @@ def parse_dict_string(string: str) -> dict[str, Any]:
     if not isinstance(result, dict):
         raise ValueError("Input must be a dictionary")
     return result
+
+
+def parse_yaml_list(string: str) -> list[str]:
+    """Shallowly parse a YAML string that contains a list of items.
+
+    All items remain raw strings, only the outermost list is parsed.
+
+    Args:
+        string: The YAML string.
+
+    Returns:
+        The parsed list of raw items.
+
+    Raises:
+        ValueError: If the YAML string is not a list.
+    """
+    node = yaml.compose(string, Loader=yaml.SafeLoader)
+
+    if not isinstance(node, yaml.nodes.SequenceNode):
+        raise ValueError(f"Not a YAML list: {string!r}")
+
+    items = []
+    for item in node.value:
+        raw = string[item.start_mark.index : item.end_mark.index].strip()
+
+        if (
+            isinstance(item, yaml.nodes.ScalarNode)
+            and item.tag == "tag:yaml.org,2002:str"
+        ):
+            # Strip quotes if the value is quoted to avoid double-quoting.
+            if (raw.startswith('"') and raw.endswith('"')) or (
+                raw.startswith("'") and raw.endswith("'")
+            ):
+                raw = raw[1:-1]
+
+        items.append(raw)
+
+    return items
 
 
 def load_answersfile_data(

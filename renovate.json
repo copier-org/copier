@@ -5,12 +5,12 @@
     "customManagers:githubActionsVersions",
     ":semanticCommitTypeAll(build)"
   ],
-  "nix": {
-    "enabled": true
-  },
   "lockFileMaintenance": {
     "enabled": true,
     "schedule": "every 4 week on Monday"
+  },
+  "pyenv": {
+    "enabled": false
   },
   "rangeStrategy": "update-lockfile",
   "labels": ["dependencies"],
@@ -27,6 +27,26 @@
     {
       "matchManagers": ["github-actions"],
       "addLabels": ["github_actions"]
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/(^|/)devbox\\.json$/"],
+      "matchStrings": ["/(?<currentValue>\\d+(\\.\\d+)*)/.schema/devbox.schema.json"],
+      "datasourceTemplate": "github-tags",
+      "packageNameTemplate": "jetify-com/devbox",
+      "depNameTemplate": "devbox",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["**/*"],
+      "matchStrings": ["docker.io/jetpackio/devbox:(?<currentValue>\\d+(\\.\\d+)*)"],
+      "datasourceTemplate": "github-tags",
+      "packageNameTemplate": "jetify-com/devbox",
+      "depNameTemplate": "devbox",
+      "versioningTemplate": "semver"
     }
   ]
 }

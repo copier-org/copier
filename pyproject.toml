@@ -47,26 +47,26 @@ copier = "copier.__main__:CopierApp.run"
 [dependency-groups]
 dev = [
   "codespell[toml]==2.4.1",
-  "commitizen==4.8.2",
-  "mypy==1.16.0",
+  "commitizen==4.8.3",
+  "mypy==1.16.1",
   "pexpect==4.9.0",
-  "poethepoet==0.34.0",
+  "poethepoet==0.36.0",
   "pre-commit==4.2.0",
-  "pytest==8.4.0",
-  "pytest-cov==6.1.1",
+  "pytest==8.4.1",
+  "pytest-cov==6.2.1",
   "pytest-gitconfig==0.7.0",
-  "pytest-xdist==3.7.0",
-  "ruff==0.11.13",
+  "pytest-xdist==3.8.0",
+  "ruff==0.12.2",
   "taplo==0.9.3",
   "types-backports==0.1.3",
   "types-colorama==0.4.15.20240311",
   "types-pygments==2.19.0.20250516",
   "types-pyyaml==6.0.12.20250516",
-  "typing-extensions==4.14.0; python_version < '<3.10'",
+  "typing-extensions==4.14.1; python_version < '<3.10'",
 ]
 docs = [
-  "markdown-exec==1.10.3",
-  "mkdocs-material==9.6.14",
+  "markdown-exec==1.11.0",
+  "mkdocs-material==9.6.15",
   "mkdocstrings[python]==0.29.1",
 ]
 
@@ -180,7 +180,7 @@ annotated_tag = true
 changelog_incremental = true
 tag_format = "v$version"
 update_changelog_on_bump = true
-version = "9.7.1"
+version = "9.8.0"
 
 [tool.codespell]
 # Ref: https://github.com/codespell-project/codespell#using-a-config-file

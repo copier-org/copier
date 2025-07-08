@@ -95,27 +95,40 @@ suitable to [autoupdate your project safely][the-copier-answersyml-file]:
 
 ### `_copier_conf`
 
-`_copier_conf` includes a representation of the current Copier
-[Worker][copier.main.Worker] object, also slightly modified:
+!!! note
 
--   It only contains JSON-serializable data.
--   You can serialize it with `{{ _copier_conf|to_json }}`.
--   ⚠️ It contains secret answers inside its `.data` key.
--   Modifying it doesn't alter the current rendering configuration.
+    - `_copier_conf` contains JSON-serializable data.
+    - `_copier_conf` can be serialized with `{{ _copier_conf|to_json }}`.
+    - ⚠️ `_copier_conf` may contain secret answers inside its `.data` key.
+    - Modifying `_copier_conf` doesn't alter the current rendering configuration.
 
-Furthermore, the following keys are added:
+Attributes:
 
-#### `os` { #\_copier_conf.os }
-
-The detected operating system, either `"linux"`, `"macos"`, `"windows"` or `None`.
-
-#### `sep` { #\_copier_conf.sep }
-
-The operating system-specific directory separator.
-
-#### `vcs_ref_hash` { #\_copier_conf.vcs_ref_hash }
-
-The current commit hash from the template.
+| Name               | Type                                                          | Description                                                                                                                                                                                                                                                |
+| ------------------ | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `answers_file`     | `Path`                                                        | The path for [the answers file][the-copier-answersyml-file] relative to `dst_path`.<br>See the [`answers_file`][] setting for related information.                                                                                                         |
+| `cleanup_on_error` | `bool`                                                        | When `True`, delete `dst_path` if there's an error.<br>See the [`cleanup_on_error`][] setting for related information.                                                                                                                                     |
+| `conflict`         | `Literal["inline", "rej"]`                                    | The output format of a diff code hunk when [updating][updating-a-project] a file yields conflicts.<br>See the [`conflict`][] setting for related information.                                                                                              |
+| `context_lines`    | `PositiveInt`                                                 | Lines of context to consider when solving conflicts in updates.<br>See the [`context_lines`][] setting for related information.                                                                                                                            |
+| `data`             | `dict[str, Any]`                                              | Answers to the questionnaire, defined in the template, provided via CLI (`-d,--data`) or API (`data`).<br>See the [`data`][] setting for related information.<br>⚠️ May contain secret answers.                                                            |
+| `defaults`         | `bool`                                                        | When `True`, use default answers to questions.<br>See the [`defaults`][] setting for related information.                                                                                                                                                  |
+| `dst_path`         | `Path`                                                        | Destination path where to render the subproject.<br>⚠️ When [updating a project][updating-a-project], it may be a temporary directory, as Copier's update algorithm generates fresh copies using the old and new template versions in temporary locations. |
+| `exclude`          | `Sequence[str]`                                               | Specified additional [file exclusion patterns][patterns-syntax].<br>See the [`exclude`][] setting for related information.                                                                                                                                 |
+| `os`               | <code>Literal["linux", "macos", "windows"] &vert; None</code> | The detected operating system, `None` if it could not be detected.                                                                                                                                                                                         |
+| `overwrite`        | `bool`                                                        | When `True`, overwrite files that already exist, without asking.<br>See the [`overwrite`][] setting for related information.                                                                                                                               |
+| `pretend`          | `bool`                                                        | When `True`, produce no real rendering.<br>See the [`pretend`][] setting for related information.                                                                                                                                                          |
+| `quiet`            | `bool`                                                        | When `True`, disable all output.<br>See the [`quiet`][] setting for related information.                                                                                                                                                                   |
+| `sep`              | `str`                                                         | The operating system-specific directory separator.                                                                                                                                                                                                         |
+| `settings`         | [`copier.settings.Settings`][]                                | General user settings.<br>See the [`settings`][] page for related information.                                                                                                                                                                             |
+| `skip_answered`    | `bool`                                                        | When `True`, skip questions that have already been answered.<br>See the [`skip_answered`][] setting for related information.                                                                                                                               |
+| `skip_if_exists`   | `Sequence[str]`                                               | Specified additional [file skip patterns][patterns-syntax].<br>See the [`skip_if_exists`][] setting for related information.                                                                                                                               |
+| `skip_tasks`       | `bool`                                                        | When `True`, skip [template tasks execution][tasks].<br>See the [`skip_tasks`][] setting for related information.                                                                                                                                          |
+| `src_path`         | `Path`                                                        | The absolute path to the (cloned/downloaded) template on disk.                                                                                                                                                                                             |
+| `unsafe`           | `bool`                                                        | When `True`, allow usage of unsafe templates.<br>See the [`unsafe`][] setting for related information.                                                                                                                                                     |
+| `use_prereleases`  | `bool`                                                        | When `True`, `vcs_ref`/`vcs_ref_hash` may refer to a prerelease version of the template.<br>See the [`use_prereleases`][] setting for related information.                                                                                                 |
+| `user_defaults`    | `dict[str, Any]`                                              | Specified user defaults that may override a template's defaults during question prompts.                                                                                                                                                                   |
+| `vcs_ref`          | <code>str &vert; None</code>                                  | The VCS tag/commit of the template, `None` if the template is not VCS-tracked.<br>See the [`vcs_ref`][] setting for related information.                                                                                                                   |
+| `vcs_ref_hash`     | <code>str &vert; None</code>                                  | The VCS commit hash of the template, `None` if the template is not VCS-tracked.                                                                                                                                                                            |
 
 ### `_copier_python`
 

@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.8.0 (2025-07-07)
+
+### Feat
+
+-   add support for providing serialized answers to multiselect choice questions
+-   **updating**: add VCS ref sentinel `:current:` for referring to the current template
+    ref
+
+### Fix
+
+-   avoid infinite recursion when accessing `_copier_conf.answers_file` via Jinja
+    context hook
+-   validate default answers
+-   correct git stage order on merge conflicts
+
 ## v9.7.1 (2025-04-23)
 
 ### Refactor

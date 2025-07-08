@@ -1,0 +1,61 @@
+repos:
+  - repo: local
+    hooks:
+      - id: codespell
+        name: codespell
+        entry: uv run codespell
+        language: system
+        types: [text]
+
+      - id: commitizen
+        name: commitizen check
+        entry: uv run cz check
+        args: [--allow-abort, --commit-msg-file]
+        stages: [commit-msg]
+        language: system
+
+      - id: editorconfig-checker
+        name: editorconfig-checker
+        entry: editorconfig-checker
+        language: system
+        types: [text]
+        exclude: \.md$|\.noeof\.|\.bundle$
+
+      - id: prettier
+        name: prettier
+        entry: prettier --write --list-different --ignore-unknown
+        language: system
+        types: [text]
+        exclude: |
+          (?x)(
+            # Some API reference identifiers are dotted paths involving
+            # internal modules prefixed with `_` which are converted by
+            # Prettier to `\_`, making them invalid.
+            ^docs/reference/.+\.md$|
+            # Those files have wrong syntax and would fail
+            ^tests/demo_invalid/copier\.yml$|
+            ^tests/demo_transclude_invalid(_multi)?/demo/copier\.yml$|
+            # HACK https://github.com/prettier/prettier/issues/9430
+            ^tests/demo
+          )
+
+      - id: ruff-check
+        name: ruff-check
+        entry: uv run ruff check --fix
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+
+      - id: ruff-format
+        name: ruff-format
+        entry: uv run ruff format
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+
+      - id: taplo
+        name: taplo
+        entry: uv run taplo format
+        language: system
+        types: [toml]
+        require_serial: true

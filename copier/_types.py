@@ -80,17 +80,25 @@ _V = TypeVar("_V")
 
 
 # HACK https://github.com/copier-org/copier/pull/1880#discussion_r1887491497
-class LazyDict(Mapping[_K, _V]):
+class LazyDict(MutableMapping[_K, _V]):
     """A dict where values are functions that get evaluated only once when requested."""
 
     def __init__(self, mapping: Mapping[_K, Callable[[], _V]] | None = None):
-        self._pending = mapping or {}
+        self._pending = dict(mapping or {})
         self._done: dict[_K, _V] = {}
 
     def __getitem__(self, key: _K) -> _V:
         if key not in self._done:
             self._done[key] = self._pending[key]()
         return self._done[key]
+
+    def __setitem__(self, key: _K, value: _V) -> None:
+        self._pending[key] = lambda: value
+        self._done.pop(key, None)
+
+    def __delitem__(self, key: _K) -> None:
+        del self._pending[key]
+        del self._done[key]
 
     def __iter__(self) -> Iterator[_K]:
         return iter(self._pending)

@@ -18,8 +18,10 @@ env:
   PRE_COMMIT_HOME: ${{ github.workspace }}/.cache/pre-commit
   PYTEST_ADDOPTS: ${{ github.event.inputs.pytest_addopts }}
   PYTHONIOENCODING: "UTF-8"
-  # renovate: datasource=pypi depName=uv
-  UV_VERSION: "0.7.12"
+  # renovate: datasource=devbox depName=uv
+  UV_VERSION: "0.7.19"
+  # renovate: datasource=github-tags depName=devbox packageName=jetify-com/devbox
+  DEVBOX_VERSION: "0.14.2"
 
 jobs:
   build:
@@ -64,7 +66,7 @@ jobs:
           name: copier
           token: ${{ secrets.CODECOV_TOKEN }}
 
-  flake-check:
+  devbox:
     strategy:
       fail-fast: false
       matrix:
@@ -76,41 +78,11 @@ jobs:
       contents: write # Allow pushing back pre-commit changes
     steps:
       - uses: actions/checkout@v4
-
-      # Install Nix
-      - uses: cachix/install-nix-action@v31
+      - name: Install devbox
+        uses: jetify-com/devbox-install-action@v0.13.0
         with:
-          nix_path: nixpkgs=channel:nixos-24.11
-      # Set up Cachix
-      - uses: cachix/cachix-action@v16
-        with:
-          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-          extraPullNames: devenv
-          name: copier
-          pushFilter: (-source$|nixpkgs\.tar\.gz$)
-      # Install devenv
-      - run: nix-env -iA devenv -f '<nixpkgs>'
-
-      # Cache for uv venv when using direnv
-      - uses: actions/cache@v4
-        with:
-          path: |
-            .cache
-            .devenv
-            .direnv
-          # prettier-ignore
-          key:
-            direnv-
-            ${{ runner.os }}-
-            ${{ runner.arch }}-
-            ${{ hashFiles('pyproject.toml', '*.lock', '*.nix') }}
-
-      # Check direnv works as expected
-      - uses: JRMurr/direnv-nix-action@v4.2.0
-        with:
-          install-nix: "false"
-          cache-store: "false"
-      - run: uv run copier --version
-
-      # Run tests
-      - run: devenv test
+          devbox-version: ${{ env.DEVBOX_VERSION }}
+          enable-cache: "true"
+      - run: devbox run -- uv run copier --version
+      - run: devbox run -- uv run pre-commit run --all-files --show-diff-on-failure
+      - run: devbox run test

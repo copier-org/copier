@@ -1,0 +1,21 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.14.2/.schema/devbox.schema.json",
+  "packages": [
+    "difftastic@0.64.0",
+    "editorconfig-checker@3.3.0",
+    "git@2.49.0",
+    "nodePackages.prettier@3.3.3",
+    "uv@0.7.19"
+  ],
+  "env": {
+    "GIT_EXTERNAL_DIFF": "difft"
+  },
+  "shell": {
+    "init_hook": ["uv sync --frozen", "uv run pre-commit install"],
+    "scripts": {
+      "test": [
+        "env GIT_AUTHOR_EMAIL=copier@example.com GIT_AUTHOR_NAME=copier GIT_COMMITTER_EMAIL=copier@example.com GIT_COMMITTER_NAME=copier PYTHONOPTIMIZE= uv run poe test"
+      ]
+    }
+  }
+}

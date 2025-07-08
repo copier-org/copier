@@ -221,6 +221,9 @@ class Worker:
             When `True`, skip template tasks execution.
     """
 
+    # NOTE: attributes are fully documented in [creating.md](../docs/creating.md)
+    # make sure to update documentation upon any changes.
+
     src_path: str | None = None
     dst_path: Path = Path()
     answers_file: RelativePath | None = None
@@ -673,7 +676,12 @@ class Worker:
         """
         path = self.answers_file or self.template.answers_relpath
         template = self.jinja_env.from_string(str(path))
-        return Path(template.render(self._render_context()))
+        # HACK: Override `_copier_conf.answers_file` in the render context to
+        # avoid infinite recursion when accessing it in a Jinja context hook via
+        # `copier-templates-extensions`.
+        context = self._render_context()
+        context["_copier_conf"]["answers_file"] = ""
+        return Path(template.render(**context))
 
     @cached_property
     def all_exclusions(self) -> Sequence[str]:
