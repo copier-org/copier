@@ -14,7 +14,7 @@
     "init_hook": ["uv sync --frozen", "uv run pre-commit install"],
     "scripts": {
       "test": [
-        "env GIT_AUTHOR_EMAIL=copier@example.com GIT_AUTHOR_NAME=copier GIT_COMMITTER_EMAIL=copier@example.com GIT_COMMITTER_NAME=copier PYTHONOPTIMIZE= uv run poe test"
+        "env GIT_AUTHOR_EMAIL=copier@example.com GIT_AUTHOR_NAME=copier GIT_COMMITTER_EMAIL=copier@example.com GIT_COMMITTER_NAME=copier PYTHONOPTIMIZE= uv run poe test $@"
       ]
     }
   }
