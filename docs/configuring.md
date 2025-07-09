@@ -79,111 +79,111 @@ Supported keys:
 
     !!! tip
 
-          A choice value of `null` makes it become the same as its key.
+            A choice value of `null` makes it become the same as its key.
 
     !!! tip "Validation and conditional choices"
 
-          A choice can be validated by using the extended syntax with dict-style and
-          tuple-style choices. For example:
+            A choice can be validated by using the extended syntax with dict-style and
+            tuple-style choices. For example:
 
-          ```yaml title="copier.yml"
-          cloud:
-              type: str
-              help: Which cloud provider do you use?
-              choices:
-                  - Any
-                  - AWS
-                  - Azure
-                  - GCP
+            ```yaml title="copier.yml"
+            cloud:
+                type: str
+                help: Which cloud provider do you use?
+                choices:
+                    - Any
+                    - AWS
+                    - Azure
+                    - GCP
 
-          iac:
-              type: str
-              help: Which IaC tool do you use?
-              choices:
-                  Terraform: tf
-                  Cloud Formation:
-                      value: cf
-                      validator: "{% if cloud != 'AWS' %}Requires AWS{% endif %}"
-                  Azure Resource Manager:
-                      value: arm
-                      validator: "{% if cloud != 'Azure' %}Requires Azure{% endif %}"
-                  Deployment Manager:
-                      value: dm
-                      validator: "{% if cloud != 'GCP' %}Requires GCP{% endif %}"
-          ```
+            iac:
+                type: str
+                help: Which IaC tool do you use?
+                choices:
+                    Terraform: tf
+                    Cloud Formation:
+                        value: cf
+                        validator: "{% if cloud != 'AWS' %}Requires AWS{% endif %}"
+                    Azure Resource Manager:
+                        value: arm
+                        validator: "{% if cloud != 'Azure' %}Requires Azure{% endif %}"
+                    Deployment Manager:
+                        value: dm
+                        validator: "{% if cloud != 'GCP' %}Requires GCP{% endif %}"
+            ```
 
-          When the rendered validator is a non-empty string, the choice is disabled and
-          the message is shown. Choice validation is useful when the validity of a choice
-          depends on the answer to a previous question.
+            When the rendered validator is a non-empty string, the choice is disabled and
+            the message is shown. Choice validation is useful when the validity of a choice
+            depends on the answer to a previous question.
 
     !!! tip "Dynamic choices"
 
-          Choices can be created dynamically by using a templated string which renders
-          as valid list-style, dict-style, or tuple-style choices in YAML format. For
-          example:
+            Choices can be created dynamically by using a templated string which renders
+            as valid list-style, dict-style, or tuple-style choices in YAML format. For
+            example:
 
-          ```yaml title="copier.yml"
-          language:
-              type: str
-              help: Which programming language do you use?
-              choices:
-                  - python
-                  - node
+            ```yaml title="copier.yml"
+            language:
+                type: str
+                help: Which programming language do you use?
+                choices:
+                    - python
+                    - node
 
-          dependency_manager:
-              type: str
-              help: Which dependency manager do you use?
-              choices: |
-                  {%- if language == "python" %}
-                  - poetry
-                  - pipenv
-                  {%- else %}
-                  - npm
-                  - yarn
-                  {%- endif %}
-          ```
+            dependency_manager:
+                type: str
+                help: Which dependency manager do you use?
+                choices: |
+                    {%- if language == "python" %}
+                    - poetry
+                    - pipenv
+                    {%- else %}
+                    - npm
+                    - yarn
+                    {%- endif %}
+            ```
 
-          Dynamic choices can be used as an alternative approach to conditional choices
-          via validators where dynamic choices hide disabled choices whereas choices
-          disabled via validators are visible with along with the validator's error
-          message but cannot be selected.
+            Dynamic choices can be used as an alternative approach to conditional choices
+            via validators where dynamic choices hide disabled choices whereas choices
+            disabled via validators are visible with along with the validator's error
+            message but cannot be selected.
 
-          When combining dynamic choices with validators, make sure to escape the
-          validator template using `{% raw %}...{% endraw %}`.
+            When combining dynamic choices with validators, make sure to escape the
+            validator template using `{% raw %}...{% endraw %}`.
 
     !!! warning
 
-          You are able to use different types for each choice value, but it is not
-          recommended because you can get to some weird scenarios.
+            You are able to use different types for each choice value, but it is not
+            recommended because you can get to some weird scenarios.
 
-          For example, try to understand this 🥴
+            For example, try to understand this 🥴
 
-          ```yaml title="copier.yml"
-          pick_one:
-              type: yaml # If you are mixing types, better be explicit
-              choices:
-                  Nothing, thanks: "null" # Will be YAML-parsed and converted to null
-                  Value is key: null # Value will be converted to "Value is key"
-                  One and a half: 1.5
-                  "Yes": true
-                  Nope: no
-                  Some array: "[yaml, converts, this]"
-          ```
+            ```yaml title="copier.yml"
+            pick_one:
+                type: yaml # If you are mixing types, better be explicit
+                choices:
+                    Nothing, thanks: "null" # Will be YAML-parsed and converted to null
+                    Value is key: null # Value will be converted to "Value is key"
+                    One and a half: 1.5
+                    "Yes": true
+                    Nope: no
+                    Some array: "[yaml, converts, this]"
+            ```
 
-          It's better to stick with a simple type and reason about it later in
-          template code:
+            It's better to stick with a simple type and reason about it later in
+            template code:
 
-          ```yaml title="copier.yml"
-          pick_one:
-              type: str
-              choices:
-                  Nothing, thanks: ""
-                  Value is key: null # Becomes "Value is key", which is a str
-                  One and a half: "1.5"
-                  "Yes": "true"
-                  Nope: "no"
-                  Some array: "[str, keeps, this, as, a, str]"
-          ```
+            ```yaml title="copier.yml"
+            pick_one:
+                type: str
+                choices:
+                    Nothing, thanks: ""
+                    Value is key: null # Becomes "Value is key", which is a str
+                    One and a half: "1.5"
+                    "Yes": "true"
+                    Nope: "no"
+                    Some array: "[str, keeps, this, as, a, str]"
+            ```
 
 - **multiselect**: When set to `true`, allows multiple choices. The answer will be a
   `list[T]` instead of a `T` where `T` is of type `type`.
@@ -195,21 +195,21 @@ Supported keys:
 
     !!! note "Dynamic default value of a multiselect choice question"
 
-          The default value of a multiselect choice question can be created dynamically by
-          using a templated string which renders a YAML-style list of choice values. List
-          items are parsed according to the question's `type` and don't need to be quoted
-          unless there is ambiguity with the surrounding list brackets. For example:
+            The default value of a multiselect choice question can be created dynamically by
+            using a templated string which renders a YAML-style list of choice values. List
+            items are parsed according to the question's `type` and don't need to be quoted
+            unless there is ambiguity with the surrounding list brackets. For example:
 
-          ```diff title="copier.yml"
-           brackets:
-               type: str
-               choices:
-                   - "["
-                   - "]"
-               multiselect: true
-          -    default: '[[, ]]'     # ❌ WRONG
-          +    default: '["[", "]"]' # ✔️ RIGHT
-          ```
+            ```diff title="copier.yml"
+             brackets:
+                 type: str
+                 choices:
+                     - "["
+                     - "]"
+                 multiselect: true
+            -    default: '[[, ]]'     # ❌ WRONG
+            +    default: '["[", "]"]' # ✔️ RIGHT
+            ```
 
 - **secret**: When `true`, it hides the prompt displaying asterisks (`*****`) and
   doesn't save the answer in [the answers file][the-copier-answersyml-file]. When
@@ -220,8 +220,8 @@ Supported keys:
 
     !!! warning
 
-          Multiline placeholders are not supported currently, due to
-          [this upstream bug](https://github.com/prompt-toolkit/python-prompt-toolkit/issues/1267).
+            Multiline placeholders are not supported currently, due to
+            [this upstream bug](https://github.com/prompt-toolkit/python-prompt-toolkit/issues/1267).
 
 - **multiline**: When set to `true`, it allows multiline input. This is especially
   useful when `type` is `json` or `yaml`.
@@ -243,29 +243,29 @@ Supported keys:
 
     !!! example
 
-          ```yaml title="copier.yaml"
-          project_creator:
-              type: str
+            ```yaml title="copier.yaml"
+            project_creator:
+                type: str
 
-          project_license:
-              type: str
-              choices:
-                  - GPLv3
-                  - Public domain
+            project_license:
+                type: str
+                choices:
+                    - GPLv3
+                    - Public domain
 
-          copyright_holder:
-              type: str
-              default: |-
-                  {% if project_license == 'Public domain' -%}
-                      {#- Nobody owns public projects -#}
-                      nobody
-                  {%- else -%}
-                      {#- By default, project creator is the owner -#}
-                      {{ project_creator }}
-                  {%- endif %}
-              # Only ask for copyright if project is not in the public domain
-              when: "{{ project_license != 'Public domain' }}"
-          ```
+            copyright_holder:
+                type: str
+                default: |-
+                    {% if project_license == 'Public domain' -%}
+                        {#- Nobody owns public projects -#}
+                        nobody
+                    {%- else -%}
+                        {#- By default, project creator is the owner -#}
+                        {{ project_creator }}
+                    {%- endif %}
+                # Only ask for copyright if project is not in the public domain
+                when: "{{ project_license != 'Public domain' }}"
+            ```
 
 !!! example
 
