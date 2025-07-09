@@ -88,10 +88,10 @@ The following variables are always available in Jinja templates:
 `_copier_answers` includes the current answers dict, but slightly modified to make it
 suitable to [autoupdate your project safely][the-copier-answersyml-file]:
 
--   It doesn't contain secret answers.
--   It doesn't contain any data that is not easy to render to JSON or YAML.
--   It contains special keys like `_commit` and `_src_path`, indicating how the last
-    template update was done.
+- It doesn't contain secret answers.
+- It doesn't contain any data that is not easy to render to JSON or YAML.
+- It contains special keys like `_commit` and `_src_path`, indicating how the last
+  template update was done.
 
 ### `_copier_conf`
 
@@ -141,9 +141,9 @@ A dict of the data contained in [external_data][].
 When rendering the template, that data will be exposed in the special `_external_data`
 variable:
 
--   Keys will be the same as in [external_data][].
--   Values will be the files contents parsed as YAML. JSON is also compatible.
--   Parsing is done lazily on first use.
+- Keys will be the same as in [external_data][].
+- Values will be the files contents parsed as YAML. JSON is also compatible.
+- Parsing is done lazily on first use.
 
 ### `_folder_name`
 
@@ -173,7 +173,7 @@ Availability: [`exclude`](configuring.md#exclude), [`tasks`](configuring.md#task
 
 Some rendering contexts provide variables unique to them:
 
--   [`migrations`](configuring.md#migrations)
+- [`migrations`](configuring.md#migrations)
 
 ## Loop over lists to generate files and directories
 

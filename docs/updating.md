@@ -41,12 +41,12 @@ answers you provided when copied last time. However, sometimes it's impossible f
 Copier to know what to do with a diff code hunk. In those cases, copier handles the
 conflict in one of two ways, controlled with the `--conflict` option:
 
--   `--conflict rej`: Creates a separate `.rej` file for each file with conflicts. These
-    files contain the unresolved diffs.
--   `--conflict inline` (default): Updates the file with conflict markers. This is quite
-    similar to the conflict markers created when a `git merge` command encounters a
-    conflict. For more information, see the "Checking Out Conflicts" section of the
-    [`git` documentation](https://git-scm.com/book/en/v2/Git-Tools-Advanced-Merging).
+- `--conflict rej`: Creates a separate `.rej` file for each file with conflicts. These
+  files contain the unresolved diffs.
+- `--conflict inline` (default): Updates the file with conflict markers. This is quite
+  similar to the conflict markers created when a `git merge` command encounters a
+  conflict. For more information, see the "Checking Out Conflicts" section of the
+  [`git` documentation](https://git-scm.com/book/en/v2/Git-Tools-Advanced-Merging).
 
 If the update results in conflicts, _you should review those manually_ before
 committing.
@@ -197,13 +197,12 @@ class compare,update,apply blackborder;
 
 As you can see here, `copier` does several things:
 
--   It regenerates a fresh project from the current template version.
--   Then, it compares both version to get the diff from "fresh project" to "current
-    project".
--   Now, it applies pre-migrations to your project, and updates the current project with
-    the latest template changes (asking for confirmation).
--   Finally, it re-applies the previously obtained diff and then runs the
-    post-migrations.
+- It regenerates a fresh project from the current template version.
+- Then, it compares both version to get the diff from "fresh project" to "current
+  project".
+- Now, it applies pre-migrations to your project, and updates the current project with
+  the latest template changes (asking for confirmation).
+- Finally, it re-applies the previously obtained diff and then runs the post-migrations.
 
 ### Handling of deleted paths
 
@@ -220,11 +219,11 @@ Their presence is always ensured, even during an `update` operation.
 Usually Copier will replay the last project generation without problems. However,
 sometimes that process can break. Examples:
 
--   When the last update was relying on some external resources that are no longer
-    available.
--   When the old and new versions of the template depend on different incompatible
-    versions of the same Jinja extension, but Copier can only use one.
--   When the old version of the template was built for an older version of Copier.
+- When the last update was relying on some external resources that are no longer
+  available.
+- When the old and new versions of the template depend on different incompatible
+  versions of the same Jinja extension, but Copier can only use one.
+- When the old version of the template was built for an older version of Copier.
 
 Generally, you should keep your templates as pure and simple as possible to avoid those
 situations. But it can still happen.
@@ -245,9 +244,9 @@ the introduced changes to your code base, specifically when you have unpleasant
 conflicts, it's not 100% obvious how to get back to the previously clean copy of your
 branch. The following strategies won't work:
 
--   `git checkout <branch>` – _error: you need to resolve your current index first_
--   `git checkout .` – _error: path '&lt;filename&gt;' is unmerged_
--   `git merge --abort` – _fatal: There is no merge to abort (MERGE_HEAD missing)_
+- `git checkout <branch>` – _error: you need to resolve your current index first_
+- `git checkout .` – _error: path '&lt;filename&gt;' is unmerged_
+- `git merge --abort` – _fatal: There is no merge to abort (MERGE_HEAD missing)_
 
 Here is what you can do using Git in the terminal to throw away all changes:
 

@@ -36,9 +36,9 @@ The `copier.yml` (or `copier.yaml`) file is found in the root of the template, a
 the main entrypoint for managing your template configuration. It will be read and used
 for two purposes:
 
--   [Prompting the user for information][questions].
--   [Applying template settings][available-settings] (excluding files, setting arguments
-    defaults, etc.).
+- [Prompting the user for information][questions].
+- [Applying template settings][available-settings] (excluding files, setting arguments
+  defaults, etc.).
 
 ### Questions
 
@@ -72,10 +72,10 @@ to ask users for data. To use it, the value must be a dict.
 
 Supported keys:
 
--   **type**: User input must match this type. Options are: `bool`, `float`, `int`,
-    `json`, `str`, `yaml` (default).
--   **help**: Additional text to help the user know what's this question for.
--   **choices**: To restrict possible values.
+- **type**: User input must match this type. Options are: `bool`, `float`, `int`,
+  `json`, `str`, `yaml` (default).
+- **help**: Additional text to help the user know what's this question for.
+- **choices**: To restrict possible values.
 
     !!! tip
 
@@ -185,13 +185,13 @@ Supported keys:
                 Some array: "[str, keeps, this, as, a, str]"
         ```
 
--   **multiselect**: When set to `true`, allows multiple choices. The answer will be a
-    `list[T]` instead of a `T` where `T` is of type `type`.
--   **default**: Leave empty to force the user to answer. Provide a default to save them
-    from typing it if it's quite common. When using `choices`, the default must be the
-    choice _value_, not its _key_, and it must match its _type_. If values are quite
-    long, you can use
-    [YAML anchors](https://confluence.atlassian.com/bitbucket/yaml-anchors-960154027.html).
+- **multiselect**: When set to `true`, allows multiple choices. The answer will be a
+  `list[T]` instead of a `T` where `T` is of type `type`.
+- **default**: Leave empty to force the user to answer. Provide a default to save them
+  from typing it if it's quite common. When using `choices`, the default must be the
+  choice _value_, not its _key_, and it must match its _type_. If values are quite long,
+  you can use
+  [YAML anchors](https://confluence.atlassian.com/bitbucket/yaml-anchors-960154027.html).
 
     !!! note "Dynamic default value of a multiselect choice question"
 
@@ -211,26 +211,26 @@ Supported keys:
         +    default: '["[", "]"]' # ✔️ RIGHT
         ```
 
--   **secret**: When `true`, it hides the prompt displaying asterisks (`*****`) and
-    doesn't save the answer in [the answers file][the-copier-answersyml-file]. When
-    `true`, a default value is required.
--   **placeholder**: To provide a visual example for what would be a good value. It is
-    only shown while the answer is empty, so maybe it doesn't make much sense to provide
-    both `default` and `placeholder`. It must be a string.
+- **secret**: When `true`, it hides the prompt displaying asterisks (`*****`) and
+  doesn't save the answer in [the answers file][the-copier-answersyml-file]. When
+  `true`, a default value is required.
+- **placeholder**: To provide a visual example for what would be a good value. It is
+  only shown while the answer is empty, so maybe it doesn't make much sense to provide
+  both `default` and `placeholder`. It must be a string.
 
     !!! warning
 
         Multiline placeholders are not supported currently, due to
         [this upstream bug](https://github.com/prompt-toolkit/python-prompt-toolkit/issues/1267).
 
--   **multiline**: When set to `true`, it allows multiline input. This is especially
-    useful when `type` is `json` or `yaml`.
+- **multiline**: When set to `true`, it allows multiline input. This is especially
+  useful when `type` is `json` or `yaml`.
 
--   **validator**: Jinja template with which to validate the user input. This template
-    will be rendered with the combined answers as variables; it should render _nothing_
-    if the value is valid, and an error message to show to the user otherwise.
+- **validator**: Jinja template with which to validate the user input. This template
+  will be rendered with the combined answers as variables; it should render _nothing_ if
+  the value is valid, and an error message to show to the user otherwise.
 
--   **when**: Condition that, if `false`, skips the question.
+- **when**: Condition that, if `false`, skips the question.
 
     If it is a boolean, it is used directly. Setting it to `false` is useful for
     creating a computed value.
@@ -440,11 +440,11 @@ larger `copier.yml` and enables you to reuse common partial sections from your
 templates. When multiple documents are used, care has to be taken with questions and
 settings that are defined in more than one document:
 
--   A question with the same name overwrites definitions from an earlier document.
--   Settings given in multiple documents for `exclude`, `skip_if_exists`,
-    `jinja_extensions` and `secret_questions` are concatenated.
--   Other settings (such as `tasks` or `migrations`) overwrite previous definitions for
-    these settings.
+- A question with the same name overwrites definitions from an earlier document.
+- Settings given in multiple documents for `exclude`, `skip_if_exists`,
+  `jinja_extensions` and `secret_questions` are concatenated.
+- Other settings (such as `tasks` or `migrations`) overwrite previous definitions for
+  these settings.
 
 !!! hint
 
@@ -719,9 +719,9 @@ Remember that **the key must be prefixed with an underscore if you use it in [th
 
 ### `answers_file`
 
--   Format: `str`
--   CLI flags: `-a`, `--answers-file`
--   Default value: `.copier-answers.yml`
+- Format: `str`
+- CLI flags: `-a`, `--answers-file`
+- Default value: `.copier-answers.yml`
 
 Path to a file where answers will be recorded by default. The path must be relative to
 the project root.
@@ -741,10 +741,10 @@ Don't forget to read [the docs about the answers file][the-copier-answersyml-fil
 
 ### `cleanup_on_error`
 
--   Format: `bool`
--   CLI flags: `-C`, `--no-cleanup` (used to disable this setting; only available in
-    `copier copy` subcommand)
--   Default value: `True`
+- Format: `bool`
+- CLI flags: `-C`, `--no-cleanup` (used to disable this setting; only available in
+  `copier copy` subcommand)
+- Default value: `True`
 
 When Copier creates the destination path, if there's any failure when rendering the
 template (either in the rendering process or when running the [tasks][tasks]), Copier
@@ -759,9 +759,9 @@ running `copier update`, this setting has no effect.
 
 ### `conflict`
 
--   Format: `Literal["rej", "inline"]`
--   CLI flags: `-o`, `--conflict` (only available in `copier update` subcommand)
--   Default value: `inline`
+- Format: `Literal["rej", "inline"]`
+- CLI flags: `-o`, `--conflict` (only available in `copier update` subcommand)
+- Default value: `inline`
 
 When updating a project, sometimes Copier doesn't know what to do with a diff code hunk.
 This option controls the output format if this happens. Using `rej`, creates `*.rej`
@@ -774,9 +774,9 @@ code hunk in the file itself, similar to the behavior of `git merge`.
 
 ### `context_lines`
 
--   Format: `Int`
--   CLI flags: `-c`, `--context-lines` (only available in `copier update` subcommand)
--   Default value: `1`
+- Format: `Int`
+- CLI flags: `-c`, `--context-lines` (only available in `copier update` subcommand)
+- Default value: `1`
 
 During a project update, Copier needs to compare the template evolution with the
 subproject evolution. This way, it can detect what changed, where and how to merge those
@@ -796,9 +796,9 @@ code chunks.
 
 ### `data`
 
--   Format: `dict|List[str=str]`
--   CLI flags: `-d`, `--data`
--   Default value: N/A
+- Format: `dict|List[str=str]`
+- CLI flags: `-d`, `--data`
+- Default value: N/A
 
 Give answers to questions through CLI/API.
 
@@ -833,9 +833,9 @@ questions with default answers.
 
 ### `data_file`
 
--   Format: `str`
--   CLI flags: `--data-file`
--   Default value: N/A
+- Format: `str`
+- CLI flags: `--data-file`
+- Default value: N/A
 
 As an alternative to [`-d, --data`][data] you can also pass the path to a YAML file that
 contains your data.
@@ -879,16 +879,16 @@ contains your data.
 
 ### `external_data`
 
--   Format: `dict[str, str]`
--   CLI flags: N/A
--   Default value: `{}`
+- Format: `dict[str, str]`
+- CLI flags: N/A
+- Default value: `{}`
 
 This allows using preexisting data inside the rendering context. The format is a dict of
 strings, where:
 
--   The dict key will be the namespace of the data under [`_external_data`][].
--   The dict value is the relative path (from the subproject destination) where the YAML
-    data file should be found.
+- The dict key will be the namespace of the data under [`_external_data`][].
+- The dict value is the relative path (from the subproject destination) where the YAML
+  data file should be found.
 
 !!! example "Template composition"
 
@@ -948,9 +948,9 @@ strings, where:
 
 ### `envops`
 
--   Format: `dict`
--   CLI flags: N/A
--   Default value: `{"keep_trailing_newline": true}`
+- Format: `dict`
+- CLI flags: N/A
+- Default value: `{"keep_trailing_newline": true}`
 
 Configurations for the Jinja environment. Copier uses the Jinja defaults whenever
 possible. The only exception at the moment is that
@@ -989,10 +989,10 @@ to know available options.
 
 ### `exclude`
 
--   Format: `List[str]`
--   CLI flags: `-x`, `--exclude`
--   Default value:
-    `["copier.yaml", "copier.yml", "~*", "*.py[co]", "__pycache__", ".git", ".DS_Store", ".svn"]`
+- Format: `List[str]`
+- CLI flags: `-x`, `--exclude`
+- Default value:
+  `["copier.yaml", "copier.yml", "~*", "*.py[co]", "__pycache__", ".git", ".DS_Store", ".svn"]`
 
 [Patterns][patterns-syntax] for files/folders that must not be copied.
 
@@ -1050,9 +1050,9 @@ Each pattern can be templated using Jinja.
 
 ### `force`
 
--   Format: `bool`
--   CLI flags: `-f`, `--force` (N/A in `copier update`)
--   Default value: `False`
+- Format: `bool`
+- CLI flags: `-f`, `--force` (N/A in `copier update`)
+- Default value: `False`
 
 Overwrite files that already exist, without asking.
 
@@ -1065,9 +1065,9 @@ sources][configuration-sources].
 
 ### `defaults`
 
--   Format: `bool`
--   CLI flags: `--defaults`
--   Default value: `False`
+- Format: `bool`
+- CLI flags: `--defaults`
+- Default value: `False`
 
 Use default answers to questions.
 
@@ -1082,9 +1082,9 @@ Use default answers to questions.
 
 ### `overwrite`
 
--   Format: `bool`
--   CLI flags: `--overwrite` (N/A in `copier update` because it's implicit)
--   Default value: `False`
+- Format: `bool`
+- CLI flags: `--overwrite` (N/A in `copier update` because it's implicit)
+- Default value: `False`
 
 Overwrite files that already exist, without asking.
 
@@ -1098,19 +1098,19 @@ Overwrite files that already exist, without asking.
 
 ### `jinja_extensions`
 
--   Format: `List[str]`
--   CLI flags: N/A
--   Default value: `[]`
+- Format: `List[str]`
+- CLI flags: N/A
+- Default value: `[]`
 
 Additional Jinja2 extensions to load in the Jinja2 environment. Extensions can add
 filters, global variables and functions, or tags to the environment.
 
 The following extensions are _always_ loaded:
 
--   [`jinja2_ansible_filters.AnsibleCoreFiltersExtension`](https://gitlab.com/dreamer-labs/libraries/jinja2-ansible-filters/):
-    this extension adds most of the
-    [Ansible filters](https://docs.ansible.com/ansible/2.3/playbooks_filters.html) to
-    the environment.
+- [`jinja2_ansible_filters.AnsibleCoreFiltersExtension`](https://gitlab.com/dreamer-labs/libraries/jinja2-ansible-filters/):
+  this extension adds most of the
+  [Ansible filters](https://docs.ansible.com/ansible/2.3/playbooks_filters.html) to the
+  environment.
 
 You don't need to tell your template users to install these extensions: Copier depends
 on them, so they are always installed when Copier is installed.
@@ -1201,9 +1201,9 @@ on them, so they are always installed when Copier is installed.
 
 ### `message_after_copy`
 
--   Format: `str`
--   CLI flags: N/A
--   Default value: `""`
+- Format: `str`
+- CLI flags: N/A
+- Default value: `""`
 
 A message to be printed after [generating](generating.md) or
 [regenerating][regenerating-a-project] a project _successfully_.
@@ -1235,9 +1235,9 @@ The message is suppressed when Copier is run in [quiet mode][quiet].
 
 ### `message_after_update`
 
--   Format: `str`
--   CLI flags: N/A
--   Default value: `""`
+- Format: `str`
+- CLI flags: N/A
+- Default value: `""`
 
 Like [`message_after_copy`][message_after_copy] but printed after
 [_updating_](updating.md) a project.
@@ -1257,9 +1257,9 @@ Like [`message_after_copy`][message_after_copy] but printed after
 
 ### `message_before_copy`
 
--   Format: `str`
--   CLI flags: N/A
--   Default value: `""`
+- Format: `str`
+- CLI flags: N/A
+- Default value: `""`
 
 Like [`message_after_copy`][message_after_copy] but printed _before_
 [generating](generating.md) or [regenerating][regenerating-a-project] a project.
@@ -1280,9 +1280,9 @@ Like [`message_after_copy`][message_after_copy] but printed _before_
 
 ### `message_before_update`
 
--   Format: `str`
--   CLI flags: N/A
--   Default value: `""`
+- Format: `str`
+- CLI flags: N/A
+- Default value: `""`
 
 Like [`message_before_copy`][message_after_copy] but printed before
 [_updating_](updating.md) a project.
@@ -1303,20 +1303,20 @@ Like [`message_before_copy`][message_after_copy] but printed before
 
 ### `migrations`
 
--   Format: `List[str|List[str]|dict]`
--   CLI flags: N/A
--   Default value: `[]`
+- Format: `List[str|List[str]|dict]`
+- CLI flags: N/A
+- Default value: `[]`
 
 Migrations are like [tasks][tasks], but each item can have additional keys:
 
--   **command**: The migration command to run
--   **version** (optional): Indicates the version that the template update has to go
-    through to trigger this migration. It is evaluated using [PEP 440][]. If no version is
-    specified the migration will run on every update.
--   **when** (optional): Specifies a condition that needs to hold for the task to run.
-    By default, a migration will run in the after upgrade stage.
--   **working_directory** (optional): Specifies the directory in which the command will
-    be run. Defaults to the destination directory.
+- **command**: The migration command to run
+- **version** (optional): Indicates the version that the template update has to go
+  through to trigger this migration. It is evaluated using [PEP 440][]. If no version is
+  specified the migration will run on every update.
+- **when** (optional): Specifies a condition that needs to hold for the task to run. By
+  default, a migration will run in the after upgrade stage.
+- **working_directory** (optional): Specifies the directory in which the command will be
+  run. Defaults to the destination directory.
 
 If a `str` or `List[str]` is given as a migrator it will be treated as `command` with
 all other items not present.
@@ -1336,21 +1336,21 @@ There are a number of additional variables available for templating of migration
 variables are also passed to the migration process as environment variables. Migration
 processes will receive these variables:
 
--   `_stage`/`$STAGE`: Either `before` or `after`.
--   `_version_from`/`$VERSION_FROM`: [Git commit description][git describe] of the
-    template as it was before updating.
--   `_version_to`/`$VERSION_TO`: [Git commit description][git describe] of the template
-    as it will be after updating.
--   `_version_current`/`$VERSION_CURRENT`: The `version` detector as you indicated it
-    when describing migration tasks (only when `version` is given).
--   `_version_pep440_from`/`$VERSION_PEP440_FROM`,
-    `_version_pep440_to`/`$VERSION_PEP440_TO`,
-    `_version_pep440_current`/`$VERSION_PEP440_CURRENT`: Same as the above, but
-    normalized into a standard [PEP 440][] version. In Jinja templates these are represented
-    as [packaging.version.Version](https://packaging.pypa.io/en/stable/version.html#packaging.version.Version)
-    objects and allow access to their attributes. As environment variables they are represented
-    as strings. If you use variables to perform migrations, you probably will prefer to use
-    these variables.
+- `_stage`/`$STAGE`: Either `before` or `after`.
+- `_version_from`/`$VERSION_FROM`: [Git commit description][git describe] of the
+  template as it was before updating.
+- `_version_to`/`$VERSION_TO`: [Git commit description][git describe] of the template as
+  it will be after updating.
+- `_version_current`/`$VERSION_CURRENT`: The `version` detector as you indicated it when
+  describing migration tasks (only when `version` is given).
+- `_version_pep440_from`/`$VERSION_PEP440_FROM`,
+  `_version_pep440_to`/`$VERSION_PEP440_TO`,
+  `_version_pep440_current`/`$VERSION_PEP440_CURRENT`: Same as the above, but normalized
+  into a standard [PEP 440][] version. In Jinja templates these are represented as
+  [packaging.version.Version](https://packaging.pypa.io/en/stable/version.html#packaging.version.Version)
+  objects and allow access to their attributes. As environment variables they are
+  represented as strings. If you use variables to perform migrations, you probably will
+  prefer to use these variables.
 
 [git describe]: https://git-scm.com/docs/git-describe
 [pep 440]: https://www.python.org/dev/peps/pep-0440/
@@ -1372,26 +1372,26 @@ format is still available, but will raise a warning when used.
 
 Each item in the list is a `dict` with the following keys:
 
--   **version**: Indicates the version that the template update has to go through to
-    trigger this migration. It is evaluated using [PEP 440][].
--   **before** (optional): Commands to execute before performing the update. The answers
-    file is reloaded after running migrations in this stage, to let you migrate answer
-    values.
--   **after** (optional): Commands to execute after performing the update.
+- **version**: Indicates the version that the template update has to go through to
+  trigger this migration. It is evaluated using [PEP 440][].
+- **before** (optional): Commands to execute before performing the update. The answers
+  file is reloaded after running migrations in this stage, to let you migrate answer
+  values.
+- **after** (optional): Commands to execute after performing the update.
 
 The migration variables mentioned above are available as environment variables, but
 can't be used in jinja templates.
 
 ### `min_copier_version`
 
--   Format: `str`
--   CLI flags: N/A
--   Default value: N/A
+- Format: `str`
+- CLI flags: N/A
+- Default value: N/A
 
 Specifies the minimum required version of Copier to generate a project from this
 template. The version must be follow the [PEP 440][] syntax. Upon generating or updating
-a project, if the installed version of Copier is less than the required one, the generation
-will be aborted and an error will be shown to the user.
+a project, if the installed version of Copier is less than the required one, the
+generation will be aborted and an error will be shown to the user.
 
 !!! info
 
@@ -1408,9 +1408,9 @@ will be aborted and an error will be shown to the user.
 
 ### `pretend`
 
--   Format: `bool`
--   CLI flags: `-n`, `--pretend`
--   Default value: `False`
+- Format: `bool`
+- CLI flags: `-n`, `--pretend`
+- Default value: `False`
 
 Run but do not make any changes.
 
@@ -1420,9 +1420,9 @@ Run but do not make any changes.
 
 ### `preserve_symlinks`
 
--   Format: `bool`
--   CLI flags: N/A
--   Default value: `False`
+- Format: `bool`
+- CLI flags: N/A
+- Default value: `False`
 
 Keep symlinks as symlinks. If this is set to `False` symlinks will be replaced with the
 file they point to.
@@ -1432,9 +1432,9 @@ the target path of the symlink will be rendered as a jinja template.
 
 ### `quiet`
 
--   Format: `bool`
--   CLI flags: `-q`, `--quiet`
--   Default value: `False`
+- Format: `bool`
+- CLI flags: `-q`, `--quiet`
+- Default value: `False`
 
 Suppress status output.
 
@@ -1444,9 +1444,9 @@ Suppress status output.
 
 ### `secret_questions`
 
--   Format: `List[str]`
--   CLI flags: N/A
--   Default value: `[]`
+- Format: `List[str]`
+- CLI flags: N/A
+- Default value: `[]`
 
 Question variables to mark as secret questions. This is especially useful when questions
 are provided in the [simplified prompt format][questions]. It's equivalent to
@@ -1464,9 +1464,9 @@ configuring `secret: true` in the [advanced prompt format][advanced-prompt-forma
 
 ### `skip_answered`
 
--   Format: `bool`
--   CLI flags: `-A`, `--skip-answered` (only available in `copier update` subcommand)
--   Default value: `False`
+- Format: `bool`
+- CLI flags: `-A`, `--skip-answered` (only available in `copier update` subcommand)
+- Default value: `False`
 
 When updating a project, skip asking questions that have already been answered and keep
 the recorded answer.
@@ -1477,9 +1477,9 @@ the recorded answer.
 
 ### `skip_if_exists`
 
--   Format: `List[str]`
--   CLI flags: `-s`, `--skip`
--   Default value: `[]`
+- Format: `List[str]`
+- CLI flags: `-s`, `--skip`
+- Default value: `[]`
 
 [Patterns][patterns-syntax] for files/folders that must be skipped only if they already
 exist, but always be present. If they do not exist in a project during an `update`
@@ -1503,9 +1503,9 @@ Each pattern can be templated using Jinja.
 
 ### `skip_tasks`
 
--   Format: `bool`
--   CLI Flags: `-T`, `--skip-tasks`
--   Default value: `False`
+- Format: `bool`
+- CLI Flags: `-T`, `--skip-tasks`
+- Default value: `False`
 
 Skip template [tasks][tasks] execution, if set to `True`.
 
@@ -1519,9 +1519,9 @@ Skip template [tasks][tasks] execution, if set to `True`.
 
 ### `subdirectory`
 
--   Format: `str`
--   CLI flags: N/A
--   Default value: N/A
+- Format: `str`
+- CLI flags: N/A
+- Default value: N/A
 
 Subdirectory to use as the template root when generating a project. If not specified,
 the root of the template is used.
@@ -1606,9 +1606,9 @@ This allows you to keep separate the template metadata and the template code.
 
 ### `tasks`
 
--   Format: `List[str|List[str]|dict]`
--   CLI flags: N/A
--   Default value: `[]`
+- Format: `List[str|List[str]|dict]`
+- CLI flags: N/A
+- Default value: `[]`
 
 Commands to execute after generating or updating a project from your template.
 
@@ -1617,10 +1617,10 @@ runs in its own subprocess.
 
 If a `dict` is given it can contain the following items:
 
--   **command**: The task command to run.
--   **when** (optional): Specifies a condition that needs to hold for the task to run.
--   **working_directory** (optional): Specifies the directory in which the command will
-    be run. Defaults to the destination directory.
+- **command**: The task command to run.
+- **when** (optional): Specifies a condition that needs to hold for the task to run.
+- **working_directory** (optional): Specifies the directory in which the command will be
+  run. Defaults to the destination directory.
 
 If a `str` or `List[str]` is given as a task it will be treated as `command` with all
 other items not present.
@@ -1656,9 +1656,9 @@ Refer to the example provided below for more information.
 
 ### `templates_suffix`
 
--   Format: `str`
--   CLI flags: N/A
--   Default value: `.jinja`
+- Format: `str`
+- CLI flags: N/A
+- Default value: `.jinja`
 
 Suffix that instructs which files are to be processed by Jinja as templates.
 
@@ -1704,15 +1704,15 @@ without suffix will be ignored.
 
 ### `unsafe`
 
--   Format: `bool`
--   CLI flags: `--UNSAFE`, `--trust`
--   Default value: `False`
+- Format: `bool`
+- CLI flags: `--UNSAFE`, `--trust`
+- Default value: `False`
 
 Copier templates can use dangerous features that allow arbitrary code execution:
 
--   [Jinja extensions][jinja_extensions]
--   [Migrations][migrations]
--   [Tasks][tasks]
+- [Jinja extensions][jinja_extensions]
+- [Migrations][migrations]
+- [Tasks][tasks]
 
 Therefore, these features are disabled by default and Copier will raise an error (and
 exit from the CLI with code `4`) when they are found in a template. In this case, please
@@ -1734,9 +1734,9 @@ switch `--UNSAFE` or `--trust`.
 
 ### `use_prereleases`
 
--   Format: `bool`
--   CLI flags: `g`, `--prereleases`
--   Default value: `False`
+- Format: `bool`
+- CLI flags: `g`, `--prereleases`
+- Default value: `False`
 
 Imagine that the template supports updates and contains these 2 Git tags: `v1.0.0` and
 `v2.0.0a1`. Copier will copy by default `v1.0.0` unless you add `--prereleases`.
@@ -1757,9 +1757,9 @@ the `v2.0.0a1` tag unless this flag is enabled.
 
 ### `vcs_ref`
 
--   Format: `str | VcsRef`
--   CLI flags: `-r`, `--vcs-ref`
--   Default value: N/A (use latest release)
+- Format: `str | VcsRef`
+- CLI flags: `-r`, `--vcs-ref`
+- Default value: N/A (use latest release)
 
 When copying or updating from a Git-versioned template, indicate which template version
 to copy.
@@ -1837,9 +1837,9 @@ in `copier.yml`.
 
 The path to the answers file must be expressed relative to the project root, because:
 
--   Its value must be available at render time.
--   It is used to update projects, and for that a project must be git-tracked. So, the
-    file must be in the repo anyway.
+- Its value must be available at render time.
+- It is used to update projects, and for that a project must be git-tracked. So, the
+  file must be in the repo anyway.
 
 ### Applying multiple templates to the same subproject
 
@@ -1855,12 +1855,12 @@ Imagine this scenario:
 
 All 3 templates are completely independent:
 
--   Anybody can generate a project for the specific framework, no matter if they want to
-    use pre-commit or not.
--   You want to share the same pre-commit configurations, no matter if the subproject is
-    for one or another framework.
--   You want to have a centralized CI configuration for all your company projects, no
-    matter their pre-commit configuration or the framework they rely on.
+- Anybody can generate a project for the specific framework, no matter if they want to
+  use pre-commit or not.
+- You want to share the same pre-commit configurations, no matter if the subproject is
+  for one or another framework.
+- You want to have a centralized CI configuration for all your company projects, no
+  matter their pre-commit configuration or the framework they rely on.
 
 Well, don't worry. Copier has you covered. You just need to use a different answers file
 for each one. All of them contain a `{{ _copier_conf.answers_file }}.jinja` file [as

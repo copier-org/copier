@@ -228,8 +228,8 @@ To avoid that, the simplest fix is to clone using SSH with cryptographic key
 authentication. If you cannot do that, then check out these links for strategies on
 passing HTTPS credentials to Git:
 
--   https://github.com/copier-org/copier/issues/466#issuecomment-2338160284
--   https://stackoverflow.com/q/35942754
--   https://git-scm.com/docs/gitcredentials
--   https://git-scm.com/book/en/v2/Git-Tools-Credential-Storage#_credential_caching
--   https://github.com/topics/git-credential-helper
+- https://github.com/copier-org/copier/issues/466#issuecomment-2338160284
+- https://stackoverflow.com/q/35942754
+- https://git-scm.com/docs/gitcredentials
+- https://git-scm.com/book/en/v2/Git-Tools-Credential-Storage#_credential_caching
+- https://github.com/topics/git-credential-helper

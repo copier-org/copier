@@ -13,11 +13,11 @@
 
 A library and CLI app for rendering project templates.
 
--   Works with **local** paths and **Git URLs**.
--   Your project can include any file and Copier can dynamically replace values in any
-    kind of text file.
--   It generates a beautiful output and takes care of not overwriting existing files
-    unless instructed to do so.
+- Works with **local** paths and **Git URLs**.
+- Your project can include any file and Copier can dynamically replace values in any
+  kind of text file.
+- It generates a beautiful output and takes care of not overwriting existing files
+  unless instructed to do so.
 
 ![Sample output](https://github.com/copier-org/copier/raw/master/img/copier-output.png)
 
@@ -72,13 +72,13 @@ print("Hello from {{module_name}}!")
 
 To generate a project from the template:
 
--   On the command-line:
+- On the command-line:
 
     ```shell
     copier copy path/to/project/template path/to/destination
     ```
 
--   Or in Python code, programmatically:
+- Or in Python code, programmatically:
 
     ```python
     from copier import run_copy

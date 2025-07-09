@@ -9,9 +9,9 @@ Report bugs at <https://github.com/copier-org/copier/issues>.
 
 If you are reporting a bug, please include:
 
--   Your operating system name and version.
--   Any details about your local setup that might be helpful in troubleshooting.
--   Detailed steps to reproduce the bug.
+- Your operating system name and version.
+- Any details about your local setup that might be helpful in troubleshooting.
+- Detailed steps to reproduce the bug.
 
 ## Fix Bugs
 
@@ -35,10 +35,10 @@ The best way to send feedback is to file an issue at
 
 If you are proposing a feature:
 
--   Explain in detail how it would work.
--   Keep the scope as narrow as possible, to make it easier to implement.
--   Remember that this is a volunteer-driven project, and that contributions are
-    welcome. :)
+- Explain in detail how it would work.
+- Keep the scope as narrow as possible, to make it easier to implement.
+- Remember that this is a volunteer-driven project, and that contributions are welcome.
+  :)
 
 ## Discuss
 
@@ -63,9 +63,9 @@ For local or more complex setups, continue reading.
 We use some tools as part of our development workflow which you'll need to install into
 your host environment:
 
--   [Devbox](https://www.jetify.com/docs/devbox/) to provide a reproducible development
-    environment.
--   [Direnv](https://direnv.net/) to load that environment automatically in your shell.
+- [Devbox](https://www.jetify.com/docs/devbox/) to provide a reproducible development
+  environment.
+- [Direnv](https://direnv.net/) to load that environment automatically in your shell.
 
 ### Without Devbox/Nix
 

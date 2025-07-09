@@ -24,8 +24,8 @@ read-only).
 
 The "template" parameter can be a local path, an URL, or a shortcut URL:
 
--   GitHub: `gh:namespace/project`
--   GitLab: `gl:namespace/project`
+- GitHub: `gh:namespace/project`
+- GitLab: `gl:namespace/project`
 
 If Copier doesn't detect your remote URL as a Git repository, make sure it starts with
 one of `git+https://`, `git+ssh://`, `git@` or `git://`, or it ends with `.git`.
