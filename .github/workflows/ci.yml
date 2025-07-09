@@ -85,6 +85,14 @@ jobs:
         os:
           - macos-latest
           - ubuntu-latest
+        include:
+          # HACK: Limit the number of pytest workers on macOS to 3 to avoid a
+          #   timeout for a few test cases. For unknown reasons, the number of
+          #   auto-configured workers on macOS runners increased from 3 to 6 on
+          #   2025-07-08.
+          # FIXME: Remove this hack when the issue has been fixed.
+          - os: macos-latest
+            pytest-xdist-maxprocesses: 3
     runs-on: ${{ matrix.os }}
     permissions:
       contents: write # Allow pushing back pre-commit changes
@@ -97,4 +105,8 @@ jobs:
           enable-cache: "true"
       - run: devbox run -- uv run copier --version
       - run: devbox run -- uv run pre-commit run --all-files --show-diff-on-failure
-      - run: devbox run test
+      - run:
+          devbox run test
+          ${PYTEST_XDIST_MAXPROCESSES:+--maxprocesses=$PYTEST_XDIST_MAXPROCESSES}
+        env:
+          PYTEST_XDIST_MAXPROCESSES: ${{ matrix.pytest-xdist-maxprocesses }}
