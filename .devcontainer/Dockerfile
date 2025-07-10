@@ -1,5 +1,5 @@
 # renovate: datasource=github-tags depName=devbox packageName=jetify-com/devbox
-ARG DEVBOX_VERSION=0.14.2
+ARG DEVBOX_VERSION=0.15.0
 FROM jetpackio/devbox:${DEVBOX_VERSION}
 
 WORKDIR /code
