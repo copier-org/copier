@@ -73,6 +73,7 @@ class Spawn(Protocol):
 
 class Keyboard(str, Enum):
     ControlH = REVERSE_ANSI_SEQUENCES[Keys.ControlH]
+    ControlI = REVERSE_ANSI_SEQUENCES[Keys.ControlI]
     ControlC = REVERSE_ANSI_SEQUENCES[Keys.ControlC]
     Enter = "\r"
     Esc = REVERSE_ANSI_SEQUENCES[Keys.Escape]
@@ -89,7 +90,7 @@ class Keyboard(str, Enum):
     # further explanations
     Alt = Esc
     Backspace = ControlH
-
+    Tab = ControlI
 
 def render(tmp_path: Path, **kwargs: Any) -> None:
     kwargs.setdefault("quiet", True)
