@@ -429,7 +429,7 @@ class Question:
                 result["placeholder"] = placeholder
         if type_name == "path":
             questionary_type = "path"
-        if questionary_type in {"input", "checkbox", "password"}:
+        if questionary_type in {"input", "checkbox", "password", "path"}:
             result["validate"] = _validate
         result.update({"type": questionary_type})
         return result
