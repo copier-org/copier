@@ -47,7 +47,7 @@ copier = "copier.__main__:CopierApp.run"
 dev = [
   "codespell[toml]==2.4.1",
   "commitizen==4.8.3",
-  "mypy==1.16.1",
+  "mypy==1.17.0",
   "pexpect==4.9.0",
   "poethepoet==0.36.0",
   "pre-commit==4.2.0",
