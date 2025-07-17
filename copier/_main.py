@@ -9,7 +9,6 @@ import sys
 from collections.abc import Iterable, Mapping, Sequence
 from contextlib import suppress
 from contextvars import ContextVar
-from copy import copy
 from dataclasses import field, replace
 from filecmp import dircmp
 from functools import cached_property, partial, wraps
@@ -21,8 +20,6 @@ from types import TracebackType
 from typing import (
     Any,
     Callable,
-    Dict,
-    List,
     Literal,
     TypeVar,
     get_args,
@@ -30,7 +27,6 @@ from typing import (
 )
 from unicodedata import normalize
 
-import dpath
 from jinja2.loaders import FileSystemLoader
 from pathspec import PathSpec
 from plumbum import ProcessExecutionError, colors
@@ -51,10 +47,9 @@ from ._tools import (
     normalize_git_path,
     printf,
     scantree,
-    set_git_alternates
+    set_git_alternates,
 )
 from ._types import (
-    MISSING,
     AnyByStrDict,
     AnyByStrMutableMapping,
     JSONSerializable,
@@ -64,13 +59,12 @@ from ._types import (
     Phase,
     RelativePath,
     StrOrPath,
-    unflatten,
     VcsRef,
+    unflatten,
 )
 from ._user_data import AnswersMap, GlobalState, QuestionNode, load_answersfile_data
 from ._vcs import get_git
 from .errors import (
-    CopierAnswersInterrupt,
     ExtensionNotFoundError,
     InteractiveSessionError,
     TaskError,
@@ -349,7 +343,10 @@ class Worker:
             if not k.startswith("_")
             and k not in self.answers.hidden
             # and k not in self.template.secret_questions
-            and self.template.question_by_answer_key(k, lambda q: not q.get("secret", False)) is not None
+            and self.template.question_by_answer_key(
+                k, lambda q: not q.get("secret", False)
+            )
+            is not None
             and isinstance(k, JSONSerializable)
             and isinstance(v, JSONSerializable)
         )
@@ -541,7 +538,7 @@ class Worker:
             return is_dir
         return self._solve_render_conflict(dst_relpath)
 
-    def _ask(self)-> None:  # noqa: C901
+    def _ask(self) -> None:  # noqa: C901
         """Ask the questions of the questionnaire and record their answers."""
         self.answers = AnswersMap(
             user_defaults=self.user_defaults,

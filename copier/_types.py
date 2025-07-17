@@ -6,7 +6,6 @@ import sys
 from collections.abc import Iterator, Mapping, MutableMapping, Sequence
 from contextlib import contextmanager
 from contextvars import ContextVar
-import dpath
 from enum import Enum
 from pathlib import Path
 from typing import (
@@ -20,6 +19,7 @@ from typing import (
     Union,
 )
 
+import dpath
 from pydantic import AfterValidator
 
 from ._tools import parse_dpath_path
@@ -144,9 +144,8 @@ class VcsRef(Enum):
     template should be used.
     """
 
-def unflatten(
-    answers: Mapping[str, Any]
-) -> AnyByStrDict:
+
+def unflatten(answers: Mapping[str, Any]) -> AnyByStrDict:
     """Unflatten a dictionary with dot-separated keys."""
     result: AnyByStrDict = {}
     for key, value in answers.items():

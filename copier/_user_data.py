@@ -30,8 +30,8 @@ from questionary.prompts.common import Choice
 
 from copier.settings import Settings
 
-from ._tools import cast_to_bool, cast_to_str, force_str_end
 from ._template import Template
+from ._tools import cast_to_bool, cast_to_str, force_str_end
 from ._types import (
     MISSING,
     AnyByStrDict,
@@ -39,9 +39,15 @@ from ._types import (
     LazyDict,
     MissingType,
     StrOrPath,
-    unflatten
+    unflatten,
 )
-from .errors import CopierAnswersInterrupt, InvalidTypeError, MissingFileWarning, UserMessageError, InteractiveSessionError
+from .errors import (
+    CopierAnswersInterrupt,
+    InteractiveSessionError,
+    InvalidTypeError,
+    MissingFileWarning,
+    UserMessageError,
+)
 
 
 # TODO Remove these two functions as well as DEFAULT_DATA in a future release
@@ -155,7 +161,9 @@ class GlobalState:
         self.context = self._context_renderer()
 
     def render_value(
-        self, value: Any, extra_context: AnyByStrDict | AnyByStrMutableMapping | None = None
+        self,
+        value: Any,
+        extra_context: AnyByStrDict | AnyByStrMutableMapping | None = None,
     ) -> Any:
         """Render a single templated value using Jinja.
 
@@ -201,7 +209,6 @@ class QuestionNode:
     _type: QuestionNodeType = QuestionNodeType.LEAF
     _path: str = ""
 
-
     def __post_init__(self) -> None:
         self.state.refresh_context()
 
@@ -210,7 +217,7 @@ class QuestionNode:
         else:
             self._type = QuestionNodeType.LEAF
 
-        self._path = self.name.replace('.','\\.')
+        self._path = self.name.replace(".", "\\.")
         if self.parent is not None:
             self._path = f"{self.parent._path}.{self._path}"
 
@@ -221,7 +228,6 @@ class QuestionNode:
             self._process_as_leaf(silent)
 
     def _process_as_dict(self, silent: bool) -> None:
-
         _silent = silent
         # Skip a question when the skip condition is met.
         if not self._get_when():
@@ -236,7 +242,7 @@ class QuestionNode:
 
             # Skip immediately to the next question when it has no default
             # value.
-            if not "default" in self.config:
+            if "default" not in self.config:
                 return
 
             if not cast_to_bool(self._render_value(self.config["default"])):
@@ -260,7 +266,7 @@ class QuestionNode:
                         "when": lambda _: self._get_when(),
                     }
                 ],
-                style="bold"
+                style="bold",
             )
 
         for name, config in self.config["items"].items():
@@ -284,7 +290,9 @@ class QuestionNode:
         # valid answer can be provided.
         if question.var_name in self.state.answers.last:
             try:
-                answer = question.parse_answer(self.state.answers.last[question.var_name])
+                answer = question.parse_answer(
+                    self.state.answers.last[question.var_name]
+                )
                 question.validate_answer(answer)
             except Exception:
                 del self.state.answers.last[question.var_name]
@@ -319,6 +327,10 @@ class QuestionNode:
         if self.state.skip_answered and question.var_name in self.state.answers.last:
             return
 
+        self._ask_question(question)
+
+    def _ask_question(self, question: Question) -> None:
+        """Ask the question to the user and store the answer."""
         try:
             # Handle getting an answer
             if self.state.defaults:
@@ -328,7 +340,11 @@ class QuestionNode:
             else:
                 try:
                     new_answer = unsafe_prompt(
-                        [question.get_questionary_structure(self._get_prompt_padding())],
+                        [
+                            question.get_questionary_structure(
+                                self._get_prompt_padding()
+                            )
+                        ],
                         answers={question.var_name: question.get_default()},
                     )[question.var_name]
                 except EOFError as err:
@@ -354,6 +370,7 @@ class QuestionNode:
     def _render_value(self, value: Any) -> Any:
         """Render a value using the worker's Jinja environment."""
         return self.state.render_value(value)
+
 
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True))
 class Question:
@@ -586,6 +603,7 @@ class Question:
 
     def get_questionary_structure(self, padding: str = "") -> AnyByStrDict:  # noqa: C901
         """Get the question in a format that the questionary lib understands."""
+
         def _validate(answer: str) -> str | Literal[True]:
             try:
                 ans = self.parse_answer(answer)
@@ -660,7 +678,9 @@ class Question:
     def validate_answer(self, answer: Any) -> None:
         """Validate user answer."""
         try:
-            err_msg = self.render_value(self.validator, unflatten({self.var_name: answer})).strip()
+            err_msg = self.render_value(
+                self.validator, unflatten({self.var_name: answer})
+            ).strip()
         except Exception as error:
             err_msg = str(error)
         if err_msg:
@@ -673,7 +693,9 @@ class Question:
         return cast_to_bool(self.render_value(self.when))
 
     def render_value(
-        self, value: Any, extra_answers: AnyByStrDict | AnyByStrMutableMapping | None = None
+        self,
+        value: Any,
+        extra_answers: AnyByStrDict | AnyByStrMutableMapping | None = None,
     ) -> Any:
         """Render a single templated value using Jinja.
 
@@ -730,6 +752,7 @@ def parse_yaml_string(string: str) -> Any:
         return yaml.safe_load(string)
     except yaml.error.YAMLError as error:
         raise ValueError(str(error))
+
 
 # Parse a YAML string specifically as a dictionary
 def parse_dict_string(string: str) -> dict[str, Any]:

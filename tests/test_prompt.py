@@ -286,17 +286,17 @@ def test_update_with_new_field_in_new_version_skip_answered(
         tui.expect_exact(pexpect.EOF)
         assert load_answersfile_data(".").get("_commit") == "v2"
 
-yaml_question = {
-    "default": "something",
-    "type": "yaml"
-}
+
+yaml_question = {"default": "something", "type": "yaml"}
 dict_question = {
     "type": "dict",
     "default": True,
     "items": {
         "sub_question_1": yaml_question,
         "sub_question_2": yaml_question,
-    }                                         }
+    },
+}
+
 
 @pytest.mark.parametrize(
     "question_1",
@@ -346,12 +346,25 @@ dict_question = {
         (dict_question | {"when": False}, False, True),
         (dict_question | {"when": False, "default": False}, False, False),
         (dict_question | {"when": False, "default": "[[ question_1 ]]"}, False, True),
-        (dict_question | {"when": False, "default": "[[ not question_1 ]]"}, False, False),
-        (dict_question | {"when": False, "default": "[% if question_1 %]YES[% endif %]"}, False, True),
-        (dict_question | {"when": False, "default": "[% if question_1 %]FALSE[% endif %]"}, False, False),
+        (
+            dict_question | {"when": False, "default": "[[ not question_1 ]]"},
+            False,
+            False,
+        ),
+        (
+            dict_question
+            | {"when": False, "default": "[% if question_1 %]YES[% endif %]"},
+            False,
+            True,
+        ),
+        (
+            dict_question
+            | {"when": False, "default": "[% if question_1 %]FALSE[% endif %]"},
+            False,
+            False,
+        ),
     ),
 )
-
 def test_when(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
@@ -408,12 +421,22 @@ def test_when(
         assert answers == {
             "_src_path": str(src),
             "question_1": question_1,
-            **({"question_2.sub_question_1": "something",
-                "question_2.sub_question_2": "something",
-            } if asks else {}),
+            **(
+                {
+                    "question_2.sub_question_1": "something",
+                    "question_2.sub_question_2": "something",
+                }
+                if asks
+                else {}
+            ),
         }
         if expect_default:
-            expected_default = {"question_2": {"sub_question_1": "something", "sub_question_2": "something"}}
+            expected_default = {
+                "question_2": {
+                    "sub_question_1": "something",
+                    "sub_question_2": "something",
+                }
+            }
 
     else:
         assert answers == {
@@ -426,6 +449,7 @@ def test_when(
             expected_default = {"question_2": "something"}
 
     assert context == {"question_1": question_1, **expected_default}
+
 
 def test_placeholder(tmp_path_factory: pytest.TempPathFactory, spawn: Spawn) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))

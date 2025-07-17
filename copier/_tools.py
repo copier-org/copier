@@ -15,7 +15,7 @@ from enum import Enum
 from importlib.metadata import version
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Callable, Literal, TextIO, TypeVar, cast, List
+from typing import Any, Callable, Literal, TextIO, TypeVar, cast
 
 import colorama
 from packaging.version import Version
@@ -281,10 +281,11 @@ def try_enum(enum_type: type[_E], value: _T) -> _E | _T:
     except ValueError:
         return value
 
-def parse_dpath_path(text: str) -> List[str]:
+
+def parse_dpath_path(text: str) -> list[str]:
     """Convert a text to a dpath path.
 
     This is used to convert text input into a valid dpath path.
     """
-    key_parts = re.split(r'(?<!\\)\.', text)
-    return [part.replace(r'\.', '.') for part in key_parts]
+    key_parts = re.split(r"(?<!\\)\.", text)
+    return [part.replace(r"\.", ".") for part in key_parts]

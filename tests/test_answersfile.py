@@ -115,7 +115,10 @@ def test_answersfile(
     assert log["group.one"] == "one"
     assert log["group.subgroup.one"] == "group.one value is one"
     assert log["group.subgroup.two"] == "subgroup.two"
-    assert log["group.three"] == "group.one value is one and group.subgroup.two value is subgroup.two"
+    assert (
+        log["group.three"]
+        == "group.one value is one and group.subgroup.two value is subgroup.two"
+    )
 
     # Check 2nd round is properly executed and remembered
     copier.run_copy(

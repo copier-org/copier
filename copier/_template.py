@@ -60,6 +60,7 @@ def filter_config(data: AnyByStrDict) -> tuple[AnyByStrDict, AnyByStrDict]:
             questions_data[k] = _normalize_question_data(v)
     return config_data, questions_data
 
+
 def _normalize_question_data(q: Any) -> dict[str, Any]:
     """Normalize question data to ensure it has a dictionary structure."""
     if not isinstance(q, dict):
@@ -484,7 +485,9 @@ class Template:
                 result[key]["secret"] = True
         return result
 
-    def question_by_answer_key(self, answer_key: str, *filters: Callable[[AnyByStrDict], bool]) -> Optional[AnyByStrDict]:
+    def question_by_answer_key(
+        self, answer_key: str, *filters: Callable[[AnyByStrDict], bool]
+    ) -> Optional[AnyByStrDict]:
         """Get a question by its answer key.
 
         Args:
@@ -505,7 +508,9 @@ class Template:
                 continue
             if p.isdigit() and q is not None and q.get("size", None) is not None:
                 continue
-            questions = q["items"] if q is not None and q.get("type", "yaml") == "dict" else {}
+            questions = (
+                q["items"] if q is not None and q.get("type", "yaml") == "dict" else {}
+            )
             if p not in questions:
                 return None
             q = questions[p]

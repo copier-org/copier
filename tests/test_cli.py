@@ -170,6 +170,7 @@ def test_data_file_parsed_by_question_type(
     assert answers["_src_path"] == str(src)
     assert answers["question"] == "answer"
 
+
 @pytest.mark.parametrize(
     "path, answer, expected",
     [
@@ -188,7 +189,7 @@ def test_cli_data_question_path(
     build_file_tree(
         {
             (src / "copier.yml"): (
-                f"""\
+                """\
                 question:
                     type: str
                     default: "default"
@@ -224,7 +225,15 @@ def test_cli_data_question_path(
         }
     )
     run_result = CopierApp.run(
-        ["copier", "copy", f"--data={path}={answer}", "--defaults", str(src), str(dst), "--quiet"],
+        [
+            "copier",
+            "copy",
+            f"--data={path}={answer}",
+            "--defaults",
+            str(src),
+            str(dst),
+            "--quiet",
+        ],
         exit=False,
     )
     assert run_result[1] == 0
