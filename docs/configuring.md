@@ -73,7 +73,7 @@ to ask users for data. To use it, the value must be a dict.
 Supported keys:
 
 -   **type**: User input must match this type. Options are: `bool`, `float`, `int`,
-    `json`, `str`, `yaml` (default).
+    `json`, `path`, `str`, `yaml` (default).
 -   **help**: Additional text to help the user know what's this question for.
 -   **choices**: To restrict possible values.
 
