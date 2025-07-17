@@ -280,3 +280,12 @@ def try_enum(enum_type: type[_E], value: _T) -> _E | _T:
         return enum_type(value)
     except ValueError:
         return value
+
+
+def parse_dpath_path(text: str) -> list[str]:
+    """Convert a text to a dpath path.
+
+    This is used to convert text input into a valid dpath path.
+    """
+    key_parts = re.split(r"(?<!\\)\.", text)
+    return [part.replace(r"\.", ".") for part in key_parts]

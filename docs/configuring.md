@@ -72,8 +72,8 @@ to ask users for data. To use it, the value must be a dict.
 
 Supported keys:
 
--   **type**: User input must match this type. Options are: `bool`, `float`, `int`,
-    `json`, `str`, `yaml` (default).
+-   **type**: User input must match this type. Options are: `bool`, `dict`, `float`,
+    `int`, `json`, `str`, `yaml` (default).
 -   **help**: Additional text to help the user know what's this question for.
 -   **choices**: To restrict possible values.
 
@@ -189,8 +189,9 @@ Supported keys:
     `list[T]` instead of a `T` where `T` is of type `type`.
 -   **default**: Leave empty to force the user to answer. Provide a default to save them
     from typing it if it's quite common. When using `choices`, the default must be the
-    choice _value_, not its _key_, and it must match its _type_. If values are quite
-    long, you can use
+    choice _value_, not its _key_, and it must match its _type_. When using `dict` the
+    default must resolve to a `boolean` and is used only in case its _when_ resolves to
+    `false`. If values are quite long, you can use
     [YAML anchors](https://confluence.atlassian.com/bitbucket/yaml-anchors-960154027.html).
 
     !!! note "Dynamic default value of a multiselect choice question"
@@ -230,7 +231,8 @@ Supported keys:
     will be rendered with the combined answers as variables; it should render _nothing_
     if the value is valid, and an error message to show to the user otherwise.
 
--   **when**: Condition that, if `false`, skips the question.
+-   **when**: Condition that, if `false`, skips the question (and all subquestions in
+    case of `dict` _type_).
 
     If it is a boolean, it is used directly. Setting it to `false` is useful for
     creating a computed value.
@@ -239,7 +241,9 @@ Supported keys:
     only for boolean values. The string can be [templated][prompt-templating].
 
     If a question is skipped, its answer is not recorded, but its default value is
-    available in the render context.
+    available in the render context. For `dict` type question this happens only if its
+    _default_ resolves to `true`. In this case all subquestions defaults will be
+    available in the render context, otherwise the whole question group is skipped.
 
     !!! example
 
@@ -812,6 +816,20 @@ questions with default answers.
 
     ```shell
     copier copy -fd 'user_name=Manuel Calavera' template destination
+    ```
+
+    You can also set an answer to a nested (dict) question by using the dot notation:
+    ```shell
+    copier copy -fd 'nested.question=answer' template destination
+    ```
+
+    If the question itself includes a dot in its name, you can escape it with a backslash:
+    ```shell
+    copier copy -fd 'nested.dotted\.question=answer' template destination
+    ```
+    or a double backslash if the argument is not quoted:
+    ```shell
+    copier copy -fd nested.dotted\\.question=answer template destination
     ```
 
 !!! example "Give an answer to a multiselect choice question"

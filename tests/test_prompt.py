@@ -287,6 +287,17 @@ def test_update_with_new_field_in_new_version_skip_answered(
         assert load_answersfile_data(".").get("_commit") == "v2"
 
 
+yaml_question = {"default": "something", "type": "yaml"}
+dict_question = {
+    "type": "dict",
+    "default": True,
+    "items": {
+        "sub_question_1": yaml_question,
+        "sub_question_2": yaml_question,
+    },
+}
+
+
 @pytest.mark.parametrize(
     "question_1",
     # All these values evaluate to true
@@ -311,33 +322,56 @@ def test_update_with_new_field_in_new_version_skip_answered(
     ),
 )
 @pytest.mark.parametrize(
-    "question_2_when, asks",
+    "question_2, asks, expect_default",
     (
-        (True, True),
-        (False, False),
-        ("trUe", True),
-        ("faLse", False),
-        ("Yes", True),
-        ("nO", False),
-        ("Y", True),
-        ("N", False),
-        ("on", True),
-        ("off", False),
-        ("~", False),
-        ("NonE", False),
-        ("nulL", False),
-        ("[[ question_1 ]]", True),
-        ("[[ not question_1 ]]", False),
-        ("[% if question_1 %]YES[% endif %]", True),
-        ("[% if question_1 %]FALSE[% endif %]", False),
+        (yaml_question | {"when": True}, True, True),
+        (yaml_question | {"when": False}, False, True),
+        (yaml_question | {"when": "trUe"}, True, True),
+        (yaml_question | {"when": "faLse"}, False, True),
+        (yaml_question | {"when": "Yes"}, True, True),
+        (yaml_question | {"when": "nO"}, False, True),
+        (yaml_question | {"when": "Y"}, True, True),
+        (yaml_question | {"when": "N"}, False, True),
+        (yaml_question | {"when": "on"}, True, True),
+        (yaml_question | {"when": "off"}, False, True),
+        (yaml_question | {"when": "~"}, False, True),
+        (yaml_question | {"when": "NonE"}, False, True),
+        (yaml_question | {"when": "nulL"}, False, True),
+        (yaml_question | {"when": "[[ question_1 ]]"}, True, True),
+        (yaml_question | {"when": "[[ not question_1 ]]"}, False, True),
+        (yaml_question | {"when": "[% if question_1 %]YES[% endif %]"}, True, True),
+        (yaml_question | {"when": "[% if question_1 %]FALSE[% endif %]"}, False, True),
+        (dict_question | {"when": True}, True, True),
+        (dict_question | {"when": True, "help": "questions group"}, True, True),
+        (dict_question | {"when": False}, False, True),
+        (dict_question | {"when": False, "default": False}, False, False),
+        (dict_question | {"when": False, "default": "[[ question_1 ]]"}, False, True),
+        (
+            dict_question | {"when": False, "default": "[[ not question_1 ]]"},
+            False,
+            False,
+        ),
+        (
+            dict_question
+            | {"when": False, "default": "[% if question_1 %]YES[% endif %]"},
+            False,
+            True,
+        ),
+        (
+            dict_question
+            | {"when": False, "default": "[% if question_1 %]FALSE[% endif %]"},
+            False,
+            False,
+        ),
     ),
 )
 def test_when(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
     question_1: str | int | float | bool,
-    question_2_when: bool | str,
+    question_2: dict[str, Any],
     asks: bool,
+    expect_default: bool,
 ) -> None:
     """Test that the 2nd question is skipped or not, properly."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -345,8 +379,9 @@ def test_when(
         "_envops": BRACKET_ENVOPS,
         "_templates_suffix": SUFFIX_TMPL,
         "question_1": question_1,
-        "question_2": {"default": "something", "type": "yaml", "when": question_2_when},
+        "question_2": question_2,
     }
+
     build_file_tree(
         {
             (src / "copier.yml"): yaml.dump(questions),
@@ -355,7 +390,10 @@ def test_when(
             ),
             (src / "context.yml.tmpl"): (
                 """\
-                question_2: [[ question_2 ]]
+                question_1: [[ question_1|to_json(ensure_ascii=False) ]]
+                [%- if question_2 %]
+                question_2: [[ question_2|to_json ]]
+                [%- endif %]
                 """
             ),
         }
@@ -364,17 +402,53 @@ def test_when(
     expect_prompt(tui, "question_1", type(question_1).__name__)
     tui.sendline()
     if asks:
-        expect_prompt(tui, "question_2", "yaml")
-        tui.sendline()
+        if question_2["type"] == "dict":
+            expect_prompt(tui, "question_2", "dict", question_2.get("help", " "))
+            expect_prompt(tui, "sub_question_1", "str")
+            tui.sendline()
+            expect_prompt(tui, "sub_question_2", "str")
+            tui.sendline()
+        else:
+            expect_prompt(tui, "question_2", "yaml")
+            tui.sendline()
     tui.expect_exact(pexpect.EOF)
     answers = load_answersfile_data(dst)
-    assert answers == {
-        "_src_path": str(src),
-        "question_1": question_1,
-        **({"question_2": "something"} if asks else {}),
-    }
     context = yaml.safe_load((dst / "context.yml").read_text())
-    assert context == {"question_2": "something"}
+    # Dichiaro esplicitamente il tipo prima dell'utilizzo
+    expected_default: dict[str, Any] = {}
+
+    if question_2["type"] == "dict":
+        assert answers == {
+            "_src_path": str(src),
+            "question_1": question_1,
+            **(
+                {
+                    "question_2.sub_question_1": "something",
+                    "question_2.sub_question_2": "something",
+                }
+                if asks
+                else {}
+            ),
+        }
+        if expect_default:
+            expected_default = {
+                "question_2": {
+                    "sub_question_1": "something",
+                    "sub_question_2": "something",
+                }
+            }
+
+    else:
+        assert answers == {
+            "_src_path": str(src),
+            "question_1": question_1,
+            **({"question_2": "something"} if asks else {}),
+        }
+        if expect_default:
+            # Dichiarazione esplicita del tipo per evitare l'errore mypy
+            expected_default = {"question_2": "something"}
+
+    assert context == {"question_1": question_1, **expected_default}
 
 
 def test_placeholder(tmp_path_factory: pytest.TempPathFactory, spawn: Spawn) -> None:
