@@ -19,7 +19,7 @@ env:
   PYTEST_ADDOPTS: ${{ github.event.inputs.pytest_addopts }}
   PYTHONIOENCODING: "UTF-8"
   # renovate: datasource=devbox depName=uv
-  UV_VERSION: "0.7.19"
+  UV_VERSION: "0.7.21"
   # renovate: datasource=github-tags depName=devbox packageName=jetify-com/devbox
   DEVBOX_VERSION: "0.15.0"
 
