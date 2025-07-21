@@ -10,6 +10,9 @@ from typing import Any, Protocol, Union
 import pexpect
 import pytest
 import yaml
+
+from coverage.tracer import CTracer
+from pexpect import spawn as pexpect_spawn
 from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
 
@@ -174,10 +177,11 @@ def test_copy_default_advertised(
         assert load_answersfile_data(".").get("_commit") == "v2"
 
 
-def test_path_completion(
-    tmp_path_factory: pytest.TempPathFactory,
-    spawn: Spawn,
-) -> None:
+@pytest.mark.skipif(
+    condition=platform.system() == "Windows",
+    reason="pexpect.spawn does not work on Windows",
+)
+def test_path_completion(tmp_path_factory: pytest.TempPathFactory) -> None:
     """Test that file paths can handle tab completion"""
     src, dst, completedir = map(tmp_path_factory.mktemp, ("src", "dst", "my-directory"))
     with local.cwd(src):
@@ -186,10 +190,15 @@ def test_path_completion(
         git("commit", "--allow-empty", "-m", "v2")
         git("tag", "v2")
     with local.cwd(dst):
+
+        # Disable subprocess timeout if debugging (except coverage)
+        # See https://stackoverflow.com/a/67065084/1468388
+        tracer = getattr(sys, "gettrace", lambda: None)()
+        timeout = 10 if not isinstance(tracer, (CTracer, type(None))) else None
+
         # Copy the v1 template
-        tui = spawn(
-            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1"), timeout=10
-        )
+        cmd = COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1")
+        tui = pexpect_spawn(cmd[0], list(cmd[1:]), timeout=timeout)
 
         # Check that default values are maintained
         expect_prompt(tui, "current_location", "path")
