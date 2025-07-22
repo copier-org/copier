@@ -213,9 +213,10 @@ def test_path_completion(tmp_path_factory: pytest.TempPathFactory) -> None:
 
         tui.expect_exact(pexpect.EOF)
 
-        assert load_answersfile_data(".").get("_commit") == "v1"
-        assert load_answersfile_data(".").get("current_location") == "/dev/warppipe0"
-        assert load_answersfile_data(".").get("star_location") == str(completedir)
+        answers = load_answersfile_data(".")
+        assert answers.get("_commit") == "v1"
+        assert answers.get("current_location") == "/dev/warppipe0"
+        assert answers.get("star_location") == str(completedir)
 
 
 @pytest.mark.parametrize(
