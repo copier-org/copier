@@ -3,9 +3,9 @@
   "packages": [
     "difftastic@0.64.0",
     "editorconfig-checker@3.3.0",
-    "git@2.49.0",
+    "git@2.50.0",
     "nodePackages.prettier@3.3.3",
-    "uv@0.7.19"
+    "uv@0.7.21"
   ],
   "env": {
     "GIT_EXTERNAL_DIFF": "difft"
