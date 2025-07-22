@@ -190,7 +190,6 @@ def test_path_completion(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("commit", "--allow-empty", "-m", "v2")
         git("tag", "v2")
     with local.cwd(dst):
-
         # Disable subprocess timeout if debugging (except coverage)
         # See https://stackoverflow.com/a/67065084/1468388
         tracer = getattr(sys, "gettrace", lambda: None)()
