@@ -203,7 +203,8 @@ def test_path_completion(tmp_path_factory: pytest.TempPathFactory) -> None:
         expect_prompt(tui, "current_location", "path")
         tui.sendline()
 
-        # check tab completion of a filesystem path (/path/to/my-direct<TAB> should complete to /path/to/my-directory0)
+        # Check tab completion of a filesystem path (/path/to/my-direct<TAB> should
+        # complete to /path/to/my-directory0)
         expect_prompt(tui, "star_location", "path", help="Location of a bonus star")
         tui.send(str(completedir)[:-4])
         tui.send(Keyboard.Tab)
