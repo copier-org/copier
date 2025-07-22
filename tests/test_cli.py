@@ -171,6 +171,77 @@ def test_data_file_parsed_by_question_type(
     assert answers["question"] == "answer"
 
 
+@pytest.mark.parametrize(
+    "path, answer, expected",
+    [
+        ("question", "string", "string"),
+        ("dot\\.question", "string", "string"),
+        ("group.str_question", "string", "string"),
+        ("group.bool_question", "true", True),
+        ("group.sub.question", "string", "string"),
+        ("group.sub.dot\\.question", "string", "string"),
+    ],
+)
+def test_cli_data_question_path(
+    tmp_path_factory: pytest.TempPathFactory, path, answer, expected
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                """\
+                question:
+                    type: str
+                    default: "default"
+                dot.question:
+                    type: str
+                    default: "default"
+                group:
+                    type: dict
+                    items:
+                        str_question:
+                            type: str
+                            default: "default"
+                        bool_question:
+                            type: bool
+                            default: false
+                        sub:
+                            type: dict
+                            items:
+                                question:
+                                    type: str
+                                    default: "default"
+                                dot.question:
+                                    type: str
+                                    default: "default"
+                """
+            ),
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                """\
+                # Changes here will be overwritten by Copier
+                {{ _copier_answers|to_nice_yaml }}
+                """
+            ),
+        }
+    )
+    run_result = CopierApp.run(
+        [
+            "copier",
+            "copy",
+            f"--data={path}={answer}",
+            "--defaults",
+            str(src),
+            str(dst),
+            "--quiet",
+        ],
+        exit=False,
+    )
+    assert run_result[1] == 0
+    answers = load_answersfile_data(dst)
+    assert answers["_src_path"] == str(src)
+    assert answers[path] == expected
+
+
 def test_data_cli_takes_precedence_over_data_file(
     tmp_path_factory: pytest.TempPathFactory,
 ) -> None:
