@@ -10,6 +10,7 @@ from typing import Any, Protocol, Union
 import pexpect
 import pytest
 import yaml
+from coverage.tracer import CTracer
 from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
 
@@ -89,6 +90,23 @@ MARIO_TREE_WITH_NEW_FIELD: Mapping[StrOrPath, str | bytes] = {
     "[[ _copier_conf.answers_file ]].tmpl": "[[_copier_answers|to_nice_yaml]]",
 }
 
+PATH_TREE: Mapping[StrOrPath, str | bytes] = {
+    "copier.yml": (
+        f"""\
+        _templates_suffix: {SUFFIX_TMPL}
+        _envops: {BRACKET_ENVOPS_JSON}
+        current_location:
+            type: path
+            default: /dev/warppipe0
+
+        star_location:
+            type: path
+            help: "Location of a bonus star"
+        """
+    ),
+    "[[ _copier_conf.answers_file ]].tmpl": "[[_copier_answers|to_nice_yaml]]",
+}
+
 
 @pytest.mark.parametrize(
     "name, args",
@@ -154,6 +172,50 @@ def test_copy_default_advertised(
         tui.sendline()
         tui.expect_exact(pexpect.EOF)
         assert load_answersfile_data(".").get("_commit") == "v2"
+
+
+@pytest.mark.skipif(
+    condition=platform.system() == "Windows",
+    reason="pexpect.spawn does not work on Windows",
+)
+def test_path_completion(tmp_path_factory: pytest.TempPathFactory) -> None:
+    """Test that file paths can handle tab completion."""
+    from pexpect.pty_spawn import spawn as pexpect_spawn
+
+    src, dst, completedir = map(tmp_path_factory.mktemp, ("src", "dst", "my-directory"))
+    with local.cwd(src):
+        build_file_tree(PATH_TREE)
+        git_save(tag="v1")
+        git("commit", "--allow-empty", "-m", "v2")
+        git("tag", "v2")
+    with local.cwd(dst):
+        # Disable subprocess timeout if debugging (except coverage)
+        # See https://stackoverflow.com/a/67065084/1468388
+        tracer = getattr(sys, "gettrace", lambda: None)()
+        timeout = 10 if not isinstance(tracer, (CTracer, type(None))) else None
+
+        # Copy the v1 template
+        cmd = COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1")
+        tui = pexpect_spawn(cmd[0], list(cmd[1:]), timeout=timeout)
+
+        # Check that default values are maintained
+        expect_prompt(tui, "current_location", "path")
+        tui.sendline()
+
+        # Check tab completion of a filesystem path (/path/to/my-direct<TAB> should
+        # complete to /path/to/my-directory0)
+        expect_prompt(tui, "star_location", "path", help="Location of a bonus star")
+        tui.send(str(completedir)[:-4])
+        tui.send(Keyboard.Tab)
+        tui.sendline()
+        tui.sendline()
+
+        tui.expect_exact(pexpect.EOF)
+
+        answers = load_answersfile_data(".")
+        assert answers.get("_commit") == "v1"
+        assert answers.get("current_location") == "/dev/warppipe0"
+        assert answers.get("star_location") == str(completedir)
 
 
 @pytest.mark.parametrize(
