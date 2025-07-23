@@ -93,6 +93,7 @@ class Keyboard(str, Enum):
     Backspace = ControlH
     Tab = ControlI
 
+
 def render(tmp_path: Path, **kwargs: Any) -> None:
     kwargs.setdefault("quiet", True)
     copier.run_copy(str(PROJECT_TEMPLATE), tmp_path, data=DATA, **kwargs)
@@ -135,7 +136,10 @@ def build_file_tree(
 
 
 def expect_prompt(
-    tui: PopenSpawn | pexpect_spawn, name: str, expected_type: str, help: str | None = None
+    tui: PopenSpawn | pexpect_spawn,
+    name: str,
+    expected_type: str,
+    help: str | None = None,
 ) -> None:
     """Check that we get a prompt in the standard form"""
     if help:

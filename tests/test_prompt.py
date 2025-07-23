@@ -10,7 +10,6 @@ from typing import Any, Protocol, Union
 import pexpect
 import pytest
 import yaml
-
 from coverage.tracer import CTracer
 from pexpect import spawn as pexpect_spawn
 from pexpect.popen_spawn import PopenSpawn
@@ -108,7 +107,6 @@ PATH_TREE: Mapping[StrOrPath, str | bytes] = {
     ),
     "[[ _copier_conf.answers_file ]].tmpl": "[[_copier_answers|to_nice_yaml]]",
 }
-
 
 
 @pytest.mark.parametrize(
