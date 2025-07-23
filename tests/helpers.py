@@ -3,16 +3,15 @@ from __future__ import annotations
 import filecmp
 import json
 import os
-import platform
 import sys
 import textwrap
 from collections.abc import Mapping
 from enum import Enum
 from hashlib import sha1
 from pathlib import Path
-from pexpect.popen_spawn import PopenSpawn
-from typing import Any, Protocol, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Protocol
 
+from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
 from plumbum.cmd import git as _git
 from plumbum.machines import LocalCommand

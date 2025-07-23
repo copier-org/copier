@@ -11,7 +11,6 @@ import pexpect
 import pytest
 import yaml
 from coverage.tracer import CTracer
-
 from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
 
