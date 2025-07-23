@@ -11,8 +11,8 @@ import pexpect
 import pytest
 import yaml
 from coverage.tracer import CTracer
+
 from pexpect.popen_spawn import PopenSpawn
-from pexpect.pty_spawn import spawn as pexpect_spawn
 from plumbum import local
 
 from copier._types import StrOrPath
@@ -181,6 +181,8 @@ def test_copy_default_advertised(
 )
 def test_path_completion(tmp_path_factory: pytest.TempPathFactory) -> None:
     """Test that file paths can handle tab completion."""
+    from pexpect.pty_spawn import spawn as pexpect_spawn
+
     src, dst, completedir = map(tmp_path_factory.mktemp, ("src", "dst", "my-directory"))
     with local.cwd(src):
         build_file_tree(PATH_TREE)

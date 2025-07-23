@@ -3,6 +3,7 @@ from __future__ import annotations
 import filecmp
 import json
 import os
+import platform
 import sys
 import textwrap
 from collections.abc import Mapping
@@ -11,8 +12,13 @@ from hashlib import sha1
 from pathlib import Path
 from typing import Any, Protocol
 
+try:
+    from pexpect.pty_spawn import spawn as pexpect_spawn
+except ModuleNotFoundError as e:
+    # module does not exist on windows. ignore windows failures only
+    if platform.system() != "Windows":
+        raise e
 from pexpect.popen_spawn import PopenSpawn
-from pexpect.pty_spawn import spawn as pexpect_spawn
 from plumbum import local
 from plumbum.cmd import git as _git
 from plumbum.machines import LocalCommand
