@@ -10,15 +10,9 @@ from collections.abc import Mapping
 from enum import Enum
 from hashlib import sha1
 from pathlib import Path
-from typing import Any, Protocol
-
-try:
-    from pexpect.pty_spawn import spawn as pexpect_spawn
-except ModuleNotFoundError as e:
-    # module does not exist on windows. ignore windows failures only
-    if platform.system() != "Windows":
-        raise e
 from pexpect.popen_spawn import PopenSpawn
+from typing import Any, Protocol, TYPE_CHECKING
+
 from plumbum import local
 from plumbum.cmd import git as _git
 from plumbum.machines import LocalCommand
@@ -28,6 +22,9 @@ from pytest_gitconfig.plugin import DEFAULT_GIT_USER_EMAIL, DEFAULT_GIT_USER_NAM
 
 import copier
 from copier._types import StrOrPath
+
+if TYPE_CHECKING:
+    from pexpect.spawnbase import SpawnBase
 
 PROJECT_TEMPLATE = Path(__file__).parent / "demo"
 
@@ -142,7 +139,7 @@ def build_file_tree(
 
 
 def expect_prompt(
-    tui: PopenSpawn | pexpect_spawn,
+    tui: SpawnBase,
     name: str,
     expected_type: str,
     help: str | None = None,
