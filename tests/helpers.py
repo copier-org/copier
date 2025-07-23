@@ -11,6 +11,7 @@ from hashlib import sha1
 from pathlib import Path
 from typing import Any, Protocol
 
+from pexpect.pty_spawn import spawn as pexpect_spawn
 from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
 from plumbum.cmd import git as _git
@@ -135,7 +136,7 @@ def build_file_tree(
 
 
 def expect_prompt(
-    tui: PopenSpawn,
+    tui: PopenSpawn | pexpect_spawn,
     name: str,
     expected_type: str,
     help: str | None = None,
