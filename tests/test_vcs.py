@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Callable
 
 import pytest
+from pytest_gitconfig.plugin import GitConfig
 from packaging.version import Version
 from plumbum import local
 
@@ -88,7 +89,12 @@ def test_local_clone() -> None:
     shutil.rmtree(local_tmp, ignore_errors=True)
 
 
-def test_local_dirty_clone(tmp_path_factory: pytest.TempPathFactory) -> None:
+def test_local_dirty_clone(tmp_path_factory: pytest.TempPathFactory, gitconfig: GitConfig) -> None:
+    """
+    When core.fsmonitor is enabled, dirty clone required specific git clone command to works properly.
+    """
+
+    gitconfig.set({"core.fsmonitor": "true"})
     src = tmp_path_factory.mktemp("src")
     print(src)
 
