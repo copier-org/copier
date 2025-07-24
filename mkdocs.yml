@@ -62,15 +62,17 @@ extra_css:
 markdown_extensions:
   - admonition
   - attr_list
+  - pymdownx.details
+  - pymdownx.emoji
   - pymdownx.highlight:
       use_pygments: true
+  - pymdownx.magiclink
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
-  - pymdownx.emoji
-  - pymdownx.magiclink
+  - pymdownx.superfences
   - toc:
       permalink: true
   - footnotes
