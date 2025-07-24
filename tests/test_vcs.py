@@ -93,7 +93,7 @@ def test_local_dirty_clone(
     tmp_path_factory: pytest.TempPathFactory, gitconfig: GitConfig
 ) -> None:
     """
-    When core.fsmonitor is enabled, dirty clone required specific git clone command to works properly.
+    When core.fsmonitor is enabled, normal `git checkout` command won't works.
     """
 
     gitconfig.set({"core.fsmonitor": "true"})
