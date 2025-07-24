@@ -212,7 +212,9 @@ def clone(url: str, ref: str | None = None) -> str:
                 )
 
     with local.cwd(location):
-        git("checkout", "-f", ref or "HEAD")
+        ## The `git checkout -f <ref>` command doesn't works when repo is local, dirty and core.fsmonitor is enabled
+        ## ref: https://github.com/copier-org/copier/issues/1887
+        git("-c", "core.fsmonitor=false", "checkout", "-f", ref or "HEAD")
         git("submodule", "update", "--checkout", "--init", "--recursive", "--force")
 
     return location
