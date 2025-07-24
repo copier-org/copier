@@ -27,7 +27,12 @@ functionalities of multiple templates, by adding some "glue code", and avoid rep
 
     The composition of these 3 templates would result in a new template that setups a web application with a CI/CD pipeline and an ArgoCD application to run it in a Kubernetes cluster.
 
-<!-- TODO? (not sure if it relevant...) add an operational distinction between the two -->
+### Operational Distinction between Inheritance and Composition
+
+|                               | Inheritance | Composition |
+| ----------------------------- | :---------: | :---------: |
+| Number of parent templates    |      1      |  2 or more  |
+| May add/averride parent parts |     Yes     |     No      |
 
 ## Why copier does not natively support inheritance and composition?
 
