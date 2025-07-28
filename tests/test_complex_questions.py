@@ -168,9 +168,13 @@ def test_api(template_path: str, tmp_path: Path) -> None:
     )
 
 
-def test_cli_interactive(template_path: str, tmp_path: Path, spawn: Spawn) -> None:
+def test_cli_interactive(
+    template_path: str, tmp_path: Path, spawn: Spawn, spawn_timeout: int | None
+) -> None:
     """Test copier correctly processes advanced questions and answers through CLI."""
-    tui = spawn(COPIER_PATH + ("copy", template_path, str(tmp_path)), timeout=10)
+    tui = spawn(
+        COPIER_PATH + ("copy", template_path, str(tmp_path)), timeout=spawn_timeout
+    )
     expect_prompt(tui, "love_me", "bool", help="I need to know it. Do you love me?")
     tui.send("y")
     expect_prompt(tui, "your_name", "str", help="Please tell me your name.")
@@ -308,7 +312,7 @@ def test_api_str_data(template_path: str, tmp_path: Path) -> None:
 
 
 def test_cli_interatively_with_flag_data_and_type_casts(
-    template_path: str, tmp_path: Path, spawn: Spawn
+    template_path: str, tmp_path: Path, spawn: Spawn, spawn_timeout: int | None
 ) -> None:
     """Assert how choices work when copier is invoked with --data interactively."""
     tui = spawn(
@@ -322,7 +326,7 @@ def test_cli_interatively_with_flag_data_and_type_casts(
             template_path,
             str(tmp_path),
         ),
-        timeout=10,
+        timeout=spawn_timeout,
     )
     expect_prompt(tui, "love_me", "bool", help="I need to know it. Do you love me?")
     tui.send("y")
@@ -377,6 +381,7 @@ def test_tui_inherited_default(
     spawn: Spawn,
     has_2_owners: bool,
     owner2: str,
+    spawn_timeout: int | None,
 ) -> None:
     """Make sure a template inherits default as expected."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -407,7 +412,7 @@ def test_tui_inherited_default(
         git("add", "--all")
         git("commit", "--message", "init template")
         git("tag", "1")
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=spawn_timeout)
     expect_prompt(tui, "owner1", "str")
     tui.sendline("example")
     expect_prompt(tui, "has_2_owners", "bool")
@@ -437,7 +442,9 @@ def test_tui_inherited_default(
 
 
 def test_tui_typed_default(
-    tmp_path_factory: pytest.TempPathFactory, spawn: Spawn
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    spawn_timeout: int | None,
 ) -> None:
     """Make sure a template defaults are typed as expected."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -466,7 +473,7 @@ def test_tui_typed_default(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=spawn_timeout)
     tui.expect_exact(pexpect.EOF)
     assert json.loads((dst / "answers.json").read_text()) == {"_src_path": str(src)}
     assert json.loads((dst / "context.json").read_text()) == {
@@ -476,7 +483,9 @@ def test_tui_typed_default(
 
 
 def test_selection_type_cast(
-    tmp_path_factory: pytest.TempPathFactory, spawn: Spawn
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    spawn_timeout: int | None,
 ) -> None:
     """Selection question with different types, properly casted."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -507,7 +516,7 @@ def test_selection_type_cast(
             (src / "answers.json.jinja"): "{{ _copier_answers|to_json }}",
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=spawn_timeout)
     expect_prompt(
         tui, "postgres1", "yaml", help="Which PostgreSQL version do you want to deploy?"
     )

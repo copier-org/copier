@@ -158,6 +158,7 @@ def test_templated_prompt(
     questions_data: AnyByStrDict,
     expected_value: str | int,
     expected_outputs: Sequence[str | Prompt],
+    spawn_timeout: int | None,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     questions_combined = {**main_question, **questions_data}
@@ -171,7 +172,7 @@ def test_templated_prompt(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=spawn_timeout)
     expect_prompt(tui, "main", "str")
     tui.expect_exact(main_default)
     tui.sendline()
@@ -328,6 +329,7 @@ def test_templated_prompt_with_conditional_choices(
     spawn: Spawn,
     cloud: str,
     iac_choices: str,
+    spawn_timeout: int | None,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
@@ -363,7 +365,7 @@ def test_templated_prompt_with_conditional_choices(
     )
     tui = spawn(
         COPIER_PATH + ("copy", f"--data=cloud={cloud}", str(src), str(dst)),
-        timeout=10,
+        timeout=spawn_timeout,
     )
     expect_prompt(tui, "iac", "str", help="Which IaC tool do you use?")
     for iac in iac_choices:
@@ -385,6 +387,7 @@ def test_templated_prompt_with_templated_choices(
     spawn: Spawn,
     cloud: str,
     iac_choices: str,
+    spawn_timeout: int | None,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
@@ -420,7 +423,7 @@ def test_templated_prompt_with_templated_choices(
     )
     tui = spawn(
         COPIER_PATH + ("copy", f"--data=cloud={cloud}", str(src), str(dst)),
-        timeout=10,
+        timeout=spawn_timeout,
     )
     expect_prompt(tui, "iac", "str", help="Which IaC tool do you use?")
     for iac in iac_choices:
@@ -429,7 +432,9 @@ def test_templated_prompt_with_templated_choices(
 
 
 def test_templated_prompt_update_previous_answer_disabled(
-    tmp_path_factory: pytest.TempPathFactory, spawn: Spawn
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    spawn_timeout: int | None,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
@@ -470,7 +475,7 @@ def test_templated_prompt_update_previous_answer_disabled(
         git_init("v1")
         git("tag", "v1")
 
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=spawn_timeout)
     expect_prompt(tui, "cloud", "str", help="Which cloud provider do you use?")
     tui.sendline(Keyboard.Down)  # select "AWS"
     expect_prompt(tui, "iac", "str", help="Which IaC tool do you use?")
@@ -487,7 +492,7 @@ def test_templated_prompt_update_previous_answer_disabled(
     with local.cwd(dst):
         git_init("v1")
 
-    tui = spawn(COPIER_PATH + ("update", str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("update", str(dst)), timeout=spawn_timeout)
     expect_prompt(tui, "cloud", "str", help="Which cloud provider do you use?")
     tui.sendline(Keyboard.Down)  # select "Azure"
     expect_prompt(tui, "iac", "str", help="Which IaC tool do you use?")
@@ -505,6 +510,7 @@ def test_templated_prompt_update_previous_answer_disabled(
 def test_multiselect_choices_with_templated_default_value(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
+    spawn_timeout: int | None,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
@@ -541,7 +547,7 @@ def test_multiselect_choices_with_templated_default_value(
         }
     )
 
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=spawn_timeout)
     expect_prompt(
         tui, "python_version", "str", help="What version of python are you targeting?"
     )
@@ -565,6 +571,7 @@ def test_multiselect_choices_with_templated_default_value(
 def test_copier_phase_variable(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
+    spawn_timeout: int | None,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
@@ -576,7 +583,7 @@ def test_copier_phase_variable(
             """
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=spawn_timeout)
     expect_prompt(tui, "phase", "str")
     tui.expect_exact("prompt")
 
@@ -584,6 +591,7 @@ def test_copier_phase_variable(
 def test_copier_conf_variable(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
+    spawn_timeout: int | None,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
@@ -595,6 +603,9 @@ def test_copier_conf_variable(
             """
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst / "test_project")), timeout=10)
+    tui = spawn(
+        COPIER_PATH + ("copy", str(src), str(dst / "test_project")),
+        timeout=spawn_timeout,
+    )
     expect_prompt(tui, "project_name", "str")
     tui.expect_exact("test_project")
