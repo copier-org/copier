@@ -486,6 +486,33 @@ settings that are defined in more than one document:
         - "pyproject.toml"
     ```
 
+!!! note
+
+    If you have nested includes, the include file path have to be relative to `copier.yml`, not to each other:
+
+    ```tree result="shell"
+    your_template
+        copier.yml
+        general-conf
+            general.yml
+            particular-conf
+                particular.yml
+    ```
+
+    ```yaml title="copier.yml"
+    !include general-conf/general.yml
+    ```
+
+    ```yaml title="general-conf/general.yml"
+    !include general-conf/particular-conf/particular.yml
+    ```
+
+    NOT:
+
+    ```yaml title="general-conf/general.yml"
+    !include particular-conf/particular.yml
+    ```
+
 ## Conditional files and directories
 
 You can take advantage of the ability to template file and directory names to make them
