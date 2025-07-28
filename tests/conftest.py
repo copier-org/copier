@@ -11,6 +11,7 @@ import pytest
 from coverage.tracer import CTracer
 from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
+from pytest import FixtureRequest, Parser
 from pytest_gitconfig.plugin import DELETE, GitConfig
 
 from .helpers import Spawn
@@ -93,3 +94,19 @@ def settings_path(config_path: Path) -> Path:
     config_path.mkdir()
     settings_path = config_path / "settings.yml"
     return settings_path
+
+
+def pytest_addoption(parser: Parser) -> None:
+    parser.addoption(
+        "--spawn-timeout",
+        action="store",
+        default=10,
+        help="timeout for spawn of pexpect",
+        type=lambda x: int(x) if x != "None" else None,
+    )
+
+
+@pytest.fixture
+def spawn_timeout(request: FixtureRequest) -> int | None:
+    _spawn_timeout: Any = request.config.getoption("--spawn-timeout")
+    return int(_spawn_timeout) if _spawn_timeout else None
