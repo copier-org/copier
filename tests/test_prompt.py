@@ -158,7 +158,12 @@ def test_copy_default_advertised(
         # Update subproject
         git_save()
         assert load_answersfile_data(".").get("_commit") == "v1"
-        tui = spawn(COPIER_PATH + ("update",), timeout=30)
+        tui = spawn(
+            COPIER_PATH + ("update",),
+            timeout=spawn_timeout * 3
+            if spawn_timeout is not None and spawn_timeout > 0
+            else None,
+        )
         # Check what was captured
         expect_prompt(tui, "in_love", "bool")
         tui.expect_exact("(Y/n)")
@@ -281,7 +286,9 @@ def test_update_skip_answered(
                 update_action,
                 "--skip-answered",
             ),
-            timeout=30,
+            timeout=spawn_timeout * 3
+            if spawn_timeout is not None and spawn_timeout > 0
+            else None,
         )
         # Check what was captured
         expect_prompt(tui, "your_enemy", "str", help="Secret enemy name")
@@ -346,7 +353,9 @@ def test_update_with_new_field_in_new_version_skip_answered(
                 "update",
                 "-A",
             ),
-            timeout=30,
+            timeout=spawn_timeout * 3
+            if spawn_timeout is not None and spawn_timeout > 0
+            else None,
         )
         # Check what was captured
         expect_prompt(tui, "your_enemy", "str", help="Secret enemy name")
