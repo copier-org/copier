@@ -1982,3 +1982,44 @@ def test_conditional_computed_value(tmp_path_factory: pytest.TempPathFactory) ->
     assert answers["first"] is True
     assert answers["second"] is True
     assert (dst / "log.txt").read_text() == "True True"
+
+
+def test_disable_secret_validator_on_replay(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    build_file_tree(
+        {
+            src / "copier.yml": (
+                """\
+                token:
+                    type: str
+                    secret: true
+                    default: ""
+                    validator: "{% if token == '' %}Must not be empty{% endif %}"
+                """
+            ),
+            src / "{{ _copier_conf.answers_file }}.jinja": (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+            src / ".gitignore": ".env",
+            src / ".env.jinja": "TOKEN={{ token }}",
+        }
+    )
+    with local.cwd(src):
+        git_init("v1")
+        git("tag", "v1")
+
+    run_copy(str(src), dst, data={"token": "$3cr3t"})
+    answers = load_answersfile_data(dst)
+    assert answers == {"_src_path": str(src), "_commit": "v1"}
+    assert (dst / ".env").read_text() == "TOKEN=$3cr3t"
+
+    with local.cwd(dst):
+        git_init("v1")
+
+    run_update(dst, data={"token": "$up3r-$3cr3t"}, overwrite=True)
+    answers = load_answersfile_data(dst)
+    assert answers == {"_src_path": str(src), "_commit": "v1"}
+    assert (dst / ".env").read_text() == "TOKEN=$up3r-$3cr3t"
