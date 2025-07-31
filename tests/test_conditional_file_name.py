@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import pexpect
 import pytest
 from plumbum import local
@@ -67,7 +65,6 @@ def test_answer_changes(
     tmp_path_factory: TempPathFactory,
     spawn: Spawn,
     interactive: bool,
-    spawn_timeout: int | None,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
@@ -88,7 +85,7 @@ def test_answer_changes(
         git("tag", "v1")
 
     if interactive:
-        tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=spawn_timeout)
+        tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
         expect_prompt(tui, "condition", "bool")
         tui.expect_exact("(y/N)")
         tui.sendline("y")
@@ -105,7 +102,7 @@ def test_answer_changes(
         git("commit", "-mv1")
 
     if interactive:
-        tui = spawn(COPIER_PATH + ("update", str(dst)), timeout=spawn_timeout)
+        tui = spawn(COPIER_PATH + ("update", str(dst)))
         expect_prompt(tui, "condition", "bool")
         tui.expect_exact("(Y/n)")
         tui.sendline("n")

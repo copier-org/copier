@@ -419,7 +419,6 @@ def test_when(
     question_1: str | int | float | bool,
     question_2_when: bool | str,
     asks: bool,
-    spawn_timeout: int | None,
 ) -> None:
     """Test that the 2nd question is skipped or not, properly."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -442,7 +441,7 @@ def test_when(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=spawn_timeout)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
     expect_prompt(tui, "question_1", type(question_1).__name__)
     tui.sendline()
     if asks:
@@ -462,7 +461,6 @@ def test_when(
 def test_placeholder(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
-    spawn_timeout: int | None,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
@@ -484,7 +482,7 @@ def test_placeholder(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=spawn_timeout)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
     expect_prompt(tui, "question_1", "str")
     tui.expect_exact("answer 1")
     tui.sendline()
@@ -505,7 +503,6 @@ def test_multiline(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
     type_: str,
-    spawn_timeout: int | None,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
@@ -532,7 +529,7 @@ def test_multiline(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=spawn_timeout)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
     expect_prompt(tui, "question_1", "str")
     tui.expect_exact("answer 1")
     tui.sendline()
@@ -580,7 +577,6 @@ def test_update_choice(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
     choices: list[int] | list[list[str | int]] | dict[str, int],
-    spawn_timeout: int | None,
 ) -> None:
     """Choices are properly remembered and selected in TUI when updating."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -608,7 +604,7 @@ def test_update_choice(
         git("commit", "-m one")
         git("tag", "v1")
     # Copy
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=spawn_timeout)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
     expect_prompt(tui, "pick_one", "float")
     tui.sendline(Keyboard.Up)
     tui.expect_exact(pexpect.EOF)
@@ -624,8 +620,7 @@ def test_update_choice(
         + (
             "update",
             str(dst),
-        ),
-        timeout=spawn_timeout,
+        )
     )
     expect_prompt(tui, "pick_one", "float")
     tui.sendline(Keyboard.Down)
@@ -638,7 +633,6 @@ def test_update_choice(
 def test_multiline_defaults(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
-    spawn_timeout: int | None,
 ) -> None:
     """Multiline questions with scalar defaults produce multiline defaults."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -671,7 +665,7 @@ def test_multiline_defaults(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=spawn_timeout)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
     expect_prompt(tui, "yaml_single", "yaml")
     # This test will always fail here, because python prompt toolkit gives
     # syntax highlighting to YAML and JSON outputs, encoded into terminal
@@ -704,7 +698,6 @@ def test_multiline_defaults(
 def test_partial_interrupt(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
-    spawn_timeout: int | None,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
@@ -717,7 +710,7 @@ def test_partial_interrupt(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=spawn_timeout)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
     expect_prompt(tui, "question_1", "str")
     tui.expect_exact("answer 1")
     # Answer the first question using the default.
@@ -735,7 +728,6 @@ def test_partial_interrupt(
 def test_var_name_value_allowed(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
-    spawn_timeout: int | None,
 ) -> None:
     """Test that a question var name "value" causes no name collision.
 
@@ -759,7 +751,7 @@ def test_var_name_value_allowed(
         }
     )
     # Copy
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=spawn_timeout)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
     expect_prompt(tui, "value", "str")
     tui.expect_exact("string")
     tui.send(Keyboard.Alt + Keyboard.Enter)
@@ -784,7 +776,6 @@ def test_required_text_question(
     spawn: Spawn,
     type_name: str,
     expected_answer: str | None | ValueError,
-    spawn_timeout: int | None,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
@@ -801,7 +792,7 @@ def test_required_text_question(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=spawn_timeout)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
     expect_prompt(tui, "question", type_name)
     tui.expect_exact("")
     tui.sendline()
@@ -820,7 +811,6 @@ def test_required_text_question(
 def test_required_bool_question(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
-    spawn_timeout: int | None,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
@@ -837,7 +827,7 @@ def test_required_bool_question(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=spawn_timeout)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
     expect_prompt(tui, "question", "bool")
     tui.expect_exact("(y/N)")
     tui.sendline()
@@ -865,7 +855,6 @@ def test_required_choice_question(
     type_name: str,
     choices: list[Any],
     expected_answer: Any,
-    spawn_timeout: int | None,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
@@ -885,7 +874,7 @@ def test_required_choice_question(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=spawn_timeout)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
     expect_prompt(tui, "question", type_name)
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
@@ -960,10 +949,9 @@ def test_multiselect_choices_question_single_answer(
     type_name: QuestionType,
     choices: QuestionChoices,
     values: ParsedValues,
-    spawn_timeout: int | None,
 ) -> None:
     src, dst = question_tree(type=type_name, choices=choices, multiselect=True)
-    tui = copier("copy", str(src), str(dst), timeout=spawn_timeout)
+    tui = copier("copy", str(src), str(dst))
     expect_prompt(tui, "question", type_name)
     tui.send(" ")  # select 1
     tui.sendline()
@@ -979,10 +967,9 @@ def test_multiselect_choices_question_multiple_answers(
     type_name: QuestionType,
     choices: QuestionChoices,
     values: ParsedValues,
-    spawn_timeout: int | None,
 ) -> None:
     src, dst = question_tree(type=type_name, choices=choices, multiselect=True)
-    tui = copier("copy", str(src), str(dst), timeout=spawn_timeout)
+    tui = copier("copy", str(src), str(dst))
     expect_prompt(tui, "question", type_name)
     tui.send(" ")  # select 0
     tui.send(Keyboard.Down)
@@ -1000,12 +987,11 @@ def test_multiselect_choices_question_with_default(
     type_name: QuestionType,
     choices: QuestionChoices,
     values: ParsedValues,
-    spawn_timeout: int | None,
 ) -> None:
     src, dst = question_tree(
         type=type_name, choices=choices, multiselect=True, default=values
     )
-    tui = copier("copy", str(src), str(dst), timeout=spawn_timeout)
+    tui = copier("copy", str(src), str(dst))
     expect_prompt(tui, "question", type_name)
     tui.send(" ")  # toggle first
     tui.sendline()
@@ -1021,7 +1007,6 @@ def test_update_multiselect_choices(
     type_name: QuestionType,
     choices: QuestionChoices,
     values: ParsedValues,
-    spawn_timeout: int | None,
 ) -> None:
     """Multiple choices are properly remembered and selected in TUI when updating."""
     src, dst = question_tree(
@@ -1035,7 +1020,7 @@ def test_update_multiselect_choices(
         git("tag", "v1")
 
     # Copy
-    tui = copier("copy", str(src), str(dst), timeout=spawn_timeout)
+    tui = copier("copy", str(src), str(dst))
     expect_prompt(tui, "question", type_name)
     tui.send(" ")  # toggle first
     tui.sendline()
@@ -1049,7 +1034,7 @@ def test_update_multiselect_choices(
         git("commit", "-m1")
 
     # Update
-    tui = copier("update", str(dst), timeout=spawn_timeout)
+    tui = copier("update", str(dst))
     expect_prompt(tui, "question", type_name)
     tui.send(" ")  # toggle first
     tui.sendline()
@@ -1061,7 +1046,6 @@ def test_update_multiselect_choices(
 def test_multiselect_choices_validator(
     question_tree: QuestionTreeFixture,
     copier: CopierFixture,
-    spawn_timeout: int | None,
 ) -> None:
     """Multiple choices are validated."""
     src, dst = question_tree(
@@ -1071,7 +1055,7 @@ def test_multiselect_choices_validator(
         validator=("[%- if not question -%]At least one choice required[%- endif -%]"),
     )
 
-    tui = copier("copy", str(src), str(dst), timeout=spawn_timeout)
+    tui = copier("copy", str(src), str(dst))
     expect_prompt(tui, "question", "str")
     tui.sendline()
     tui.expect_exact("At least one choice required")
@@ -1085,7 +1069,6 @@ def test_multiselect_choices_validator(
 def test_secret_validator(
     question_tree: QuestionTreeFixture,
     copier: CopierFixture,
-    spawn_timeout: int | None,
 ) -> None:
     """Secret question answer is validated."""
     default = "s3cret"
@@ -1096,7 +1079,7 @@ def test_secret_validator(
         validator="[% if question|length < 3 %]too short[% endif %]",
     )
 
-    tui = copier("copy", str(src), str(dst), timeout=spawn_timeout)
+    tui = copier("copy", str(src), str(dst))
     expect_prompt(tui, "question", "str")
     # Delete default value to fail validation
     for _ in range(len(default)):

@@ -861,7 +861,6 @@ def test_update_inline_changed_answers_and_questions(
     tmp_path_factory: pytest.TempPathFactory,
     interactive: bool,
     spawn: Spawn,
-    spawn_timeout: int | None,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     with local.cwd(src):
@@ -906,9 +905,7 @@ def test_update_inline_changed_answers_and_questions(
         git("tag", "2")
     # Init project
     if interactive:
-        tui = spawn(
-            COPIER_PATH + ("copy", "-r1", str(src), str(dst)), timeout=spawn_timeout
-        )
+        tui = spawn(COPIER_PATH + ("copy", "-r1", str(src), str(dst)))
         tui.expect_exact("b (bool)")
         tui.expect_exact("(y/N)")
         tui.send("y")
@@ -934,9 +931,7 @@ def test_update_inline_changed_answers_and_questions(
         git("commit", "-am2")
         # Update from template, inline, with answer changes
         if interactive:
-            tui = spawn(
-                COPIER_PATH + ("update", "--conflict=inline"), timeout=spawn_timeout
-            )
+            tui = spawn(COPIER_PATH + ("update", "--conflict=inline"))
             tui.expect_exact("b (bool)")
             tui.expect_exact("(Y/n)")
             tui.sendline()
