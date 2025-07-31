@@ -22,10 +22,10 @@ functionalities of multiple templates, by adding some "glue code", and avoid rep
     You have 3 independent templates:
 
     - A template that setups the skeleton of a web application using the Flask framework;
-    - A template that setups a CI/CD pipeline for building a Docker image and deploying it to a cloud provider starting from any python application;
-    - A template that setups an ArgoCD application to run a service based on a Docker image in a Kubernetes cluster.
+    - A template that setups a CI/CD pipeline for building and pushing a Docker image of a python application;
+    - A template that setups an ArgoCD application of a webapp, given a Docker image.
 
-    The composition of these 3 templates would result in a new template that setups a web application with a CI/CD pipeline and an ArgoCD application to run it in a Kubernetes cluster.
+    The composition of these 3 templates would result in a new template that setups a web application with a CI/CD pipeline and an ArgoCD application to deploy it on a Kubernetes cluster.
 
 ### Operational Distinction between Inheritance and Composition
 
