@@ -50,6 +50,7 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           version: ${{ env.UV_VERSION }}
+          python-version: ${{ matrix.python-version }}
           enable-cache: "true"
           cache-suffix: ${{ matrix.python-version }}
       - name: Set up Python ${{ matrix.python-version }}
