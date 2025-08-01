@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.9.0 (2025-08-01)
+
+### Feat
+
+-   add support for prompting filesystem paths (#2210)
+
+### Fix
+
+-   **updating**: disable secret question validator when replaying old copy
+-   **vcs**: fix cloning local dirty template repo when `core.fsmonitor=true` (#2151)
+
 ## v9.8.0 (2025-07-07)
 
 ### Feat
