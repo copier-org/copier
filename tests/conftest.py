@@ -27,7 +27,7 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def spawn_timeout(request: FixtureRequest) -> int | None:
     _spawn_timeout: Any = request.config.getoption("--spawn-timeout")
     return int(_spawn_timeout) if _spawn_timeout else None
