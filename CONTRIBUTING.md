@@ -131,17 +131,17 @@ Ready to contribute? Here's how to set up the project for local development.
 
     !!! note
 
-        If you get fails due to `pexpect.exceptions.TIMEOUT: <pexpect.popen_spawn.PopenSpawn object at 0x............>`, you can adjust the timeout to a longer one (default: `10`), or remove the timeout (`None`).
+        If you get fails due to `pexpect.exceptions.TIMEOUT: <pexpect.popen_spawn.PopenSpawn object at 0x............>`, you can adjust the timeout to a longer one (default: `10`), or remove the timeout (`0`).
         Either add it as an argument in your command:
         ```shell
-        uv run poe test --spawn-timeout None
+        uv run poe test --spawn-timeout 0
         ```
-        Or modify pytest arguments in VSCode Workspace settings:
+        Or modify pytest arguments in VS Code workspace settings:
         ```json title=".vscode/settings.json"
         {
           ...
           "python.testing.pytestArgs": [
-            "--spawn-timeout=None"
+            "--spawn-timeout=0"
           ]
         }
         ```
