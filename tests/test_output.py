@@ -143,9 +143,7 @@ def test_messages_with_inline_text(
 
     # copy
     if interactive:
-        tui = spawn(
-            COPIER_PATH + ("copy", "-r", "v1", str(src), str(dst)),
-        )
+        tui = spawn(COPIER_PATH + ("copy", "-r", "v1", str(src), str(dst)))
         expect_prompt(tui, "project_name", "str")
         tui.sendline("myproj")
         tui.expect_exact(pexpect.EOF)
@@ -285,9 +283,7 @@ def test_messages_with_included_text(
 
     # copy
     if interactive:
-        tui = spawn(
-            COPIER_PATH + ("copy", "-r", "v1", str(src), str(dst)),
-        )
+        tui = spawn(COPIER_PATH + ("copy", "-r", "v1", str(src), str(dst)))
         expect_prompt(tui, "project_name", "str")
         tui.sendline("myproj")
         tui.expect_exact(pexpect.EOF)
@@ -406,9 +402,7 @@ def test_messages_quiet(
 
     # copy
     if interactive:
-        tui = spawn(
-            COPIER_PATH + ("copy", "--quiet", "-r", "v1", str(src), str(dst)),
-        )
+        tui = spawn(COPIER_PATH + ("copy", "--quiet", "-r", "v1", str(src), str(dst)))
         expect_prompt(tui, "project_name", "str")
         tui.sendline("myproj")
         tui.expect_exact(pexpect.EOF)
@@ -424,9 +418,7 @@ def test_messages_quiet(
 
     # recopy
     if interactive:
-        tui = spawn(
-            COPIER_PATH + ("recopy", "--quiet", "-r", "v1", str(dst)),
-        )
+        tui = spawn(COPIER_PATH + ("recopy", "--quiet", "-r", "v1", str(dst)))
         expect_prompt(tui, "project_name", "str")
         tui.sendline("_new")
         tui.expect_exact(pexpect.EOF)

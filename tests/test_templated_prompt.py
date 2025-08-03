@@ -361,9 +361,7 @@ def test_templated_prompt_with_conditional_choices(
             ),
         }
     )
-    tui = spawn(
-        COPIER_PATH + ("copy", f"--data=cloud={cloud}", str(src), str(dst)),
-    )
+    tui = spawn(COPIER_PATH + ("copy", f"--data=cloud={cloud}", str(src), str(dst)))
     expect_prompt(tui, "iac", "str", help="Which IaC tool do you use?")
     for iac in iac_choices:
         tui.expect_exact(iac)
