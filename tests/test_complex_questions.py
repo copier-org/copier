@@ -436,8 +436,7 @@ def test_tui_inherited_default(
 
 
 def test_tui_typed_default(
-    tmp_path_factory: pytest.TempPathFactory,
-    spawn: Spawn,
+    tmp_path_factory: pytest.TempPathFactory, spawn: Spawn
 ) -> None:
     """Make sure a template defaults are typed as expected."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -476,8 +475,7 @@ def test_tui_typed_default(
 
 
 def test_selection_type_cast(
-    tmp_path_factory: pytest.TempPathFactory,
-    spawn: Spawn,
+    tmp_path_factory: pytest.TempPathFactory, spawn: Spawn
 ) -> None:
     """Selection question with different types, properly casted."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))

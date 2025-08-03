@@ -858,9 +858,7 @@ def test_file_removed(tmp_path_factory: pytest.TempPathFactory) -> None:
 
 @pytest.mark.parametrize("interactive", [True, False])
 def test_update_inline_changed_answers_and_questions(
-    tmp_path_factory: pytest.TempPathFactory,
-    interactive: bool,
-    spawn: Spawn,
+    tmp_path_factory: pytest.TempPathFactory, interactive: bool, spawn: Spawn
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     with local.cwd(src):

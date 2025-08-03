@@ -62,9 +62,7 @@ def test_dont_render_conditional_subdir(tmp_path_factory: TempPathFactory) -> No
 
 @pytest.mark.parametrize("interactive", [False, True])
 def test_answer_changes(
-    tmp_path_factory: TempPathFactory,
-    spawn: Spawn,
-    interactive: bool,
+    tmp_path_factory: TempPathFactory, spawn: Spawn, interactive: bool
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 

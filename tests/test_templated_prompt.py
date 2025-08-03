@@ -425,8 +425,7 @@ def test_templated_prompt_with_templated_choices(
 
 
 def test_templated_prompt_update_previous_answer_disabled(
-    tmp_path_factory: pytest.TempPathFactory,
-    spawn: Spawn,
+    tmp_path_factory: pytest.TempPathFactory, spawn: Spawn
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(

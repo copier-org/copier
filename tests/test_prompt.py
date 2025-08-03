@@ -458,10 +458,7 @@ def test_when(
     assert context == {"question_2": "something"}
 
 
-def test_placeholder(
-    tmp_path_factory: pytest.TempPathFactory,
-    spawn: Spawn,
-) -> None:
+def test_placeholder(tmp_path_factory: pytest.TempPathFactory, spawn: Spawn) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
@@ -500,9 +497,7 @@ def test_placeholder(
 
 @pytest.mark.parametrize("type_", ["str", "yaml", "json"])
 def test_multiline(
-    tmp_path_factory: pytest.TempPathFactory,
-    spawn: Spawn,
-    type_: str,
+    tmp_path_factory: pytest.TempPathFactory, spawn: Spawn, type_: str
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
@@ -631,8 +626,7 @@ def test_update_choice(
 
 @pytest.mark.skip("TODO: fix this")
 def test_multiline_defaults(
-    tmp_path_factory: pytest.TempPathFactory,
-    spawn: Spawn,
+    tmp_path_factory: pytest.TempPathFactory, spawn: Spawn
 ) -> None:
     """Multiline questions with scalar defaults produce multiline defaults."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -726,8 +720,7 @@ def test_partial_interrupt(
 
 
 def test_var_name_value_allowed(
-    tmp_path_factory: pytest.TempPathFactory,
-    spawn: Spawn,
+    tmp_path_factory: pytest.TempPathFactory, spawn: Spawn
 ) -> None:
     """Test that a question var name "value" causes no name collision.
 
@@ -809,8 +802,7 @@ def test_required_text_question(
 
 
 def test_required_bool_question(
-    tmp_path_factory: pytest.TempPathFactory,
-    spawn: Spawn,
+    tmp_path_factory: pytest.TempPathFactory, spawn: Spawn
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
@@ -1044,8 +1036,7 @@ def test_update_multiselect_choices(
 
 
 def test_multiselect_choices_validator(
-    question_tree: QuestionTreeFixture,
-    copier: CopierFixture,
+    question_tree: QuestionTreeFixture, copier: CopierFixture
 ) -> None:
     """Multiple choices are validated."""
     src, dst = question_tree(
@@ -1067,8 +1058,7 @@ def test_multiselect_choices_validator(
 
 
 def test_secret_validator(
-    question_tree: QuestionTreeFixture,
-    copier: CopierFixture,
+    question_tree: QuestionTreeFixture, copier: CopierFixture
 ) -> None:
     """Secret question answer is validated."""
     default = "s3cret"
