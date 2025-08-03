@@ -121,7 +121,7 @@ def test_copy_default_advertised(
     spawn: Spawn,
     name: str,
     args: tuple[str, ...],
-    spawn_timeout: int | None,
+    spawn_timeout: int,
 ) -> None:
     """Test that the questions for the user are OK"""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -158,12 +158,7 @@ def test_copy_default_advertised(
         # Update subproject
         git_save()
         assert load_answersfile_data(".").get("_commit") == "v1"
-        tui = spawn(
-            COPIER_PATH + ("update",),
-            timeout=spawn_timeout * 3
-            if spawn_timeout is not None and spawn_timeout > 0
-            else None,
-        )
+        tui = spawn(COPIER_PATH + ("update",), timeout=spawn_timeout * 3)
         # Check what was captured
         expect_prompt(tui, "in_love", "bool")
         tui.expect_exact("(Y/n)")
@@ -186,7 +181,7 @@ def test_copy_default_advertised(
     reason="pexpect.spawn does not work on Windows",
 )
 def test_path_completion(
-    tmp_path_factory: pytest.TempPathFactory, spawn_timeout: int | None
+    tmp_path_factory: pytest.TempPathFactory, spawn_timeout: int
 ) -> None:
     """Test that file paths can handle tab completion."""
     from pexpect.pty_spawn import spawn as pexpect_spawn
@@ -202,7 +197,9 @@ def test_path_completion(
         # See https://stackoverflow.com/a/67065084/1468388
         tracer = getattr(sys, "gettrace", lambda: None)()
         timeout = (
-            spawn_timeout if not isinstance(tracer, (CTracer, type(None))) else None
+            None
+            if not isinstance(tracer, (CTracer, type(None))) or spawn_timeout == 0
+            else spawn_timeout
         )
 
         # Copy the v1 template
@@ -244,7 +241,7 @@ def test_update_skip_answered(
     name: str,
     update_action: str,
     args: tuple[str, ...],
-    spawn_timeout: int | None,
+    spawn_timeout: int,
 ) -> None:
     """Test that the questions for the user are OK"""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -286,9 +283,7 @@ def test_update_skip_answered(
                 update_action,
                 "--skip-answered",
             ),
-            timeout=spawn_timeout * 3
-            if spawn_timeout is not None and spawn_timeout > 0
-            else None,
+            timeout=spawn_timeout * 3,
         )
         # Check what was captured
         expect_prompt(tui, "your_enemy", "str", help="Secret enemy name")
@@ -311,7 +306,7 @@ def test_update_with_new_field_in_new_version_skip_answered(
     spawn: Spawn,
     name: str,
     args: tuple[str, ...],
-    spawn_timeout: int | None,
+    spawn_timeout: int,
 ) -> None:
     """Test that the questions for the user are OK"""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -353,9 +348,7 @@ def test_update_with_new_field_in_new_version_skip_answered(
                 "update",
                 "-A",
             ),
-            timeout=spawn_timeout * 3
-            if spawn_timeout is not None and spawn_timeout > 0
-            else None,
+            timeout=spawn_timeout * 3,
         )
         # Check what was captured
         expect_prompt(tui, "your_enemy", "str", help="Secret enemy name")
@@ -1088,7 +1081,7 @@ def test_secret_validator(
     reason="prompt-toolkit in subprocess call fails on Windows",
 )
 def test_interactive_session_required_for_question_prompt(
-    question_tree: QuestionTreeFixture, spawn_timeout: int | None
+    question_tree: QuestionTreeFixture, spawn_timeout: int
 ) -> None:
     """Answering a question prompt requires an interactive session."""
     src, dst = question_tree(type="str")
@@ -1096,7 +1089,7 @@ def test_interactive_session_required_for_question_prompt(
         (*COPIER_PATH, "copy", str(src), str(dst)),
         stdin=subprocess.PIPE,  # Prevents interactive input
         capture_output=True,
-        timeout=spawn_timeout,
+        timeout=spawn_timeout if spawn_timeout != 0 else None,
     )
     assert process.returncode == 1
     assert (
@@ -1110,7 +1103,7 @@ def test_interactive_session_required_for_question_prompt(
     reason="prompt-toolkit in subprocess call fails on Windows",
 )
 def test_interactive_session_required_for_overwrite_prompt(
-    tmp_path_factory: pytest.TempPathFactory, spawn_timeout: int | None
+    tmp_path_factory: pytest.TempPathFactory, spawn_timeout: int
 ) -> None:
     """Overwriting a file without `--overwrite` flag requires an interactive session."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -1124,7 +1117,7 @@ def test_interactive_session_required_for_overwrite_prompt(
         (*COPIER_PATH, "copy", str(src), str(dst)),
         stdin=subprocess.PIPE,  # Prevents interactive input
         capture_output=True,
-        timeout=spawn_timeout,
+        timeout=spawn_timeout if spawn_timeout != 0 else None,
     )
     assert process.returncode == 1
     assert (
