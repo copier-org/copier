@@ -23,7 +23,11 @@ def pytest_addoption(parser: Parser) -> None:
         action="store",
         default=10,
         help="timeout for spawn of pexpect",
-        type=int,
+        type=lambda x: int(x)
+        if int(x) >= 0
+        else sys.exit(
+            f"\033[31mERROR: usage: pytest --spawn-timeout <int>\npytest: error: argument --spawn-timeout: should be positive or `0`: `{x}`\n\33[0m"
+        ),
     )
 
 
