@@ -1089,7 +1089,7 @@ def test_interactive_session_required_for_question_prompt(
         (*COPIER_PATH, "copy", str(src), str(dst)),
         stdin=subprocess.PIPE,  # Prevents interactive input
         capture_output=True,
-        timeout=spawn_timeout if spawn_timeout != 0 else None,
+        timeout=spawn_timeout or None,
     )
     assert process.returncode == 1
     assert (
@@ -1117,7 +1117,7 @@ def test_interactive_session_required_for_overwrite_prompt(
         (*COPIER_PATH, "copy", str(src), str(dst)),
         stdin=subprocess.PIPE,  # Prevents interactive input
         capture_output=True,
-        timeout=spawn_timeout if spawn_timeout != 0 else None,
+        timeout=spawn_timeout or None,
     )
     assert process.returncode == 1
     assert (
