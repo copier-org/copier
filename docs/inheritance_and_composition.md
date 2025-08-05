@@ -56,7 +56,7 @@ most challenging. Composition will most likely emerge from the Inheritance solut
 | ------------------ | ------------------------------------------- | ------------------ | ------------------------------ | -------------- | --------------------------------- |
 | Requires `--trust` | -                                           | -                  | Yes                            | -              | -                                 |
 
-### Git submodules + jinja template inheritance
+### Git submodules + Jinja template inheritance
 
 <!-- TODO: Add content-->
 
