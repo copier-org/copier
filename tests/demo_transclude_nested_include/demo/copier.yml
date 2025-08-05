@@ -1,5 +1,5 @@
 ---
-!include ../copier_files/include_me.yml
+!include ./include_me.yml
 ---
 
 project_name:

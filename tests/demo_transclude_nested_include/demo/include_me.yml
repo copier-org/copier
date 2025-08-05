@@ -1,5 +1,5 @@
 ---
-!include ../copier_files/nested/include_me_also.yml
+!include ./include_me_also.yml
 ---
 
 project_url:
