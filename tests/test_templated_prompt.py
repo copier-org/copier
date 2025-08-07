@@ -171,7 +171,7 @@ def test_templated_prompt(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
     expect_prompt(tui, "main", "str")
     tui.expect_exact(main_default)
     tui.sendline()
@@ -361,10 +361,7 @@ def test_templated_prompt_with_conditional_choices(
             ),
         }
     )
-    tui = spawn(
-        COPIER_PATH + ("copy", f"--data=cloud={cloud}", str(src), str(dst)),
-        timeout=10,
-    )
+    tui = spawn(COPIER_PATH + ("copy", f"--data=cloud={cloud}", str(src), str(dst)))
     expect_prompt(tui, "iac", "str", help="Which IaC tool do you use?")
     for iac in iac_choices:
         tui.expect_exact(iac)
@@ -418,10 +415,7 @@ def test_templated_prompt_with_templated_choices(
             ),
         }
     )
-    tui = spawn(
-        COPIER_PATH + ("copy", f"--data=cloud={cloud}", str(src), str(dst)),
-        timeout=10,
-    )
+    tui = spawn(COPIER_PATH + ("copy", f"--data=cloud={cloud}", str(src), str(dst)))
     expect_prompt(tui, "iac", "str", help="Which IaC tool do you use?")
     for iac in iac_choices:
         tui.expect_exact(iac)
@@ -470,7 +464,7 @@ def test_templated_prompt_update_previous_answer_disabled(
         git_init("v1")
         git("tag", "v1")
 
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
     expect_prompt(tui, "cloud", "str", help="Which cloud provider do you use?")
     tui.sendline(Keyboard.Down)  # select "AWS"
     expect_prompt(tui, "iac", "str", help="Which IaC tool do you use?")
@@ -487,7 +481,7 @@ def test_templated_prompt_update_previous_answer_disabled(
     with local.cwd(dst):
         git_init("v1")
 
-    tui = spawn(COPIER_PATH + ("update", str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("update", str(dst)))
     expect_prompt(tui, "cloud", "str", help="Which cloud provider do you use?")
     tui.sendline(Keyboard.Down)  # select "Azure"
     expect_prompt(tui, "iac", "str", help="Which IaC tool do you use?")
@@ -541,7 +535,7 @@ def test_multiselect_choices_with_templated_default_value(
         }
     )
 
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
     expect_prompt(
         tui, "python_version", "str", help="What version of python are you targeting?"
     )
@@ -576,7 +570,7 @@ def test_copier_phase_variable(
             """
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
     expect_prompt(tui, "phase", "str")
     tui.expect_exact("prompt")
 
@@ -595,6 +589,6 @@ def test_copier_conf_variable(
             """
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst / "test_project")), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst / "test_project")))
     expect_prompt(tui, "project_name", "str")
     tui.expect_exact("test_project")

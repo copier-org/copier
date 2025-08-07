@@ -11,13 +11,29 @@ import pytest
 from coverage.tracer import CTracer
 from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
+from pytest import FixtureRequest, Parser
 from pytest_gitconfig.plugin import DELETE, GitConfig
 
 from .helpers import Spawn
 
 
+def pytest_addoption(parser: Parser) -> None:
+    parser.addoption(
+        "--spawn-timeout",
+        action="store",
+        default=10,
+        help="timeout for spawn of pexpect",
+        type=int,
+    )
+
+
+@pytest.fixture(scope="session")
+def spawn_timeout(request: FixtureRequest) -> int:
+    return int(request.config.getoption("--spawn-timeout"))
+
+
 @pytest.fixture
-def spawn() -> Spawn:
+def spawn(spawn_timeout: int) -> Spawn:
     """Spawn a copier process TUI to interact with."""
     if platform.system() == "Windows":
         # HACK https://github.com/prompt-toolkit/python-prompt-toolkit/issues/1243#issuecomment-706668723
@@ -26,11 +42,13 @@ def spawn() -> Spawn:
             "pexpect fails on Windows",
         )
 
-    def _spawn(cmd: tuple[str, ...], *, timeout: int | None = None) -> PopenSpawn:
+    def _spawn(
+        cmd: tuple[str, ...], *, timeout: int | None = spawn_timeout
+    ) -> PopenSpawn:
         # Disable subprocess timeout if debugging (except coverage), for commodity
         # See https://stackoverflow.com/a/67065084/1468388
         tracer = getattr(sys, "gettrace", lambda: None)()
-        if not isinstance(tracer, (CTracer, type(None))):
+        if not isinstance(tracer, (CTracer, type(None))) or timeout == 0:
             timeout = None
         # Using PopenSpawn, although probably it would be best to use pexpect.spawn
         # instead. However, it's working fine and it seems easier to fix in the
