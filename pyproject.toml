@@ -50,7 +50,7 @@ dev = [
   "mypy==1.17.1",
   "pexpect==4.9.0",
   "poethepoet==0.36.0",
-  "pre-commit==4.2.0",
+  "pre-commit==4.3.0",
   "pytest==8.4.1",
   "pytest-cov==6.2.1",
   "pytest-gitconfig==0.7.0",
