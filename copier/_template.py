@@ -90,7 +90,9 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
         if PurePosixPath(include_file).is_absolute():
             raise ValueError("YAML include file path must be a relative path")
         return [
-            yaml.load(path.read_bytes(), Loader=type(loader))
+            lflatten(
+                filter(None, yaml.load_all(path.read_bytes(), Loader=type(loader)))
+            )
             for path in conf_path.parent.glob(include_file)
         ]
 

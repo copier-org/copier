@@ -1,0 +1,7 @@
+---
+!include ./include_me.yml
+---
+
+project_name:
+  type: str
+  help: What is the project name
