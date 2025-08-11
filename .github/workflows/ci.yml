@@ -43,7 +43,7 @@ jobs:
             pytest-xdist-maxprocesses: 3
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0 # Needs all tags to compute dynamic version
       - name: Install uv
@@ -98,7 +98,7 @@ jobs:
     permissions:
       contents: write # Allow pushing back pre-commit changes
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install devbox
         uses: jetify-com/devbox-install-action@v0.13.0
         with:
