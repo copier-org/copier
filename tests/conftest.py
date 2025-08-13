@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import platform
 import sys
+from argparse import ArgumentTypeError
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
@@ -18,16 +19,18 @@ from .helpers import Spawn
 
 
 def pytest_addoption(parser: Parser) -> None:
+    def timeout_type(value: Any) -> int:
+        _value = int(value)
+        if _value >= 0:
+            return _value
+        raise ArgumentTypeError(f"Timeout must be a non-negative integer: '{_value}'")
+
     parser.addoption(
         "--spawn-timeout",
         action="store",
         default=10,
         help="timeout for spawn of pexpect",
-        type=lambda x: int(x)
-        if int(x) >= 0
-        else sys.exit(
-            f"\033[31mERROR: usage: pytest --spawn-timeout <int>\npytest: error: argument --spawn-timeout: should be positive or `0`: `{x}`\n\33[0m"
-        ),
+        type=timeout_type,
     )
 
 
