@@ -13,7 +13,7 @@ from dataclasses import field, replace
 from filecmp import dircmp
 from functools import cached_property, partial, wraps
 from itertools import chain
-from pathlib import Path
+from pathlib import Path, PurePath
 from shutil import rmtree
 from tempfile import TemporaryDirectory
 from types import TracebackType
@@ -399,9 +399,9 @@ class Worker:
         """Produce render context for Jinja."""
         conf = LazyDict(
             {
-                "src_path": lambda: self.template.local_abspath,
-                "dst_path": lambda: self.dst_path,
-                "answers_file": lambda: self.answers_relpath,
+                "src_path": lambda: PurePath(self.template.local_abspath),
+                "dst_path": lambda: PurePath(self.dst_path),
+                "answers_file": lambda: PurePath(self.answers_relpath),
                 "vcs_ref": lambda: self.resolved_vcs_ref,
                 "vcs_ref_hash": lambda: self.template.commit_hash,
                 "data": lambda: self.data,
@@ -659,13 +659,18 @@ class Worker:
                 "Make sure to install these extensions alongside Copier itself.\n"
                 "See the docs at https://copier.readthedocs.io/en/latest/configuring/#jinja_extensions"
             )
+
+        def to_json_fallback(value: Any) -> Any:
+            if isinstance(value, LazyDict):
+                return dict(value)
+            if isinstance(value, PurePath):
+                return str(value)
+            return value
+
         # patch the `to_json` filter to support Pydantic dataclasses
         env.filters["to_json"] = partial(
             env.filters["to_json"],
-            default=partial(
-                to_jsonable_python,
-                fallback=lambda v: dict(v) if isinstance(v, LazyDict) else v,
-            ),
+            default=partial(to_jsonable_python, fallback=to_json_fallback),
         )
 
         # Add a global function to join filesystem paths.

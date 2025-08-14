@@ -1,5 +1,7 @@
 import json
+import sys
 from pathlib import Path
+from uuid import uuid4
 
 import pytest
 from plumbum import local
@@ -7,6 +9,60 @@ from plumbum import local
 import copier
 
 from .helpers import build_file_tree, git_save
+
+
+def test_no_path_variables(
+    tmp_path_factory: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test that there are no context variables of type `pathlib.Path`."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    ext_module_name = uuid4()
+    build_file_tree(
+        {
+            src / f"{ext_module_name}.py": (
+                """\
+                from pathlib import Path
+                from typing import Any, Mapping
+
+                from jinja2 import Environment, pass_context
+                from jinja2.ext import Extension
+                from jinja2.runtime import Context
+                from pydantic import BaseModel
+
+
+                class ContextExtension(Extension):
+                    def __init__(self, environment: Environment) -> None:
+                        super().__init__(environment)
+                        environment.globals["__assert"] = self._assert
+
+                    @pass_context
+                    def _assert(self, ctx: Context) -> None:
+                        items: list[tuple[str, Any]] = list(dict(ctx).items())
+                        for k, v in items:
+                            if isinstance(v, Path):
+                                raise AssertionError(
+                                    f"{k} must not be a `pathlib.Path` object"
+                                )
+                            if isinstance(v, BaseModel):
+                                v = dict(v)
+                            if isinstance(v, Mapping):
+                                items.extend((f"{k}.{k2}", v2) for k2, v2 in v.items())
+                            elif isinstance(v, (list, tuple, set)):
+                                items.extend((f"{k}[{i}]", v2) for i, v2 in enumerate(v))
+                """
+            ),
+            src / "copier.yml": (
+                f"""\
+                _jinja_extensions:
+                    - {ext_module_name}.ContextExtension
+                """
+            ),
+            src / "test.txt.jinja": "{{ __assert() | default('', true) }}",
+        }
+    )
+    monkeypatch.setattr("sys.path", [str(src), *sys.path])
+    copier.run_copy(str(src), dst, unsafe=True)
+    assert (dst / "test.txt").read_text("utf-8") == ""
 
 
 def test_exclude_templating_with_operation(
