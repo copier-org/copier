@@ -451,6 +451,38 @@ def test_when(
     assert context == {"question_2": "something"}
 
 
+def test_default(tmp_path_factory: pytest.TempPathFactory, spawn: Spawn) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): yaml.dump(
+                {
+                    "_envops": BRACKET_ENVOPS,
+                    "_templates_suffix": SUFFIX_TMPL,
+                    "team": {
+                        "type": "str",
+                        "default": "@copier-org/",
+                        "validator": "[% if not (team | regex_search('^@copier-org/.+$')) %]Must be a copier-org GitHub team[% endif %]",
+                    },
+                }
+            ),
+            (src / "[[ _copier_conf.answers_file ]].tmpl"): (
+                "[[ _copier_answers | to_nice_yaml ]]"
+            ),
+        }
+    )
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
+    expect_prompt(tui, "team", "str")
+    tui.expect_exact("@copier-org/")
+    tui.sendline("everyone")
+    tui.expect_exact(pexpect.EOF)
+    answers = load_answersfile_data(dst)
+    assert answers == {
+        "_src_path": str(src),
+        "team": "@copier-org/everyone",
+    }
+
+
 def test_placeholder(tmp_path_factory: pytest.TempPathFactory, spawn: Spawn) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(

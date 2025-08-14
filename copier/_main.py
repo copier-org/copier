@@ -607,6 +607,12 @@ class Worker:
                 raise CopierAnswersInterrupt(
                     self.answers, question, self.template
                 ) from err
+            # Computed values (i.e., `when: false`) are intentionally not
+            # validated at the moment.
+            # https://github.com/copier-org/copier/issues/1779#issuecomment-2365006990
+            # https://github.com/copier-org/copier/pull/1785
+            if question.get_when():
+                question.validate_answer(new_answer)
             self.answers.user[var_name] = new_answer
 
         # Reload external data, which may depend on answers
