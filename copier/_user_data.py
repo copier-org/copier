@@ -276,14 +276,7 @@ class Question:
                     result = self.render_value(
                         self.settings.defaults.get(self.var_name, self.default)
                     )
-        result = self.parse_answer(result)
-        # Computed values (i.e., `when: false`) are intentionally not validated
-        # at the moment.
-        # https://github.com/copier-org/copier/issues/1779#issuecomment-2365006990
-        # https://github.com/copier-org/copier/pull/1785
-        if self.get_when():
-            self.validate_answer(result)
-        return result
+        return self.parse_answer(result)
 
     def get_default_rendered(self) -> bool | str | Choice | None | MissingType:
         """Get default answer rendered for the questionary lib.
