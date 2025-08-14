@@ -13,7 +13,7 @@ from dataclasses import field, replace
 from filecmp import dircmp
 from functools import cached_property, partial, wraps
 from itertools import chain
-from pathlib import Path, PurePath
+from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
 from shutil import rmtree
 from tempfile import TemporaryDirectory
 from types import TracebackType
@@ -67,6 +67,7 @@ from ._vcs import get_git
 from .errors import (
     CopierAnswersInterrupt,
     ExtensionNotFoundError,
+    ForbiddenPathError,
     InteractiveSessionError,
     TaskError,
     UnsafeTemplateError,
@@ -674,16 +675,16 @@ class Worker:
         )
 
         # Add a global function to join filesystem paths.
-        separators = {
-            "posix": "/",
-            "windows": "\\",
-            "native": os.path.sep,
+        path_type = {
+            "posix": PurePosixPath,
+            "windows": PureWindowsPath,
+            "native": PurePath,
         }
 
         def _pathjoin(
             *path: str, mode: Literal["posix", "windows", "native"] = "posix"
         ) -> str:
-            return separators[mode].join(path)
+            return str(path_type[mode](*path))
 
         env.globals["pathjoin"] = _pathjoin
         return env
@@ -713,6 +714,7 @@ class Worker:
     def _render_template(self) -> None:
         """Render the template in the subproject root."""
         follow_symlinks = not self.template.preserve_symlinks
+        cwd = Path.cwd()
         for src in scantree(str(self.template_copy_root), follow_symlinks):
             src_abspath = Path(src.path)
             src_relpath = Path(src_abspath).relative_to(self.template.local_abspath)
@@ -720,6 +722,8 @@ class Worker:
                 Path(src_abspath).relative_to(self.template_copy_root)
             )
             for dst_relpath, ctx in dst_relpaths_ctxs:
+                if not cwd.joinpath(dst_relpath).resolve().is_relative_to(cwd):
+                    raise ForbiddenPathError(path=dst_relpath)
                 if self.match_exclude(dst_relpath):
                     continue
                 if src.is_symlink() and self.template.preserve_symlinks:
