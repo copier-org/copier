@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.9.1 (2025-08-18)
+
+### Security
+
+-   disallow render paths outside destination directory
+-   cast Jinja context path variables to `pathlib.PurePath`
+
 ## v9.9.0 (2025-08-01)
 
 ### Feat
