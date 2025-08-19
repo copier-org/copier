@@ -383,6 +383,22 @@ def test_config_data_transclusion() -> None:
     assert config.all_exclusions == ("exclude1", "exclude2")
 
 
+@pytest.mark.skip(
+    "TODO: Catch circular transclusions instead of causing a `RecursionError` and provide a comprehensive error with files that collide"
+)
+@pytest.mark.parametrize(
+    "demo_path",
+    ["tests/demo_transclude_circular/demo", "tests/demo_transclude_circular_bis/demo"],
+)
+def test_config_circular_transclusions(demo_path: str) -> None:
+    config = Worker(demo_path)
+    with pytest.raises(RecursionError):
+        assert config.all_exclusions == ("exclude1", "exclude2")
+    raise ValueError(
+        "Error should be custom, and caught before exceeding recursion limit."
+    )
+
+
 @pytest.mark.parametrize(
     "user_defaults, data, expected",
     [
