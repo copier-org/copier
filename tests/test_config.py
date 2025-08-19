@@ -383,6 +383,16 @@ def test_config_data_transclusion() -> None:
     assert config.all_exclusions == ("exclude1", "exclude2")
 
 
+def test_config_data_nested_transclusion_path() -> None:
+    config = Worker("tests/demo_transclude_nested_path/demo")
+    assert config.all_exclusions == ("exclude1", "exclude2")
+
+
+def test_config_data_nested_transclusion_path_invalid() -> None:
+    config = Worker("tests/demo_transclude_nested_path_invalid/demo")
+    assert not config.all_exclusions == ("exclude1", "exclude2")
+
+
 @pytest.mark.parametrize(
     "user_defaults, data, expected",
     [
