@@ -267,6 +267,38 @@ Supported keys:
             when: "{{ project_license != 'Public domain' }}"
         ```
 
+    If the default value of a skipped question is not meaningful, then it can be unset
+    by rendering the special `UNSET` variable, so the question's variable is undefined
+    in the render context:
+
+    !!! example
+
+        ```yaml title="copier.yml"
+        database_engine:
+            type: str
+            help: Database engine
+            choices:
+                - postgres
+                - mysql
+                - none
+            default: postgres
+
+        database_url:
+            type: str
+            help: Database URL
+            default: >-
+                {%- if database_engine == 'postgres' -%}
+                postgresql://user:pass@localhost:5432/dbname
+                {%- elif database_engine == 'mysql' -%}
+                mysql://user:pass@localhost:3306/dbname
+                {%- else -%}
+                {{ UNSET }}
+                {%- endif -%}
+            when: "{{ database_engine != 'none' }}"
+            # Simplified for illustration purposes
+            validator: "{% if '://' not in database_url %}Invalid{% endif %}"
+        ```
+
 !!! example
 
     ```yaml title="copier.yml"
