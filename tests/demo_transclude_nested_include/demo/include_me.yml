@@ -1,0 +1,7 @@
+---
+!include ./include_me_also.yml
+---
+
+project_url:
+  type: str
+  help: What is the project URL?
