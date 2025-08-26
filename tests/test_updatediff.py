@@ -2011,10 +2011,10 @@ def test_disable_secret_validator_on_replay(
         git_init("v1")
         git("tag", "v1")
 
-    run_copy(str(src), dst, data={"token": "$3cr3t"})
+    run_copy(str(src), dst, defaults=True)
     answers = load_answersfile_data(dst)
     assert answers == {"_src_path": str(src), "_commit": "v1"}
-    assert (dst / ".env").read_text() == "TOKEN=$3cr3t"
+    assert (dst / ".env").read_text() == "TOKEN="
 
     with local.cwd(dst):
         git_init("v1")

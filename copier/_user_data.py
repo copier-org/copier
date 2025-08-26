@@ -281,7 +281,7 @@ class Question:
         # at the moment.
         # https://github.com/copier-org/copier/issues/1779#issuecomment-2365006990
         # https://github.com/copier-org/copier/pull/1785
-        if self.get_when():
+        if self.get_when() and not self.secret:
             self.validate_answer(result)
         return result
 
