@@ -11,7 +11,15 @@ from pydantic import ValidationError
 
 import copier
 from copier._main import Worker
-from copier._template import DEFAULT_EXCLUDE, Task, Template, load_template_config
+from copier._template import (
+    DEFAULT_EXCLUDE,
+    Task,
+    Template,
+    condition_questions,
+    get_include_file_N_condition,
+    load_template_config,
+    trim_cond,
+)
 from copier._types import AnyByStrDict
 from copier.errors import InvalidConfigFileError, MultipleConfigFilesError
 
@@ -717,3 +725,103 @@ def test_secret_question_requires_default_value(
     build_file_tree({src / "copier.yml": config})
     with pytest.raises(ValueError, match="Secret question requires a default value"):
         copier.run_copy(str(src), dst)
+
+
+@pytest.mark.parametrize(
+    "input, output",
+    (
+        ("./include_me.yml when {{ var }}", ("./include_me.yml", "{{ var }}")),
+        ("./include_me.yaml", ("./include_me.yaml", None)),
+    ),
+)
+def test_get_include_file_N_condition(input: str, output: tuple[str, str | None]):
+    assert get_include_file_N_condition(input) == output
+
+
+@pytest.mark.parametrize("input, output", (("{{ test }}", "test"),))
+def test_trim_cond(input: str, output: str) -> None:
+    assert trim_cond(input) == output
+
+
+@pytest.mark.parametrize("_dict, _condition, output", (({}, "", {}),))
+def test_condition_questions(
+    _dict: dict[str, Any], _condition: str, output: dict[str, Any]
+):
+    assert condition_questions(_dict, _condition) == output
+
+
+def test_condition_include():
+    pass
+
+
+@pytest.mark.parametrize(
+    "inputs, output_files, answer_file",
+    (
+        # ({"condition": True, "var": None, "the_str": None, "tests": None}),
+        (
+            {
+                "condition": True,
+                "var": 1,
+                "the_str": "my_str",
+                "test": False,
+            },
+            {
+                ".copier-answers.yml": True,
+                "test_none.py": False,
+                "test.py": False,
+                "copier.yml": False,
+                "include_me.yml": False,
+                "include_me_also.yml": False,
+            },
+            "# Changes here will be overwritten by Copier\n_src_path: tests/demo_transclude_conditional/demo\ncondition: true\ntest: false\nthe_str: my_str\nvar: 1\n",
+        ),
+        (
+            {
+                "condition": False,
+                "var": None,
+                "the_str": None,
+                "test": None,
+            },
+            {
+                ".copier-answers.yml": True,
+                "test_none.py": False,
+                "test.py": False,
+                "copier.yml": False,
+                "include_me.yml": True,
+                "include_me_also.yml": False,
+            },
+            "# Changes here will be overwritten by Copier\n_src_path: tests/demo_transclude_conditional/demo\ncondition: false\n",
+        ),
+    ),
+)
+def test_conditional_transclusion(
+    tmp_path_factory: pytest.TempPathFactory,
+    capsys: pytest.CaptureFixture[str],
+    inputs: dict[str, tuple[bool, Any]],
+    output_files: dict[str, bool],
+    answer_file: str,
+) -> None:
+    dst = tmp_path_factory.mktemp("dst")
+    src: str = "tests/demo_transclude_conditional/demo"
+
+    # clear capture output log
+    capsys.readouterr()
+
+    # copy
+    _data = {_key: _val for _key, _val in inputs.items() if _val is not None}
+    print(f"{_data =}")
+    copier.run_copy(
+        src,
+        dst,
+        data=_data,
+        quiet=True,
+    )
+    ##
+    print("".join(["#"] * 20))
+    print((dst / ".copier-answers.yml").read_text())
+    ##
+    for _key, _val in output_files.items():
+        assert (dst / _key).exists() == _val, (
+            f"File `{_key}` should {'' if _val else 'not'} exist."
+        )
+    assert (dst / ".copier-answers.yml").read_text() == answer_file

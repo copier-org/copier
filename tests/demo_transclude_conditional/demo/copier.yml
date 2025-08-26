@@ -1,0 +1,14 @@
+
+condition:
+  type: bool
+  default: True
+
+---
+!include ./include_me.yml
+when "{{ condition }}"
+---
+!include ./include_me_also.yml
+---
+
+_exclude:
+  - "copier.yml"

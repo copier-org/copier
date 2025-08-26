@@ -1,0 +1,17 @@
+
+var:
+  type: int
+  default: 1
+
+the_str:
+  type: str
+  # when: "{{ var>0 }}"
+
+test:
+  # type: "{% if var %}bool{% else %}str{% endif %}"
+  type: "{{ 'bool' if var else 'str' }}"
+  # default: "{% if var %}false{% else %}my_str{% endif %}"
+  default: "{{ '' if var else 'my_str' }}"
+
+_exclude:
+  - "include_me.yml"
