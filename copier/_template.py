@@ -63,6 +63,60 @@ def filter_config(data: AnyByStrDict) -> tuple[AnyByStrDict, AnyByStrDict]:
     return config_data, questions_data
 
 
+def get_include_file_N_condition(_include_file: str) -> tuple[str, str]:
+    _match = re.match(
+        r"(.*?\.ya?ml)(?: when (['\"]?)(.*)\2)?",
+        _include_file,
+    )
+    _include_file = _match.groups()[0]
+    _condition = _match.groups()[-1]
+    return _include_file, _condition
+
+
+def trim_cond(cond: str) -> str:
+    return cond.replace("{{ ", "").replace(" }}", "")
+
+
+def condition_questions(_dict: dict[str, Any], _condition: str) -> dict[str, Any]:
+    _cond_expr = trim_cond(_condition)
+    for _key, _val in _dict.items():
+        if _key[0] != "_" and isinstance(_val, dict):
+            jinja2_type_default = f"{ {'str': '', 'int': 0, 'float': 0.0, 'bool': False}.get(_val.get('type'), '') }"
+            _val = _val.update(
+                {
+                    "when": f"{{{{ {trim_cond(_val.get('when', 'True'))} if {_cond_expr} else False }}}}",
+                    "default": f"{{% if {_cond_expr} %}}{_val.get('default', '')}{{% else %}}{jinja2_type_default}{{% endif %}}",
+                }
+            )
+    return _dict
+
+
+def condition_include(
+    conf_path: Path, loader: yaml.Loader, include_file: str, _condition: str
+) -> dict[str, Any]:
+    _tmp = {}
+    _res = [
+        yaml.load(path.read_bytes(), Loader=type(loader))
+        for path in conf_path.parent.glob(include_file)
+    ]
+    for _elem in _res:
+        _tmp.update(_elem)
+    if _condition:
+        _condition_short = re.match(r"{{ (.*?) }}", _condition).groups()[0]
+        _tmp.update(
+            {
+                "_exclude": [
+                    f"{{% if {_condition_short} %}}{_elem}{{% endif %}}"
+                    for _elem in _tmp["_exclude"]
+                ]
+            }
+        )
+        _tmp = condition_questions(_tmp, _condition)
+
+    return _tmp
+    # return _res
+
+
 def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
     """Load the `copier.yml` file.
 
@@ -86,13 +140,13 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
     def _include(loader: yaml.Loader, node: yaml.Node) -> Any:
         if not isinstance(node, yaml.ScalarNode):
             raise ValueError(f"Unsupported YAML node: {node!r}")
-        include_file = str(loader.construct_scalar(node))
+        include_file, _condition = get_include_file_N_condition(
+            str(loader.construct_scalar(node))
+        )
         if PurePosixPath(include_file).is_absolute():
             raise ValueError("YAML include file path must be a relative path")
-        return [
-            yaml.load(path.read_bytes(), Loader=type(loader))
-            for path in conf_path.parent.glob(include_file)
-        ]
+
+        return condition_include(conf_path, loader, include_file, _condition)
 
     _Loader.add_constructor("!include", _include)
 
