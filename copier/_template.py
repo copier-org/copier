@@ -96,7 +96,7 @@ def condition_include(
 ) -> dict[str, Any]:
     _tmp = {}
     _res = [
-        yaml.load(path.read_bytes(), Loader=type(loader))
+        lflatten(filter(None, yaml.load_all(path.read_bytes(), Loader=type(loader))))
         for path in conf_path.parent.glob(include_file)
     ]
     for _elem in _res:

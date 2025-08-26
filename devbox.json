@@ -1,9 +1,9 @@
 {
-  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.15.0/.schema/devbox.schema.json",
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.16.0/.schema/devbox.schema.json",
   "packages": [
     "difftastic@0.64.0",
-    "editorconfig-checker@3.3.0",
-    "git@2.50.0",
+    "editorconfig-checker@3.4.0",
+    "git@2.50.1",
     "nodePackages.prettier@3.3.3",
     "uv@0.8.2"
   ],

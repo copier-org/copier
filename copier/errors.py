@@ -85,6 +85,13 @@ class PathNotRelativeError(PathError):
         super().__init__(f'"{path}" is not a relative path')
 
 
+class ForbiddenPathError(PathError):
+    """The path is forbidden in the given context."""
+
+    def __init__(self, *, path: Path) -> None:
+        super().__init__(f'"{path}" is forbidden')
+
+
 class ExtensionNotFoundError(UserMessageError):
     """Extensions listed in the configuration could not be loaded."""
 

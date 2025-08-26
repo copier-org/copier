@@ -391,6 +391,11 @@ def test_config_data_transclusion() -> None:
     assert config.all_exclusions == ("exclude1", "exclude2")
 
 
+def test_config_data_nested_transclusions() -> None:
+    config = Worker("tests/demo_transclude_nested_include/demo")
+    assert config.all_exclusions == ("exclude1", "exclude2")
+
+
 @pytest.mark.parametrize(
     "user_defaults, data, expected",
     [

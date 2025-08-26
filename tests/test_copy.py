@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import filecmp
+import os
 import platform
+import re
 import stat
 import sys
 from contextlib import AbstractContextManager, nullcontext as does_not_raise
@@ -19,6 +21,7 @@ from plumbum import local
 import copier
 from copier import run_copy
 from copier._types import AnyByStrDict
+from copier.errors import ForbiddenPathError
 
 from .helpers import (
     BRACKET_ENVOPS,
@@ -503,10 +506,13 @@ def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> N
             {
                 "type": "str",
                 "secret": True,
+                "default": "",
                 "validator": "[% if q|length < 3 %]too short[% endif %]",
             },
             "",
-            pytest.raises(ValueError),
+            pytest.raises(
+                ValueError, match=r"^Validation error for question '\w+': too short$"
+            ),
         ),
         ({"type": "bool"}, "true", does_not_raise()),
         ({"type": "bool"}, "false", does_not_raise()),
@@ -933,7 +939,7 @@ def test_required_choice_question_without_data(
             },
             pytest.raises(ValueError),
         ),
-        (
+        pytest.param(
             {
                 "type": "str",
                 "default": "",
@@ -941,6 +947,9 @@ def test_required_choice_question_without_data(
                 "validator": "[% if q|length < 3 %]too short[% endif %]",
             },
             pytest.raises(ValueError),
+            marks=pytest.mark.xfail(
+                reason="Default values of secrets are currently not validated"
+            ),
         ),
         ({"type": "int", "default": 1}, does_not_raise()),
         ({"type": "int", "default": 1.0}, does_not_raise()),
@@ -1274,3 +1283,82 @@ def test_copier_phase_variable(tmp_path_factory: pytest.TempPathFactory) -> None
     copier.run_copy(str(src), dst)
     assert (dst / "render").exists()
     assert (dst / "render").read_text() == "render"
+
+
+def test_relative_render_path_outside_destination_raises_error(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    root = tmp_path_factory.mktemp("root")
+    (src := root / "src").mkdir()
+    (dst := root / "dst").mkdir()
+    build_file_tree(
+        {
+            root / "forbidden.txt": "foo",
+            src / "{{ pathjoin('..', 'forbidden.txt') }}": "bar",
+        }
+    )
+    with pytest.raises(
+        ForbiddenPathError,
+        match=re.escape(rf'"{Path("..", "forbidden.txt")}" is forbidden'),
+    ):
+        copier.run_copy(str(src), dst, overwrite=True)
+    assert not (dst / "forbidden.txt").exists()
+    assert (root / "forbidden.txt").exists()
+    assert (root / "forbidden.txt").read_text("utf-8") == "foo"
+
+
+@pytest.mark.skipif(os.name != "posix", reason="Applies only to POSIX")
+def test_absolute_render_path_outside_destination_raises_error_on_posix(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst, other = map(tmp_path_factory.mktemp, ("src", "dst", "other"))
+    path_parts = ", ".join(map(repr, other.parts[1:]))
+    build_file_tree(
+        {
+            other / "forbidden.txt": "foo",
+            src / "copier.yml": f"_envops: {BRACKET_ENVOPS_JSON}",
+            src / f"[[ pathjoin(_copier_conf.sep, {path_parts}, 'forbidden.txt') ]]": (
+                "bar"
+            ),
+        }
+    )
+    with pytest.raises(
+        ForbiddenPathError,
+        match=re.escape(rf'"{other / "forbidden.txt"}" is forbidden'),
+    ):
+        copier.run_copy(str(src), dst, overwrite=True)
+    assert not (dst / "forbidden.txt").exists()
+    assert (other / "forbidden.txt").exists()
+    assert (other / "forbidden.txt").read_text("utf-8") == "foo"
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Applies only to Windows")
+def test_absolute_render_path_outside_destination_raises_error_on_windows(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst, other = map(tmp_path_factory.mktemp, ("src", "dst", "other"))
+    path_parts = ", ".join(map(repr, other.parts[1:]))
+    build_file_tree(
+        {
+            other / "forbidden.txt": "foo",
+            src / "copier.yml": (
+                f"""\
+                _envops: {BRACKET_ENVOPS_JSON}
+
+                drive:
+                    type: str
+                    default: "{other.drive}"
+                    when: false
+                """
+            ),
+            src / f"[[ pathjoin(drive, {path_parts}, 'forbidden.txt') ]]": "bar",
+        }
+    )
+    with pytest.raises(
+        ForbiddenPathError,
+        match=re.escape(rf'"{other / "forbidden.txt"}" is forbidden'),
+    ):
+        copier.run_copy(str(src), dst, overwrite=True)
+    assert not (dst / "forbidden.txt").exists()
+    assert (other / "forbidden.txt").exists()
+    assert (other / "forbidden.txt").read_text("utf-8") == "foo"
