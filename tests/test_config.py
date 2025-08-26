@@ -740,7 +740,9 @@ def test_secret_question_requires_default_value(
         ("'common_*.yml'", ("'common_*.yml'", None)),
     ),
 )
-def test_get_include_file_N_condition(input: str, output: tuple[str, str | None]):
+def test_get_include_file_N_condition(
+    input: str, output: tuple[str, str | None]
+) -> None:
     assert get_include_file_N_condition(input) == output
 
 
@@ -752,11 +754,11 @@ def test_trim_cond(input: str, output: str) -> None:
 @pytest.mark.parametrize("_dict, _condition, output", (({}, "", {}),))
 def test_condition_questions(
     _dict: dict[str, Any], _condition: str, output: dict[str, Any]
-):
+) -> None:
     assert condition_questions(_dict, _condition) == output
 
 
-def test_condition_include():
+def test_condition_include() -> None:
     pass
 
 

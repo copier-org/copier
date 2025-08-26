@@ -68,9 +68,11 @@ def get_include_file_N_condition(_include_file: str) -> tuple[str, str]:
         r"(['\"]?.*?\.ya?ml['\"]?)(?: when (['\"]?)(.*)\2)?",
         _include_file,
     )
-    _include_file = _match.groups()[0]
-    _condition = _match.groups()[-1]
-    return _include_file, _condition
+    if _match is not None:
+        _include_file = _match.groups()[0]
+        _condition = _match.groups()[-1]
+        return _include_file, _condition
+    return _include_file, ""
 
 
 def trim_cond(cond: str) -> str:
@@ -81,7 +83,7 @@ def condition_questions(_dict: dict[str, Any], _condition: str) -> dict[str, Any
     _cond_expr = trim_cond(_condition)
     for _key, _val in _dict.items():
         if _key[0] != "_" and isinstance(_val, dict):
-            jinja2_type_default = f"{ {'str': '', 'int': 0, 'float': 0.0, 'bool': False}.get(_val.get('type'), '') }"
+            jinja2_type_default = f"{ {'str': '', 'int': 0, 'float': 0.0, 'bool': False}.get(_val.get('type', ''), '') }"
             _val = _val.update(
                 {
                     "when": f"{{{{ {trim_cond(_val.get('when', 'True'))} if {_cond_expr} else False }}}}",
@@ -103,7 +105,8 @@ def condition_include(
         for _sub in _elem:
             _tmp.update(_sub)
     if _condition:
-        _condition_short = re.match(r"{{ (.*?) }}", _condition).groups()[0]
+        _match = re.match(r"{{ (.*?) }}", _condition)
+        _condition_short = _match.groups()[0] if _match is not None else _condition
         _tmp.update(
             {
                 "_exclude": [
