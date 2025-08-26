@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.10.0 (2025-08-26)
+
+### Feat
+
+-   add support for nested multi-document includes in `copier.yml` (#2251)
+
+### Fix
+
+-   disable default answer validator for secret questions
+
 ## v9.9.1 (2025-08-18)
 
 ### Security
