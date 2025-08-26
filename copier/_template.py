@@ -65,7 +65,7 @@ def filter_config(data: AnyByStrDict) -> tuple[AnyByStrDict, AnyByStrDict]:
 
 def get_include_file_N_condition(_include_file: str) -> tuple[str, str]:
     _match = re.match(
-        r"(.*?\.ya?ml)(?: when (['\"]?)(.*)\2)?",
+        r"(['\"]?.*?\.ya?ml['\"]?)(?: when (['\"]?)(.*)\2)?",
         _include_file,
     )
     _include_file = _match.groups()[0]
@@ -100,7 +100,8 @@ def condition_include(
         for path in conf_path.parent.glob(include_file)
     ]
     for _elem in _res:
-        _tmp.update(_elem)
+        for _sub in _elem:
+            _tmp.update(_sub)
     if _condition:
         _condition_short = re.match(r"{{ (.*?) }}", _condition).groups()[0]
         _tmp.update(
@@ -114,7 +115,6 @@ def condition_include(
         _tmp = condition_questions(_tmp, _condition)
 
     return _tmp
-    # return _res
 
 
 def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:

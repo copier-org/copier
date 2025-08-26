@@ -737,6 +737,7 @@ def test_secret_question_requires_default_value(
     (
         ("./include_me.yml when {{ var }}", ("./include_me.yml", "{{ var }}")),
         ("./include_me.yaml", ("./include_me.yaml", None)),
+        ("'common_*.yml'", ("'common_*.yml'", None)),
     ),
 )
 def test_get_include_file_N_condition(input: str, output: tuple[str, str | None]):
