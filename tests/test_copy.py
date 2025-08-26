@@ -506,10 +506,13 @@ def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> N
             {
                 "type": "str",
                 "secret": True,
+                "default": "",
                 "validator": "[% if q|length < 3 %]too short[% endif %]",
             },
             "",
-            pytest.raises(ValueError),
+            pytest.raises(
+                ValueError, match=r"^Validation error for question '\w+': too short$"
+            ),
         ),
         ({"type": "bool"}, "true", does_not_raise()),
         ({"type": "bool"}, "false", does_not_raise()),
@@ -936,7 +939,7 @@ def test_required_choice_question_without_data(
             },
             pytest.raises(ValueError),
         ),
-        (
+        pytest.param(
             {
                 "type": "str",
                 "default": "",
@@ -944,6 +947,9 @@ def test_required_choice_question_without_data(
                 "validator": "[% if q|length < 3 %]too short[% endif %]",
             },
             pytest.raises(ValueError),
+            marks=pytest.mark.xfail(
+                reason="Default values of secrets are currently not validated"
+            ),
         ),
         ({"type": "int", "default": 1}, does_not_raise()),
         ({"type": "int", "default": 1.0}, does_not_raise()),

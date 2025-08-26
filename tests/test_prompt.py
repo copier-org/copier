@@ -1050,11 +1050,11 @@ def test_multiselect_choices_validator(
     assert answers["question"] == ["one"]
 
 
+@pytest.mark.parametrize("default", ["s3cret", ""])
 def test_secret_validator(
-    question_tree: QuestionTreeFixture, copier: CopierFixture
+    question_tree: QuestionTreeFixture, copier: CopierFixture, default: str
 ) -> None:
     """Secret question answer is validated."""
-    default = "s3cret"
     src, dst = question_tree(
         type="str",
         default=default,
@@ -1069,8 +1069,8 @@ def test_secret_validator(
         tui.send(Keyboard.Backspace)
     tui.sendline()
     tui.expect_exact("too short")
-    # Enter default value again to pass validation
-    tui.sendline(default)
+    # Enter the valid answer again to pass validation
+    tui.sendline("s3cret")
     tui.expect_exact("******")
     tui.expect_exact(pexpect.EOF)
 

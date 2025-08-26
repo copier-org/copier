@@ -1163,13 +1163,6 @@ class Worker:
                 src_path=self.subproject.template.url,  # type: ignore[union-attr]
                 vcs_ref=self.subproject.template.commit,  # type: ignore[union-attr]
             ) as old_worker:
-                # HACK: Remove the validator from a secret question when replaying
-                # a fresh copy using the old template because only the default value
-                # is available which may not pass validation.
-                assert old_worker.template is not self.template
-                for q in old_worker.template.questions_data.values():
-                    if q.get("secret", False):
-                        q.pop("validator", None)
                 old_worker.run_copy()
             # Run pre-migration tasks
             with Phase.use(Phase.MIGRATE):
