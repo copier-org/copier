@@ -98,7 +98,7 @@ suitable to [autoupdate your project safely][the-copier-answersyml-file]:
 !!! note
 
     - `_copier_conf` contains JSON-serializable data.
-    - `_copier_conf` can be serialized with `{{ _copier_conf|to_json }}`.
+    - `_copier_conf` can be serialized with `#!jinja {{ _copier_conf|to_json }}`.
     - ⚠️ `_copier_conf` may contain secret answers inside its `.data` key.
     - Modifying `_copier_conf` doesn't alter the current rendering configuration.
 
@@ -180,10 +180,12 @@ Some rendering contexts provide variables unique to them:
 You can use the special `yield` tag in file and directory names to generate multiple
 files or directories based on a list of items.
 
-In the path name, `{% yield item from list_of_items %}{{ item }}{% endyield %}` will
-loop over the `list_of_items` and replace `{{ item }}` with each item in the list.
+In the path name, `#!jinja {% yield item from list_of_items %}{{ item }}{% endyield %}`
+will loop over the `list_of_items` and replace `#!jinja {{ item }}` with each item in
+the list.
 
-A looped `{{ item }}` will be available in the scope of generated files and directories.
+A looped `#!jinja {{ item }}` will be available in the scope of generated files and
+directories.
 
 ```yaml title="copier.yml"
 commands:

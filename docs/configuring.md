@@ -149,7 +149,7 @@ Supported keys:
         message but cannot be selected.
 
         When combining dynamic choices with validators, make sure to escape the
-        validator template using `{% raw %}...{% endraw %}`.
+        validator template using `#!jinja {% raw %}...{% endraw %}`.
 
     !!! warning
 
@@ -1156,7 +1156,7 @@ on them, so they are always installed when Copier is installed.
         -   [loop controls](https://jinja.palletsprojects.com/en/3.1.x/extensions/#loop-controls), which adds the `break` and `continue`
             keywords for Jinja loops.
         -   [debug extension](https://jinja.palletsprojects.com/en/3.1.x/extensions/#debug-extension), which can dump the current context
-            thanks to the added `{% debug %}` tag.
+            thanks to the added `#!jinja {% debug %}` tag.
 
     -   From [cookiecutter](https://cookiecutter.readthedocs.io/en/1.7.2/):
 
@@ -1807,9 +1807,9 @@ file][the-copieryml-file].
 This makes projects easier to update because when the user is asked, the default answers
 will be the last ones they used.
 
-The file **must be called exactly `{{ _copier_conf.answers_file }}.jinja`** (or ended
-with [your chosen suffix][templates_suffix]) in your template's root folder) to allow
-[applying multiple templates to the same
+The file **must be called exactly `#!jinja {{ _copier_conf.answers_file }}.jinja`** (or
+ended with [your chosen suffix][templates_suffix]) in your template's root folder) to
+allow [applying multiple templates to the same
 subproject][applying-multiple-templates-to-the-same-subproject].
 
 The default name will be `.copier-answers.yml`, but [you can define a different default
@@ -1863,9 +1863,9 @@ All 3 templates are completely independent:
     matter their pre-commit configuration or the framework they rely on.
 
 Well, don't worry. Copier has you covered. You just need to use a different answers file
-for each one. All of them contain a `{{ _copier_conf.answers_file }}.jinja` file [as
-specified above][the-copier-answersyml-file]. Then you apply all the templates to the
-same project:
+for each one. All of them contain a `#!jinja {{ _copier_conf.answers_file }}.jinja` file
+[as specified above][the-copier-answersyml-file]. Then you apply all the templates to
+the same project:
 
 ```shell
 mkdir my-project
