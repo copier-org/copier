@@ -573,7 +573,7 @@ class Worker:
                     del self.answers.last[var_name]
                 # Skip immediately to the next question when it has no default
                 # value.
-                if question.default is MISSING:
+                if question.get_default() is MISSING:
                     continue
             if var_name in self.answers.init:
                 # Try to parse and validate (if the question has a validator)
