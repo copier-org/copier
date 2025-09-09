@@ -259,7 +259,7 @@ requires-dist = [
     { name = "pathspec", specifier = ">=0.9.0" },
     { name = "platformdirs", specifier = ">=4.3.6" },
     { name = "plumbum", specifier = ">=1.6.9" },
-    { name = "prompt-toolkit", specifier = "<3.0.52" },
+    { name = "prompt-toolkit", specifier = "<3.0.53" },
     { name = "pydantic", specifier = ">=2.4.2" },
     { name = "pygments", specifier = ">=2.7.1" },
     { name = "pyyaml", specifier = ">=5.3.1" },
