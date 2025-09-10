@@ -52,7 +52,7 @@ dev = [
   "poethepoet==0.37.0",
   "pre-commit==4.3.0",
   "pytest==8.4.2",
-  "pytest-cov==6.3.0",
+  "pytest-cov==7.0.0",
   "pytest-gitconfig==0.7.0",
   "pytest-xdist==3.8.0",
   "ruff==0.12.12",
