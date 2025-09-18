@@ -127,7 +127,7 @@ def build_file_tree(
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         if isinstance(contents, Path):
-            os.symlink(str(contents), path)
+            path.symlink_to(contents)
         else:
             binary = isinstance(contents, bytes)
             if not binary and dedent:
