@@ -122,3 +122,6 @@ class YieldExtension(Extension):
             res = ""
 
         return res
+
+
+class UnsetError(UndefinedError): ...
