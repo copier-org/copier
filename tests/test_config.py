@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import json
+from contextlib import nullcontext
 from pathlib import Path
 from textwrap import dedent
 from typing import Any, Callable
 
 import pytest
+import yaml
 from plumbum import local
 from pydantic import ValidationError
 
@@ -15,9 +17,14 @@ from copier._template import (
     DEFAULT_EXCLUDE,
     Task,
     Template,
+    apply_condition,
+    condition_include,
     condition_questions,
+    condition_settings,
     get_include_file_N_condition,
+    jinja_str_to_f_str,
     load_template_config,
+    transform_jinja_cond_to_jinja_var,
     trim_cond,
 )
 from copier._types import AnyByStrDict
@@ -732,40 +739,431 @@ def test_secret_question_requires_default_value(
         copier.run_copy(str(src), dst)
 
 
+##### conditional_transclusion #####
+
+
+@pytest.mark.conditional_transclusion
 @pytest.mark.parametrize(
-    "input, output",
+    "input, output, is_error",
     (
-        ("./include_me.yml when {{ var }}", ("./include_me.yml", "{{ var }}")),
-        ("./include_me.yaml", ("./include_me.yaml", None)),
-        ("'common_*.yml'", ("'common_*.yml'", None)),
+        ("./include_me.yml when {{ var }}", ("./include_me.yml", "{{ var }}"), False),
+        ("./include_me.yaml", ("./include_me.yaml", None), False),
+        ("'common_*.yml'", ("'common_*.yml'", None), False),
+        ("not legit", (None, None), True),
     ),
 )
 def test_get_include_file_N_condition(
-    input: str, output: tuple[str, str | None]
+    input: str, output: tuple[str | None, str | None], is_error: bool
 ) -> None:
-    assert get_include_file_N_condition(input) == output
+    with pytest.raises(ValueError) if is_error else nullcontext():
+        assert get_include_file_N_condition(input) == output
 
 
-@pytest.mark.parametrize("input, output", (("{{ test }}", "test"),))
+@pytest.mark.conditional_transclusion
+@pytest.mark.parametrize(
+    "input, output",
+    (("{{ test }}", "test"), ("test {{ ", "test "), ("}} test ", "}} test ")),
+)
 def test_trim_cond(input: str, output: str) -> None:
     assert trim_cond(input) == output
 
 
-@pytest.mark.parametrize("_dict, _condition, output", (({}, "", {}),))
+@pytest.mark.conditional_transclusion
+@pytest.mark.parametrize(
+    "_dict, _condition, output",
+    (
+        (
+            {
+                "var": {"type": "int", "default": 1},
+            },
+            "condition",
+            {
+                "var": {
+                    "type": "int",
+                    "default": "{% if (condition) %}1{% else %}0{% endif %}",
+                    "when": "{{ True if (condition) else False }}",
+                },
+            },
+        ),
+        (
+            {
+                "the_str": {"type": "str"},
+            },
+            "condition",
+            {
+                "the_str": {
+                    "type": "str",
+                    "when": "{{ True if (condition) else False }}",
+                    "default": "{% if (condition) %}{% else %}{% endif %}",
+                },
+            },
+        ),
+        (
+            {
+                "test": {
+                    "type": "{{ 'bool' if var else 'str' }}",
+                    "default": "{{ '' if var else 'my_str' }}",
+                },
+            },
+            "condition",
+            {
+                "test": {
+                    "type": "{{ 'bool' if var else 'str' }}",
+                    "default": "{% if (condition) %}{{ '' if var else 'my_str' }}{% else %}{% endif %}",
+                    "when": "{{ True if (condition) else False }}",
+                },
+            },
+        ),
+        (
+            {
+                "_exclude": ["{% if condition %}include_me.yml{% endif %}"],
+            },
+            "condition",
+            {
+                "_exclude": ["{% if condition %}include_me.yml{% endif %}"],
+            },
+        ),
+        # ({}, "", {}),
+    ),
+)
 def test_condition_questions(
     _dict: dict[str, Any], _condition: str, output: dict[str, Any]
 ) -> None:
-    assert condition_questions(_dict, _condition) == output
+    condition_questions(_dict, _condition)
+    assert _dict == output
 
 
-def test_condition_include() -> None:
-    pass
-
-
+@pytest.mark.conditional_transclusion
 @pytest.mark.parametrize(
-    "inputs, output_files, answer_file",
+    "input, output",
     (
-        # ({"condition": True, "var": None, "the_str": None, "tests": None}),
+        ({}, {}),
+        (
+            {
+                "_answers_file": ".my-custom-answers.yml",
+                "_external_data": {
+                    "parent_tpl": "{{ parent_tpl_answers_file }}",
+                    "secrets": ".secrets.yaml",
+                },
+                "_envops": {
+                    "autoescape": "false",
+                    "block_end_string": "%]",
+                    "block_start_string": "[%",
+                    "comment_end_string": "#]",
+                    "comment_start_string": "[#",
+                    "keep_trailing_newline": "true",
+                    "variable_end_string": "]]",
+                    "variable_start_string": "[[",
+                },
+                "_exclude": [
+                    "include_me.yml",
+                    "{% if _copier_operation == 'update' -%}src/*_example.py{% endif %}",
+                    "*.bar",
+                    ".git",
+                ],
+                "_jinja_extensions": [
+                    "jinja_markdown.MarkdownExtension",
+                    "jinja2_slug.SlugExtension",
+                    "jinja2_time.TimeExtension",
+                ],
+                "_message_after_copy": 'Your project "{{ project_name }}" has been created successfully!\n\nNext steps:\n\n1. Change directory to the project root:\n\n\t$ cd {{ _copier_conf.dst_path }}\n\n2. Read "CONTRIBUTING.md" and start coding.',
+                "_message_after_update": 'Your project "{{ project_name }}" has been updated successfully!\nIn case there are any conflicts, please resolve them. Then,\nyou\'re done.',
+                "_message_before_copy": "Thanks for generating a project using our template.\n\nYou'll be asked a series of questions whose answers will be used to\ngenerate a tailored project for you.",
+                "_message_before_update": "Thanks for updating your project using our template.\n\nYou'll be asked a series of questions whose answers are pre-populated\nwith previously entered values. Feel free to change them as needed.",
+                "_migrations": [
+                    "invoke -r {{ _copier_conf.src_path }} -c migrations migrate $STAGE $VERSION_FROM $VERSION_TO",
+                    {
+                        "version": "v1.0.0",
+                        "command": "rm ./old-folder",
+                        "when": "{{ _stage == 'before' }}",
+                    },
+                ],
+                "_min_copier_version": "4.1.0",
+                "_preserve_symlinks": "True",
+                "_secret_questions": [
+                    "password",
+                ],
+                "_skip_if_exists": [
+                    ".secret_password.yml",
+                ],
+                "_skip_tasks": "{{ condition }}",
+                "_subdirectory": "{{ python_engine }}",
+                "_tasks": [
+                    "git init",
+                    "rm {{ name_of_the_project }}/README.md",
+                    [
+                        "invoke",
+                        "--search-root={{ _copier_conf.src_path }}",
+                        "after-copy",
+                    ],
+                    ["invoke", "end-process", "--full-conf={{ _copier_conf|to_json }}"],
+                    ["{{ _copier_python }}", "task.py"],
+                    {
+                        "command": ["{{ _copier_python }}", "task.py"],
+                        "when": "{{ _copier_operation == 'copy' }}",
+                    },
+                    {
+                        "command": "rm {{ name_of_the_project }}/README.md",
+                        "when": "{{ _copier_conf.os in  ['linux', 'macos'] }}",
+                    },
+                    {
+                        "command": "Remove-Item {{ name_of_the_project }}\\README.md",
+                        "when": "{{ _copier_conf.os == 'windows' }}",
+                    },
+                ],
+                "_templates_suffix": ".my-custom-suffix",
+            },
+            ### Output ###
+            {
+                "_answers_file": "{% if (condition) %}.my-custom-answers.yml{% endif %}",
+                "_external_data": {
+                    "parent_tpl": "{% if (condition) %}{{ parent_tpl_answers_file }}{% endif %}",
+                    "secrets": "{% if (condition) %}.secrets.yaml{% endif %}",
+                },
+                "_envops": {
+                    "autoescape": "{% if (condition) %}false{% endif %}",
+                    "block_end_string": "{% if (condition) %}%]{% endif %}",
+                    "block_start_string": "{% if (condition) %}[%{% endif %}",
+                    "comment_end_string": "{% if (condition) %}#]{% endif %}",
+                    "comment_start_string": "{% if (condition) %}[#{% endif %}",
+                    "keep_trailing_newline": "{% if (condition) %}true{% endif %}",
+                    "variable_end_string": "{% if (condition) %}]]{% endif %}",
+                    "variable_start_string": "{% if (condition) %}[[{% endif %}",
+                },
+                "_exclude": [
+                    "{% if (condition) %}include_me.yml{% endif %}",
+                    "{% if (condition) %}{% if _copier_operation == 'update' -%}src/*_example.py{% endif %}{% endif %}",
+                    "{% if (condition) %}*.bar{% endif %}",
+                    "{% if (condition) %}.git{% endif %}",
+                ],
+                "_jinja_extensions": [
+                    "{% if (condition) %}jinja_markdown.MarkdownExtension{% endif %}",
+                    "{% if (condition) %}jinja2_slug.SlugExtension{% endif %}",
+                    "{% if (condition) %}jinja2_time.TimeExtension{% endif %}",
+                ],
+                "_message_after_copy": '{% if (condition) %}Your project "{{ project_name }}" has been created successfully!\n\nNext steps:\n\n1. Change directory to the project root:\n\n\t$ cd {{ _copier_conf.dst_path }}\n\n2. Read "CONTRIBUTING.md" and start coding.{% endif %}',
+                "_message_after_update": '{% if (condition) %}Your project "{{ project_name }}" has been updated successfully!\nIn case there are any conflicts, please resolve them. Then,\nyou\'re done.{% endif %}',
+                "_message_before_copy": "{% if (condition) %}Thanks for generating a project using our template.\n\nYou'll be asked a series of questions whose answers will be used to\ngenerate a tailored project for you.{% endif %}",
+                "_message_before_update": "{% if (condition) %}Thanks for updating your project using our template.\n\nYou'll be asked a series of questions whose answers are pre-populated\nwith previously entered values. Feel free to change them as needed.{% endif %}",
+                "_migrations": [
+                    {
+                        "command": "invoke -r {{ _copier_conf.src_path }} -c migrations migrate $STAGE $VERSION_FROM $VERSION_TO",
+                        "when": "{{ condition }}",
+                    },
+                    {
+                        "version": "v1.0.0",
+                        "command": "rm ./old-folder",
+                        "when": "{% if (condition) %}{{ _stage == 'before' }}{% endif %}",
+                    },
+                ],
+                "_min_copier_version": "{% if (condition) %}4.1.0{% endif %}",
+                "_preserve_symlinks": "{% if (condition) %}True{% endif %}",
+                "_secret_questions": [
+                    "{% if (condition) %}password{% endif %}",
+                ],
+                "_skip_if_exists": [
+                    "{% if (condition) %}.secret_password.yml{% endif %}",
+                ],
+                "_skip_tasks": "{% if (condition) %}{{ condition }}{% endif %}",
+                "_subdirectory": "{% if (condition) %}{{ python_engine }}{% endif %}",
+                "_tasks": [
+                    {"command": "git init", "when": "{{ condition }}"},
+                    {
+                        "command": "rm {{ name_of_the_project }}/README.md",
+                        "when": "{{ condition }}",
+                    },
+                    {
+                        "command": [
+                            "invoke",
+                            "--search-root={{ _copier_conf.src_path }}",
+                            "after-copy",
+                        ],
+                        "when": "{{ condition }}",
+                    },
+                    {
+                        "command": [
+                            "invoke",
+                            "end-process",
+                            "--full-conf={{ _copier_conf|to_json }}",
+                        ],
+                        "when": "{{ condition }}",
+                    },
+                    {
+                        "command": ["{{ _copier_python }}", "task.py"],
+                        "when": "{{ condition }}",
+                    },
+                    {
+                        "command": ["{{ _copier_python }}", "task.py"],
+                        "when": "{% if (condition) %}{{ _copier_operation == 'copy' }}{% endif %}",
+                    },
+                    {
+                        "command": "rm {{ name_of_the_project }}/README.md",
+                        "when": "{% if (condition) %}{{ _copier_conf.os in  ['linux', 'macos'] }}{% endif %}",
+                    },
+                    {
+                        "command": "Remove-Item {{ name_of_the_project }}\\README.md",
+                        "when": "{% if (condition) %}{{ _copier_conf.os == 'windows' }}{% endif %}",
+                    },
+                ],
+                "_templates_suffix": "{% if (condition) %}.my-custom-suffix{% endif %}",
+            },
+        ),
+    ),
+)
+def test_condition_settings(input: dict[str, Any], output: dict[str, Any]) -> None:
+    condition_settings(input, "condition")
+    assert input == output
+
+
+@pytest.mark.conditional_transclusion
+@pytest.mark.parametrize(
+    "input, output",
+    (
+        ("{{var}}", 'f"{var}"'),
+        ("Test: {{var}} number", 'f"Test: {var} number"'),
+        ("Hello world!", '"Hello world!"'),
+    ),
+)
+def test_jinja_str_to_f_str(input: str, output: str) -> None:
+    assert jinja_str_to_f_str(input) == output
+
+
+@pytest.mark.conditional_transclusion
+@pytest.mark.parametrize(
+    "_cond, output",
+    (
+        ("{{ condition }}", "condition"),
+        (
+            "{% if var>0 %}Welcome {{user}}!{% else %}{% if polite %}Goodbye{% else %}Bye{% endif %}{% endif %}",
+            '(f"Welcome {user}!") if (var>0) else (("Goodbye") if (polite) else ("Bye"))',
+        ),
+        (
+            "{% if var>0 %}Welcome {{user}}!{% elif var<-2 %}Hello!{% else %}{% if polite %}Goodbye{% else %}Bye{% endif %}{% endif %}",
+            '(f"Welcome {user}!") if (var>0) else ("Hello!") if (var<-2) else (("Goodbye") if (polite) else ("Bye"))',
+        ),
+        # ("", ""),
+    ),
+)
+def test_transform_jinja_cond_to_jinja_var(_cond: str, output: str) -> None:
+    assert transform_jinja_cond_to_jinja_var(_cond)[0] == output
+
+
+@pytest.mark.conditional_transclusion
+@pytest.mark.parametrize(
+    "_dict, _condition, output",
+    (
+        (
+            {
+                "var": {"type": "int", "default": 1},
+            },
+            "{{ condition }}",
+            {
+                "var": {
+                    "type": "int",
+                    "default": "{% if (condition) %}1{% else %}0{% endif %}",
+                    "when": "{{ True if (condition) else False }}",
+                },
+            },
+        ),
+        (
+            {
+                "the_str": {"type": "str"},
+            },
+            "{{ condition }}",
+            {
+                "the_str": {
+                    "type": "str",
+                    "when": "{{ True if (condition) else False }}",
+                    "default": "{% if (condition) %}{% else %}{% endif %}",
+                },
+            },
+        ),
+        (
+            {
+                "test": {
+                    "type": "{{ 'bool' if var else 'str' }}",
+                    "default": "{{ '' if var else 'my_str' }}",
+                },
+            },
+            "{{ condition }}",
+            {
+                "test": {
+                    "type": "{{ 'bool' if var else 'str' }}",
+                    "default": "{% if (condition) %}{{ '' if var else 'my_str' }}{% else %}{% endif %}",
+                    "when": "{{ True if (condition) else False }}",
+                },
+            },
+        ),
+        (
+            {
+                "_exclude": ["include_me.yml"],
+            },
+            "{{ condition }}",
+            {
+                "_exclude": ["{% if (condition) %}include_me.yml{% endif %}"],
+            },
+        ),
+        (
+            {
+                "_exclude": ["include_me.yml"],
+            },
+            "{% if condition %}True{% else %}False{% endif %}",
+            {
+                "_exclude": [
+                    '{% if (("True") if (condition) else ("False")) %}include_me.yml{% endif %}'
+                ],
+            },
+        ),
+        # ({}, "", {}),
+    ),
+)
+def test_apply_condition(
+    _dict: dict[str, Any], _condition: str, output: dict[str, Any]
+) -> None:
+    apply_condition(_dict, _condition)
+    assert _dict == output
+
+
+@pytest.mark.conditional_transclusion
+def test_condition_include() -> None:
+    class _Loader(yaml.FullLoader):
+        """Intermediate class to avoid monkey-patching main loader."""
+
+    conf_path = Path("./tests/demo_transclude_conditional/demo/copier.yml")
+    output = {
+        "_exclude": ["{% if (condition) %}include_me.yml{% endif %}"],
+        "test": {
+            "default": "{% if (condition) %}{{ '' if var else 'my_str' }}{% else %}{% endif %}",
+            "type": "{{ 'bool' if var else 'str' }}",
+            "when": "{{ True if (condition) else False }}",
+        },
+        "the_str": {
+            "default": "{% if (condition) %}{% else %}{% endif %}",
+            "type": "str",
+            "when": "{{ True if (condition) else False }}",
+        },
+        "var": {
+            "default": "{% if (condition) %}1{% else %}0{% endif %}",
+            "type": "int",
+            "when": "{{ True if (condition) else False }}",
+        },
+    }
+    with conf_path.open("rb") as f:
+        assert (
+            condition_include(
+                conf_path=conf_path,
+                loader=_Loader(f),
+                include_file="./include_me.yml",
+                _condition="{{ condition }}",
+            )
+            == output
+        )
+
+
+@pytest.mark.conditional_transclusion
+@pytest.mark.parametrize(
+    "inputs, output_files, answer_file, src",
+    (
         (
             {
                 "condition": True,
@@ -777,11 +1175,16 @@ def test_condition_include() -> None:
                 ".copier-answers.yml": True,
                 "test_none.py": False,
                 "test.py": False,
+                "test_json.py": True,
+                "test_path.py": True,
+                "test_yaml.py": True,
+                "var.py": True,
                 "copier.yml": False,
                 "include_me.yml": False,
                 "include_me_also.yml": False,
             },
-            "# Changes here will be overwritten by Copier\n_src_path: tests/demo_transclude_conditional/demo\ncondition: true\ntest: false\nthe_str: my_str\nvar: 1\n",
+            f"# Changes here will be overwritten by Copier\n_src_path: tests/demo_transclude_conditional/demo\ncondition: true\ntest: false\ntest_json:\n{''.join([' '] * 4)}test: 1\ntest_path: ./tests\ntest_yaml:\n{''.join([' '] * 4)}test:\n{''.join([' '] * 8)}type: bool\nthe_str: my_str\nvar: 1\n",
+            "tests/demo_transclude_conditional/demo",
         ),
         (
             {
@@ -794,11 +1197,38 @@ def test_condition_include() -> None:
                 ".copier-answers.yml": True,
                 "test_none.py": False,
                 "test.py": False,
+                "test_json.py": False,
+                "test_path.py": False,
+                "test_yaml.py": False,
+                "var.py": False,
                 "copier.yml": False,
                 "include_me.yml": True,
                 "include_me_also.yml": False,
             },
             "# Changes here will be overwritten by Copier\n_src_path: tests/demo_transclude_conditional/demo\ncondition: false\n",
+            "tests/demo_transclude_conditional/demo",
+        ),
+        (
+            {
+                "condition": True,
+                "var": 0,
+                "the_str": "my_str",
+                "test": None,
+            },
+            {
+                ".copier-answers.yml": True,
+                "test_none.py": False,
+                "test.py": True,
+                "test_json.py": True,
+                "test_path.py": True,
+                "test_yaml.py": True,
+                "var.py": False,
+                "copier.yml": False,
+                "include_me.yml": False,
+                "include_me_also.yml": False,
+            },
+            f"# Changes here will be overwritten by Copier\n_src_path: tests/demo_transclude_conditional/demo\ncondition: true\ntest: my_str\ntest_json:\n{''.join([' '] * 4)}test: 1\ntest_path: ./tests\ntest_yaml:\n{''.join([' '] * 4)}test:\n{''.join([' '] * 8)}type: bool\nthe_str: my_str\nvar: 0\n",
+            "tests/demo_transclude_conditional/demo",
         ),
     ),
 )
@@ -808,9 +1238,9 @@ def test_conditional_transclusion(
     inputs: dict[str, tuple[bool, Any]],
     output_files: dict[str, bool],
     answer_file: str,
+    src: str,
 ) -> None:
     dst = tmp_path_factory.mktemp("dst")
-    src: str = "tests/demo_transclude_conditional/demo"
 
     # clear capture output log
     capsys.readouterr()
@@ -823,6 +1253,7 @@ def test_conditional_transclusion(
         dst,
         data=_data,
         quiet=True,
+        defaults=True,
     )
     ##
     print("".join(["#"] * 20))
