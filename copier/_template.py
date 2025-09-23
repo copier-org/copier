@@ -63,39 +63,276 @@ def filter_config(data: AnyByStrDict) -> tuple[AnyByStrDict, AnyByStrDict]:
     return config_data, questions_data
 
 
-def get_include_file_N_condition(_include_file: str) -> tuple[str, str]:
+def get_include_file_N_condition(_include_file: str) -> tuple[str, Any | None]:
+    """Parse the YAML include statement (e.g. `./include_me.yml when {{ var }}`, `"./include_me.yaml"`), and return the YAML file path, and the condition if a condition is present.
+
+    Args:
+        _include_file: input
+
+    Returns:
+        (_yaml_file_path, _condition):
+            _yaml_file_path: YAML file path
+            _condition: the condition if a condition is present
+    """
     _match = re.match(
-        r"(['\"]?.*?\.ya?ml['\"]?)(?: when (['\"]?)(.*)\2)?",
+        r"((['\"]?).*?\.ya?ml\2)(?: when (['\"]?)(.*)\3)?",
+        # Note that `(?: )` is a non-cpaturing group
+        # group 0 (`\1`): wrapped or not in `"` or `'`, string finishing by `yaml`/`yml` extension
+        # group 1 (`\2`) [optional]: `"` or `'` starting the YAML file path
+        # group 2 (`\3`) [optional]: `"` or `'` starting the condition
+        # group 3 (`\4`) [optional]: the condition string not wrapped in `'` or `"`
         _include_file,
     )
     if _match is not None:
         _include_file = _match.groups()[0]
-        _condition = _match.groups()[-1]
+        _condition = _match.groups()[3]
         return _include_file, _condition
-    return _include_file, ""
+    raise ValueError(
+        f"`_include_file` args is not in a correct format, got: `{_include_file}`\nExpected a string like:`\"sub_questions.yml\"` or `'./sub_dir/sub_questions.yaml' when {'{{var}}'}`"
+    )
 
 
 def trim_cond(cond: str) -> str:
+    """Remove `{{ ` and ` }}`.
+
+    Args:
+        cond: input
+
+    Returns:
+        str: str without `{{ ` and ` }}`
+
+    """
+    # TODO: might have to condition it more strictly `^\{\{ (.*?) \}\}$`?
     return cond.replace("{{ ", "").replace(" }}", "")
 
 
-def condition_questions(_dict: dict[str, Any], _condition: str) -> dict[str, Any]:
-    _cond_expr = trim_cond(_condition)
+def condition_questions(_dict: dict[str, Any], _condition: str) -> None:
+    """Modify in-place the `question` var.s to jinja condition them on **_condition**, and default them to falsy values if **_condition** is false.
+
+    Args:
+        _dict: dict of yaml loaded elements
+        _condition: jinja condition str
+
+    """
+    # bool, float, int, json, path, str, yaml (default)
+    _cond_expr = _condition
+    jinja2_type_default_dict = {
+        "bool": False,
+        "float": 0.0,
+        "int": 0,
+        "json": "{}",  # Have to pass a JsonDecode
+        "path": "",  # Converted to ''
+        "str": "",
+        "yaml": "",  # Converted to `null`
+    }
     for _key, _val in _dict.items():
         if _key[0] != "_" and isinstance(_val, dict):
-            jinja2_type_default = f"{ {'str': '', 'int': 0, 'float': 0.0, 'bool': False}.get(_val.get('type', ''), '') }"
+            jinja2_type_default = (
+                f"{jinja2_type_default_dict.get(_val.get('type', ''), '')}"
+            )
             _val = _val.update(
                 {
-                    "when": f"{{{{ {trim_cond(_val.get('when', 'True'))} if {_cond_expr} else False }}}}",
-                    "default": f"{{% if {_cond_expr} %}}{_val.get('default', '')}{{% else %}}{jinja2_type_default}{{% endif %}}",
+                    "when": f"{{{{ {trim_cond(_val.get('when', 'True'))} if ({_condition}) else False }}}}",
+                    "default": f"{{% if ({_condition}) %}}{_val.get('default', '')}{{% else %}}{jinja2_type_default}{{% endif %}}",
                 }
             )
-    return _dict
+
+
+def condition_settings(_dict: dict[str, Any], _condition_short: str) -> None:
+    """Modify in-place the settings, if they exist, to 'jinja' condition them on **_condition_short**.
+
+    Args:
+        _dict: dict of yaml loaded elements
+        _condition_short: jinja condition str
+    """
+    # name, type
+    settings = (
+        ("answers_file", str),
+        # `cleanup_on_error`: Not supported in copier.yml.
+        # `conflict`: Not supported in copier.yml.
+        # `context_lines`: Not supported in copier.yml.
+        # `data`: Cannot be defined in copier.yml.
+        # `data_file`: Not supported in copier.yml.
+        ("external_data", dict[str, str]),
+        ("envops", dict),
+        ("exclude", list[str]),
+        # `force`: Not supported in copier.yml.
+        # `defaults`: Not supported in copier.yml.
+        # `overwrite`: Not supported in copier.yml.
+        ("jinja_extensions", list[str]),  # TODO: Check if it is interpreted by jinja
+        ("message_after_copy", str),
+        ("message_after_update", str),
+        ("message_before_copy", str),
+        ("message_before_update", str),
+        # ("migrations", list[str|list[str]|dict]), # if dict => `command`,`when`, transf. list[str] to dict
+        ("migrations", list),
+        ("min_copier_version", str),
+        # `pretend`: Not supported in copier.yml.
+        ("preserve_symlinks", bool),
+        # `quiet`: Not supported in copier.yml.
+        ("secret_questions", list[str]),
+        # `skip_answered`: Not supported in copier.yml.
+        ("skip_if_exists", list[str]),
+        ("skip_tasks", bool),
+        ("subdirectory", str),
+        # ("tasks", list[str|list[str]|dict]), # if dict => `command`,`when`, transf. list[str] to dict
+        ("tasks", list),
+        ("templates_suffix", str),
+        # `unsafe`: Not supported in copier.yml.
+        # `use_prereleases`: Not supported in copier.yml.
+        # `vcs_ref`: Not supported in copier.yml.
+    )
+    for _setting, _types_GenericAlias in settings:
+        if _types_GenericAlias in (str, bool) and f"_{_setting}" in _dict:
+            _dict[f"_{_setting}"] = (
+                f"{{% if ({_condition_short}) %}}{_dict[f'_{_setting}']}{{% endif %}}"
+            )
+        if _types_GenericAlias == list[str] and f"_{_setting}" in _dict:
+            _dict[f"_{_setting}"] = [
+                f"{{% if ({_condition_short}) %}}{_elem}{{% endif %}}"
+                for _elem in _dict[f"_{_setting}"]
+            ]
+        if _setting in ("tasks", "migrations") and f"_{_setting}" in _dict:
+            _tmp = []
+            for _elem in _dict[f"_{_setting}"]:
+                if type(_elem) in (str, list):
+                    _tmp.append(
+                        {"command": _elem, "when": f"{{{{ {_condition_short} }}}}"}
+                    )
+                if isinstance(_elem, dict):
+                    _elem["when"] = (
+                        f"{{% if ({_condition_short}) %}}{_elem['when']}{{% endif %}}"
+                    )
+                    _tmp.append(_elem)
+
+            _dict[f"_{_setting}"] = _tmp
+
+        if _setting in ("envops", "external_data") and f"_{_setting}" in _dict:
+            _dict[f"_{_setting}"] = {
+                _key: f"{{% if ({_condition_short}) %}}{_val}{{% endif %}}"
+                for _key, _val in _dict[f"_{_setting}"].items()
+            }
+
+
+def jinja_str_to_f_str(_jinja_str: str) -> str:
+    """Replace jinja var indicator `{{` and `}}` by python f-string var `{` and `}`, if present, and return the string as the exprression of an f-string.
+
+    Args:
+        _jinja_str: The input str
+
+    Returns:
+        str: Modified str
+
+    """
+    if _jinja_str.find("{{") >= 0:
+        return 'f"' + _jinja_str.replace("{{", "{").replace("}}", "}") + '"'
+
+    return f'"{_jinja_str}"'
+
+
+def transform_jinja_cond_to_jinja_var(_cond: str) -> tuple[str, bool]:
+    """Parse the jinja condition string, and return the condition as a "jinja variable".
+
+    Args:
+        _cond: The jinja condition str
+
+    Returns:
+        _cond_jinja_var, _is_str:
+            _cond_jinja_var: the condition as a "jinja variable"
+            _is_str: the condition above a str, or an expression
+    """
+    if _match := re.match(r"^\{% if (.+?) %\}(.+)", _cond):
+        _if_cond = _match.groups()[0]  # if statement
+        _cond, _cond_to_str = transform_jinja_cond_to_jinja_var(
+            _match.groups()[1]
+        )  # Check for a nested if statement
+
+        _if_elif_statement = []
+        _elif_cond = []
+        while _match := re.match(r"^(.+?)\{% elif (.+?) %\}(.+)", _cond):
+            _if_elif_statement.append(
+                jinja_str_to_f_str(_match.groups()[0])
+                if _cond_to_str
+                else _match.groups()[0]
+            )
+            _elif_cond.append(_match.groups()[1])
+            _cond, _cond_to_str = transform_jinja_cond_to_jinja_var(_match.groups()[2])
+
+        if _match := re.match(r"^(.+?)\{% else %\}(.+)", _cond):
+            _if_elif_statement.append(
+                jinja_str_to_f_str(_match.groups()[0])
+                if _cond_to_str
+                else _match.groups()[0]
+            )
+            _cond, _cond_to_str = transform_jinja_cond_to_jinja_var(_match.groups()[1])
+        if _match := re.match(r"^(.+?)\{% endif %\}(.*)", _cond):
+            _if_elif_statement.append(
+                jinja_str_to_f_str(_match.groups()[0])
+                if _cond_to_str
+                else _match.groups()[0]
+            )
+            _cond_end = _match.groups()[1]
+        else:
+            raise ValueError("Condition does not end.")
+
+        _res = " ".join(
+            (
+                f"({_if_elif_statement[0]}) if ({_if_cond})",
+                *(
+                    f"else ({_val}) if ({_if})"
+                    for _if, _val in zip(_elif_cond, _if_elif_statement[1:-1])
+                ),
+                f"else ({_if_elif_statement[-1]})",
+            )
+        )
+        if _cond_end:
+            _res += _cond_end
+        return (_res, False)
+
+    elif _match := re.match(r"\{\{ (.*) \}\}", _cond):
+        return _match.groups()[0], False
+    return _cond, True
+
+
+def apply_condition(_dict: dict[str, Any], _condition: str) -> None:
+    """Modify in-place the **_dict** elements to be 'jinja' conditioned on **_condition**.
+
+    Args:
+        _dict: dict of yaml loaded elements
+        _condition: jinja str condition
+    """
+    if _match := re.match(r"{{ (.*?) }}", _condition):
+        _condition_short = _match.groups()[0]
+    else:
+        _condition_short = transform_jinja_cond_to_jinja_var(_condition)[0]
+    # _match = re.match(r"{{ (.*?) }}", _condition)
+    # _condition_short = _match.groups()[0] if _match is not None else _condition
+    condition_settings(_dict, _condition_short)
+    # condition_questions(_dict, _condition)
+    condition_questions(_dict, _condition_short)
 
 
 def condition_include(
-    conf_path: Path, loader: yaml.Loader, include_file: str, _condition: str
+    conf_path: Path,
+    loader: yaml.BaseLoader
+    | yaml.FullLoader
+    | yaml.SafeLoader
+    | yaml.Loader
+    | yaml.UnsafeLoader,
+    include_file: str,
+    _condition: str | None,
 ) -> dict[str, Any]:
+    """Get the dict of YAML loaded elements 'jinja' conditioned on **_condition**.
+
+    Args:
+        conf_path: The path to the `copier.yml` file.
+        loader: The YAML loader
+        include_file: The YAML file path
+        _condition: jinja include condition
+
+    Returns:
+        dict: The dict of YAML loaded elements 'jinja' conditioned on **_condition**
+    """
     _tmp = {}
     _res = [
         lflatten(filter(None, yaml.load_all(path.read_bytes(), Loader=type(loader))))
@@ -105,17 +342,7 @@ def condition_include(
         for _sub in _elem:
             _tmp.update(_sub)
     if _condition:
-        _match = re.match(r"{{ (.*?) }}", _condition)
-        _condition_short = _match.groups()[0] if _match is not None else _condition
-        _tmp.update(
-            {
-                "_exclude": [
-                    f"{{% if {_condition_short} %}}{_elem}{{% endif %}}"
-                    for _elem in _tmp["_exclude"]
-                ]
-            }
-        )
-        _tmp = condition_questions(_tmp, _condition)
+        apply_condition(_tmp, _condition)
 
     return _tmp
 
