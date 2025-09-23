@@ -3,6 +3,7 @@ condition:
   type: bool
   default: True
 
+
 ---
 !include ./include_me.yml
 when "{{ condition }}"
