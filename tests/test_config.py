@@ -1137,6 +1137,21 @@ def test_condition_include() -> None:
             "type": "{{ 'bool' if var else 'str' }}",
             "when": "{{ True if (condition) else False }}",
         },
+        "test_json": {
+            "default": '{% if (condition) %}{"test":1}{% else %}{}{% endif %}',
+            "type": "json",
+            "when": "{{ True if (condition) else False }}",
+        },
+        "test_path": {
+            "default": "{% if (condition) %}./tests{% else %}{% endif %}",
+            "type": "path",
+            "when": "{{ True if (condition) else False }}",
+        },
+        "test_yaml": {
+            "default": "{% if (condition) %}{'test': {'type': 'bool'}}{% else %}{% endif %}",
+            "type": "yaml",
+            "when": "{{ True if (condition) else False }}",
+        },
         "the_str": {
             "default": "{% if (condition) %}{% else %}{% endif %}",
             "type": "str",
