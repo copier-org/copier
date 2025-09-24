@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 import pytest
@@ -256,7 +255,7 @@ def test_update_symlink(tmp_path_factory: pytest.TempPathFactory) -> None:
     with local.cwd(src):
         # test updating a symlink
         Path("symlink.txt").unlink()
-        os.symlink("bbbb.txt", "symlink.txt")
+        Path("symlink.txt").symlink_to("bbbb.txt")
 
     # dst must be vcs-tracked to use run_update
     with local.cwd(dst):
@@ -312,7 +311,7 @@ def test_update_file_to_symlink(tmp_path_factory: pytest.TempPathFactory) -> Non
     with local.cwd(src):
         # test updating a symlink
         Path("bbbb.txt").unlink()
-        os.symlink("aaaa.txt", "bbbb.txt")
+        Path("bbbb.txt").symlink_to("aaaa.txt")
         Path("cccc.txt").unlink()
         with Path("cccc.txt").open("w+") as f:
             f.write("Lorem ipsum")
