@@ -31,10 +31,19 @@ A library and CLI app for rendering project templates.
 
 ### Nix flake
 
-To install latest Copier release with 100% reproducibility:
+To install the latest Copier release with 100% reproducibility:
 
 ```shell
 nix profile install 'https://flakehub.com/f/copier-org/copier/*.tar.gz'
+```
+
+### Homebrew formula
+
+To install the latest Copier release using
+[its Homebrew formula](https://formulae.brew.sh/formula/copier) for macOS or Linux:
+
+```shell
+brew install copier
 ```
 
 ## Quick start
