@@ -158,7 +158,10 @@ disable_error_code = ["no-untyped-def"]
 
 [tool.pytest.ini_options]
 addopts = "-n auto -ra"
-markers = ["impure: needs network or is not 100% reproducible"]
+markers = [
+  "impure: needs network or is not 100% reproducible",
+  "conditional_transclusion: marks tests as conditional_transclusion (deselect with '-m \"not conditional_transclusion\"')",
+]
 
 [tool.coverage.run]
 omit = [
