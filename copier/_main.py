@@ -722,7 +722,17 @@ class Worker:
                 Path(src_abspath).relative_to(self.template_copy_root)
             )
             for dst_relpath, ctx in dst_relpaths_ctxs:
-                if not cwd.joinpath(dst_relpath).resolve().is_relative_to(cwd):
+                # Check if destination path would escape the working directory
+                dst_path = cwd.joinpath(dst_relpath)
+                if dst_path.is_symlink():
+                    # For existing symlinks, check the symlink itself, not its target
+                    # This prevents ForbiddenPathError when symlinks point outside cwd
+                    check_path = dst_path
+                else:
+                    # For regular files/dirs, resolve as normal to catch path traversal
+                    check_path = dst_path.resolve()
+
+                if not check_path.is_relative_to(cwd):
                     raise ForbiddenPathError(path=dst_relpath)
                 if self.match_exclude(dst_relpath):
                     continue

@@ -1362,3 +1362,38 @@ def test_absolute_render_path_outside_destination_raises_error_on_windows(
     assert not (dst / "forbidden.txt").exists()
     assert (other / "forbidden.txt").exists()
     assert (other / "forbidden.txt").read_text("utf-8") == "foo"
+
+
+
+def test_symlink_to_external_path_does_not_raise_forbidden_error(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """Test that existing symlinks pointing outside the project don't raise ForbiddenPathError.
+
+    This addresses a bug where copier would resolve symlinks and then check if the resolved
+    path is within the project directory, causing ForbiddenPathError for legitimate external
+    symlinks like environment files stored outside the project.
+    """
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    external = tmp_path_factory.mktemp("external")
+
+    # Create external config file
+    (external / ".env.local").write_text("SECRET=external-value")
+
+    # Create template
+    (src / "copier.yml").write_text("_templates_suffix: .j2")
+    (src / "regular.txt.j2").write_text("regular file content")
+
+    # First copy to create destination directory
+    copier.run_copy(str(src), dst, quiet=True)
+
+    # Create symlink in destination pointing outside project
+    (dst / ".env.local").symlink_to(external / ".env.local")
+
+    # Update should not raise ForbiddenPathError despite symlink pointing outside
+    copier.run_copy(str(src), dst, overwrite=True, quiet=True)
+
+    # Verify symlink still exists and points to external file
+    assert (dst / ".env.local").is_symlink()
+    assert (dst / ".env.local").readlink() == external / ".env.local"
+    assert (dst / ".env.local").read_text() == "SECRET=external-value"
