@@ -1050,6 +1050,21 @@ def test_transform_jinja_cond_to_jinja_var(_cond: str, output: str) -> None:
 
 @pytest.mark.conditional_transclusion
 @pytest.mark.parametrize(
+    "_cond",
+    (
+        "{% if var>0 %}Welcome {{user}}!{% else %}{% if polite %}Goodbye{% else %}Bye{% endif %}",
+        "{% if var>0 %}Welcome {{user}}!{% elif var<-2 %}Hello!{% else %}{% if polite %}Goodbye{% else %}Bye{% endif %}",
+        "{% if var>0 %}Welcome {{user}}!{% elif var<-2 %}{% if polite %}Goodbye{% else %}Bye{% endif %}{% else %}Hello!",
+        "{% if var>0 %}Welcome {{user}}!{% elif var<-2 %}{% if polite %}Goodbye{% else %}Bye{% else %}Hello!{% endif %}",
+    ),
+)
+def test_transform_jinja_cond_to_jinja_var_Error(_cond: str) -> None:
+    with pytest.raises(ValueError):
+        transform_jinja_cond_to_jinja_var(_cond)
+
+
+@pytest.mark.conditional_transclusion
+@pytest.mark.parametrize(
     "_dict, _condition, output",
     (
         (
