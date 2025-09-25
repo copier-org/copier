@@ -221,51 +221,51 @@
         }
       }
     },
-    "uv@0.8.2": {
-      "last_modified": "2025-07-24T15:00:16Z",
-      "resolved": "github:NixOS/nixpkgs/b74a30dbc0a72e20df07d43109339f780b439291#uv",
+    "uv@0.8.14": {
+      "last_modified": "2025-09-18T16:33:27Z",
+      "resolved": "github:NixOS/nixpkgs/f4b140d5b253f5e2a1ff4e5506edbf8267724bde#uv",
       "source": "devbox-search",
-      "version": "0.8.2",
+      "version": "0.8.14",
       "systems": {
         "aarch64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/6iy8d2cn8sykw5h8lzylc46vv3ah00p0-uv-0.8.2",
+              "path": "/nix/store/jvsjlmb0h8kfflmr1fjqaqvv8znp99pr-uv-0.8.14",
               "default": true
             }
           ],
-          "store_path": "/nix/store/6iy8d2cn8sykw5h8lzylc46vv3ah00p0-uv-0.8.2"
+          "store_path": "/nix/store/jvsjlmb0h8kfflmr1fjqaqvv8znp99pr-uv-0.8.14"
         },
         "aarch64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/mr45kbhf7s1slkm10ba21skch5qvbag3-uv-0.8.2",
+              "path": "/nix/store/3yyvvd9k79im73nsafnrqqadi7ln7lgd-uv-0.8.14",
               "default": true
             }
           ],
-          "store_path": "/nix/store/mr45kbhf7s1slkm10ba21skch5qvbag3-uv-0.8.2"
+          "store_path": "/nix/store/3yyvvd9k79im73nsafnrqqadi7ln7lgd-uv-0.8.14"
         },
         "x86_64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/3k7b264mci6jgb8whw47wixjvfg8ws6g-uv-0.8.2",
+              "path": "/nix/store/lsl4wjgvsfvka6dm0lirlgpfks3r9937-uv-0.8.14",
               "default": true
             }
           ],
-          "store_path": "/nix/store/3k7b264mci6jgb8whw47wixjvfg8ws6g-uv-0.8.2"
+          "store_path": "/nix/store/lsl4wjgvsfvka6dm0lirlgpfks3r9937-uv-0.8.14"
         },
         "x86_64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/sd4i4r0w1dx5bqxwlpgi5wrza8p850xp-uv-0.8.2",
+              "path": "/nix/store/d4klvr31w9qc9qpypwaxmz6f9xy3339y-uv-0.8.14",
               "default": true
             }
           ],
-          "store_path": "/nix/store/sd4i4r0w1dx5bqxwlpgi5wrza8p850xp-uv-0.8.2"
+          "store_path": "/nix/store/d4klvr31w9qc9qpypwaxmz6f9xy3339y-uv-0.8.14"
         }
       }
     }
