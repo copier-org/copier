@@ -13,3 +13,15 @@ when "{{ condition }}"
 
 _exclude:
   - "copier.yml"
+
+
+env_type:
+  type: str
+  choices:
+    - dev
+    - run
+
+---
+!include env/dev.yml
+when "{{ env_type == 'dev' }}"
+---

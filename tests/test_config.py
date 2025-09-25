@@ -1185,6 +1185,7 @@ def test_condition_include() -> None:
                 "var": 1,
                 "the_str": "my_str",
                 "test": False,
+                "env_type": "dev",
             },
             {
                 ".copier-answers.yml": True,
@@ -1197,8 +1198,9 @@ def test_condition_include() -> None:
                 "copier.yml": False,
                 "include_me.yml": False,
                 "include_me_also.yml": False,
+                "env/dev.yml": False,
             },
-            f"# Changes here will be overwritten by Copier\n_src_path: tests/demo_transclude_conditional/demo\ncondition: true\ntest: false\ntest_json:\n{''.join([' '] * 4)}test: 1\ntest_path: ./tests\ntest_yaml:\n{''.join([' '] * 4)}test:\n{''.join([' '] * 8)}type: bool\nthe_str: my_str\nvar: 1\n",
+            f"# Changes here will be overwritten by Copier\n_src_path: tests/demo_transclude_conditional/demo\ncondition: true\nenv_type: dev\ntest: false\ntest_json:\n{''.join([' '] * 4)}test: 1\ntest_path: ./tests\ntest_yaml:\n{''.join([' '] * 4)}test:\n{''.join([' '] * 8)}type: bool\nthe_str: my_str\nvar: 1\n",
             "tests/demo_transclude_conditional/demo",
         ),
         (
@@ -1207,6 +1209,7 @@ def test_condition_include() -> None:
                 "var": None,
                 "the_str": None,
                 "test": None,
+                "env_type": "run",
             },
             {
                 ".copier-answers.yml": True,
@@ -1219,8 +1222,9 @@ def test_condition_include() -> None:
                 "copier.yml": False,
                 "include_me.yml": True,
                 "include_me_also.yml": False,
+                "env/dev.yml": True,
             },
-            "# Changes here will be overwritten by Copier\n_src_path: tests/demo_transclude_conditional/demo\ncondition: false\n",
+            "# Changes here will be overwritten by Copier\n_src_path: tests/demo_transclude_conditional/demo\ncondition: false\nenv_type: run\n",
             "tests/demo_transclude_conditional/demo",
         ),
         (
@@ -1229,6 +1233,7 @@ def test_condition_include() -> None:
                 "var": 0,
                 "the_str": "my_str",
                 "test": None,
+                "env_type": "run",
             },
             {
                 ".copier-answers.yml": True,
@@ -1241,8 +1246,9 @@ def test_condition_include() -> None:
                 "copier.yml": False,
                 "include_me.yml": False,
                 "include_me_also.yml": False,
+                "env/dev.yml": True,
             },
-            f"# Changes here will be overwritten by Copier\n_src_path: tests/demo_transclude_conditional/demo\ncondition: true\ntest: my_str\ntest_json:\n{''.join([' '] * 4)}test: 1\ntest_path: ./tests\ntest_yaml:\n{''.join([' '] * 4)}test:\n{''.join([' '] * 8)}type: bool\nthe_str: my_str\nvar: 0\n",
+            f"# Changes here will be overwritten by Copier\n_src_path: tests/demo_transclude_conditional/demo\ncondition: true\nenv_type: run\ntest: my_str\ntest_json:\n{''.join([' '] * 4)}test: 1\ntest_path: ./tests\ntest_yaml:\n{''.join([' '] * 4)}test:\n{''.join([' '] * 8)}type: bool\nthe_str: my_str\nvar: 0\n",
             "tests/demo_transclude_conditional/demo",
         ),
     ),
