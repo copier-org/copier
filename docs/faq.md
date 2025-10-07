@@ -176,7 +176,7 @@ If the repository containing the template is a shallow clone, the git process ca
 Copier might consume unusually high resources. To avoid that, use a fully-cloned
 repository.
 
-## While developing, why the template doesn't include dirty changes?
+## While developing, why doesn't the template include dirty changes?
 
 Copier follows [a specific algorithm][templates-versions] to choose what reference to
 use from the template. It also [includes dirty changes in the `HEAD` ref while
