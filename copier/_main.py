@@ -1162,6 +1162,10 @@ class Worker:
                 quiet=True,
                 src_path=self.subproject.template.url,  # type: ignore[union-attr]
                 vcs_ref=self.subproject.template.commit,  # type: ignore[union-attr]
+                # Exclude also paths listed in the new template version, so they
+                # won't be included in the diff as deleted paths to prevent deletion.
+                # https://github.com/orgs/copier-org/discussions/2345
+                exclude=[*self.template.exclude, *self.exclude],
             ) as old_worker:
                 old_worker.run_copy()
             # Run pre-migration tasks

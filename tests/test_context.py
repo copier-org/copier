@@ -108,6 +108,50 @@ def test_exclude_templating_with_operation(
     assert copy_and_update.read_text() == "bar"
 
 
+def test_exclude_templating_with_operation_added_in_new_version(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """
+    Ensure it's possible to create one-off boilerplate files that are not
+    managed during updates via `_exclude` using the `_copier_operation` context variable
+    when the `_exclude` item is added in the new template version.
+    """
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    template = "{% if _copier_operation == 'update' %}copy-only{% endif %}"
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "copy-only": "foo",
+                "copy-and-update": "foo",
+            }
+        )
+        git_save(tag="1.0.0")
+        build_file_tree(
+            {
+                "copier.yml": f'_exclude:\n - "{template}"',
+                "copy-only": "bar",
+                "copy-and-update": "bar",
+            }
+        )
+        git_save(tag="2.0.0")
+    copy_only = dst / "copy-only"
+    copy_and_update = dst / "copy-and-update"
+
+    copier.run_copy(str(src), dst, defaults=True, overwrite=True, vcs_ref="1.0.0")
+    for file in (copy_only, copy_and_update):
+        assert file.exists()
+        assert file.read_text() == "foo"
+
+    with local.cwd(dst):
+        git_save()
+
+    copier.run_update(str(dst), overwrite=True)
+    assert copy_only.read_text() == "foo"
+    assert copy_and_update.read_text() == "bar"
+
+
 def test_task_templating_with_operation(
     tmp_path_factory: pytest.TempPathFactory, tmp_path: Path
 ) -> None:
