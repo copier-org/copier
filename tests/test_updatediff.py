@@ -2023,3 +2023,39 @@ def test_disable_secret_validator_on_replay(
     answers = load_answersfile_data(dst)
     assert answers == {"_src_path": str(src), "_commit": "v1"}
     assert (dst / ".env").read_text() == "TOKEN=$up3r-$3cr3t"
+
+
+def test_exclude_added_in_new_version(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "copy-only": "foo",
+                "copy-and-update": "foo",
+            }
+        )
+        git_save(tag="v1")
+        build_file_tree(
+            {
+                "copier.yml": "_exclude:\n - copy-only",
+                "copy-only": "bar",
+                "copy-and-update": "bar",
+            }
+        )
+        git_save(tag="v2")
+    copy_only = dst / "copy-only"
+    copy_and_update = dst / "copy-and-update"
+
+    run_copy(str(src), dst, defaults=True, overwrite=True, vcs_ref="v1")
+    for file in (copy_only, copy_and_update):
+        assert file.exists()
+        assert file.read_text() == "foo"
+
+    with local.cwd(dst):
+        git_save()
+
+    run_update(str(dst), overwrite=True)
+    assert copy_only.read_text() == "foo"
+    assert copy_and_update.read_text() == "bar"
