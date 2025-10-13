@@ -601,7 +601,9 @@ def load_answersfile_data(
 ) -> AnyByStrDict:
     """Load answers data from a `$dst_path/$answers_file` file if it exists."""
     try:
-        with Path(dst_path, answers_file).open("rb") as fd:
+        # Resolve `..` segments first, which the OS can't do when `dst_path`
+        # doesn't exist yet (e.g. on first copy).
+        with Path(dst_path, answers_file).resolve().open("rb") as fd:
             return yaml.safe_load(fd)
     except (FileNotFoundError, IsADirectoryError):
         if warn_on_missing:
