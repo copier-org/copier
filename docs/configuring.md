@@ -1442,6 +1442,58 @@ Suppress status output.
 
     Not supported in `copier.yml`.
 
+### `resolve_commit_to_sha`
+
+-   Format: `bool`
+-   CLI flags: `--resolve-commit-to-sha`
+-   Default value: `False`
+
+When copying or updating from a Git-versioned template, store the actual SHA commit hash
+in the answers file instead of the Git reference (tag/branch name). This provides an
+immutable reference to the exact template version used, ensuring reproducibility and
+traceability.
+
+Storing SHA hashes instead of symbolic references (tags/branches) is useful for:
+
+-   **Reproducibility**: Ensures the exact same template version can be used across
+    different environments
+-   **Handling mutable references**: References that change over time (like floating
+    tags or branch heads) won't affect existing projects
+
+!!! info
+
+    Template authors can enable this by default in their templates by setting
+    `_resolve_commit_to_sha: true` in `copier.yml`. The CLI flag takes precedence
+    over the template configuration.
+
+!!! example "Usage examples"
+
+    ```shell
+    # Store immutable reference for reproducible builds
+    copier copy --resolve-commit-to-sha --vcs-ref v2.0.0 template destination
+
+    # Working with a development branch
+    copier copy --resolve-commit-to-sha --vcs-ref main template destination
+
+    # Using a floating tag (stores the current SHA, not the tag)
+    copier copy --resolve-commit-to-sha --vcs-ref stable/latest template destination
+    ```
+
+    In all cases, the answers file will contain a SHA hash like `a1b2c3d4e5f6`
+    instead of the symbolic reference, ensuring an immutable reference to the
+    exact template version.
+
+!!! example "Template configuration"
+
+    Template authors can enable this behavior by default:
+
+    ```yaml title="copier.yml"
+    _resolve_commit_to_sha: true
+    ```
+
+    This ensures all projects generated from the template will store immutable
+    SHA references for better reproducibility and traceability.
+
 ### `secret_questions`
 
 -   Format: `List[str]`

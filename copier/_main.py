@@ -219,8 +219,8 @@ class Worker:
 
         resolve_commit_to_sha:
             When `True`, store SHA commit hash instead of git ref (tag/branch)
-            in the answers file. This prevents issues with moving/floating tags
-            that may point to different commits over time.
+            in the answers file. This provides an immutable reference to the
+            exact template version used.
     """
 
     # NOTE: attributes are fully documented in [creating.md](../docs/creating.md)
@@ -349,7 +349,7 @@ class Worker:
             should_resolve = self.template.resolve_commit_to_sha
 
         if should_resolve and self.template.vcs == "git":
-            # Use SHA hash instead of potentially moving ref
+            # Use SHA hash for immutable reference
             commit = self.template.commit_hash or commit
         src = self.template.url
         for key, value in (("_commit", commit), ("_src_path", src)):

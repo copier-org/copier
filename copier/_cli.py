@@ -165,7 +165,7 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
     resolve_commit_to_sha = cli.Flag(
         ["--resolve-commit-to-sha"],
         default=False,
-        help="Store SHA commit hash instead of git ref in answers file (prevents issues with moving tags)",
+        help="Store SHA commit hash instead of git ref in answers file for immutable references",
     )
 
     @cli.switch(  # type: ignore[misc]
