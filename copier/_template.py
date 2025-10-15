@@ -556,6 +556,14 @@ class Template:
         return bool(self.config_data.get("preserve_symlinks", False))
 
     @cached_property
+    def resolve_commit_to_sha(self) -> bool:
+        """Know if Copier should resolve commit references to SHA.
+
+        See [resolve_commit_to_sha][].
+        """
+        return bool(self.config_data.get("resolve_commit_to_sha", False))
+
+    @cached_property
     def local_abspath(self) -> Path:
         """Get the absolute path to the template on disk.
 

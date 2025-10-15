@@ -162,6 +162,11 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
         default=False,
         help="Skip template tasks execution",
     )
+    resolve_commit_to_sha = cli.Flag(
+        ["--resolve-commit-to-sha"],
+        default=False,
+        help="Store SHA commit hash instead of git ref in answers file (prevents issues with moving tags)",
+    )
 
     @cli.switch(  # type: ignore[misc]
         ["-d", "--data"],
@@ -226,6 +231,7 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
             use_prereleases=self.prereleases,
             unsafe=self.unsafe,
             skip_tasks=self.skip_tasks,
+            resolve_commit_to_sha=self.resolve_commit_to_sha,
             **kwargs,
         )
 

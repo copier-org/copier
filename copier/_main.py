@@ -216,6 +216,11 @@ class Worker:
 
         skip_tasks:
             When `True`, skip template tasks execution.
+
+        resolve_commit_to_sha:
+            When `True`, store SHA commit hash instead of git ref (tag/branch)
+            in the answers file. This prevents issues with moving/floating tags
+            that may point to different commits over time.
     """
 
     # NOTE: attributes are fully documented in [creating.md](../docs/creating.md)
@@ -241,6 +246,7 @@ class Worker:
     unsafe: bool = False
     skip_answered: bool = False
     skip_tasks: bool = False
+    resolve_commit_to_sha: bool = False
 
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
     _cleanup_hooks: list[Callable[[], None]] = field(default_factory=list, init=False)
@@ -333,7 +339,18 @@ class Worker:
         """Get only answers that will be remembered in the copier answers file."""
         # All internal values must appear first
         answers: AnyByStrDict = {}
+        # Check if we should resolve to SHA
         commit = self.template.commit
+        # Use SHA if either command line flag or template config says so
+        # CLI flag takes precedence over template config
+        should_resolve = self.resolve_commit_to_sha
+        if not should_resolve:
+            # Only check template config if CLI flag is False (the default)
+            should_resolve = self.template.resolve_commit_to_sha
+
+        if should_resolve and self.template.vcs == "git":
+            # Use SHA hash instead of potentially moving ref
+            commit = self.template.commit_hash or commit
         src = self.template.url
         for key, value in (("_commit", commit), ("_src_path", src)):
             if value is not None:
@@ -421,6 +438,7 @@ class Worker:
                 "unsafe": lambda: self.unsafe,
                 "skip_answered": lambda: self.skip_answered,
                 "skip_tasks": lambda: self.skip_tasks,
+                "resolve_commit_to_sha": lambda: self.resolve_commit_to_sha,
                 "sep": lambda: os.sep,
                 "os": lambda: OS,
             }
