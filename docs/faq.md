@@ -215,6 +215,55 @@ $ copier copy -r HEAD ./src ./dst
 ... then you'll notice `new-file.txt` does exist. You passed a specific ref to copy, so
 Copier skips its autodetection and just goes for the `HEAD` you already chose.
 
+## When should I use SHA references instead of tags/branches?
+
+The `--resolve-commit-to-sha` flag stores the actual commit SHA instead of symbolic
+references (tags/branches) in your answers file. This is useful in several scenarios:
+
+### For reproducible builds
+
+When you need to ensure that everyone on your team or CI/CD pipeline uses the exact same
+template version:
+
+```shell
+copier copy --resolve-commit-to-sha --vcs-ref v2.0.0 template destination
+```
+
+### For audit and compliance
+
+When you need immutable records of which exact template version was used for security or
+compliance purposes.
+
+### When working with development branches
+
+If you're using templates from frequently updated branches:
+
+```shell
+copier copy --resolve-commit-to-sha --vcs-ref main template destination
+```
+
+### With floating or moving tags
+
+Some templates use floating tags (like `stable/v1` or `latest`) that get moved to newer
+commits:
+
+```shell
+copier copy --resolve-commit-to-sha --vcs-ref stable/latest template destination
+```
+
+### Template author configuration
+
+Template authors can enable this behavior by default to ensure all projects use
+immutable references:
+
+```yaml title="copier.yml"
+_resolve_commit_to_sha: true
+```
+
+Using SHA references provides better reproducibility, traceability, and security, though
+at the cost of not automatically following tag updates. See [resolve_commit_to_sha][]
+for more details.
+
 ## How to pass credentials to Git?
 
 If you do something like this, and the template supports updates, you'll notice that the
