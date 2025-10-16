@@ -1298,6 +1298,7 @@ class Worker:
                 extra_exclude = [
                     filename.split("!! ").pop()
                     for filename in ignored_files.splitlines()
+                    if filename.startswith("!! ")
                 ]
                 for skip_pattern in chain(
                     self.skip_if_exists, self.template.skip_if_exists, extra_exclude
