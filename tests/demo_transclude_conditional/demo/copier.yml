@@ -1,0 +1,27 @@
+
+condition:
+  type: bool
+  default: True
+
+
+---
+!include ./include_me.yml
+when "{{ condition }}"
+---
+!include ./include_me_also.yml
+---
+
+_exclude:
+  - "copier.yml"
+
+
+env_type:
+  type: str
+  choices:
+    - dev
+    - run
+
+---
+!include env/dev.yml
+when "{{ env_type == 'dev' }}"
+---
