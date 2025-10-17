@@ -638,6 +638,11 @@ class Worker:
         return self.template.exclude + tuple(self.exclude)
 
     @cached_property
+    def all_skip_if_exists(self) -> Sequence[str]:
+        """Combine default and template skip-if-exists patterns."""
+        return tuple(chain(self.skip_if_exists, self.template.skip_if_exists))
+
+    @cached_property
     def jinja_env(self) -> YieldEnvironment:
         """Return a pre-configured Jinja environment.
 
@@ -704,12 +709,7 @@ class Worker:
     @cached_property
     def match_skip(self) -> Callable[[Path], bool]:
         """Get a callable to match paths against all skip-if-exists patterns."""
-        return self._path_matcher(
-            map(
-                self._render_string,
-                tuple(chain(self.skip_if_exists, self.template.skip_if_exists)),
-            )
-        )
+        return self._path_matcher(map(self._render_string, self.all_skip_if_exists))
 
     def _render_template(self) -> None:
         """Render the template in the subproject root."""
@@ -1301,7 +1301,7 @@ class Worker:
                     if filename.startswith("!! ")
                 ]
                 for skip_pattern in chain(
-                    self.skip_if_exists, self.template.skip_if_exists, extra_exclude
+                    map(self._render_string, self.all_skip_if_exists), extra_exclude
                 ):
                     apply_cmd = apply_cmd["--exclude", skip_pattern]
                 (apply_cmd << diff)(retcode=None)
