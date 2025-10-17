@@ -2059,3 +2059,33 @@ def test_exclude_added_in_new_version(tmp_path_factory: pytest.TempPathFactory) 
     run_update(str(dst), overwrite=True)
     assert copy_only.read_text() == "foo"
     assert copy_and_update.read_text() == "bar"
+
+
+def test_skip_if_exists_templated(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yml": """\
+                    _skip_if_exists:
+                        - "{{ 'skip-if-exists.txt' }}"
+                """,
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "skip-if-exists.txt": "foo",
+            }
+        )
+        git_save(tag="v1")
+        build_file_tree({"skip-if-exists.txt": "bar"})
+        git_save(tag="v2")
+
+    run_copy(str(src), dst, defaults=True, overwrite=True, vcs_ref="v1")
+    assert (dst / "skip-if-exists.txt").read_text() == "foo"
+
+    with local.cwd(dst):
+        git_save()
+        build_file_tree({"skip-if-exists.txt": "baz"})
+        git_save()
+
+    run_update(str(dst), overwrite=True)
+    assert (dst / "skip-if-exists.txt").read_text() == "baz"
