@@ -32,7 +32,7 @@ jobs:
           - macos-latest
           - ubuntu-latest
           - windows-latest
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
         include:
           # HACK: Limit the number of pytest workers on macOS to 3 to avoid a
           #   timeout for a few test cases. For unknown reasons, the number of
