@@ -214,3 +214,66 @@ def test_update_with_gpg_sign(
     gitconfig.set({"user.signinkey": "123456", "commit.gpgsign": "true"})
     with pytest.warns(DirtyLocalWarning):
         run_update(dst, defaults=True, overwrite=True)
+
+
+def test_update_parallel_projects_dirty(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """Test updating two parallel copier projects without committing changes between updates."""
+    src = tmp_path_factory.mktemp("src")
+    parent = tmp_path_factory.mktemp("parent")
+    dst1 = parent / "project1"
+    dst2 = parent / "project2"
+
+    # Create initial template
+    build_file_tree(
+        {
+            (src / "template" / ".copier-answers.yml.jinja"): (
+                """\
+                # Changes here will be overwritten by Copier
+                {{ _copier_answers|to_nice_yaml }}
+                """
+            ),
+            (src / "copier.yml"): (
+                """\
+                question:
+                    type: str
+                _subdirectory: template
+                """
+            ),
+            (src / "template" / "file.txt.jinja"): "{{ question }}",
+        }
+    )
+
+    with local.cwd(src):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m", "initial template commit")
+
+    with local.cwd(parent):
+        git("init")
+
+    # Create projects
+    for dst in [dst1, dst2]:
+        run_copy(str(src), dst, overwrite=True, data={"question": dst.name})
+
+    with local.cwd(parent):
+        git("add", "-A")
+        git("commit", "-m", "initial project commit")
+
+    # Update first project, then the second without committing/stashing changes from first
+    for dst in [dst1, dst2]:
+        run_update(dst, overwrite=True, data={"question": f"Updated {dst.name}"})
+
+    for dst in [dst1, dst2]:
+        assert (dst / "file.txt").read_text() == f"Updated {dst.name}"
+
+    # Verify template is still dirty
+    expected = """
+M project1/.copier-answers.yml
+ M project1/file.txt
+ M project2/.copier-answers.yml
+ M project2/file.txt
+"""
+    with local.cwd(parent):
+        assert git("status", "--porcelain").strip() == expected.strip()
