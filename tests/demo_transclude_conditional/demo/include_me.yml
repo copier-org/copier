@@ -1,0 +1,38 @@
+
+var:
+  type: int
+  default: 1
+
+the_str:
+  type: str
+  # when: "{{ var>0 }}"
+
+test:
+  # type: "{% if var %}bool{% else %}str{% endif %}"
+  type: "{{ 'bool' if var else 'str' }}"
+  # default: "{% if var %}false{% else %}my_str{% endif %}"
+  default: "{{ '' if var else 'my_str' }}"
+
+
+test_json:
+  type: json
+  default: '{"test":1}'
+
+test_path:
+  type: path
+  default: './tests'
+
+test_yaml:
+  type: yaml
+  default:
+    test:
+      type: bool
+
+
+
+
+_exclude:
+  - "include_me.yml"
+
+
+
