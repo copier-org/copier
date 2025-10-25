@@ -272,8 +272,6 @@ class Question:
                 try:
                     result = self.answers.user_defaults[self.var_name]
                 except KeyError:
-                    if self.default is MISSING:
-                        return MISSING
                     try:
                         result = self.render_value(
                             self.settings.defaults.get(self.var_name, self.default),
