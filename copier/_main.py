@@ -266,8 +266,6 @@ class Worker:
     skip_answered: bool = False
     skip_tasks: bool = False
     ignore_git_tags: bool = False
-    # Backward compatibility: accept old flag name
-    resolve_commit_to_sha: bool | None = None
 
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
     _cleanup_hooks: list[Callable[[], None]] = field(default_factory=list, init=False)
