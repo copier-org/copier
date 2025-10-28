@@ -272,14 +272,6 @@ class Worker:
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
     _cleanup_hooks: list[Callable[[], None]] = field(default_factory=list, init=False)
 
-    def __post_init__(self) -> None:
-        """Handle backward compatibility for renamed flag."""
-        if self.resolve_commit_to_sha is not None:
-            # Old flag was used, apply it to new flag
-            self.ignore_git_tags = self.resolve_commit_to_sha
-            # Don't keep the old flag around
-            self.resolve_commit_to_sha = None
-
     def __enter__(self) -> Worker:
         """Allow using worker as a context manager."""
         return self

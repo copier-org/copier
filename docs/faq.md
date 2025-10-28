@@ -215,54 +215,66 @@ $ copier copy -r HEAD ./src ./dst
 ... then you'll notice `new-file.txt` does exist. You passed a specific ref to copy, so
 Copier skips its autodetection and just goes for the `HEAD` you already chose.
 
-## When should I use SHA references instead of tags/branches?
+## How does Copier handle floating tags?
 
-The `--resolve-commit-to-sha` flag stores the actual commit SHA instead of symbolic
-references (tags/branches) in your answers file. This is useful in several scenarios:
+Copier uses **dual-versioning** with **automatic tag resolution** to handle both stable
+and floating tags intelligently. No flag is needed in most cases.
 
-### For reproducible builds
+### What is dual-versioning?
 
-When you need to ensure that everyone on your team or CI/CD pipeline uses the exact same
-template version:
+When copying from a Git template, Copier stores BOTH values in your answers file:
 
-```shell
-copier copy --resolve-commit-to-sha --vcs-ref v2.0.0 template destination
-```
+-   `_commit`: The semantic version (tag/branch name) - human-readable
+-   `_commit_sha`: The SHA commit hash - immutable reference
 
-### For audit and compliance
+During updates, Copier automatically chooses which to use based on whether the tag is
+"floating" (movable) or "stable" (fixed).
 
-When you need immutable records of which exact template version was used for security or
-compliance purposes.
+### Automatic tag resolution
 
-### When working with development branches
+Copier automatically detects floating tags like:
 
-If you're using templates from frequently updated branches:
+-   `latest`, `stable/*`, `main`, `master`, `develop`
+-   Branch patterns: `feat/*`, `fix/*`, `feature-*`
 
-```shell
-copier copy --resolve-commit-to-sha --vcs-ref main template destination
-```
-
-### With floating or moving tags
-
-Some templates use floating tags (like `stable/v1` or `latest`) that get moved to newer
-commits:
+For these, Copier uses SHA during updates to ensure reproducibility. For stable semantic
+versions (like `v1.0.0`), it preserves the tag name.
 
 ```shell
-copier copy --resolve-commit-to-sha --vcs-ref stable/latest template destination
+# No special flag needed - automatic resolution handles it
+copier copy --vcs-ref stable/v1 template destination
+copier update  # Works correctly even if tag moved
 ```
 
-### Template author configuration
+### When to use `--ignore-git-tags`
 
-Template authors can enable this behavior by default to ensure all projects use
-immutable references:
+Use this flag to force SHA usage for ALL updates, overriding automatic detection:
+
+-   **When automatic resolution isn't working**: If updates fail with floating tags, use
+    this flag to force SHA usage
+-   **For strict compliance/reproducibility**: When you need guaranteed immutable
+    references for all updates
+
+```shell
+# Force SHA usage
+copier copy --ignore-git-tags --vcs-ref v2.0.0 template destination
+copier update --ignore-git-tags
+```
+
+### Template configuration
+
+Template authors can force SHA usage or define custom stable patterns:
 
 ```yaml title="copier.yml"
-_resolve_commit_to_sha: true
+# Force SHA usage for all projects
+_ignore_git_tags: true
+
+# Or define custom stable patterns
+_stable_tag_patterns:
+    - ^release/.*$
 ```
 
-Using SHA references provides better reproducibility, traceability, and security, though
-at the cost of not automatically following tag updates. See [resolve_commit_to_sha][]
-for more details.
+See [ignore_git_tags][] for more details.
 
 ## How to pass credentials to Git?
 

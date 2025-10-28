@@ -1474,57 +1474,80 @@ Suppress status output.
 
     Not supported in `copier.yml`.
 
-### `resolve_commit_to_sha`
+### `ignore_git_tags`
 
 -   Format: `bool`
--   CLI flags: `--resolve-commit-to-sha`
+-   CLI flags: `--ignore-git-tags`
 -   Default value: `False`
 
-When copying or updating from a Git-versioned template, store the actual SHA commit hash
-in the answers file instead of the Git reference (tag/branch name). This provides an
-immutable reference to the exact template version used, ensuring reproducibility and
-traceability.
+Copier uses **dual-versioning** when copying from Git-versioned templates: it stores
+BOTH the semantic version (tag/branch name) and the SHA commit hash in the answers file.
+During updates, Copier applies **automatic tag resolution** to intelligently choose
+which to use.
 
-Storing SHA hashes instead of symbolic references (tags/branches) is useful for:
+By default, Copier automatically detects floating tags (like `latest`, `stable/v1`,
+`main`) and uses SHA for those, while preserving semantic versions for stable tags (like
+`v1.0.0`).
 
--   **Reproducibility**: Ensures the exact same template version can be used across
-    different environments
--   **Handling mutable references**: References that change over time (like floating
-    tags or branch heads) won't affect existing projects
+If automatic tag resolution isn't working as expected, use the `--ignore-git-tags` flag
+to force SHA usage for all updates, overriding automatic detection.
+
+**Automatic Tag Resolution** detects these floating patterns:
+
+-   `latest`, `stable/*`, `main`, `master`, `develop`
+-   Branch-like patterns: `feat/*`, `fix/*`, `feature-*`
+
+For these patterns, Copier automatically uses SHA to ensure reproducible updates. For
+stable semantic versions (like `v1.0.0`), it preserves the tag name.
 
 !!! info
 
-    Template authors can enable this by default in their templates by setting
-    `_resolve_commit_to_sha: true` in `copier.yml`. The CLI flag takes precedence
-    over the template configuration.
+    Template authors can force SHA usage for all projects by setting
+    `_ignore_git_tags: true` in `copier.yml`. The CLI flag takes precedence
+    over template configuration.
 
-!!! example "Usage examples"
+!!! example "Automatic resolution (recommended)"
 
     ```shell
-    # Store immutable reference for reproducible builds
-    copier copy --resolve-commit-to-sha --vcs-ref v2.0.0 template destination
+    # No flag needed - automatic resolution handles everything
+    copier copy --vcs-ref v1.0.0 template destination
+    copier update  # Automatically uses SHA for floating tags
 
-    # Working with a development branch
-    copier copy --resolve-commit-to-sha --vcs-ref main template destination
-
-    # Using a floating tag (stores the current SHA, not the tag)
-    copier copy --resolve-commit-to-sha --vcs-ref stable/latest template destination
+    # With floating tag - automatically uses SHA for updates
+    copier copy --vcs-ref stable/v1 template destination
+    copier update  # Updates work correctly even if tag moved
     ```
 
-    In all cases, the answers file will contain a SHA hash like `a1b2c3d4e5f6`
-    instead of the symbolic reference, ensuring an immutable reference to the
-    exact template version.
+    The answers file contains both:
+    ```yaml
+    _commit: v1.0.0  # or stable/v1
+    _commit_sha: a1b2c3d4e5f6...
+    ```
+
+!!! example "Force SHA usage"
+
+    Use this if automatic resolution isn't working or for strict reproducibility:
+
+    ```shell
+    # Override automatic detection - always use SHA
+    copier copy --ignore-git-tags --vcs-ref v1.0.0 template destination
+    copier update --ignore-git-tags
+    ```
 
 !!! example "Template configuration"
 
-    Template authors can enable this behavior by default:
+    Template authors can force SHA usage by default:
 
     ```yaml title="copier.yml"
-    _resolve_commit_to_sha: true
+    _ignore_git_tags: true
     ```
 
-    This ensures all projects generated from the template will store immutable
-    SHA references for better reproducibility and traceability.
+    Or define custom stable tag patterns:
+
+    ```yaml title="copier.yml"
+    _stable_tag_patterns:
+      - ^release/.*$  # Treat release/* as stable
+    ```
 
 ### `secret_questions`
 
