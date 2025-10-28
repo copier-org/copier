@@ -305,7 +305,7 @@ def test_parallel_projects_in_subdirs(
         assert (dst / "file.txt").read_text() == f"Updated {dst.name}"
 
     # Verify subdirectories are both now dirty
-    expected = "M project1/.copier-answers.yml\n M project1/file.txt\n M project2/.copier-answers.yml\n M project2/file.txt"
+    expected = "M  project1/.copier-answers.yml\nM  project1/file.txt\nM  project2/.copier-answers.yml\nM  project2/file.txt"
     with local.cwd(parent):
         assert git("status", "--porcelain").strip() == expected
 
