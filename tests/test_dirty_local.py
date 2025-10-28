@@ -7,7 +7,7 @@ from pytest_gitconfig.plugin import GitConfig
 
 import copier
 from copier._main import run_copy, run_update
-from copier.errors import DirtyLocalWarning
+from copier.errors import DirtyLocalWarning, UserMessageError
 
 from .helpers import DATA, PROJECT_TEMPLATE, build_file_tree, git
 
@@ -216,10 +216,10 @@ def test_update_with_gpg_sign(
         run_update(dst, defaults=True, overwrite=True)
 
 
-def test_update_parallel_projects_dirty(
+@pytest.fixture
+def setup_parallel_projects(
     tmp_path_factory: pytest.TempPathFactory,
-) -> None:
-    """Test updating two parallel copier projects without committing changes between updates."""
+) -> tuple[Path, Path, Path, Path]:
     src = tmp_path_factory.mktemp("src")
     parent = tmp_path_factory.mktemp("parent")
     dst1 = parent / "project1"
@@ -260,20 +260,60 @@ def test_update_parallel_projects_dirty(
     with local.cwd(parent):
         git("add", "-A")
         git("commit", "-m", "initial project commit")
+    return dst1, dst2, src, parent
+
+
+def test_update_parallel_projects_dirty_updated_answers(
+    setup_parallel_projects: tuple[Path, Path, Path, Path],
+) -> None:
+    """Test updating two parallel copier projects with new answers without committing changes between updates."""
+    dst1, dst2, _, parent = setup_parallel_projects
+    # Update first project, then the second without committing/stashing changes from first
+    for dst in [dst1, dst2]:
+        assert (dst / "file.txt").read_text() == dst.name
+        run_update(dst, overwrite=True, data={"question": f"Updated {dst.name}"})
+        assert (dst / "file.txt").read_text() == f"Updated {dst.name}"
+
+    # Verify subdirectories are both now dirty
+    expected = "M project1/.copier-answers.yml\n M project1/file.txt\n M project2/.copier-answers.yml\n M project2/file.txt"
+    with local.cwd(parent):
+        assert git("status", "--porcelain").strip() == expected
+
+
+def test_update_parallel_projects_dirty_updated_src(
+    setup_parallel_projects: tuple[Path, Path, Path, Path],
+) -> None:
+    """Test updating two parallel copier projects after updating the template without committing changes between updates."""
+    dst1, dst2, src, _ = setup_parallel_projects
+
+    (src / "template" / "file.txt.jinja").write_text("New {{ question }}")
+
+    with local.cwd(src):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m", "second template commit")
 
     # Update first project, then the second without committing/stashing changes from first
     for dst in [dst1, dst2]:
+        assert (dst / "file.txt").read_text() == dst.name
+        run_update(dst, defaults=True, overwrite=True)
+        assert (dst / "file.txt").read_text() == f"New {dst.name}"
+
+
+def test_fails_on_update_to_dirty_project_subdir(
+    setup_parallel_projects: tuple[Path, Path, Path, Path],
+) -> None:
+    """Test failing on attempting to update a dirty project subdirectory."""
+    dst1, dst2, _, parent = setup_parallel_projects
+    for dst in [dst1, dst2]:
         run_update(dst, overwrite=True, data={"question": f"Updated {dst.name}"})
 
-    for dst in [dst1, dst2]:
-        assert (dst / "file.txt").read_text() == f"Updated {dst.name}"
-
-    # Verify template is still dirty
-    expected = """
-M project1/.copier-answers.yml
- M project1/file.txt
- M project2/.copier-answers.yml
- M project2/file.txt
-"""
     with local.cwd(parent):
-        assert git("status", "--porcelain").strip() == expected.strip()
+        assert bool(git("status", "--porcelain").strip())
+
+    for dst in [dst1, dst2]:
+        with pytest.raises(UserMessageError):
+            run_update(
+                dst, overwrite=True, data={"question": f"Updated {dst.name} Again"}
+            )
+        assert (dst / "file.txt").read_text() == f"Updated {dst.name}"
