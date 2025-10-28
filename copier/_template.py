@@ -556,12 +556,30 @@ class Template:
         return bool(self.config_data.get("preserve_symlinks", False))
 
     @cached_property
-    def resolve_commit_to_sha(self) -> bool:
-        """Know if Copier should resolve commit references to SHA.
+    def ignore_git_tags(self) -> bool:
+        """Know if Copier should ignore git tags and use SHA instead.
 
-        See [resolve_commit_to_sha][].
+        See [ignore_git_tags][].
         """
-        return bool(self.config_data.get("resolve_commit_to_sha", False))
+        return bool(self.config_data.get("_ignore_git_tags", False))
+
+    @cached_property
+    def stable_tag_patterns(self) -> list[str] | None:
+        """Get custom regex patterns for stable tags.
+
+        Template authors can define which tag patterns should be considered
+        stable semantic versions vs floating tags.
+
+        See [stable_tag_patterns][].
+        """
+        patterns = self.config_data.get("_stable_tag_patterns")
+        if patterns is None:
+            return None
+        if isinstance(patterns, str):
+            return [patterns]
+        if isinstance(patterns, list):
+            return patterns
+        return None
 
     @cached_property
     def local_abspath(self) -> Path:

@@ -59,7 +59,11 @@ def test_migrations_and_tasks(tmp_path: Path, skip_tasks: bool) -> None:
     assert not list(dst.glob("*-before.txt"))
     assert not list(dst.glob("*-after.txt"))
     answers = load_answersfile_data(dst)
-    assert answers == {"_commit": "v1.0.0", "_src_path": str(src)}
+    # Check required fields are present
+    assert answers["_commit"] == "v1.0.0"
+    assert answers["_src_path"] == str(src)
+    # SHA is also stored in new dual-versioning system
+    assert "_commit_sha" in answers
     # Save changes in downstream repo
     with local.cwd(dst):
         git("init")
@@ -89,7 +93,9 @@ def test_migrations_and_tasks(tmp_path: Path, skip_tasks: bool) -> None:
     assert (dst / "PEP440-1.0.0-2-2.0-before.json").is_file()
     assert (dst / "PEP440-1.0.0-2-2.0-after.json").is_file()
     answers = load_answersfile_data(dst)
-    assert answers == {"_commit": "v2.0", "_src_path": str(src)}
+    assert answers["_commit"] == "v2.0"
+    assert answers["_src_path"] == str(src)
+    assert "_commit_sha" in answers
 
 
 def test_pre_migration_modifies_answers(

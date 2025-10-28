@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import platform
+import re
 import subprocess
 import sys
 from collections.abc import Iterable, Mapping, Sequence
@@ -28,6 +29,7 @@ from typing import (
 from unicodedata import normalize
 
 from jinja2.loaders import FileSystemLoader
+from packaging.version import InvalidVersion, parse as parse_version
 from pathspec import PathSpec
 from plumbum import ProcessExecutionError, colors
 from plumbum.machines import local
@@ -217,14 +219,29 @@ class Worker:
         skip_tasks:
             When `True`, skip template tasks execution.
 
-        resolve_commit_to_sha:
-            When `True`, store SHA commit hash instead of git ref (tag/branch)
-            in the answers file. This provides an immutable reference to the
-            exact template version used.
+        ignore_git_tags:
+            When `True`, always use SHA commit hash instead of git tags/branches
+            for update operations. Both semantic version and SHA are always stored
+            in the answers file; this flag controls which one is used for updates.
     """
 
     # NOTE: attributes are fully documented in [creating.md](../docs/creating.md)
     # make sure to update documentation upon any changes.
+
+    # Floating tag patterns for automatic tag resolution
+    # These patterns identify tags/refs that are likely to move over time
+    _FLOATING_TAG_PATTERNS = [
+        r"^latest$",
+        r"^stable(/.*)?$",
+        r"^main$",
+        r"^master$",
+        r"^develop$",
+        r"^development$",
+        r"^HEAD$",
+        # Branch-like patterns
+        r"^[a-z]+[-_][a-z]+$",  # e.g., feature-branch, dev-test
+        r"^(feat|fix|chore|docs|test|refactor)/.*$",  # conventional branch names
+    ]
 
     src_path: str | None = None
     dst_path: Path = Path()
@@ -246,10 +263,20 @@ class Worker:
     unsafe: bool = False
     skip_answered: bool = False
     skip_tasks: bool = False
-    resolve_commit_to_sha: bool = False
+    ignore_git_tags: bool = False
+    # Backward compatibility: accept old flag name
+    resolve_commit_to_sha: bool | None = None
 
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
     _cleanup_hooks: list[Callable[[], None]] = field(default_factory=list, init=False)
+
+    def __post_init__(self) -> None:
+        """Handle backward compatibility for renamed flag."""
+        if self.resolve_commit_to_sha is not None:
+            # Old flag was used, apply it to new flag
+            self.ignore_git_tags = self.resolve_commit_to_sha
+            # Don't keep the old flag around
+            self.resolve_commit_to_sha = None
 
     def __enter__(self) -> Worker:
         """Allow using worker as a context manager."""
@@ -339,22 +366,39 @@ class Worker:
         """Get only answers that will be remembered in the copier answers file."""
         # All internal values must appear first
         answers: AnyByStrDict = {}
-        # Check if we should resolve to SHA
-        commit = self.template.commit
-        # Use SHA if either command line flag or template config says so
-        # CLI flag takes precedence over template config
-        should_resolve = self.resolve_commit_to_sha
-        if not should_resolve:
-            # Only check template config if CLI flag is False (the default)
-            should_resolve = self.template.resolve_commit_to_sha
 
-        if should_resolve and self.template.vcs == "git":
-            # Use SHA hash for immutable reference
-            commit = self.template.commit_hash or commit
-        src = self.template.url
-        for key, value in (("_commit", commit), ("_src_path", src)):
-            if value is not None:
-                answers[key] = value
+        # Always store both semantic version and SHA when available
+        if self.template.vcs == "git":
+            # For copy operations or explicit vcs_ref, use the specified ref
+            # For updates with :current:, use the resolved ref
+            if self.vcs_ref is VcsRef.CURRENT:
+                # During update with :current:, use resolved ref
+                semantic_version = self.resolved_vcs_ref or self.template.commit
+            elif self.vcs_ref == "HEAD":
+                # When user specifies HEAD, store the git describe output instead
+                # of the literal string "HEAD" for better human readability
+                semantic_version = self.template.commit
+            else:
+                # During copy or update with explicit ref (tag/branch name), use vcs_ref directly
+                semantic_version = self.vcs_ref or self.template.commit
+            sha_version = self.template.commit_hash
+
+            # Dual versioning: Always store both values
+            # _commit stores semantic version (for human readability)
+            # _commit_sha stores SHA (for reliable resolution)
+            # The ignore_git_tags flag controls which one is USED during updates,
+            # not which one is STORED
+
+            if semantic_version:
+                answers["_commit"] = semantic_version
+
+            # Always store SHA separately for fallback
+            if sha_version:
+                answers["_commit_sha"] = sha_version
+
+        # Store source path
+        if src := self.template.url:
+            answers["_src_path"] = src
         # Other data goes next
         answers.update(
             (str(k), v)
@@ -367,6 +411,88 @@ class Worker:
             and isinstance(v, JSONSerializable)
         )
         return answers
+
+    def _get_sha_from_answers(self, answers: dict[str, Any]) -> str | None:
+        """Extract SHA from answers dict.
+
+        Args:
+            answers: The answers dictionary
+
+        Returns:
+            The SHA as a string, or None if not available
+        """
+        sha = answers.get("_commit_sha")
+        return str(sha) if sha else None
+
+    def _is_stable_semantic_version(self, ref: str) -> bool:
+        """Detect if a reference is a stable semantic version or floating tag.
+
+        Args:
+            ref: The git reference to check (tag, branch, etc.)
+
+        Returns:
+            True if the reference is a stable semantic version, False otherwise.
+        """
+        # Check custom stable patterns from template config first
+        # Use subproject.template (FROM version) to avoid circular dependency
+        # This is the template that was used originally, so its config is what matters
+        if self.subproject.template and self.subproject.template.stable_tag_patterns:
+            stable_patterns = self.subproject.template.stable_tag_patterns
+            for pattern in stable_patterns:
+                if re.match(pattern, ref):
+                    return True
+            # If custom patterns defined but no match, it's not stable
+            return False
+
+        # Check against default floating tag patterns
+        for pattern in self._FLOATING_TAG_PATTERNS:
+            if re.match(pattern, ref, re.IGNORECASE):
+                return False
+
+        # Check if it's a valid semver tag
+        try:
+            parse_version(ref)
+            return True
+        except InvalidVersion:
+            return False
+
+    def _resolve_vcs_ref_for_update(
+        self, answers: dict[str, Any] | None = None
+    ) -> str | None:
+        """Resolve which VCS ref to use for update operations.
+
+        Implements automatic tag resolution to handle floating tags:
+        1. If --ignore-git-tags flag is set, always use SHA
+        2. If semantic version looks stable, use it
+        3. Otherwise, fallback to SHA for safety (floating tags)
+
+        Args:
+            answers: The answers dict to read from
+
+        Returns:
+            The resolved VCS reference (semantic version or SHA), or None if unavailable.
+        """
+        # answers must be provided to avoid recursion
+        if answers is None:
+            return None
+
+        # No answers available (first copy)
+        if not answers.get("_commit") and not answers.get("_commit_sha"):
+            return None
+
+        # 1. CLI flag override (explicit user choice)
+        if self.ignore_git_tags:
+            return self._get_sha_from_answers(answers)
+
+        # 2. Automatic resolution: prefer semantic version if stable
+        semantic_version = answers.get("_commit")
+        if semantic_version:
+            semantic_str = str(semantic_version)
+            if self._is_stable_semantic_version(semantic_str):
+                return semantic_str
+
+        # 3. Fallback to SHA (for floating tags or when semantic version doesn't exist)
+        return self._get_sha_from_answers(answers)
 
     def _execute_tasks(self, tasks: Sequence[Task]) -> None:
         """Run the given tasks.
@@ -438,7 +564,7 @@ class Worker:
                 "unsafe": lambda: self.unsafe,
                 "skip_answered": lambda: self.skip_answered,
                 "skip_tasks": lambda: self.skip_tasks,
-                "resolve_commit_to_sha": lambda: self.resolve_commit_to_sha,
+                "ignore_git_tags": lambda: self.ignore_git_tags,
                 "sep": lambda: os.sep,
                 "os": lambda: OS,
             }
@@ -994,12 +1120,16 @@ class Worker:
         """Get the resolved VCS reference to use.
 
         This is either `vcs_ref` or the subproject template ref
-        if `vcs_ref` is `VcsRef.CURRENT`.
+        if `vcs_ref` is `VcsRef.CURRENT`. When using the subproject's
+        stored ref, applies automatic resolution to choose between semantic
+        version and SHA.
         """
         if self.vcs_ref is VcsRef.CURRENT:
             if self.subproject.template is None:
                 raise TypeError("Template not found")
-            return self.subproject.template.ref
+            # Use automatic resolution for updates - pass answers explicitly
+            resolved = self._resolve_vcs_ref_for_update(self.subproject.last_answers)
+            return resolved if resolved else self.subproject.template.ref
         return self.vcs_ref
 
     @cached_property
