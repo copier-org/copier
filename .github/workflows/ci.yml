@@ -19,7 +19,7 @@ env:
   PYTEST_ADDOPTS: ${{ github.event.inputs.pytest_addopts }}
   PYTHONIOENCODING: "UTF-8"
   # renovate: datasource=devbox depName=uv
-  UV_VERSION: "0.8.14"
+  UV_VERSION: "0.8.19"
   # renovate: datasource=github-tags depName=devbox packageName=jetify-com/devbox
   DEVBOX_VERSION: "0.16.0"
 
@@ -32,7 +32,7 @@ jobs:
           - macos-latest
           - ubuntu-latest
           - windows-latest
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
         include:
           # HACK: Limit the number of pytest workers on macOS to 3 to avoid a
           #   timeout for a few test cases. For unknown reasons, the number of
@@ -47,7 +47,7 @@ jobs:
         with:
           fetch-depth: 0 # Needs all tags to compute dynamic version
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
         with:
           version: ${{ env.UV_VERSION }}
           python-version: ${{ matrix.python-version }}

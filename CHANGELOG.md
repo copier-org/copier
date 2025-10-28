@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.10.3 (2025-10-17)
+
+### Fix
+
+-   **updating**: render templated skip-if-exists patterns before applying patch with
+    excluded paths
+-   **updating**: exclude only Git-ignored files when applying patch
+-   **updating**: ignore paths added to the `_exclude` list in new template version when
+    updating
+
 ## v9.10.2 (2025-09-09)
 
 ### Fix

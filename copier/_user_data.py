@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Callable, Literal
 
 import yaml
-from jinja2 import UndefinedError
+from jinja2 import StrictUndefined, UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
 from prompt_toolkit.lexers import PygmentsLexer
 from pydantic import ConfigDict, Field, field_validator
@@ -25,6 +25,7 @@ from pydantic_core.core_schema import ValidationInfo
 from pygments.lexers.data import JsonLexer, YamlLexer
 from questionary.prompts.common import Choice
 
+from copier._jinja_ext import UnsetError
 from copier.settings import Settings
 
 from ._tools import cast_to_bool, cast_to_str, force_str_end
@@ -271,11 +272,17 @@ class Question:
                 try:
                     result = self.answers.user_defaults[self.var_name]
                 except KeyError:
-                    if self.default is MISSING:
+                    try:
+                        result = self.render_value(
+                            self.settings.defaults.get(self.var_name, self.default),
+                            extra_answers={
+                                "UNSET": StrictUndefined("UNSET", exc=UnsetError)
+                            },
+                        )
+                    except UnsetError:
                         return MISSING
-                    result = self.render_value(
-                        self.settings.defaults.get(self.var_name, self.default)
-                    )
+                    if result is MISSING:
+                        return MISSING
         result = self.parse_answer(result)
         # Computed values (i.e., `when: false`) are intentionally not validated
         # at the moment.
@@ -482,6 +489,8 @@ class Question:
             )
         try:
             return template.render({**self.context, **(extra_answers or {})})
+        except UnsetError:
+            raise
         except UndefinedError as error:
             raise UserMessageError(str(error)) from error
 

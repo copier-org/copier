@@ -5,8 +5,10 @@ from __future__ import annotations
 import os
 import platform
 import re
+import stat
 import subprocess
 import sys
+import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from contextlib import suppress
 from contextvars import ContextVar
@@ -717,7 +719,7 @@ class Worker:
                     del self.answers.last[var_name]
                 # Skip immediately to the next question when it has no default
                 # value.
-                if question.default is MISSING:
+                if question.get_default() is MISSING:
                     continue
             if var_name in self.answers.init:
                 # Try to parse and validate (if the question has a validator)
@@ -780,6 +782,11 @@ class Worker:
     def all_exclusions(self) -> Sequence[str]:
         """Combine default, template and user-chosen exclusions."""
         return self.template.exclude + tuple(self.exclude)
+
+    @cached_property
+    def all_skip_if_exists(self) -> Sequence[str]:
+        """Combine default and template skip-if-exists patterns."""
+        return tuple(chain(self.skip_if_exists, self.template.skip_if_exists))
 
     @cached_property
     def jinja_env(self) -> YieldEnvironment:
@@ -848,12 +855,7 @@ class Worker:
     @cached_property
     def match_skip(self) -> Callable[[Path], bool]:
         """Get a callable to match paths against all skip-if-exists patterns."""
-        return self._path_matcher(
-            map(
-                self._render_string,
-                tuple(chain(self.skip_if_exists, self.template.skip_if_exists)),
-            )
-        )
+        return self._path_matcher(map(self._render_string, self.all_skip_if_exists))
 
     def _render_template(self) -> None:
         """Render the template in the subproject root."""
@@ -877,7 +879,7 @@ class Worker:
                 else:
                     self._render_file(src_relpath, dst_relpath, extra_context=ctx or {})
 
-    def _render_file(
+    def _render_file(  # noqa: C901
         self,
         src_relpath: Path,
         dst_relpath: Path,
@@ -929,7 +931,17 @@ class Worker:
                 # replace a symlink with a file we have to unlink it first
                 dst_abspath.unlink()
             dst_abspath.write_bytes(new_content)
-            dst_abspath.chmod(src_mode)
+            if (dst_mode := dst_abspath.stat().st_mode) != src_mode:
+                try:
+                    dst_abspath.chmod(src_mode)
+                except PermissionError:
+                    # In some filesystems (e.g., gcsfuse), `chmod` is not allowed,
+                    # so we suppress the `PermissionError` here.
+                    warnings.warn(
+                        f"Path permissions for {dst_abspath} cannot be changed from "
+                        f"{stat.filemode(dst_mode)} to {stat.filemode(src_mode)}",
+                        stacklevel=2,
+                    )
 
     def _render_symlink(self, src_relpath: Path, dst_relpath: Path) -> None:
         """Render one symlink.
@@ -1446,9 +1458,10 @@ class Worker:
                 extra_exclude = [
                     filename.split("!! ").pop()
                     for filename in ignored_files.splitlines()
+                    if filename.startswith("!! ")
                 ]
                 for skip_pattern in chain(
-                    self.skip_if_exists, self.template.skip_if_exists, extra_exclude
+                    map(self._render_string, self.all_skip_if_exists), extra_exclude
                 ):
                     apply_cmd = apply_cmd["--exclude", skip_pattern]
                 (apply_cmd << diff)(retcode=None)
