@@ -36,6 +36,16 @@ This will read all available Git tags, will compare them using
 before updating. To update to the latest commit, add `--vcs-ref=HEAD`. You can use any
 other Git ref you want.
 
+!!! tip "Handling floating tags"
+
+    Copier automatically handles floating tags (like `stable/*`, `latest`, `main`) using
+    **automatic tag resolution**. It stores both the semantic version and SHA, then
+    intelligently chooses which to use during updates. No special flags needed - updates
+    work correctly even if tags move.
+
+    If automatic resolution isn't working as expected, use the `--ignore-git-tags` flag to
+    force SHA usage for all updates. See [ignore_git_tags][] for more details.
+
 When updating, Copier will do its best to respect your project evolution by using the
 answers you provided when copied last time. However, sometimes it's impossible for
 Copier to know what to do with a diff code hunk. In those cases, copier handles the
