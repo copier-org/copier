@@ -38,15 +38,11 @@ other Git ref you want.
 
 When updating, Copier will do its best to respect your project evolution by using the
 answers you provided when copied last time. However, sometimes it's impossible for
-Copier to know what to do with a diff code hunk. In those cases, copier handles the
-conflict in one of two ways, controlled with the `--conflict` option:
-
--   `--conflict rej`: Creates a separate `.rej` file for each file with conflicts. These
-    files contain the unresolved diffs.
--   `--conflict inline` (default): Updates the file with conflict markers. This is quite
-    similar to the conflict markers created when a `git merge` command encounters a
-    conflict. For more information, see the "Checking Out Conflicts" section of the
-    [`git` documentation](https://git-scm.com/book/en/v2/Git-Tools-Advanced-Merging).
+Copier to know how to merge the changes from the evolved template into the evolved
+project. In those cases, Copier updates a conflicting file with conflict markers in the
+same ways as a `git merge` command encounters conflicts; in fact, Copier uses
+`git merge` internally. For more information, see the "Checking Out Conflicts" section
+of the [`git` documentation](https://git-scm.com/book/en/v2/Git-Tools-Advanced-Merging).
 
 If the update results in conflicts, _you should review those manually_ before
 committing.
@@ -56,13 +52,11 @@ Git history, but if you aren't careful, it's easy to make mistakes.
 
 That's why the recommended way to prevent these mistakes is to add a
 [pre-commit](https://pre-commit.com/) (or equivalent) hook that forbids committing
-conflict files or markers. The recommended hook configuration depends on the `conflict`
-setting you use.
+conflict markers.
 
 ## Preventing Commit of Merge Conflicts
 
-If you use `--conflict inline` (the default) then you need to check for conflicts
-markers in your files:
+You need to check for conflict markers in your files:
 
 ```yaml title=".pre-commit-config.yaml"
 repos:
@@ -73,29 +67,6 @@ repos:
           - id: check-merge-conflict
             args: [--assume-in-merge]
 ```
-
-If you use `--conflict rej` then you need to review and remove all generated `.rej`
-files:
-
-```yaml title=".pre-commit-config.yaml"
-repos:
-    - repo: local
-      hooks:
-          # Prevent committing .rej files
-          - id: forbidden-files
-            name: forbidden files
-            entry:
-                found Copier update rejection files; review and remove them before
-                merging.
-            language: fail
-            files: "\\.rej$"
-```
-
-!!! note
-
-    For projects that use both `rej` and `inline` depending on each user's preference,
-    you can add both hooks to your `pre-commit-config.yaml` file, making sure that no
-    unresolved merge conflicts are committed.
 
 ## Never change the answers file manually
 
@@ -157,42 +128,40 @@ graph TD
 
 %% nodes ----------------------------------------------------------
 template_repo("template repository")
-template_current("/tmp/template<br>(current tag)")
-template_latest("/tmp/template<br>(latest tag)")
+template_current("/tmp/template-old<br>(current tag)")
+template_latest("/tmp/template-new<br>(latest tag)")
 
-project_regen("/tmp/project<br>(fresh, current version)")
+project_regen_current("/tmp/project-old<br>(fresh, current version)")
+project_regen_latest("/tmp/project-new<br>(fresh, latest version)")
 project_current("current project")
 project_half("half migrated<br>project")
 project_updated("updated project")
-project_applied("updated project<br>(diff applied)")
 project_full("fully updated<br>and migrated project")
 
-update["update current<br>project in-place<br>(prompting)<br>+ run tasks again"]
-compare["compare to get diff"]
-apply["apply diff"]
-
-diff("diff")
+update["3-way merge<br>& run tasks again"]
+regen_current["generate and run tasks"]
+regen_latest["generate and run tasks"]
 
 %% edges ----------------------------------------------------------
         template_repo --> |git clone| template_current
         template_repo --> |git clone| template_latest
 
-     template_current --> |generate and run tasks| project_regen
-      project_current --> compare
+     template_current --> regen_current
+      project_current .-> |use answers| regen_current
+        regen_current --> project_regen_current
+      template_latest --> regen_latest
+         regen_latest --> project_regen_latest
       project_current --> |apply pre-migrations| project_half
-        project_regen --> compare
+         project_half .-> |use answers| regen_latest
          project_half --> update
-      template_latest --> update
+project_regen_current --> update
+ project_regen_latest --> update
                update --> project_updated
-              compare --> diff
-                 diff --> apply
-      project_updated --> apply
-                apply --> project_applied
-      project_applied --> |apply post-migrations| project_full
+      project_updated --> |apply post-migrations| project_full
 
 %% style ----------------------------------------------------------
 classDef blackborder stroke:#000;
-class compare,update,apply blackborder;
+class regen_current,regen_latest,update blackborder;
 ```
 
 As you can see here, `copier` does several things:
@@ -247,15 +216,18 @@ branch. The following strategies won't work:
 
 -   `git checkout <branch>` – _error: you need to resolve your current index first_
 -   `git checkout .` – _error: path '&lt;filename&gt;' is unmerged_
--   `git merge --abort` – _fatal: There is no merge to abort (MERGE_HEAD missing)_
 
 Here is what you can do using Git in the terminal to throw away all changes:
 
-```shell
-git reset           # throw away merge conflict information
-git checkout .      # restore modified files
-git clean -d -i     # remove untracked files and folders
-```
+-   ```shell
+    git merge --abort
+    ```
+
+-   ```shell
+    git reset           # throw away merge conflict information
+    git checkout .      # restore modified files
+    git clean -d -i     # remove untracked files and folders
+    ```
 
 If you want fine-grained control to restore files selectively, read the output of the
 `git status` command attentively. It shows all the commands you may need as hints!

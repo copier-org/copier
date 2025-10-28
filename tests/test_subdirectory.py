@@ -1,6 +1,5 @@
 from pathlib import Path
 from textwrap import dedent
-from typing import Literal
 
 import pytest
 from plumbum import local
@@ -177,34 +176,8 @@ def test_update_subdirectory_from_root_path(
     assert (dst / "subfolder" / "file1").read_text() == "version 2\nhello\na1\nbye\n"
 
 
-@pytest.mark.parametrize(
-    "conflict, readme, expect_reject",
-    [
-        (
-            "rej",
-            "upstream version 2\n",
-            True,
-        ),
-        (
-            "inline",
-            dedent(
-                """\
-                <<<<<<< before updating
-                downstream version 1
-                =======
-                upstream version 2
-                >>>>>>> after updating
-                """
-            ),
-            False,
-        ),
-    ],
-)
 def test_new_version_uses_subdirectory(
     tmp_path_factory: pytest.TempPathFactory,
-    conflict: Literal["rej", "inline"],
-    readme: str,
-    expect_reject: bool,
 ) -> None:
     # Template in v1 doesn't have a _subdirectory;
     # in v2 it moves all things into a subdir and adds that key to copier.yml.
@@ -259,15 +232,22 @@ def test_new_version_uses_subdirectory(
         git("tag", "v2")
 
     # Finally, update the generated project
-    copier.run_update(dst_path=dst, defaults=True, overwrite=True, conflict=conflict)
+    copier.run_update(dst_path=dst, defaults=True, overwrite=True)
     assert load_answersfile_data(dst).get("_commit") == "v2"
 
     # Assert that the README still exists, and the conflicts were handled
     # correctly.
     assert (dst / "README.md").exists()
 
-    assert (dst / "README.md").read_text().splitlines() == readme.splitlines()
-    assert (dst / "README.md.rej").exists() == expect_reject
+    assert (dst / "README.md").read_text() == dedent(
+        """\
+        <<<<<<< HEAD
+        downstream version 1
+        =======
+        upstream version 2
+        >>>>>>> copier/after-updating
+        """
+    )
 
     # Also assert the subdirectory itself was not rendered
     assert not (dst / subdir).exists()
