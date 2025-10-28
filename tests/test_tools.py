@@ -5,9 +5,7 @@ from tempfile import TemporaryDirectory
 import pytest
 from poethepoet.app import PoeThePoet
 
-from copier._tools import normalize_git_path
-
-from .helpers import git
+from .helpers import git, normalize_git_path
 
 
 def test_types() -> None:

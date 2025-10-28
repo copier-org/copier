@@ -193,3 +193,27 @@ def git_init(message: str = "hello world") -> None:
     git("init")
     git("add", ".")
     git("commit", "-m", message)
+
+
+def normalize_git_path(path: str) -> str:
+    r"""Convert weird characters returned by Git to normal UTF-8 path strings.
+
+    A filename like âñ will be reported by Git as "\\303\\242\\303\\261" (octal notation).
+    Similarly, a filename like "<tab>foo\b<lf>ar" will be reported as "\tfoo\\b\nar".
+    This can be disabled with `git config core.quotepath off`.
+
+    Args:
+        path: The Git path to normalize.
+
+    Returns:
+        str: The normalized Git path.
+    """
+    # Remove surrounding quotes
+    if path[0] == path[-1] == '"':
+        path = path[1:-1]
+    # Repair double-quotes
+    path = path.replace('\\"', '"')
+    # Unescape escape characters
+    path = path.encode("latin-1", "backslashreplace").decode("unicode-escape")
+    # Convert octal to utf8
+    return path.encode("latin-1", "backslashreplace").decode("utf-8")

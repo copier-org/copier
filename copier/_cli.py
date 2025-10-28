@@ -375,23 +375,6 @@ class CopierUpdateSubApp(_Subcommand):
         """
     )
 
-    conflict = cli.SwitchAttr(
-        ["-o", "--conflict"],
-        cli.Set("rej", "inline"),
-        default="inline",
-        help=(
-            "Behavior on conflict: Create .rej files, or add inline conflict markers."
-        ),
-    )
-    context_lines = cli.SwitchAttr(
-        ["-c", "--context-lines"],
-        int,
-        default=3,
-        help=(
-            "Lines of context to use for detecting conflicts. Increase for "
-            "accuracy, decrease for resilience."
-        ),
-    )
     defaults = cli.Flag(
         ["-l", "-f", "--defaults"],
         help="Use default answers to questions, which might be null if not specified.",
@@ -417,8 +400,6 @@ class CopierUpdateSubApp(_Subcommand):
         def inner() -> None:
             with self._worker(
                 dst_path=destination_path,
-                conflict=self.conflict,
-                context_lines=self.context_lines,
                 defaults=self.defaults,
                 skip_answered=self.skip_answered,
                 overwrite=True,
