@@ -62,6 +62,7 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
                 Thanks for your attention.
                 """
             ),
+            (repo / ".gitignore.jinja"): ".venv/\n**/.cache/\n",
         }
     )
     with local.cwd(repo):
@@ -2089,3 +2090,118 @@ def test_skip_if_exists_templated(tmp_path_factory: pytest.TempPathFactory) -> N
 
     run_update(str(dst), overwrite=True)
     assert (dst / "skip-if-exists.txt").read_text() == "baz"
+
+
+def test_exclude_with_gitignore(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    # Prepare repo bundle
+    repo = src / "repo"
+    bundle = src / "demo_updatediff_repo.bundle"
+    build_file_tree(
+        {
+            (repo / ".copier-answers.yml.jinja"): (
+                """\
+                # Changes here will be overwritten by Copier
+                {{ _copier_answers|to_nice_yaml }}
+                """
+            ),
+            (repo / "copier.yml"): (
+                """\
+                _envops:
+                    "keep_trailing_newline": True
+                project_name: to become a pirate
+                author_name: Guybrush
+                """
+            ),
+            (repo / "README.txt.jinja"): (
+                """
+                Let me introduce myself.
+
+                My name is {{author_name}}, and my project is {{project_name}}.
+
+                Thanks for your attention.
+                """
+            ),
+            (repo / ".gitignore.jinja"): ".venv/\n**/.cache/\n",
+        }
+    )
+    with local.cwd(repo):
+        git("init")
+        git("add", ".")
+        git("commit", "-m", "Guybrush wants to be a pirate")
+        git("tag", "v0.0.1")
+    build_file_tree(
+        {
+            (repo / "README.txt.jinja"): (
+                """
+                Let me introduce myself.
+
+                My name is {{author_name}}.
+
+                My project is {{project_name}}.
+
+                Thanks for your attention.
+                """
+            ),
+        }
+    )
+    with local.cwd(repo):
+        git("init")
+        git("add", ".")
+        git("commit", "-m", "Update README format")
+        git("bundle", "create", bundle, "--all")
+        git("tag", "v0.0.2")
+
+    # Generate repo bundle
+    target = dst / "target"
+    readme = target / "README.txt"
+    commit = git["commit", "--all"]
+    # Run copier 1st time, with specific tag
+    CopierApp.run(
+        [
+            "copier",
+            "copy",
+            str(bundle),
+            str(target),
+            "--defaults",
+            "--overwrite",
+            "--vcs-ref=v0.0.1",
+        ],
+        exit=False,
+    )
+    # Check it's copied OK
+    assert load_answersfile_data(target) == {
+        "_commit": "v0.0.1",
+        "_src_path": str(bundle),
+        "author_name": "Guybrush",
+        "project_name": "to become a pirate",
+    }
+    assert readme.read_text() == dedent(
+        """
+        Let me introduce myself.
+
+        My name is Guybrush, and my project is to become a pirate.
+
+        Thanks for your attention.
+        """
+    )
+    # Init destination as a new independent git repo
+    with local.cwd(target):
+        git("init")
+        # Commit changes
+        # Test .gitignore by creating files in the ignored directories
+        venv_dir = target / ".venv"
+        venv_dir.mkdir()
+        cache_dir = target / "test_cache/.cache"
+        cache_dir.mkdir(parents=True)
+        for i in range(3000):
+            (venv_dir / f"file_{i}.txt").write_text(f"dummy {i}")
+            (cache_dir / f"file_{i}.txt").write_text(f"dummy cache {i}")
+        git("add", ".")
+        commit("-m", "hello world")
+        # Update target to latest tag and check it's updated in answers file
+        CopierApp.run(["copier", "update", "--defaults", "--UNSAFE"], exit=False)
+        assert venv_dir.exists()
+        assert (venv_dir / "file_0.txt").exists()
+        assert cache_dir.exists()
+        assert (cache_dir / "file_0.txt").exists()
