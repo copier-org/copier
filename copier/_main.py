@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import platform
+import re
 import stat
 import subprocess
 import sys
@@ -1305,16 +1306,47 @@ class Worker:
             with local.cwd(subproject_top):
                 apply_cmd = git["apply", "--reject", "--exclude", self.answers_relpath]
                 ignored_files = git["status", "--ignored", "--porcelain"]()
-                # returns "!! file1\n !! file2\n"
-                # extra_exclude will contain: ["file1", file2"]
-                extra_exclude = [
-                    filename.split("!! ").pop()
-                    for filename in ignored_files.splitlines()
-                    if filename.startswith("!! ")
-                ]
-                for skip_pattern in chain(
-                    map(self._render_string, self.all_skip_if_exists), extra_exclude
-                ):
+                # Parse .gitignore for directory-level patterns (robust)
+
+                def is_dir_pattern(pattern):
+                    pattern = pattern.strip()
+                    if not pattern or pattern.startswith("#"):
+                        return False
+                    # Matches foo/, foo/*, foo/**/, **/test/, **/test/*, etc.
+                    return (
+                        pattern.endswith("/")
+                        or pattern.endswith("/*")
+                        or pattern.endswith("/**/")
+                        or re.match(r".*\*\*/.*", pattern)
+                    )
+
+                gitignore_path = Path(subproject_top, ".gitignore")
+                dir_patterns = set()
+                if gitignore_path.exists():
+                    with gitignore_path.open() as gitignore_file:
+                        for line in gitignore_file:
+                            line = line.strip()
+                            if is_dir_pattern(line):
+                                # Remove trailing slash or /* for matching
+                                cleaned = re.sub(r"(\/\*|\/\*\*\/|\/$)", "", line)
+                                dir_patterns.add(cleaned)
+                # Build extra_exclude: only add files not covered by dir_patterns
+                extra_exclude = []
+                for filename in ignored_files.splitlines():
+                    if filename.startswith("!! "):
+                        fname = filename.split("!! ").pop()
+                        # Check if file is in a directory pattern
+                        if any(fname.startswith(p + "/") for p in dir_patterns):
+                            continue  # Skip, will be excluded by directory pattern
+                        extra_exclude.append(fname)
+                # Add directory patterns first
+                for dir_pattern in dir_patterns:
+                    apply_cmd = apply_cmd["--exclude", dir_pattern + "/*"]
+                # Add skip_if_exists patterns
+                for skip_pattern in map(self._render_string, self.all_skip_if_exists):
+                    apply_cmd = apply_cmd["--exclude", skip_pattern]
+                # Add remaining specific files
+                for skip_pattern in extra_exclude:
                     apply_cmd = apply_cmd["--exclude", skip_pattern]
                 (apply_cmd << diff)(retcode=None)
                 if self.conflict == "inline":
