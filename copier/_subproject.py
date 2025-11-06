@@ -61,18 +61,27 @@ class Subproject:
 
     @cached_property
     def last_answers(self) -> AnyByStrDict:
-        """Last answers, excluding private ones (except _src_path and _commit)."""
+        """Last answers, excluding private ones (except _src_path, _commit, and _commit_sha)."""
         return {
             key: value
             for key, value in self._raw_answers.items()
-            if key in {"_src_path", "_commit"} or not key.startswith("_")
+            if key in {"_src_path", "_commit", "_commit_sha"} or not key.startswith("_")
         }
 
     @cached_property
     def template(self) -> Template | None:
-        """Template, as it was used the last time."""
+        """Template, as it was used the last time.
+
+        Uses the stored SHA if available to ensure we reference the exact
+        commit the project was created from, even if tags have moved.
+        This is critical for the update diff calculation.
+        """
         last_url = self.last_answers.get("_src_path")
-        last_ref = self.last_answers.get("_commit")
+        # Prefer SHA for exact reference (prevents issues with moved tags)
+        # Fall back to _commit if SHA not available (backward compatibility)
+        last_ref = self.last_answers.get("_commit_sha") or self.last_answers.get(
+            "_commit"
+        )
         if last_url:
             result = Template(url=last_url, ref=last_ref)
             self._cleanup_hooks.append(result._cleanup)
