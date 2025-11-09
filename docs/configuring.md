@@ -224,8 +224,8 @@ Supported keys:
         [this upstream bug](https://github.com/prompt-toolkit/python-prompt-toolkit/issues/1267).
 
 -   **qmark**: Custom emoji or mark to display before the question. If not specified,
-    defaults to 🎤 for regular questions and 🕵️ for secret questions. This is useful
-    for customizing the visual appearance of your prompts.
+    defaults to 🎤 for regular questions and 🕵️ for secret questions. This is useful for
+    customizing the visual appearance of your prompts.
 
     !!! example
 
