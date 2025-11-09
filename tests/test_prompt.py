@@ -500,15 +500,16 @@ def test_qmark(tmp_path_factory: pytest.TempPathFactory, spawn: Spawn) -> None:
                     "favorite_color": {
                         "type": "str",
                         "default": "blue",
-                        "qmark": "❤️ ",
+                        "qmark": "❤️",
                     },
                     "api_key": {
                         "type": "str",
                         "default": "secret123",
                         "secret": True,
-                        "qmark": "🔐 ",
+                        "qmark": "🔐",
                     },
-                }
+                },
+                sort_keys=False,
             ),
             (src / "[[ _copier_conf.answers_file ]].tmpl"): (
                 "[[ _copier_answers|to_nice_yaml ]]"
@@ -516,12 +517,12 @@ def test_qmark(tmp_path_factory: pytest.TempPathFactory, spawn: Spawn) -> None:
         }
     )
     tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
-    tui.expect_exact("favorite_color")
     tui.expect_exact("❤️")
+    tui.expect_exact("favorite_color")
     tui.expect_exact("blue")
     tui.sendline()
-    tui.expect_exact("api_key")
     tui.expect_exact("🔐")
+    tui.expect_exact("api_key")
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
     answers = load_answersfile_data(dst)
@@ -557,12 +558,12 @@ def test_qmark_default(tmp_path_factory: pytest.TempPathFactory, spawn: Spawn) -
         }
     )
     tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
-    tui.expect_exact("name")
     tui.expect_exact("🎤")
+    tui.expect_exact("name")
     tui.expect_exact("John")
     tui.sendline()
-    tui.expect_exact("password")
     tui.expect_exact("🕵️")
+    tui.expect_exact("password")
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
     answers = load_answersfile_data(dst)
