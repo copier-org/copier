@@ -1647,6 +1647,15 @@ Commands to execute after generating or updating a project from your template.
 They run ordered, and with the `$STAGE=task` variable in their environment. Each task
 runs in its own subprocess.
 
+**Available variables:**
+
+-   All template variables (from questions and defaults)
+-   `_copier_phase` = "tasks"
+-   `_copier_operation` = "copy" or "update"
+-   `_update_stage` = "current" during copy; "previous", "current", or "new" during
+    update (see [postrender_tasks][] for details)
+-   `_stage` = "task" (available as `STAGE` environment variable)
+
 If a `dict` is given it can contain the following items:
 
 -   **command**: The task command to run.
@@ -1685,6 +1694,109 @@ Refer to the example provided below for more information.
     Note: the example assumes you use [Invoke](https://www.pyinvoke.org/) as
     your task manager. But it's just an example. The point is that we're showing
     how to build and call commands.
+
+### `postrender_tasks`
+
+!!! info Available since Copier 9.11.0
+
+-   Format: `List[str|List[str]|dict]`
+-   CLI flags: N/A
+-   Default value: `[]`
+
+Postrender tasks are commands that run after template rendering is complete but before
+regular tasks execute.
+
+During copy operations, postrender tasks execute once after all files are rendered.
+
+During update operations, postrender tasks execute three times:
+
+1. After rendering the old template version (into temporary directory)
+2. After rendering the new template version (into temporary directory)
+3. After rendering to the actual destination
+
+This ensures that any transformations are applied consistently before diff calculation,
+maintaining correct 3-way merge semantics.
+
+**Use cases:**
+
+-   Package refactoring (e.g., Java package renaming)
+-   Path normalization
+-   File transformations that should be consistent across template versions
+
+If a `dict` is given it can contain the following items:
+
+-   **command**: The task command to run.
+-   **when** (optional): Specifies a condition that needs to hold for the task to run.
+-   **working_directory** (optional): Specifies the directory in which the command will
+    be run. Defaults to the destination directory.
+
+If a `str` or `List[str]` is given as a postrender task it will be treated as `command`
+with all other items not present.
+
+**Available variables:**
+
+-   All template variables (from questions and defaults)
+-   `_copier_phase` = "postrender"
+-   `_copier_operation` = "copy" or "update"
+-   `_update_stage` = "current" during copy; "previous", "current", or "new" during
+    update
+-   `_stage` = "postrender" (available as `STAGE` environment variable)
+
+**Execution:**
+
+-   Postrender tasks respect the [`skip_tasks`][skip_tasks] flag
+-   Task failures will abort the copy/update operation
+-   Tasks run in the destination directory by default
+
+!!! warning "Postrender tasks must be idempotent"
+
+    During updates, postrender tasks run three times in different contexts:
+
+    - **`previous` stage**: Renders old template into clean temp directory
+    - **`new` stage**: Renders new template into clean temp directory
+    - **`current` stage**: Renders to actual destination (which already has previous postrender results!)
+
+    This means simple commands like `mv src/example src/{{ package }}` will fail during
+    updates because the destination directory already exists. Use the `_update_stage` variable to
+    apply different logic based on stage, or write fully idempotent tasks.
+
+!!! example "Simple idempotent task"
+
+    ```yaml title="copier.yml"
+    _postrender_tasks:
+        - "echo 'Postrender complete'"
+        - ["{{ _copier_python }}", "refactor.py", "example", "{{ package }}"]
+    ```
+
+!!! example "Directory renaming with `_update_stage`"
+
+    When renaming directories, use conditional logic based on `_update_stage`:
+
+    ```yaml title="copier.yml"
+    package:
+        type: str
+        help: Package name
+
+    _postrender_tasks:
+        # Temp directories: always clean, simple rename works
+        - command: "[ -d src/example ] && mv src/example src/{{ package }} || true"
+          when: "{{ _update_stage in ['previous', 'new'] }}"
+
+        # Destination: must handle existing renamed directory from previous render
+        - command: |
+            if [ -d src/example ]; then
+              if [ ! -d "src/{{ package }}" ]; then
+                # Initial copy: simple rename
+                mv src/example "src/{{ package }}"
+              else
+                # Update: merge new template files into existing directory
+                mkdir -p "src/{{ package }}"
+                cp -R src/example/* "src/{{ package }}/"
+                rm -rf src/example
+              fi
+            fi
+          when: "{{ _update_stage == 'current' }}"
+    ```
 
 ### `templates_suffix`
 
