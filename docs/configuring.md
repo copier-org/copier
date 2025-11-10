@@ -232,7 +232,7 @@ Supported keys:
         ```yaml title="copier.yml"
         love_copier:
             type: bool
-            qmark: "❤️ "
+            qmark: "❤️"
             help: Do you love Copier?
         ```
 
