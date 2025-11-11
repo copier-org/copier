@@ -61,7 +61,7 @@ def spawn(spawn_timeout: int) -> Spawn:
         # instead. However, it's working fine and it seems easier to fix in the
         # future to work on Windows (where, this way, spawning actually works; it's just
         # python-prompt-toolkit that rejects displaying a TUI)
-        return PopenSpawn(cmd, timeout, logfile=sys.stderr.buffer)
+        return PopenSpawn(cmd, timeout, logfile=sys.stderr, encoding="utf-8")
 
     return _spawn
 

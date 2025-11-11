@@ -223,6 +223,19 @@ Supported keys:
         Multiline placeholders are not supported currently, due to
         [this upstream bug](https://github.com/prompt-toolkit/python-prompt-toolkit/issues/1267).
 
+-   **qmark**: Custom emoji or mark to display before the question. If not specified,
+    defaults to 🎤 for regular questions and 🕵️ for secret questions. This is useful for
+    customizing the visual appearance of your prompts.
+
+    !!! example
+
+        ```yaml title="copier.yml"
+        love_copier:
+            type: bool
+            qmark: "❤️"
+            help: Do you love Copier?
+        ```
+
 -   **multiline**: When set to `true`, it allows multiline input. This is especially
     useful when `type` is `json` or `yaml`.
 
