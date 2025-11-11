@@ -789,43 +789,6 @@ running `copier update`, this setting has no effect.
 
     Not supported in `copier.yml`.
 
-### `conflict`
-
--   Format: `Literal["rej", "inline"]`
--   CLI flags: `-o`, `--conflict` (only available in `copier update` subcommand)
--   Default value: `inline`
-
-When updating a project, sometimes Copier doesn't know what to do with a diff code hunk.
-This option controls the output format if this happens. Using `rej`, creates `*.rej`
-files that contain the unresolved diffs. The `inline` option (default) includes the diff
-code hunk in the file itself, similar to the behavior of `git merge`.
-
-!!! info
-
-    Not supported in `copier.yml`.
-
-### `context_lines`
-
--   Format: `Int`
--   CLI flags: `-c`, `--context-lines` (only available in `copier update` subcommand)
--   Default value: `1`
-
-During a project update, Copier needs to compare the template evolution with the
-subproject evolution. This way, it can detect what changed, where and how to merge those
-changes. [Refer here for more details on this process](updating.md).
-
-The more lines you use, the more accurate Copier will be when detecting conflicts. But
-you will also have more conflicts to solve by yourself. FWIW, Git uses 3 lines by
-default.
-
-The less lines you use, the less conflicts you will have. However, Copier will not be so
-accurate and could even move lines around if the file it's comparing has several similar
-code chunks.
-
-!!! info
-
-    Not supported in `copier.yml`.
-
 ### `data`
 
 -   Format: `dict|List[str=str]`
