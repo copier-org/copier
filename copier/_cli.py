@@ -49,11 +49,11 @@ copier --help-all
 """
 
 import sys
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from os import PathLike
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, Callable, Optional
+from typing import Any
 
 import yaml
 from plumbum import cli, colors
@@ -202,7 +202,7 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
 
     def _worker(
         self,
-        src_path: Optional[str] = None,
+        src_path: str | None = None,
         dst_path: str = ".",
         **kwargs: Any,  # noqa: FA100
     ) -> Worker:

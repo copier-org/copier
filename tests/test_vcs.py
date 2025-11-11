@@ -1,8 +1,7 @@
 import os
 import shutil
-from collections.abc import Iterator, Sequence
+from collections.abc import Callable, Iterator, Sequence
 from pathlib import Path
-from typing import Callable
 
 import pytest
 from packaging.version import Version

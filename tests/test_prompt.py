@@ -5,7 +5,7 @@ import subprocess
 import sys
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Protocol, Union
+from typing import Any, Protocol, TypeAlias
 
 import pexpect
 import pytest
@@ -29,12 +29,6 @@ from .helpers import (
     git,
     git_save,
 )
-
-if sys.version_info < (3, 10):
-    from typing_extensions import TypeAlias
-else:
-    from typing import TypeAlias
-
 
 MARIO_TREE: Mapping[StrOrPath, str | bytes] = {
     "copier.yml": (
@@ -871,7 +865,7 @@ def test_required_choice_question(
 
 
 QuestionType: TypeAlias = str
-QuestionChoices: TypeAlias = Union[list[Any], dict[str, Any]]
+QuestionChoices: TypeAlias = list[Any] | dict[str, Any]
 ParsedValues: TypeAlias = list[Any]
 
 _CHOICES: dict[str, tuple[QuestionType, QuestionChoices, ParsedValues]] = {
