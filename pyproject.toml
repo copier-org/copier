@@ -63,7 +63,7 @@ dev = [
   "typing-extensions==4.15.0; python_version < '<3.10'",
 ]
 docs = [
-  "markdown-exec==1.11.0",
+  "markdown-exec==1.12.1",
   "mkdocs-material==9.6.23",
   "mkdocstrings[python]==0.30.1",
 ]
