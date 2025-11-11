@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import warnings
 from collections import ChainMap
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from copy import deepcopy
 from dataclasses import field
 from datetime import datetime
@@ -13,7 +13,7 @@ from functools import cached_property
 from hashlib import sha512
 from os import urandom
 from pathlib import Path
-from typing import Any, Callable, Literal
+from typing import Any, Literal
 
 import yaml
 from jinja2 import StrictUndefined, UndefinedError

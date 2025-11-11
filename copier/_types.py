@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import sys
-from collections.abc import Iterator, Mapping, MutableMapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, MutableMapping, Sequence
 from contextlib import contextmanager
 from contextvars import ContextVar
 from enum import Enum
@@ -11,23 +10,15 @@ from pathlib import Path
 from typing import (
     Annotated,
     Any,
-    Callable,
     Literal,
     NewType,
-    Optional,
     TypeVar,
-    Union,
 )
 
 from pydantic import AfterValidator
 
-if sys.version_info >= (3, 10):
-    from typing import ParamSpec as ParamSpec
-else:
-    from typing_extensions import ParamSpec as ParamSpec
-
 # simple types
-StrOrPath = Union[str, Path]
+StrOrPath = str | Path
 AnyByStrDict = dict[str, Any]
 AnyByStrMutableMapping = MutableMapping[str, Any]
 
@@ -36,8 +27,8 @@ IntSeq = Sequence[int]
 PathSeq = Sequence[Path]
 
 # optional types
-OptBool = Optional[bool]
-OptStrOrPath = Optional[StrOrPath]
+OptBool = bool | None
+OptStrOrPath = StrOrPath | None
 
 # miscellaneous
 T = TypeVar("T")

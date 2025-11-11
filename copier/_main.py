@@ -8,7 +8,7 @@ import stat
 import subprocess
 import sys
 import warnings
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from contextlib import suppress
 from contextvars import ContextVar
 from dataclasses import field, replace
@@ -21,8 +21,8 @@ from tempfile import TemporaryDirectory
 from types import TracebackType
 from typing import (
     Any,
-    Callable,
     Literal,
+    ParamSpec,
     TypeVar,
     get_args,
     overload,
@@ -58,7 +58,6 @@ from ._types import (
     JSONSerializable,
     LazyDict,
     Operation,
-    ParamSpec,
     Phase,
     RelativePath,
     StrOrPath,

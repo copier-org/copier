@@ -23,7 +23,7 @@ A library and CLI app for rendering project templates.
 
 ## Installation
 
-1. Install Python 3.9 or newer.
+1. Install Python 3.10 or newer.
 1. Install Git 2.27 or newer.
 1. To use as a CLI app: [`pipx install copier`](https://github.com/pypa/pipx) or
    [`uv tool install copier`](https://docs.astral.sh/uv/#tool-management)
