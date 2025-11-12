@@ -216,8 +216,7 @@ def test_update_with_gpg_sign(
         run_update(dst, defaults=True, overwrite=True)
 
 
-@pytest.fixture
-def setup_parallel_projects(
+def test_parallel_projects_in_subdirs(
     tmp_path_factory: pytest.TempPathFactory,
 ) -> tuple[Path, Path, Path, Path]:
     src = tmp_path_factory.mktemp("src")
@@ -260,14 +259,7 @@ def setup_parallel_projects(
     with local.cwd(parent):
         git("add", "-A")
         git("commit", "-m", "initial project commit")
-    return dst1, dst2, src, parent
 
-
-def test_update_parallel_projects_dirty_updated_answers(
-    setup_parallel_projects: tuple[Path, Path, Path, Path],
-) -> None:
-    """Test updating two parallel copier projects with new answers without committing changes between updates."""
-    dst1, dst2, _, parent = setup_parallel_projects
     # Update first project, then the second without committing/stashing changes from first
     for dst in [dst1, dst2]:
         assert (dst / "file.txt").read_text() == dst.name
@@ -279,38 +271,7 @@ def test_update_parallel_projects_dirty_updated_answers(
     with local.cwd(parent):
         assert git("status", "--porcelain").strip() == expected
 
-
-def test_update_parallel_projects_dirty_updated_src(
-    setup_parallel_projects: tuple[Path, Path, Path, Path],
-) -> None:
-    """Test updating two parallel copier projects after updating the template without committing changes between updates."""
-    dst1, dst2, src, _ = setup_parallel_projects
-
-    (src / "template" / "file.txt.jinja").write_text("New {{ question }}")
-
-    with local.cwd(src):
-        git("init")
-        git("add", "-A")
-        git("commit", "-m", "second template commit")
-
-    # Update first project, then the second without committing/stashing changes from first
-    for dst in [dst1, dst2]:
-        assert (dst / "file.txt").read_text() == dst.name
-        run_update(dst, defaults=True, overwrite=True)
-        assert (dst / "file.txt").read_text() == f"New {dst.name}"
-
-
-def test_fails_on_update_to_dirty_project_subdir(
-    setup_parallel_projects: tuple[Path, Path, Path, Path],
-) -> None:
-    """Test failing on attempting to update a dirty project subdirectory."""
-    dst1, dst2, _, parent = setup_parallel_projects
-    for dst in [dst1, dst2]:
-        run_update(dst, overwrite=True, data={"question": f"Updated {dst.name}"})
-
-    with local.cwd(parent):
-        assert bool(git("status", "--porcelain").strip())
-
+    # Test failing on attempting to update our now dirty project subdirectories.
     for dst in [dst1, dst2]:
         with pytest.raises(UserMessageError):
             run_update(
