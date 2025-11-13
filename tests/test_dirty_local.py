@@ -273,7 +273,7 @@ def test_parallel_projects_in_subdirs(
 
     # Test failing on attempting to update our now dirty project subdirectories.
     for dst in [dst1, dst2]:
-        with pytest.raises(UserMessageError):
+        with pytest.raises(UserMessageError, match="Destination repository is dirty"):
             run_update(
                 dst, overwrite=True, data={"question": f"Updated {dst.name} Again"}
             )
