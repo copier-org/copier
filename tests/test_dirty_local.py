@@ -218,7 +218,7 @@ def test_update_with_gpg_sign(
 
 def test_parallel_projects_in_subdirs(
     tmp_path_factory: pytest.TempPathFactory,
-) -> tuple[Path, Path, Path, Path]:
+) -> None:
     src = tmp_path_factory.mktemp("src")
     parent = tmp_path_factory.mktemp("parent")
     dst1 = parent / "project1"
