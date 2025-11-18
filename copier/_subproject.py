@@ -43,7 +43,9 @@ class Subproject:
         """
         if self.vcs == "git":
             with local.cwd(self.local_abspath):
-                return bool(get_git()("status", "--porcelain").strip())
+                return bool(
+                    get_git()("status", self.local_abspath, "--porcelain").strip()
+                )
         return False
 
     def _cleanup(self) -> None:
