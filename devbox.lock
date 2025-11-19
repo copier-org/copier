@@ -1,51 +1,51 @@
 {
   "lockfile_version": "1",
   "packages": {
-    "difftastic@0.65.0": {
-      "last_modified": "2025-10-07T08:41:47Z",
-      "resolved": "github:NixOS/nixpkgs/bce5fe2bb998488d8e7e7856315f90496723793c#difftastic",
+    "difftastic@0.67.0": {
+      "last_modified": "2025-11-17T10:23:24Z",
+      "resolved": "github:NixOS/nixpkgs/8b6600824693a9c706ef09bd86711ca393703466#difftastic",
       "source": "devbox-search",
-      "version": "0.65.0",
+      "version": "0.67.0",
       "systems": {
         "aarch64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/jc73vm4a82v3m8npj2lw7g9hfqp1ybrc-difftastic-0.65.0",
+              "path": "/nix/store/0rbwby2x89nbakdbwna529kg846ljmj1-difftastic-0.67.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/jc73vm4a82v3m8npj2lw7g9hfqp1ybrc-difftastic-0.65.0"
+          "store_path": "/nix/store/0rbwby2x89nbakdbwna529kg846ljmj1-difftastic-0.67.0"
         },
         "aarch64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/ix7jl4786pqvwanfzw64211rbalr8ki6-difftastic-0.65.0",
+              "path": "/nix/store/yp75xylpmp00d229wqlc6y18shk6vz90-difftastic-0.67.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/ix7jl4786pqvwanfzw64211rbalr8ki6-difftastic-0.65.0"
+          "store_path": "/nix/store/yp75xylpmp00d229wqlc6y18shk6vz90-difftastic-0.67.0"
         },
         "x86_64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/0ri4mx4m1z02yq2qc0a5sxc3znxz50w4-difftastic-0.65.0",
+              "path": "/nix/store/mfzaabw1hrsa9g7a0pa0ijvcs5gm0as2-difftastic-0.67.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/0ri4mx4m1z02yq2qc0a5sxc3znxz50w4-difftastic-0.65.0"
+          "store_path": "/nix/store/mfzaabw1hrsa9g7a0pa0ijvcs5gm0as2-difftastic-0.67.0"
         },
         "x86_64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/86jb5jckw3yslfkwfhx5335pgnsgnvx0-difftastic-0.65.0",
+              "path": "/nix/store/2dvn2hknnb37yxmay68i4sckkcf6x501-difftastic-0.67.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/86jb5jckw3yslfkwfhx5335pgnsgnvx0-difftastic-0.65.0"
+          "store_path": "/nix/store/2dvn2hknnb37yxmay68i4sckkcf6x501-difftastic-0.67.0"
         }
       }
     },
