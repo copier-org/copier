@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.11.0 (2025-11-20)
+
+### Feat
+
+-   **updating**: allow updating a dirty Git repository when the subproject directory is
+    clean (#2369)
+-   add support for custom question icons (#2381)
+-   add support for conditionally unsetting a question's default value
+
+### Fix
+
+-   raise warning instead of error when `chmod` is not allowed
+-   fix using default answers from settings for required questions (#2374)
+
+### Refactor
+
+-   drop support for Python 3.9
+
 ## v9.10.3 (2025-10-17)
 
 ### Fix
