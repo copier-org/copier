@@ -29,14 +29,6 @@ A library and CLI app for rendering project templates.
    [`uv tool install copier`](https://docs.astral.sh/uv/#tool-management)
 1. To use as a library: `pip install copier` or `conda install -c conda-forge copier`
 
-### Nix flake
-
-To install the latest Copier release with 100% reproducibility:
-
-```shell
-nix profile install 'https://flakehub.com/f/copier-org/copier/*.tar.gz'
-```
-
 ### Homebrew formula
 
 To install the latest Copier release using
