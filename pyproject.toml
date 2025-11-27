@@ -65,7 +65,7 @@ dev = [
 docs = [
   "markdown-exec==1.12.1",
   "mkdocs-material==9.7.0",
-  "mkdocstrings[python]==0.30.1",
+  "mkdocstrings[python]==1.0.0",
 ]
 
 [tool.poe.tasks.coverage]
