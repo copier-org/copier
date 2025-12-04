@@ -48,7 +48,7 @@ dev = [
   "commitizen==4.10.0",
   "mypy==1.18.2",
   "pexpect==4.9.0",
-  "poethepoet==0.37.0",
+  "poethepoet==0.38.0",
   "pre-commit==4.5.0",
   "pytest==9.0.1",
   "pytest-cov==7.0.0",
