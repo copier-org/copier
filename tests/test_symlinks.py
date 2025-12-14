@@ -505,11 +505,11 @@ def test_symlinked_to_outside_destination_absolute(
         git("add", "-A")
         git("commit", "-m", "first commit on dst")
 
-        # While update appears like a no-op, this part of the test captures
-        # possible changes in behaviour when the symlinks actually exist
-        # (having been created by the initial copy) as was the case for
-        # https://github.com/copier-org/copier/issues/2426
-        run_update(dst, defaults=True, overwrite=True)
+    # While update appears like a no-op, this part of the test captures
+    # possible changes in behaviour when the symlinks actually exist
+    # (having been created by the initial copy) as was the case for
+    # https://github.com/copier-org/copier/issues/2426
+    run_update(dst, defaults=True, overwrite=True)
 
     assert (dst / "symlink_dir").is_symlink()
     assert (dst / "symlink_dir" / "outside.txt").read_text() == "outside"
@@ -559,11 +559,11 @@ def test_symlinked_to_outside_destination_relative(
         git("add", "-A")
         git("commit", "-m", "first commit on dst")
 
-        # While update appears like a no-op, this part of the test captures
-        # possible changes in behaviour when the symlinks actually exist
-        # (having been created by the initial copy) as was the case for
-        # https://github.com/copier-org/copier/issues/2426
-        run_update(dst, defaults=True, overwrite=True)
+    # While update appears like a no-op, this part of the test captures
+    # possible changes in behaviour when the symlinks actually exist
+    # (having been created by the initial copy) as was the case for
+    # https://github.com/copier-org/copier/issues/2426
+    run_update(dst, defaults=True, overwrite=True)
 
     assert (dst / "symlink_dir").is_symlink()
     assert (dst / "symlink_dir" / "outside.txt").read_text() == "outside"
