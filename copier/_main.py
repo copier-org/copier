@@ -723,7 +723,15 @@ class Worker:
                 Path(src_abspath).relative_to(self.template_copy_root)
             )
             for dst_relpath, ctx in dst_relpaths_ctxs:
-                if not cwd.joinpath(dst_relpath).resolve().is_relative_to(cwd):
+                path_to_check = cwd.joinpath(dst_relpath)
+                if path_to_check.is_symlink():
+                    # If destination path is a symlink, it can safely point outside subproject dir,
+                    # so long as nothing is templated into it (which would be caught by its own check),
+                    # while still itself existing within the subproject.
+                    # Therefore check parent is within subproject to avoid resolving the symlink itself
+                    # Note: Typically occurs when updating preserve_symlinks = true templates
+                    path_to_check = path_to_check.parent
+                if not path_to_check.resolve().is_relative_to(cwd):
                     raise ForbiddenPathError(path=dst_relpath)
                 if self.match_exclude(dst_relpath):
                     continue
