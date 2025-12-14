@@ -503,7 +503,7 @@ def test_symlinked_to_outside_destination(
         git("add", "-A")
         git("commit", "-m", "first commit on dst")
 
-        run_update(dst, defaults=True, overwrite=True)
+    run_update(dst, defaults=True, overwrite=True)
 
     assert (dst / "symlink_dir").is_symlink()
     assert (dst / "symlink_dir" / "outside.txt").read_text() == "outside"
