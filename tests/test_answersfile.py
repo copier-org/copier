@@ -328,3 +328,49 @@ def test_undefined_phase_in_external_data(
     copier.run_copy(str(src), dst, defaults=True, overwrite=True)
     answers = load_answersfile_data(dst, ".copier-answers.yml")
     assert answers["key"] == "value"
+
+
+
+def test_answersfile_relative_path_nonexistent_dst(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """Test that relative answers_file paths work when dst_path doesn't exist yet."""
+    src = tmp_path_factory.mktemp("src")
+    # Create a simple template
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                """\
+                project_name:
+                  type: str
+                """
+            ),
+            (src / ".copier-answers.yml"): (
+                """\
+                project_name: "test project"
+                """
+            ),
+            (src / "README.txt.jinja"): (
+                "Project: {{ project_name }}"
+            ),
+        }
+    )
+    git_save(src, tag="v1")
+
+    # Destination path that doesn't exist yet
+    dst_dir =  src / "my" / "dest" / "path"
+
+    # Answers file in parent directory (relative path of dst_dir)
+    answers_file = "../../../.copier-answers.yml"
+
+    # This should work even though dst_dir doesn't exist yet
+    copier.run_copy(
+        str(src),
+        dst_dir,
+        answers_file=answers_file,
+        defaults=True,
+        overwrite=True,
+    )
+
+    # Verify the project was created
+    assert (dst_dir / "README.txt").read_text() == "Project: test project"
