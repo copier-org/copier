@@ -1335,7 +1335,15 @@ class Worker:
                         # Remove ".rej" suffix
                         fname = fname[:-4]
                         # Undo possible non-rejected chunks
-                        git("checkout", "--", fname)
+                        git(
+                            # Ignore hooks to avoid errors from them or
+                            # issues when .pre-commit-config.yaml is changed
+                            "-c",
+                            "core.hooksPath=/dev/null",
+                            "checkout",
+                            "--",
+                            fname,
+                        )
                         # 3-way-merge the file directly
                         git(
                             "merge-file",
