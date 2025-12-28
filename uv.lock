@@ -258,7 +258,7 @@ dev = [
     { name = "pre-commit", specifier = "==4.5.1" },
     { name = "pytest", specifier = "==9.0.2" },
     { name = "pytest-cov", specifier = "==7.0.0" },
-    { name = "pytest-gitconfig", specifier = "==0.8.0" },
+    { name = "pytest-gitconfig", specifier = "==0.9.0" },
     { name = "pytest-xdist", specifier = "==3.8.0" },
     { name = "ruff", specifier = "==0.14.10" },
     { name = "taplo", specifier = "==0.9.3" },
@@ -1110,14 +1110,14 @@ wheels = [
 
 [[package]]
 name = "pytest-gitconfig"
-version = "0.8.0"
+version = "0.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pytest" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5e/72/15772ecf297ba300bce701543369829b16970f31b8d634caaf58e6deabde/pytest_gitconfig-0.8.0.tar.gz", hash = "sha256:0dc72c2ce96b1ac6f26cb0375aa882ee017fb4833a864f64d0c11998912418dd", size = 9107, upload-time = "2025-10-12T16:59:17.574Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f5/c7/39ad46d239bf49e6c1c8b4f6b99e75c8bee7bfc1e83cd8542d8701190508/pytest_gitconfig-0.9.0.tar.gz", hash = "sha256:5f9e8a29b4a8e55ddd740216ddb0a8a5e97f1c9c7f6bfdac91863473a8c60f9c", size = 10078, upload-time = "2025-12-28T01:52:17.821Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/59/35/2104dad540c9e44d7a1ab7f97f6acada58df46d6a54ab9c37e224004180f/pytest_gitconfig-0.8.0-py3-none-any.whl", hash = "sha256:db84b420b4cce6cab023af9f634e6b356d9db71f267c4a7e1efe6193d6d9ec6a", size = 6685, upload-time = "2025-10-12T16:59:14.444Z" },
+    { url = "https://files.pythonhosted.org/packages/d9/78/460084e968adb270fa1b15d3b125d3d6da25514293e05c811820a19bfc04/pytest_gitconfig-0.9.0-py3-none-any.whl", hash = "sha256:3d855a9dd5fb3906010dbb1f8161366d4d86b34df8c14021fa012f23de3e5354", size = 7113, upload-time = "2025-12-28T01:52:16.395Z" },
 ]
 
 [[package]]
