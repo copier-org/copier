@@ -535,6 +535,32 @@ class Template:
         return tasks
 
     @cached_property
+    def postrender_tasks(self) -> Sequence[Task]:
+        """Get postrender tasks defined in the template.
+
+        These run after template rendering is complete but before regular
+        tasks execute. During updates, they run on both old_copy and new_copy
+        to ensure consistent transformations before diff calculation.
+
+        See [postrender_tasks][].
+        """
+        extra_vars = {"stage": "postrender"}
+        tasks = []
+        for task in self.config_data.get("postrender_tasks", []):
+            if isinstance(task, dict):
+                tasks.append(
+                    Task(
+                        cmd=task["command"],
+                        extra_vars=extra_vars,
+                        condition=task.get("when", "true"),
+                        working_directory=Path(task.get("working_directory", ".")),
+                    )
+                )
+            else:
+                tasks.append(Task(cmd=task, extra_vars=extra_vars))
+        return tasks
+
+    @cached_property
     def templates_suffix(self) -> str:
         """Get the suffix defined for templates.
 
