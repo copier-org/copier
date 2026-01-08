@@ -203,6 +203,12 @@ class Question:
             If it is a boolean, it is used directly. If it is a str, it is
             converted to boolean using a parser similar to YAML, but only for
             boolean values.
+
+        use_shortcuts:
+            Condition that, if `True`, will use `use_shortcuts` in `select` question, allowing for selection via automatically numbered shortcut. Will be deactivated if `use_filter_search` is `True`.
+
+        use_filter_search:
+            Condition that, if `True`, uses `use_search_filter` in `checkbox`/`select` question while deactivating `use_jk_keys`, allowing for selection via filtering.
     """
 
     var_name: str
