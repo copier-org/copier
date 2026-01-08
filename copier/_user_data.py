@@ -221,6 +221,8 @@ class Question:
     type: str = Field(default="", validate_default=True)
     validator: str = ""
     when: str | bool = True
+    use_shortcuts: bool = False
+    use_filter_search: bool = False
 
     @field_validator("var_name")
     @classmethod
@@ -419,6 +421,13 @@ class Question:
                 result["default"] = False
         if self.choices:
             questionary_type = "checkbox" if self.multiselect else "select"
+
+            if self.use_filter_search:
+                result["use_search_filter"] = True
+                result["use_jk_keys"] = False
+            elif self.use_shortcuts and questionary_type == "select":
+                result["use_shortcuts"] = True
+
             choices = self._formatted_choices
             # Select default choices for a multiselect question.
             if self.multiselect and isinstance(
