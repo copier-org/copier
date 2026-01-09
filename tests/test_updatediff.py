@@ -2089,3 +2089,28 @@ def test_skip_if_exists_templated(tmp_path_factory: pytest.TempPathFactory) -> N
 
     run_update(str(dst), overwrite=True)
     assert (dst / "skip-if-exists.txt").read_text() == "baz"
+
+
+def test_render_copier_conf_as_json_without_circular_reference(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """See https://github.com/copier-org/copier/issues/2448."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "copier_conf.json.jinja": "{{ _copier_conf|to_json }}",
+            }
+        )
+        git_save(tag="v1")
+
+    run_copy(str(src), dst, overwrite=True, unsafe=True)
+    assert (dst / "copier_conf.json").exists()
+
+    with local.cwd(dst):
+        git_save()
+
+    run_update(str(dst), overwrite=True, unsafe=True)
+    assert (dst / "copier_conf.json").exists()
