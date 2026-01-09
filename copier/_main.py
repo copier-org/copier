@@ -1244,8 +1244,8 @@ class Worker:
                 dst_path=new_copy / subproject_subdir,
                 data={
                     k: v
-                    for k, v in self.answers.combined.items()
-                    if k not in self.answers.hidden
+                    for k, v in self._answers_to_remember().items()
+                    if not k.startswith("_")
                 },
                 defaults=True,
                 quiet=True,
