@@ -178,7 +178,7 @@ annotated_tag = true
 changelog_incremental = true
 tag_format = "v$version"
 update_changelog_on_bump = true
-version = "9.11.0"
+version = "9.11.1"
 
 [tool.codespell]
 # Ref: https://github.com/codespell-project/codespell#using-a-config-file
