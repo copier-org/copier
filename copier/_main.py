@@ -715,7 +715,7 @@ class Worker:
     def _render_template(self) -> None:
         """Render the template in the subproject root."""
         follow_symlinks = not self.template.preserve_symlinks
-        cwd = Path.cwd()
+        dst_root = self.dst_path.resolve()
         for src in scantree(str(self.template_copy_root), follow_symlinks):
             src_abspath = Path(src.path)
             src_relpath = Path(src_abspath).relative_to(self.template.local_abspath)
@@ -723,7 +723,17 @@ class Worker:
                 Path(src_abspath).relative_to(self.template_copy_root)
             )
             for dst_relpath, ctx in dst_relpaths_ctxs:
-                if not cwd.joinpath(dst_relpath).resolve().is_relative_to(cwd):
+                dst_abspath = dst_root / dst_relpath
+                if dst_abspath.is_symlink() and self.template.preserve_symlinks:
+                    # If destination path is a symlink, it can safely point outside the
+                    # subproject dir, while still itself existing within the subproject.
+                    # (So long as nothing is templated into it (if it is a directory),
+                    # which would be caught by that path's own check.)
+                    # Therefore avoid resolving the symlink itself:
+                    dst_realpath = dst_abspath.parent.resolve() / dst_abspath.name
+                else:
+                    dst_realpath = dst_abspath.resolve()
+                if not dst_realpath.is_relative_to(dst_root):
                     raise ForbiddenPathError(path=dst_relpath)
                 if self.match_exclude(dst_relpath):
                     continue

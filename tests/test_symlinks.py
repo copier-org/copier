@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import pytest
@@ -460,3 +461,109 @@ def test_symlinked_dir_expanded(tmp_path_factory: pytest.TempPathFactory) -> Non
     assert (dst / "a_dir" / "a_file.txt").read_text() == "some content"
     assert (dst / "a_symlinked_dir" / "a_file.txt").read_text() == "some content"
     assert (dst / "a_nested" / "symlink" / "a_file.txt").read_text() == "some content"
+
+
+@pytest.mark.xfail(
+    os.name == "nt", reason="Absolute paths not created as symlinks on Windows"
+)
+def test_symlinked_to_outside_destination_absolute(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst, other = map(tmp_path_factory.mktemp, ("src", "dst", "other"))
+    tmpl = src / "template"
+    build_file_tree(
+        {
+            tmpl / ".copier-answers.yml.jinja": """\
+                # Changes here will be overwritten by Copier
+                {{ _copier_answers|to_nice_yaml }}
+            """,
+            src / "copier.yaml": """\
+            _preserve_symlinks: true
+            _subdirectory: template
+            """,
+            tmpl / "a_file.txt": "some content",
+            tmpl / "a_symlink.txt": other / "outside.txt",
+            tmpl / "symlink_dir": other,
+            other / "outside.txt": "outside",
+        }
+    )
+
+    with local.cwd(src):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m", "first commit on src")
+
+    with local.cwd(dst):
+        run_copy(str(src), dst, defaults=True, overwrite=True)
+
+    assert (dst / "symlink_dir").is_symlink()
+    assert (dst / "symlink_dir" / "outside.txt").read_text() == "outside"
+    assert (dst / "a_symlink.txt").is_symlink()
+    assert (dst / "a_symlink.txt").read_text() == "outside"
+
+    # dst must be vcs-tracked to use run_update
+    with local.cwd(dst):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m", "first commit on dst")
+
+    run_update(dst, defaults=True, overwrite=True)
+
+    assert (dst / "symlink_dir").is_symlink()
+    assert (dst / "symlink_dir" / "outside.txt").read_text() == "outside"
+    assert (dst / "a_symlink.txt").is_symlink()
+    assert (dst / "a_symlink.txt").read_text() == "outside"
+
+
+def test_symlinked_to_outside_destination_relative(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst_parent = map(tmp_path_factory.mktemp, ("src", "dst_parent"))
+    dst = dst_parent / "dst"
+    dst.mkdir()
+    other = dst_parent / "other"
+    other.mkdir()
+    other_rel = Path("../") / "other"
+    tmpl = src / "template"
+    build_file_tree(
+        {
+            tmpl / ".copier-answers.yml.jinja": """\
+                # Changes here will be overwritten by Copier
+                {{ _copier_answers|to_nice_yaml }}
+            """,
+            src / "copier.yaml": """\
+            _preserve_symlinks: true
+            _subdirectory: template
+            """,
+            tmpl / "a_file.txt": "some content",
+            tmpl / "a_symlink.txt": other_rel / "outside.txt",
+            tmpl / "symlink_dir": other_rel,
+            other / "outside.txt": "outside",
+        }
+    )
+
+    with local.cwd(src):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m", "first commit on src")
+
+    with local.cwd(dst):
+        run_copy(str(src), dst, defaults=True, overwrite=True)
+
+    assert (dst / "symlink_dir").is_symlink()
+    assert (dst / "symlink_dir" / "outside.txt").read_text() == "outside"
+    assert (dst / "a_symlink.txt").is_symlink()
+    assert (dst / "a_symlink.txt").read_text() == "outside"
+
+    # dst must be vcs-tracked to use run_update
+    with local.cwd(dst):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m", "first commit on dst")
+
+    run_update(dst, defaults=True, overwrite=True)
+
+    assert (dst / "symlink_dir").is_symlink()
+    assert (dst / "symlink_dir" / "outside.txt").read_text() == "outside"
+    assert (dst / "a_symlink.txt").is_symlink()
+    assert (dst / "a_symlink.txt").read_text() == "outside"
