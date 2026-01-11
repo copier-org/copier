@@ -8,9 +8,7 @@ import pytest
 from plumbum import local
 
 from .helpers import (
-    BRACKET_ENVOPS_JSON,
     COPIER_PATH,
-    SUFFIX_TMPL,
     Keyboard,
     Spawn,
     build_file_tree,
@@ -22,9 +20,7 @@ from .helpers import (
     "copier_file, input_select, result",
     [
         (
-            f"""\
-            _templates_suffix: {SUFFIX_TMPL}
-            _envops: {BRACKET_ENVOPS_JSON}
+            """\
             select:
                 type: str
                 help: Select one option only
@@ -54,9 +50,7 @@ from .helpers import (
             ),
         ),
         (
-            f"""\
-            _templates_suffix: {SUFFIX_TMPL}
-            _envops: {BRACKET_ENVOPS_JSON}
+            """\
             select:
                 type: str
                 help: Select one option only
@@ -84,9 +78,7 @@ from .helpers import (
             ),
         ),
         (
-            f"""\
-            _templates_suffix: {SUFFIX_TMPL}
-            _envops: {BRACKET_ENVOPS_JSON}
+            """\
             select:
                 type: str
                 help: Select one option only
@@ -115,9 +107,7 @@ from .helpers import (
             ),
         ),
         (
-            f"""\
-            _templates_suffix: {SUFFIX_TMPL}
-            _envops: {BRACKET_ENVOPS_JSON}
+            """\
             select:
                 type: str
                 help: Select one option only
@@ -146,9 +136,7 @@ from .helpers import (
             ),
         ),
         (
-            f"""\
-            _templates_suffix: {SUFFIX_TMPL}
-            _envops: {BRACKET_ENVOPS_JSON}
+            """\
             select:
                 type: str
                 help: Select one option only
@@ -193,9 +181,9 @@ def test_shortcuts(
         build_file_tree(
             {
                 "copier.yml": copier_file,
-                "results.txt.tmpl": """\
-                    select: [[select|tojson]]
-                    checkbox: [[checkbox|tojson]]
+                "results.txt.jinja": """\
+                    select: {{select|tojson}}
+                    checkbox: {{checkbox|tojson}}
                 """,
             }
         )
