@@ -8,7 +8,6 @@ import pytest
 from plumbum import local
 
 from .helpers import (
-    BRACKET_ENVOPS,
     BRACKET_ENVOPS_JSON,
     COPIER_PATH,
     SUFFIX_TMPL,
@@ -17,9 +16,6 @@ from .helpers import (
     build_file_tree,
     expect_prompt,
 )
-
-BLK_START = BRACKET_ENVOPS["block_start_string"]
-BLK_END = BRACKET_ENVOPS["block_end_string"]
 
 
 @pytest.mark.parametrize(
@@ -190,7 +186,6 @@ def test_shortcuts(
     spawn: Spawn,
 ) -> None:
     """Test shortcuts."""
-    # tui = spawn(COPIER_PATH + ("copy", path, str(tmp_path)))
 
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
