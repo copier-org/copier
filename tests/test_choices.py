@@ -42,7 +42,7 @@ BLK_END = BRACKET_ENVOPS["block_end_string"]
                 type: str
                 help: Select any
                 multiselect: true
-                use_filter_search: true
+                use_search_filter: true
                 choices:
                     one: first
                     two: second
@@ -134,7 +134,7 @@ BLK_END = BRACKET_ENVOPS["block_end_string"]
                 type: str
                 help: Select any
                 multiselect: true
-                use_filter_search: true
+                use_search_filter: true
                 choices:
                     one: first
                     two: second
@@ -156,7 +156,7 @@ BLK_END = BRACKET_ENVOPS["block_end_string"]
             select:
                 type: str
                 help: Select one option only
-                use_filter_search: true
+                use_search_filter: true
                 default: first
                 choices:
                     one: first

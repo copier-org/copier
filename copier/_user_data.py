@@ -205,9 +205,9 @@ class Question:
             boolean values.
 
         use_shortcuts:
-            Condition that, if `True`, will use `use_shortcuts` in `select` question, allowing for selection via automatically numbered shortcut. Will be deactivated if `use_filter_search` is `True`.
+            Condition that, if `True`, will use `use_shortcuts` in `select` question, allowing for selection via automatically numbered shortcut. Will be deactivated if `use_search_filter` is `True`.
 
-        use_filter_search:
+        use_search_filter:
             Condition that, if `True`, uses `use_search_filter` in `checkbox`/`select` question while deactivating `use_jk_keys`, allowing for selection via filtering.
     """
 
@@ -228,7 +228,7 @@ class Question:
     validator: str = ""
     when: str | bool = True
     use_shortcuts: bool = False
-    use_filter_search: bool = False
+    use_search_filter: bool = False
 
     @field_validator("var_name")
     @classmethod
@@ -428,7 +428,7 @@ class Question:
         if self.choices:
             questionary_type = "checkbox" if self.multiselect else "select"
 
-            if self.use_filter_search:
+            if self.use_search_filter:
                 result["use_search_filter"] = True
                 result["use_jk_keys"] = False
             elif self.use_shortcuts and questionary_type == "select":
