@@ -106,6 +106,7 @@ extend-select = [
   "PGH",
   "PTH",
   "UP",
+  "W505", # doc-line-too-long
 ]
 extend-ignore = ['B028', "B904", "D105", "D107", "E501"]
 
@@ -118,6 +119,9 @@ known-first-party = ["copier"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 72
 
 [tool.ruff.lint.pyupgrade]
 keep-runtime-typing = true
