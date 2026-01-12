@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import deque
 from textwrap import dedent
+from typing import Any
 
 import pexpect
 import pytest
@@ -19,7 +20,7 @@ from .helpers import (
 def tui_test_template(
     tmp_path_factory: pytest.TempPathFactory,
     copier_file: str,
-    tui_io: tuple[dict],
+    tui_io: tuple[dict[str, Any]],
     result_template: str,
     result: str,
     spawn: Spawn,
@@ -182,7 +183,7 @@ def tui_test_template(
 def test_use_shortcuts(
     tmp_path_factory: pytest.TempPathFactory,
     copier_file: str,
-    tui_io: tuple[dict],
+    tui_io: tuple[dict[str, Any]],
     result_template: str,
     result: str,
     spawn: Spawn,
@@ -355,7 +356,7 @@ def test_use_shortcuts(
 def test_use_search_filter(
     tmp_path_factory: pytest.TempPathFactory,
     copier_file: str,
-    tui_io: tuple[dict],
+    tui_io: tuple[dict[str, Any]],
     result_template: str,
     result: str,
     spawn: Spawn,
