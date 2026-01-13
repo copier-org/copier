@@ -718,6 +718,20 @@ class Worker:
         dst_root = self.dst_path.resolve()
         for src in scantree(str(self.template_copy_root), follow_symlinks):
             src_abspath = Path(src.path)
+            # If the source is a symlink, we are not preserving symlinks, and the
+            # symlink target is outside the template root, this means that we are
+            # copying a file/directory from outside the template, which is
+            # forbidden, so raise an error.
+            if (
+                src_abspath.is_symlink()
+                and not self.template.preserve_symlinks
+                and not (src_abspath.resolve()).is_relative_to(
+                    self.template.local_abspath
+                )
+            ):
+                raise ForbiddenPathError(
+                    path=src_abspath.relative_to(self.template_copy_root)
+                )
             src_relpath = Path(src_abspath).relative_to(self.template.local_abspath)
             dst_relpaths_ctxs = self._render_path(
                 Path(src_abspath).relative_to(self.template_copy_root)
