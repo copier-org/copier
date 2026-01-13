@@ -21,7 +21,6 @@ class TestAnswersMap:
         assert _answser_map.last == {}
         assert _answser_map.user_defaults == {}
         assert _answser_map.external == {}
-        assert _answser_map.external == {}
         assert _answser_map.hidden == set()
 
     @pytest.mark.parametrize(
