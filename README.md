@@ -51,6 +51,8 @@ To create a template:
 └── 📄 {{_copier_conf.answers_file}}.jinja   # answers are recorded here
 ```
 
+Content of the `copier.yml` file:
+
 ```yaml title="copier.yml"
 # questions
 project_name:
@@ -62,9 +64,13 @@ module_name:
     help: What is your Python module name?
 ```
 
+Content of the `{{project_name}}/{{module_name}}.py.jinja` file:
+
 ```python+jinja title="{{project_name}}/{{module_name}}.py.jinja"
 print("Hello from {{module_name}}!")
 ```
+
+Content of the `{{_copier_conf.answers_file}}.jinja` file:
 
 ```yaml+jinja title="{{_copier_conf.answers_file}}.jinja"
 # Changes here will be overwritten by Copier
