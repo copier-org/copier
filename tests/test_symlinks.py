@@ -1,11 +1,12 @@
 import os
+import re
 from pathlib import Path
 
 import pytest
 from plumbum import local
 
 from copier import run_copy, run_update
-from copier.errors import DirtyLocalWarning
+from copier.errors import DirtyLocalWarning, ForbiddenPathError
 
 from .helpers import build_file_tree, git
 
@@ -569,3 +570,40 @@ def test_symlinked_to_outside_destination_relative(
     assert (dst / "symlink_dir" / "outside.txt").read_text() == "outside"
     assert (dst / "a_symlink.txt").is_symlink()
     assert (dst / "a_symlink.txt").read_text() == "outside"
+
+
+def test_symlink_not_followed(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst, other = map(tmp_path_factory.mktemp, ("src", "dst", "other"))
+    build_file_tree(
+        {
+            src / "copier.yaml": """\
+            _preserve_symlinks: true
+            """,
+            # HACK: The `{% yield %}` tag is used to ensure the order in which the
+            # symlink and the generated file path are created, so the symlink is
+            # guaranteed to exist when the file is created, such that generating the
+            # `outside.txt` file might follow the symlink to its target location
+            # outside the destination root which is forbidden.
+            src
+            / "{% yield i from [1, 2] %}.{% endyield %}"
+            / "{% if i == 1 %}symlink{% endif %}": other,
+            src
+            / "{% yield i from [1, 2] %}.{% endyield %}"
+            / "{% if i == 2 %}{{ pathjoin('symlink', 'outside.txt') }}{% endif %}": "overwritten",
+            other / "outside.txt": "outside",
+        }
+    )
+
+    with local.cwd(src):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m", "init")
+
+    with pytest.raises(
+        ForbiddenPathError,
+        match=re.escape('"symlink/outside.txt" is forbidden'),
+    ):
+        run_copy(str(src), dst, defaults=True, overwrite=True)
+
+    assert (dst / "symlink").is_symlink()
+    assert (dst / "symlink" / "outside.txt").read_text() == "outside"

@@ -723,6 +723,7 @@ class Worker:
                 Path(src_abspath).relative_to(self.template_copy_root)
             )
             for dst_relpath, ctx in dst_relpaths_ctxs:
+                print(">>>", src_relpath, "->", dst_relpath, file=sys.stderr)
                 dst_abspath = dst_root / dst_relpath
                 if dst_abspath.is_symlink() and self.template.preserve_symlinks:
                     # If destination path is a symlink, it can safely point outside the
