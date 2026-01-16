@@ -321,7 +321,7 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
                     _templates_suffix: {SUFFIX_TMPL}
                     _tasks:
                         - git init
-                        - pre-commit install -t pre-commit -t commit-msg
+                        - pre-commit install
                         - pre-commit run -a || true
                     what: grog
                     """
@@ -333,6 +333,10 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
                 ),
                 ".pre-commit-config.yaml": (
                     r"""
+                    default_install_hook_types: [
+                        pre-commit,
+                        commit-msg,
+                    ]
                     repos:
                     -   repo: https://github.com/pre-commit/mirrors-prettier
                         rev: v2.0.4
@@ -478,6 +482,90 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
         )
         # This time a .rej file is unavoidable
         assert Path(f"{life}.rej").is_file()
+
+
+# Checkout test_commit_hooks_respected
+# FIXME Some generous Windows power user please fix this test!
+@pytest.mark.xfail(
+    condition=platform.system() == "Windows", reason="Git broken on Windows?"
+)
+@pytest.mark.impure
+def test_post_checkout_hook_ignored(tmp_path_factory: pytest.TempPathFactory) -> None:
+    """Ignore post-checkout hook when conflicts are encountered."""
+    # Prepare source template v1
+    src, dst1 = map(tmp_path_factory.mktemp, ("src", "dst1"))
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yml": (
+                    f"""
+                    _envops: {BRACKET_ENVOPS_JSON}
+                    _templates_suffix: {SUFFIX_TMPL}
+                    _tasks:
+                        - git init
+                        - git config --local core.hooksPath hooks/
+                        - chmod +x hooks/post-checkout
+                    """
+                ),
+                "[[ _copier_conf.answers_file ]].tmpl": (
+                    """
+                    [[ _copier_answers|to_nice_yaml ]]
+                    """
+                ),
+                "test.txt": "This is a file",
+                "hooks/post-checkout": (
+                    r"""
+                    echo "Post-checkout hook executed"
+                    """
+                ),
+            }
+        )
+        git("init")
+        git("add", ".")
+        git("commit", "-m", "feat: commit 1")
+        git("tag", "v1")
+    # Copy source template
+    run_copy(
+        src_path=str(src),
+        dst_path=dst1,
+        defaults=True,
+        overwrite=False,
+        unsafe=True,
+    )
+    with local.cwd(dst1):
+        git("add", ".")
+        # Commit initial copy
+        git("commit", "-am", "feat: copied v1")
+        # Introduce conflict
+        Path(f"{dst1}/test.txt").open(mode="w").write("This is a conflicting change")
+        git("add", ".")
+        git("commit", "-am", "feat: edit test.txt")
+    # Evolve source template to v2
+    # No errors should be raised due to post-checkout hook
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "test.txt": "This is a edited file in v2",
+                "hooks/post-checkout": (
+                    r"""
+                    exit 1
+                    """
+                ),
+            }
+        )
+        git("init")
+        git("add", ".")
+        git("commit", "-m", "feat: Update post-checkout")
+        git("tag", "v2")
+    # Update subproject to v2
+    run_update(
+        dst_path=dst1,
+        defaults=True,
+        overwrite=True,
+        unsafe=True,
+        skip_tasks=True,
+        conflict="inline",
+    )
 
 
 def test_update_from_tagged_to_head(tmp_path_factory: pytest.TempPathFactory) -> None:
