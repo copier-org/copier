@@ -1339,7 +1339,7 @@ class Worker:
                             # Ignore hooks to avoid errors from them or
                             # issues when .pre-commit-config.yaml is changed
                             "-c",
-                            "core.hooksPath=/dev/null",
+                            f"core.hooksPath={os.devnull}",
                             "checkout",
                             "--",
                             fname,

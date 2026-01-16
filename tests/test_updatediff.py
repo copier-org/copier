@@ -491,7 +491,7 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
 )
 @pytest.mark.impure
 def test_post_checkout_hook_ignored(tmp_path_factory: pytest.TempPathFactory) -> None:
-    """Ignore post-checkout hook when conflicts are encountered and .pre-commit-config.yaml is updated."""
+    """Ignore post-checkout hook when conflicts are encountered."""
     # Prepare source template v1
     src, dst1 = map(tmp_path_factory.mktemp, ("src", "dst1"))
     with local.cwd(src):
@@ -503,8 +503,8 @@ def test_post_checkout_hook_ignored(tmp_path_factory: pytest.TempPathFactory) ->
                     _templates_suffix: {SUFFIX_TMPL}
                     _tasks:
                         - git init
-                        - pre-commit install
-                        - pre-commit run -a || true
+                        - git config --local core.hooksPath hooks/
+                        - chmod +x hooks/post-checkout
                     """
                 ),
                 "[[ _copier_conf.answers_file ]].tmpl": (
@@ -513,29 +513,9 @@ def test_post_checkout_hook_ignored(tmp_path_factory: pytest.TempPathFactory) ->
                     """
                 ),
                 "test.txt": "This is a file",
-                ".pre-commit-config.yaml": (
+                "hooks/post-checkout": (
                     r"""
-                    default_install_hook_types: [
-                        pre-commit,
-                        pre-push,
-                        post-checkout,
-                        post-merge,
-                        post-rewrite,
-                    ]
-                    repos:
-                    -   repo: local
-                        hooks:
-                        -   id: echo
-                            name: echo V1
-                            entry: exit 0
-                            language: system
-                            pass_filenames: false
-                            types: [ file ]
-                            stages: [
-                                post-checkout,
-                                post-merge,
-                                post-rewrite,
-                            ]
+                    echo "Post-checkout hook executed"
                     """
                 ),
             }
@@ -561,44 +541,23 @@ def test_post_checkout_hook_ignored(tmp_path_factory: pytest.TempPathFactory) ->
         git("add", ".")
         git("commit", "-am", "feat: edit test.txt")
     # Evolve source template to v2
+    # No errors should be raised due to post-checkout hook
     with local.cwd(src):
         build_file_tree(
             {
-                ".pre-commit-config.yaml": (
+                "test.txt": "This is a edited file in v2",
+                "hooks/post-checkout": (
                     r"""
-                    default_install_hook_types: [
-                        pre-commit,
-                        pre-push,
-                        post-checkout,
-                        post-merge,
-                        post-rewrite,
-                    ]
-                    repos:
-                    -   repo: local
-                        hooks:
-                        -   id: echo
-                            name: echo V2
-                            entry: exit 0
-                            language: system
-                            pass_filenames: false
-                            types: [ file ]
-                            stages: [
-                                post-checkout,
-                                post-merge,
-                                post-rewrite,
-                            ]
+                    exit 1
                     """
                 ),
-                "test.txt": "This is a edited file in v2",
             }
         )
         git("init")
         git("add", ".")
-        git("commit", "-m", "feat: update .pre-commit-config.yaml")
+        git("commit", "-m", "feat: Update post-checkout")
         git("tag", "v2")
     # Update subproject to v2
-    # No errors should be raised due to post-checkout hook when
-    # encountering conflicts and .pre-commit-config.yaml is updated
     run_update(
         dst_path=dst1,
         defaults=True,
