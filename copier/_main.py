@@ -1451,7 +1451,7 @@ class Worker:
             "--no-verify",
         )
 
-    def run_check(self) -> None:
+    def run_check_update(self) -> None:
         """Check if a subproject is using the latest version of its template.
 
         See [checking a project][checking-a-project].

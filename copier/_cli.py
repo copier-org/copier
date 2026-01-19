@@ -39,13 +39,13 @@ Basically, there are 4 different commands you can run:
         copier update
         ```
 
--   [`copier check`][copier.cli.CopierCheckSubApp] to check if a preexisting
+-   [`copier check-update`][copier.cli.CopierCheckUpdateSubApp] to check if a preexisting
     project is using the latest version of its template.
 
     !!! example
 
         ```sh
-        copier check
+        copier check-update
         ```
 
 Below are the docs of each one of those.
@@ -437,9 +437,9 @@ class CopierUpdateSubApp(_Subcommand):
         return _handle_exceptions(inner)
 
 
-@CopierApp.subcommand("check")
-class CopierCheckSubApp(_Subcommand):
-    """The `copier check` subcommand.
+@CopierApp.subcommand("check-update")
+class CopierCheckUpdateSubApp(_Subcommand):
+    """The `copier check-update` subcommand.
 
     Use this subcommand to check if an existing subproject is using the
     latest version of a template.
@@ -472,7 +472,7 @@ class CopierCheckSubApp(_Subcommand):
     )
 
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
-        """Call [run_check][copier.main.Worker.run_check].
+        """Call [run_check_update][copier.main.Worker.run_check_update].
 
         Parameters:
             destination_path:
@@ -486,7 +486,7 @@ class CopierCheckSubApp(_Subcommand):
         def inner() -> None:
             try:
                 with self._worker(dst_path=destination_path) as worker:
-                    worker.run_check()
+                    worker.run_check_update()
             except SubprojectOutdatedError:
                 return self.exit_code
 
