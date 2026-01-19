@@ -70,7 +70,7 @@ from plumbum import cli, colors
 from ._main import Worker
 from ._tools import copier_version, try_enum
 from ._types import AnyByStrDict, VcsRef
-from .errors import UnsafeTemplateError, UserMessageError, SubprojectOutdatedError
+from .errors import SubprojectOutdatedError, UnsafeTemplateError, UserMessageError
 
 
 def _handle_exceptions(method: Callable[[], None]) -> int:
@@ -436,8 +436,9 @@ class CopierUpdateSubApp(_Subcommand):
 
         return _handle_exceptions(inner)
 
+
 @CopierApp.subcommand("check")
-class CopierCheckSubApp(cli.Application):
+class CopierCheckSubApp(_Subcommand):
     """The `copier check` subcommand.
 
     Use this subcommand to check if an existing subproject is using the
@@ -470,7 +471,6 @@ class CopierCheckSubApp(cli.Application):
         ),
     )
 
-    @handle_exceptions
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
         """Call [run_check][copier.main.Worker.run_check].
 
@@ -482,9 +482,12 @@ class CopierCheckSubApp(cli.Application):
                 The subproject must exist. If not specified, the currently
                 working directory is used.
         """
-        try:
-            self.parent._worker(dst_path=destination_path).run_check()
-        except SubprojectOutdatedError:
-            return self.exit_code
-        return 0
 
+        def inner() -> None:
+            try:
+                with self._worker(dst_path=destination_path) as worker:
+                    worker.run_check()
+            except SubprojectOutdatedError:
+                return self.exit_code
+
+        return _handle_exceptions(inner)

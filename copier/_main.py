@@ -70,11 +70,11 @@ from .errors import (
     ExtensionNotFoundError,
     ForbiddenPathError,
     InteractiveSessionError,
+    SubprojectOutdatedError,
     TaskError,
     UnsafeTemplateError,
     UserMessageError,
     YieldTagInFileError,
-    SubprojectOutdatedError,
 )
 from .settings import Settings
 
@@ -1480,12 +1480,12 @@ class Worker:
                     f"NEW template version available. "
                     f"Currently using {self.subproject.template.version}, "
                     f"latest is {self.template.version}.",
-                    file=sys.stderr)
+                    file=sys.stderr,
+                )
             raise SubprojectOutdatedError()
         elif not self.quiet:
             # TODO Unify printing tools
             print("Project is up-to-date 🎉", file=sys.stderr)
-
 
 
 def run_copy(
@@ -1543,13 +1543,15 @@ def run_update(
 
 def run_check(
     dst_path: StrOrPath = ".",
-    data: Optional[AnyByStrDict] = None,
-    **kwargs,
+    data: AnyByStrDict | None = None,
+    **kwargs: Any,
 ) -> Worker:
     """Check if a subproject is using the latest version of its template.
 
     See [Worker][copier.main.Worker] fields to understand this function's args.
     """
+    if data is not None:
+        kwargs["data"] = data
     with Worker(dst_path=Path(dst_path), **kwargs) as worker:
         worker.run_check()
     return worker
