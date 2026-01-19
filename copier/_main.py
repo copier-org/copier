@@ -1541,7 +1541,7 @@ def run_update(
     return worker
 
 
-def run_check(
+def run_check_update(
     dst_path: StrOrPath = ".",
     data: AnyByStrDict | None = None,
     **kwargs: Any,
@@ -1553,7 +1553,7 @@ def run_check(
     if data is not None:
         kwargs["data"] = data
     with Worker(dst_path=Path(dst_path), **kwargs) as worker:
-        worker.run_check()
+        worker.run_check_update()
     return worker
 
 
