@@ -1,24 +1,31 @@
+from __future__ import annotations
+
 import json
+from collections.abc import Sequence
 from datetime import datetime
-from typing import Optional, Sequence, Type, Union
 
 import pexpect
 import pytest
 import yaml
 from pexpect.popen_spawn import PopenSpawn
+from plumbum import local
 
-from copier import Worker
+from copier._main import Worker
+from copier._types import AnyByStrDict
+from copier._user_data import load_answersfile_data
 from copier.errors import InvalidTypeError
-from copier.types import AnyByStrDict, OptStr
 
 from .helpers import (
     BRACKET_ENVOPS,
     BRACKET_ENVOPS_JSON,
     COPIER_PATH,
     SUFFIX_TMPL,
+    Keyboard,
     Spawn,
     build_file_tree,
     expect_prompt,
+    git,
+    git_init,
 )
 
 main_default = "copier"
@@ -30,7 +37,7 @@ main_question = {
 
 
 class Prompt:
-    def __init__(self, name: str, format: str, help: OptStr = None) -> None:
+    def __init__(self, name: str, format: str, help: str | None = None) -> None:
         self.name = name
         self.format = format
         self.help = help
@@ -149,8 +156,8 @@ def test_templated_prompt(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
     questions_data: AnyByStrDict,
-    expected_value: Union[str, int],
-    expected_outputs: Sequence[Union[str, Prompt]],
+    expected_value: str | int,
+    expected_outputs: Sequence[str | Prompt],
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     questions_combined = {**main_question, **questions_data}
@@ -164,7 +171,7 @@ def test_templated_prompt(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + (str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
     expect_prompt(tui, "main", "str")
     tui.expect_exact(main_default)
     tui.sendline()
@@ -175,7 +182,7 @@ def test_templated_prompt(
             tui.expect_exact(output)
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
-    answers = yaml.safe_load((dst / ".copier-answers.yml").read_text())
+    answers = load_answersfile_data(dst)
     assert answers[question_name] == expected_value
 
 
@@ -236,7 +243,9 @@ def test_templated_prompt_builtins(tmp_path_factory: pytest.TempPathFactory) -> 
             src / "make_secret.tmpl": "[[ question2 ]]",
         }
     )
-    Worker(str(src), dst, defaults=True, overwrite=True).run_copy()
+    with pytest.warns(FutureWarning) as warnings:
+        Worker(str(src), dst, defaults=True, overwrite=True).run_copy()
+    assert len([w for w in warnings if w.category is FutureWarning]) == 2
     that_now = datetime.fromisoformat((dst / "now").read_text())
     assert that_now <= datetime.utcnow()
     assert len((dst / "make_secret").read_text()) == 128
@@ -254,7 +263,7 @@ def test_templated_prompt_builtins(tmp_path_factory: pytest.TempPathFactory) -> 
 def test_templated_prompt_invalid(
     tmp_path_factory: pytest.TempPathFactory,
     questions: AnyByStrDict,
-    raises: Optional[Type[BaseException]],
+    raises: type[BaseException] | None,
     returns: str,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -271,3 +280,315 @@ def test_templated_prompt_invalid(
     else:
         worker.run_copy()
         assert (dst / "result").read_text() == returns
+
+
+@pytest.mark.parametrize(
+    "cloud, iac_choices",
+    [
+        (
+            "Any",
+            [
+                "Terraform",
+                "Cloud Formation (Requires AWS)",
+                "Azure Resource Manager (Requires Azure)",
+                "Deployment Manager (Requires GCP)",
+            ],
+        ),
+        (
+            "AWS",
+            [
+                "Terraform",
+                "Cloud Formation",
+                "Azure Resource Manager (Requires Azure)",
+                "Deployment Manager (Requires GCP)",
+            ],
+        ),
+        (
+            "Azure",
+            [
+                "Terraform",
+                "Cloud Formation (Requires AWS)",
+                "Azure Resource Manager",
+                "Deployment Manager (Requires GCP)",
+            ],
+        ),
+        (
+            "GCP",
+            [
+                "Terraform",
+                "Cloud Formation (Requires AWS)",
+                "Azure Resource Manager (Requires Azure)",
+                "Deployment Manager",
+            ],
+        ),
+    ],
+)
+def test_templated_prompt_with_conditional_choices(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    cloud: str,
+    iac_choices: str,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                """\
+                cloud:
+                    type: str
+                    help: Which cloud provider do you use?
+                    choices:
+                        - Any
+                        - AWS
+                        - Azure
+                        - GCP
+
+                iac:
+                    type: str
+                    help: Which IaC tool do you use?
+                    choices:
+                        Terraform: tf
+                        Cloud Formation:
+                            value: cf
+                            validator: "{% if cloud != 'AWS' %}Requires AWS{% endif %}"
+                        Azure Resource Manager:
+                            value: arm
+                            validator: "{% if cloud != 'Azure' %}Requires Azure{% endif %}"
+                        Deployment Manager:
+                            value: dm
+                            validator: "{% if cloud != 'GCP' %}Requires GCP{% endif %}"
+                """
+            ),
+        }
+    )
+    tui = spawn(COPIER_PATH + ("copy", f"--data=cloud={cloud}", str(src), str(dst)))
+    expect_prompt(tui, "iac", "str", help="Which IaC tool do you use?")
+    for iac in iac_choices:
+        tui.expect_exact(iac)
+    tui.sendline()
+
+
+@pytest.mark.parametrize(
+    "cloud, iac_choices",
+    [
+        ("Any", ["Terraform"]),
+        ("AWS", ["Terraform", "Cloud Formation"]),
+        ("Azure", ["Terraform", "Azure Resource Manager"]),
+        ("GCP", ["Terraform", "Deployment Manager"]),
+    ],
+)
+def test_templated_prompt_with_templated_choices(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    cloud: str,
+    iac_choices: str,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                """\
+                cloud:
+                    type: str
+                    help: Which cloud provider do you use?
+                    choices:
+                        - Any
+                        - AWS
+                        - Azure
+                        - GCP
+
+                iac:
+                    type: str
+                    help: Which IaC tool do you use?
+                    choices: |
+                        Terraform: tf
+                        {%- if cloud == 'AWS' %}
+                        Cloud Formation: cf
+                        {%- endif %}
+                        {%- if cloud == 'Azure' %}
+                        Azure Resource Manager: arm
+                        {%- endif %}
+                        {%- if cloud == 'GCP' %}
+                        Deployment Manager: dm
+                        {%- endif %}
+                """
+            ),
+        }
+    )
+    tui = spawn(COPIER_PATH + ("copy", f"--data=cloud={cloud}", str(src), str(dst)))
+    expect_prompt(tui, "iac", "str", help="Which IaC tool do you use?")
+    for iac in iac_choices:
+        tui.expect_exact(iac)
+    tui.sendline()
+
+
+def test_templated_prompt_update_previous_answer_disabled(
+    tmp_path_factory: pytest.TempPathFactory, spawn: Spawn
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                """\
+                cloud:
+                    type: str
+                    help: Which cloud provider do you use?
+                    choices:
+                        - Any
+                        - AWS
+                        - Azure
+                        - GCP
+                iac:
+                    type: str
+                    help: Which IaC tool do you use?
+                    choices:
+                        Terraform: tf
+                        Cloud Formation:
+                            value: cf
+                            validator: "{% if cloud != 'AWS' %}Requires AWS{% endif %}"
+                        Azure Resource Manager:
+                            value: arm
+                            validator: "{% if cloud != 'Azure' %}Requires Azure{% endif %}"
+                        Deployment Manager:
+                            value: dm
+                            validator: "{% if cloud != 'GCP' %}Requires GCP{% endif %}"
+                """
+            ),
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+        }
+    )
+
+    with local.cwd(src):
+        git_init("v1")
+        git("tag", "v1")
+
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
+    expect_prompt(tui, "cloud", "str", help="Which cloud provider do you use?")
+    tui.sendline(Keyboard.Down)  # select "AWS"
+    expect_prompt(tui, "iac", "str", help="Which IaC tool do you use?")
+    tui.sendline(Keyboard.Down)  # select "Cloud Formation"
+    tui.expect_exact(pexpect.EOF)
+
+    assert load_answersfile_data(dst) == {
+        "_src_path": str(src),
+        "_commit": "v1",
+        "cloud": "AWS",
+        "iac": "cf",
+    }
+
+    with local.cwd(dst):
+        git_init("v1")
+
+    tui = spawn(COPIER_PATH + ("update", str(dst)))
+    expect_prompt(tui, "cloud", "str", help="Which cloud provider do you use?")
+    tui.sendline(Keyboard.Down)  # select "Azure"
+    expect_prompt(tui, "iac", "str", help="Which IaC tool do you use?")
+    tui.sendline()  # select "Terraform" (first supported)
+    tui.expect_exact(pexpect.EOF)
+
+    assert load_answersfile_data(dst) == {
+        "_src_path": str(src),
+        "_commit": "v1",
+        "cloud": "Azure",
+        "iac": "tf",
+    }
+
+
+def test_multiselect_choices_with_templated_default_value(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                """\
+                python_version:
+                    type: str
+                    help: What version of python are you targeting?
+                    default: "3.11"
+                    choices:
+                        - "3.8"
+                        - "3.9"
+                        - "3.10"
+                        - "3.11"
+                        - "3.12"
+
+                github_runner_python_version:
+                    type: str
+                    help: Which Python versions do you want to use on your Github Runner?
+                    default: ["{{ python_version }}"]
+                    multiselect: true
+                    choices:
+                        - "3.8"
+                        - "3.9"
+                        - "3.10"
+                        - "3.11"
+                        - "3.12"
+                """
+            ),
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+        }
+    )
+
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
+    expect_prompt(
+        tui, "python_version", "str", help="What version of python are you targeting?"
+    )
+    tui.sendline()  # select `3.11" (default value)
+    expect_prompt(
+        tui,
+        "github_runner_python_version",
+        "str",
+        help="Which Python versions do you want to use on your Github Runner?",
+    )
+    tui.sendline()  # select "[3.11]" (default value)
+    tui.expect_exact(pexpect.EOF)
+
+    assert load_answersfile_data(dst) == {
+        "_src_path": str(src),
+        "python_version": "3.11",
+        "github_runner_python_version": ["3.11"],
+    }
+
+
+def test_copier_phase_variable(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): """\
+                phase:
+                    type: str
+                    default: "{{ _copier_phase }}"
+            """
+        }
+    )
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
+    expect_prompt(tui, "phase", "str")
+    tui.expect_exact("prompt")
+
+
+def test_copier_conf_variable(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): """\
+                project_name:
+                    type: str
+                    default: "{{ _copier_conf.dst_path | basename }}"
+            """
+        }
+    )
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst / "test_project")))
+    expect_prompt(tui, "project_name", "str")
+    tui.expect_exact("test_project")

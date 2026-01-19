@@ -1,5 +1,6 @@
 # ![Copier](https://github.com/copier-org/copier/raw/master/img/copier-logotype.png)
 
+[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)
 [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/copier-org/copier)
 [![codecov](https://codecov.io/gh/copier-org/copier/branch/master/graph/badge.svg)](https://codecov.io/gh/copier-org/copier)
 [![CI](https://github.com/copier-org/copier/workflows/CI/badge.svg)](https://github.com/copier-org/copier/actions?query=branch%3Amaster)
@@ -8,6 +9,7 @@
 [![PyPI](https://img.shields.io/pypi/v/copier?logo=pypi&logoColor=%23959DA5)](https://pypi.org/project/copier/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Documentation Status](https://img.shields.io/readthedocs/copier/latest?logo=readthedocs)](https://copier.readthedocs.io/en/latest)
+[![](https://img.shields.io/badge/Gurubase-Ask%20Copier%20Guru-006BFF)](https://gurubase.io/g/copier)
 
 A library and CLI app for rendering project templates.
 
@@ -21,11 +23,20 @@ A library and CLI app for rendering project templates.
 
 ## Installation
 
-1. Install Python 3.7 or newer (3.8 or newer if you're on Windows).
+1. Install Python 3.10 or newer.
 1. Install Git 2.27 or newer.
-1. To use as a CLI app: `pipx install copier`
+1. To use as a CLI app: [`pipx install copier`](https://github.com/pypa/pipx) or
+   [`uv tool install copier`](https://docs.astral.sh/uv/#tool-management)
 1. To use as a library: `pip install copier` or `conda install -c conda-forge copier`
-1. To use with 100% reproducibility: `nix profile install github:copier-org/copier`
+
+### Homebrew formula
+
+To install the latest Copier release using
+[its Homebrew formula](https://formulae.brew.sh/formula/copier) for macOS or Linux:
+
+```shell
+brew install copier
+```
 
 ## Quick start
 
@@ -40,6 +51,8 @@ To create a template:
 └── 📄 {{_copier_conf.answers_file}}.jinja   # answers are recorded here
 ```
 
+Content of the `copier.yml` file:
+
 ```yaml title="copier.yml"
 # questions
 project_name:
@@ -51,9 +64,13 @@ module_name:
     help: What is your Python module name?
 ```
 
+Content of the `{{project_name}}/{{module_name}}.py.jinja` file:
+
 ```python+jinja title="{{project_name}}/{{module_name}}.py.jinja"
 print("Hello from {{module_name}}!")
 ```
+
+Content of the `{{_copier_conf.answers_file}}.jinja` file:
 
 ```yaml+jinja title="{{_copier_conf.answers_file}}.jinja"
 # Changes here will be overwritten by Copier
@@ -65,25 +82,25 @@ To generate a project from the template:
 -   On the command-line:
 
     ```shell
-    copier path/to/project/template path/to/destination
+    copier copy path/to/project/template path/to/destination
     ```
 
 -   Or in Python code, programmatically:
 
     ```python
-    from copier import run_auto
+    from copier import run_copy
 
     # Create a project from a local path
-    run_auto("path/to/project/template", "path/to/destination")
+    run_copy("path/to/project/template", "path/to/destination")
 
     # Or from a Git URL.
-    run_auto("https://github.com/copier-org/copier.git", "path/to/destination")
+    run_copy("https://github.com/copier-org/copier.git", "path/to/destination")
 
     # You can also use "gh:" as a shortcut of "https://github.com/"
-    run_auto("gh:copier-org/copier.git", "path/to/destination")
+    run_copy("gh:copier-org/copier.git", "path/to/destination")
 
     # Or "gl:" as a shortcut of "https://gitlab.com/"
-    run_auto("gl:copier-org/copier.git", "path/to/destination")
+    run_copy("gl:copier-org/copier.git", "path/to/destination")
     ```
 
 ## Basic concepts
@@ -91,7 +108,7 @@ To generate a project from the template:
 Copier is composed of these main concepts:
 
 1. **Templates**. They lay out how to generate the subproject.
-1. **Questionaries**. They are configured in the template. Answers are used to generate
+1. **Questionnaires**. They are configured in the template. Answers are used to generate
    projects.
 1. **Projects**. This is where your real program lives. But it is usually generated
    and/or updated from a template.
@@ -101,10 +118,8 @@ Copier targets these main human audiences:
 1.  **Template creators**. Programmers that repeat code too much and prefer a tool to do
     it for them.
 
-    !!! tip
-
-         Copier doesn't replace the DRY principle... but sometimes you simply can't be
-         DRY and you need a DRYing machine...
+    **_Tip:_** Copier doesn't replace the DRY principle... but sometimes you simply
+    can't be DRY and you need a DRYing machine...
 
 1.  **Template consumers**. Programmers that want to start a new project quickly, or
     that want to evolve it comfortably.
@@ -131,6 +146,53 @@ inspiration!
 
 If you want your template to appear in that list, just add the topic to it! 🏷
 
+## Show your support
+
+If you're using Copier, consider adding the Copier badge to your project's `README.md`:
+
+```md
+[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-orange.json)](https://github.com/copier-org/copier)
+```
+
+...or `README.rst`:
+
+```rst
+.. image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-orange.json
+    :target: https://github.com/copier-org/copier
+    :alt: Copier
+```
+
+...or, as HTML:
+
+<!-- prettier-ignore-start -->
+```html
+<a href="https://github.com/copier-org/copier"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-orange.json" alt="Copier" style="max-width:100%;"/></a>
+```
+<!-- prettier-ignore-end -->
+
+### Copier badge variations
+
+1. Badge Grayscale Border
+   [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-border.json)](https://github.com/copier-org/copier)
+
+1. Badge Grayscale Inverted Border
+   [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border.json)](https://github.com/copier-org/copier)
+
+1. Badge Grayscale Inverted Border Orange
+   [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-orange.json)](https://github.com/copier-org/copier)
+
+1. Badge Grayscale Inverted Border Red
+   [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-red.json)](https://github.com/copier-org/copier)
+
+1. Badge Grayscale Inverted Border Teal
+   [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-teal.json)](https://github.com/copier-org/copier)
+
+1. Badge Grayscale Inverted Border Purple
+   [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)
+
+1. Badge Black
+   [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-black.json)](https://github.com/copier-org/copier)
+
 ## Credits
 
 Special thanks go to [jpsca](https://github.com/jpsca) for originally creating `Copier`.
@@ -151,4 +213,10 @@ codebase.
 
 And thanks to all financial supporters and folks that give us a shiny star! ⭐
 
-[![Star History Chart](https://api.star-history.com/svg?repos=copier-org/copier&type=Date)](https://star-history.com/#copier-org/copier&Date)
+<a href="https://star-history.com/#copier-org/copier&Date">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=copier-org/copier&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=copier-org/copier&type=Date" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=copier-org/copier&type=Date" />
+  </picture>
+</a>

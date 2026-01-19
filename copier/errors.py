@@ -1,16 +1,25 @@
 """Custom exceptions used by Copier."""
 
+from __future__ import annotations
+
+import subprocess
+import sys
+from collections.abc import Sequence
 from pathlib import Path
+from subprocess import CompletedProcess
 from typing import TYPE_CHECKING
 
-from pydantic.errors import _PathValueError
-
-from .tools import printf_exception
-from .types import PathSeq
+from ._tools import printf_exception
+from ._types import PathSeq
 
 if TYPE_CHECKING:  # always false
-    from .template import Template
-    from .user_data import AnswersMap, Question
+    from ._template import Template
+    from ._user_data import AnswersMap, Question
+
+if sys.version_info < (3, 11):
+    from typing_extensions import Self
+else:
+    from typing import Self
 
 
 # Errors
@@ -20,6 +29,12 @@ class CopierError(Exception):
 
 class UserMessageError(CopierError):
     """Exit the program giving a message to the user."""
+
+    def __init__(self, message: str):
+        self.message = message
+
+    def __str__(self) -> str:
+        return self.message
 
 
 class SubprojectOutdatedError(UserMessageError):
@@ -46,7 +61,7 @@ class InvalidConfigFileError(ConfigFileError):
 class MultipleConfigFilesError(ConfigFileError):
     """Both copier.yml and copier.yaml found, and that's an error."""
 
-    def __init__(self, conf_paths: "PathSeq"):
+    def __init__(self, conf_paths: PathSeq):
         msg = str(conf_paths)
         printf_exception(self, "MULTIPLE CONFIG FILES", msg=msg)
         super().__init__(msg)
@@ -56,18 +71,29 @@ class InvalidTypeError(TypeError, CopierError):
     """The question type is not among the supported ones."""
 
 
-class PathNotAbsoluteError(_PathValueError, CopierError):
+class PathError(CopierError, ValueError):
+    """The path is invalid in the given context."""
+
+
+class PathNotAbsoluteError(PathError):
     """The path is not absolute, but it should be."""
 
-    code = "path.not_absolute"
-    msg_template = '"{path}" is not an absolute path'
+    def __init__(self, *, path: Path) -> None:
+        super().__init__(f'"{path}" is not an absolute path')
 
 
-class PathNotRelativeError(_PathValueError, CopierError):
+class PathNotRelativeError(PathError):
     """The path is not relative, but it should be."""
 
-    code = "path.not_relative"
-    msg_template = '"{path}" is not a relative path'
+    def __init__(self, *, path: Path) -> None:
+        super().__init__(f'"{path}" is not a relative path')
+
+
+class ForbiddenPathError(PathError):
+    """The path is forbidden in the given context."""
+
+    def __init__(self, *, path: Path) -> None:
+        super().__init__(f'"{path}" is forbidden')
 
 
 class ExtensionNotFoundError(UserMessageError):
@@ -95,11 +121,60 @@ class CopierAnswersInterrupt(CopierError, KeyboardInterrupt):
     """
 
     def __init__(
-        self, answers: "AnswersMap", last_question: "Question", template: "Template"
+        self, answers: AnswersMap, last_question: Question, template: Template
     ) -> None:
         self.answers = answers
         self.last_question = last_question
         self.template = template
+
+
+class UnsafeTemplateError(CopierError):
+    """Unsafe Copier template features are used without explicit consent."""
+
+    def __init__(self, features: Sequence[str]):
+        assert features
+        s = "s" if len(features) > 1 else ""
+        super().__init__(
+            f"Template uses potentially unsafe feature{s}: {', '.join(features)}.\n"
+            "If you trust this template, consider adding the `--trust` option when running `copier copy/update`."
+        )
+
+
+class YieldTagInFileError(CopierError):
+    """A yield tag is used in the file content, but it is not allowed."""
+
+
+class MultipleYieldTagsError(CopierError):
+    """Multiple yield tags are used in one path name, but it is not allowed."""
+
+
+class TaskError(subprocess.CalledProcessError, UserMessageError):
+    """Exception raised when a task fails."""
+
+    def __init__(
+        self,
+        command: str | Sequence[str],
+        returncode: int,
+        stdout: str | bytes | None,
+        stderr: str | bytes | None,
+    ):
+        subprocess.CalledProcessError.__init__(
+            self, returncode=returncode, cmd=command, output=stdout, stderr=stderr
+        )
+        message = f"Task {command!r} returned non-zero exit status {returncode}."
+        UserMessageError.__init__(self, message)
+
+    @classmethod
+    def from_process(
+        cls, process: CompletedProcess[str] | CompletedProcess[bytes]
+    ) -> Self:
+        """Create a TaskError from a CompletedProcess."""
+        return cls(
+            command=process.args,
+            returncode=process.returncode,
+            stdout=process.stdout,
+            stderr=process.stderr,
+        )
 
 
 # Warnings
@@ -121,3 +196,18 @@ class DirtyLocalWarning(UserWarning, CopierWarning):
 
 class ShallowCloneWarning(UserWarning, CopierWarning):
     """The template repository is a shallow clone."""
+
+
+class MissingSettingsWarning(UserWarning, CopierWarning):
+    """Settings path has been defined but file is missing."""
+
+
+class MissingFileWarning(UserWarning, CopierWarning):
+    """I still couldn't find what I'm looking for."""
+
+
+class InteractiveSessionError(UserMessageError):
+    """An interactive session is required to run this program."""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(f"Interactive session required: {message}")

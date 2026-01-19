@@ -1,19 +1,21 @@
+from __future__ import annotations
+
 import platform
 from pathlib import Path
 from shutil import rmtree
 from textwrap import dedent
-from typing import Optional
+from typing import Literal
 
 import pexpect
 import pytest
-import yaml
 from plumbum import local
-from plumbum.cmd import git
 
-from copier import Worker, copy
-from copier.cli import CopierApp
-from copier.main import run_copy, run_update
-from copier.types import Literal
+from copier._cli import CopierApp
+from copier._main import Worker, run_copy, run_update
+from copier._tools import normalize_git_path
+from copier._types import VcsRef
+from copier._user_data import load_answersfile_data
+from copier.errors import UserMessageError
 
 from .helpers import (
     BRACKET_ENVOPS_JSON,
@@ -22,6 +24,9 @@ from .helpers import (
     SUFFIX_TMPL,
     Spawn,
     build_file_tree,
+    git,
+    git_init,
+    git_save,
 )
 
 
@@ -74,20 +79,23 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
                 author_name: Guybrush
                 _migrations:
                     -   version: v0.0.1
-                        before:
-                            - touch before-v0.0.1
-                        after:
-                            - touch after-v0.0.1
+                        when: "{{ _stage == 'before' }}"
+                        command: touch before-v0.0.1
+                    -   version: v0.0.1
+                        when: "{{ _stage == 'after' }}"
+                        command: touch after-v0.0.1
                     -   version: v0.0.2
-                        before:
-                            - touch before-v0.0.2
-                        after:
-                            - touch after-v0.0.2
+                        when: "{{ _stage == 'before' }}"
+                        command: touch before-v0.0.2
+                    -   version: v0.0.2
+                        when: "{{ _stage == 'after' }}"
+                        command: touch after-v0.0.2
                     -   version: v1.0.0
-                        before:
-                            - touch before-v1.0.0
-                        after:
-                            - touch after-v1.0.0
+                        when: "{{ _stage == 'before' }}"
+                        command: touch before-v1.0.0
+                    -   version: v1.0.0
+                        when: "{{ _stage == 'after' }}"
+                        command: touch after-v1.0.0
                 """
             ),
         }
@@ -107,20 +115,23 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
                 author_name: Elaine
                 _migrations:
                     -   version: v0.0.1
-                        before:
-                            - touch before-v0.0.1
-                        after:
-                            - touch after-v0.0.1
+                        when: "{{ _stage == 'before' }}"
+                        command: touch before-v0.0.1
+                    -   version: v0.0.1
+                        when: "{{ _stage == 'after' }}"
+                        command: touch after-v0.0.1
                     -   version: v0.0.2
-                        before:
-                            - touch before-v0.0.2
-                        after:
-                            - touch after-v0.0.2
+                        when: "{{ _stage == 'before' }}"
+                        command: touch before-v0.0.2
+                    -   version: v0.0.2
+                        when: "{{ _stage == 'after' }}"
+                        command: touch after-v0.0.2
                     -   version: v1.0.0
-                        before:
-                            - touch before-v1.0.0
-                        after:
-                            - touch after-v1.0.0
+                        when: "{{ _stage == 'before' }}"
+                        command: touch before-v1.0.0
+                    -   version: v1.0.0
+                        when: "{{ _stage == 'after' }}"
+                        command: touch after-v1.0.0
                 """
             ),
             (repo / "README.txt.jinja"): (
@@ -145,27 +156,27 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
     # Generate repo bundle
     target = dst / "target"
     readme = target / "README.txt"
-    answers = target / ".copier-answers.yml"
     commit = git["commit", "--all"]
     # Run copier 1st time, with specific tag
-    CopierApp.invoke(
-        "copy",
-        str(bundle),
-        str(target),
-        defaults=True,
-        overwrite=True,
-        vcs_ref="v0.0.1",
+    CopierApp.run(
+        [
+            "copier",
+            "copy",
+            str(bundle),
+            str(target),
+            "--defaults",
+            "--overwrite",
+            "--vcs-ref=v0.0.1",
+        ],
+        exit=False,
     )
     # Check it's copied OK
-    assert answers.read_text() == dedent(
-        f"""\
-        # Changes here will be overwritten by Copier
-        _commit: v0.0.1
-        _src_path: {bundle}
-        author_name: Guybrush
-        project_name: to become a pirate\n
-        """
-    )
+    assert load_answersfile_data(target) == {
+        "_commit": "v0.0.1",
+        "_src_path": str(bundle),
+        "author_name": "Guybrush",
+        "project_name": "to become a pirate",
+    }
     assert readme.read_text() == dedent(
         """
         Let me introduce myself.
@@ -178,9 +189,6 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
     # Init destination as a new independent git repo
     with local.cwd(target):
         git("init")
-        # Configure git in case you're running in CI
-        git("config", "user.name", "Copier Test")
-        git("config", "user.email", "test@copier")
         # Commit changes
         git("add", ".")
         commit("-m", "hello world")
@@ -198,16 +206,13 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
         )
         commit("-m", "I prefer grog")
         # Update target to latest tag and check it's updated in answers file
-        CopierApp.invoke(defaults=True, overwrite=True)
-        assert answers.read_text() == dedent(
-            f"""\
-            # Changes here will be overwritten by Copier
-            _commit: v0.0.2
-            _src_path: {bundle}
-            author_name: Guybrush
-            project_name: to become a pirate\n
-            """
-        )
+        CopierApp.run(["copier", "update", "--defaults", "--UNSAFE"], exit=False)
+        assert load_answersfile_data(target) == {
+            "_commit": "v0.0.2",
+            "_src_path": str(bundle),
+            "author_name": "Guybrush",
+            "project_name": "to become a pirate",
+        }
         # Check migrations were executed properly
         assert not (target / "before-v0.0.1").is_file()
         assert not (target / "after-v0.0.1").is_file()
@@ -219,7 +224,10 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
         assert not (target / "after-v1.0.0").is_file()
         commit("-m", "Update template to v0.0.2")
         # Update target to latest commit, which is still untagged
-        CopierApp.invoke(defaults=True, overwrite=True, vcs_ref="HEAD")
+        CopierApp.run(
+            ["copier", "update", "--defaults", "--vcs-ref=HEAD"],
+            exit=False,
+        )
         # Check no new migrations were executed
         assert not (target / "before-v0.0.1").is_file()
         assert not (target / "after-v0.0.1").is_file()
@@ -228,15 +236,12 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
         assert not (target / "before-v1.0.0").is_file()
         assert not (target / "after-v1.0.0").is_file()
         # Check it's updated OK
-        assert answers.read_text() == dedent(
-            f"""\
-            # Changes here will be overwritten by Copier
-            _commit: {last_commit}
-            _src_path: {bundle}
-            author_name: Guybrush
-            project_name: to become a pirate\n
-            """
-        )
+        assert load_answersfile_data(target) == {
+            "_commit": last_commit,
+            "_src_path": str(bundle),
+            "author_name": "Guybrush",
+            "project_name": "to become a pirate",
+        }
         assert readme.read_text() == dedent(
             """
             Let me introduce myself.
@@ -251,10 +256,13 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
         commit("-m", f"Update template to {last_commit}")
         assert not git("status", "--porcelain")
         # No more updates exist, so updating again should change nothing
-        CopierApp.invoke(defaults=True, overwrite=True, vcs_ref="HEAD")
+        CopierApp.run(
+            ["copier", "update", "--defaults", "--vcs-ref=HEAD"],
+            exit=False,
+        )
         assert not git("status", "--porcelain")
         # If I change an option, it updates properly
-        copy(
+        run_update(
             data={"author_name": "Largo LaGrande", "project_name": "to steal a lot"},
             defaults=True,
             overwrite=True,
@@ -331,7 +339,7 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
                         hooks:
                         -   id: prettier
                     -   repo: https://github.com/commitizen-tools/commitizen
-                        rev: v2.42.1
+                        rev: v3.12.0
                         hooks:
                         -   id: commitizen
                     -   repo: local
@@ -358,7 +366,9 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
         git("commit", "-m", "feat: commit 1")
         git("tag", "v1")
     # Copy source template
-    copy(src_path=str(src), dst_path=dst1, defaults=True, overwrite=True)
+    run_copy(
+        src_path=str(src), dst_path=dst1, defaults=True, overwrite=True, unsafe=True
+    )
     with local.cwd(dst1):
         life = Path("life.yml")
         git("add", ".")
@@ -395,7 +405,14 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
         git("commit", "-m", "feat: commit 2")
         git("tag", "v2")
     # Update subproject to v2
-    copy(dst_path=dst1, defaults=True, overwrite=True, conflict="rej")
+    run_update(
+        dst_path=dst1,
+        defaults=True,
+        overwrite=True,
+        conflict="rej",
+        context_lines=1,
+        unsafe=True,
+    )
     with local.cwd(dst1):
         git("commit", "-am", "feat: copied v2")
         assert life.read_text() == dedent(
@@ -430,7 +447,14 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
     git("clone", "--depth=1", f"file://{dst1}", dst2)
     with local.cwd(dst2):
         # Subproject re-updates just to change some values
-        copy(data={"what": "study"}, defaults=True, overwrite=True, conflict="rej")
+        run_update(
+            data={"what": "study"},
+            defaults=True,
+            overwrite=True,
+            conflict="rej",
+            context_lines=1,
+            unsafe=True,
+        )
         git("commit", "-am", "chore: re-updated to change values after evolving")
         # Subproject evolution was respected up to sane possibilities.
         # In an ideal world, this file would be exactly the same as what's written
@@ -478,9 +502,8 @@ def test_update_from_tagged_to_head(tmp_path_factory: pytest.TempPathFactory) ->
     # Copy it without specifying version
     run_copy(src_path=str(src), dst_path=dst)
     example = dst / "example"
-    answers_file = dst / ".copier-answers.yml"
     assert example.read_text() == "1"
-    assert yaml.safe_load(answers_file.read_text())["_commit"] == "v1"
+    assert load_answersfile_data(dst)["_commit"] == "v1"
     # Build repo on copy
     with local.cwd(dst):
         git("init")
@@ -489,7 +512,7 @@ def test_update_from_tagged_to_head(tmp_path_factory: pytest.TempPathFactory) ->
     # Update project, it must let us do it
     run_update(dst, vcs_ref="HEAD", defaults=True, overwrite=True)
     assert example.read_text() == "2"
-    assert yaml.safe_load(answers_file.read_text())["_commit"] == f"v1-1-g{sha}"
+    assert load_answersfile_data(dst)["_commit"] == f"v1-1-g{sha}"
 
 
 def test_skip_update(tmp_path_factory: pytest.TempPathFactory) -> None:
@@ -508,8 +531,7 @@ def test_skip_update(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("tag", "1.0.0")
     run_copy(str(src), dst, defaults=True, overwrite=True)
     skip_me = dst / "skip_me"
-    answers_file = dst / ".copier-answers.yml"
-    answers = yaml.safe_load(answers_file.read_text())
+    answers = load_answersfile_data(dst)
     assert skip_me.read_text() == "1"
     assert answers["_commit"] == "1.0.0"
     skip_me.write_text("2")
@@ -522,17 +544,203 @@ def test_skip_update(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("commit", "-am2")
         git("tag", "2.0.0")
     run_update(dst, defaults=True, overwrite=True)
-    answers = yaml.safe_load(answers_file.read_text())
+    answers = load_answersfile_data(dst)
     assert skip_me.read_text() == "2"
     assert answers["_commit"] == "2.0.0"
     assert not (dst / "skip_me.rej").exists()
 
 
 @pytest.mark.parametrize(
+    "file_name",
+    (
+        "skip_normal_file",
+        pytest.param(
+            "skip_unicode_âñ",
+            marks=pytest.mark.xfail(
+                platform.system() in {"Darwin", "Windows"},
+                reason="OS without proper UTF-8 filesystem.",
+            ),
+        ),
+        "skip file with whitespace",
+        " skip_leading_whitespace",
+        "skip_trailing_whitespace ",
+        "   skip_multi_whitespace   ",
+        pytest.param(
+            "\tskip_other_whitespace\t\\t",
+            marks=pytest.mark.skipif(
+                platform.system() == "Windows",
+                reason="Disallowed characters in file name",
+            ),
+        ),
+        pytest.param(
+            "\a\f\n\t\vskip_control\a\f\n\t\vcharacters\v\t\n\f\a",
+            marks=pytest.mark.skipif(
+                platform.system() == "Windows",
+                reason="Disallowed characters in file name",
+            ),
+        ),
+        pytest.param(
+            "skip_back\\slash",
+            marks=pytest.mark.skipif(
+                platform.system() == "Windows",
+                reason="Disallowed characters in file name",
+            ),
+        ),
+        pytest.param(
+            "!skip_special",
+            marks=pytest.mark.skipif(
+                platform.system() == "Windows",
+                reason="Disallowed characters in file name",
+            ),
+        ),
+    ),
+)
+def test_skip_update_deleted(
+    file_name: str, tmp_path_factory: pytest.TempPathFactory
+) -> None:
+    """
+    Ensure that paths in ``skip_if_exists`` are always recreated
+    if they are absent before updating.
+    """
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yaml": "_skip_if_exists: ['*skip*']",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                file_name: "1",
+                "another_file": "foobar",
+            }
+        )
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "1.0.0")
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    skip_me = dst / file_name
+    answers = load_answersfile_data(dst)
+    assert skip_me.read_text() == "1"
+    assert answers["_commit"] == "1.0.0"
+    skip_me.unlink()
+    with local.cwd(dst):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+    run_update(dst, overwrite=True)
+    assert skip_me.exists()
+    assert skip_me.read_text() == "1"
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    (
+        "normal_file",
+        pytest.param(
+            "unicode_âñ",
+            marks=pytest.mark.xfail(
+                platform.system() in {"Darwin", "Windows"},
+                reason="OS without proper UTF-8 filesystem.",
+            ),
+        ),
+        "file with whitespace",
+        " leading_whitespace",
+        "trailing_whitespace ",
+        "   multi_whitespace   ",
+        pytest.param(
+            "\tother_whitespace\t\\t",
+            marks=pytest.mark.skipif(
+                platform.system() == "Windows",
+                reason="Disallowed characters in file name",
+            ),
+        ),
+        pytest.param(
+            # This param accounts for some limitations that would
+            # otherwise make the test fail:
+            #   * \r in path segment names is converted to \n by Jinja rendering,
+            #     hence the rendered file would be named differently altogether.
+            #   * The pathspec lib does not account for different kinds of escaped
+            #     whitespace at the end of the pattern, only a space.
+            #     If there are control characters at the end of the string
+            #     that would be stripped by .strip(), the pattern would end
+            #     in the backslash that should have escaped it.
+            "\a\f\n\t\vcontrol\a\f\n\t\vcharacters\v\t\n\f\a",
+            marks=pytest.mark.skipif(
+                platform.system() == "Windows",
+                reason="Disallowed characters in file name",
+            ),
+        ),
+        pytest.param(
+            "back\\slash",
+            marks=pytest.mark.skipif(
+                platform.system() == "Windows",
+                reason="Disallowed characters in file name",
+            ),
+        ),
+        pytest.param(
+            "!special",
+            marks=pytest.mark.skipif(
+                platform.system() == "Windows",
+                reason="Disallowed characters in file name",
+            ),
+        ),
+        pytest.param(
+            "dont_wildmatch*",
+            marks=pytest.mark.skipif(
+                platform.system() == "Windows",
+                reason="Disallowed characters in file name",
+            ),
+        ),
+    ),
+)
+def test_update_deleted_path(
+    file_name: str, tmp_path_factory: pytest.TempPathFactory
+) -> None:
+    """
+    Ensure that deleted paths are not regenerated during updates,
+    even if the template has changes in that path.
+    """
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                file_name: "foo",
+                "another_file": "foobar",
+                "dont_wildmatch": "bar",
+            }
+        )
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "1.0.0")
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    updated_file = dst / file_name
+    dont_wildmatch = dst / "dont_wildmatch"
+    answers = load_answersfile_data(dst)
+    assert dont_wildmatch.read_text() == "bar"
+    assert updated_file.read_text() == "foo"
+    assert answers["_commit"] == "1.0.0"
+    updated_file.unlink()
+    with local.cwd(dst):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+    with local.cwd(src):
+        build_file_tree({file_name: "bar", "dont_wildmatch": "baz"})
+        git("commit", "-am2")
+        git("tag", "2.0.0")
+    run_update(dst, overwrite=True)
+    assert dont_wildmatch.exists()
+    assert dont_wildmatch.read_text() == "baz"
+    assert not updated_file.exists()
+
+
+@pytest.mark.parametrize(
     "answers_file", [None, ".copier-answers.yml", ".custom.copier-answers.yaml"]
 )
 def test_overwrite_answers_file_always(
-    tmp_path_factory: pytest.TempPathFactory, answers_file: Optional[str]
+    tmp_path_factory: pytest.TempPathFactory, answers_file: str | None
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     with local.cwd(src):
@@ -558,10 +766,8 @@ def test_overwrite_answers_file_always(
         git("commit", "-m1")
         # When updating, the only thing to overwrite is the copier answers file,
         # which shouldn't ask, so also this shouldn't hang with overwrite=False
-        run_update(defaults=True, answers_file=answers_file)
-    answers = yaml.safe_load(
-        (dst / (answers_file or ".copier-answers.yml")).read_bytes()
-    )
+        run_update(defaults=True, overwrite=True, answers_file=answers_file)
+    answers = load_answersfile_data(dst, answers_file or ".copier-answers.yml")
     assert answers["question_1"] is True
     assert answers["_commit"] == "2"
     assert (dst / "answer_1").read_text() == "True"
@@ -579,6 +785,7 @@ def test_file_removed(tmp_path_factory: pytest.TempPathFactory) -> None:
                 Path("dir 3", "subdir 3", "3.txt"): "content 3",
                 Path("dir 4", "subdir 4", "4.txt"): "content 4",
                 Path("dir 5", "subdir 5", "5.txt"): "content 5",
+                "toignore.txt": "should survive update",
             }
         )
         git("init")
@@ -607,6 +814,7 @@ def test_file_removed(tmp_path_factory: pytest.TempPathFactory) -> None:
     assert (dst / "dir 3" / "subdir 3" / "3.txt").is_file()
     assert (dst / "dir 4" / "subdir 4" / "4.txt").is_file()
     assert (dst / "dir 5" / "subdir 5" / "5.txt").is_file()
+    assert (dst / "toignore.txt").is_file()
     assert (dst / "I.txt").is_file()
     assert (dst / "dir II" / "II.txt").is_file()
     assert (dst / "dir 3" / "subdir III" / "III.txt").is_file()
@@ -624,7 +832,14 @@ def test_file_removed(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("tag", "2")
     # Subproject updates
     with local.cwd(dst):
-        run_update(conflict="rej")
+        Path(".gitignore").write_text("toignore.txt")
+        git("add", ".gitignore")
+        git("commit", "-m", "ignore file")
+        with pytest.raises(
+            UserMessageError, match="Enable overwrite to update a subproject."
+        ):
+            run_update(conflict="rej")
+        run_update(conflict="rej", overwrite=True)
     # Check what must still exist
     assert (dst / ".copier-answers.yml").is_file()
     assert (dst / "I.txt").is_file()
@@ -632,6 +847,7 @@ def test_file_removed(tmp_path_factory: pytest.TempPathFactory) -> None:
     assert (dst / "dir 3" / "subdir III" / "III.txt").is_file()
     assert (dst / "dir 4" / "subdir 4" / "IV.txt").is_file()
     assert (dst / "6.txt").is_file()
+    assert (dst / "toignore.txt").is_file()
     # Check what must not exist
     assert not (dst / "1.txt").exists()
     assert not (dst / "dir 2").exists()
@@ -687,7 +903,7 @@ def test_update_inline_changed_answers_and_questions(
         git("tag", "2")
     # Init project
     if interactive:
-        tui = spawn(COPIER_PATH + ("-r1", "copy", str(src), str(dst)), timeout=10)
+        tui = spawn(COPIER_PATH + ("copy", "-r1", str(src), str(dst)))
         tui.expect_exact("b (bool)")
         tui.expect_exact("(y/N)")
         tui.send("y")
@@ -713,7 +929,7 @@ def test_update_inline_changed_answers_and_questions(
         git("commit", "-am2")
         # Update from template, inline, with answer changes
         if interactive:
-            tui = spawn(COPIER_PATH + ("-w", "update", "--conflict=inline"), timeout=10)
+            tui = spawn(COPIER_PATH + ("update", "--conflict=inline"))
             tui.expect_exact("b (bool)")
             tui.expect_exact("(Y/n)")
             tui.sendline()
@@ -859,7 +1075,7 @@ def test_update_needs_more_context(
         if api:
             run_copy(str(src), ".")
         else:
-            CopierApp.invoke("copy", str(src), ".")
+            CopierApp.run(["copier", "copy", str(src), "."], exit=False)
         git("init")
         git("add", ".")
         git("commit", "-m1")
@@ -923,7 +1139,6 @@ def test_update_needs_more_context(
         run_update(dst, overwrite=True, conflict="inline", context_lines=context_lines)
     else:
         COPIER_CMD(
-            "--overwrite",
             "update",
             str(dst),
             "--conflict=inline",
@@ -955,3 +1170,947 @@ def test_update_needs_more_context(
             print("Previous line lied.")
         """
     )
+
+
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "README.md",
+        "spa ces",
+        # Double quotes are not supported in file names on Windows.
+        "qu`o'tes" if platform.system() == "Windows" else 'qu`o"tes',
+        "m4â4ñ4a",
+    ],
+)
+def test_conflicted_files_are_marked_unmerged(
+    tmp_path_factory: pytest.TempPathFactory,
+    filename: str,
+) -> None:
+    # Template in v1 has a file with a single line;
+    # in v2 it changes that line.
+    # Meanwhile, downstream project appended contents to the first line.
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    # First, create the template with an initial file
+    build_file_tree(
+        {
+            (src / filename): "upstream version 1",
+            (src / "{{_copier_conf.answers_file}}.jinja"): (
+                "{{_copier_answers|to_nice_yaml}}"
+            ),
+        }
+    )
+    with local.cwd(src):
+        git_init("hello template")
+        git("tag", "v1")
+
+    # Generate the project a first time, assert the file exists
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    assert (dst / filename).exists()
+    assert load_answersfile_data(dst).get("_commit") == "v1"
+
+    # Start versioning the generated project
+    with local.cwd(dst):
+        git_init("hello project")
+
+        # After first commit, change the file, commit again
+        Path(filename).write_text("upstream version 1 + downstream")
+        git("commit", "-am", "updated file")
+
+    # Now change the template
+    with local.cwd(src):
+        # Update the file
+        Path(filename).write_text("upstream version 2")
+
+        # Commit the changes
+        git("add", ".", "-A")
+        git("commit", "-m", "change line in file")
+        git("tag", "v2")
+
+    # Finally, update the generated project
+    run_update(dst_path=dst, defaults=True, overwrite=True, conflict="inline")
+    assert load_answersfile_data(dst).get("_commit") == "v2"
+
+    # Assert that the file still exists, has inline conflict markers,
+    # and is reported as "unmerged" by Git.
+    assert (dst / filename).exists()
+
+    expected_contents = dedent(
+        """\
+        <<<<<<< before updating
+        upstream version 1 + downstream
+        =======
+        upstream version 2
+        >>>>>>> after updating
+        """
+    )
+    assert (dst / filename).read_text().splitlines() == expected_contents.splitlines()
+    assert not (dst / f"{filename}.rej").exists()
+
+    with local.cwd(dst):
+        lines = git("status", "--porcelain=v1").strip().splitlines()
+        assert any(
+            line.startswith("UU") and normalize_git_path(line[3:]) == filename
+            for line in lines
+        )
+
+
+def test_3way_merged_files_without_conflicts_are_not_marked_unmerged(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    filename = "readme.md"
+
+    # Template in v1 has a file with a single line;
+    # in v2 it changes that line.
+    # Meanwhile, downstream project made the same change.
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    # First, create the template with an initial file
+    build_file_tree(
+        {
+            (src / filename): "upstream version 1",
+            (src / "{{_copier_conf.answers_file}}.jinja"): (
+                "{{_copier_answers|to_nice_yaml}}"
+            ),
+        }
+    )
+    with local.cwd(src):
+        git_init("hello template")
+        git("tag", "v1")
+
+    # Generate the project a first time, assert the file exists
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    assert (dst / filename).exists()
+    assert load_answersfile_data(dst).get("_commit") == "v1"
+
+    # Start versioning the generated project
+    with local.cwd(dst):
+        git_init("hello project")
+
+        # After first commit, change the file, commit again
+        Path(filename).write_text("upstream version 2")
+        git("commit", "-am", "updated file")
+
+    # Now change the template
+    with local.cwd(src):
+        # Update the file
+        Path(filename).write_text("upstream version 2")
+
+        # Commit the changes
+        git("add", ".", "-A")
+        git("commit", "-m", "change line in file")
+        git("tag", "v2")
+
+    # Finally, update the generated project
+    run_update(dst_path=dst, defaults=True, overwrite=True, conflict="inline")
+    assert load_answersfile_data(dst).get("_commit") == "v2"
+
+    # Assert that the file still exists, does not have inline conflict markers,
+    # and is not reported as "unmerged" by Git.
+    assert (dst / filename).exists()
+
+    expected_contents = "upstream version 2"
+    assert (dst / filename).read_text() == expected_contents
+    assert not (dst / f"{filename}.rej").exists()
+
+    with local.cwd(dst):
+        lines = git("status", "--porcelain=v1").strip().splitlines()
+        assert not any(
+            line.startswith("UU") and normalize_git_path(line[3:]) == filename
+            for line in lines
+        )
+
+
+def test_update_with_new_file_in_template_and_project(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": (
+                    "{{ _copier_answers|to_yaml }}"
+                ),
+            }
+        )
+        git_init("v1")
+        git("tag", "v1")
+
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    assert load_answersfile_data(dst).get("_commit") == "v1"
+
+    with local.cwd(dst):
+        git_init("v1")
+        Path(".gitlab-ci.yml").write_text(
+            dedent(
+                """\
+                tests:
+                    stage: test
+                    script:
+                        - ./test.sh
+
+                pages:
+                    stage: deploy
+                    script:
+                        - ./deploy.sh
+                """
+            )
+        )
+        git("add", ".")
+        git("commit", "-m", "v2")
+
+    with local.cwd(src):
+        Path(".gitlab-ci.yml.jinja").write_text(
+            dedent(
+                """\
+                tests:
+                    stage: test
+                    script:
+                        - ./test.sh --slow
+                """
+            )
+        )
+        git("add", ".")
+        git("commit", "-m", "v2")
+        git("tag", "v2")
+
+    run_update(dst_path=dst, defaults=True, overwrite=True, conflict="inline")
+    assert load_answersfile_data(dst).get("_commit") == "v2"
+    assert (dst / ".gitlab-ci.yml").read_text() == dedent(
+        """\
+        tests:
+            stage: test
+            script:
+        <<<<<<< before updating
+                - ./test.sh
+
+        pages:
+            stage: deploy
+            script:
+                - ./deploy.sh
+        =======
+                - ./test.sh --slow
+        >>>>>>> after updating
+        """
+    )
+
+
+def test_update_with_new_file_in_template_and_project_via_migration(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """Merge conflicts are yielded when both template and project add same file.
+
+    The project adds content to `.gitlab-ci.yml` on top of what template v1 provides.
+    In a template v2, `.gitlab-ci.yml.jinja` is moved to `.gitlab/ci/main.yml.jinja`
+    and `.gitlab-ci.yml.jinja` now includes the generated `.gitlab/ci/main.yml`. To
+    retain the project's changes/additions to `.gitlab-ci.yml`, a pre-update migration
+    task copies `.gitlab-ci.yml` (containing those changes/additions) to
+    `.gitlab/ci/main.yml` and stages it, then Copier applies template v2's version of
+    that file (which was also moved there, but Git doesn't recognize it as status `R`
+    but as `A`).
+    """
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": (
+                    "{{ _copier_answers|to_yaml }}"
+                ),
+                ".gitlab-ci.yml.jinja": (
+                    """\
+                    tests:
+                        stage: test
+                        script:
+                            - ./test.sh
+                    """
+                ),
+            }
+        )
+        git_init("v1")
+        git("tag", "v1")
+
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    assert load_answersfile_data(dst).get("_commit") == "v1"
+    assert (dst / ".gitlab-ci.yml").exists()
+
+    with local.cwd(dst):
+        with Path(".gitlab-ci.yml").open(mode="at") as f:
+            f.write(
+                dedent(
+                    """\
+
+                    pages:
+                        stage: deploy
+                        script:
+                            - ./deploy.sh
+                    """
+                )
+            )
+        git_init("v1")
+
+    with local.cwd(src):
+        old_file = Path(".gitlab-ci.yml.jinja")
+        new_file = Path(".gitlab", "ci", "main.yml.jinja")
+        new_file.parent.mkdir(parents=True)
+        # Move `.gitlab-ci.yml.jinja` to `.gitlab/ci/main.yml.jinja`
+        git("mv", old_file, new_file)
+        # Make a small modification in `.gitlab/ci/main.yml.jinja`
+        new_file.write_text(new_file.read_text().replace("test.sh", "test.sh --slow"))
+        # Include `.gitlab/ci/main.yml.jinja` in `.gitlab-ci.yml.jinja`
+        old_file.write_text(
+            dedent(
+                """\
+                include:
+                    - local: .gitlab/ci/main.yml
+                """
+            )
+        )
+        # Add a pre-migration that copies `.gitlab-ci.yml` to
+        # `.gitlab/ci/main.yml` and stages it, so that the user changes made in
+        # the project are retained after moving the file.
+        build_file_tree(
+            {
+                "copier.yml": (
+                    """\
+                    _migrations:
+                    -   version: v2
+                        when: "{{ _stage == 'before' }}"
+                        command: "{{ _copier_python }} {{ _copier_conf.src_path / 'migrate.py' }}"
+                    """
+                ),
+                "migrate.py": (
+                    """\
+                    from pathlib import Path
+                    from plumbum.cmd import git
+
+                    f = Path(".gitlab", "ci", "main.yml")
+                    f.parent.mkdir(parents=True)
+                    f.write_text(Path(".gitlab-ci.yml").read_text())
+                    git("add", f)
+                    """
+                ),
+            }
+        )
+        git("add", ".")
+        git("commit", "-m", "v2")
+        git("tag", "v2")
+
+    run_update(
+        dst_path=dst, defaults=True, overwrite=True, conflict="inline", unsafe=True
+    )
+    assert load_answersfile_data(dst).get("_commit") == "v2"
+    assert (dst / ".gitlab-ci.yml").read_text() == dedent(
+        """\
+        <<<<<<< before updating
+        tests:
+            stage: test
+            script:
+                - ./test.sh
+
+        pages:
+            stage: deploy
+            script:
+                - ./deploy.sh
+        =======
+        include:
+            - local: .gitlab/ci/main.yml
+        >>>>>>> after updating
+        """
+    )
+    assert (dst / ".gitlab" / "ci" / "main.yml").read_text() == dedent(
+        """\
+        tests:
+            stage: test
+            script:
+        <<<<<<< before updating
+                - ./test.sh
+
+        pages:
+            stage: deploy
+            script:
+                - ./deploy.sh
+        =======
+                - ./test.sh --slow
+        >>>>>>> after updating
+        """
+    )
+
+
+def test_update_with_separate_git_directory(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst, dst_git_dir = map(tmp_path_factory.mktemp, ("src", "dst", "dst_git_dir"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "version.txt": "v1",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+            }
+        )
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "v1")
+
+    run_copy(str(src), dst, overwrite=True)
+    assert load_answersfile_data(dst).get("_commit") == "v1"
+
+    with local.cwd(dst):
+        git("init", "--separate-git-dir", dst_git_dir)
+        # Add a file to make sure the subproject's tree object is different from
+        # that of the fresh copy from the old template version; otherwise, we
+        # cannot test the linking of local (temporary) repositories for
+        # borrowing Git objects.
+        build_file_tree({"foo.txt": "bar"})
+        git("add", ".")
+        git("commit", "-m1")
+
+    with local.cwd(src):
+        build_file_tree({"version.txt": "v2"})
+        git("add", ".")
+        git("commit", "-m2")
+        git("tag", "v2")
+
+    run_update(dst, overwrite=True)
+    assert load_answersfile_data(dst).get("_commit") == "v2"
+
+
+def test_update_with_skip_answered_and_new_answer(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yml": "boolean: false",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+            }
+        )
+        git_init("v1")
+        git("tag", "v1")
+
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    answers = load_answersfile_data(dst)
+    assert answers["boolean"] is False
+
+    with local.cwd(dst):
+        git_init("v1")
+
+    run_update(dst, data={"boolean": "true"}, skip_answered=True, overwrite=True)
+    answers = load_answersfile_data(dst)
+    assert answers["boolean"] is True
+
+
+@pytest.mark.parametrize("cli", [True, False])
+def test_update_vcs_ref_current(
+    tmp_path_factory: pytest.TempPathFactory,
+    cli: bool,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yml": "boolean: false",
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+            }
+        )
+        git_init("v1")
+        git("tag", "v1")
+
+    if cli:
+        CopierApp.run(
+            ["copier", "copy", str(src), str(dst), "--defaults", "--overwrite"],
+            exit=False,
+        )
+    else:
+        run_copy(str(src), dst, defaults=True, overwrite=True)
+    answers = load_answersfile_data(dst)
+    assert answers["_commit"] == "v1"
+    assert answers["boolean"] is False
+
+    with local.cwd(dst):
+        git_init("v1")
+
+    with local.cwd(src):
+        build_file_tree({"README.md": "# Template Update"})
+        git_save(message="update template", tag="v2")
+
+    if cli:
+        with local.cwd(dst):
+            CopierApp.run(
+                [
+                    "copier",
+                    "update",
+                    "--data",
+                    "boolean=true",
+                    "--vcs-ref=:current:",
+                ],
+                exit=False,
+            )
+    else:
+        run_update(
+            dst, data={"boolean": "true"}, vcs_ref=VcsRef.CURRENT, overwrite=True
+        )
+    answers = load_answersfile_data(dst)
+    assert answers["_commit"] == "v1"
+    assert answers["boolean"] is True
+
+    # assert that the README.md file was not created
+    assert not (dst / "README.md").exists()
+
+
+def test_update_dont_validate_computed_value(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yml": dedent(
+                    """\
+                    computed:
+                        type: str
+                        default: foo
+                        when: false
+                        validator: "This validator should never be rendered"
+                    """
+                ),
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+            }
+        )
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "v1")
+
+    run_copy(str(src), dst, overwrite=True)
+    answers = load_answersfile_data(dst)
+    assert "computed" not in answers
+
+    with local.cwd(dst):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+
+    run_update(dst, overwrite=True)
+    answers = load_answersfile_data(dst)
+    assert "computed" not in answers
+
+
+def test_update_git_submodule(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst, submodule = map(tmp_path_factory.mktemp, ("src", "dst", "submodule"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "version.txt": "v1",
+            }
+        )
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+        git("tag", "v1")
+
+    run_copy(str(src), submodule)
+
+    with local.cwd(submodule):
+        git("init")
+        git("add", ".")
+        git("commit", "-m1")
+
+    assert (submodule / ".copier-answers.yml").is_file()
+    assert (submodule / "version.txt").is_file()
+    assert (submodule / "version.txt").read_text() == "v1"
+
+    with local.cwd(dst):
+        git("init")
+        # See https://github.com/git/git/security/advisories/GHSA-3wp6-j8xr-qw85
+        # for more details on why we need to set `protocol.file.allow=always` to
+        # be able to clone a local submodule.
+        git("-c", "protocol.file.allow=always", "submodule", "add", submodule, "sub")
+        git("add", ".")
+        git("commit", "-m", "add submodule")
+
+    assert (dst / "sub" / ".copier-answers.yml").is_file()
+    assert (dst / "sub" / "version.txt").is_file()
+    assert (dst / "sub" / "version.txt").read_text() == "v1"
+
+    with local.cwd(src):
+        build_file_tree({"version.txt": "v2"})
+        git("add", ".")
+        git("commit", "-m2")
+        git("tag", "v2")
+
+    run_update(dst / "sub", overwrite=True)
+
+    assert (dst / "sub" / ".copier-answers.yml").is_file()
+    assert (dst / "sub" / "version.txt").is_file()
+    assert (dst / "sub" / "version.txt").read_text() == "v2"
+
+
+def test_gitignore_file_unignored(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    env_file = ".env"
+    gitignore_file = ".gitignore"
+
+    # Template in v1 has a file with a single line;
+    # in v2 it changes that line.
+    # Meanwhile, downstream project made the same change.
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    # First, create the template with an initial file
+    build_file_tree(
+        {
+            (src / gitignore_file): "",
+            (src / env_file): "",
+            (src / "{{_copier_conf.answers_file}}.jinja"): (
+                "{{_copier_answers|to_nice_yaml}}"
+            ),
+        }
+    )
+
+    with local.cwd(src):
+        git_init("hello template")
+        git("tag", "v1")
+
+    # Generate the project a first time, assert the file exists
+    run_copy(str(src), dst)
+    for f in (env_file, gitignore_file):
+        assert (dst / f).exists()
+    assert load_answersfile_data(dst).get("_commit") == "v1"
+
+    # Start versioning the generated project
+    with local.cwd(dst):
+        git_init("hello project")
+
+    # Add a file to the `.gitignore` file
+    with local.cwd(src):
+        Path(gitignore_file).write_text(env_file)
+        git("commit", "-am", "ignore file")
+        git("tag", "v2")
+
+    # Update the generated project
+    run_update(dst_path=dst, overwrite=True)
+    assert load_answersfile_data(dst).get("_commit") == "v2"
+
+    # Commit project changes.
+    with local.cwd(dst):
+        git("commit", "-am", "update to template v2")
+
+    # Remove the file previously added to `.gitignore`
+    with local.cwd(src):
+        Path(gitignore_file).write_text("")
+        git("commit", "-am", "un-ignore file")
+        git("tag", "v3")
+
+    # Update the generated project.
+    # This would fail if `git add` was called without the `--force` flag;
+    # Otherwise, it should succeed.
+    run_update(dst_path=dst, overwrite=True)
+    assert load_answersfile_data(dst).get("_commit") == "v3"
+
+
+def test_update_with_answers_with_umlaut(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yml": (
+                    """\
+                    umlaut:
+                        type: str
+                    """
+                ),
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+            }
+        )
+        git_init("v1")
+        git("tag", "v1")
+
+    run_copy(str(src), dst, data={"umlaut": "äöü"}, overwrite=True)
+    answers = load_answersfile_data(dst)
+    assert answers["umlaut"] == "äöü"
+
+    with local.cwd(dst):
+        git_init("v1")
+
+    run_update(dst, skip_answered=True, overwrite=True)
+    answers = load_answersfile_data(dst)
+    assert answers["umlaut"] == "äöü"
+
+
+def test_conflict_on_update_with_unicode_in_content(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "copier.yml": "b: false",
+                "content.jinja": """\
+                    aaa🐍
+                    {%- if b %}
+                    bbb🐍
+                    {%- endif %}
+                    zzz🐍
+                    """,
+            },
+            encoding="utf-8",
+        )
+        git("init")
+        git("add", "-A")
+        git("commit", "-m1")
+        git("tag", "1")
+        build_file_tree(
+            {
+                "copier.yml": dedent(
+                    """\
+                    b: false
+                    c: false
+                    """
+                ),
+                "content.jinja": """\
+                    aaa🐍
+                    {%- if b %}
+                    bbb🐍
+                    {%- endif %}
+                    {%- if c %}
+                    ccc🐍
+                    {%- endif %}
+                    zzz🐍
+                    """,
+            },
+            encoding="utf-8",
+        )
+        git("commit", "-am2")
+        git("tag", "2")
+    # Init project
+    run_copy(str(src), dst, data={"b": True}, vcs_ref="1")
+    assert "ccc" not in (dst / "content").read_text(encoding="utf-8")
+    with local.cwd(dst):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m1")
+        # Project evolution
+        Path("content").write_text(
+            dedent(
+                """\
+                aaa🐍
+                bbb🐍
+                jjj🐍
+                zzz🐍
+                """
+            ),
+            encoding="utf-8",
+        )
+        git("commit", "-am2")
+        # Update from template, inline, with answer changes
+        run_update(data={"c": True}, defaults=True, overwrite=True, conflict="inline")
+        assert Path("content").read_text(encoding="utf-8") == dedent(
+            """\
+            aaa🐍
+            bbb🐍
+            <<<<<<< before updating
+            jjj🐍
+            =======
+            ccc🐍
+            >>>>>>> after updating
+            zzz🐍
+            """
+        )
+
+
+def test_conditional_computed_value(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    build_file_tree(
+        {
+            src / "copier.yml": (
+                """\
+                first:
+                    type: bool
+
+                second:
+                    type: bool
+                    default: "{{ first }}"
+                    when: "{{ first }}"
+                """
+            ),
+            src / "{{ _copier_conf.answers_file }}.jinja": (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+            src / "log.txt.jinja": "{{ first }} {{ second }}",
+        }
+    )
+    with local.cwd(src):
+        git_init("v1")
+        git("tag", "v1")
+
+    run_copy(str(src), dst, data={"first": True}, defaults=True)
+    answers = load_answersfile_data(dst)
+    assert answers["first"] is True
+    assert answers["second"] is True
+    assert (dst / "log.txt").read_text() == "True True"
+
+    with local.cwd(dst):
+        git_init("v1")
+
+    run_update(dst, data={"first": False}, overwrite=True)
+    answers = load_answersfile_data(dst)
+    assert answers["first"] is False
+    assert "second" not in answers
+    assert (dst / "log.txt").read_text() == "False False"
+
+    with local.cwd(dst):
+        git("add", ".")
+        git("commit", "-m", "v2")
+
+    run_update(dst, data={"first": True}, defaults=True, overwrite=True)
+    answers = load_answersfile_data(dst)
+    assert answers["first"] is True
+    assert answers["second"] is True
+    assert (dst / "log.txt").read_text() == "True True"
+
+
+def test_disable_secret_validator_on_replay(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    build_file_tree(
+        {
+            src / "copier.yml": (
+                """\
+                token:
+                    type: str
+                    secret: true
+                    default: ""
+                    validator: "{% if token == '' %}Must not be empty{% endif %}"
+                """
+            ),
+            src / "{{ _copier_conf.answers_file }}.jinja": (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+            src / ".gitignore": ".env",
+            src / ".env.jinja": "TOKEN={{ token }}",
+        }
+    )
+    with local.cwd(src):
+        git_init("v1")
+        git("tag", "v1")
+
+    run_copy(str(src), dst, defaults=True)
+    answers = load_answersfile_data(dst)
+    assert answers == {"_src_path": str(src), "_commit": "v1"}
+    assert (dst / ".env").read_text() == "TOKEN="
+
+    with local.cwd(dst):
+        git_init("v1")
+
+    run_update(dst, data={"token": "$up3r-$3cr3t"}, overwrite=True)
+    answers = load_answersfile_data(dst)
+    assert answers == {"_src_path": str(src), "_commit": "v1"}
+    assert (dst / ".env").read_text() == "TOKEN=$up3r-$3cr3t"
+
+
+def test_exclude_added_in_new_version(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "copy-only": "foo",
+                "copy-and-update": "foo",
+            }
+        )
+        git_save(tag="v1")
+        build_file_tree(
+            {
+                "copier.yml": "_exclude:\n - copy-only",
+                "copy-only": "bar",
+                "copy-and-update": "bar",
+            }
+        )
+        git_save(tag="v2")
+    copy_only = dst / "copy-only"
+    copy_and_update = dst / "copy-and-update"
+
+    run_copy(str(src), dst, defaults=True, overwrite=True, vcs_ref="v1")
+    for file in (copy_only, copy_and_update):
+        assert file.exists()
+        assert file.read_text() == "foo"
+
+    with local.cwd(dst):
+        git_save()
+
+    run_update(str(dst), overwrite=True)
+    assert copy_only.read_text() == "foo"
+    assert copy_and_update.read_text() == "bar"
+
+
+def test_skip_if_exists_templated(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yml": """\
+                    _skip_if_exists:
+                        - "{{ 'skip-if-exists.txt' }}"
+                """,
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "skip-if-exists.txt": "foo",
+            }
+        )
+        git_save(tag="v1")
+        build_file_tree({"skip-if-exists.txt": "bar"})
+        git_save(tag="v2")
+
+    run_copy(str(src), dst, defaults=True, overwrite=True, vcs_ref="v1")
+    assert (dst / "skip-if-exists.txt").read_text() == "foo"
+
+    with local.cwd(dst):
+        git_save()
+        build_file_tree({"skip-if-exists.txt": "baz"})
+        git_save()
+
+    run_update(str(dst), overwrite=True)
+    assert (dst / "skip-if-exists.txt").read_text() == "baz"
+
+
+def test_render_copier_conf_as_json_without_circular_reference(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """See https://github.com/copier-org/copier/issues/2448."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "copier_conf.json.jinja": "{{ _copier_conf|to_json }}",
+            }
+        )
+        git_save(tag="v1")
+
+    run_copy(str(src), dst, overwrite=True, unsafe=True)
+    assert (dst / "copier_conf.json").exists()
+
+    with local.cwd(dst):
+        git_save()
+
+    run_update(str(dst), overwrite=True, unsafe=True)
+    assert (dst / "copier_conf.json").exists()

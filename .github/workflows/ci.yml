@@ -4,7 +4,6 @@ on:
   pull_request:
   push:
     branches: [master]
-    tags: ["*"]
   workflow_dispatch:
     inputs:
       pytest_addopts:
@@ -16,12 +15,13 @@ on:
 env:
   LANG: "en_US.utf-8"
   LC_ALL: "en_US.utf-8"
-  PIP_CACHE_DIR: ${{ github.workspace }}/.cache/pip
-  POETRY_CACHE_DIR: ${{ github.workspace }}/.cache/pypoetry
-  POETRY_VIRTUALENVS_IN_PROJECT: "true"
   PRE_COMMIT_HOME: ${{ github.workspace }}/.cache/pre-commit
   PYTEST_ADDOPTS: ${{ github.event.inputs.pytest_addopts }}
   PYTHONIOENCODING: "UTF-8"
+  # renovate: datasource=devbox depName=uv
+  UV_VERSION: "0.9.24"
+  # renovate: datasource=github-tags depName=devbox packageName=jetify-com/devbox
+  DEVBOX_VERSION: "0.16.0"
 
 jobs:
   build:
@@ -32,47 +32,42 @@ jobs:
           - macos-latest
           - ubuntu-latest
           - windows-latest
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        include:
+          # HACK: Limit the number of pytest workers on macOS to 3 to avoid a
+          #   timeout for a few test cases. For unknown reasons, the number of
+          #   auto-configured workers on macOS runners increased from 3 to 6 on
+          #   2025-07-08.
+          # FIXME: Remove this hack when the issue has been fixed.
+          - os: macos-latest
+            pytest-xdist-maxprocesses: 3
     runs-on: ${{ matrix.os }}
     steps:
-      # HACK https://github.com/actions/cache/issues/315
-      - name: Enable msys binaries
-        if: ${{ runner.os == 'Windows' }}
-        run: |
-          echo "C:\msys64\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          rm C:\msys64\usr\bin\bash.exe
-      - run: git config --global user.name copier-ci
-      - run: git config --global user.email copier@copier
-      - run: git config --global core.autocrlf input
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0 # Needs all tags to compute dynamic version
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: ${{ matrix.python-version }}
+          enable-cache: "true"
+          cache-suffix: ${{ matrix.python-version }}
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
-      - name: generate cache key PY
-        shell: bash
-        run:
-          echo "PY=$((python -VV; pip freeze) | sha256sum | cut -d' ' -f1)" >>
-          $GITHUB_ENV
-      - uses: actions/cache@v3
-        with:
-          path: |
-            .cache
-            .venv
-          key:
-            cache|${{ runner.os }}|${{ env.PY }}|${{ hashFiles('pyproject.toml') }}|${{
-            hashFiles('poetry.lock') }}|${{ hashFiles('.pre-commit-config.yaml') }}
       - name: Install dependencies
-        run: |
-          python -m pip install poetry poetry-dynamic-versioning
-          poetry install --with dev,docs -v
+        run: uv sync --frozen
       - name: Run pytest
-        run: poetry run poe test --cov=./ --cov-report=xml -ra .
+        run:
+          uv run poe test --cov=./ --cov-report=xml -ra
+          ${PYTEST_XDIST_MAXPROCESSES:+--maxprocesses=$PYTEST_XDIST_MAXPROCESSES} .
+        env:
+          PYTEST_XDIST_MAXPROCESSES: ${{ matrix.pytest-xdist-maxprocesses }}
       - name: Upload coverage to Codecov
         continue-on-error: true
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         env:
           OS: ${{ matrix.os }}
           PYTHON: ${{ matrix.python-version }}
@@ -84,91 +79,35 @@ jobs:
           name: copier
           token: ${{ secrets.CODECOV_TOKEN }}
 
-  flake-check:
+  devbox:
     strategy:
       fail-fast: false
       matrix:
         os:
           - macos-latest
           - ubuntu-latest
+        include:
+          # HACK: Limit the number of pytest workers on macOS to 3 to avoid a
+          #   timeout for a few test cases. For unknown reasons, the number of
+          #   auto-configured workers on macOS runners increased from 3 to 6 on
+          #   2025-07-08.
+          # FIXME: Remove this hack when the issue has been fixed.
+          - os: macos-latest
+            pytest-xdist-maxprocesses: 3
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write # Allow pushing back pre-commit changes
     steps:
-      - uses: actions/checkout@v3
-
-      # Install Nix and set up Cachix
-      - uses: cachix/install-nix-action@v20
+      - uses: actions/checkout@v6
+      - name: Install devbox
+        uses: jetify-com/devbox-install-action@v0.14.0
         with:
-          nix_path: nixpkgs=channel:nixos-unstable
-      - uses: cachix/cachix-action@v12
-        with:
-          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-          extraPullNames: devenv
-          name: copier
-          pushFilter: (-source$|nixpkgs\.tar\.gz$)
-
-      # Cache for poetry venv when using direnv
-      - uses: actions/cache@v3
-        with:
-          path: |
-            .cache
-            .devenv
-            .direnv
-            .venv
-          key:
-            direnv|${{ runner.os }}|${{ hashFiles('pyproject.toml', '*.lock', '*.nix')
-            }}
-
-      # Check direnv works as expected
-      - uses: JRMurr/direnv-nix-action@v3
-        with:
-          install-nix: "false"
-          cache-store: "false"
-      - run: copier --version
-
-      # Run nix checks
-      - run: nix flake check -L
-
-  publish:
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-    needs:
-      - build
-      - flake-check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0 # Needs all tags to compute dynamic version
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - name: generate cache key PY
-        run:
-          echo "PY=$((python -VV; pip freeze) | sha256sum | cut -d' ' -f1)" >>
-          $GITHUB_ENV
-      - uses: actions/cache@v3
-        with:
-          path: |
-            .cache
-            .venv
-          key:
-            cache|${{ runner.os }}|${{ env.PY }}|${{ hashFiles('pyproject.toml') }}|${{
-            hashFiles('poetry.lock') }}|${{ hashFiles('.pre-commit-config.yaml') }}
-      - name: Install dependencies
-        shell: bash
-        run: |
-          python -m pip install poetry poetry-dynamic-versioning
-      - name: Build dist
-        run: |
-          poetry build
-      - name: Publish distribution 📦 to Test PyPI
-        uses: pypa/gh-action-pypi-publish@master
-        with:
-          user: __token__
-          password: ${{ secrets.test_pypi_token_copier }}
-          repository_url: https://test.pypi.org/legacy/
-      - name: Publish distribution 📦 to PyPI
-        uses: pypa/gh-action-pypi-publish@master
-        with:
-          user: __token__
-          password: ${{ secrets.pypi_token_copier }}
+          devbox-version: ${{ env.DEVBOX_VERSION }}
+          enable-cache: "true"
+      - run: devbox run -- uv run copier --version
+      - run: devbox run -- uv run pre-commit run --all-files --show-diff-on-failure
+      - run:
+          devbox run test
+          ${PYTEST_XDIST_MAXPROCESSES:+--maxprocesses=$PYTEST_XDIST_MAXPROCESSES}
+        env:
+          PYTEST_XDIST_MAXPROCESSES: ${{ matrix.pytest-xdist-maxprocesses }}

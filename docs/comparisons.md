@@ -18,6 +18,7 @@ docs! We don't want to be biased, but it's easy that we tend to be:
 | Feature                                  | Copier                           | Cookiecutter                    | Yeoman        |
 | ---------------------------------------- | -------------------------------- | ------------------------------- | ------------- |
 | Can template file names                  | Yes                              | Yes                             | Yes           |
+| Can generate file structures in loops    | Yes                              | No                              | No            |
 | Configuration                            | Single YAML file[^1]             | Single JSON file                | JS module     |
 | Migrations                               | Yes                              | No                              | No            |
 | Programmed in                            | Python                           | Python                          | NodeJS        |
@@ -29,15 +30,13 @@ docs! We don't want to be biased, but it's easy that we tend to be:
 | Context hooks                            | Yes[^5]                          | Yes                             | ?             |
 | Template in a subfolder                  | Not required, but you choose     | Yes, required                   | Yes, required |
 | Template package format                  | Git repo[^2], Git bundle, folder | Git or Mercurial repo, Zip file | NPM package   |
-| Template updates                         | **Yes**[^4]                      | No                              | No            |
+| Template updates                         | **Yes**[^4]                      | No[^6]                          | No            |
 | Templating engine                        | [Jinja][]                        | [Jinja][]                       | [EJS][]       |
 
 [jinja]: https://jinja.palletsprojects.com/
 [ejs]: https://ejs.co/
 
-[^1]:
-    The file itself can
-    [include other YAML files](configuring.md#include-other-yaml-files).
+[^1]: The file itself can [include other YAML files][include-other-yaml-files].
 
 [^2]:
     Git repo is recommended to be able to use advanced features such as template tagging
@@ -53,5 +52,8 @@ docs! We don't want to be biased, but it's easy that we tend to be:
 
 [^5]: Context hooks are provided through the [`ContextHook` extension][context-hook].
 
+[^6]: Updates are possible through [Cruft][cruft].
+
 [context-hook]:
     https://github.com/copier-org/copier-templates-extensions#context-hook-extension
+[cruft]: https://github.com/cruft/cruft

@@ -1,0 +1,122 @@
+name: Problem
+description: Create a report to help us improve
+labels: [bug, triage]
+
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Describe the problem
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+
+  - type: textarea
+    id: template
+    attributes:
+      label: Template
+      description:
+        Many problems are related to a specific Copier template. If you can provide a
+        template, please do it. It can be a Git repo URL, a .zip file containing the
+        template, or instructions to build it.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: To Reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        1. Run `copier ...`
+        2. Answer ...
+        3. Choose ...
+        4. See error
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description:
+        Provide logs of the problem. These will typically happen when getting to the
+        latest step explained above if Copier produces an error. It helps too if you
+        paste your copying session.
+      render: console
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional_info
+    attributes:
+      label: Screenshots/screencasts/logs
+      description:
+        If applicable, add screenshots/screencasts/logs to help explain your problem.
+
+  - type: dropdown
+    id: env-os
+    attributes:
+      label: Operating system
+      options:
+        - macOS
+        - Linux
+        - Windows
+    validations:
+      required: true
+
+  - type: input
+    id: env-os-distro
+    attributes:
+      label: Operating system distribution and version
+      description: E.g. Ubuntu 22.04
+    validations:
+      required: true
+
+  - type: input
+    id: env-copier
+    attributes:
+      label: Copier version
+      description: |
+        Please run the following command and copy the output below:
+
+        ```shell
+        copier --version
+        ```
+
+    validations:
+      required: true
+
+  - type: input
+    id: env-python
+    attributes:
+      label: Python version
+      description: E.g. CPython 3.11
+    validations:
+      required: true
+
+  - type: dropdown
+    id: env-install
+    attributes:
+      label: Installation method
+      options:
+        - uvx+pypi
+        - uvx+git
+        - pipx+pypi
+        - pipx+git
+        - pip+pypi
+        - pip+git
+        - local build
+        - distro package
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add any other context about the problem here.

@@ -1,26 +1,29 @@
+from __future__ import annotations
+
 import filecmp
 import json
 import os
 import sys
 import textwrap
+from collections.abc import Mapping
 from enum import Enum
 from hashlib import sha1
 from pathlib import Path
-from typing import Mapping, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Protocol
 
 from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
+from plumbum.cmd import git as _git
+from plumbum.machines import LocalCommand
 from prompt_toolkit.input.ansi_escape_sequences import REVERSE_ANSI_SEQUENCES
 from prompt_toolkit.keys import Keys
+from pytest_gitconfig.plugin import DEFAULT_GIT_USER_EMAIL, DEFAULT_GIT_USER_NAME
 
 import copier
-from copier.types import OptStr, StrOrPath
+from copier._types import StrOrPath
 
-# HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
-if sys.version_info >= (3, 8):
-    from typing import Protocol
-else:
-    from typing_extensions import Protocol
+if TYPE_CHECKING:
+    from pexpect.spawnbase import SpawnBase
 
 PROJECT_TEMPLATE = Path(__file__).parent / "demo"
 
@@ -39,7 +42,7 @@ COPIER_CMD = local.get(
     # HACK https://github.com/microsoft/vscode-python/issues/14222
     str(Path(sys.executable).parent / "copier.cmd"),
     str(Path(sys.executable).parent / "copier"),
-    # Poetry installs the executable as copier.cmd in Windows
+    # uv installs the executable as copier.cmd in Windows
     "copier.cmd",
     "copier",
 )
@@ -62,14 +65,20 @@ BRACKET_ENVOPS = {
 BRACKET_ENVOPS_JSON = json.dumps(BRACKET_ENVOPS)
 SUFFIX_TMPL = ".tmpl"
 
+COPIER_ANSWERS_FILE: Mapping[StrOrPath, str | bytes | Path] = {
+    "{{ _copier_conf.answers_file }}.jinja": ("{{ _copier_answers|tojson }}")
+}
+
 
 class Spawn(Protocol):
-    def __call__(self, cmd: Tuple[str, ...], *, timeout: Optional[int]) -> PopenSpawn:
-        ...
+    def __call__(
+        self, cmd: tuple[str, ...], *, timeout: int | None = ...
+    ) -> PopenSpawn: ...
 
 
 class Keyboard(str, Enum):
     ControlH = REVERSE_ANSI_SEQUENCES[Keys.ControlH]
+    ControlI = REVERSE_ANSI_SEQUENCES[Keys.ControlI]
     ControlC = REVERSE_ANSI_SEQUENCES[Keys.ControlC]
     Enter = "\r"
     Esc = REVERSE_ANSI_SEQUENCES[Keys.Escape]
@@ -86,11 +95,12 @@ class Keyboard(str, Enum):
     # further explanations
     Alt = Esc
     Backspace = ControlH
+    Tab = ControlI
 
 
-def render(tmp_path: Path, **kwargs) -> None:
+def render(tmp_path: Path, **kwargs: Any) -> None:
     kwargs.setdefault("quiet", True)
-    copier.copy(str(PROJECT_TEMPLATE), tmp_path, data=DATA, **kwargs)
+    copier.run_copy(str(PROJECT_TEMPLATE), tmp_path, data=DATA, **kwargs)
 
 
 def assert_file(tmp_path: Path, *path: str) -> None:
@@ -100,8 +110,10 @@ def assert_file(tmp_path: Path, *path: str) -> None:
 
 
 def build_file_tree(
-    spec: Mapping[StrOrPath, Union[str, bytes, Path]], dedent: bool = True
-):
+    spec: Mapping[StrOrPath, str | bytes | Path],
+    dedent: bool = True,
+    encoding: str = "utf-8",
+) -> None:
     """Builds a file tree based on the received spec.
 
     Params:
@@ -115,19 +127,23 @@ def build_file_tree(
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         if isinstance(contents, Path):
-            os.symlink(str(contents), path)
+            path.symlink_to(contents)
         else:
             binary = isinstance(contents, bytes)
             if not binary and dedent:
                 assert isinstance(contents, str)
                 contents = textwrap.dedent(contents)
             mode = "wb" if binary else "w"
-            with path.open(mode) as fd:
+            enc = None if binary else encoding
+            with Path(path).open(mode, encoding=enc) as fd:
                 fd.write(contents)
 
 
 def expect_prompt(
-    tui: PopenSpawn, name: str, expected_type: str, help: OptStr = None
+    tui: SpawnBase,
+    name: str,
+    expected_type: str,
+    help: str | None = None,
 ) -> None:
     """Check that we get a prompt in the standard form"""
     if help:
@@ -136,3 +152,44 @@ def expect_prompt(
         tui.expect_exact(name)
         if expected_type != "str":
             tui.expect_exact(f"({expected_type})")
+
+
+git: LocalCommand = _git.with_env(
+    GIT_AUTHOR_NAME=DEFAULT_GIT_USER_NAME,
+    GIT_AUTHOR_EMAIL=DEFAULT_GIT_USER_EMAIL,
+    GIT_COMMITTER_NAME=DEFAULT_GIT_USER_NAME,
+    GIT_COMMITTER_EMAIL=DEFAULT_GIT_USER_EMAIL,
+)
+
+
+def git_save(
+    dst: StrOrPath = ".",
+    message: str = "Test commit",
+    tag: str | None = None,
+    allow_empty: bool = False,
+) -> None:
+    """Save the current repo state in git.
+
+    Args:
+        dst: Path to the repo to save.
+        message: Commit message.
+        tag: Tag to create, optionally.
+        allow_empty: Allow creating a commit with no changes
+    """
+    with local.cwd(dst):
+        git("init")
+        git("add", ".")
+        git("commit", "-m", message, *(["--allow-empty"] if allow_empty else []))
+        if tag:
+            git("tag", tag)
+
+
+def git_init(message: str = "hello world") -> None:
+    """Initialize a Git repository with a first commit.
+
+    Args:
+        message: The first commit message.
+    """
+    git("init")
+    git("add", ".")
+    git("commit", "-m", message)

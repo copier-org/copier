@@ -1,8 +1,8 @@
 {
   "recommendations": [
-    "esbenp.prettier-vscode",
-    "ms-python.python",
+    "bpruitt-goddard.mermaid-markdown-syntax-highlighting",
     "editorconfig.editorconfig",
-    "bpruitt-goddard.mermaid-markdown-syntax-highlighting"
+    "elagil.pre-commit-helper",
+    "ms-python.python"
   ]
 }

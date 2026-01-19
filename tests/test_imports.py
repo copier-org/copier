@@ -2,7 +2,7 @@ import pytest
 import yaml
 
 import copier
-from copier.types import AnyByStrDict
+from copier._types import AnyByStrDict
 
 from .helpers import build_file_tree
 
@@ -67,7 +67,7 @@ def test_include(
             ): "",
         }
     )
-    copier.copy(str(src), dst, defaults=True)
+    copier.run_copy(str(src), dst, defaults=True)
     assert (dst / "slug-answer.txt").read_text() == "the-name"
     assert (dst / "slug-from-include.txt").read_text() == "the-name"
     assert (dst / "the-name.txt").exists()
@@ -125,8 +125,7 @@ def test_import_macro(
             (src / subdir / "slug-answer.txt.jinja"): "{{ slug }}",
             # File for testing the Jinja import statement as content.
             (src / subdir / "slug-from-macro.txt.jinja"): (
-                "{% from 'includes/slugify.jinja' import slugify %}"
-                "{{ slugify(name) }}"
+                "{% from 'includes/slugify.jinja' import slugify %}{{ slugify(name) }}"
             ),
             # File for testing the Jinja import statement in the file name.
             (
@@ -143,7 +142,7 @@ def test_import_macro(
             ): "",
         }
     )
-    copier.copy(str(src), dst, defaults=True)
+    copier.run_copy(str(src), dst, defaults=True)
     assert (dst / "slug-answer.txt").read_text() == "the-name"
     assert (dst / "slug-from-macro.txt").read_text() == "the-name"
     assert (dst / "the-name.txt").exists()

@@ -1,15 +1,18 @@
 from pathlib import Path
 from stat import S_IREAD
+from tempfile import TemporaryDirectory
 
-from plumbum.cmd import git
+import pytest
 from poethepoet.app import PoeThePoet
 
-from copier.tools import TemporaryDirectory
+from copier._tools import normalize_git_path
+
+from .helpers import git
 
 
 def test_types() -> None:
     """Ensure source code static typing."""
-    result = PoeThePoet(Path("."))(["types"])
+    result = PoeThePoet(Path())(["types"])
     assert result == 0
 
 
@@ -28,3 +31,24 @@ def test_temporary_directory_with_git_repo_deletion() -> None:
     with TemporaryDirectory() as tmp_dir:
         git("init")
     assert not Path(tmp_dir).exists()
+
+
+@pytest.mark.parametrize(
+    ("path", "normalized"),
+    [
+        ("readme.md", "readme.md"),
+        ('quo\\"tes', 'quo"tes'),
+        ('"surrounded"', "surrounded"),
+        ("m4\\303\\2424\\303\\2614a", "m4â4ñ4a"),
+        ("tab\\t", "tab\t"),
+        ("lf\\n", "lf\n"),
+        ("crlf\\r\\n", "crlf\r\n"),
+        ("back\\\\slash", "back\\slash"),
+        (
+            "\\a\\b\\f\\n\\t\\vcontrol\\a\\b\\f\\n\\t\\vcharacters\\a\\b\\f\\n\\t\\v",
+            "\a\b\f\n\t\vcontrol\a\b\f\n\t\vcharacters\a\b\f\n\t\v",
+        ),
+    ],
+)
+def test_normalizing_git_paths(path: str, normalized: str) -> None:
+    assert normalize_git_path(path) == normalized

@@ -11,10 +11,13 @@ nav:
   - Configuring a template: "configuring.md"
   - Generating a project: "generating.md"
   - Updating a project: "updating.md"
+  - Settings: "settings.md"
   - Reference:
       - cli.py: "reference/cli.md"
       - errors.py: "reference/errors.md"
+      - jinja_ext.py: "reference/jinja_ext.md"
       - main.py: "reference/main.md"
+      - settings.py: "reference/settings.md"
       - subproject.py: "reference/subproject.md"
       - template.py: "reference/template.md"
       - tools.py: "reference/tools.md"
@@ -33,6 +36,10 @@ theme:
     - navigation.top
     - navigation.tracking
   palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
       primary: deep orange
@@ -46,15 +53,17 @@ theme:
       accent: orange
       toggle:
         icon: material/weather-night
-        name: Switch to light mode
+        name: Switch to system preference
 
 extra_css:
   - css/mkdocstrings.css
 
 markdown_extensions:
   - admonition
-  - codehilite:
-      guess_lang: false
+  - attr_list
+  - pymdownx.highlight:
+      use_pygments: true
+  - pymdownx.inlinehilite
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid

@@ -1,18 +1,22 @@
+from __future__ import annotations
+
+import json
+from collections.abc import Callable
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any
 
 import pytest
 from plumbum import local
-from plumbum.cmd import git
 from pydantic import ValidationError
 
 import copier
+from copier._main import Worker
+from copier._template import DEFAULT_EXCLUDE, Task, Template, load_template_config
+from copier._types import AnyByStrDict
 from copier.errors import InvalidConfigFileError, MultipleConfigFilesError
-from copier.template import DEFAULT_EXCLUDE, Task, Template, load_template_config
-from copier.types import AnyByStrDict
 
-from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree
+from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree, git_init
 
 GOOD_ENV_OPS = {
     "autoescape": True,
@@ -27,21 +31,13 @@ GOOD_ENV_OPS = {
 }
 
 
-def git_init(message="hello world") -> None:
-    git("init")
-    git("config", "user.name", "Copier Test")
-    git("config", "user.email", "test@copier")
-    git("add", ".")
-    git("commit", "-m", message)
-
-
 def test_config_data_is_loaded_from_file() -> None:
     tpl = Template("tests/demo_data")
     assert tpl.exclude == ("exclude1", "exclude2")
     assert tpl.skip_if_exists == ["skip_if_exists1", "skip_if_exists2"]
     assert tpl.tasks == [
-        Task(cmd="touch 1", extra_env={"STAGE": "task"}),
-        Task(cmd="touch 2", extra_env={"STAGE": "task"}),
+        Task(cmd="touch 1", extra_vars={"stage": "task"}),
+        Task(cmd="touch 2", extra_vars={"stage": "task"}),
     ]
 
 
@@ -87,13 +83,71 @@ def test_read_data(
             ),
         }
     )
-    copier.copy(str(src), dst, defaults=True, overwrite=True)
+    copier.run_copy(str(src), dst, defaults=True, overwrite=True)
     assert (dst / "user_data.txt").read_text() == dedent(
         """\
         A string: lorem ipsum
         A number: 12345
         A boolean: True
         A list: one, two, three
+        """
+    )
+
+
+def test_settings_defaults_precedence(
+    tmp_path_factory: pytest.TempPathFactory, settings_path: Path
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                f"""\
+                # This is a comment
+                _envops: {BRACKET_ENVOPS_JSON}
+                a_string: lorem ipsum
+                a_number: 12345
+                a_boolean: true
+                a_list:
+                    - one
+                    - two
+                    - three
+                a_string_without_default:
+                    type: str
+                """
+            ),
+            (src / "user_data.txt.jinja"): (
+                """\
+                A string: [[ a_string ]]
+                A number: [[ a_number ]]
+                A boolean: [[ a_boolean ]]
+                A list: [[ ", ".join(a_list) ]]
+                A string without default: [[ a_string_without_default ]]
+                """
+            ),
+        }
+    )
+    settings_path.write_text(
+        dedent(
+            """\
+        defaults:
+            a_string: whatever
+            a_number: 42
+            a_boolean: false
+            a_list:
+                - one
+                - two
+            a_string_without_default: something
+    """
+        )
+    )
+    copier.run_copy(str(src), dst, defaults=True, overwrite=True)
+    assert (dst / "user_data.txt").read_text() == dedent(
+        """\
+        A string: whatever
+        A number: 42
+        A boolean: False
+        A list: one, two
+        A string without default: something
         """
     )
 
@@ -120,11 +174,11 @@ def test_invalid_yaml(capsys: pytest.CaptureFixture[str]) -> None:
 def test_invalid_config_data(
     capsys: pytest.CaptureFixture[str],
     conf_path: str,
-    check_err: Optional[Callable[[str], bool]],
+    check_err: Callable[[str], bool] | None,
 ) -> None:
     template = Template(conf_path)
     with pytest.raises(InvalidConfigFileError):
-        template.config_data
+        template.config_data  # noqa: B018
     if check_err:
         _, err = capsys.readouterr()
         assert check_err(err)
@@ -189,16 +243,77 @@ def test_valid_multi_section(tmp_path: Path) -> None:
     }
 
 
+def test_empty_section(tmp_path: Path) -> None:
+    """Empty sections are ignored."""
+    build_file_tree(
+        {
+            (tmp_path / "copier.yml"): (
+                """\
+                ---
+                ---
+
+                ---
+                your_age:
+                    type: int
+                your_name:
+                    type: str
+                ---
+                """
+            ),
+        }
+    )
+    template = Template(str(tmp_path))
+    assert template.questions_data == {
+        "your_age": {"type": "int"},
+        "your_name": {"type": "str"},
+    }
+
+
+def test_include_path_must_be_relative(tmp_path: Path) -> None:
+    """Include path must not be a relative path."""
+    build_file_tree(
+        {
+            (tmp_path / "copier.yml"): (
+                """\
+                !include /absolute/path/to/common.yml
+                """
+            ),
+        }
+    )
+    template = Template(str(tmp_path))
+    with pytest.raises(
+        ValueError, match="YAML include file path must be a relative path"
+    ):
+        template.config_data  # noqa: B018
+
+
+@pytest.mark.parametrize("include_value", ["[]", "{}"])
+def test_include_value_must_be_scalar_node(tmp_path: Path, include_value: str) -> None:
+    """Include value must be a YAML scalar node."""
+    build_file_tree(
+        {
+            (tmp_path / "copier.yml"): (
+                f"""\
+                !include {include_value}
+                """
+            ),
+        }
+    )
+    template = Template(str(tmp_path))
+    with pytest.raises(ValueError, match=r"^Unsupported YAML node:"):
+        template.config_data  # noqa: B018
+
+
 def test_config_data_empty() -> None:
     template = Template("tests/demo_config_empty")
-    assert template.config_data == {"secret_questions": set()}
+    assert template.config_data == {}
     assert template.questions_data == {}
 
 
 def test_multiple_config_file_error() -> None:
     template = Template("tests/demo_multi_config")
     with pytest.raises(MultipleConfigFilesError):
-        template.config_data
+        template.config_data  # noqa: B018
 
 
 # ConfigData
@@ -214,36 +329,36 @@ def test_multiple_config_file_error() -> None:
 )
 def test_flags_bad_data(data: AnyByStrDict) -> None:
     with pytest.raises(ValidationError):
-        copier.Worker(**data)
+        Worker(**data)
 
 
 def test_flags_extra_fails() -> None:
-    with pytest.raises(TypeError):
-        copier.Worker(  # type: ignore[call-arg]
+    with pytest.raises(ValidationError):
+        Worker(  # type: ignore[call-arg]
             src_path="..",
-            dst_path=Path("."),
+            dst_path=Path(),
             i_am_not_a_member="and_i_do_not_belong_here",
         )
 
 
 def test_missing_template(tmp_path: Path) -> None:
     with pytest.raises(ValueError):
-        copier.copy("./i_do_not_exist", tmp_path)
+        copier.run_copy("./i_do_not_exist", tmp_path)
 
 
-def is_subdict(small: Dict[Any, Any], big: Dict[Any, Any]) -> bool:
+def is_subdict(small: dict[Any, Any], big: dict[Any, Any]) -> bool:
     return {**big, **small} == big
 
 
 def test_worker_good_data(tmp_path: Path) -> None:
     # This test is probably useless, as it tests the what and not the how
-    conf = copier.Worker("./tests/demo_data", tmp_path)
+    conf = Worker("./tests/demo_data", tmp_path)
     assert conf._render_context()["_folder_name"] == tmp_path.name
     assert conf.all_exclusions == ("exclude1", "exclude2")
     assert conf.template.skip_if_exists == ["skip_if_exists1", "skip_if_exists2"]
     assert conf.template.tasks == [
-        Task(cmd="touch 1", extra_env={"STAGE": "task"}),
-        Task(cmd="touch 2", extra_env={"STAGE": "task"}),
+        Task(cmd="touch 1", extra_vars={"stage": "task"}),
+        Task(cmd="touch 2", extra_vars={"stage": "task"}),
     ]
 
 
@@ -263,14 +378,19 @@ def test_worker_good_data(tmp_path: Path) -> None:
     ],
 )
 def test_worker_config_precedence(
-    tmp_path: Path, test_input: AnyByStrDict, expected_exclusions: Tuple[str, ...]
+    tmp_path: Path, test_input: AnyByStrDict, expected_exclusions: tuple[str, ...]
 ) -> None:
-    conf = copier.Worker(dst_path=tmp_path, vcs_ref="HEAD", **test_input)
+    conf = Worker(dst_path=tmp_path, vcs_ref="HEAD", **test_input)
     assert expected_exclusions == conf.all_exclusions
 
 
 def test_config_data_transclusion() -> None:
-    config = copier.Worker("tests/demo_transclude/demo")
+    config = Worker("tests/demo_transclude/demo")
+    assert config.all_exclusions == ("exclude1", "exclude2")
+
+
+def test_config_data_nested_transclusions() -> None:
+    config = Worker("tests/demo_transclude_nested_include/demo")
     assert config.all_exclusions == ("exclude1", "exclude2")
 
 
@@ -374,7 +494,7 @@ def test_user_defaults(
             ),
         }
     )
-    copier.copy(
+    copier.run_copy(
         str(src),
         dst,
         defaults=True,
@@ -391,6 +511,7 @@ def test_user_defaults(
         "user_defaults_updated",
         "data_initial",
         "data_updated",
+        "settings_defaults",
         "expected_initial",
         "expected_updated",
     ),
@@ -406,6 +527,53 @@ def test_user_defaults(
             },
             {},
             {},
+            {},
+            dedent(
+                """\
+                A string: foo
+                """
+            ),
+            dedent(
+                """\
+                A string: foo
+                """
+            ),
+        ),
+        # Settings defaults takes precedence over initial defaults.
+        # The output should remain unchanged following the update operation.
+        (
+            {},
+            {},
+            {},
+            {},
+            {
+                "a_string": "bar",
+            },
+            dedent(
+                """\
+                A string: bar
+                """
+            ),
+            dedent(
+                """\
+                A string: bar
+                """
+            ),
+        ),
+        # User provided defaults takes precedence over initial defaults and settings defaults.
+        # The output should remain unchanged following the update operation.
+        (
+            {
+                "a_string": "foo",
+            },
+            {
+                "a_string": "foobar",
+            },
+            {},
+            {},
+            {
+                "a_string": "bar",
+            },
             dedent(
                 """\
                 A string: foo
@@ -430,6 +598,9 @@ def test_user_defaults(
                 "a_string": "yosemite",
             },
             {},
+            {
+                "a_string": "bar",
+            },
             dedent(
                 """\
                 A string: yosemite
@@ -456,6 +627,9 @@ def test_user_defaults(
             {
                 "a_string": "red rocks",
             },
+            {
+                "a_string": "bar",
+            },
             dedent(
                 """\
                 A string: yosemite
@@ -475,8 +649,10 @@ def test_user_defaults_updated(
     user_defaults_updated: AnyByStrDict,
     data_initial: AnyByStrDict,
     data_updated: AnyByStrDict,
+    settings_defaults: AnyByStrDict,
     expected_initial: str,
     expected_updated: str,
+    settings_path: Path,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     with local.cwd(src):
@@ -503,8 +679,9 @@ def test_user_defaults_updated(
             }
         )
         git_init()
+    settings_path.write_text(f"defaults: {json.dumps(settings_defaults)}")
 
-    copier.copy(
+    copier.run_copy(
         str(src),
         dst,
         defaults=True,
@@ -525,3 +702,29 @@ def test_user_defaults_updated(
         data=data_updated,
     )
     assert (dst / "user_data.txt").read_text() == expected_updated
+
+
+@pytest.mark.parametrize(
+    "config",
+    [
+        """\
+        question:
+            type: str
+            secret: true
+        """,
+        """\
+        question:
+            type: str
+
+        _secret_questions:
+            - question
+        """,
+    ],
+)
+def test_secret_question_requires_default_value(
+    tmp_path_factory: pytest.TempPathFactory, config: str
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree({src / "copier.yml": config})
+    with pytest.raises(ValueError, match="Secret question requires a default value"):
+        copier.run_copy(str(src), dst)

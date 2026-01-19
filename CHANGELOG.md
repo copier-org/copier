@@ -4,6 +4,376 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.11.1 (2026-01-10)
+
+### Fix
+
+-   **updating**: avoid circular reference when rendering JSON-serialized `_copier_conf`
+    variable
+
+## v9.11.0 (2025-11-20)
+
+### Feat
+
+-   **updating**: allow updating a dirty Git repository when the subproject directory is
+    clean (#2369)
+-   add support for custom question icons (#2381)
+-   add support for conditionally unsetting a question's default value
+
+### Fix
+
+-   raise warning instead of error when `chmod` is not allowed
+-   fix using default answers from settings for required questions (#2374)
+
+### Refactor
+
+-   drop support for Python 3.9
+
+## v9.10.3 (2025-10-17)
+
+### Fix
+
+-   **updating**: render templated skip-if-exists patterns before applying patch with
+    excluded paths
+-   **updating**: exclude only Git-ignored files when applying patch
+-   **updating**: ignore paths added to the `_exclude` list in new template version when
+    updating
+
+## v9.10.2 (2025-09-09)
+
+### Fix
+
+-   **deps**: remove prompt-toolkit version cap
+
+## v9.10.1 (2025-08-28)
+
+### Fix
+
+-   **deps**: cap prompt-toolkit to <3.0.52
+
+## v9.10.0 (2025-08-26)
+
+### Feat
+
+-   add support for nested multi-document includes in `copier.yml` (#2251)
+
+### Fix
+
+-   disable default answer validator for secret questions
+
+## v9.9.1 (2025-08-18)
+
+### Security
+
+-   disallow render paths outside destination directory
+-   cast Jinja context path variables to `pathlib.PurePath`
+
+## v9.9.0 (2025-08-01)
+
+### Feat
+
+-   add support for prompting filesystem paths (#2210)
+
+### Fix
+
+-   **updating**: disable secret question validator when replaying old copy
+-   **vcs**: fix cloning local dirty template repo when `core.fsmonitor=true` (#2151)
+
+## v9.8.0 (2025-07-07)
+
+### Feat
+
+-   add support for providing serialized answers to multiselect choice questions
+-   **updating**: add VCS ref sentinel `:current:` for referring to the current template
+    ref
+
+### Fix
+
+-   avoid infinite recursion when accessing `_copier_conf.answers_file` via Jinja
+    context hook
+-   validate default answers
+-   correct git stage order on merge conflicts
+
+## v9.7.1 (2025-04-23)
+
+### Refactor
+
+-   import from module `_tools` instead of `tools`
+
+## v9.7.0 (2025-04-22)
+
+### Feat
+
+-   raise new `TaskError` exception on task errors
+-   raise `InteractiveSessionError` when prompting in non-interactive environment
+
+### Fix
+
+-   **settings**: use `<CONFIG_ROOT>/copier` as settings directory on Windows (#2071)
+-   **updating**: ignore last answer of `when: false` questions
+-   restore access to full rendering context in prompt phase
+
+### Refactor
+
+-   re-expose API with deprecation warnings on non-public API imports
+-   rename internal modules with a `_` prefix
+
+## v9.6.0 (2025-03-09)
+
+### Feat
+
+-   Add `_copier_operation` variable (#1733)
+-   **context**: expose a `_copier_phase` context variable
+
+### Fix
+
+-   explicitly specify file encoding for windows (#2007)
+-   auto-detect encoding when reading external data file
+-   **settings**: auto-detect encoding when reading settings file
+-   **cli**: auto-detect encoding when reading unicode-encoded file specified with
+    `--data-file`
+-   expose only answers in question rendering context
+-   ignore `$file` if `$file.tmpl` exists when subdirectory is used
+-   decode external data file content explicitly as UTF-8
+-   decode answers file content explicitly as UTF-8
+
+### Refactor
+
+-   use common answers file loader
+
+## v9.5.0 (2025-02-17)
+
+### Feat
+
+-   **external_data**: load data from other YAML files
+-   **settings**: allow to define some trusted repositories or prefixes
+-   **settings**: add user settings support with `defaults` values (fix #235)
+-   add dynamic file structures in loop using yield-tag (#1855)
+-   add support for dynamic choices
+
+### Fix
+
+-   correctly record missing stages in index for merge conflicts (#1907)
+-   allow importing from a file that has a conditional name
+-   **updating**: don't crash when file is removed from template's `.gitignore` file
+    (#1886)
+-   **deps**: update dependency packaging to v24.2
+-   re-render answers file path when producing render context
+-   restore compatibility with Git prior to v2.31 (#1838)
+-   **updating**: don't validate computed values
+-   Don't mark files without conflict markers as unmerged (#1813)
+
+## v9.4.1 (2024-10-18)
+
+### Fix
+
+-   restore support for `preserve_symlinks: false` for directories (#1820)
+
+## v9.4.0 (2024-10-15)
+
+### Fix
+
+-   **exclude**: support negative exclude matching child of excluded parent
+-   parse new answer when `--skip-answered` is used
+-   validate answers to secret questions
+-   **updating**: do not recreate deleted paths on update (#1719)
+-   support Git config without user identity
+
+### Refactor
+
+-   set default value for `keep_trailing_newline` more idiomatically
+-   drop support for Python 3.8
+
+### Perf
+
+-   **updating**: avoid creating subproject copy
+
+## v9.3.1 (2024-07-03)
+
+### Fix
+
+-   pass `--skip-tasks` flag to worker (#1688)
+
+## v9.3.0 (2024-07-01)
+
+### Feat
+
+-   add simpler migrations configuration syntax (#1510)
+
+### Fix
+
+-   **tasks**: do not consider unsafe if they are being skipped
+-   add context information to answer validation error message (#1609)
+-   do not overwrite identical files (#1576)
+-   **updating**: unset invalid last answers
+-   render `default` list items for multi-select choice questions
+-   **updating**: yield merge conflict when both template and project add same file
+
+## v9.2.0 (2024-04-04)
+
+### Feat
+
+-   **tasks**: add support for skipping tasks (#1561)
+-   add support for validating multi-select choice answers
+
+### Fix
+
+-   ignore empty YAML documents in `copier.yml`
+-   preserve choices order in answers to multi-select choice questions
+-   **exclude**: apply exclude matcher to rendered path
+
+### Refactor
+
+-   drop `pyyaml-include` dependency and reimplement relevant features
+
+### Perf
+
+-   apply `PERF` lint rules fixes (#1556)
+
+## v9.1.1 (2024-01-16)
+
+### Fix
+
+-   don't fail in systems with windows 1252 encoding (probably)
+-   skip excluded paths before rendering
+
+## v9.1.0 (2023-11-27)
+
+### Feat
+
+-   Conflicts on updates now appear as git merge conflicts, also on VSCode
+-   **choices**: support questionary checkbox for multiple choices using
+    `multiselect: true`.
+
+### Fix
+
+-   mark package as typed
+-   Normalize paths obtained from Git commands output
+-   don't crash when update replaces file with symlink (or vice versa) (#1409)
+-   keep git-ignored files on update (#1373)
+-   address deprecation warning in `shutil.rmtree(onerror=...)` (#1401)
+
+## v9.0.1 (2023-10-30)
+
+### Fix
+
+-   don't produce output when imported with `$FORCE_COLOR=1` env
+
+## v9.0.0 (2023-10-22)
+
+### BREAKING CHANGE
+
+-   Changes the return code for unsafe template error from 2 to 4 to avoid return code
+    collision with Plumbum's `SwitchError` type errors which use return code 2.
+
+### Feat
+
+-   allow overriding data file with CLI arguments (#1332)
+-   **cli**: read answers from yaml file (#1325)
+
+### Fix
+
+-   **vcs**: prevent local clone from being stuck by gpg prompts (#1360)
+-   **pydantic**: compatible with 2.4+, solving `FieldValidationInfo` warning (#1342)
+-   fix answer validation for `type: str` questions
+-   version guess from tags that don't start with `v`, but are still PEP440 compliant
+    (#1048)
+-   **cli**: use return code 4 for unsafe template error
+-   **nix**: detect build version appropriately
+
+## v8.3.0 (2023-09-05)
+
+### Feat
+
+-   add `-A` as an alias for `--skip-answered`, and support it in `recopy` too
+-   add `--skip-answered` flag to avoid repeating recorded answers
+
+### Fix
+
+-   **recopy**: never clone old template (even less if it's just for cleanup)
+
+## v8.2.0 (2023-08-28)
+
+### Feat
+
+-   release on FlakeHub.com too
+-   add support for pre-update and post-update messages (#1288)
+-   add support for pre-copy and post-copy messages
+
+### Fix
+
+-   do not immediately fail if git is not available
+-   provide more clarification in unsafe error message (#1280)
+-   clean up tmp dir
+-   don't lie about updated files
+-   require default value for secret question
+-   fix answer validation against conditional choices with duplicate values
+
+### Refactor
+
+-   drop support for Python 3.7 (#1252)
+
+## v8.1.0 (2023-07-10)
+
+### Feat
+
+-   add support for computed values via skipped questions (#1220)
+-   add `--trust` as a less scary alternative to `--UNSAFE` (#1179)
+-   add OS identifier to render context
+
+### Fix
+
+-   **pydantic**: add upper dependency bound to fix unlocked installations
+
+### Refactor
+
+-   request answers imperatively instead of implicitly via impure property
+
+## v8.0.0 (2023-06-04)
+
+### BREAKING CHANGE
+
+-   Updates will overwrite existing files always. If you need to select only some files,
+    just use `git mergetool` or `git difftool` after updating.
+-   Flag `--overwrite/-w` disappeared from `copier update`. It is now implicit.
+-   To update via API, `overwrite=True` is now required.
+-   The default update conflict mode is now `inline` instead of `rej`.
+-   By default, updates now consider 3 lines of context instead of just 1.
+-   All CLI calls to Copier must now include the subcommand as the 1st argument. For
+    example, `copier` must become now `copier update`; also `copier ./tpl ./dst` must
+    become `copier copy ./tpl ./dst`.
+-   All flags must go after the subcommand now. For example,
+    `copier -r HEAD update ./dst` must now become `copier update -r HEAD ./dst` or
+    `copier update ./dst -r HEAD`.
+-   Automatic mode removed. Since now subcommands are required, the automatic mode is
+    removed.
+-   Deprecated `copier.copy` function is removed. Use `copier.run_copy`,
+    `copier.run_update` or `copier.run_recopy` explicitly as needed.
+-   default values must be of the same type than the question.
+
+### Feat
+
+-   disable unsafe features by default and add `--UNSAFE` switch (#1171)
+-   basic nixpkgs overlay
+-   add `recopy` command and function
+-   support conditional choices (#1010)
+-   validate default values (#1075)
+
+### Fix
+
+-   explain better why an answer casting fails
+-   **cli**: display subcommand args meaning
+-   preserver recursive symlinks
+-   work around Pydantic bug when parsing choices
+-   skip validating question and generating its default value when its skip condition is
+    met
+
+### Refactor
+
+-   overwrite always on updates
+-   **update**: default to inline markers and 3 lines of context
+-   remove unused local overrides to answers
+
 ## v7.2.0 (2023-04-19)
 
 ### Feat

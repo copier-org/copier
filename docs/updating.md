@@ -1,10 +1,26 @@
 # Updating a project
 
+Copier enables the code lifecycle management for generated projects. There are several
+common use cases for that, including but not limited to
+
+1. Update the answers to previous questions
+
+    Questions can be reanswered to fit the latest requirements of the generated
+    projects. This is helpful, especially when the template includes optional tools that
+    fit into different phases of a project. In that case, template consumers are able to
+    activate the optional tools gradually when the project matures.
+
+1. Sync updates from evolved templates
+
+    The template creators might update the template to add new functionalities or bug
+    fixes. The generated project can get updated if the template consumers want to keep
+    it to the latest version.
+
 The best way to update a project from its template is when all of these conditions are
 true:
 
-1. The template includes
-   [a valid `.copier-answers.yml` file](configuring.md#the-copier-answersyml-file).
+1. The destination folder includes [a valid `.copier-answers.yml`
+   file][the-copier-answersyml-file].
 1. The template is versioned with Git (with tags).
 1. The destination folder is versioned with Git.
 
@@ -25,11 +41,11 @@ answers you provided when copied last time. However, sometimes it's impossible f
 Copier to know what to do with a diff code hunk. In those cases, copier handles the
 conflict in one of two ways, controlled with the `--conflict` option:
 
--   `--conflict rej` (default): Creates a separate `.rej` file for each file with
-    conflicts. These files contain the unresolved diffs.
--   `--conflict inline` (experimental): Updates the file with conflict markers. This is
-    quite similar to the conflict markers created when a `git merge` command encounters
-    a conflict. For more information, see the "Checking Out Conflicts" section of the
+-   `--conflict rej`: Creates a separate `.rej` file for each file with conflicts. These
+    files contain the unresolved diffs.
+-   `--conflict inline` (default): Updates the file with conflict markers. This is quite
+    similar to the conflict markers created when a `git merge` command encounters a
+    conflict. For more information, see the "Checking Out Conflicts" section of the
     [`git` documentation](https://git-scm.com/book/en/v2/Git-Tools-Advanced-Merging).
 
 If the update results in conflicts, _you should review those manually_ before
@@ -45,7 +61,21 @@ setting you use.
 
 ## Preventing Commit of Merge Conflicts
 
-If you use `--conflict rej` (the default):
+If you use `--conflict inline` (the default) then you need to check for conflicts
+markers in your files:
+
+```yaml title=".pre-commit-config.yaml"
+repos:
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v4.3.0
+      hooks:
+          # Prevent committing inline conflict markers
+          - id: check-merge-conflict
+            args: [--assume-in-merge]
+```
+
+If you use `--conflict rej` then you need to review and remove all generated `.rej`
+files:
 
 ```yaml title=".pre-commit-config.yaml"
 repos:
@@ -54,16 +84,18 @@ repos:
           # Prevent committing .rej files
           - id: forbidden-files
             name: forbidden files
-            entry: found Copier update rejection files; review them and remove them
+            entry:
+                found Copier update rejection files; review and remove them before
+                merging.
             language: fail
             files: "\\.rej$"
-    - repo: https://github.com/pre-commit/pre-commit-hooks
-      rev: v4.3.0
-      hooks:
-          # Prevent committing inline conflict markers
-          - id: check-merge-conflict
-            args: [--assume-in-merge]
 ```
+
+!!! note
+
+    For projects that use both `rej` and `inline` depending on each user's preference,
+    you can add both hooks to your `pre-commit-config.yaml` file, making sure that no
+    unresolved merge conflicts are committed.
 
 ## Never change the answers file manually
 
@@ -87,14 +119,33 @@ repos:
 If you want to just reuse all previous answers:
 
 ```shell
-copier --force update
+copier update --defaults
 ```
 
 If you want to change just one question, and leave all others untouched, and don't want
-to go through the whole questionary again:
+to go through the whole questionnaire again:
 
 ```shell
-copier --force --data updated_question="my new answer" update
+copier update --defaults --data updated_question="my new answer"
+```
+
+You can achieve the same using a [data file][data_file]:
+
+```shell
+echo "updated_question: my new answer" > /tmp/data-file.yaml
+copier update --defaults --data-file /tmp/data-file.yaml
+```
+
+!!! note
+
+    Due to [issue #1474](https://github.com/copier-org/copier/issues/1474),
+    it is not yet possible to update a multiselect choice using ˋ--dataˋ.
+    Use ˋ--data-fileˋ instead for now.
+
+If you want to update the answers to all questions, but not the template:
+
+```shell
+copier update --vcs-ref=:current:
 ```
 
 ## How the update works
@@ -154,34 +205,57 @@ As you can see here, `copier` does several things:
 -   Finally, it re-applies the previously obtained diff and then runs the
     post-migrations.
 
-!!! important
+### Handling of deleted paths
 
-    The diff obtained by comparing the fresh, regenerated project to your
-    current project can cancel the modifications applied by the update from the latest
-    template version. During the process, `copier` will ask for your confirmation to
-    overwrite or skip modifications, but in the end, it is possible that nothing has
-    changed (except for the version in `.copier-answers.yml` of course). This is not a
-    bug: although it can be quite surprising, this behavior is correct.
+Template-based files/directories that were deleted in the generated project are
+automatically excluded from updates. If you want to recover such a file later on, you
+can run `copier recopy` and recommit it to your repository. Subsequent updates for the
+path will then be respected again.
 
-## Migration across Copier major versions
+An exception to this behavior applies to paths that are matched by `skip_if_exists`.
+Their presence is always ensured, even during an `update` operation.
 
-When there's a new major release of Copier (for example from Copier 5.x to 6.x), there
-are chances that there's something that changed. Maybe your template will not work as it
-did before.
+### Recover from a broken update
 
-[As explained above][how-the-update-works], Copier needs to make a copy of the template
-in its old state with its old answers so it can actually produce a diff with the new
-state and answers and apply the smart update to the project. However, **how can I be
-sure that Copier will produce the same "old state" if I copied the template with an
-older Copier major release?** Good question.
+Usually Copier will replay the last project generation without problems. However,
+sometimes that process can break. Examples:
 
-We will do our best to respect older behaviors for at least one extra major release
-cycle, but the simpler answer is that you can't be sure of that.
+-   When the last update was relying on some external resources that are no longer
+    available.
+-   When the old and new versions of the template depend on different incompatible
+    versions of the same Jinja extension, but Copier can only use one.
+-   When the old version of the template was built for an older version of Copier.
 
-How to overcome that situation?
+Generally, you should keep your templates as pure and simple as possible to avoid those
+situations. But it can still happen.
 
-1. You can write good [migrations][].
-1. Then you can test them on your template's CI on a matrix against several Copier
-   versions.
-1. Or you can just [recopy the project][regenerating-a-project] when you update to a
-   newer Copier major release.
+To overcome this, use [the `copier recopy` command][regenerating-a-project], which will
+discard all the smart update algorithm [explained above][how-the-update-works]. It will
+behave just like if you were applying the template for the first time, but it will keep
+your answers from the last update.
+
+Of course, the experience will be less satisfactory. The new template will override any
+changes found in your local project. But you can use a Git diff tool to overcome that.
+After doing this, further updates generally keep on working as usual.
+
+### Aborting an update
+
+When you're not happy with the result of a `copier update` run or unsure about adding
+the introduced changes to your code base, specifically when you have unpleasant
+conflicts, it's not 100% obvious how to get back to the previously clean copy of your
+branch. The following strategies won't work:
+
+-   `git checkout <branch>` – _error: you need to resolve your current index first_
+-   `git checkout .` – _error: path '&lt;filename&gt;' is unmerged_
+-   `git merge --abort` – _fatal: There is no merge to abort (MERGE_HEAD missing)_
+
+Here is what you can do using Git in the terminal to throw away all changes:
+
+```shell
+git reset           # throw away merge conflict information
+git checkout .      # restore modified files
+git clean -d -i     # remove untracked files and folders
+```
+
+If you want fine-grained control to restore files selectively, read the output of the
+`git status` command attentively. It shows all the commands you may need as hints!

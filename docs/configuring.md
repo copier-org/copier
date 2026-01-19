@@ -13,22 +13,22 @@ It is important that you understand how Copier works. It has 2 kinds of configur
 Copier reads **settings** from these sources, in this order of priority:
 
 1. Command line or API arguments.
-1. [The `copier.yml` file](#the-copieryml-file). Settings here always start with an
+1. [The `copier.yml` file][the-copieryml-file]. Settings here always start with an
    underscore (e.g. `_min_copier_version`).
 
 !!! info
 
     Some settings are _only_ available as CLI arguments, and some others _only_ as
     template configurations. Some behave differently depending on where they are
-    defined. [Check the docs for each specific setting](#available-settings).
+    defined. [Check the docs for each specific setting][available-settings].
 
 Copier obtains **answers** from these sources, in this order of priority:
 
 1. Command line or API arguments.
 1. Asking the user. Notice that Copier will not ask any questions answered in the
    previous source.
-1. [Answer from last execution](#the-copier-answersyml-file).
-1. Default values defined in [the `copier.yml` file](#the-copieryml-file).
+1. [Answer from last execution][the-copier-answersyml-file].
+1. Default values defined in [the `copier.yml` file][the-copieryml-file].
 
 ## The `copier.yml` file
 
@@ -36,9 +36,9 @@ The `copier.yml` (or `copier.yaml`) file is found in the root of the template, a
 the main entrypoint for managing your template configuration. It will be read and used
 for two purposes:
 
--   [Prompting the user for information](#questions).
--   [Applying template settings](#available-settings) (excluding files, setting
-    arguments defaults, etc.).
+-   [Prompting the user for information][questions].
+-   [Applying template settings][available-settings] (excluding files, setting arguments
+    defaults, etc.).
 
 ### Questions
 
@@ -55,7 +55,7 @@ they become available to the project template.
     your_email: ""
     ```
 
-    Will result in a questionary similar to:
+    Will result in a questionnaire similar to:
 
     <pre style="font-weight: bold">
     🎤 name_of_the_project
@@ -73,13 +73,83 @@ to ask users for data. To use it, the value must be a dict.
 Supported keys:
 
 -   **type**: User input must match this type. Options are: `bool`, `float`, `int`,
-    `json`, `str`, `yaml` (default).
+    `json`, `path`, `str`, `yaml` (default).
 -   **help**: Additional text to help the user know what's this question for.
 -   **choices**: To restrict possible values.
 
     !!! tip
 
         A choice value of `null` makes it become the same as its key.
+
+    !!! tip "Validation and conditional choices"
+
+        A choice can be validated by using the extended syntax with dict-style and
+        tuple-style choices. For example:
+
+        ```yaml title="copier.yml"
+        cloud:
+            type: str
+            help: Which cloud provider do you use?
+            choices:
+                - Any
+                - AWS
+                - Azure
+                - GCP
+
+        iac:
+            type: str
+            help: Which IaC tool do you use?
+            choices:
+                Terraform: tf
+                Cloud Formation:
+                    value: cf
+                    validator: "{% if cloud != 'AWS' %}Requires AWS{% endif %}"
+                Azure Resource Manager:
+                    value: arm
+                    validator: "{% if cloud != 'Azure' %}Requires Azure{% endif %}"
+                Deployment Manager:
+                    value: dm
+                    validator: "{% if cloud != 'GCP' %}Requires GCP{% endif %}"
+        ```
+
+        When the rendered validator is a non-empty string, the choice is disabled and
+        the message is shown. Choice validation is useful when the validity of a choice
+        depends on the answer to a previous question.
+
+    !!! tip "Dynamic choices"
+
+        Choices can be created dynamically by using a templated string which renders
+        as valid list-style, dict-style, or tuple-style choices in YAML format. For
+        example:
+
+        ```yaml title="copier.yml"
+        language:
+            type: str
+            help: Which programming language do you use?
+            choices:
+                - python
+                - node
+
+        dependency_manager:
+            type: str
+            help: Which dependency manager do you use?
+            choices: |
+                {%- if language == "python" %}
+                - poetry
+                - pipenv
+                {%- else %}
+                - npm
+                - yarn
+                {%- endif %}
+        ```
+
+        Dynamic choices can be used as an alternative approach to conditional choices
+        via validators where dynamic choices hide disabled choices whereas choices
+        disabled via validators are visible with along with the validator's error
+        message but cannot be selected.
+
+        When combining dynamic choices with validators, make sure to escape the
+        validator template using `#!jinja {% raw %}...{% endraw %}`.
 
     !!! warning
 
@@ -115,21 +185,56 @@ Supported keys:
                 Some array: "[str, keeps, this, as, a, str]"
         ```
 
+-   **multiselect**: When set to `true`, allows multiple choices. The answer will be a
+    `list[T]` instead of a `T` where `T` is of type `type`.
 -   **default**: Leave empty to force the user to answer. Provide a default to save them
     from typing it if it's quite common. When using `choices`, the default must be the
     choice _value_, not its _key_, and it must match its _type_. If values are quite
     long, you can use
     [YAML anchors](https://confluence.atlassian.com/bitbucket/yaml-anchors-960154027.html).
+
+    !!! note "Dynamic default value of a multiselect choice question"
+
+        The default value of a multiselect choice question can be created dynamically by
+        using a templated string which renders a YAML-style list of choice values. List
+        items are parsed according to the question's `type` and don't need to be quoted
+        unless there is ambiguity with the surrounding list brackets. For example:
+
+        ```diff title="copier.yml"
+         brackets:
+             type: str
+             choices:
+                 - "["
+                 - "]"
+             multiselect: true
+        -    default: '[[, ]]'     # ❌ WRONG
+        +    default: '["[", "]"]' # ✔️ RIGHT
+        ```
+
 -   **secret**: When `true`, it hides the prompt displaying asterisks (`*****`) and
-    doesn't save the answer in [the answers file](#the-copier-answersyml-file)
+    doesn't save the answer in [the answers file][the-copier-answersyml-file]. When
+    `true`, a default value is required.
 -   **placeholder**: To provide a visual example for what would be a good value. It is
     only shown while the answer is empty, so maybe it doesn't make much sense to provide
-    both `default` and `placeholder`.
+    both `default` and `placeholder`. It must be a string.
 
     !!! warning
 
         Multiline placeholders are not supported currently, due to
         [this upstream bug](https://github.com/prompt-toolkit/python-prompt-toolkit/issues/1267).
+
+-   **qmark**: Custom emoji or mark to display before the question. If not specified,
+    defaults to 🎤 for regular questions and 🕵️ for secret questions. This is useful for
+    customizing the visual appearance of your prompts.
+
+    !!! example
+
+        ```yaml title="copier.yml"
+        love_copier:
+            type: bool
+            qmark: "❤️"
+            help: Do you love Copier?
+        ```
 
 -   **multiline**: When set to `true`, it allows multiline input. This is especially
     useful when `type` is `json` or `yaml`.
@@ -140,17 +245,14 @@ Supported keys:
 
 -   **when**: Condition that, if `false`, skips the question.
 
-    If it is a boolean, it is used directly, but it's a bit absurd in that case.
+    If it is a boolean, it is used directly. Setting it to `false` is useful for
+    creating a computed value.
 
     If it is a string, it is converted to boolean using a parser similar to YAML, but
-    only for boolean values.
+    only for boolean values. The string can be [templated][prompt-templating].
 
-    This is most useful when [templated](#prompt-templating).
-
-    If a question is skipped, its answer will be:
-
-    -   The default value, if you're generating the project for the 1st time.
-    -   The last answer recorded, if you're updating the project.
+    If a question is skipped, its answer is not recorded, but its default value is
+    available in the render context.
 
     !!! example
 
@@ -176,6 +278,38 @@ Supported keys:
                 {%- endif %}
             # Only ask for copyright if project is not in the public domain
             when: "{{ project_license != 'Public domain' }}"
+        ```
+
+    If the default value of a skipped question is not meaningful, then it can be unset
+    by rendering the special `UNSET` variable, so the question's variable is undefined
+    in the render context:
+
+    !!! example
+
+        ```yaml title="copier.yml"
+        database_engine:
+            type: str
+            help: Database engine
+            choices:
+                - postgres
+                - mysql
+                - none
+            default: postgres
+
+        database_url:
+            type: str
+            help: Database URL
+            default: >-
+                {%- if database_engine == 'postgres' -%}
+                postgresql://user:pass@localhost:5432/dbname
+                {%- elif database_engine == 'mysql' -%}
+                mysql://user:pass@localhost:3306/dbname
+                {%- else -%}
+                {{ UNSET }}
+                {%- endif -%}
+            when: "{{ database_engine != 'none' }}"
+            # Simplified for illustration purposes
+            validator: "{% if '://' not in database_url %}Invalid{% endif %}"
         ```
 
 !!! example
@@ -422,12 +556,12 @@ your_template
 
 !!! important
 
-    Note that the chosen [template suffix](#templates_suffix)
+    Note that the chosen [template suffix][templates_suffix]
     **must** appear outside of the Jinja condition,
     otherwise the whole file won't be considered a template and will
     be copied as such in generated projects.
 
-You can even use the answers of questions with [choices](#advanced-prompt-formatting):
+You can even use the answers of questions with [choices][advanced-prompt-formatting]:
 
 ```yaml title="copier.yml"
 ci:
@@ -450,7 +584,7 @@ your_template
 
 !!! important
 
-    Contrary to files, directories **must not** end with the [template suffix](#templates_suffix).
+    Contrary to files, directories **must not** end with the [template suffix][templates_suffix].
 
 !!! warning
 
@@ -594,14 +728,14 @@ your_template
         ...
 ```
 
-Then, make sure to [exclude](#exclude) this folder
+Then, make sure to [exclude][exclude] this folder
 
 ```yaml title="copier.yml"
 _exclude:
     - includes
 ```
 
-or use a [subdirectory](#subdirectory), e.g.:
+or use a [subdirectory][subdirectory], e.g.:
 
 ```yaml title="copier.yml"
 _subdirectory: template
@@ -622,11 +756,11 @@ reason, Copier provides a function
 
 ## Available settings
 
-Template settings alter how the template is rendered.
-[They come from several sources](#configuration-sources).
+Template settings alter how the template is rendered. [They come from several
+sources][configuration-sources].
 
-Remember that **the key must be prefixed with an underscore if you use it in
-[the `copier.yml` file](#the-copieryml-file)**.
+Remember that **the key must be prefixed with an underscore if you use it in [the
+`copier.yml` file][the-copieryml-file]**.
 
 ### `answers_file`
 
@@ -642,7 +776,7 @@ the project root.
     Remember to add that file to your Git template if you want to support
     [updates](updating.md).
 
-Don't forget to read [the docs about the answers file](#the-copier-answersyml-file).
+Don't forget to read [the docs about the answers file][the-copier-answersyml-file].
 
 !!! example
 
@@ -658,7 +792,7 @@ Don't forget to read [the docs about the answers file](#the-copier-answersyml-fi
 -   Default value: `True`
 
 When Copier creates the destination path, if there's any failure when rendering the
-template (either in the rendering process or when running the [tasks](#tasks)), Copier
+template (either in the rendering process or when running the [tasks][tasks]), Copier
 will delete that folder.
 
 Copier will never delete the folder if it didn't create it. For this reason, when
@@ -672,11 +806,11 @@ running `copier update`, this setting has no effect.
 
 -   Format: `Literal["rej", "inline"]`
 -   CLI flags: `-o`, `--conflict` (only available in `copier update` subcommand)
--   Default value: `rej`
+-   Default value: `inline`
 
 When updating a project, sometimes Copier doesn't know what to do with a diff code hunk.
-This option controls the output format if this happens. The default, `rej`, creates
-`*.rej` files that contain the unresolved diffs. The `inline` option includes the diff
+This option controls the output format if this happens. Using `rej`, creates `*.rej`
+files that contain the unresolved diffs. The `inline` option (default) includes the diff
 code hunk in the file itself, similar to the behavior of `git merge`.
 
 !!! info
@@ -691,7 +825,7 @@ code hunk in the file itself, similar to the behavior of `git merge`.
 
 During a project update, Copier needs to compare the template evolution with the
 subproject evolution. This way, it can detect what changed, where and how to merge those
-changes. [Refer here for more details on this process](./updating.md).
+changes. [Refer here for more details on this process](updating.md).
 
 The more lines you use, the more accurate Copier will be when detecting conflicts. But
 you will also have more conflicts to solve by yourself. FWIW, Git uses 3 lines by
@@ -722,7 +856,139 @@ questions with default answers.
     which is overridden, and don't ask user anything else:
 
     ```shell
-    copier -fd 'user_name=Manuel Calavera' copy template destination
+    copier copy -fd 'user_name=Manuel Calavera' template destination
+    ```
+
+!!! example "Give an answer to a multiselect choice question"
+
+    The answer to a multiselect choice question is a YAML-style list of choice values.
+    For example:
+
+    ```shell
+    copier copy -fd 'python_versions=[3.10, 3.11, 3.12]'
+    ```
+
+    List items are parsed according to the question's `type` and don't need to be quoted
+    unless there is ambiguity with the surrounding list brackets. For example:
+
+    ```shell
+    copier copy -fd 'brackets=[[, ]]'     # ❌ WRONG
+    copier copy -fd 'brackets=["[", "]"]' # ✔️ RIGHT
+    ```
+
+### `data_file`
+
+-   Format: `str`
+-   CLI flags: `--data-file`
+-   Default value: N/A
+
+As an alternative to [`-d, --data`][data] you can also pass the path to a YAML file that
+contains your data.
+
+!!! info
+
+    Not supported in `copier.yml` or API calls. Only supported through the CLI.
+
+!!! example
+
+    Example CLI usage with a YAML file containing data:
+
+    ```yaml title="input.yml"
+    user_name: Manuel Calavera
+    age: 7
+    height: 1.83
+    ```
+
+    Passing a data file
+
+    ```shell
+    copier copy --data-file input.yml template destination
+    ```
+
+    is equivalent to passing its content as key-value pairs:
+
+    ```shell
+    copier copy -d 'user_name=Manuel Calavera' -d 'age=7' -d 'height=1.83' template destination
+    ```
+
+    If you'd like to override some of the answers in the file, `--data` flags always take
+    precedence:
+
+    ```shell
+    copier copy -d 'user_name=Bilbo Baggins' --data-file input.yml template destination
+    ```
+
+!!! info
+
+    Command line arguments passed via `--data` always take precedence over the data file.
+
+### `external_data`
+
+-   Format: `dict[str, str]`
+-   CLI flags: N/A
+-   Default value: `{}`
+
+This allows using preexisting data inside the rendering context. The format is a dict of
+strings, where:
+
+-   The dict key will be the namespace of the data under [`_external_data`][].
+-   The dict value is the relative path (from the subproject destination) where the YAML
+    data file should be found.
+
+!!! example "Template composition"
+
+    If your template is
+    [a complement of another template][applying-multiple-templates-to-the-same-subproject],
+    you can access the other template's answers with a pattern similar to this:
+
+    ```yaml title="copier.yml"
+    # Child template defaults to a different answers file, to avoid conflicts
+    _answers_file: .copier-answers.child-tpl.yml
+
+    # Child template loads parent answers
+    _external_data:
+        # A dynamic path. Make sure you answer that question
+        # before the first access to the data (with `_external_data.parent_tpl`)
+        parent_tpl: "{{ parent_tpl_answers_file }}"
+
+    # Ask user where they stored parent answers
+    parent_tpl_answers_file:
+        help: Where did you store answers of the parent template?
+        default: .copier-answers.yml
+
+    # Use a parent answer as the default value for a child question
+    target_version:
+        help: What version are you deploying?
+        # We already answered the `parent_tpl_answers_file` question, so we can
+        # now correctly access the external data from `_external_data.parent_tpl`
+        default: "{{ _external_data.parent_tpl.target_version }}"
+    ```
+
+!!! example "Loading secrets"
+
+    If your template has [secret questions][secret_questions], you can load the secrets
+    and use them, e.g., as default answers with a pattern similar to this:
+
+    ```yaml
+    # Template loads secrets from Git-ignored file
+    _external_data:
+        # A static path. If missing, it will return an empty dict
+        secrets: .secrets.yaml
+
+    # Use a secret answers as the default value for a secret question
+    password:
+        help: What is the password?
+        secret: true
+        # If `.secrets.yaml` exists, it has been loaded at this point and we can
+        # now correctly access the external data from `_external_data.secrets`
+        default: "{{ _external_data.secrets.password }}"
+    ```
+
+    A template might even render `.secrets.yaml` with the answers to secret questions
+    similar to this:
+
+    ```yaml title=".secrets.yaml.jinja"
+    password: "{{ password }}"
     ```
 
 ### `envops`
@@ -773,9 +1039,24 @@ to know available options.
 -   Default value:
     `["copier.yaml", "copier.yml", "~*", "*.py[co]", "__pycache__", ".git", ".DS_Store", ".svn"]`
 
-[Patterns](#patterns-syntax) for files/folders that must not be copied.
+[Patterns][patterns-syntax] for files/folders that must not be copied.
 
 The CLI option can be passed several times to add several patterns.
+
+Each pattern can be templated using Jinja.
+
+!!! example
+
+    Templating `exclude` patterns using `_copier_operation` allows to have files
+    that are rendered once during `copy`, but are never updated:
+
+    ```yaml
+    _exclude:
+        - "{% if _copier_operation == 'update' -%}src/*_example.py{% endif %}"
+    ```
+
+    The difference with [skip_if_exists][] is that it will never be rendered during
+    an update, no matter if it exists or not.
 
 !!! info
 
@@ -794,7 +1075,7 @@ The CLI option can be passed several times to add several patterns.
 
 !!! info
 
-    When the [`subdirectory`](#subdirectory) parameter is defined and its value is the
+    When the [`subdirectory`][subdirectory] parameter is defined and its value is the
     path of an actual subdirectory (i.e. not `""` or `"."` or `"./"`), then the default
     value of the `exclude` parameter is `[]`.
 
@@ -809,19 +1090,19 @@ The CLI option can be passed several times to add several patterns.
     !!! example "Example CLI usage to copy only a single file from the template"
 
         ```shell
-        copier --exclude '*' --exclude '!file-i-want' copy ./template ./destination
+        copier copy --exclude '*' --exclude '!file-i-want' ./template ./destination
         ```
 
 ### `force`
 
 -   Format: `bool`
--   CLI flags: `-f`, `--force`
+-   CLI flags: `-f`, `--force` (N/A in `copier update`)
 -   Default value: `False`
 
 Overwrite files that already exist, without asking.
 
-Also don't ask questions to the user; just use default values
-[obtained from other sources](#configuration-sources).
+Also don't ask questions to the user; just use default values [obtained from other
+sources][configuration-sources].
 
 !!! info
 
@@ -838,7 +1119,7 @@ Use default answers to questions.
 !!! attention
 
     Any question that does not have a default value must be answered
-    [via CLI/API](#data). Otherwise, an error is raised.
+    [via CLI/API][data]. Otherwise, an error is raised.
 
 !!! info
 
@@ -847,16 +1128,18 @@ Use default answers to questions.
 ### `overwrite`
 
 -   Format: `bool`
--   CLI flags: `--overwrite`
+-   CLI flags: `--overwrite` (N/A in `copier update` because it's implicit)
 -   Default value: `False`
 
 Overwrite files that already exist, without asking.
 
-[obtained from other sources](#configuration-sources).
+[obtained from other sources][configuration-sources].
 
 !!! info
 
     Not supported in `copier.yml`.
+
+    Required when updating from API.
 
 ### `jinja_extensions`
 
@@ -895,6 +1178,8 @@ on them, so they are always installed when Copier is installed.
 
     # if Copier was installed with pipx
     pipx inject copier jinja2-time
+    # if Copier was installed with uv
+    uv tool install --with jinja2-time copier
     ```
 
 !!! example
@@ -916,7 +1201,7 @@ on them, so they are always installed when Copier is installed.
         -   [loop controls](https://jinja.palletsprojects.com/en/3.1.x/extensions/#loop-controls), which adds the `break` and `continue`
             keywords for Jinja loops.
         -   [debug extension](https://jinja.palletsprojects.com/en/3.1.x/extensions/#debug-extension), which can dump the current context
-            thanks to the added `{% debug %}` tag.
+            thanks to the added `#!jinja {% debug %}` tag.
 
     -   From [cookiecutter](https://cookiecutter.readthedocs.io/en/1.7.2/):
 
@@ -942,7 +1227,7 @@ on them, so they are always installed when Copier is installed.
         enhances the extension loading mechanism to allow templates writers to put their
         extensions directly in their templates. It also allows to modify the rendering context
         (the Jinja variables that you can use in your templates) before
-        rendering templates, see [using a context hook](../faq#how-can-i-alter-the-context-before-rendering-the-project).
+        rendering templates, see [using a context hook][how-can-i-alter-the-context-before-rendering-the-project].
     -   [`jinja_markdown.MarkdownExtension`](https://github.com/jpsca/jinja-markdown):
         provides a `markdown` tag that will render Markdown to HTML using
         [PyMdown extensions](https://facelessuser.github.io/pymdown-extensions/).
@@ -951,51 +1236,166 @@ on them, so they are always installed when Copier is installed.
     -   [`jinja2_time.TimeExtension`](https://github.com/hackebrot/jinja2-time): adds a
         `now` tag that provides convenient access to the
         [arrow.now()](http://crsmithdev.com/arrow/#arrow.factory.ArrowFactory.now) API.
+    -   [`jinja2_jsonschema.JsonSchemaExtension`](https://github.com/copier-org/jinja2-jsonschema):
+        adds a `jsonschema` filter for validating data against a JSON/YAML schema.
 
     Search for more extensions on GitHub using the
     [jinja2-extension topic](https://github.com/topics/jinja2-extension), or
     [other Jinja2 topics](https://github.com/search?q=jinja&type=topics), or
     [on PyPI using the jinja + extension keywords](https://pypi.org/search/?q=jinja+extension).
 
+### `message_after_copy`
+
+-   Format: `str`
+-   CLI flags: N/A
+-   Default value: `""`
+
+A message to be printed after [generating](generating.md) or
+[regenerating][regenerating-a-project] a project _successfully_.
+
+If the message contains Jinja code, it will be rendered with the same context as the
+rest of the template. A [Jinja include][importing-jinja-templates-and-macros] expression
+may be used to import a message from a file.
+
+The message is suppressed when Copier is run in [quiet mode][quiet].
+
+!!! example
+
+    ```yaml title="copier.yml"
+    project_name:
+        type: str
+        help: An awesome project needs an awesome name. Tell me yours.
+
+    _message_after_copy: |
+        Your project "{{ project_name }}" has been created successfully!
+
+        Next steps:
+
+        1. Change directory to the project root:
+
+           $ cd {{ _copier_conf.dst_path }}
+
+        2. Read "CONTRIBUTING.md" and start coding.
+    ```
+
+### `message_after_update`
+
+-   Format: `str`
+-   CLI flags: N/A
+-   Default value: `""`
+
+Like [`message_after_copy`][message_after_copy] but printed after
+[_updating_](updating.md) a project.
+
+!!! example
+
+    ```yaml title="copier.yml"
+    project_name:
+        type: str
+        help: An awesome project needs an awesome name. Tell me yours.
+
+    _message_after_update: |
+        Your project "{{ project_name }}" has been updated successfully!
+        In case there are any conflicts, please resolve them. Then,
+        you're done.
+    ```
+
+### `message_before_copy`
+
+-   Format: `str`
+-   CLI flags: N/A
+-   Default value: `""`
+
+Like [`message_after_copy`][message_after_copy] but printed _before_
+[generating](generating.md) or [regenerating][regenerating-a-project] a project.
+
+!!! example
+
+    ```yaml title="copier.yml"
+    project_name:
+        type: str
+        help: An awesome project needs an awesome name. Tell me yours.
+
+    _message_before_copy: |
+        Thanks for generating a project using our template.
+
+        You'll be asked a series of questions whose answers will be used to
+        generate a tailored project for you.
+    ```
+
+### `message_before_update`
+
+-   Format: `str`
+-   CLI flags: N/A
+-   Default value: `""`
+
+Like [`message_before_copy`][message_after_copy] but printed before
+[_updating_](updating.md) a project.
+
+!!! example
+
+    ```yaml title="copier.yml"
+    project_name:
+        type: str
+        help: An awesome project needs an awesome name. Tell me yours.
+
+    _message_before_update: |
+        Thanks for updating your project using our template.
+
+        You'll be asked a series of questions whose answers are pre-populated
+        with previously entered values. Feel free to change them as needed.
+    ```
+
 ### `migrations`
 
--   Format: `List[dict]`
+-   Format: `List[str|List[str]|dict]`
 -   CLI flags: N/A
 -   Default value: `[]`
 
-Migrations are like [tasks](#tasks), but each item in the list is a `dict` with these
-keys:
+Migrations are like [tasks][tasks], but each item can have additional keys:
 
--   **version**: Indicates the version that the template update has to go through to
-    trigger this migration. It is evaluated using [PEP 440][].
--   **before** (optional): Commands to execute before performing the update. The answers
-    file is reloaded after running migrations in this stage, to let you migrate answer
-    values.
--   **after** (optional): Commands to execute after performing the update.
+-   **command**: The migration command to run
+-   **version** (optional): Indicates the version that the template update has to go
+    through to trigger this migration. It is evaluated using [PEP 440][]. If no version is
+    specified the migration will run on every update.
+-   **when** (optional): Specifies a condition that needs to hold for the task to run.
+    By default, a migration will run in the after upgrade stage.
+-   **working_directory** (optional): Specifies the directory in which the command will
+    be run. Defaults to the destination directory.
+
+If a `str` or `List[str]` is given as a migrator it will be treated as `command` with
+all other items not present.
 
 Migrations will run in the same order as declared here (so you could even run a
 migration for a higher version before running a migration for a lower version if the
 higher one is declared before and the update passes through both).
 
-They will only run when _new version >= declared version > old version_. And only when
-updating (not when copying for the 1st time).
+When `version` is given they will only run when _new version >= declared version > old
+version_. Your template will only be marked as [unsafe][unsafe] if this condition is
+true. Migrations will also only run when updating (not when copying for the 1st time).
 
 If the migrations definition contains Jinja code, it will be rendered with the same
 context as the rest of the template.
 
-Migration processes will receive these environment variables:
+There are a number of additional variables available for templating of migrations. Those
+variables are also passed to the migration process as environment variables. Migration
+processes will receive these variables:
 
--   `$STAGE`: Either `before` or `after`.
--   `$VERSION_FROM`: [Git commit description][git describe] of the template as it was
-    before updating.
--   `$VERSION_TO`: [Git commit description][git describe] of the template as it will be
-    after updating.
--   `$VERSION_CURRENT`: The `version` detector as you indicated it when describing
-    migration tasks.
--   `$VERSION_PEP440_FROM`, `$VERSION_PEP440_TO`, `$VERSION_PEP440_CURRENT`: Same as the
-    above, but normalized into a standard [PEP 440][] version string indicator. If your
-    scripts use these environment variables to perform migrations, you probably will
-    prefer to use these variables.
+-   `_stage`/`$STAGE`: Either `before` or `after`.
+-   `_version_from`/`$VERSION_FROM`: [Git commit description][git describe] of the
+    template as it was before updating.
+-   `_version_to`/`$VERSION_TO`: [Git commit description][git describe] of the template
+    as it will be after updating.
+-   `_version_current`/`$VERSION_CURRENT`: The `version` detector as you indicated it
+    when describing migration tasks (only when `version` is given).
+-   `_version_pep440_from`/`$VERSION_PEP440_FROM`,
+    `_version_pep440_to`/`$VERSION_PEP440_TO`,
+    `_version_pep440_current`/`$VERSION_PEP440_CURRENT`: Same as the above, but
+    normalized into a standard [PEP 440][] version. In Jinja templates these are represented
+    as [packaging.version.Version](https://packaging.pypa.io/en/stable/version.html#packaging.version.Version)
+    objects and allow access to their attributes. As environment variables they are represented
+    as strings. If you use variables to perform migrations, you probably will prefer to use
+    these variables.
 
 [git describe]: https://git-scm.com/docs/git-describe
 [pep 440]: https://www.python.org/dev/peps/pep-0440/
@@ -1004,14 +1404,28 @@ Migration processes will receive these environment variables:
 
     ```yaml title="copier.yml"
     _migrations:
-        - version: v1.0.0
-          before:
-              - rm ./old-folder
-          after:
-              # {{ _copier_conf.src_path }} points to the path where the template was
-              # cloned, so it can be helpful to run migration scripts stored there.
-              - invoke -r {{ _copier_conf.src_path }} -c migrations migrate $VERSION_CURRENT
+      # {{ _copier_conf.src_path }} points to the path where the template was
+      # cloned, so it can be helpful to run migration scripts stored there.
+      - invoke -r {{ _copier_conf.src_path }} -c migrations migrate $STAGE $VERSION_FROM $VERSION_TO
+      - version: v1.0.0
+        command: rm ./old-folder
+        when: "{{ _stage == 'before' }}"
     ```
+
+In Copier versions before v9.3.0 a different configuration format had to be used. This
+format is still available, but will raise a warning when used.
+
+Each item in the list is a `dict` with the following keys:
+
+-   **version**: Indicates the version that the template update has to go through to
+    trigger this migration. It is evaluated using [PEP 440][].
+-   **before** (optional): Commands to execute before performing the update. The answers
+    file is reloaded after running migrations in this stage, to let you migrate answer
+    values.
+-   **after** (optional): Commands to execute after performing the update.
+
+The migration variables mentioned above are available as environment variables, but
+can't be used in jinja templates.
 
 ### `min_copier_version`
 
@@ -1021,8 +1435,8 @@ Migration processes will receive these environment variables:
 
 Specifies the minimum required version of Copier to generate a project from this
 template. The version must be follow the [PEP 440][] syntax. Upon generating or updating
-a project, if the installed version of Copier is less than the required one, the
-generation will be aborted and an error will be shown to the user.
+a project, if the installed version of Copier is less than the required one, the generation
+will be aborted and an error will be shown to the user.
 
 !!! info
 
@@ -1080,8 +1494,8 @@ Suppress status output.
 -   Default value: `[]`
 
 Question variables to mark as secret questions. This is especially useful when questions
-are provided in the [simplified prompt format](#questions). It's equivalent to
-configuring `secret: true` in the [advanced prompt format](#advanced-prompt-formatting).
+are provided in the [simplified prompt format][questions]. It's equivalent to
+configuring `secret: true` in the [advanced prompt format][advanced-prompt-formatting].
 
 !!! example
 
@@ -1093,14 +1507,30 @@ configuring `secret: true` in the [advanced prompt format](#advanced-prompt-form
     password: s3cr3t
     ```
 
+### `skip_answered`
+
+-   Format: `bool`
+-   CLI flags: `-A`, `--skip-answered` (only available in `copier update` subcommand)
+-   Default value: `False`
+
+When updating a project, skip asking questions that have already been answered and keep
+the recorded answer.
+
+!!! info
+
+    Not supported in `copier.yml`.
+
 ### `skip_if_exists`
 
 -   Format: `List[str]`
 -   CLI flags: `-s`, `--skip`
 -   Default value: `[]`
 
-[Patterns](#patterns-syntax) for files/folders that must be skipped if they already
-exist.
+[Patterns][patterns-syntax] for files/folders that must be skipped only if they already
+exist, but always be present. If they do not exist in a project during an `update`
+operation, they will be recreated.
+
+Each pattern can be templated using Jinja.
 
 !!! example
 
@@ -1115,6 +1545,22 @@ exist.
     ```yaml title=".secret_password.yml.jinja"
     {{999999999999999999999999999999999|ans_random|hash('sha512')}}
     ```
+
+### `skip_tasks`
+
+-   Format: `bool`
+-   CLI Flags: `-T`, `--skip-tasks`
+-   Default value: `False`
+
+Skip template [tasks][tasks] execution, if set to `True`.
+
+!!! note
+
+    It only skips [tasks][tasks], not [migration tasks][migrations].
+
+!!! question "Does it imply `--trust`?"
+
+    This flag does not imply [`--trust`][unsafe], and will do nothing if not used with.
 
 ### `subdirectory`
 
@@ -1170,7 +1616,7 @@ This allows you to keep separate the template metadata and the template code.
         1.  Ignore instructions for projects generated with the template.
 
     However, it is true that the value of this option can itself be templated. This would
-    let you have different templates that all use the same questionary, and the used
+    let you have different templates that all use the same questionnaire, and the used
     template would be saved as an answer. It would let the user update safely and change
     that option in the future.
 
@@ -1205,13 +1651,26 @@ This allows you to keep separate the template metadata and the template code.
 
 ### `tasks`
 
--   Format: `List[str|List[str]]`
+-   Format: `List[str|List[str]|dict]`
 -   CLI flags: N/A
 -   Default value: `[]`
 
 Commands to execute after generating or updating a project from your template.
 
-They run ordered, and with the `$STAGE=task` variable in their environment.
+They run ordered, and with the `$STAGE=task` variable in their environment. Each task
+runs in its own subprocess.
+
+If a `dict` is given it can contain the following items:
+
+-   **command**: The task command to run.
+-   **when** (optional): Specifies a condition that needs to hold for the task to run.
+-   **working_directory** (optional): Specifies the directory in which the command will
+    be run. Defaults to the destination directory.
+
+If a `str` or `List[str]` is given as a task it will be treated as `command` with all
+other items not present.
+
+Refer to the example provided below for more information.
 
 !!! example
 
@@ -1226,6 +1685,14 @@ They run ordered, and with the `$STAGE=task` variable in their environment.
         - [invoke, end-process, "--full-conf={{ _copier_conf|to_json }}"]
         # Your script can be run by the same Python environment used to run Copier
         - ["{{ _copier_python }}", task.py]
+        # Run a command during the initial copy operation only, excluding updates
+        - command: ["{{ _copier_python }}", task.py]
+          when: "{{ _copier_operation == 'copy' }}"
+        # OS-specific task (supported values are "linux", "macos", "windows" and `None`)
+        - command: rm {{ name_of_the_project }}/README.md
+          when: "{{ _copier_conf.os in  ['linux', 'macos'] }}"
+        - command: Remove-Item {{ name_of_the_project }}\\README.md
+          when: "{{ _copier_conf.os == 'windows' }}"
     ```
 
     Note: the example assumes you use [Invoke](https://www.pyinvoke.org/) as
@@ -1247,7 +1714,7 @@ Suffix that instructs which files are to be processed by Jinja as templates.
     ```
 
 An empty suffix is also valid, and will instruct Copier to copy and render _every file_,
-except those that are [excluded by default](#exclude). If an error happens while trying
+except those that are [excluded by default][exclude]. If an error happens while trying
 to read a file as a template, it will fallback to a simple copy (it will typically
 happen for binary files like images). At the contrary, if such an error happens and the
 templates suffix is _not_ empty, Copier will abort and print an error message.
@@ -1256,6 +1723,18 @@ templates suffix is _not_ empty, Copier will abort and print an error message.
 
     ```yaml title="copier.yml"
     _templates_suffix: ""
+    ```
+
+If there is a file with the template suffix next to another one without it, the one
+without suffix will be ignored.
+
+!!! example
+
+    ```tree result="shell"
+    my_copier_template
+        README.md           # Your template's README, ignored at rendering
+        README.md.jinja     # README that will be rendered
+        CONTRIBUTING.md     # Used both for the template and the subprojects
     ```
 
 !!! warning
@@ -1267,6 +1746,36 @@ templates suffix is _not_ empty, Copier will abort and print an error message.
     than 6.
 
     Copier 7+ no longer uses the old default independent of [min_copier_version][].
+
+### `unsafe`
+
+-   Format: `bool`
+-   CLI flags: `--UNSAFE`, `--trust`
+-   Default value: `False`
+
+Copier templates can use dangerous features that allow arbitrary code execution:
+
+-   [Jinja extensions][jinja_extensions]
+-   [Migrations][migrations]
+-   [Tasks][tasks]
+
+Therefore, these features are disabled by default and Copier will raise an error (and
+exit from the CLI with code `4`) when they are found in a template. In this case, please
+verify that no malicious code gets executed by any of the used features. When you're
+sufficiently confident or willing to take the risk, set `unsafe=True` or pass the CLI
+switch `--UNSAFE` or `--trust`.
+
+!!! danger
+
+    Please be sure you understand the risks when allowing unsafe features!
+
+!!! info
+
+    Not supported in `copier.yml`.
+
+!!! tip
+
+    See the [`trust` setting][trusted-locations] to mark some repositories as always trusted.
 
 ### `use_prereleases`
 
@@ -1293,7 +1802,7 @@ the `v2.0.0a1` tag unless this flag is enabled.
 
 ### `vcs_ref`
 
--   Format: `str`
+-   Format: `str | VcsRef`
 -   CLI flags: `-r`, `--vcs-ref`
 -   Default value: N/A (use latest release)
 
@@ -1310,8 +1819,10 @@ _commit: v1.0.0
 
     Not supported in `copier.yml`.
 
-By default, Copier will copy from the last release found in template Git tags, sorted as
-[PEP 440][].
+The special value `VcsRef.CURRENT` is set to indicate that the template version should
+be identical to the version already present. It is set when using `--vcs-ref=:current:`
+in the CLI. By default, Copier will copy from the last release found in template Git
+tags, sorted as [PEP 440][].
 
 ## Patterns syntax
 
@@ -1335,18 +1846,19 @@ _exclude:
 ## The `.copier-answers.yml` file
 
 If the destination path exists and a `.copier-answers.yml` file is present there, it
-will be used to load the last user's answers to the questions made in
-[the `copier.yml` file](#the-copieryml-file).
+will be used to load the last user's answers to the questions made in [the `copier.yml`
+file][the-copieryml-file].
 
 This makes projects easier to update because when the user is asked, the default answers
 will be the last ones they used.
 
-The file **must be called exactly `{{ _copier_conf.answers_file }}.jinja`** (or ended
-with [your chosen suffix](#templates_suffix)) in your template's root folder) to allow
-[applying multiple templates to the same subproject](#applying-multiple-templates-to-the-same-subproject).
+The file **must be called exactly `#!jinja {{ _copier_conf.answers_file }}.jinja`** (or
+ended with [your chosen suffix][templates_suffix]) in your template's root folder) to
+allow [applying multiple templates to the same
+subproject][applying-multiple-templates-to-the-same-subproject].
 
-The default name will be `.copier-answers.yml`, but
-[you can define a different default path for this file](#answers_file).
+The default name will be `.copier-answers.yml`, but [you can define a different default
+path for this file][answers_file].
 
 The file must have this content:
 
@@ -1358,11 +1870,11 @@ The file must have this content:
 !!! important
 
     Did you notice that `NEVER EDIT MANUALLY` part?
-    [It is important](updating.md#never-change-the-answers-file-manually).
+    [It is important][never-change-the-answers-file-manually].
 
 The builtin `_copier_answers` variable includes all data needed to smooth future updates
 of this project. This includes (but is not limited to) all JSON-serializable values
-declared as user questions in [the `copier.yml` file](#the-copieryml-file).
+declared as user questions in [the `copier.yml` file][the-copieryml-file].
 
 As you can see, you also have the power to customize what will be logged here. Keys that
 start with an underscore (`_`) are specific to Copier. Other keys should match questions
@@ -1396,8 +1908,8 @@ All 3 templates are completely independent:
     matter their pre-commit configuration or the framework they rely on.
 
 Well, don't worry. Copier has you covered. You just need to use a different answers file
-for each one. All of them contain a `{{ _copier_conf.answers_file }}.jinja` file
-[as specified above](#the-copier-answersyml-file). Then you apply all the templates to
+for each one. All of them contain a `#!jinja {{ _copier_conf.answers_file }}.jinja` file
+[as specified above][the-copier-answersyml-file]. Then you apply all the templates to
 the same project:
 
 ```shell
@@ -1405,16 +1917,16 @@ mkdir my-project
 cd my-project
 git init
 # Apply framework template
-copier -a .copier-answers.main.yml copy https://github.com/example-framework/framework-template.git .
+copier copy -a .copier-answers.main.yml https://github.com/example-framework/framework-template.git .
 git add .
 git commit -m 'Start project based on framework template'
 # Apply pre-commit template
-copier -a .copier-answers.pre-commit.yml copy https://gitlab.com/my-stuff/pre-commit-template.git .
+copier copy -a .copier-answers.pre-commit.yml https://gitlab.com/my-stuff/pre-commit-template.git .
 git add .
 pre-commit run -a  # Just in case 😉
 git commit -am 'Apply pre-commit template'
 # Apply internal CI template
-copier -a .copier-answers.ci.yml copy git@gitlab.example.com:my-company/ci-template.git .
+copier copy -a .copier-answers.ci.yml git@gitlab.example.com:my-company/ci-template.git .
 git add .
 git commit -m 'Apply internal CI template'
 ```
@@ -1425,7 +1937,7 @@ After a while, when templates get new releases, updates are handled separately f
 template:
 
 ```shell
-copier -a .copier-answers.main.yml update
-copier -a .copier-answers.pre-commit.yml update
-copier -a .copier-answers.ci.yml update
+copier update -a .copier-answers.main.yml
+copier update -a .copier-answers.pre-commit.yml
+copier update -a .copier-answers.ci.yml
 ```

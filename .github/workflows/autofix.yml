@@ -1,0 +1,34 @@
+name: autofix.ci # needed to securely identify the workflow
+
+on:
+  pull_request:
+  push:
+    branches: ["master"]
+permissions:
+  contents: read
+
+env:
+  # renovate: datasource=github-tags depName=devbox packageName=jetify-com/devbox
+  DEVBOX_VERSION: "0.16.0"
+
+jobs:
+  autofix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      # Install Devbox
+      - name: Install devbox
+        uses: jetify-com/devbox-install-action@v0.14.0
+        with:
+          devbox-version: ${{ env.DEVBOX_VERSION }}
+          enable-cache: "true"
+
+      # Autoformat and try to push back changes
+      - run: devbox run -- uv run pre-commit run -a --show-diff-on-failure
+        continue-on-error: true
+      # HACK https://github.com/autofix-ci/action/pull/15
+      - run: devbox run -- uv run pre-commit uninstall -t pre-commit -t commit-msg
+      - uses: autofix-ci/action@v1.3
+        with:
+          commit-message: "style: autoformat with pre-commit"

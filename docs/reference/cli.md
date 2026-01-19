@@ -1,1 +1,1 @@
-::: copier.cli
+::: copier._cli

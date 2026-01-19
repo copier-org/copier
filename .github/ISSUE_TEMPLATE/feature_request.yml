@@ -1,0 +1,45 @@
+name: Feature request
+description: Suggest an idea for this project
+labels: [enhancement]
+
+body:
+  - type: textarea
+    id: actual-situation
+    attributes:
+      label: Actual Situation
+      description: |
+        How does the user work? 💻 What is happening, why is he/she working like this, what problem is he/she encountering, why is it causing him/her frustration?
+
+        If you want, you can put a 📼 video where you record the use case that is problematic, or just some 📸 screenshots.
+
+        Don't just state the problem in the program itself. **Also explain how it impacts the user's real world**.
+    validations:
+      required: true
+
+  - type: textarea
+    id: desired-situation
+    attributes:
+      label: Desired Situation
+      description: |
+        What would the user want to happen instead of what is happening?
+
+        Explain it broadly, without going into details of how you would implement the solution.
+
+        Don't just think about what would **solve the problem** 💪, but also think about what would **reduce frustration** 🤩.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed solution
+      description: |
+        As humans, when we see a problem, it's hard not to think of a solution - and that's a good thing! 👷
+
+        In this section, you can propose what you think would be the ideal solution.
+
+        - You can give as many technical details as you see fit.
+        - You can design a draft interface of the solution.
+        - The most valued solutions are the MVP solutions.
+
+        But, important: your solution **is just a proposal**; don't get upset if it doesn't end up being the final solution. 😃

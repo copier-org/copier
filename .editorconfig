@@ -12,5 +12,5 @@ insert_final_newline = true
 # For isort
 profile = black
 
-[*.{code-snippets,code-workspace,json,lock,nix,tf,yaml,yml}{,.jinja}]
+[*.{code-snippets,code-workspace,json,lock,nix,toml,tf,yaml,yml}{,.jinja}]
 indent_size = 2

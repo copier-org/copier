@@ -1,99 +1,23 @@
-"""Complex types, annotations, validators."""
+"""Deprecated: module is intended for internal use only."""
 
-import sys
-from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    Mapping,
-    NewType,
-    Optional,
-    Sequence,
-    TypeVar,
-    Union,
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
+from copier import _types
+from copier._deprecation import (
+    deprecate_member_as_internal,
+    deprecate_module_as_internal,
 )
 
-from pydantic.validators import path_validator
-
-# HACK https://github.com/python/mypy/issues/8520#issuecomment-772081075
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
-
 if TYPE_CHECKING:
-    from pydantic.typing import CallableGenerator
+    from copier._types import *  # noqa: F403
 
 
-# simple types
-StrOrPath = Union[str, Path]
-AnyByStrDict = Dict[str, Any]
-
-# sequences
-IntSeq = Sequence[int]
-StrSeq = Sequence[str]
-StrOrPathSeq = Sequence[StrOrPath]
-PathSeq = Sequence[Path]
-
-# optional types
-OptBool = Optional[bool]
-OptStrOrPath = Optional[StrOrPath]
-OptStrOrPathSeq = Optional[StrOrPathSeq]
-OptStr = Optional[str]
-
-# miscellaneous
-T = TypeVar("T")
-JSONSerializable = (dict, list, str, int, float, bool, type(None))
-VCSTypes = Literal["git"]
-Env = Mapping[str, str]
-MissingType = NewType("MissingType", object)
-MISSING = MissingType(object())
+deprecate_module_as_internal(__name__)
 
 
-class AllowArbitraryTypes:
-    """Allow any type for this class."""
-
-    arbitrary_types_allowed = True
-
-
-# Validators
-def path_is_absolute(value: Path) -> Path:
-    """Require absolute paths in an argument."""
-    if not value.is_absolute():
-        from .errors import PathNotAbsoluteError
-
-        raise PathNotAbsoluteError(path=value)
-    return value
-
-
-def path_is_relative(value: Path) -> Path:
-    """Require relative paths in an argument."""
-    if value.is_absolute():
-        from .errors import PathNotRelativeError
-
-        raise PathNotRelativeError(path=value)
-    return value
-
-
-# Validated types
-if TYPE_CHECKING:
-    AbsolutePath = Path
-    RelativePath = Path
-else:
-
-    class AbsolutePath(Path):
-        """Require absolute paths in an argument."""
-
-        @classmethod
-        def __get_validators__(cls) -> "CallableGenerator":
-            yield path_validator
-            yield path_is_absolute
-
-    class RelativePath(Path):
-        """Require relative paths in an argument."""
-
-        @classmethod
-        def __get_validators__(cls) -> "CallableGenerator":
-            yield path_validator
-            yield path_is_relative
+def __getattr__(name: str) -> Any:
+    if not name.startswith("_"):
+        deprecate_member_as_internal(name, __name__)
+    return getattr(_types, name)

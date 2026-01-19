@@ -3,8 +3,8 @@
 ## Can Copier be applied over a preexisting project?
 
 Yes, of course. Copier understands this use case out of the box. That's actually what
-powers features such as [updating](../updating) or the ability of
-[applying multiple templates to the same subproject](../configuring#applying-multiple-templates-to-the-same-subproject).
+powers features such as [updating](updating.md) or the ability of [applying multiple
+templates to the same subproject][applying-multiple-templates-to-the-same-subproject].
 
 !!! example
 
@@ -37,27 +37,61 @@ nix bundle --bundler github:NixOS/bundlers#toDockerImage \
 docker load < python*copier*.tar.gz
 ```
 
+## How to create computed values?
+
+Combine `default` and `when: false`.
+
+!!! example
+
+    ```yaml title="copier.yaml"
+    copyright_year:
+        type: int
+        default: 2024
+
+    next_year:
+        type: int
+        default: "{{ copyright_year + 1 }}" # This computes the value
+        when: false # This makes sure it isn't asked nor stored
+    ```
+
+See [advanced prompt formatting docs][advanced-prompt-formatting]. If you need more
+power, see [below][how-can-i-alter-the-context-before-rendering-the-project].
+
+## How to "lock" a computed value?
+
+When you want to ensure that a computed value is set or locked during project
+initialization, for example if you want to store a dynamically computed `copyright_year`
+but ensure that it doesn't change upon later Copier template updates, you can combine
+the `default` and `when: false` configuration while also explicitly dumping the value to
+YAML with the [answers file][the-copier-answersyml-file].
+
+!!! example
+
+    ```yaml title="copier.yaml"
+    copyright_year:
+        type: str
+        default: "{{ copyright_year | default('%Y' | strftime) }}"
+        when: false
+    ```
+
+    ```yaml title="{{ _copier_conf.answers_file }}.jinja"
+    # Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+    {{ dict(_copier_answers, copyright_year=copyright_year) | to_nice_yaml -}}
+    ```
+
 ## How can I alter the context before rendering the project?
 
-Similar questions:
-
--   **How can I add/remove variables to/from the rendering context?**
--   **How to infer context variables based on the users answers, without prompting
-    users?**
-
-Answer:
-
-**Use the [`ContextHook` extension][context-hook].**
-
-The [`ContextHook` extension][context-hook] lets you modify the context used to render
-templates, so that you can add, change or remove variables.
+**Use the [`ContextHook` extension][context-hook].** It lets you modify the context used
+to render templates, so that you can add, change or remove variables. Since it is a
+Python extension, you have the full power of Python at your fingertips, at the cost of
+having to mark the template as [unsafe][].
 
 [context-hook]:
     https://github.com/copier-org/copier-templates-extensions#context-hook-extension
 
 In order for Copier to be able to load and use the extension when generating a project,
-it must be installed alongside Copier itself. More details in the
-[`jinja_extensions` docs](#jinja_extensions).
+it must be installed alongside Copier itself. More details in the [`jinja_extensions`
+docs][jinja_extensions].
 
 You can then configure your Jinja extensions in Copier's configuration file:
 
@@ -91,15 +125,15 @@ class ContextUpdater(ContextHook):
     def hook(self, context):
         flavor = context["flavor"]  # user's answer to the "flavor" question
         return {
-            "isDocker": flavor == "docker"
-            "isK8s": flavor == "kubernetes"
-            "isInstances": flavor == "instances"
-            "isLite": flavor == "none"
-            "isNotDocker": flavor != "docker"
-            "isNotK8s": flavor != "kubernetes"
-            "isNotInstances": flavor != "instances"
-            "isNotLite": flavor != "none"
-            "hasContainers": flavor in {"docker", "kubernetes"}
+            "isDocker": flavor == "docker",
+            "isK8s": flavor == "kubernetes",
+            "isInstances": flavor == "instances",
+            "isLite": flavor == "none",
+            "isNotDocker": flavor != "docker",
+            "isNotK8s": flavor != "kubernetes",
+            "isNotInstances": flavor != "instances",
+            "isNotLite": flavor != "none",
+            "hasContainers": flavor in {"docker", "kubernetes"},
         }
 ```
 
@@ -142,11 +176,11 @@ If the repository containing the template is a shallow clone, the git process ca
 Copier might consume unusually high resources. To avoid that, use a fully-cloned
 repository.
 
-## While developing, why the template doesn't include dirty changes?
+## While developing, why doesn't the template include dirty changes?
 
-Copier follows [a specific algorithm](./configuring.md#templates-versions) to choose
-what reference to use from the template. It also
-[includes dirty changes in the `HEAD` ref while developing locally](./configuring.md#copying-dirty-changes).
+Copier follows [a specific algorithm][templates-versions] to choose what reference to
+use from the template. It also [includes dirty changes in the `HEAD` ref while
+developing locally][copying-dirty-changes].
 
 However, did you make sure you are selecting the `HEAD` ref for copying?
 
@@ -175,8 +209,27 @@ Well, Copier indeed included that into the `HEAD` ref. However, it still selecte
 However, if you do this:
 
 ```shell
-$ copier -r HEAD copy ./src ./dst
+$ copier copy -r HEAD ./src ./dst
 ```
 
 ... then you'll notice `new-file.txt` does exist. You passed a specific ref to copy, so
 Copier skips its autodetection and just goes for the `HEAD` you already chose.
+
+## How to pass credentials to Git?
+
+If you do something like this, and the template supports updates, you'll notice that the
+credentials will end up stored in [the answers file][file][the-copier-answersyml-file]:
+
+```shell
+copier copy https://myuser:example.com/repo.git .
+```
+
+To avoid that, the simplest fix is to clone using SSH with cryptographic key
+authentication. If you cannot do that, then check out these links for strategies on
+passing HTTPS credentials to Git:
+
+-   https://github.com/copier-org/copier/issues/466#issuecomment-2338160284
+-   https://stackoverflow.com/q/35942754
+-   https://git-scm.com/docs/gitcredentials
+-   https://git-scm.com/book/en/v2/Git-Tools-Credential-Storage#_credential_caching
+-   https://github.com/topics/git-credential-helper
