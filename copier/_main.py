@@ -1474,18 +1474,18 @@ class Worker:
             raise UserMessageError("Cannot check: version from template not detected.")
 
         if self.template.version > self.subproject.template.version:
+            output_msg = (
+                f"Parent template update available. "
+                f"\nCurrent version is {self.subproject.template.version}, "
+                f"latest version is {self.template.version}."
+            )
             if not self.quiet:
                 # TODO Unify printing tools
-                print(
-                    f"NEW template version available. "
-                    f"Currently using {self.subproject.template.version}, "
-                    f"latest is {self.template.version}.",
-                    file=sys.stderr,
-                )
-            raise SubprojectOutdatedError()
+                print(output_msg, file=sys.stderr)
+            raise SubprojectOutdatedError(output_msg)
         elif not self.quiet:
             # TODO Unify printing tools
-            print("Project is up-to-date 🎉", file=sys.stderr)
+            print("Project is up-to-date!", file=sys.stderr)
 
 
 def run_copy(

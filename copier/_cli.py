@@ -72,8 +72,6 @@ from ._tools import copier_version, try_enum
 from ._types import AnyByStrDict, VcsRef
 from .errors import SubprojectOutdatedError, UnsafeTemplateError, UserMessageError
 
-EXIT_CODE_OUTDATED = 0b10
-
 
 def _handle_exceptions(method: Callable[[], None]) -> int:
     """Handle keyboard interruption while running a method."""
@@ -82,6 +80,9 @@ def _handle_exceptions(method: Callable[[], None]) -> int:
             method()
         except KeyboardInterrupt:
             raise UserMessageError("Execution stopped by user")
+    except SubprojectOutdatedError as error:
+        print(colors.red | "\n".join(error.args), file=sys.stderr)
+        return 0b101
     except UserMessageError as error:
         print(colors.red | error.message, file=sys.stderr)
         return 1
@@ -474,10 +475,7 @@ class CopierCheckUpdateSubApp(_Subcommand):
         """
 
         def inner() -> None:
-            try:
-                with self._worker(dst_path=destination_path) as worker:
-                    worker.run_check_update()
-            except SubprojectOutdatedError:
-                return EXIT_CODE_OUTDATED
+            with self._worker(dst_path=destination_path) as worker:
+                worker.run_check_update()
 
         return _handle_exceptions(inner)
