@@ -72,6 +72,8 @@ from ._tools import copier_version, try_enum
 from ._types import AnyByStrDict, VcsRef
 from .errors import SubprojectOutdatedError, UnsafeTemplateError, UserMessageError
 
+EXIT_CODE_OUTDATED = 0b10
+
 
 def _handle_exceptions(method: Callable[[], None]) -> int:
     """Handle keyboard interruption while running a method."""
@@ -444,8 +446,6 @@ class CopierCheckUpdateSubApp(_Subcommand):
     Use this subcommand to check if an existing subproject is using the
     latest version of a template.
 
-    Attributes:
-        exit-code: Set [exit-code][] option.
     """
 
     DESCRIPTION = "Check if a copy is using the latest version of its original template"
@@ -459,16 +459,6 @@ class CopierCheckUpdateSubApp(_Subcommand):
         repository, this command will do its best to determine whether a newer
         version is available, applying PEP 440 to the template's history.
         """
-    )
-
-    exit_code: cli.SwitchAttr = cli.SwitchAttr(
-        ["-e", "--exit-code"],
-        int,
-        default=0,
-        help=(
-            "Exit code for the command if a newer version is available, "
-            "for use in scripts."
-        ),
     )
 
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
@@ -488,6 +478,6 @@ class CopierCheckUpdateSubApp(_Subcommand):
                 with self._worker(dst_path=destination_path) as worker:
                     worker.run_check_update()
             except SubprojectOutdatedError:
-                return self.exit_code
+                return EXIT_CODE_OUTDATED
 
         return _handle_exceptions(inner)
