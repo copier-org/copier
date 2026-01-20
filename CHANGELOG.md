@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.11.2 (2026-01-20)
+
+### Fix
+
+-   **updating**: restore support for preserved symlinks pointing outside subproject
+    (#2427)
+
+### Security
+
+-   disallow symlink-based includes outside template root
+-   disallow symlink-following write operations outside destination directory (#2427)
+
 ## v9.11.1 (2026-01-10)
 
 ### Fix
