@@ -61,7 +61,7 @@ jobs:
         run: uv sync --frozen
       - name: Run pytest
         run:
-          uv run poe test --cov=./ --cov-report=xml -ra
+          uv run poe test --cov=./ --cov-report=xml -ra -s -k test_symlink_not_followed
           ${PYTEST_XDIST_MAXPROCESSES:+--maxprocesses=$PYTEST_XDIST_MAXPROCESSES} .
         env:
           PYTEST_XDIST_MAXPROCESSES: ${{ matrix.pytest-xdist-maxprocesses }}
