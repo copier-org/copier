@@ -462,6 +462,11 @@ class CopierCheckUpdateSubApp(_Subcommand):
         """
     )
 
+    check_update_output_as_json = cli.Flag(
+        ["--check-update-output-as-json"],
+        help="Output a JSON object to stdout containing information about if an update is needed",
+    )
+
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
         """Call [run_check_update][copier.main.Worker.run_check_update].
 
@@ -475,7 +480,10 @@ class CopierCheckUpdateSubApp(_Subcommand):
         """
 
         def inner() -> None:
-            with self._worker(dst_path=destination_path) as worker:
+            with self._worker(
+                dst_path=destination_path,
+                check_update_output_as_json=self.check_update_output_as_json,
+            ) as worker:
                 worker.run_check_update()
 
         return _handle_exceptions(inner)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import platform
 import stat
@@ -118,6 +119,7 @@ class Worker:
     -   [run_copy][copier.main.Worker.run_copy] to copy a subproject.
     -   [run_recopy][copier.main.Worker.run_recopy] to recopy a subproject.
     -   [run_update][copier.main.Worker.run_update] to update a subproject.
+    -   [run_check_update][copier.main.Worker.run_check_update] to check a subproject for updates to its source template.
 
     Example:
         ```python
@@ -218,6 +220,9 @@ class Worker:
 
         skip_tasks:
             When `True`, skip template tasks execution.
+
+        check_update_output_as_json:
+            When `True` causes check-update to write a JSON object to stdout instead of the normal behavior of writing human-readable logs to stderr.
     """
 
     # NOTE: attributes are fully documented in [creating.md](../docs/creating.md)
@@ -243,6 +248,7 @@ class Worker:
     unsafe: bool = False
     skip_answered: bool = False
     skip_tasks: bool = False
+    check_update_output_as_json: bool = False
 
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
     _cleanup_hooks: list[Callable[[], None]] = field(default_factory=list, init=False)
@@ -1473,19 +1479,32 @@ class Worker:
         if not self.template.version:
             raise UserMessageError("Cannot check: version from template not detected.")
 
+        update_json = json.dumps(
+            {
+                "update_available": self.template.version
+                > self.subproject.template.version,
+                "current_version": str(self.subproject.template.version),
+                "latest_version": str(self.template.version),
+            }
+        )
+
         if self.template.version > self.subproject.template.version:
-            output_msg = (
-                f"Parent template update available. "
-                f"\nCurrent version is {self.subproject.template.version}, "
-                f"latest version is {self.template.version}."
-            )
             if not self.quiet:
-                # TODO Unify printing tools
-                print(output_msg, file=sys.stderr)
-            raise SubprojectOutdatedError(output_msg)
+                if self.check_update_output_as_json:
+                    # TODO Unify printing tools
+                    print(update_json, file=sys.stdout)
+                raise SubprojectOutdatedError(
+                    "Parent template update available. "
+                    f"\nCurrent version is {self.subproject.template.version}, "
+                    f"latest version is {self.template.version}."
+                )
         elif not self.quiet:
-            # TODO Unify printing tools
-            print("Project is up-to-date!", file=sys.stderr)
+            if self.check_update_output_as_json:
+                # TODO Unify printing tools
+                print(update_json, file=sys.stdout)
+            else:
+                # TODO Unify printing tools
+                print("Project is up-to-date!", file=sys.stderr)
 
 
 def run_copy(
