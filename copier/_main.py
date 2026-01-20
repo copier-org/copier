@@ -21,6 +21,7 @@ from tempfile import TemporaryDirectory
 from types import TracebackType
 from typing import (
     Any,
+    Final,
     Literal,
     ParamSpec,
     TypeVar,
@@ -30,7 +31,8 @@ from typing import (
 from unicodedata import normalize
 
 from jinja2.loaders import FileSystemLoader
-from pathspec import PathSpec
+from packaging.version import Version
+from pathspec import PathSpec, __version__ as pathspec_version
 from plumbum import ProcessExecutionError, colors
 from plumbum.machines import local
 from pydantic import ConfigDict, PositiveInt
@@ -81,6 +83,9 @@ _T = TypeVar("_T")
 _P = ParamSpec("_P")
 
 _operation: ContextVar[Operation] = ContextVar("_operation")
+_pathspec_pattern: Final = (
+    "gitignore" if Version(pathspec_version) >= Version("1.0.0") else "gitwildmatch"
+)
 
 
 def as_operation(value: Operation) -> Callable[[Callable[_P, _T]], Callable[_P, _T]]:
@@ -439,7 +444,7 @@ class Worker:
         """Produce a function that matches against specified patterns."""
         # TODO Is normalization really needed?
         normalized_patterns = (normalize("NFD", pattern) for pattern in patterns)
-        spec = PathSpec.from_lines("gitwildmatch", normalized_patterns)
+        spec = PathSpec.from_lines(_pathspec_pattern, normalized_patterns)
         return spec.match_file
 
     def _solve_render_conflict(self, dst_relpath: Path) -> bool:
