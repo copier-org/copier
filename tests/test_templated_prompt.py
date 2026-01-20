@@ -471,12 +471,12 @@ def test_templated_prompt_update_previous_answer_disabled(
     tui.sendline(Keyboard.Down)  # select "Cloud Formation"
     tui.expect_exact(pexpect.EOF)
 
-    assert load_answersfile_data(dst) == {
-        "_src_path": str(src),
-        "_commit": "v1",
-        "cloud": "AWS",
-        "iac": "cf",
-    }
+    answers = load_answersfile_data(dst)
+    assert answers["_src_path"] == str(src)
+    assert answers["_commit"] == "v1"
+    assert answers["cloud"] == "AWS"
+    assert answers["iac"] == "cf"
+    assert "_commit_sha" in answers
 
     with local.cwd(dst):
         git_init("v1")
@@ -488,12 +488,12 @@ def test_templated_prompt_update_previous_answer_disabled(
     tui.sendline()  # select "Terraform" (first supported)
     tui.expect_exact(pexpect.EOF)
 
-    assert load_answersfile_data(dst) == {
-        "_src_path": str(src),
-        "_commit": "v1",
-        "cloud": "Azure",
-        "iac": "tf",
-    }
+    updated_answers = load_answersfile_data(dst)
+    assert updated_answers["_src_path"] == str(src)
+    assert updated_answers["_commit"] == "v1"
+    assert updated_answers["cloud"] == "Azure"
+    assert updated_answers["iac"] == "tf"
+    assert "_commit_sha" in updated_answers
 
 
 def test_multiselect_choices_with_templated_default_value(
