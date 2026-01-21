@@ -163,7 +163,7 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
         help="Skip template tasks execution",
     )
 
-    @cli.switch(  # type: ignore[misc]
+    @cli.switch(  # type: ignore[untyped-decorator]
         ["-d", "--data"],
         str,
         "VARIABLE=VALUE",
@@ -181,7 +181,7 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
             key, value = arg.split("=", 1)
             self.data[key] = value
 
-    @cli.switch(  # type: ignore[misc]
+    @cli.switch(  # type: ignore[untyped-decorator]
         ["--data-file"],
         cli.ExistingFile,
         help="Load data from a YAML file",
