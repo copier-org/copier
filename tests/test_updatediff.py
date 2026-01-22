@@ -481,7 +481,6 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
         assert Path(f"{life}.rej").is_file()
 
 
-@pytest.mark.impure
 def test_post_checkout_hook_ignored(tmp_path_factory: pytest.TempPathFactory) -> None:
     """Ignore post-checkout hook when conflicts are encountered."""
     # Prepare source template v1
@@ -493,8 +492,6 @@ def test_post_checkout_hook_ignored(tmp_path_factory: pytest.TempPathFactory) ->
                     f"""
                     _envops: {BRACKET_ENVOPS_JSON}
                     _templates_suffix: {SUFFIX_TMPL}
-                    _tasks:
-                        - git init
                     """
                 ),
                 "[[ _copier_conf.answers_file ]].tmpl": (
@@ -513,20 +510,18 @@ def test_post_checkout_hook_ignored(tmp_path_factory: pytest.TempPathFactory) ->
     run_copy(
         src_path=str(src),
         dst_path=dst,
-        defaults=True,
-        overwrite=False,
-        unsafe=True,
     )
     with local.cwd(dst):
+        git("init")
         git("add", ".")
         # Commit initial copy
         git("commit", "-am", "feat: copied v1")
         # Introduce conflict
-        Path(dst / "test.txt").open(mode="w").write("This is a conflicting change")
+        Path("test.txt").write_text("This is a conflicting change")
         git("add", ".")
         git("commit", "-am", "feat: edit test.txt")
         # Add post-checkout hook that fails
-        hook_file = dst / ".git" / "hooks" / "post-checkout"
+        hook_file = Path(".git") / "hooks" / "post-checkout"
         hook_file.write_text("exit 1")
         hook_file.chmod(hook_file.stat().st_mode | stat.S_IXUSR)
     # Evolve source template to v2
@@ -536,7 +531,6 @@ def test_post_checkout_hook_ignored(tmp_path_factory: pytest.TempPathFactory) ->
                 "test.txt": "This is an edited file in v2",
             }
         )
-        git("init")
         git("add", ".")
         git("commit", "-m", "feat: Update post-checkout")
         git("tag", "v2")
@@ -544,11 +538,7 @@ def test_post_checkout_hook_ignored(tmp_path_factory: pytest.TempPathFactory) ->
     # No errors should be raised due to post-checkout hook
     run_update(
         dst_path=dst,
-        defaults=True,
         overwrite=True,
-        unsafe=True,
-        skip_tasks=True,
-        conflict="inline",
     )
 
 
