@@ -1273,8 +1273,11 @@ class Worker:
                 dst_path=new_copy / subproject_subdir,
                 data={
                     k: v
-                    for k, v in self._answers_to_remember().items()
+                    for k, v in self.answers.combined.items()
                     if not k.startswith("_")
+                    and k not in self.answers.hidden
+                    and isinstance(k, JSONSerializable)
+                    and isinstance(v, JSONSerializable)
                 },
                 defaults=True,
                 quiet=True,
