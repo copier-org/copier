@@ -127,19 +127,15 @@ def cast_to_bool(value: Any) -> bool:
     # Assume it's a number
     with suppress(TypeError, ValueError):
         return bool(float(value))
-    
-    # Treat whitespace-only string  as False
-    if isinstance(value,str) and not value.strip():
-        return False
-    
     # Assume it's a string
     with suppress(AttributeError):
-        lower = value.lower()
+        stripped = value.strip()
+        lower = stripped.lower()
         if lower in {"y", "yes", "t", "true", "on"}:
             return True
-        elif lower in {"n", "no", "f", "false", "off", "~", "null", "none"}:
+        elif lower in {"n", "no", "f", "false", "off", "~", "null", "none", ""}:
             return False
-    # Assume nothing
+    # Fallback
     return bool(value)
 
 
