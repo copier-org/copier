@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import platform
 import stat
@@ -72,6 +73,7 @@ from .errors import (
     ExtensionNotFoundError,
     ForbiddenPathError,
     InteractiveSessionError,
+    SubprojectOutdatedError,
     TaskError,
     UnsafeTemplateError,
     UserMessageError,
@@ -122,6 +124,7 @@ class Worker:
     -   [run_copy][copier.main.Worker.run_copy] to copy a subproject.
     -   [run_recopy][copier.main.Worker.run_recopy] to recopy a subproject.
     -   [run_update][copier.main.Worker.run_update] to update a subproject.
+    -   [run_check_update][copier.main.Worker.run_check_update] to check a subproject for updates to its source template.
 
     Example:
         ```python
@@ -222,6 +225,9 @@ class Worker:
 
         skip_tasks:
             When `True`, skip template tasks execution.
+
+        check_update_output_as_json:
+            When `True` causes check-update to write a JSON object to stdout instead of the normal behavior of writing human-readable logs to stderr.
     """
 
     # NOTE: attributes are fully documented in [creating.md](../docs/creating.md)
@@ -247,6 +253,7 @@ class Worker:
     unsafe: bool = False
     skip_answered: bool = False
     skip_tasks: bool = False
+    check_update_output_as_json: bool = False
 
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
     _cleanup_hooks: list[Callable[[], None]] = field(default_factory=list, init=False)
@@ -1480,6 +1487,55 @@ class Worker:
             "--no-verify",
         )
 
+    def run_check_update(self) -> None:
+        """Check if a subproject is using the latest version of its template.
+
+        See [checking a project][checking-a-project].
+        """
+        # Check all you need is there
+        if self.subproject.template is None or self.subproject.template.ref is None:
+            raise UserMessageError(
+                "Cannot check because cannot obtain old template references "
+                f"from `{self.subproject.answers_relpath}`."
+            )
+        if self.template.commit is None:
+            raise UserMessageError(
+                "Checking is only supported in git-tracked templates."
+            )
+        if not self.subproject.template.version:
+            raise UserMessageError(
+                "Cannot check: version from last update not detected."
+            )
+        if not self.template.version:
+            raise UserMessageError("Cannot check: version from template not detected.")
+
+        update_json = json.dumps(
+            {
+                "update_available": self.template.version
+                > self.subproject.template.version,
+                "current_version": str(self.subproject.template.version),
+                "latest_version": str(self.template.version),
+            }
+        )
+
+        if self.template.version > self.subproject.template.version:
+            if not self.quiet:
+                if self.check_update_output_as_json:
+                    # TODO Unify printing tools
+                    print(update_json, file=sys.stdout)
+                raise SubprojectOutdatedError(
+                    "Parent template update available. "
+                    f"\nCurrent version is {self.subproject.template.version}, "
+                    f"latest version is {self.template.version}."
+                )
+        elif not self.quiet:
+            if self.check_update_output_as_json:
+                # TODO Unify printing tools
+                print(update_json, file=sys.stdout)
+            else:
+                # TODO Unify printing tools
+                print("Project is up-to-date!", file=sys.stderr)
+
 
 def run_copy(
     src_path: str,
@@ -1531,6 +1587,22 @@ def run_update(
         kwargs["data"] = data
     with Worker(dst_path=Path(dst_path), **kwargs) as worker:
         worker.run_update()
+    return worker
+
+
+def run_check_update(
+    dst_path: StrOrPath = ".",
+    data: AnyByStrDict | None = None,
+    **kwargs: Any,
+) -> Worker:
+    """Check if a subproject is using the latest version of its template.
+
+    See [Worker][copier.main.Worker] fields to understand this function's args.
+    """
+    if data is not None:
+        kwargs["data"] = data
+    with Worker(dst_path=Path(dst_path), **kwargs) as worker:
+        worker.run_check_update()
     return worker
 
 

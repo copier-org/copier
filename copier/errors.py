@@ -37,6 +37,10 @@ class UserMessageError(CopierError):
         return self.message
 
 
+class SubprojectOutdatedError(UserMessageError):
+    """An old version of the template is being used."""
+
+
 class UnsupportedVersionError(UserMessageError):
     """Copier version does not support template version."""
 
