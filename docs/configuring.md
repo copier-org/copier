@@ -210,9 +210,11 @@ Supported keys:
         -    default: '[[, ]]'     # ❌ WRONG
         +    default: '["[", "]"]' # ✔️ RIGHT
         ```
-    
-    If the default value does not apply to all cases, i.e., an answer is required under certain conditions, then the default can be unset by rendering the special `UNSET` variable to force the user to provide an answer:
-    
+
+    If the default value does not apply to all cases, i.e., an answer is required under
+    certain conditions, then the default can be unset by rendering the special `UNSET`
+    variable to force the user to provide an answer:
+
     !!! example
 
         ```yaml title="copier.yml"
@@ -311,8 +313,8 @@ Supported keys:
 
     If the default value of a skipped question is not meaningful, then it can be unset
     by rendering the special `UNSET` variable, so the question's variable is undefined
-    in the render context.
-    See an example using `UNSET` in the section for `default` above.
+    in the render context. See an example using `UNSET` in the section for `default`
+    above.
 
 !!! example
 
