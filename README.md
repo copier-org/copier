@@ -23,19 +23,11 @@ A library and CLI app for rendering project templates.
 
 ## Installation
 
-1. Install Python 3.9 or newer.
+1. Install Python 3.10 or newer.
 1. Install Git 2.27 or newer.
 1. To use as a CLI app: [`pipx install copier`](https://github.com/pypa/pipx) or
    [`uv tool install copier`](https://docs.astral.sh/uv/#tool-management)
 1. To use as a library: `pip install copier` or `conda install -c conda-forge copier`
-
-### Nix flake
-
-To install the latest Copier release with 100% reproducibility:
-
-```shell
-nix profile install 'https://flakehub.com/f/copier-org/copier/*.tar.gz'
-```
 
 ### Homebrew formula
 
@@ -59,6 +51,8 @@ To create a template:
 └── 📄 {{_copier_conf.answers_file}}.jinja   # answers are recorded here
 ```
 
+Content of the `copier.yml` file:
+
 ```yaml title="copier.yml"
 # questions
 project_name:
@@ -70,9 +64,13 @@ module_name:
     help: What is your Python module name?
 ```
 
+Content of the `{{project_name}}/{{module_name}}.py.jinja` file:
+
 ```python+jinja title="{{project_name}}/{{module_name}}.py.jinja"
 print("Hello from {{module_name}}!")
 ```
+
+Content of the `{{_copier_conf.answers_file}}.jinja` file:
 
 ```yaml+jinja title="{{_copier_conf.answers_file}}.jinja"
 # Changes here will be overwritten by Copier

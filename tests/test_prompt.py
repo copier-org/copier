@@ -5,7 +5,7 @@ import subprocess
 import sys
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Protocol, Union
+from typing import Any, Protocol, TypeAlias
 
 import pexpect
 import pytest
@@ -29,12 +29,6 @@ from .helpers import (
     git,
     git_save,
 )
-
-if sys.version_info < (3, 10):
-    from typing_extensions import TypeAlias
-else:
-    from typing import TypeAlias
-
 
 MARIO_TREE: Mapping[StrOrPath, str | bytes] = {
     "copier.yml": (
@@ -488,6 +482,91 @@ def test_placeholder(tmp_path_factory: pytest.TempPathFactory, spawn: Spawn) -> 
     }
 
 
+def test_qmark(tmp_path_factory: pytest.TempPathFactory, spawn: Spawn) -> None:
+    """Test that custom qmark parameter is displayed for questions."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): yaml.dump(
+                {
+                    "_envops": BRACKET_ENVOPS,
+                    "_templates_suffix": SUFFIX_TMPL,
+                    "favorite_color": {
+                        "type": "str",
+                        "default": "blue",
+                        "qmark": "❤️",
+                    },
+                    "api_key": {
+                        "type": "str",
+                        "default": "secret123",
+                        "secret": True,
+                        "qmark": "🔐",
+                    },
+                },
+                sort_keys=False,
+            ),
+            (src / "[[ _copier_conf.answers_file ]].tmpl"): (
+                "[[ _copier_answers|to_nice_yaml ]]"
+            ),
+        }
+    )
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
+    tui.expect_exact("❤️")
+    tui.expect_exact("favorite_color")
+    tui.expect_exact("blue")
+    tui.sendline()
+    tui.expect_exact("🔐")
+    tui.expect_exact("api_key")
+    tui.sendline()
+    tui.expect_exact(pexpect.EOF)
+    answers = load_answersfile_data(dst)
+    assert answers == {
+        "_src_path": str(src),
+        "favorite_color": "blue",
+    }
+
+
+def test_qmark_default(tmp_path_factory: pytest.TempPathFactory, spawn: Spawn) -> None:
+    """Test that default qmark emojis are used when qmark is not specified."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): yaml.dump(
+                {
+                    "_envops": BRACKET_ENVOPS,
+                    "_templates_suffix": SUFFIX_TMPL,
+                    "name": {
+                        "type": "str",
+                        "default": "John",
+                    },
+                    "password": {
+                        "type": "str",
+                        "default": "secret",
+                        "secret": True,
+                    },
+                }
+            ),
+            (src / "[[ _copier_conf.answers_file ]].tmpl"): (
+                "[[ _copier_answers|to_nice_yaml ]]"
+            ),
+        }
+    )
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
+    tui.expect_exact("🎤")
+    tui.expect_exact("name")
+    tui.expect_exact("John")
+    tui.sendline()
+    tui.expect_exact("🕵️")
+    tui.expect_exact("password")
+    tui.sendline()
+    tui.expect_exact(pexpect.EOF)
+    answers = load_answersfile_data(dst)
+    assert answers == {
+        "_src_path": str(src),
+        "name": "John",
+    }
+
+
 @pytest.mark.parametrize("type_", ["str", "yaml", "json"])
 def test_multiline(
     tmp_path_factory: pytest.TempPathFactory, spawn: Spawn, type_: str
@@ -871,7 +950,7 @@ def test_required_choice_question(
 
 
 QuestionType: TypeAlias = str
-QuestionChoices: TypeAlias = Union[list[Any], dict[str, Any]]
+QuestionChoices: TypeAlias = list[Any] | dict[str, Any]
 ParsedValues: TypeAlias = list[Any]
 
 _CHOICES: dict[str, tuple[QuestionType, QuestionChoices, ParsedValues]] = {

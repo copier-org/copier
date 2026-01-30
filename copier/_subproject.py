@@ -5,10 +5,10 @@ A *subproject* is a project that gets rendered and/or updated with Copier.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import field
 from functools import cached_property
 from pathlib import Path
-from typing import Callable
 
 from plumbum.machines import local
 from pydantic.dataclasses import dataclass
@@ -43,7 +43,9 @@ class Subproject:
         """
         if self.vcs == "git":
             with local.cwd(self.local_abspath):
-                return bool(get_git()("status", "--porcelain").strip())
+                return bool(
+                    get_git()("status", self.local_abspath, "--porcelain").strip()
+                )
         return False
 
     def _cleanup(self) -> None:

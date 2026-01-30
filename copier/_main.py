@@ -9,7 +9,7 @@ import stat
 import subprocess
 import sys
 import warnings
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from contextlib import suppress
 from contextvars import ContextVar
 from dataclasses import field, replace
@@ -22,8 +22,9 @@ from tempfile import TemporaryDirectory
 from types import TracebackType
 from typing import (
     Any,
-    Callable,
+    Final,
     Literal,
+    ParamSpec,
     TypeVar,
     get_args,
     overload,
@@ -32,7 +33,8 @@ from unicodedata import normalize
 
 from jinja2.loaders import FileSystemLoader
 from packaging.version import InvalidVersion, parse as parse_version
-from pathspec import PathSpec
+from packaging.version import Version
+from pathspec import PathSpec, __version__ as pathspec_version
 from plumbum import ProcessExecutionError, colors
 from plumbum.machines import local
 from pydantic import ConfigDict, PositiveInt
@@ -60,7 +62,6 @@ from ._types import (
     JSONSerializable,
     LazyDict,
     Operation,
-    ParamSpec,
     Phase,
     RelativePath,
     StrOrPath,
@@ -84,6 +85,9 @@ _T = TypeVar("_T")
 _P = ParamSpec("_P")
 
 _operation: ContextVar[Operation] = ContextVar("_operation")
+_pathspec_pattern: Final = (
+    "gitignore" if Version(pathspec_version) >= Version("1.0.0") else "gitwildmatch"
+)
 
 
 def as_operation(value: Operation) -> Callable[[Callable[_P, _T]], Callable[_P, _T]]:
@@ -574,7 +578,7 @@ class Worker:
         """Produce a function that matches against specified patterns."""
         # TODO Is normalization really needed?
         normalized_patterns = (normalize("NFD", pattern) for pattern in patterns)
-        spec = PathSpec.from_lines("gitwildmatch", normalized_patterns)
+        spec = PathSpec.from_lines(_pathspec_pattern, normalized_patterns)
         return spec.match_file
 
     def _solve_render_conflict(self, dst_relpath: Path) -> bool:
@@ -850,15 +854,39 @@ class Worker:
     def _render_template(self) -> None:
         """Render the template in the subproject root."""
         follow_symlinks = not self.template.preserve_symlinks
-        cwd = Path.cwd()
+        dst_root = self.dst_path.resolve()
         for src in scantree(str(self.template_copy_root), follow_symlinks):
             src_abspath = Path(src.path)
+            # If the source is a symlink, we are not preserving symlinks, and the
+            # symlink target is outside the template root, this means that we are
+            # copying a file/directory from outside the template, which is
+            # forbidden, so raise an error.
+            if (
+                src_abspath.is_symlink()
+                and not self.template.preserve_symlinks
+                and not (src_abspath.resolve()).is_relative_to(
+                    self.template.local_abspath
+                )
+            ):
+                raise ForbiddenPathError(
+                    path=src_abspath.relative_to(self.template_copy_root)
+                )
             src_relpath = Path(src_abspath).relative_to(self.template.local_abspath)
             dst_relpaths_ctxs = self._render_path(
                 Path(src_abspath).relative_to(self.template_copy_root)
             )
             for dst_relpath, ctx in dst_relpaths_ctxs:
-                if not cwd.joinpath(dst_relpath).resolve().is_relative_to(cwd):
+                dst_abspath = dst_root / dst_relpath
+                if dst_abspath.is_symlink() and self.template.preserve_symlinks:
+                    # If destination path is a symlink, it can safely point outside the
+                    # subproject dir, while still itself existing within the subproject.
+                    # (So long as nothing is templated into it (if it is a directory),
+                    # which would be caught by that path's own check.)
+                    # Therefore avoid resolving the symlink itself:
+                    dst_realpath = dst_abspath.parent.resolve() / dst_abspath.name
+                else:
+                    dst_realpath = dst_abspath.resolve()
+                if not dst_realpath.is_relative_to(dst_root):
                     raise ForbiddenPathError(path=dst_relpath)
                 if self.match_exclude(dst_relpath):
                     continue
@@ -1384,7 +1412,10 @@ class Worker:
                 data={
                     k: v
                     for k, v in self.answers.combined.items()
-                    if k not in self.answers.hidden
+                    if not k.startswith("_")
+                    and k not in self.answers.hidden
+                    and isinstance(k, JSONSerializable)
+                    and isinstance(v, JSONSerializable)
                 },
                 defaults=True,
                 quiet=True,
@@ -1474,7 +1505,15 @@ class Worker:
                         # Remove ".rej" suffix
                         fname = fname[:-4]
                         # Undo possible non-rejected chunks
-                        git("checkout", "--", fname)
+                        git(
+                            # Ignore hooks to avoid errors from them or
+                            # issues when .pre-commit-config.yaml is changed
+                            "-c",
+                            f"core.hooksPath={os.devnull}",
+                            "checkout",
+                            "--",
+                            fname,
+                        )
                         # 3-way-merge the file directly
                         git(
                             "merge-file",

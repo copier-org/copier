@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import platform
-import sys
 from pathlib import Path
 
 import pytest
@@ -111,11 +110,7 @@ def test_settings_from_utf_file(
 
     with monkeypatch.context() as m:
         # Override the factor that determines the default encoding when opening files.
-        if sys.version_info >= (3, 10):
-            m.setattr("io.text_encoding", lambda *_args: "cp932")
-        else:
-            m.setattr("_bootlocale.getpreferredencoding", lambda *_args: "cp932")
-
+        m.setattr("io.text_encoding", lambda *_args: "cp932")
         settings = Settings.from_file()
 
     assert settings.defaults == defaults

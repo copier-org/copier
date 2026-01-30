@@ -211,6 +211,37 @@ Supported keys:
         +    default: '["[", "]"]' # ✔️ RIGHT
         ```
 
+    If the default value does not apply to all cases, i.e., an answer is required under
+    certain conditions, then the default can be unset by rendering the special `UNSET`
+    variable to force the user to provide an answer:
+
+    !!! example
+
+        ```yaml title="copier.yml"
+        database_engine:
+            type: str
+            help: Database engine
+            choices:
+                - postgres
+                - mysql
+                - other
+            default: postgres
+
+        database_url:
+            type: str
+            help: Database URL
+            default: >-
+                {%- if database_engine == 'postgres' -%}
+                postgresql://user:pass@localhost:5432/dbname
+                {%- elif database_engine == 'mysql' -%}
+                mysql://user:pass@localhost:3306/dbname
+                {%- else -%}
+                {{ UNSET }}
+                {%- endif -%}
+            # Simplified for illustration purposes
+            validator: "{% if '://' not in database_url %}Invalid{% endif %}"
+        ```
+
 -   **secret**: When `true`, it hides the prompt displaying asterisks (`*****`) and
     doesn't save the answer in [the answers file][the-copier-answersyml-file]. When
     `true`, a default value is required.
@@ -222,6 +253,19 @@ Supported keys:
 
         Multiline placeholders are not supported currently, due to
         [this upstream bug](https://github.com/prompt-toolkit/python-prompt-toolkit/issues/1267).
+
+-   **qmark**: Custom emoji or mark to display before the question. If not specified,
+    defaults to 🎤 for regular questions and 🕵️ for secret questions. This is useful for
+    customizing the visual appearance of your prompts.
+
+    !!! example
+
+        ```yaml title="copier.yml"
+        love_copier:
+            type: bool
+            qmark: "❤️"
+            help: Do you love Copier?
+        ```
 
 -   **multiline**: When set to `true`, it allows multiline input. This is especially
     useful when `type` is `json` or `yaml`.
@@ -269,35 +313,8 @@ Supported keys:
 
     If the default value of a skipped question is not meaningful, then it can be unset
     by rendering the special `UNSET` variable, so the question's variable is undefined
-    in the render context:
-
-    !!! example
-
-        ```yaml title="copier.yml"
-        database_engine:
-            type: str
-            help: Database engine
-            choices:
-                - postgres
-                - mysql
-                - none
-            default: postgres
-
-        database_url:
-            type: str
-            help: Database URL
-            default: >-
-                {%- if database_engine == 'postgres' -%}
-                postgresql://user:pass@localhost:5432/dbname
-                {%- elif database_engine == 'mysql' -%}
-                mysql://user:pass@localhost:3306/dbname
-                {%- else -%}
-                {{ UNSET }}
-                {%- endif -%}
-            when: "{{ database_engine != 'none' }}"
-            # Simplified for illustration purposes
-            validator: "{% if '://' not in database_url %}Invalid{% endif %}"
-        ```
+    in the render context. See an example using `UNSET` in the section for `default`
+    above.
 
 !!! example
 

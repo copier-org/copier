@@ -7,7 +7,7 @@ on:
 
 env:
   # renovate: datasource=devbox depName=uv
-  UV_VERSION: "0.8.19"
+  UV_VERSION: "0.9.26"
 
 jobs:
   build:
@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -39,7 +39,7 @@ jobs:
         run: uv build
 
       - name: Upload artifact containing distribution files
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: dist
           path: dist/
@@ -58,7 +58,7 @@ jobs:
 
     steps:
       - name: Download artifact containing distribution files
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: dist
           path: dist/
@@ -82,7 +82,7 @@ jobs:
 
     steps:
       - name: Download artifact containing distribution files
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: dist
           path: dist/

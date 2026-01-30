@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import warnings
 from collections import ChainMap
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from copy import deepcopy
 from dataclasses import field
 from datetime import datetime
@@ -13,7 +13,7 @@ from functools import cached_property
 from hashlib import sha512
 from os import urandom
 from pathlib import Path
-from typing import Any, Callable, Literal
+from typing import Any, Literal
 
 import yaml
 from jinja2 import StrictUndefined, UndefinedError
@@ -179,6 +179,10 @@ class Question:
             Text that appears if there's nothing written in the input field,
             but disappears as soon as the user writes anything. Can be templated.
 
+        qmark:
+            Custom emoji or mark to display before the question. If not specified,
+            defaults to 🎤 for regular questions and 🕵️ for secret questions.
+
         secret:
             Indicates if the question should be removed from the answers file.
             If the question type is str, it will hide user input on the screen
@@ -212,6 +216,7 @@ class Question:
     help: str = ""
     multiline: str | bool = False
     placeholder: str = ""
+    qmark: str | None = None
     secret: bool = False
     type: str = Field(default="", validate_default=True)
     validator: str = ""
@@ -399,7 +404,7 @@ class Question:
             "message": self.get_message(),
             "mouse_support": True,
             "name": self.var_name,
-            "qmark": "🕵️" if self.secret else "🎤",
+            "qmark": self.qmark or ("🕵️" if self.secret else "🎤"),
             "when": lambda _: self.get_when(),
         }
         default = self.get_default_rendered()

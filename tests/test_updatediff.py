@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import platform
+import stat
 from pathlib import Path
 from shutil import rmtree
 from textwrap import dedent
@@ -478,6 +479,67 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
         )
         # This time a .rej file is unavoidable
         assert Path(f"{life}.rej").is_file()
+
+
+def test_post_checkout_hook_ignored(tmp_path_factory: pytest.TempPathFactory) -> None:
+    """Ignore post-checkout hook when conflicts are encountered."""
+    # Prepare source template v1
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yml": (
+                    f"""
+                    _envops: {BRACKET_ENVOPS_JSON}
+                    _templates_suffix: {SUFFIX_TMPL}
+                    """
+                ),
+                "[[ _copier_conf.answers_file ]].tmpl": (
+                    """
+                    [[ _copier_answers|to_nice_yaml ]]
+                    """
+                ),
+                "test.txt": "This is a file",
+            }
+        )
+        git("init")
+        git("add", ".")
+        git("commit", "-m", "feat: commit 1")
+        git("tag", "v1")
+    # Copy source template
+    run_copy(
+        src_path=str(src),
+        dst_path=dst,
+    )
+    with local.cwd(dst):
+        git("init")
+        git("add", ".")
+        # Commit initial copy
+        git("commit", "-am", "feat: copied v1")
+        # Introduce conflict
+        Path("test.txt").write_text("This is a conflicting change")
+        git("add", ".")
+        git("commit", "-am", "feat: edit test.txt")
+        # Add post-checkout hook that fails
+        hook_file = Path(".git") / "hooks" / "post-checkout"
+        hook_file.write_text("exit 1")
+        hook_file.chmod(hook_file.stat().st_mode | stat.S_IXUSR)
+    # Evolve source template to v2
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "test.txt": "This is an edited file in v2",
+            }
+        )
+        git("add", ".")
+        git("commit", "-m", "feat: Update post-checkout")
+        git("tag", "v2")
+    # Update subproject to v2
+    # No errors should be raised due to post-checkout hook
+    run_update(
+        dst_path=dst,
+        overwrite=True,
+    )
 
 
 def test_update_from_tagged_to_head(tmp_path_factory: pytest.TempPathFactory) -> None:
@@ -2093,3 +2155,28 @@ def test_skip_if_exists_templated(tmp_path_factory: pytest.TempPathFactory) -> N
 
     run_update(str(dst), overwrite=True)
     assert (dst / "skip-if-exists.txt").read_text() == "baz"
+
+
+def test_render_copier_conf_as_json_without_circular_reference(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """See https://github.com/copier-org/copier/issues/2448."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "copier_conf.json.jinja": "{{ _copier_conf|to_json }}",
+            }
+        )
+        git_save(tag="v1")
+
+    run_copy(str(src), dst, overwrite=True, unsafe=True)
+    assert (dst / "copier_conf.json").exists()
+
+    with local.cwd(dst):
+        git_save()
+
+    run_update(str(dst), overwrite=True, unsafe=True)
+    assert (dst / "copier_conf.json").exists()
