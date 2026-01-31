@@ -561,7 +561,7 @@ class Template:
 
         See [ignore_git_tags][].
         """
-        return bool(self.config_data.get("_ignore_git_tags", False))
+        return bool(self.config_data.get("ignore_git_tags", False))
 
     @cached_property
     def stable_tag_patterns(self) -> list[str] | None:

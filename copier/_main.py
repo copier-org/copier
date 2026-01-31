@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 import platform
-import re
 import stat
 import subprocess
 import sys
@@ -32,7 +31,6 @@ from typing import (
 from unicodedata import normalize
 
 from jinja2.loaders import FileSystemLoader
-from packaging.version import InvalidVersion, parse as parse_version
 from packaging.version import Version
 from pathspec import PathSpec, __version__ as pathspec_version
 from plumbum import ProcessExecutionError, colors
@@ -234,21 +232,6 @@ class Worker:
     # NOTE: attributes are fully documented in [creating.md](../docs/creating.md)
     # make sure to update documentation upon any changes.
 
-    # Floating tag patterns for automatic tag resolution
-    # These patterns identify tags/refs that are likely to move over time
-    _FLOATING_TAG_PATTERNS = [
-        r"^latest$",
-        r"^stable(/.*)?$",
-        r"^main$",
-        r"^master$",
-        r"^develop$",
-        r"^development$",
-        r"^HEAD$",
-        # Branch-like patterns
-        r"^[a-z]+[-_][a-z]+$",  # e.g., feature-branch, dev-test
-        r"^(feat|fix|chore|docs|test|refactor)/.*$",  # conventional branch names
-    ]
-
     src_path: str | None = None
     dst_path: Path = Path()
     answers_file: RelativePath | None = None
@@ -420,75 +403,30 @@ class Worker:
         sha = answers.get("_commit_sha")
         return str(sha) if sha else None
 
-    def _is_stable_semantic_version(self, ref: str) -> bool:
-        """Detect if a reference is a stable semantic version or floating tag.
-
-        Args:
-            ref: The git reference to check (tag, branch, etc.)
-
-        Returns:
-            True if the reference is a stable semantic version, False otherwise.
-        """
-        # Check custom stable patterns from template config first
-        # Use subproject.template (FROM version) to avoid circular dependency
-        # This is the template that was used originally, so its config is what matters
-        if self.subproject.template and self.subproject.template.stable_tag_patterns:
-            stable_patterns = self.subproject.template.stable_tag_patterns
-            for pattern in stable_patterns:
-                if re.match(pattern, ref):
-                    return True
-            # If custom patterns defined but no match, it's not stable
-            return False
-
-        # Check against default floating tag patterns
-        for pattern in self._FLOATING_TAG_PATTERNS:
-            if re.match(pattern, ref, re.IGNORECASE):
-                return False
-
-        # Check if it's a valid semver tag
-        try:
-            parse_version(ref)
-            return True
-        except InvalidVersion:
-            return False
-
     def _resolve_vcs_ref_for_update(
         self, answers: dict[str, Any] | None = None
     ) -> str | None:
         """Resolve which VCS ref to use for update operations.
 
-        Implements automatic tag resolution to handle floating tags:
-        1. If --ignore-git-tags flag is set, always use SHA
-        2. If semantic version looks stable, use it
-        3. Otherwise, fallback to SHA for safety (floating tags)
-
         Args:
             answers: The answers dict to read from
 
         Returns:
-            The resolved VCS reference (semantic version or SHA), or None if unavailable.
+            The resolved VCS reference (tag or SHA), or None if unavailable.
         """
-        # answers must be provided to avoid recursion
         if answers is None:
             return None
 
-        # No answers available (first copy)
         if not answers.get("_commit") and not answers.get("_commit_sha"):
             return None
 
-        # 1. CLI flag override (explicit user choice)
+        # If ignore_git_tags is set, use SHA
         if self.ignore_git_tags:
             return self._get_sha_from_answers(answers)
 
-        # 2. Automatic resolution: prefer semantic version if stable
-        semantic_version = answers.get("_commit")
-        if semantic_version:
-            semantic_str = str(semantic_version)
-            if self._is_stable_semantic_version(semantic_str):
-                return semantic_str
-
-        # 3. Fallback to SHA (for floating tags or when semantic version doesn't exist)
-        return self._get_sha_from_answers(answers)
+        # Otherwise use stored tag, fallback to SHA
+        commit = answers.get("_commit")
+        return str(commit) if commit else self._get_sha_from_answers(answers)
 
     def _execute_tasks(self, tasks: Sequence[Task]) -> None:
         """Run the given tasks.
