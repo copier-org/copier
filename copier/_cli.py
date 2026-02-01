@@ -1,6 +1,6 @@
 """Command line entrypoint. This module declares the Copier CLI applications.
 
-Basically, there are 3 different commands you can run:
+Basically, there are 4 different commands you can run:
 
 -   [`copier`][copier.cli.CopierApp], the main app, which is a shortcut for the
     `copy` and `update` subapps.
@@ -39,6 +39,15 @@ Basically, there are 3 different commands you can run:
         copier update
         ```
 
+-   [`copier check-update`][copier.cli.CopierCheckUpdateSubApp] to check if a preexisting
+    project is using the latest version of its template.
+
+    !!! example
+
+        ```sh
+        copier check-update
+        ```
+
 Below are the docs of each one of those.
 
 CLI help generated from `copier --help-all`:
@@ -61,7 +70,7 @@ from plumbum import cli, colors
 from ._main import Worker
 from ._tools import copier_version, try_enum
 from ._types import AnyByStrDict, VcsRef
-from .errors import UnsafeTemplateError, UserMessageError
+from .errors import SubprojectOutdatedError, UnsafeTemplateError, UserMessageError
 
 
 def _handle_exceptions(method: Callable[[], None]) -> int:
@@ -71,6 +80,9 @@ def _handle_exceptions(method: Callable[[], None]) -> int:
             method()
         except KeyboardInterrupt:
             raise UserMessageError("Execution stopped by user")
+    except SubprojectOutdatedError as error:
+        print(colors.red | "\n".join(error.args), file=sys.stderr)
+        return 0b101
     except UserMessageError as error:
         print(colors.red | error.message, file=sys.stderr)
         return 1
@@ -424,5 +436,54 @@ class CopierUpdateSubApp(_Subcommand):
                 overwrite=True,
             ) as worker:
                 worker.run_update()
+
+        return _handle_exceptions(inner)
+
+
+@CopierApp.subcommand("check-update")
+class CopierCheckUpdateSubApp(_Subcommand):
+    """The `copier check-update` subcommand.
+
+    Use this subcommand to check if an existing subproject is using the
+    latest version of a template.
+
+    """
+
+    DESCRIPTION = "Check if a copy is using the latest version of its original template"
+    DESCRIPTION_MORE = dedent(
+        """\
+        The copy must have a valid answers file which contains info
+        from the last Copier execution, including the source template
+        (it must be a key called `_src_path`).
+
+        If that file contains also `_commit` and `destination_path` is a git
+        repository, this command will do its best to determine whether a newer
+        version is available, applying PEP 440 to the template's history.
+        """
+    )
+
+    check_update_output_as_json = cli.Flag(
+        ["--check-update-output-as-json"],
+        help="Output a JSON object to stdout containing information about if an update is needed",
+    )
+
+    def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
+        """Call [run_check_update][copier.main.Worker.run_check_update].
+
+        Parameters:
+            destination_path:
+                Only the destination path is needed to check, because the
+                `src_path` comes from [the answers file][the-copier-answersyml-file].
+
+                The subproject must exist. If not specified, the currently
+                working directory is used.
+        """
+
+        def inner() -> None:
+            with self._worker(
+                dst_path=destination_path,
+                check_update_output_as_json=self.check_update_output_as_json,
+            ) as worker:
+                worker.run_check_update()
 
         return _handle_exceptions(inner)
