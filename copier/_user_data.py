@@ -39,6 +39,10 @@ from ._types import (
 )
 from .errors import InvalidTypeError, MissingFileWarning, UserMessageError
 
+# Default answers file names, in order of precedence
+DEFAULT_ANSWERS_FILE_YML = ".copier-answers.yml"
+DEFAULT_ANSWERS_FILE_YAML = ".copier-answers.yaml"
+
 
 # TODO Remove these two functions as well as DEFAULT_DATA in a future release
 def _now() -> datetime:
@@ -585,11 +589,50 @@ def parse_yaml_list(string: str) -> list[str]:
 
 def load_answersfile_data(
     dst_path: StrOrPath,
-    answers_file: StrOrPath = ".copier-answers.yml",
+    answers_file: StrOrPath | None = None,
     *,
     warn_on_missing: bool = False,
 ) -> AnyByStrDict:
-    """Load answers data from a `$dst_path/$answers_file` file if it exists."""
+    """Load answers data from a `$dst_path/$answers_file` file if it exists.
+
+    Args:
+        dst_path: Path to the destination directory.
+        answers_file: Path to the answers file relative to dst_path.
+            If None, auto-detects by checking for .copier-answers.yml first,
+            then .copier-answers.yaml. The .yml extension takes precedence.
+        warn_on_missing: If True, warn when the answers file is not found.
+
+    Returns:
+        The loaded answers data, or an empty dict if not found.
+    """
+    dst = Path(dst_path)
+
+    # If answers_file is None, auto-detect
+    if answers_file is None:
+        yml_path = dst / DEFAULT_ANSWERS_FILE_YML
+        yaml_path = dst / DEFAULT_ANSWERS_FILE_YAML
+
+        yml_exists = yml_path.is_file()
+        yaml_exists = yaml_path.is_file()
+
+        # Warn if both files exist
+        if yml_exists and yaml_exists:
+            warnings.warn(
+                f"Both {DEFAULT_ANSWERS_FILE_YML} and {DEFAULT_ANSWERS_FILE_YAML} "
+                f"exist in {dst_path}. Using {DEFAULT_ANSWERS_FILE_YML}. "
+                "Please remove the duplicate file.",
+                stacklevel=2,
+            )
+
+        # .yml takes precedence, fall back to .yaml
+        if yml_exists:
+            answers_file = DEFAULT_ANSWERS_FILE_YML
+        elif yaml_exists:
+            answers_file = DEFAULT_ANSWERS_FILE_YAML
+        else:
+            # Default to .yml when neither exists
+            answers_file = DEFAULT_ANSWERS_FILE_YML
+
     try:
         with Path(dst_path, answers_file).open("rb") as fd:
             return yaml.safe_load(fd)
@@ -600,6 +643,46 @@ def load_answersfile_data(
                 MissingFileWarning,
             )
         return {}
+
+
+def resolve_answersfile_path(dst_path: StrOrPath) -> Path:
+    """Resolve which answers file to use for a given destination path.
+
+    For reading: Returns the existing answers file (.yml takes precedence over .yaml).
+    For writing: Returns the existing file to update, or .yml as default for new files.
+
+    Warns if both .yml and .yaml files exist.
+
+    Args:
+        dst_path: Path to the destination directory.
+
+    Returns:
+        Relative path to the answers file to use.
+    """
+    dst = Path(dst_path)
+    yml_path = dst / DEFAULT_ANSWERS_FILE_YML
+    yaml_path = dst / DEFAULT_ANSWERS_FILE_YAML
+
+    yml_exists = yml_path.is_file()
+    yaml_exists = yaml_path.is_file()
+
+    # Warn if both files exist
+    if yml_exists and yaml_exists:
+        warnings.warn(
+            f"Both {DEFAULT_ANSWERS_FILE_YML} and {DEFAULT_ANSWERS_FILE_YAML} "
+            f"exist in {dst_path}. Using {DEFAULT_ANSWERS_FILE_YML}. "
+            "Please remove the duplicate file.",
+            stacklevel=2,
+        )
+
+    # .yml takes precedence for reading/updating
+    if yml_exists:
+        return Path(DEFAULT_ANSWERS_FILE_YML)
+    # If only .yaml exists, use it (maintains backwards compatibility for .yaml projects)
+    elif yaml_exists:
+        return Path(DEFAULT_ANSWERS_FILE_YAML)
+    # Default to .yml for new files
+    return Path(DEFAULT_ANSWERS_FILE_YML)
 
 
 CAST_STR_TO_NATIVE: Mapping[str, Callable[[str], Any]] = {

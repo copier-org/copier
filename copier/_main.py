@@ -65,7 +65,7 @@ from ._types import (
     StrOrPath,
     VcsRef,
 )
-from ._user_data import AnswersMap, Question, load_answersfile_data
+from ._user_data import AnswersMap, Question, load_answersfile_data, resolve_answersfile_path
 from ._vcs import get_git
 from .errors import (
     CopierAnswersInterrupt,
@@ -1027,10 +1027,11 @@ class Worker:
     @cached_property
     def subproject(self) -> Subproject:
         """Get related subproject."""
-        default_answers_file = Path(".copier-answers.yaml") if Path(".copier-answers.yaml").exists() else Path(".copier-answers.yml")
+        # answers_file=None means auto-detect based on existing files
+        # The Subproject will use resolve_answersfile_path to determine which file to use
         result = Subproject(
             local_abspath=self.dst_path.absolute(),
-            answers_relpath=self.answers_file or default_answers_file,
+            answers_relpath=self.answers_file,
         )
         self._cleanup_hooks.append(result._cleanup)
         return result
