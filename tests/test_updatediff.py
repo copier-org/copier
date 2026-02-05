@@ -2176,3 +2176,74 @@ def test_render_copier_conf_as_json_without_circular_reference(
 
     run_update(str(dst), overwrite=True, unsafe=True)
     assert (dst / "copier_conf.json").exists()
+
+
+def test_update_diff3_conflict_markers(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """Test that --diff3 produces conflict markers with base version."""
+    filename = "readme.md"
+
+    # Template in v1 has a file with a single line;
+    # in v2 it changes that line.
+    # Meanwhile, downstream project changes the same line differently.
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    # First, create the template with an initial file
+    build_file_tree(
+        {
+            (src / filename): "upstream version 1",
+            (src / "{{_copier_conf.answers_file}}.jinja"): (
+                "{{_copier_answers|to_nice_yaml}}"
+            ),
+        }
+    )
+    with local.cwd(src):
+        git_init("hello template")
+        git("tag", "v1")
+
+    # Generate the project a first time, assert the file exists
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    assert (dst / filename).exists()
+    assert load_answersfile_data(dst).get("_commit") == "v1"
+
+    # Start versioning the generated project
+    with local.cwd(dst):
+        git_init("hello project")
+
+        # After first commit, change the file, commit again
+        Path(filename).write_text("upstream version 1 + downstream")
+        git("commit", "-am", "updated file")
+
+    # Now change the template
+    with local.cwd(src):
+        # Update the file
+        Path(filename).write_text("upstream version 2")
+
+        # Commit the changes
+        git("add", ".", "-A")
+        git("commit", "-m", "change line in file")
+        git("tag", "v2")
+
+    # Finally, update the generated project with diff3=True
+    run_update(
+        dst_path=dst, defaults=True, overwrite=True, conflict="inline", diff3=True
+    )
+    assert load_answersfile_data(dst).get("_commit") == "v2"
+
+    # Assert that the file has diff3-style conflict markers
+    # which include the base version (from last update)
+    assert (dst / filename).exists()
+
+    expected_contents = dedent(
+        """\
+        <<<<<<< before updating
+        upstream version 1 + downstream
+        ||||||| last update
+        upstream version 1
+        =======
+        upstream version 2
+        >>>>>>> after updating
+        """
+    )
+    assert (dst / filename).read_text().splitlines() == expected_contents.splitlines()
