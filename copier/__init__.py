@@ -21,6 +21,7 @@ except importlib.metadata.PackageNotFoundError:
 
 def __getattr__(name: str) -> Any:
     if not name.startswith("_") and name not in {
+        "run_adopt",
         "run_copy",
         "run_recopy",
         "run_update",
