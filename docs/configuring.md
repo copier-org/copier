@@ -1791,7 +1791,7 @@ Imagine that the template supports updates and contains these 2 Git tags: `v1.0.
 `v2.0.0a1`. Copier will copy by default `v1.0.0` unless you add `--prereleases`.
 
 <!-- prettier-ignore-start -->
-Also, if you run [`copier update`][copier.cli.CopierUpdateSubApp], Copier would ignore
+Also, if you run `copier update`, Copier would ignore
 the `v2.0.0a1` tag unless this flag is enabled.
 <!-- prettier-ignore-end -->
 

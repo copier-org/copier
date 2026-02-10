@@ -119,9 +119,9 @@ class Worker:
 
     Then, execute one of its main methods, which are prefixed with `run_`:
 
-    -   [run_copy][copier.main.Worker.run_copy] to copy a subproject.
-    -   [run_recopy][copier.main.Worker.run_recopy] to recopy a subproject.
-    -   [run_update][copier.main.Worker.run_update] to update a subproject.
+    -   [run_copy][copier.run_copy] to copy a subproject.
+    -   [run_recopy][copier.run_recopy] to recopy a subproject.
+    -   [run_update][copier.run_update] to update a subproject.
 
     Example:
         ```python
@@ -1487,12 +1487,7 @@ def run_copy(
     data: AnyByStrDict | None = None,
     **kwargs: Any,
 ) -> Worker:
-    """Copy a template to a destination, from zero.
-
-    This is a shortcut for [run_copy][copier.main.Worker.run_copy].
-
-    See [Worker][copier.main.Worker] fields to understand this function's args.
-    """
+    """Copy a template to a destination, from zero."""
     if data is not None:
         kwargs["data"] = data
     with Worker(src_path=src_path, dst_path=Path(dst_path), **kwargs) as worker:
@@ -1503,12 +1498,7 @@ def run_copy(
 def run_recopy(
     dst_path: StrOrPath = ".", data: AnyByStrDict | None = None, **kwargs: Any
 ) -> Worker:
-    """Update a subproject from its template, discarding subproject evolution.
-
-    This is a shortcut for [run_recopy][copier.main.Worker.run_recopy].
-
-    See [Worker][copier.main.Worker] fields to understand this function's args.
-    """
+    """Update a subproject from its template, discarding subproject evolution."""
     if data is not None:
         kwargs["data"] = data
     with Worker(dst_path=Path(dst_path), **kwargs) as worker:
@@ -1521,12 +1511,7 @@ def run_update(
     data: AnyByStrDict | None = None,
     **kwargs: Any,
 ) -> Worker:
-    """Update a subproject, from its template.
-
-    This is a shortcut for [run_update][copier.main.Worker.run_update].
-
-    See [Worker][copier.main.Worker] fields to understand this function's args.
-    """
+    """Update a subproject, from its template."""
     if data is not None:
         kwargs["data"] = data
     with Worker(dst_path=Path(dst_path), **kwargs) as worker:
