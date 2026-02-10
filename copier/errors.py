@@ -50,6 +50,7 @@ __all__ = [
     "InteractiveSessionError",
 ]
 
+
 # Errors
 class CopierError(Exception):
     """Base class for all other Copier errors."""

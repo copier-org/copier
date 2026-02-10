@@ -237,8 +237,8 @@ Now the tag is released, but GitHub won't display it in the releases page. For t
 1. [Draft a new release](https://github.com/copier-org/copier/releases/new).
 1. Choose the tag you just pushed.
 1. Set the tag also as release title.
-1. Copy the just added changelog entry from [CHANGELOG](changelog.md) and paste it as
-   a description.
+1. Copy the just added changelog entry from [CHANGELOG](changelog.md) and paste it as a
+   description.
 1. Enable "Set as the latest release".
 1. Optionally, enable "Create a discussion for this release".
 1. Click on "Publish release".
