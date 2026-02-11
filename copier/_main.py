@@ -1485,7 +1485,21 @@ def run_copy(
     src_path: str,
     dst_path: StrOrPath = ".",
     data: AnyByStrDict | None = None,
-    **kwargs: Any,
+    *,
+    answers_file: RelativePath | str | None = None,
+    vcs_ref: str | VcsRef | None = None,
+    settings: Settings | None = None,
+    exclude: Sequence[str] = (),
+    use_prereleases: bool = False,
+    skip_if_exists: Sequence[str] = (),
+    cleanup_on_error: bool = True,
+    defaults: bool = False,
+    user_defaults: AnyByStrDict | None = None,
+    overwrite: bool = False,
+    pretend: bool = False,
+    quiet: bool = False,
+    unsafe: bool = False,
+    skip_tasks: bool = False,
 ) -> Worker:
     """Copy a template to a destination, from zero.
 
@@ -1493,15 +1507,52 @@ def run_copy(
 
     See [Worker][copier.main.Worker] fields to understand this function's args.
     """
-    if data is not None:
-        kwargs["data"] = data
-    with Worker(src_path=src_path, dst_path=Path(dst_path), **kwargs) as worker:
+    with Worker(
+        src_path=src_path,
+        dst_path=Path(dst_path),
+        data=data or {},
+        answers_file=(
+            RelativePath(answers_file)
+            if isinstance(answers_file, str)
+            else answers_file
+        ),
+        vcs_ref=vcs_ref,
+        settings=settings or Settings.from_file(),
+        exclude=exclude,
+        use_prereleases=use_prereleases,
+        skip_if_exists=skip_if_exists,
+        cleanup_on_error=cleanup_on_error,
+        defaults=defaults,
+        user_defaults=user_defaults or {},
+        overwrite=overwrite,
+        pretend=pretend,
+        quiet=quiet,
+        unsafe=unsafe,
+        skip_tasks=skip_tasks,
+    ) as worker:
         worker.run_copy()
     return worker
 
 
 def run_recopy(
-    dst_path: StrOrPath = ".", data: AnyByStrDict | None = None, **kwargs: Any
+    dst_path: StrOrPath = ".",
+    data: AnyByStrDict | None = None,
+    *,
+    answers_file: RelativePath | str | None = None,
+    vcs_ref: str | VcsRef | None = None,
+    settings: Settings | None = None,
+    exclude: Sequence[str] = (),
+    use_prereleases: bool = False,
+    skip_if_exists: Sequence[str] = (),
+    cleanup_on_error: bool = True,
+    defaults: bool = False,
+    user_defaults: AnyByStrDict | None = None,
+    overwrite: bool = False,
+    pretend: bool = False,
+    quiet: bool = False,
+    unsafe: bool = False,
+    skip_answered: bool = False,
+    skip_tasks: bool = False,
 ) -> Worker:
     """Update a subproject from its template, discarding subproject evolution.
 
@@ -1509,9 +1560,29 @@ def run_recopy(
 
     See [Worker][copier.main.Worker] fields to understand this function's args.
     """
-    if data is not None:
-        kwargs["data"] = data
-    with Worker(dst_path=Path(dst_path), **kwargs) as worker:
+    with Worker(
+        dst_path=Path(dst_path),
+        data=data or {},
+        answers_file=(
+            RelativePath(answers_file)
+            if isinstance(answers_file, str)
+            else answers_file
+        ),
+        vcs_ref=vcs_ref,
+        settings=settings or Settings.from_file(),
+        exclude=exclude,
+        use_prereleases=use_prereleases,
+        skip_if_exists=skip_if_exists,
+        cleanup_on_error=cleanup_on_error,
+        defaults=defaults,
+        user_defaults=user_defaults or {},
+        overwrite=overwrite,
+        pretend=pretend,
+        quiet=quiet,
+        unsafe=unsafe,
+        skip_answered=skip_answered,
+        skip_tasks=skip_tasks,
+    ) as worker:
         worker.run_recopy()
     return worker
 
@@ -1519,7 +1590,24 @@ def run_recopy(
 def run_update(
     dst_path: StrOrPath = ".",
     data: AnyByStrDict | None = None,
-    **kwargs: Any,
+    *,
+    answers_file: RelativePath | str | None = None,
+    vcs_ref: str | VcsRef | None = None,
+    settings: Settings | None = None,
+    exclude: Sequence[str] = (),
+    use_prereleases: bool = False,
+    skip_if_exists: Sequence[str] = (),
+    cleanup_on_error: bool = True,
+    defaults: bool = False,
+    user_defaults: AnyByStrDict | None = None,
+    overwrite: bool = False,
+    pretend: bool = False,
+    quiet: bool = False,
+    conflict: Literal["inline", "rej"] = "inline",
+    context_lines: PositiveInt = 3,
+    unsafe: bool = False,
+    skip_answered: bool = False,
+    skip_tasks: bool = False,
 ) -> Worker:
     """Update a subproject, from its template.
 
@@ -1527,9 +1615,31 @@ def run_update(
 
     See [Worker][copier.main.Worker] fields to understand this function's args.
     """
-    if data is not None:
-        kwargs["data"] = data
-    with Worker(dst_path=Path(dst_path), **kwargs) as worker:
+    with Worker(
+        dst_path=Path(dst_path),
+        data=data or {},
+        answers_file=(
+            RelativePath(answers_file)
+            if isinstance(answers_file, str)
+            else answers_file
+        ),
+        vcs_ref=vcs_ref,
+        settings=settings or Settings.from_file(),
+        exclude=exclude,
+        use_prereleases=use_prereleases,
+        skip_if_exists=skip_if_exists,
+        cleanup_on_error=cleanup_on_error,
+        defaults=defaults,
+        user_defaults=user_defaults or {},
+        overwrite=overwrite,
+        pretend=pretend,
+        quiet=quiet,
+        conflict=conflict,
+        context_lines=context_lines,
+        unsafe=unsafe,
+        skip_answered=skip_answered,
+        skip_tasks=skip_tasks,
+    ) as worker:
         worker.run_update()
     return worker
 
