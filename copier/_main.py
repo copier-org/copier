@@ -62,7 +62,6 @@ from ._types import (
     Operation,
     Phase,
     RelativePath,
-    StrOrPath,
     VcsRef,
 )
 from ._user_data import AnswersMap, Question, load_answersfile_data
@@ -1483,10 +1482,10 @@ class Worker:
 
 def run_copy(
     src_path: str,
-    dst_path: StrOrPath = ".",
-    data: AnyByStrDict | None = None,
+    dst_path: Path | str = ".",
+    data: dict[str, Any] | None = None,
     *,
-    answers_file: RelativePath | str | None = None,
+    answers_file: Path | str | None = None,
     vcs_ref: str | VcsRef | None = None,
     settings: Settings | None = None,
     exclude: Sequence[str] = (),
@@ -1494,7 +1493,7 @@ def run_copy(
     skip_if_exists: Sequence[str] = (),
     cleanup_on_error: bool = True,
     defaults: bool = False,
-    user_defaults: AnyByStrDict | None = None,
+    user_defaults: dict[str, Any] | None = None,
     overwrite: bool = False,
     pretend: bool = False,
     quiet: bool = False,
@@ -1535,10 +1534,10 @@ def run_copy(
 
 
 def run_recopy(
-    dst_path: StrOrPath = ".",
-    data: AnyByStrDict | None = None,
+    dst_path: Path | str = ".",
+    data: dict[str, Any] | None = None,
     *,
-    answers_file: RelativePath | str | None = None,
+    answers_file: Path | str | None = None,
     vcs_ref: str | VcsRef | None = None,
     settings: Settings | None = None,
     exclude: Sequence[str] = (),
@@ -1546,7 +1545,7 @@ def run_recopy(
     skip_if_exists: Sequence[str] = (),
     cleanup_on_error: bool = True,
     defaults: bool = False,
-    user_defaults: AnyByStrDict | None = None,
+    user_defaults: dict[str, Any] | None = None,
     overwrite: bool = False,
     pretend: bool = False,
     quiet: bool = False,
@@ -1588,10 +1587,10 @@ def run_recopy(
 
 
 def run_update(
-    dst_path: StrOrPath = ".",
-    data: AnyByStrDict | None = None,
+    dst_path: Path | str = ".",
+    data: dict[str, Any] | None = None,
     *,
-    answers_file: RelativePath | str | None = None,
+    answers_file: Path | str | None = None,
     vcs_ref: str | VcsRef | None = None,
     settings: Settings | None = None,
     exclude: Sequence[str] = (),
@@ -1599,7 +1598,7 @@ def run_update(
     skip_if_exists: Sequence[str] = (),
     cleanup_on_error: bool = True,
     defaults: bool = False,
-    user_defaults: AnyByStrDict | None = None,
+    user_defaults: dict[str, Any] | None = None,
     overwrite: bool = False,
     pretend: bool = False,
     quiet: bool = False,
