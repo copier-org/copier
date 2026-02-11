@@ -27,3 +27,10 @@ def __getattr__(name: str) -> Any:
     }:
         deprecate_member_as_internal(name, __name__)
     return getattr(_main, name)
+
+
+__all__ = [
+    "run_copy",  # noqa: F405
+    "run_recopy",  # noqa: F405
+    "run_update",  # noqa: F405
+]
