@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 
 __all__ = ["Phase", "VcsRef"]
 
+
 def __getattr__(name: str) -> Any:
     if not name.startswith("_") and name not in {"Phase", "VcsRef"}:
         deprecate_member_as_internal(name, __name__)
