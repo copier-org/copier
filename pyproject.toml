@@ -45,16 +45,16 @@ copier = "copier.__main__:CopierApp.run"
 [dependency-groups]
 dev = [
   "codespell[toml]==2.4.1",
-  "commitizen==4.13.0",
+  "commitizen==4.13.7",
   "mypy==1.19.1",
   "pexpect==4.9.0",
-  "poethepoet==0.40.0",
+  "poethepoet==0.41.0",
   "pre-commit==4.5.1",
   "pytest==9.0.2",
   "pytest-cov==7.0.0",
   "pytest-gitconfig==0.9.0",
   "pytest-xdist==3.8.0",
-  "ruff==0.14.14",
+  "ruff==0.15.0",
   "taplo==0.9.3",
   "types-backports==0.1.3",
   "types-colorama==0.4.15.20250801",
@@ -66,7 +66,7 @@ docs = [
   "markdown-exec==1.12.1",
   "mkdocs-material==9.7.1",
   "mkdocs-redirects==1.2.2",
-  "mkdocstrings[python]==1.0.2",
+  "mkdocstrings[python]==1.0.3",
 ]
 
 [tool.poe.tasks.coverage]
