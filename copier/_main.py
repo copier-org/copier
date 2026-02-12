@@ -1235,7 +1235,7 @@ class Worker:
                 ).splitlines()
                 exclude_plus_removed = list(
                     set(self.exclude).union(
-                        escape_git_path(path)
+                        f"/{escape_git_path(path)}"
                         for path in map(normalize_git_path, files_removed)
                         if not self.match_skip(Path(path))
                     )

@@ -805,6 +805,41 @@ def test_update_deleted_path(
     assert not updated_file.exists()
 
 
+def test_update_deleted_path_not_used_as_pattern(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """
+    Test that user-deleted paths don't cause deletion of other paths matching
+    the same pattern when updating a project.
+    """
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    build_file_tree(
+        {
+            src / "{{ _copier_conf.answers_file }}.jinja": (
+                "{{ _copier_answers|to_yaml }}"
+            ),
+            src / "test.txt": "remove",
+            src / "foo" / "test.txt": "keep",
+            src / "foo" / "bar" / "test.txt": "keep",
+        }
+    )
+    git_save(src, message="initial commit")
+
+    run_copy(str(src), dst)
+    assert (dst / "test.txt").read_text() == "remove"
+    assert (dst / "foo" / "test.txt").read_text() == "keep"
+    assert (dst / "foo" / "bar" / "test.txt").read_text() == "keep"
+
+    (dst / "test.txt").unlink()
+    git_save(dst, message="remove test.txt")
+
+    run_update(str(dst), overwrite=True)
+    assert not (dst / "test.txt").exists()
+    assert (dst / "foo" / "test.txt").read_text() == "keep"
+    assert (dst / "foo" / "bar" / "test.txt").read_text() == "keep"
+
+
 @pytest.mark.parametrize(
     "answers_file", [None, ".copier-answers.yml", ".custom.copier-answers.yaml"]
 )
