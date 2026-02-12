@@ -655,6 +655,13 @@ def test_skip_update(tmp_path_factory: pytest.TempPathFactory) -> None:
                 reason="Disallowed characters in file name",
             ),
         ),
+        pytest.param(
+            "sk\\ip_with_backslash_in_skip_pattern",
+            marks=pytest.mark.skipif(
+                platform.system() == "Windows",
+                reason="Disallowed characters in file name",
+            ),
+        ),
     ),
 )
 def test_skip_update_deleted(
@@ -669,7 +676,7 @@ def test_skip_update_deleted(
     with local.cwd(src):
         build_file_tree(
             {
-                "copier.yaml": "_skip_if_exists: ['*skip*']",
+                "copier.yaml": "_skip_if_exists: ['*skip*', '*sk\\ip*']",
                 "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
                 file_name: "1",
                 "another_file": "foobar",

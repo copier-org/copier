@@ -1235,17 +1235,9 @@ class Worker:
                 ).splitlines()
                 exclude_plus_removed = list(
                     set(self.exclude).union(
-                        map(
-                            escape_git_path,
-                            map(
-                                normalize_git_path,
-                                (
-                                    path
-                                    for path in files_removed
-                                    if not self.match_skip(path)
-                                ),
-                            ),
-                        )
+                        escape_git_path(path)
+                        for path in map(normalize_git_path, files_removed)
+                        if not self.match_skip(Path(path))
                     )
                 )
             # Clear last answers cache to load possible answers migration, if skip_answered flag is not set
