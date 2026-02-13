@@ -577,12 +577,19 @@ def test_update_from_tagged_to_head(tmp_path_factory: pytest.TempPathFactory) ->
     assert load_answersfile_data(dst)["_commit"] == f"v1-1-g{sha}"
 
 
-def test_skip_update(tmp_path_factory: pytest.TempPathFactory) -> None:
+@pytest.mark.parametrize("subproject_path", [Path(), Path("subproject")])
+@pytest.mark.parametrize("skip_pattern", ["skip_me", "/skip_me"])
+def test_skip_update(
+    tmp_path_factory: pytest.TempPathFactory,
+    skip_pattern: str,
+    subproject_path: Path,
+) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    dst_subproject = dst / subproject_path
     with local.cwd(src):
         build_file_tree(
             {
-                "copier.yaml": "_skip_if_exists: [skip_me]",
+                "copier.yaml": f"_skip_if_exists: ['{skip_pattern}']",
                 "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
                 "skip_me": "1",
             }
@@ -591,9 +598,9 @@ def test_skip_update(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("add", ".")
         git("commit", "-m1")
         git("tag", "1.0.0")
-    run_copy(str(src), dst, defaults=True, overwrite=True)
-    skip_me = dst / "skip_me"
-    answers = load_answersfile_data(dst)
+    run_copy(str(src), dst_subproject, defaults=True, overwrite=True)
+    skip_me = dst_subproject / "skip_me"
+    answers = load_answersfile_data(dst_subproject)
     assert skip_me.read_text() == "1"
     assert answers["_commit"] == "1.0.0"
     skip_me.write_text("2")
@@ -605,11 +612,11 @@ def test_skip_update(tmp_path_factory: pytest.TempPathFactory) -> None:
         build_file_tree({"skip_me": "3"})
         git("commit", "-am2")
         git("tag", "2.0.0")
-    run_update(dst, defaults=True, overwrite=True)
-    answers = load_answersfile_data(dst)
+    run_update(dst_subproject, defaults=True, overwrite=True)
+    answers = load_answersfile_data(dst_subproject)
     assert skip_me.read_text() == "2"
     assert answers["_commit"] == "2.0.0"
-    assert not (dst / "skip_me.rej").exists()
+    assert not (dst_subproject / "skip_me.rej").exists()
 
 
 @pytest.mark.parametrize(

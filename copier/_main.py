@@ -1314,6 +1314,24 @@ class Worker:
                     "HEAD",
                     subproject_head,
                 ]
+                # Get the list of modified files in the subproject directory
+                # that match the skip-if-exists patterns. These are relative
+                # paths anchored at the Git repo root because they will be used
+                # with `git apply --exclude` later, which expects paths relative
+                # to the repo root. Importantly, the skip-if-exists patterns
+                # are anchored at the subproject root, which may be a
+                # subdirectory of the Git repo, so we need to relativize the
+                # paths accordingly for pattern matching.
+                skip_if_exists_files = [
+                    escape_git_path(f)
+                    for f in map(
+                        normalize_git_path,
+                        diff_cmd(
+                            "-r", "--no-commit-id", "--name-only", subproject_subdir
+                        ).splitlines(),
+                    )
+                    if self.match_skip(Path(f).relative_to(subproject_subdir))
+                ]
                 try:
                     diff = diff_cmd("--inter-hunk-context=-1")
                 except ProcessExecutionError:
@@ -1326,19 +1344,22 @@ class Worker:
             compared = dircmp(old_copy, new_copy)
             # Try to apply cached diff into final destination
             with local.cwd(subproject_top):
-                apply_cmd = git["apply", "--reject", "--exclude", self.answers_relpath]
+                apply_cmd = git[
+                    "apply",
+                    "--reject",
+                    "--exclude",
+                    subproject_subdir / self.answers_relpath,
+                ]
+                # Exclude modified files that match the skip-if-exists patterns
+                # to exclude them from the patch application.
+                for filename in skip_if_exists_files:
+                    apply_cmd = apply_cmd["--exclude", filename]
                 ignored_files = git["status", "--ignored", "--porcelain"]()
                 # returns "!! file1\n !! file2\n"
-                # extra_exclude will contain: ["file1", file2"]
-                extra_exclude = [
-                    filename.split("!! ").pop()
-                    for filename in ignored_files.splitlines()
-                    if filename.startswith("!! ")
-                ]
-                for skip_pattern in chain(
-                    map(self._render_string, self.all_skip_if_exists), extra_exclude
-                ):
-                    apply_cmd = apply_cmd["--exclude", skip_pattern]
+                # adds `--exclude file1 --exclude file2` to `git apply` command
+                for filename in ignored_files.splitlines():
+                    if filename.startswith("!! "):
+                        apply_cmd = apply_cmd["--exclude", filename[3:]]
                 (apply_cmd << diff)(retcode=None)
                 if self.conflict == "inline":
                     conflicted = []
