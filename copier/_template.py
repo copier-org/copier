@@ -24,6 +24,7 @@ from pydantic.dataclasses import dataclass
 
 from ._tools import copier_version, handle_remove_readonly
 from ._types import AnyByStrDict, VCSTypes
+from ._user_data import DEFAULT_ANSWERS_FILE_YML
 from ._vcs import checkout_latest_tag, clone, get_git, get_repo
 from .errors import (
     InvalidConfigFileError,
@@ -272,10 +273,12 @@ class Template:
         """Get the answers file relative path, as specified in the template.
 
         If not specified, returns the default `.copier-answers.yml`.
+        Note: The actual file used may be `.copier-answers.yaml` if that exists
+        and `.copier-answers.yml` does not. This is handled by the subproject.
 
         See [answers_file][].
         """
-        result = Path(self.config_data.get("answers_file", ".copier-answers.yml"))
+        result = Path(self.config_data.get("answers_file", DEFAULT_ANSWERS_FILE_YML))
         assert not result.is_absolute()
         return result
 
