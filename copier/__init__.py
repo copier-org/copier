@@ -25,6 +25,7 @@ def __getattr__(name: str) -> Any:
         return getattr(_types, name)
 
     if not name.startswith("_") and name not in {
+        "run_adopt",
         "run_copy",
         "run_recopy",
         "run_update",
