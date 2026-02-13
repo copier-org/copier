@@ -1491,6 +1491,81 @@ Suppress status output.
 
     Not supported in `copier.yml`.
 
+### `ignore_git_tags`
+
+-   Format: `bool`
+-   CLI flags: `--ignore-git-tags`
+-   Default value: `False`
+
+Copier uses **dual-versioning** when copying from Git-versioned templates: it stores
+BOTH the semantic version (tag/branch name) and the SHA commit hash in the answers file.
+During updates, Copier applies **automatic tag resolution** to intelligently choose
+which to use.
+
+By default, Copier automatically detects floating tags (like `latest`, `stable/v1`,
+`main`) and uses SHA for those, while preserving semantic versions for stable tags (like
+`v1.0.0`).
+
+If automatic tag resolution isn't working as expected, use the `--ignore-git-tags` flag
+to force SHA usage for all updates, overriding automatic detection.
+
+**Automatic Tag Resolution** detects these floating patterns:
+
+-   `latest`, `stable/*`, `main`, `master`, `develop`
+-   Branch-like patterns: `feat/*`, `fix/*`, `feature-*`
+
+For these patterns, Copier automatically uses SHA to ensure reproducible updates. For
+stable semantic versions (like `v1.0.0`), it preserves the tag name.
+
+!!! info
+
+    Template authors can force SHA usage for all projects by setting
+    `_ignore_git_tags: true` in `copier.yml`. The CLI flag takes precedence
+    over template configuration.
+
+!!! example "Automatic resolution (recommended)"
+
+    ```shell
+    # No flag needed - automatic resolution handles everything
+    copier copy --vcs-ref v1.0.0 template destination
+    copier update  # Automatically uses SHA for floating tags
+
+    # With floating tag - automatically uses SHA for updates
+    copier copy --vcs-ref stable/v1 template destination
+    copier update  # Updates work correctly even if tag moved
+    ```
+
+    The answers file contains both:
+    ```yaml
+    _commit: v1.0.0  # or stable/v1
+    _commit_sha: a1b2c3d4e5f6...
+    ```
+
+!!! example "Force SHA usage"
+
+    Use this if automatic resolution isn't working or for strict reproducibility:
+
+    ```shell
+    # Override automatic detection - always use SHA
+    copier copy --ignore-git-tags --vcs-ref v1.0.0 template destination
+    copier update --ignore-git-tags
+    ```
+
+!!! example "Template configuration"
+
+    Template authors can force SHA usage by default:
+
+    ```yaml title="copier.yml"
+    _ignore_git_tags: true
+    ```
+
+    Or define custom stable tag patterns:
+
+    ```yaml title="copier.yml"
+    _stable_tag_patterns:
+      - ^release/.*$  # Treat release/* as stable
+    ```
+
 ### `secret_questions`
 
 -   Format: `List[str]`
