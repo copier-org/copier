@@ -212,6 +212,11 @@ class Worker:
             With less lines, context resolution is less accurate, but it will
             respect better the evolution of your subproject.
 
+        diff3:
+            When `True`, use diff3-style conflict markers that include
+            the base version (from last update) in addition to
+            "before updating" and "after updating".
+
         unsafe:
             When `True`, allow usage of unsafe templates.
 
@@ -244,6 +249,7 @@ class Worker:
     quiet: bool = False
     conflict: Literal["inline", "rej"] = "inline"
     context_lines: PositiveInt = 3
+    diff3: bool = False
     unsafe: bool = False
     skip_answered: bool = False
     skip_tasks: bool = False
@@ -1392,6 +1398,7 @@ class Worker:
                         # 3-way-merge the file directly
                         git(
                             "merge-file",
+                            *(["--diff3"] if self.diff3 else []),
                             "-L",
                             "before updating",
                             "-L",

@@ -48,6 +48,30 @@ conflict in one of two ways, controlled with the `--conflict` option:
     conflict. For more information, see the "Checking Out Conflicts" section of the
     [`git` documentation](https://git-scm.com/book/en/v2/Git-Tools-Advanced-Merging).
 
+When using `--conflict inline`, you can additionally specify `--diff3` to include the
+base version (from the last update) in conflict markers:
+
+```shell
+copier update --conflict inline --diff3
+```
+
+This produces conflict markers like:
+
+```text
+<<<<<<< before updating
+your local changes
+||||||| last update
+original base content
+=======
+template's new changes
+>>>>>>> after updating
+```
+
+The base version can help you understand what the original content was before both you
+and the template made changes, making conflict resolution easier. This format is also
+useful for tools like [mergiraf](https://mergiraf.org/) that can perform semantic
+merging based on the three-way diff.
+
 If the update results in conflicts, _you should review those manually_ before
 committing.
 

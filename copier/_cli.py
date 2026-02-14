@@ -392,6 +392,13 @@ class CopierUpdateSubApp(_Subcommand):
             "accuracy, decrease for resilience."
         ),
     )
+    diff3 = cli.Flag(
+        ["--diff3"],
+        help=(
+            "Use diff3-style conflict markers that include the base version "
+            "(from last update) in addition to 'before updating' and 'after updating'."
+        ),
+    )
     defaults = cli.Flag(
         ["-l", "-f", "--defaults"],
         help="Use default answers to questions, which might be null if not specified.",
@@ -419,6 +426,7 @@ class CopierUpdateSubApp(_Subcommand):
                 dst_path=destination_path,
                 conflict=self.conflict,
                 context_lines=self.context_lines,
+                diff3=self.diff3,
                 defaults=self.defaults,
                 skip_answered=self.skip_answered,
                 overwrite=True,
