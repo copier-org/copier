@@ -259,3 +259,74 @@ git clean -d -i     # remove untracked files and folders
 
 If you want fine-grained control to restore files selectively, read the output of the
 `git status` command attentively. It shows all the commands you may need as hints!
+
+## Checking for updates
+
+Copier provides a subcommand `copier check-update` that can be used to check if there
+are updates to the template used to generate a project. Two workflows are recommended,
+one for manual checking, and one for checking as part of a script or other automation.
+
+### Manual Checking
+
+To manually check if the template used to generate your project has been updated, simply
+run this command inside your project directory:
+
+```bash
+copier check-update
+```
+
+This will output human-readable details about the update status as follows:
+
+#### No Update Found
+
+If no update is found, `copier check-update` will exit with status code 0 and the
+following output:
+
+```
+Project is up-to-date!
+```
+
+#### No Update Found
+
+If an update is found, `copier check-update` will exit with status code 5 and output
+similar to the following:
+
+```
+New template version available.
+Current version is 1.0.0, latest version is 2.0.0.
+```
+
+### Automated Checking
+
+To facilitate automated checking for updates, `copier check-update` provides json output
+via the flag `--output-format json`. This output can be consumed by scripts or parsed
+using command line tools like jq/yq/etc:
+
+```bash
+copier check-update --output-format json
+```
+
+This will output human-readable details about the update status
+
+#### No Update Found
+
+If no update is found, `copier check-update` will exit with status code 0 and output
+similar to the following:
+
+```json
+{ "update_available": false, "current_version": "1.0.0", "latest_version": "1.0.0" }
+```
+
+#### No Update Found
+
+If an update is found, `copier check-update` will exit with status code 5 and output
+similar to the following:
+
+```json
+{ "update_available": true, "current_version": "1.0.0", "latest_version": "2.0.0" }
+```
+
+### About Prereleases
+
+Mirroring the behavior of the other subcommands, prerelease template tags are ignored by
+`copier check-update` unless the `--prerelease` flag is included.
