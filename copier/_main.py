@@ -221,8 +221,9 @@ class Worker:
         skip_tasks:
             When `True`, skip template tasks execution.
 
-        check_update_output_as_json:
-            When `True` causes check-update to write a JSON object to stdout instead of the normal behavior of writing human-readable logs to stderr.
+        output_format:
+            Output format, either 'plain' (the default) or 'json'. This flag is
+            only supported by the 'check-update' subcommand.
     """
 
     # NOTE: attributes are fully documented in [creating.md](../docs/creating.md)
@@ -248,7 +249,7 @@ class Worker:
     unsafe: bool = False
     skip_answered: bool = False
     skip_tasks: bool = False
-    check_update_output_as_json: bool = False
+    output_format: Literal["plain", "json"] = "plain"
 
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
     _cleanup_hooks: list[Callable[[], None]] = field(default_factory=list, init=False)
@@ -1490,7 +1491,7 @@ class Worker:
 
         if self.template.version > self.subproject.template.version:
             if not self.quiet:
-                if self.check_update_output_as_json:
+                if self.output_format == "json":
                     # TODO Unify printing tools
                     print(update_json, file=sys.stdout)
                 raise SubprojectOutdatedError(
@@ -1499,7 +1500,7 @@ class Worker:
                     f"latest version is {self.template.version}."
                 )
         elif not self.quiet:
-            if self.check_update_output_as_json:
+            if self.output_format == "json":
                 # TODO Unify printing tools
                 print(update_json, file=sys.stdout)
             else:

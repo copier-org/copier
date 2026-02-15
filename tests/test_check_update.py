@@ -129,7 +129,7 @@ def test_with_updated_template_no_opts(
 
 @pytest.mark.impure
 def test_with_updated_template_json_output(
-    tmp_path_factory: pytest.TempPathFactory, capsys
+    tmp_path_factory: pytest.TempPathFactory, capsys: pytest.CaptureFixture[str]
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     # Prepare repo bundle
@@ -233,7 +233,8 @@ def test_with_updated_template_json_output(
             "copier",
             "check-update",
             str(target),
-            "--check-update-output-as-json",
+            "--output-format",
+            "json",
         ],
         exit=False,
     )
@@ -331,7 +332,7 @@ def test_without_updated_template_no_opts(
 
 @pytest.mark.impure
 def test_without_updated_template_json_output(
-    tmp_path_factory: pytest.TempPathFactory, capsys
+    tmp_path_factory: pytest.TempPathFactory, capsys: pytest.CaptureFixture[str]
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     # Prepare repo bundle
@@ -407,7 +408,8 @@ def test_without_updated_template_json_output(
             "copier",
             "check-update",
             str(target),
-            "--check-update-output-as-json",
+            "--output-format",
+            "json",
         ],
         exit=False,
     )
