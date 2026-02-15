@@ -1496,8 +1496,8 @@ class Worker:
                     # TODO Unify printing tools
                     print(update_json, file=sys.stdout)
                 raise SubprojectOutdatedError(
-                    "Parent template update available. "
-                    f"\nCurrent version is {self.subproject.template.version}, "
+                    "New template version available.\n"
+                    f"Current version is {self.subproject.template.version}, "
                     f"latest version is {self.template.version}."
                 )
         elif not self.quiet:
