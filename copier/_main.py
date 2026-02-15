@@ -1482,8 +1482,9 @@ class Worker:
 
         update_json = json.dumps(
             {
-                "update_available": self.template.version
-                > self.subproject.template.version,
+                "update_available": (
+                    self.template.version > self.subproject.template.version
+                ),
                 "current_version": str(self.subproject.template.version),
                 "latest_version": str(self.template.version),
             }
