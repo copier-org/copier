@@ -288,7 +288,7 @@ Project is up-to-date!
 
 #### No Update Found
 
-If an update is found, `copier check-update` will exit with status code 5 and output
+If an update is found, `copier check-update` will exit with status code 1 and output
 similar to the following:
 
 ```
@@ -319,7 +319,7 @@ similar to the following:
 
 #### No Update Found
 
-If an update is found, `copier check-update` will exit with status code 5 and output
+If an update is found, `copier check-update` will exit with status code 1 and output
 similar to the following:
 
 ```json

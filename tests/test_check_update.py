@@ -236,7 +236,7 @@ def test_with_updated_template_no_opts(
         ],
         exit=False,
     )
-    assert run_result[1] == 5
+    assert run_result[1] == 1
 
 
 def test_with_updated_template_json_output_opt(
@@ -254,7 +254,7 @@ def test_with_updated_template_json_output_opt(
         ],
         exit=False,
     )
-    assert run_result[1] == 5
+    assert run_result[1] == 1
     captured = capsys.readouterr()
     assert (
         '{"update_available": true, "current_version": "1.0.0", "latest_version": "2.0.0"}'
@@ -316,7 +316,7 @@ def test_with_prerelease_template_prereleases_opt(
         ],
         exit=False,
     )
-    assert run_result[1] == 5
+    assert run_result[1] == 1
 
 
 def test_with_prerelease_template_prereleases_and_json_output_opts(
@@ -336,7 +336,7 @@ def test_with_prerelease_template_prereleases_and_json_output_opts(
         ],
         exit=False,
     )
-    assert run_result[1] == 5
+    assert run_result[1] == 1
     captured = capsys.readouterr()
     assert (
         '{"update_available": true, "current_version": "1.0.0", "latest_version": "2.0.0a0"}'

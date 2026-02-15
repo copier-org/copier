@@ -82,7 +82,7 @@ def _handle_exceptions(method: Callable[[], None]) -> int:
             raise UserMessageError("Execution stopped by user")
     except SubprojectOutdatedError as error:
         print(colors.red | "\n".join(error.args), file=sys.stderr)
-        return 0b101
+        return 1
     except UserMessageError as error:
         print(colors.red | error.message, file=sys.stderr)
         return 1
