@@ -13,8 +13,6 @@ from copier._deprecation import (
 if TYPE_CHECKING:
     from copier._types import *  # noqa: F403
 
-__all__ = ["Phase", "VcsRef"]  # noqa: F405
-
 
 deprecate_module_as_internal(__name__)
 
