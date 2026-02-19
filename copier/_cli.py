@@ -2,7 +2,7 @@
 
 Basically, there are 3 different commands you can run:
 
--   [`copier`][copier.cli.CopierApp], the main app, which is a shortcut for the
+-   `copier`, the main app, which is a shortcut for the
     `copy` and `update` subapps.
 
     If the destination project is found and has [an answers
@@ -21,7 +21,7 @@ Basically, there are 3 different commands you can run:
         copier
         ```
 
--   [`copier copy`][copier.cli.CopierApp], used to bootstrap a new project from
+-   `copier copy`, used to bootstrap a new project from
     a template.
 
     !!! example
@@ -30,7 +30,7 @@ Basically, there are 3 different commands you can run:
         copier copy gh:copier-org/autopretty my-project
         ```
 
--   [`copier update`][copier.cli.CopierUpdateSubApp] to update a preexisting
+-   `copier update` to update a preexisting
     project to a newer version of its template.
 
     !!! example
@@ -163,7 +163,7 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
         help="Skip template tasks execution",
     )
 
-    @cli.switch(  # type: ignore[misc]
+    @cli.switch(  # type: ignore[untyped-decorator]
         ["-d", "--data"],
         str,
         "VARIABLE=VALUE",
@@ -181,7 +181,7 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
             key, value = arg.split("=", 1)
             self.data[key] = value
 
-    @cli.switch(  # type: ignore[misc]
+    @cli.switch(  # type: ignore[untyped-decorator]
         ["--data-file"],
         cli.ExistingFile,
         help="Load data from a YAML file",
@@ -211,7 +211,7 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
         Arguments:
             src_path: The source path of the template to generate the project from.
             dst_path: The path to generate the project to.
-            **kwargs: Arguments passed to [Worker][copier.main.Worker].
+            **kwargs: Arguments passed to the worker.
         """
         return Worker(
             data=self.data,
@@ -259,7 +259,7 @@ class CopierCopySubApp(_Subcommand):
     )
 
     def main(self, template_src: str, destination_path: str) -> int:
-        """Call [run_copy][copier.main.Worker.run_copy].
+        """Call [run_copy][copier.run_copy].
 
         Params:
             template_src:
@@ -329,7 +329,7 @@ class CopierRecopySubApp(_Subcommand):
     )
 
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
-        """Call [run_recopy][copier.main.Worker.run_recopy].
+        """Call [run_recopy][copier.run_recopy].
 
         Parameters:
             destination_path:
@@ -403,7 +403,7 @@ class CopierUpdateSubApp(_Subcommand):
     )
 
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
-        """Call [run_update][copier.main.Worker.run_update].
+        """Call [run_update][copier.run_update].
 
         Parameters:
             destination_path:

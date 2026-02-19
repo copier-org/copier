@@ -15,6 +15,10 @@ from pydantic import BaseModel, Field
 from ._tools import OS
 from .errors import MissingSettingsWarning
 
+__all__ = [
+    "Settings",
+]
+
 ENV_VAR = "COPIER_SETTINGS_PATH"
 
 
