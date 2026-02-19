@@ -121,7 +121,7 @@ known-first-party = ["copier"]
 convention = "google"
 
 [tool.ruff.lint.pycodestyle]
-max-doc-length = 72
+max-doc-length = 88
 
 [tool.ruff.lint.pyupgrade]
 keep-runtime-typing = true
