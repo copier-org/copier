@@ -122,6 +122,7 @@ convention = "google"
 
 [tool.ruff.lint.pycodestyle]
 max-doc-length = 88
+ignore-overlong-task-comments = true
 
 [tool.ruff.lint.pyupgrade]
 keep-runtime-typing = true
