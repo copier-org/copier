@@ -41,6 +41,7 @@ from pydantic_core import to_jsonable_python
 from questionary import confirm, unsafe_prompt
 
 from ._jinja_ext import YieldEnvironment, YieldExtension
+from ._settings import Settings
 from ._subproject import Subproject
 from ._template import Task, Template
 from ._tools import (
@@ -77,7 +78,6 @@ from .errors import (
     UserMessageError,
     YieldTagInFileError,
 )
-from .settings import Settings
 
 _T = TypeVar("_T")
 _P = ParamSpec("_P")

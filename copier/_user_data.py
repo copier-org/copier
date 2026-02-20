@@ -26,7 +26,7 @@ from pygments.lexers.data import JsonLexer, YamlLexer
 from questionary.prompts.common import Choice
 
 from copier._jinja_ext import UnsetError
-from copier.settings import Settings
+from copier._settings import Settings
 
 from ._tools import cast_to_bool, cast_to_str, force_str_end
 from ._types import (
