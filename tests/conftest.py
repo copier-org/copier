@@ -109,7 +109,7 @@ def gitconfig(gitconfig: GitConfig) -> Iterator[GitConfig]:
 def config_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[Path]:
     config_path = tmp_path / "config"
     monkeypatch.delenv("COPIER_SETTINGS_PATH", raising=False)
-    with patch("copier.settings.user_config_path", return_value=config_path):
+    with patch("copier._settings.user_config_path", return_value=config_path):
         yield config_path
 
 

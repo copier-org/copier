@@ -2,34 +2,36 @@ from __future__ import annotations
 
 import os
 import platform
+from collections.abc import Sequence
 from pathlib import Path
 
 import pytest
 import yaml
 
-from copier._settings import SettingsModel
-from copier.errors import MissingSettingsWarning
+from copier import Settings, load_settings, run_copy
+from copier._settings import _default_settings_path, is_trusted_repository
+from copier.errors import MissingSettingsWarning, SettingsError
+from tests.helpers import build_file_tree
 
 
 def test_default_settings() -> None:
-    settings = SettingsModel()
+    settings = Settings()
 
     assert settings.defaults == {}
-    assert settings.trust == set()
+    assert settings.trust == []
 
 
-def test_settings_from_default_location(settings_path: Path) -> None:
+def test_load_settings_from_default_location(settings_path: Path) -> None:
     settings_path.write_text("defaults:\n  foo: bar")
 
-    settings = SettingsModel.from_file()
+    settings = load_settings()
 
     assert settings.defaults == {"foo": "bar"}
 
 
 @pytest.mark.skipif(platform.system() != "Windows", reason="Windows-only test")
 def test_default_windows_settings_path() -> None:
-    settings = SettingsModel()
-    assert settings._default_settings_path() == Path(
+    assert _default_settings_path() == Path(
         os.getenv("USERPROFILE", default=""),
         "AppData",
         "Local",
@@ -39,8 +41,8 @@ def test_default_windows_settings_path() -> None:
 
 
 @pytest.mark.usefixtures("config_path")
-def test_settings_from_default_location_dont_exists() -> None:
-    settings = SettingsModel.from_file()
+def test_load_settings_from_default_location_dont_exist() -> None:
+    settings = load_settings()
 
     assert settings.defaults == {}
 
@@ -55,12 +57,12 @@ def test_settings_from_env_location(
 
     monkeypatch.setenv("COPIER_SETTINGS_PATH", str(settings_from_env_path))
 
-    settings = SettingsModel.from_file()
+    settings = load_settings()
 
     assert settings.defaults == {"foo": "baz"}
 
 
-def test_settings_from_param(
+def test_load_settings_from_param(
     settings_path: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     settings_path.write_text("defaults:\n  foo: bar")
@@ -73,25 +75,25 @@ def test_settings_from_param(
     file_path = tmp_path / "file.yml"
     file_path.write_text("defaults:\n  from: file")
 
-    settings = SettingsModel.from_file(file_path)
+    settings = load_settings(file_path)
 
     assert settings.defaults == {"from": "file"}
 
 
-def test_settings_defined_but_missing(
+def test_load_settings_env_defined_but_missing(
     settings_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("COPIER_SETTINGS_PATH", str(settings_path))
 
     with pytest.warns(MissingSettingsWarning):
-        SettingsModel.from_file()
+        load_settings()
 
 
 @pytest.mark.parametrize(
     "encoding",
     ["utf-8", "utf-8-sig", "utf-16-le", "utf-16-be"],
 )
-def test_settings_from_utf_file(
+def test_load_settings_from_utf_file(
     settings_path: Path, monkeypatch: pytest.MonkeyPatch, encoding: str
 ) -> None:
     def _encode(data: str) -> bytes:
@@ -111,15 +113,41 @@ def test_settings_from_utf_file(
     with monkeypatch.context() as m:
         # Override the factor that determines the default encoding when opening files.
         m.setattr("io.text_encoding", lambda *_args: "cp932")
-        settings = SettingsModel.from_file()
+        settings = load_settings()
 
     assert settings.defaults == defaults
 
 
 @pytest.mark.parametrize(
-    ("repository", "trust", "is_trusted"),
+    ("data", "error"),
     [
-        ("https://github.com/user/repo.git", set(), False),
+        (
+            b"\x00",
+            "^Invalid YAML data: unacceptable character",
+        ),
+        (
+            b"defaults: should be an object",
+            "^Invalid format:\n  defaults:\n    Input should be a valid dictionary",
+        ),
+        (
+            b"trust: should be an array",
+            "^Invalid format:\n  trust:\n    Input should be a valid set",
+        ),
+    ],
+)
+def test_load_settings_with_invalid_data(
+    settings_path: Path, data: bytes, error: str
+) -> None:
+    settings_path.write_bytes(data)
+
+    with pytest.raises(SettingsError, match=error):
+        load_settings(settings_path)
+
+
+@pytest.mark.parametrize(
+    ("repository", "trust", "expected"),
+    [
+        ("https://github.com/user/repo.git", [], False),
         (
             "https://github.com/user/repo.git",
             {"https://github.com/user/repo.git"},
@@ -131,7 +159,7 @@ def test_settings_from_utf_file(
         ("https://github.com/user/repo.git", {"https://github.com/user"}, False),
         ("https://github.com/user/repo.git", {"https://github.com/"}, True),
         ("https://github.com/user/repo.git", {"https://github.com"}, False),
-        (f"{Path.home()}/template", set(), False),
+        (f"{Path.home()}/template", [], False),
         (f"{Path.home()}/template", {f"{Path.home()}/template"}, True),
         (f"{Path.home()}/template", {"~/template"}, True),
         (f"{Path.home()}/path/to/template", {"~/path/to/template"}, True),
@@ -139,7 +167,22 @@ def test_settings_from_utf_file(
         (f"{Path.home()}/path/to/template", {"~/path/to"}, False),
     ],
 )
-def test_is_trusted(repository: str, trust: set[str], is_trusted: bool) -> None:
-    settings = SettingsModel(trust=trust)
+def test_is_trusted(repository: str, trust: Sequence[str], expected: bool) -> None:
+    assert is_trusted_repository(trust, repository) == expected
 
-    assert settings.is_trusted(repository) == is_trusted
+
+def test_copy_with_defaults(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "copier.yml": "project_name: foo",
+            src / "result.txt.jinja": "{{ project_name }}",
+        }
+    )
+    run_copy(
+        str(src),
+        dst,
+        defaults=True,
+        settings=Settings(defaults={"project_name": "bar"}),
+    )
+    assert (dst / "result.txt").read_text() == "bar"

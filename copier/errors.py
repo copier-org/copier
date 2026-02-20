@@ -236,3 +236,7 @@ class InteractiveSessionError(UserMessageError):
 
     def __init__(self, message: str) -> None:
         super().__init__(f"Interactive session required: {message}")
+
+
+class SettingsError(CopierError):
+    """Exception raised when the settings are invalid."""

@@ -26,7 +26,7 @@ from pygments.lexers.data import JsonLexer, YamlLexer
 from questionary.prompts.common import Choice
 
 from copier._jinja_ext import UnsetError
-from copier._settings import Settings
+from copier._settings import SettingsModel
 
 from ._tools import cast_to_bool, cast_to_str, force_str_end
 from ._types import (
@@ -207,7 +207,7 @@ class Question:
     answers: AnswersMap
     context: Mapping[str, Any]
     jinja_env: SandboxedEnvironment
-    settings: Settings = field(default_factory=Settings)
+    settings: SettingsModel = field(default_factory=SettingsModel)
     choices: Sequence[Any] | dict[Any, Any] | str = field(default_factory=list)
     multiselect: bool = False
     default: Any = MISSING
