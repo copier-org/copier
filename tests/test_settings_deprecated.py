@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 import yaml
 
+from copier._settings import Settings
 from copier.errors import MissingSettingsWarning
-from copier.settings import Settings
 
 
 def test_default_settings() -> None:
