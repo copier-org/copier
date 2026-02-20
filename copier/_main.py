@@ -1430,8 +1430,9 @@ class Worker:
                     # Only the usual stage 0 is recorded, with the hash of the current
                     # version.
                     # We therefore update the index with the missing stages:
-                    # 1 = current (before updating), 2 = base (last update),
-                    # 3 = other (after updating).
+                    # 1 = current (before updating)
+                    # 2 = base (last update)
+                    # 3 = other (after updating)
                     # See this SO post: https://stackoverflow.com/questions/79309642/
                     # and Git docs: https://git-scm.com/docs/git-update-index#_using_index_info.
                     if conflicted:
