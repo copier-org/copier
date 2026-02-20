@@ -41,7 +41,7 @@ from pydantic_core import to_jsonable_python
 from questionary import confirm, unsafe_prompt
 
 from ._jinja_ext import YieldEnvironment, YieldExtension
-from ._settings import Settings
+from ._settings import Settings, SettingsModel, is_trusted_repository
 from ._subproject import Subproject
 from ._template import Task, Template
 from ._tools import (
@@ -232,7 +232,7 @@ class Worker:
     answers_file: RelativePath | None = None
     vcs_ref: str | VcsRef | None = None
     data: AnyByStrDict = field(default_factory=dict)
-    settings: Settings = field(default_factory=Settings.from_file)
+    settings: SettingsModel = field(default_factory=SettingsModel.from_file)
     exclude: Sequence[str] = ()
     use_prereleases: bool = False
     skip_if_exists: Sequence[str] = ()
@@ -286,7 +286,7 @@ class Worker:
 
     def _check_unsafe(self, mode: Operation) -> None:
         """Check whether a template uses unsafe features."""
-        if self.unsafe or self.settings.is_trusted(self.template.url):
+        if self.unsafe or is_trusted_repository(self.settings.trust, self.template.url):
             return
         features: set[str] = set()
         if self.template.jinja_extensions:
@@ -1501,7 +1501,7 @@ def run_copy(
     *,
     answers_file: RelativePath | str | None = None,
     vcs_ref: str | VcsRef | None = None,
-    settings: Settings | None = None,
+    settings: Settings | SettingsModel | None = None,
     exclude: Sequence[str] = (),
     use_prereleases: bool = False,
     skip_if_exists: Sequence[str] = (),
@@ -1525,7 +1525,11 @@ def run_copy(
             else answers_file
         ),
         vcs_ref=vcs_ref,
-        settings=settings or Settings.from_file(),
+        settings=(
+            SettingsModel(defaults=settings.defaults, trust=settings.trust)
+            if isinstance(settings, Settings)
+            else (settings or SettingsModel.from_file())
+        ),
         exclude=exclude,
         use_prereleases=use_prereleases,
         skip_if_exists=skip_if_exists,
@@ -1548,7 +1552,7 @@ def run_recopy(
     *,
     answers_file: RelativePath | str | None = None,
     vcs_ref: str | VcsRef | None = None,
-    settings: Settings | None = None,
+    settings: Settings | SettingsModel | None = None,
     exclude: Sequence[str] = (),
     use_prereleases: bool = False,
     skip_if_exists: Sequence[str] = (),
@@ -1572,7 +1576,11 @@ def run_recopy(
             else answers_file
         ),
         vcs_ref=vcs_ref,
-        settings=settings or Settings.from_file(),
+        settings=(
+            SettingsModel(defaults=settings.defaults, trust=settings.trust)
+            if isinstance(settings, Settings)
+            else (settings or SettingsModel.from_file())
+        ),
         exclude=exclude,
         use_prereleases=use_prereleases,
         skip_if_exists=skip_if_exists,
@@ -1596,7 +1604,7 @@ def run_update(
     *,
     answers_file: RelativePath | str | None = None,
     vcs_ref: str | VcsRef | None = None,
-    settings: Settings | None = None,
+    settings: Settings | SettingsModel | None = None,
     exclude: Sequence[str] = (),
     use_prereleases: bool = False,
     skip_if_exists: Sequence[str] = (),
@@ -1622,7 +1630,11 @@ def run_update(
             else answers_file
         ),
         vcs_ref=vcs_ref,
-        settings=settings or Settings.from_file(),
+        settings=(
+            SettingsModel(defaults=settings.defaults, trust=settings.trust)
+            if isinstance(settings, Settings)
+            else (settings or SettingsModel.from_file())
+        ),
         exclude=exclude,
         use_prereleases=use_prereleases,
         skip_if_exists=skip_if_exists,

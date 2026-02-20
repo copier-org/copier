@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 from copier import _settings
 from copier._deprecation import (
+    deprecate_member,
     deprecate_member_as_internal,
     deprecate_module_as_internal,
 )
@@ -24,7 +25,7 @@ def __getattr__(name: str) -> Any:
     # Explicitly handle deprecated members with re-mapped names for backwards
     # compatibility.
     if name == "Settings":
-        deprecate_member_as_internal(name, __name__)
+        deprecate_member(name, __name__, f"from copier import {name}")
         return _settings.SettingsModel
     if name == "ENV_VAR":
         deprecate_member_as_internal(name, __name__)

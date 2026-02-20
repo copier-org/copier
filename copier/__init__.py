@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 from . import _main
 from ._deprecation import deprecate_member_as_internal
+from ._settings import Settings, load_settings
 from ._types import Phase, VcsRef
 
 if TYPE_CHECKING:
@@ -30,9 +31,11 @@ def __getattr__(name: str) -> Any:
 
 
 __all__ = [
+    "load_settings",
     "run_copy",  # noqa: F405
     "run_recopy",  # noqa: F405
     "run_update",  # noqa: F405,
     "Phase",
+    "Settings",
     "VcsRef",
 ]

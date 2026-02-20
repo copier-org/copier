@@ -4,21 +4,76 @@ from __future__ import annotations
 
 import os
 import warnings
+from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import dataclass, field
 from os.path import expanduser
 from pathlib import Path
 from typing import Any
 
 import yaml
 from platformdirs import user_config_path
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from ._tools import OS
-from .errors import MissingSettingsWarning
+from .errors import MissingSettingsWarning, SettingsError
 
-ENV_VAR = "COPIER_SETTINGS_PATH"
+_ENV_VAR = "COPIER_SETTINGS_PATH"
 
 
-class Settings(BaseModel):
+@dataclass(frozen=True, slots=True)
+class Settings:
+    """User settings."""
+
+    defaults: Mapping[str, Any] = field(default_factory=dict)
+    """Default values for questions."""
+
+    trust: Sequence[str] = field(default_factory=list)
+    """Set of trusted repositories or prefixes."""
+
+
+def load_settings(settings_path: Path | None = None) -> Settings:
+    """Load settings from a YAML file.
+
+    If `settings_path` is not given, the path is determined from the
+    `COPIER_SETTINGS_PATH` environment variable or the platform-specific
+    default configuration directory.
+
+    Args:
+        settings_path: Path to a settings YAML file.
+
+    Returns:
+        Settings loaded from the YAML file.
+
+    Raises:
+        SettingsError: If the settings file is invalid.
+    """
+    try:
+        settings = SettingsModel.from_file(settings_path)
+    except yaml.YAMLError as e:
+        raise SettingsError(f"Invalid YAML data: {e}") from e
+    except ValidationError as e:
+        message = "\n".join(
+            f"  {'.'.join(map(str, err['loc']))}:\n    {err['msg']}"
+            for err in e.errors()
+        )
+        raise SettingsError(f"Invalid format:\n{message}") from e
+    return Settings(defaults=settings.defaults, trust=list(settings.trust))
+
+
+def is_trusted_repository(trust: Iterable[str], repository: str) -> bool:
+    """Check if a repository is trusted.
+
+    Args:
+        trust: The set of trusted repositories or prefixes.
+        repository: The repository URL to check.
+
+    Returns:
+        Whether the repository is trusted.
+    """
+    return _is_trusted(trust, repository)
+
+
+class SettingsModel(BaseModel):
     """User settings model."""
 
     defaults: dict[str, Any] = Field(
@@ -30,12 +85,12 @@ class Settings(BaseModel):
 
     @staticmethod
     def _default_settings_path() -> Path:
-        return user_config_path("copier", appauthor=False) / "settings.yml"
+        return _default_settings_path()
 
     @classmethod
-    def from_file(cls, settings_path: Path | None = None) -> Settings:
+    def from_file(cls, settings_path: Path | None = None) -> SettingsModel:
         """Load settings from a file."""
-        env_path = os.getenv(ENV_VAR)
+        env_path = os.getenv(_ENV_VAR)
         if settings_path is None:
             if env_path:
                 settings_path = Path(env_path)
@@ -64,15 +119,34 @@ class Settings(BaseModel):
 
     def is_trusted(self, repository: str) -> bool:
         """Check if a repository is trusted."""
-        return any(
-            repository.startswith(self.normalize(trusted))
-            if trusted.endswith("/")
-            else repository == self.normalize(trusted)
-            for trusted in self.trust
-        )
+        return _is_trusted(self, repository)
 
     def normalize(self, url: str) -> str:
         """Normalize an URL using user settings."""
-        if url.startswith("~"):  # Only expand on str to avoid messing with URLs
-            url = expanduser(url)  # noqa: PTH111
-        return url
+        return _normalize(url)
+
+
+def _default_settings_path() -> Path:
+    return user_config_path("copier", appauthor=False) / "settings.yml"
+
+
+def _is_trusted(
+    trust_or_settings: Iterable[str] | SettingsModel, repository: str
+) -> bool:
+    trust = (
+        trust_or_settings.trust
+        if isinstance(trust_or_settings, SettingsModel)
+        else trust_or_settings
+    )
+    return any(
+        repository.startswith(_normalize(t))
+        if t.endswith("/")
+        else repository == _normalize(t)
+        for t in trust
+    )
+
+
+def _normalize(url: str) -> str:
+    if url.startswith("~"):  # Only expand on str to avoid messing with URLs
+        url = expanduser(url)  # noqa: PTH111
+    return url
