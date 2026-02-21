@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.12.0 (2026-02-21)
+
+### Feat
+
+-   add new settings API with minimal surface
+-   re-export `Phase` enum at package level
+
+### Fix
+
+-   **updating**: apply skip-if-exists patterns as gitignore-style at subproject root in
+    update algorithm
+-   **updating**: anchor removed file paths to project root in update algorithm
+-   **updating**: normalize user-deleted paths before skip-if-exists pattern matching
+    during updates
+
+### Refactor
+
+-   **typing**: use builtin types in public API signatures
+-   deprecate public `settings` module and its symbols
+-   replace `**kwargs` with explicit parameters in `run_{copy,recopy,update}` functions
+
 ## v9.11.3 (2026-01-23)
 
 ### Fix
