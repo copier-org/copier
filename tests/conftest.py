@@ -81,7 +81,8 @@ def default_git_user_email() -> Any:
 @pytest.fixture(scope="session", autouse=True)
 def default_gitconfig(default_gitconfig: GitConfig) -> GitConfig:
     """
-    Use a clean and isolated default gitconfig avoiding user settings to break some tests.
+    Use a clean and isolated default gitconfig avoiding user settings to break some
+    tests.
 
     Add plumbum support to the original session-scoped fixture.
     """

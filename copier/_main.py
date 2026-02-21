@@ -177,12 +177,14 @@ class Worker:
             See [cleanup_on_error][].
 
         defaults:
-            When `True`, use default answers to questions, which might be null if not specified.
+            When `True`, use default answers to questions, which might be null if not
+            specified.
 
             See [defaults][].
 
         user_defaults:
-            Specify user defaults that may override a template's defaults during question prompts.
+            Specify user defaults that may override a template's defaults during
+            question prompts.
 
         overwrite:
             When `True`, Overwrite files that already exist, without asking.
@@ -390,7 +392,8 @@ class Worker:
                 continue
 
             working_directory = (
-                # We can't use _render_path here, as that function has special handling for files in the template
+                # We can't use _render_path here, as that function has special handling
+                # for files in the template
                 self.subproject.local_abspath
                 / Path(self._render_string(str(task.working_directory), extra_context))
             ).absolute()
@@ -906,7 +909,8 @@ class Worker:
     ) -> Iterable[tuple[Path, AnyByStrDict | None]]:
         """Render a set of parts into path and context pairs.
 
-        If a yield tag is found in a part, it will recursively yield multiple path and context pairs.
+        If a yield tag is found in a part, it will recursively yield multiple path and
+        context pairs.
         """
         if rendered_parts is None:
             rendered_parts = tuple()
@@ -929,7 +933,8 @@ class Worker:
         if not extra_context:
             extra_context = {}
 
-        # If the `part` has a yield tag, `self.jinja_env` will be set with the yield name and iterable
+        # If the `part` has a yield tag, `self.jinja_env` will be set with the yield
+        # name and iterable
         rendered_part = self._render_string(part, extra_context=extra_context)
 
         yield_name = self.jinja_env.yield_name
@@ -1239,7 +1244,8 @@ class Worker:
                         if not self.match_skip(Path(path))
                     )
                 )
-            # Clear last answers cache to load possible answers migration, if skip_answered flag is not set
+            # Clear last answers cache to load possible answers migration, if
+            # skip_answered flag is not set
             if self.skip_answered is False:
                 self.answers = AnswersMap(external=self._external_data())
                 with suppress(AttributeError):
@@ -1406,7 +1412,8 @@ class Worker:
                         Path(f"{fname}.rej").unlink()
                         # The 3-way merge might have resolved conflicts automatically,
                         # so we need to check if the file contains conflict markers
-                        # before storing the file name for marking it as unmerged after the loop.
+                        # before storing the file name for marking it as unmerged after
+                        # the loop.
                         with Path(fname).open("rb") as conflicts_candidate:
                             if any(
                                 line.rstrip()
@@ -1419,9 +1426,12 @@ class Worker:
                                 conflicted.append(fname)
                     # We ran `git merge-file` outside of a regular merge operation,
                     # which means no merge conflict is recorded in the index.
-                    # Only the usual stage 0 is recorded, with the hash of the current version.
+                    # Only the usual stage 0 is recorded, with the hash of the current
+                    # version.
                     # We therefore update the index with the missing stages:
-                    # 1 = current (before updating), 2 = base (last update), 3 = other (after updating).
+                    # 1 = current (before updating)
+                    # 2 = base (last update)
+                    # 3 = other (after updating)
                     # See this SO post: https://stackoverflow.com/questions/79309642/
                     # and Git docs: https://git-scm.com/docs/git-update-index#_using_index_info.
                     if conflicted:
