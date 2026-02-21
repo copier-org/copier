@@ -172,12 +172,12 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
         exit=False,
     )
     # Check it's copied OK
-    assert load_answersfile_data(target) == {
-        "_commit": "v0.0.1",
-        "_src_path": str(bundle),
-        "author_name": "Guybrush",
-        "project_name": "to become a pirate",
-    }
+    answers = load_answersfile_data(target)
+    assert answers["_commit"] == "v0.0.1"
+    assert answers["_src_path"] == str(bundle)
+    assert answers["author_name"] == "Guybrush"
+    assert answers["project_name"] == "to become a pirate"
+    assert "_commit_sha" in answers
     assert readme.read_text() == dedent(
         """
         Let me introduce myself.
@@ -208,12 +208,12 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
         commit("-m", "I prefer grog")
         # Update target to latest tag and check it's updated in answers file
         CopierApp.run(["copier", "update", "--defaults", "--UNSAFE"], exit=False)
-        assert load_answersfile_data(target) == {
-            "_commit": "v0.0.2",
-            "_src_path": str(bundle),
-            "author_name": "Guybrush",
-            "project_name": "to become a pirate",
-        }
+        answers = load_answersfile_data(target)
+        assert answers["_commit"] == "v0.0.2"
+        assert answers["_src_path"] == str(bundle)
+        assert answers["author_name"] == "Guybrush"
+        assert answers["project_name"] == "to become a pirate"
+        assert "_commit_sha" in answers
         # Check migrations were executed properly
         assert not (target / "before-v0.0.1").is_file()
         assert not (target / "after-v0.0.1").is_file()
@@ -237,12 +237,12 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
         assert not (target / "before-v1.0.0").is_file()
         assert not (target / "after-v1.0.0").is_file()
         # Check it's updated OK
-        assert load_answersfile_data(target) == {
-            "_commit": last_commit,
-            "_src_path": str(bundle),
-            "author_name": "Guybrush",
-            "project_name": "to become a pirate",
-        }
+        answers = load_answersfile_data(target)
+        assert answers["_commit"] == last_commit
+        assert answers["_src_path"] == str(bundle)
+        assert answers["author_name"] == "Guybrush"
+        assert answers["project_name"] == "to become a pirate"
+        assert "_commit_sha" in answers
         assert readme.read_text() == dedent(
             """
             Let me introduce myself.
@@ -2124,7 +2124,9 @@ def test_disable_secret_validator_on_replay(
 
     run_copy(str(src), dst, defaults=True)
     answers = load_answersfile_data(dst)
-    assert answers == {"_src_path": str(src), "_commit": "v1"}
+    assert answers["_src_path"] == str(src)
+    assert answers["_commit"] == "v1"
+    assert "_commit_sha" in answers
     assert (dst / ".env").read_text() == "TOKEN="
 
     with local.cwd(dst):
@@ -2132,7 +2134,9 @@ def test_disable_secret_validator_on_replay(
 
     run_update(dst, data={"token": "$up3r-$3cr3t"}, overwrite=True)
     answers = load_answersfile_data(dst)
-    assert answers == {"_src_path": str(src), "_commit": "v1"}
+    assert answers["_src_path"] == str(src)
+    assert answers["_commit"] == "v1"
+    assert "_commit_sha" in answers
     assert (dst / ".env").read_text() == "TOKEN=$up3r-$3cr3t"
 
 

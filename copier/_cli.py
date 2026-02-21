@@ -162,6 +162,11 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
         default=False,
         help="Skip template tasks execution",
     )
+    ignore_git_tags = cli.Flag(
+        ["--ignore-git-tags"],
+        default=False,
+        help="Always use SHA commit hash instead of git tags/branches for updates",
+    )
 
     @cli.switch(  # type: ignore[untyped-decorator]
         ["-d", "--data"],
@@ -226,6 +231,7 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
             use_prereleases=self.prereleases,
             unsafe=self.unsafe,
             skip_tasks=self.skip_tasks,
+            ignore_git_tags=self.ignore_git_tags,
             **kwargs,
         )
 

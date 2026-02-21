@@ -223,6 +223,11 @@ class Worker:
 
         skip_tasks:
             When `True`, skip template tasks execution.
+
+        ignore_git_tags:
+            When `True`, always use SHA commit hash instead of git tags/branches
+            for update operations. Both semantic version and SHA are always stored
+            in the answers file; this flag controls which one is used for updates.
     """
 
     # NOTE: attributes are fully documented in [creating.md](../docs/creating.md)
@@ -248,6 +253,7 @@ class Worker:
     unsafe: bool = False
     skip_answered: bool = False
     skip_tasks: bool = False
+    ignore_git_tags: bool = False
 
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
     _cleanup_hooks: list[Callable[[], None]] = field(default_factory=list, init=False)
@@ -340,11 +346,39 @@ class Worker:
         """Get only answers that will be remembered in the copier answers file."""
         # All internal values must appear first
         answers: AnyByStrDict = {}
-        commit = self.template.commit
-        src = self.template.url
-        for key, value in (("_commit", commit), ("_src_path", src)):
-            if value is not None:
-                answers[key] = value
+
+        # Always store both semantic version and SHA when available
+        if self.template.vcs == "git":
+            # For copy operations or explicit vcs_ref, use the specified ref
+            # For updates with :current:, use the resolved ref
+            if self.vcs_ref is VcsRef.CURRENT:
+                # During update with :current:, use resolved ref
+                semantic_version = self.resolved_vcs_ref or self.template.commit
+            elif self.vcs_ref == "HEAD":
+                # When user specifies HEAD, store the git describe output instead
+                # of the literal string "HEAD" for better human readability
+                semantic_version = self.template.commit
+            else:
+                # During copy or update with explicit ref (tag/branch name), use vcs_ref directly
+                semantic_version = self.vcs_ref or self.template.commit
+            sha_version = self.template.commit_hash
+
+            # Dual versioning: Always store both values
+            # _commit stores semantic version (for human readability)
+            # _commit_sha stores SHA (for reliable resolution)
+            # The ignore_git_tags flag controls which one is USED during updates,
+            # not which one is STORED
+
+            if semantic_version:
+                answers["_commit"] = semantic_version
+
+            # Always store SHA separately for fallback
+            if sha_version:
+                answers["_commit_sha"] = sha_version
+
+        # Store source path
+        if src := self.template.url:
+            answers["_src_path"] = src
         # Other data goes next
         answers.update(
             (str(k), v)
@@ -357,6 +391,43 @@ class Worker:
             and isinstance(v, JSONSerializable)
         )
         return answers
+
+    def _get_sha_from_answers(self, answers: dict[str, Any]) -> str | None:
+        """Extract SHA from answers dict.
+
+        Args:
+            answers: The answers dictionary
+
+        Returns:
+            The SHA as a string, or None if not available
+        """
+        sha = answers.get("_commit_sha")
+        return str(sha) if sha else None
+
+    def _resolve_vcs_ref_for_update(
+        self, answers: dict[str, Any] | None = None
+    ) -> str | None:
+        """Resolve which VCS ref to use for update operations.
+
+        Args:
+            answers: The answers dict to read from
+
+        Returns:
+            The resolved VCS reference (tag or SHA), or None if unavailable.
+        """
+        if answers is None:
+            return None
+
+        if not answers.get("_commit") and not answers.get("_commit_sha"):
+            return None
+
+        # If ignore_git_tags is set, use SHA
+        if self.ignore_git_tags:
+            return self._get_sha_from_answers(answers)
+
+        # Otherwise use stored tag, fallback to SHA
+        commit = answers.get("_commit")
+        return str(commit) if commit else self._get_sha_from_answers(answers)
 
     def _execute_tasks(self, tasks: Sequence[Task]) -> None:
         """Run the given tasks.
@@ -429,6 +500,7 @@ class Worker:
                 "unsafe": lambda: self.unsafe,
                 "skip_answered": lambda: self.skip_answered,
                 "skip_tasks": lambda: self.skip_tasks,
+                "ignore_git_tags": lambda: self.ignore_git_tags,
                 "sep": lambda: os.sep,
                 "os": lambda: OS,
             }
@@ -1020,12 +1092,16 @@ class Worker:
         """Get the resolved VCS reference to use.
 
         This is either `vcs_ref` or the subproject template ref
-        if `vcs_ref` is `VcsRef.CURRENT`.
+        if `vcs_ref` is `VcsRef.CURRENT`. When using the subproject's
+        stored ref, applies automatic resolution to choose between semantic
+        version and SHA.
         """
         if self.vcs_ref is VcsRef.CURRENT:
             if self.subproject.template is None:
                 raise TypeError("Template not found")
-            return self.subproject.template.ref
+            # Use automatic resolution for updates - pass answers explicitly
+            resolved = self._resolve_vcs_ref_for_update(self.subproject.last_answers)
+            return resolved if resolved else self.subproject.template.ref
         return self.vcs_ref
 
     @cached_property

@@ -215,6 +215,67 @@ $ copier copy -r HEAD ./src ./dst
 ... then you'll notice `new-file.txt` does exist. You passed a specific ref to copy, so
 Copier skips its autodetection and just goes for the `HEAD` you already chose.
 
+## How does Copier handle floating tags?
+
+Copier uses **dual-versioning** with **automatic tag resolution** to handle both stable
+and floating tags intelligently. No flag is needed in most cases.
+
+### What is dual-versioning?
+
+When copying from a Git template, Copier stores BOTH values in your answers file:
+
+-   `_commit`: The semantic version (tag/branch name) - human-readable
+-   `_commit_sha`: The SHA commit hash - immutable reference
+
+During updates, Copier automatically chooses which to use based on whether the tag is
+"floating" (movable) or "stable" (fixed).
+
+### Automatic tag resolution
+
+Copier automatically detects floating tags like:
+
+-   `latest`, `stable/*`, `main`, `master`, `develop`
+-   Branch patterns: `feat/*`, `fix/*`, `feature-*`
+
+For these, Copier uses SHA during updates to ensure reproducibility. For stable semantic
+versions (like `v1.0.0`), it preserves the tag name.
+
+```shell
+# No special flag needed - automatic resolution handles it
+copier copy --vcs-ref stable/v1 template destination
+copier update  # Works correctly even if tag moved
+```
+
+### When to use `--ignore-git-tags`
+
+Use this flag to force SHA usage for ALL updates, overriding automatic detection:
+
+-   **When automatic resolution isn't working**: If updates fail with floating tags, use
+    this flag to force SHA usage
+-   **For strict compliance/reproducibility**: When you need guaranteed immutable
+    references for all updates
+
+```shell
+# Force SHA usage
+copier copy --ignore-git-tags --vcs-ref v2.0.0 template destination
+copier update --ignore-git-tags
+```
+
+### Template configuration
+
+Template authors can force SHA usage or define custom stable patterns:
+
+```yaml title="copier.yml"
+# Force SHA usage for all projects
+_ignore_git_tags: true
+
+# Or define custom stable patterns
+_stable_tag_patterns:
+    - ^release/.*$
+```
+
+See [ignore_git_tags][] for more details.
+
 ## How to pass credentials to Git?
 
 If you do something like this, and the template supports updates, you'll notice that the

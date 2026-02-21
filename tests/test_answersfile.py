@@ -178,13 +178,13 @@ def test_external_data(tmp_path_factory: pytest.TempPathFactory) -> None:
     copier.run_copy(str(parent1), dst, defaults=True, overwrite=True)
     git_save(dst)
     assert (dst / "parent1.txt").read_text() == "P1"
-    expected_parent1_answers = {
-        "_src_path": str(parent1),
-        "_commit": "v1.0+parent1",
-        "name": "P1",
-        "child": "C1",
-    }
-    assert load_answersfile_data(dst, ".copier-answers.yml") == expected_parent1_answers
+    parent1_answers = load_answersfile_data(dst, ".copier-answers.yml")
+    assert parent1_answers["_src_path"] == str(parent1)
+    assert parent1_answers["_commit"] == "v1.0+parent1"
+    assert parent1_answers["name"] == "P1"
+    assert parent1_answers["child"] == "C1"
+    # SHA is also stored in new dual-versioning system
+    assert "_commit_sha" in parent1_answers
     # Apply parent 2. It uses a different answers file.
     copier.run_copy(
         str(parent2),
@@ -195,14 +195,12 @@ def test_external_data(tmp_path_factory: pytest.TempPathFactory) -> None:
     )
     git_save(dst)
     assert (dst / "parent2.txt").read_text() == "P2"
-    expected_parent2_answers = {
-        "_commit": "v1.0+parent2",
-        "_src_path": str(parent2),
-        "name": "P2",
-    }
-    assert (
-        load_answersfile_data(dst, ".parent2-answers.yml") == expected_parent2_answers
-    )
+    parent2_answers = load_answersfile_data(dst, ".parent2-answers.yml")
+    assert parent2_answers["_commit"] == "v1.0+parent2"
+    assert parent2_answers["_src_path"] == str(parent2)
+    assert parent2_answers["name"] == "P2"
+
+    assert "_commit_sha" in parent2_answers
     # Apply child. It can access answers from both parents.
     copier.run_copy(
         str(child),
@@ -212,12 +210,13 @@ def test_external_data(tmp_path_factory: pytest.TempPathFactory) -> None:
         answers_file=".child-answers.yml",
     )
     git_save(dst)
-    assert load_answersfile_data(dst, ".child-answers.yml") == {
-        "_commit": "v1.0+child",
-        "_src_path": str(child),
-        "name": "C1",
-        "parent2_answers": ".parent2-answers.yml",
-    }
+    child_answers = load_answersfile_data(dst, ".child-answers.yml")
+    assert child_answers["_commit"] == "v1.0+child"
+    assert child_answers["_src_path"] == str(child)
+    assert child_answers["name"] == "C1"
+    assert child_answers["parent2_answers"] == ".parent2-answers.yml"
+
+    assert "_commit_sha" in child_answers
     assert json.loads((dst / "combined.json").read_text()) == {
         "parent1": "P1",
         "parent2": "P2",

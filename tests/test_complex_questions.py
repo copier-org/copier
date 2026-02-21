@@ -417,14 +417,14 @@ def test_tui_inherited_default(
         tui.expect_exact("example")
         tui.sendline("2")
     tui.expect_exact(pexpect.EOF)
-    result = {
-        "_commit": "1",
-        "_src_path": str(src),
-        "has_2_owners": has_2_owners,
-        "owner1": "example",
-        **({"owner2": owner2} if has_2_owners else {}),
-    }
-    assert json.loads((dst / "answers.json").read_text()) == result
+    answers = json.loads((dst / "answers.json").read_text())
+    assert answers["_commit"] == "1"
+    assert answers["_src_path"] == str(src)
+    assert answers["has_2_owners"] == has_2_owners
+    assert answers["owner1"] == "example"
+    assert "_commit_sha" in answers
+    if has_2_owners:
+        assert answers["owner2"] == owner2
     assert json.loads((dst / "context.json").read_text()) == {"owner2": owner2}
     with local.cwd(dst):
         git("init")
@@ -432,7 +432,14 @@ def test_tui_inherited_default(
         git("commit", "--message", "init project")
     # After a forced update, answers stay the same
     run_update(dst, defaults=True, overwrite=True)
-    assert json.loads((dst / "answers.json").read_text()) == result
+    updated_answers = json.loads((dst / "answers.json").read_text())
+    assert updated_answers["_commit"] == "1"
+    assert updated_answers["_src_path"] == str(src)
+    assert updated_answers["has_2_owners"] == has_2_owners
+    assert updated_answers["owner1"] == "example"
+    assert "_commit_sha" in updated_answers
+    if has_2_owners:
+        assert updated_answers["owner2"] == owner2
 
 
 def test_tui_typed_default(
