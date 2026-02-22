@@ -39,7 +39,7 @@ Basically, there are 4 different commands you can run:
         copier update
         ```
 
--   [`copier check-update`][copier.cli.CopierCheckUpdateSubApp] to check if a preexisting
+-   `copier check-update` to check if a preexisting
     project is using the latest version of its template.
 
     !!! example
