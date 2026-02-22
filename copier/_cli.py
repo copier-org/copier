@@ -53,12 +53,11 @@ from collections.abc import Callable, Iterable
 from os import PathLike
 from pathlib import Path
 from textwrap import dedent
-from typing import Any
 
 import yaml
 from plumbum import cli, colors
 
-from ._main import Worker
+from ._main import run_copy, run_recopy, run_update
 from ._tools import copier_version, try_enum
 from ._types import AnyByStrDict, VcsRef
 from .errors import UnsafeTemplateError, UserMessageError
@@ -200,35 +199,6 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
         }
         self.data.update(updates_without_cli_overrides)
 
-    def _worker(
-        self,
-        src_path: str | None = None,
-        dst_path: str = ".",
-        **kwargs: Any,  # noqa: FA100
-    ) -> Worker:
-        """Run Copier's internal API using CLI switches.
-
-        Arguments:
-            src_path: The source path of the template to generate the project from.
-            dst_path: The path to generate the project to.
-            **kwargs: Arguments passed to the worker.
-        """
-        return Worker(
-            data=self.data,
-            dst_path=Path(dst_path),
-            answers_file=self.answers_file,
-            exclude=self.exclude,
-            pretend=self.pretend,
-            skip_if_exists=self.skip,
-            quiet=self.quiet,
-            src_path=src_path,
-            vcs_ref=try_enum(VcsRef, self.vcs_ref),
-            use_prereleases=self.prereleases,
-            unsafe=self.unsafe,
-            skip_tasks=self.skip_tasks,
-            **kwargs,
-        )
-
 
 @CopierApp.subcommand("copy")
 class CopierCopySubApp(_Subcommand):
@@ -272,14 +242,23 @@ class CopierCopySubApp(_Subcommand):
         """
 
         def inner() -> None:
-            with self._worker(
+            run_copy(
                 template_src,
                 destination_path,
+                data=self.data,
+                answers_file=self.answers_file,
+                vcs_ref=try_enum(VcsRef, self.vcs_ref),
+                exclude=self.exclude,
+                use_prereleases=self.prereleases,
+                skip_if_exists=self.skip,
                 cleanup_on_error=self.cleanup_on_error,
                 defaults=self.force or self.defaults,
                 overwrite=self.force or self.overwrite,
-            ) as worker:
-                worker.run_copy()
+                pretend=self.pretend,
+                quiet=self.quiet,
+                unsafe=self.unsafe,
+                skip_tasks=self.skip_tasks,
+            )
 
         return _handle_exceptions(inner)
 
@@ -341,13 +320,22 @@ class CopierRecopySubApp(_Subcommand):
         """
 
         def inner() -> None:
-            with self._worker(
-                dst_path=destination_path,
+            run_recopy(
+                destination_path,
+                data=self.data,
+                answers_file=self.answers_file,
+                vcs_ref=try_enum(VcsRef, self.vcs_ref),
+                exclude=self.exclude,
+                use_prereleases=self.prereleases,
+                skip_if_exists=self.skip,
                 defaults=self.force or self.defaults,
                 overwrite=self.force or self.overwrite,
+                pretend=self.pretend,
+                quiet=self.quiet,
+                unsafe=self.unsafe,
                 skip_answered=self.skip_answered,
-            ) as worker:
-                worker.run_recopy()
+                skip_tasks=self.skip_tasks,
+            )
 
         return _handle_exceptions(inner)
 
@@ -415,14 +403,23 @@ class CopierUpdateSubApp(_Subcommand):
         """
 
         def inner() -> None:
-            with self._worker(
-                dst_path=destination_path,
+            run_update(
+                destination_path,
+                data=self.data,
+                answers_file=self.answers_file,
+                vcs_ref=try_enum(VcsRef, self.vcs_ref),
+                exclude=self.exclude,
+                use_prereleases=self.prereleases,
+                skip_if_exists=self.skip,
+                defaults=self.defaults,
+                overwrite=True,
+                pretend=self.pretend,
+                quiet=self.quiet,
                 conflict=self.conflict,
                 context_lines=self.context_lines,
-                defaults=self.defaults,
+                unsafe=self.unsafe,
                 skip_answered=self.skip_answered,
-                overwrite=True,
-            ) as worker:
-                worker.run_update()
+                skip_tasks=self.skip_tasks,
+            )
 
         return _handle_exceptions(inner)
