@@ -1564,16 +1564,13 @@ def run_update(
 
 def run_check_update(
     dst_path: StrOrPath = ".",
-    data: AnyByStrDict | None = None,
-    **kwargs: Any,
+    output_format: str = "plain",
 ) -> Worker:
     """Check if a subproject is using the latest version of its template.
 
     See [Worker][copier.main.Worker] fields to understand this function's args.
     """
-    if data is not None:
-        kwargs["data"] = data
-    with Worker(dst_path=Path(dst_path), **kwargs) as worker:
+    with Worker(dst_path=Path(dst_path), output_format=output_format) as worker:
         worker.run_check_update()
     return worker
 
