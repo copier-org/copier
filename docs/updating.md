@@ -269,31 +269,23 @@ one for manual checking, and one for checking as part of a script or other autom
 ### Manual Checking
 
 To manually check if the template used to generate your project has been updated, simply
-run this command inside your project directory:
+run `copier check-update` in your project directory. Sample output is provided for
+different scenarios:
 
-```bash
-copier check-update
-```
-
-This will output human-readable details about the update status as follows:
-
-#### No Update Found
-
-If no update is found, `copier check-update` will exit with status code 0 and the
-following output:
-
-```
+```console
+# No update available
+$ copier check-update
 Project is up-to-date!
-```
 
-#### No Update Found
-
-If an update is found, `copier check-update` will exit with status code 1 and output
-similar to the following:
-
-```
+# Update available
+$ copier check-update
 New template version available.
 Current version is 1.0.0, latest version is 2.0.0.
+
+# Prerelease update available
+$ copier check-update --prereleases
+New template version available.
+Current version is 1.0.0, latest version is 2.0.0a0.
 ```
 
 ### Automated Checking
