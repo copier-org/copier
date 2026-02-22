@@ -57,6 +57,7 @@ copier --help-all
 ```
 """
 
+import json
 import sys
 from collections.abc import Callable, Iterable
 from os import PathLike
@@ -67,7 +68,7 @@ from typing import Any
 import yaml
 from plumbum import cli, colors
 
-from ._main import Worker
+from ._main import Worker, get_update_data
 from ._tools import copier_version, try_enum
 from ._types import AnyByStrDict, VcsRef
 from .errors import SubprojectOutdatedError, UnsafeTemplateError, UserMessageError
@@ -470,7 +471,10 @@ class CopierCheckUpdateSubApp(_Subcommand):
     )
 
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
-        """Call [run_check_update][copier.main.Worker.run_check_update].
+        """Call [get_update_data][copier.main.get_update_data].
+
+        The values returned by get_update_data are processed and used to
+        generate console output.
 
         Parameters:
             destination_path:
@@ -482,10 +486,38 @@ class CopierCheckUpdateSubApp(_Subcommand):
         """
 
         def inner() -> None:
-            with self._worker(
+            update_available, current_version, latest_version = get_update_data(
                 dst_path=destination_path,
-                output_format=self.output_format,
-            ) as worker:
-                worker.run_check_update()
+                use_prereleases=self.prereleases,
+            )
+
+            update_json = json.dumps(
+                {
+                    "update_available": update_available,
+                    "current_version": current_version,
+                    "latest_version": latest_version,
+                }
+            )
+
+            print(f"update_available: {update_available}")
+            if update_available:
+                if self.quiet:
+                    raise SubprojectOutdatedError()
+                else:
+                    if self.output_format == "json":
+                        # TODO Unify printing tools
+                        print(update_json, file=sys.stdout)
+                    raise SubprojectOutdatedError(
+                        "New template version available.\n"
+                        f"Current version is {current_version}, "
+                        f"latest version is {latest_version}."
+                    )
+            elif not self.quiet:
+                if self.output_format == "json":
+                    # TODO Unify printing tools
+                    print(update_json, file=sys.stdout)
+                else:
+                    # TODO Unify printing tools
+                    print("Project is up-to-date!", file=sys.stderr)
 
         return _handle_exceptions(inner)

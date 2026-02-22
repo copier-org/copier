@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import os
 import platform
 import stat
@@ -71,7 +70,6 @@ from .errors import (
     ExtensionNotFoundError,
     ForbiddenPathError,
     InteractiveSessionError,
-    SubprojectOutdatedError,
     TaskError,
     UnsafeTemplateError,
     UserMessageError,
@@ -119,7 +117,6 @@ class Worker:
     -   [run_copy][copier.main.Worker.run_copy] to copy a subproject.
     -   [run_recopy][copier.main.Worker.run_recopy] to recopy a subproject.
     -   [run_update][copier.main.Worker.run_update] to update a subproject.
-    -   [run_check_update][copier.main.Worker.run_check_update] to check a subproject for updates to its source template.
 
     Example:
         ```python
@@ -220,10 +217,6 @@ class Worker:
 
         skip_tasks:
             When `True`, skip template tasks execution.
-
-        output_format:
-            Output format, either 'plain' (the default) or 'json'. This flag is
-            only supported by the 'check-update' subcommand.
     """
 
     # NOTE: attributes are fully documented in [creating.md](../docs/creating.md)
@@ -249,7 +242,6 @@ class Worker:
     unsafe: bool = False
     skip_answered: bool = False
     skip_tasks: bool = False
-    output_format: Literal["plain", "json"] = "plain"
 
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
     _cleanup_hooks: list[Callable[[], None]] = field(default_factory=list, init=False)
@@ -1458,56 +1450,6 @@ class Worker:
             "--no-verify",
         )
 
-    def run_check_update(self) -> None:
-        """Check if a subproject is using the latest version of its template.
-
-        See [checking a project][checking-a-project].
-        """
-        # Check all you need is there
-        if self.subproject.template is None or self.subproject.template.ref is None:
-            raise UserMessageError(
-                "Cannot check because cannot obtain old template references "
-                f"from `{self.subproject.answers_relpath}`."
-            )
-        if self.template.commit is None:
-            raise UserMessageError(
-                "Checking is only supported in git-tracked templates."
-            )
-        if not self.subproject.template.version:
-            raise UserMessageError(
-                "Cannot check: version from last update not detected."
-            )
-        if not self.template.version:
-            raise UserMessageError("Cannot check: version from template not detected.")
-
-        update_json = json.dumps(
-            {
-                "update_available": (
-                    self.template.version > self.subproject.template.version
-                ),
-                "current_version": str(self.subproject.template.version),
-                "latest_version": str(self.template.version),
-            }
-        )
-
-        if self.template.version > self.subproject.template.version:
-            if not self.quiet:
-                if self.output_format == "json":
-                    # TODO Unify printing tools
-                    print(update_json, file=sys.stdout)
-                raise SubprojectOutdatedError(
-                    "New template version available.\n"
-                    f"Current version is {self.subproject.template.version}, "
-                    f"latest version is {self.template.version}."
-                )
-        elif not self.quiet:
-            if self.output_format == "json":
-                # TODO Unify printing tools
-                print(update_json, file=sys.stdout)
-            else:
-                # TODO Unify printing tools
-                print("Project is up-to-date!", file=sys.stderr)
-
 
 def run_copy(
     src_path: str,
@@ -1562,17 +1504,46 @@ def run_update(
     return worker
 
 
-def run_check_update(
+def get_update_data(
     dst_path: StrOrPath = ".",
-    output_format: str = "plain",
-) -> Worker:
-    """Check if a subproject is using the latest version of its template.
+    use_prereleases: bool = False,
+) -> tuple[bool, str, str]:
+    """Gets data regarding if a subproject has updates.
 
-    See [Worker][copier.main.Worker] fields to understand this function's args.
+    Returns a tuple containing a bool for if the project has an update,
+    a string containing a project's current version, and a string containing
+    the latest version of the template available.
+
+    See [checking a project][checking-a-project].
     """
-    with Worker(dst_path=Path(dst_path), output_format=output_format) as worker:
-        worker.run_check_update()
-    return worker
+    with Worker(
+        dst_path=Path(dst_path),
+        use_prereleases=use_prereleases,
+    ) as worker:
+        if worker.subproject.template is None or worker.subproject.template.ref is None:
+            print(f"worker: {worker}")
+            print(f"subproj: {worker.subproject.template}")
+            print(f"subproj-ref: {worker.subproject.template.ref}")
+            raise UserMessageError(
+                "Cannot check because cannot obtain old template references "
+                f"from `{worker.subproject.answers_relpath}`."
+            )
+        if worker.template.commit is None:
+            raise UserMessageError(
+                "Checking is only supported in git-tracked templates."
+            )
+        if not worker.subproject.template.version:
+            raise UserMessageError(
+                "Cannot check: version from last update not detected."
+            )
+        if not worker.template.version:
+            raise UserMessageError("Cannot check: version from template not detected.")
+
+        update_available = worker.template.version > worker.subproject.template.version
+        current_version = str(worker.subproject.template.version)
+        latest_version = str(worker.template.version)
+
+    return (update_available, current_version, latest_version)
 
 
 def _remove_old_files(prefix: Path, cmp: dircmp[str], rm_common: bool = False) -> None:
