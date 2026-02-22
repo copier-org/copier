@@ -1664,7 +1664,7 @@ def run_update(
 
 
 def get_update_data(
-    dst_path: StrOrPath = ".",
+    dst_path: Path | str = ".",
     use_prereleases: bool = False,
 ) -> tuple[bool, str, str]:
     """Gets data regarding if a subproject has updates.
