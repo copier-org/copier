@@ -496,7 +496,6 @@ class CopierCheckUpdateSubApp(_Subcommand):
                 }
             )
 
-            print(f"update_available: {update_available}")
             if update_available:
                 if self.quiet:
                     raise SubprojectOutdatedError()

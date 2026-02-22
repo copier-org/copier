@@ -1680,9 +1680,6 @@ def get_update_data(
         use_prereleases=use_prereleases,
     ) as worker:
         if worker.subproject.template is None or worker.subproject.template.ref is None:
-            print(f"worker: {worker}")
-            print(f"subproj: {worker.subproject.template}")
-            print(f"subproj-ref: {worker.subproject.template.ref}")
             raise UserMessageError(
                 "Cannot check because cannot obtain old template references "
                 f"from `{worker.subproject.answers_relpath}`."
