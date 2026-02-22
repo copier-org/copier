@@ -292,33 +292,20 @@ Current version is 1.0.0, latest version is 2.0.0a0.
 
 To facilitate automated checking for updates, `copier check-update` provides json output
 via the flag `--output-format json`. This output can be consumed by scripts or parsed
-using command line tools like jq/yq/etc:
+using command line tools like jq/yq/etc. Sample output is provided for different
+scenarios:
 
-```bash
-copier check-update --output-format json
-```
-
-This will output human-readable details about the update status
-
-#### No Update Found
-
-If no update is found, `copier check-update` will exit with status code 0 and output
-similar to the following:
-
-```json
+```console
+# No update available
+$ copier check-update --output-format json
 { "update_available": false, "current_version": "1.0.0", "latest_version": "1.0.0" }
-```
 
-#### No Update Found
-
-If an update is found, `copier check-update` will exit with status code 1 and output
-similar to the following:
-
-```json
+# Update available
+$ copier check-update --output-format json
 { "update_available": true, "current_version": "1.0.0", "latest_version": "2.0.0" }
+
+# Prerelease update available
+$ copier check-update --output-format json --prereleases
+New template version available.
+{ "update_available": true, "current_version": "1.0.0", "latest_version": "2.0.0a0" }
 ```
-
-### About Prereleases
-
-Mirroring the behavior of the other subcommands, prerelease template tags are ignored by
-`copier check-update` unless the `--prerelease` flag is included.
