@@ -22,6 +22,35 @@ else:
     from typing import Self
 
 
+__all__ = [
+    "CopierError",
+    "UserMessageError",
+    "UnsupportedVersionError",
+    "ConfigFileError",
+    "InvalidConfigFileError",
+    "MultipleConfigFilesError",
+    "InvalidTypeError",
+    "PathError",
+    "PathNotAbsoluteError",
+    "PathNotRelativeError",
+    "ForbiddenPathError",
+    "ExtensionNotFoundError",
+    "CopierAnswersInterrupt",
+    "UnsafeTemplateError",
+    "YieldTagInFileError",
+    "MultipleYieldTagsError",
+    "TaskError",
+    "CopierWarning",
+    "UnknownCopierVersionWarning",
+    "OldTemplateWarning",
+    "DirtyLocalWarning",
+    "ShallowCloneWarning",
+    "MissingSettingsWarning",
+    "MissingFileWarning",
+    "InteractiveSessionError",
+]
+
+
 # Errors
 class CopierError(Exception):
     """Base class for all other Copier errors."""
@@ -211,3 +240,7 @@ class InteractiveSessionError(UserMessageError):
 
     def __init__(self, message: str) -> None:
         super().__init__(f"Interactive session required: {message}")
+
+
+class SettingsError(CopierError):
+    """Exception raised when the settings are invalid."""

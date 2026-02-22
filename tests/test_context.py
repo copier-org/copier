@@ -70,7 +70,8 @@ def test_exclude_templating_with_operation(
 ) -> None:
     """
     Ensure it's possible to create one-off boilerplate files that are not
-    managed during updates via `_exclude` using the `_copier_operation` context variable.
+    managed during updates via `_exclude` using the `_copier_operation` context
+    variable.
     """
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 

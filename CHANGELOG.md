@@ -4,6 +4,49 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.12.0 (2026-02-21)
+
+### Feat
+
+-   add new settings API with minimal surface
+-   re-export `Phase` enum at package level
+
+### Fix
+
+-   **updating**: apply skip-if-exists patterns as gitignore-style at subproject root in
+    update algorithm
+-   **updating**: anchor removed file paths to project root in update algorithm
+-   **updating**: normalize user-deleted paths before skip-if-exists pattern matching
+    during updates
+
+### Refactor
+
+-   **typing**: use builtin types in public API signatures
+-   deprecate public `settings` module and its symbols
+-   replace `**kwargs` with explicit parameters in `run_{copy,recopy,update}` functions
+
+## v9.11.3 (2026-01-23)
+
+### Fix
+
+-   **updating**: include non-question answers when generating fresh copy of new
+    template
+-   **updating**: ignore Git hooks on internal checkout before 3-way merging file with
+    conflicts (#2432)
+-   avoid pattern deprecation warning for `pathspec` v1.0.0+
+
+## v9.11.2 (2026-01-20)
+
+### Fix
+
+-   **updating**: restore support for preserved symlinks pointing outside subproject
+    (#2427)
+
+### Security
+
+-   disallow symlink-based includes outside template root
+-   disallow symlink-following write operations outside destination directory (#2427)
+
 ## v9.11.1 (2026-01-10)
 
 ### Fix

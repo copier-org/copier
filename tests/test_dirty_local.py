@@ -260,7 +260,8 @@ def test_parallel_projects_in_subdirs(
         git("add", "-A")
         git("commit", "-m", "initial project commit")
 
-    # Update first project, then the second without committing/stashing changes from first
+    # Update first project, then the second without committing/stashing changes from
+    # first
     for dst in [dst1, dst2]:
         assert (dst / "file.txt").read_text() == dst.name
         run_update(dst, overwrite=True, data={"question": f"Updated {dst.name}"})

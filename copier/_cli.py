@@ -2,7 +2,7 @@
 
 Basically, there are 4 different commands you can run:
 
--   [`copier`][copier.cli.CopierApp], the main app, which is a shortcut for the
+-   `copier`, the main app, which is a shortcut for the
     `copy` and `update` subapps.
 
     If the destination project is found and has [an answers
@@ -21,7 +21,7 @@ Basically, there are 4 different commands you can run:
         copier
         ```
 
--   [`copier copy`][copier.cli.CopierApp], used to bootstrap a new project from
+-   `copier copy`, used to bootstrap a new project from
     a template.
 
     !!! example
@@ -30,7 +30,7 @@ Basically, there are 4 different commands you can run:
         copier copy gh:copier-org/autopretty my-project
         ```
 
--   [`copier update`][copier.cli.CopierUpdateSubApp] to update a preexisting
+-   `copier update` to update a preexisting
     project to a newer version of its template.
 
     !!! example
@@ -63,12 +63,11 @@ from collections.abc import Callable, Iterable
 from os import PathLike
 from pathlib import Path
 from textwrap import dedent
-from typing import Any
 
 import yaml
 from plumbum import cli, colors
 
-from ._main import Worker, get_update_data
+from ._main import get_update_data, run_copy, run_recopy, run_update
 from ._tools import copier_version, try_enum
 from ._types import AnyByStrDict, VcsRef
 from .errors import SubprojectOutdatedError, UnsafeTemplateError, UserMessageError
@@ -176,7 +175,7 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
         help="Skip template tasks execution",
     )
 
-    @cli.switch(  # type: ignore[misc]
+    @cli.switch(  # type: ignore[untyped-decorator]
         ["-d", "--data"],
         str,
         "VARIABLE=VALUE",
@@ -194,7 +193,7 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
             key, value = arg.split("=", 1)
             self.data[key] = value
 
-    @cli.switch(  # type: ignore[misc]
+    @cli.switch(  # type: ignore[untyped-decorator]
         ["--data-file"],
         cli.ExistingFile,
         help="Load data from a YAML file",
@@ -212,35 +211,6 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
             k: v for k, v in file_updates.items() if k not in self.data
         }
         self.data.update(updates_without_cli_overrides)
-
-    def _worker(
-        self,
-        src_path: str | None = None,
-        dst_path: str = ".",
-        **kwargs: Any,  # noqa: FA100
-    ) -> Worker:
-        """Run Copier's internal API using CLI switches.
-
-        Arguments:
-            src_path: The source path of the template to generate the project from.
-            dst_path: The path to generate the project to.
-            **kwargs: Arguments passed to [Worker][copier.main.Worker].
-        """
-        return Worker(
-            data=self.data,
-            dst_path=Path(dst_path),
-            answers_file=self.answers_file,
-            exclude=self.exclude,
-            pretend=self.pretend,
-            skip_if_exists=self.skip,
-            quiet=self.quiet,
-            src_path=src_path,
-            vcs_ref=try_enum(VcsRef, self.vcs_ref),
-            use_prereleases=self.prereleases,
-            unsafe=self.unsafe,
-            skip_tasks=self.skip_tasks,
-            **kwargs,
-        )
 
 
 @CopierApp.subcommand("copy")
@@ -272,7 +242,7 @@ class CopierCopySubApp(_Subcommand):
     )
 
     def main(self, template_src: str, destination_path: str) -> int:
-        """Call [run_copy][copier.main.Worker.run_copy].
+        """Call [run_copy][copier.run_copy].
 
         Params:
             template_src:
@@ -285,14 +255,23 @@ class CopierCopySubApp(_Subcommand):
         """
 
         def inner() -> None:
-            with self._worker(
+            run_copy(
                 template_src,
                 destination_path,
+                data=self.data,
+                answers_file=self.answers_file,
+                vcs_ref=try_enum(VcsRef, self.vcs_ref),
+                exclude=self.exclude,
+                use_prereleases=self.prereleases,
+                skip_if_exists=self.skip,
                 cleanup_on_error=self.cleanup_on_error,
                 defaults=self.force or self.defaults,
                 overwrite=self.force or self.overwrite,
-            ) as worker:
-                worker.run_copy()
+                pretend=self.pretend,
+                quiet=self.quiet,
+                unsafe=self.unsafe,
+                skip_tasks=self.skip_tasks,
+            )
 
         return _handle_exceptions(inner)
 
@@ -342,7 +321,7 @@ class CopierRecopySubApp(_Subcommand):
     )
 
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
-        """Call [run_recopy][copier.main.Worker.run_recopy].
+        """Call [run_recopy][copier.run_recopy].
 
         Parameters:
             destination_path:
@@ -354,13 +333,22 @@ class CopierRecopySubApp(_Subcommand):
         """
 
         def inner() -> None:
-            with self._worker(
-                dst_path=destination_path,
+            run_recopy(
+                destination_path,
+                data=self.data,
+                answers_file=self.answers_file,
+                vcs_ref=try_enum(VcsRef, self.vcs_ref),
+                exclude=self.exclude,
+                use_prereleases=self.prereleases,
+                skip_if_exists=self.skip,
                 defaults=self.force or self.defaults,
                 overwrite=self.force or self.overwrite,
+                pretend=self.pretend,
+                quiet=self.quiet,
+                unsafe=self.unsafe,
                 skip_answered=self.skip_answered,
-            ) as worker:
-                worker.run_recopy()
+                skip_tasks=self.skip_tasks,
+            )
 
         return _handle_exceptions(inner)
 
@@ -416,7 +404,7 @@ class CopierUpdateSubApp(_Subcommand):
     )
 
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
-        """Call [run_update][copier.main.Worker.run_update].
+        """Call [run_update][copier.run_update].
 
         Parameters:
             destination_path:
@@ -428,15 +416,24 @@ class CopierUpdateSubApp(_Subcommand):
         """
 
         def inner() -> None:
-            with self._worker(
-                dst_path=destination_path,
+            run_update(
+                destination_path,
+                data=self.data,
+                answers_file=self.answers_file,
+                vcs_ref=try_enum(VcsRef, self.vcs_ref),
+                exclude=self.exclude,
+                use_prereleases=self.prereleases,
+                skip_if_exists=self.skip,
+                defaults=self.defaults,
+                overwrite=True,
+                pretend=self.pretend,
+                quiet=self.quiet,
                 conflict=self.conflict,
                 context_lines=self.context_lines,
-                defaults=self.defaults,
+                unsafe=self.unsafe,
                 skip_answered=self.skip_answered,
-                overwrite=True,
-            ) as worker:
-                worker.run_update()
+                skip_tasks=self.skip_tasks,
+            )
 
         return _handle_exceptions(inner)
 
