@@ -12,9 +12,8 @@ from .helpers import (
 
 
 @pytest.fixture(scope="module")
-def src_and_dst_no_update(tmp_path_factory: pytest.TempPathFactory) -> tuple[str, str]:
-    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
-    src_str, dst_str = map(str, (src, dst))
+def template_path(tmp_path_factory: pytest.TempPathFactory) -> str:
+    src = tmp_path_factory.mktemp("src")
 
     # Create template v1.0.0
     build_file_tree(
@@ -36,65 +35,6 @@ def src_and_dst_no_update(tmp_path_factory: pytest.TempPathFactory) -> tuple[str
         git("add", ".")
         git("commit", "-m", "v1.0.0")
         git("tag", "v1.0.0")
-
-    # Run copier 1st time, with specific tag
-    CopierApp.run(
-        [
-            "copier",
-            "copy",
-            src_str,
-            dst_str,
-            "--defaults",
-            "--overwrite",
-            "--vcs-ref=v1.0.0",
-        ],
-        exit=False,
-    )
-
-    return src_str, dst_str
-
-
-@pytest.fixture(scope="module")
-def src_and_dst_update_available(
-    tmp_path_factory: pytest.TempPathFactory,
-) -> tuple[str, str]:
-    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
-    src_str, dst_str = map(str, (src, dst))
-
-    # Create template v1.0.0
-    build_file_tree(
-        {
-            src / "{{ _copier_conf.answers_file }}.jinja": """\
-                # Changes here will be overwritten by Copier
-                {{ _copier_answers|to_nice_yaml }}
-                """,
-            src / "copier.yml": """\
-                version: 1.0.0
-                """,
-            src / "README.md.jinja": """\
-                # Version {{ version }}
-                """,
-        }
-    )
-    with local.cwd(src):
-        git("init")
-        git("add", ".")
-        git("commit", "-m", "v1.0.0")
-        git("tag", "v1.0.0")
-
-    # Run copier 1st time, with specific tag
-    CopierApp.run(
-        [
-            "copier",
-            "copy",
-            src_str,
-            dst_str,
-            "--defaults",
-            "--overwrite",
-            "--vcs-ref=v1.0.0",
-        ],
-        exit=False,
-    )
 
     # Create template v2.0.0
     build_file_tree(
@@ -116,17 +56,7 @@ def src_and_dst_update_available(
         git("commit", "-m", "v2.0.0")
         git("tag", "v2.0.0")
 
-    return src_str, dst_str
-
-
-@pytest.fixture(scope="module")
-def src_and_dst_prerelease_update_available(
-    tmp_path_factory: pytest.TempPathFactory,
-) -> tuple[str, str]:
-    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
-    src_str, dst_str = map(str, (src, dst))
-
-    # Create template v1.0.0
+    # Create template v3.0.0-alpha
     build_file_tree(
         {
             src / "{{ _copier_conf.answers_file }}.jinja": """\
@@ -134,7 +64,7 @@ def src_and_dst_prerelease_update_available(
                 {{ _copier_answers|to_nice_yaml }}
                 """,
             src / "copier.yml": """\
-                version: 1.0.0
+                version: 3.0.0-alpha
                 """,
             src / "README.md.jinja": """\
                 # Version {{ version }}
@@ -142,52 +72,32 @@ def src_and_dst_prerelease_update_available(
         }
     )
     with local.cwd(src):
-        git("init")
         git("add", ".")
-        git("commit", "-m", "v1.0.0")
-        git("tag", "v1.0.0")
+        git("commit", "-m", "v3.0.0-alpha")
+        git("tag", "v3.0.0-alpha")
 
-    # Run copier 1st time, with specific tag
+    return str(src)
+
+
+def test_without_updated_template_no_opts(
+    tmp_path_factory: pytest.TempPathFactory,
+    template_path: str,
+) -> None:
+    src = template_path
+    dst = str(tmp_path_factory.mktemp("dst"))
+
     CopierApp.run(
         [
             "copier",
             "copy",
-            src_str,
-            dst_str,
+            src,
+            dst,
             "--defaults",
             "--overwrite",
-            "--vcs-ref=v1.0.0",
+            "--vcs-ref=v2.0.0",
         ],
         exit=False,
     )
-
-    # Create template v2.0.0-alpha
-    build_file_tree(
-        {
-            src / "{{ _copier_conf.answers_file }}.jinja": """\
-                # Changes here will be overwritten by Copier
-                {{ _copier_answers|to_nice_yaml }}
-                """,
-            src / "copier.yml": """\
-                version: 2.0.0-alpha
-                """,
-            src / "README.md.jinja": """\
-                # Version {{ version }}
-                """,
-        }
-    )
-    with local.cwd(src):
-        git("add", ".")
-        git("commit", "-m", "v2.0.0-alpha")
-        git("tag", "v2.0.0-alpha")
-
-    return src_str, dst_str
-
-
-def test_without_updated_template_no_opts(
-    src_and_dst_no_update: tuple[str, str],
-) -> None:
-    src, dst = src_and_dst_no_update
 
     run_result = CopierApp.run(
         [
@@ -201,9 +111,25 @@ def test_without_updated_template_no_opts(
 
 
 def test_without_updated_template_json_output_opt(
-    capsys: pytest.CaptureFixture[str], src_and_dst_no_update: tuple[str, str]
+    capsys: pytest.CaptureFixture[str],
+    tmp_path_factory: pytest.TempPathFactory,
+    template_path: str,
 ) -> None:
-    src, dst = src_and_dst_no_update
+    src = template_path
+    dst = str(tmp_path_factory.mktemp("dst"))
+
+    CopierApp.run(
+        [
+            "copier",
+            "copy",
+            src,
+            dst,
+            "--defaults",
+            "--overwrite",
+            "--vcs-ref=v2.0.0",
+        ],
+        exit=False,
+    )
 
     run_result = CopierApp.run(
         [
@@ -218,15 +144,29 @@ def test_without_updated_template_json_output_opt(
     assert run_result[1] == 0
     captured = capsys.readouterr()
     assert (
-        '{"update_available": false, "current_version": "1.0.0", "latest_version": "1.0.0"}'
+        '{"update_available": false, "current_version": "2.0.0", "latest_version": "2.0.0"}'
         in captured.out
     )
 
 
 def test_with_updated_template_no_opts(
-    src_and_dst_update_available: tuple[str, str],
+    tmp_path_factory: pytest.TempPathFactory, template_path: str
 ) -> None:
-    src, dst = src_and_dst_update_available
+    src = template_path
+    dst = str(tmp_path_factory.mktemp("dst"))
+
+    CopierApp.run(
+        [
+            "copier",
+            "copy",
+            src,
+            dst,
+            "--defaults",
+            "--overwrite",
+            "--vcs-ref=v1.0.0",
+        ],
+        exit=False,
+    )
 
     run_result = CopierApp.run(
         [
@@ -240,9 +180,25 @@ def test_with_updated_template_no_opts(
 
 
 def test_with_updated_template_json_output_opt(
-    capsys: pytest.CaptureFixture[str], src_and_dst_update_available: tuple[str, str]
+    capsys: pytest.CaptureFixture[str],
+    tmp_path_factory: pytest.TempPathFactory,
+    template_path: str,
 ) -> None:
-    src, dst = src_and_dst_update_available
+    src = template_path
+    dst = str(tmp_path_factory.mktemp("dst"))
+
+    CopierApp.run(
+        [
+            "copier",
+            "copy",
+            src,
+            dst,
+            "--defaults",
+            "--overwrite",
+            "--vcs-ref=v1.0.0",
+        ],
+        exit=False,
+    )
 
     run_result = CopierApp.run(
         [
@@ -263,9 +219,23 @@ def test_with_updated_template_json_output_opt(
 
 
 def test_with_prerelease_template_no_opts(
-    src_and_dst_prerelease_update_available: tuple[str, str],
+    tmp_path_factory: pytest.TempPathFactory, template_path: str
 ) -> None:
-    src, dst = src_and_dst_prerelease_update_available
+    src = template_path
+    dst = str(tmp_path_factory.mktemp("dst"))
+
+    CopierApp.run(
+        [
+            "copier",
+            "copy",
+            src,
+            dst,
+            "--defaults",
+            "--overwrite",
+            "--vcs-ref=v2.0.0",
+        ],
+        exit=False,
+    )
 
     run_result = CopierApp.run(
         [
@@ -280,9 +250,24 @@ def test_with_prerelease_template_no_opts(
 
 def test_with_prerelease_template_json_output_opt(
     capsys: pytest.CaptureFixture[str],
-    src_and_dst_prerelease_update_available: tuple[str, str],
+    tmp_path_factory: pytest.TempPathFactory,
+    template_path: str,
 ) -> None:
-    src, dst = src_and_dst_prerelease_update_available
+    src = template_path
+    dst = str(tmp_path_factory.mktemp("dst"))
+
+    CopierApp.run(
+        [
+            "copier",
+            "copy",
+            src,
+            dst,
+            "--defaults",
+            "--overwrite",
+            "--vcs-ref=v2.0.0",
+        ],
+        exit=False,
+    )
 
     run_result = CopierApp.run(
         [
@@ -297,15 +282,29 @@ def test_with_prerelease_template_json_output_opt(
     assert run_result[1] == 0
     captured = capsys.readouterr()
     assert (
-        '{"update_available": false, "current_version": "1.0.0", "latest_version": "1.0.0"}'
+        '{"update_available": false, "current_version": "2.0.0", "latest_version": "2.0.0"}'
         in captured.out
     )
 
 
 def test_with_prerelease_template_prereleases_opt(
-    src_and_dst_prerelease_update_available: tuple[str, str],
+    tmp_path_factory: pytest.TempPathFactory, template_path: str
 ) -> None:
-    src, dst = src_and_dst_prerelease_update_available
+    src = template_path
+    dst = str(tmp_path_factory.mktemp("dst"))
+
+    CopierApp.run(
+        [
+            "copier",
+            "copy",
+            src,
+            dst,
+            "--defaults",
+            "--overwrite",
+            "--vcs-ref=v2.0.0",
+        ],
+        exit=False,
+    )
 
     run_result = CopierApp.run(
         [
@@ -321,9 +320,24 @@ def test_with_prerelease_template_prereleases_opt(
 
 def test_with_prerelease_template_prereleases_and_json_output_opts(
     capsys: pytest.CaptureFixture[str],
-    src_and_dst_prerelease_update_available: tuple[str, str],
+    tmp_path_factory: pytest.TempPathFactory,
+    template_path: str,
 ) -> None:
-    src, dst = src_and_dst_prerelease_update_available
+    src = template_path
+    dst = str(tmp_path_factory.mktemp("dst"))
+
+    CopierApp.run(
+        [
+            "copier",
+            "copy",
+            src,
+            dst,
+            "--defaults",
+            "--overwrite",
+            "--vcs-ref=v2.0.0",
+        ],
+        exit=False,
+    )
 
     run_result = CopierApp.run(
         [
@@ -339,6 +353,6 @@ def test_with_prerelease_template_prereleases_and_json_output_opts(
     assert run_result[1] == 1
     captured = capsys.readouterr()
     assert (
-        '{"update_available": true, "current_version": "1.0.0", "latest_version": "2.0.0a0"}'
+        '{"update_available": true, "current_version": "2.0.0", "latest_version": "3.0.0a0"}'
         in captured.out
     )
