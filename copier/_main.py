@@ -251,6 +251,7 @@ class Worker:
 
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
     _cleanup_hooks: list[Callable[[], None]] = field(default_factory=list, init=False)
+    _update_stage: str = field(default="current", init=False)
 
     def __enter__(self) -> Worker:
         """Allow using worker as a context manager."""
@@ -368,6 +369,7 @@ class Worker:
         for i, task in enumerate(tasks):
             extra_context = {f"_{k}": v for k, v in task.extra_vars.items()}
             extra_context["_copier_operation"] = operation
+            extra_context["_update_stage"] = self._update_stage
 
             if not cast_to_bool(self._render_value(task.condition, extra_context)):
                 continue
@@ -1094,6 +1096,8 @@ class Worker:
                 # TODO Unify printing tools
                 print("")  # padding space
             if not self.skip_tasks:
+                with Phase.use(Phase.POSTRENDER):
+                    self._execute_tasks(self.template.postrender_tasks)
                 with Phase.use(Phase.TASKS):
                     self._execute_tasks(self.template.tasks)
         except Exception:
@@ -1211,6 +1215,7 @@ class Worker:
                 # https://github.com/orgs/copier-org/discussions/2345
                 exclude=[*self.template.exclude, *self.exclude],
             ) as old_worker:
+                old_worker._update_stage = "previous"
                 old_worker.run_copy()
             # Run pre-migration tasks
             with Phase.use(Phase.MIGRATE):
@@ -1261,6 +1266,7 @@ class Worker:
                 # TODO
                 quiet=True,
             ) as current_worker:
+                current_worker._update_stage = "current"
                 current_worker.run_copy()
                 self.answers = current_worker.answers
                 self.answers.external = self._external_data()
@@ -1282,6 +1288,7 @@ class Worker:
                 exclude=exclude_plus_removed,
                 vcs_ref=self.resolved_vcs_ref,
             ) as new_worker:
+                new_worker._update_stage = "new"
                 new_worker.run_copy()
             with local.cwd(new_copy):
                 self._git_initialize_repo()
