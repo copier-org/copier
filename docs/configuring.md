@@ -1670,6 +1670,8 @@ If a `dict` is given it can contain the following items:
 -   **when** (optional): Specifies a condition that needs to hold for the task to run.
 -   **working_directory** (optional): Specifies the directory in which the command will
     be run. Defaults to the destination directory.
+-   **failure_message** (optional): Provides a message to print if the task fails. If
+    not provided, the subprocess exception message will be shown.
 
 If a `str` or `List[str]` is given as a task it will be treated as `command` with all
 other items not present.
@@ -1697,6 +1699,8 @@ Refer to the example provided below for more information.
           when: "{{ _copier_conf.os in  ['linux', 'macos'] }}"
         - command: Remove-Item {{ name_of_the_project }}\\README.md
           when: "{{ _copier_conf.os == 'windows' }}"
+        - command: finalize-project
+          failure_message: Couldn't finalize {{ name_of_the_project }}
     ```
 
     Note: the example assumes you use [Invoke](https://www.pyinvoke.org/) as
