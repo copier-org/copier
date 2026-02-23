@@ -290,7 +290,7 @@ Current version is 1.0.0, latest version is 2.0.0a0.
 
 ### Automated Checking
 
-To facilitate automated checking for updates, `copier check-update` provides json output
+To facilitate automated checking for updates, `copier check-update` provides JSON output
 via the flag `--output-format json`. This output can be consumed by scripts or parsed
 using command line tools like jq/yq/etc. Sample output is provided for different
 scenarios:
