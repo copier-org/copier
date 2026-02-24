@@ -468,10 +468,7 @@ class CopierCheckUpdateSubApp(_Subcommand):
     )
 
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
-        """Call [get_update_data][copier.main.get_update_data].
-
-        The values returned by get_update_data are processed and used to
-        generate console output.
+        """Call get_update_data, parse its output, and write to console.
 
         Parameters:
             destination_path:
