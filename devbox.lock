@@ -170,8 +170,8 @@
       }
     },
     "github:NixOS/nixpkgs/nixpkgs-unstable": {
-      "last_modified": "2026-02-02T06:50:11Z",
-      "resolved": "github:NixOS/nixpkgs/f08e6b11a5ed43637a8ac444dd44118bc7d273b9?lastModified=1770015011&narHash=sha256-7vUo0qWCl%2Frip%2Bfzr6lcMlz9I0tN%2F8m7d5Bla%2FrS2kk%3D"
+      "last_modified": "2026-02-23T15:40:43Z",
+      "resolved": "github:NixOS/nixpkgs/80d901ec0377e19ac3f7bb8c035201e2e098cc97?lastModified=1771861243&narHash=sha256-mz05b1VyLWoTkNg8iJr3yXFJF7HDlwIUKI3ln39RacY%3D"
     },
     "nodePackages.prettier@3.3.3": {
       "last_modified": "2025-02-07T11:26:36Z",
