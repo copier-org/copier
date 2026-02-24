@@ -5,10 +5,7 @@ from plumbum import local
 
 from copier._cli import CopierApp
 
-from .helpers import (
-    build_file_tree,
-    git,
-)
+from .helpers import build_file_tree, git
 
 
 @pytest.fixture(scope="module")
@@ -18,16 +15,22 @@ def template_path(tmp_path_factory: pytest.TempPathFactory) -> str:
     # Create template v1.0.0
     build_file_tree(
         {
-            src / "{{ _copier_conf.answers_file }}.jinja": """\
+            src / "{{ _copier_conf.answers_file }}.jinja": (
+                """\
                 # Changes here will be overwritten by Copier
                 {{ _copier_answers|to_nice_yaml }}
-                """,
-            src / "copier.yml": """\
+                """
+            ),
+            src / "copier.yml": (
+                """\
                 version: 1.0.0
-                """,
-            src / "README.md.jinja": """\
+                """
+            ),
+            src / "README.md.jinja": (
+                """\
                 # Version {{ version }}
-                """,
+                """
+            ),
         }
     )
     with local.cwd(src):
@@ -39,16 +42,22 @@ def template_path(tmp_path_factory: pytest.TempPathFactory) -> str:
     # Create template v2.0.0
     build_file_tree(
         {
-            src / "{{ _copier_conf.answers_file }}.jinja": """\
+            src / "{{ _copier_conf.answers_file }}.jinja": (
+                """\
                 # Changes here will be overwritten by Copier
                 {{ _copier_answers|to_nice_yaml }}
-                """,
-            src / "copier.yml": """\
+                """
+            ),
+            src / "copier.yml": (
+                """\
                 version: 2.0.0
-                """,
-            src / "README.md.jinja": """\
+                """
+            ),
+            src / "README.md.jinja": (
+                """\
                 # Version {{ version }}
-                """,
+                """
+            ),
         }
     )
     with local.cwd(src):
@@ -59,16 +68,22 @@ def template_path(tmp_path_factory: pytest.TempPathFactory) -> str:
     # Create template v3.0.0-alpha
     build_file_tree(
         {
-            src / "{{ _copier_conf.answers_file }}.jinja": """\
+            src / "{{ _copier_conf.answers_file }}.jinja": (
+                """\
                 # Changes here will be overwritten by Copier
                 {{ _copier_answers|to_nice_yaml }}
-                """,
-            src / "copier.yml": """\
+                """
+            ),
+            src / "copier.yml": (
+                """\
                 version: 3.0.0-alpha
-                """,
-            src / "README.md.jinja": """\
+                """
+            ),
+            src / "README.md.jinja": (
+                """\
                 # Version {{ version }}
-                """,
+                """
+            ),
         }
     )
     with local.cwd(src):
