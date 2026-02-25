@@ -301,20 +301,20 @@ Sample output is provided for different scenarios:
 ```console
 # No update available
 $ copier check-update --output-format json
-{ "update_available": false, "current_version": "1.0.0", "latest_version": "1.0.0" }
+{"update_available": false, "current_version": "1.0.0", "latest_version": "1.0.0"}
 $ copier check-update --quiet
 [No output, exits 0]
 
 # Update available
 $ copier check-update --output-format json
-{ "update_available": true, "current_version": "1.0.0", "latest_version": "2.0.0" }
+{"update_available": true, "current_version": "1.0.0", "latest_version": "2.0.0"}
 $ copier check-update --quiet
 [No output, exits 2]
 
 # Prerelease update available
 $ copier check-update --output-format json --prereleases
 New template version available.
-{ "update_available": true, "current_version": "1.0.0", "latest_version": "2.0.0a0" }
+{"update_available": true, "current_version": "1.0.0", "latest_version": "2.0.0a0"}
 $ copier check-update --quiet --prereleases
 [No output, exits 2]
 ```
