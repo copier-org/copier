@@ -1,6 +1,6 @@
 """Command line entrypoint. This module declares the Copier CLI applications.
 
-Basically, there are 3 different commands you can run:
+Basically, there are 4 different commands you can run:
 
 -   `copier`, the main app, which is a shortcut for the
     `copy` and `update` subapps.
@@ -39,6 +39,15 @@ Basically, there are 3 different commands you can run:
         copier update
         ```
 
+-   `copier check-update` to check if a preexisting
+    project is using the latest version of its template.
+
+    !!! example
+
+        ```sh
+        copier check-update
+        ```
+
 Below are the docs of each one of those.
 
 CLI help generated from `copier --help-all`:
@@ -48,6 +57,7 @@ copier --help-all
 ```
 """
 
+import json
 import sys
 from collections.abc import Callable, Iterable
 from os import PathLike
@@ -57,17 +67,19 @@ from textwrap import dedent
 import yaml
 from plumbum import cli, colors
 
-from ._main import run_copy, run_recopy, run_update
+from ._main import get_update_data, run_copy, run_recopy, run_update
 from ._tools import copier_version, try_enum
 from ._types import AnyByStrDict, VcsRef
 from .errors import UnsafeTemplateError, UserMessageError
 
 
-def _handle_exceptions(method: Callable[[], None]) -> int:
-    """Handle keyboard interruption while running a method."""
+def _handle_exceptions(method: Callable[[], int | None]) -> int:
+    """Handle exceptions while running a method."""
     try:
         try:
-            method()
+            exit_code = method()
+            if exit_code is not None:
+                return exit_code
         except KeyboardInterrupt:
             raise UserMessageError("Execution stopped by user")
     except UserMessageError as error:
@@ -421,5 +433,85 @@ class CopierUpdateSubApp(_Subcommand):
                 skip_answered=self.skip_answered,
                 skip_tasks=self.skip_tasks,
             )
+
+        return _handle_exceptions(inner)
+
+
+@CopierApp.subcommand("check-update")
+class CopierCheckUpdateSubApp(_Subcommand):
+    """The `copier check-update` subcommand.
+
+    Use this subcommand to check if an existing subproject is using the
+    latest version of a template.
+
+    """
+
+    DESCRIPTION = "Check if a copy is using the latest version of its original template"
+    DESCRIPTION_MORE = dedent(
+        """\
+        The copy must have a valid answers file which contains info
+        from the last Copier execution, including the source template
+        (it must be a key called `_src_path`).
+
+        If that file contains also `_commit` and `destination_path` is a git
+        repository, this command will do its best to determine whether a newer
+        version is available, applying PEP 440 to the template's history.
+        """
+    )
+
+    output_format = cli.SwitchAttr(
+        ["--output-format"],
+        cli.Set("plain", "json"),
+        default="plain",
+        help="Output format, either 'plain' (the default) or 'json'.",
+    )
+
+    def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
+        """Call get_update_data, parse its output, and write to console.
+
+        Parameters:
+            destination_path:
+                Only the destination path is needed to check, because the
+                `src_path` comes from [the answers file][the-copier-answersyml-file].
+
+                The subproject must exist. If not specified, the currently
+                working directory is used.
+        """
+
+        def inner() -> int:
+            update_available, current_version, latest_version = get_update_data(
+                dst_path=destination_path,
+                use_prereleases=self.prereleases,
+            )
+
+            update_json = json.dumps(
+                {
+                    "update_available": update_available,
+                    "current_version": current_version,
+                    "latest_version": latest_version,
+                }
+            )
+
+            if update_available:
+                if self.quiet:
+                    return 2
+                if self.output_format == "json":
+                    # TODO Unify printing tools
+                    print(update_json)
+                else:
+                    # TODO Unify printing tools
+                    print(
+                        "New template version available.\n"
+                        f"Current version is {current_version}, "
+                        f"latest version is {latest_version}."
+                    )
+            elif not self.quiet:
+                if self.output_format == "json":
+                    # TODO Unify printing tools
+                    print(update_json)
+                else:
+                    # TODO Unify printing tools
+                    print("Project is up-to-date!")
+            return 0
 
         return _handle_exceptions(inner)
