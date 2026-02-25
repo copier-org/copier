@@ -70,19 +70,18 @@ from plumbum import cli, colors
 from ._main import get_update_data, run_copy, run_recopy, run_update
 from ._tools import copier_version, try_enum
 from ._types import AnyByStrDict, VcsRef
-from .errors import SubprojectOutdatedError, UnsafeTemplateError, UserMessageError
+from .errors import UnsafeTemplateError, UserMessageError
 
 
-def _handle_exceptions(method: Callable[[], None]) -> int:
-    """Handle keyboard interruption while running a method."""
+def _handle_exceptions(method: Callable[[], int | None]) -> int:
+    """Handle exceptions while running a method."""
     try:
         try:
-            method()
+            exit_code = method()
+            if exit_code is not None:
+                return exit_code
         except KeyboardInterrupt:
             raise UserMessageError("Execution stopped by user")
-    except SubprojectOutdatedError as error:
-        print(colors.red | "\n".join(error.args), file=sys.stderr)
-        return 1
     except UserMessageError as error:
         print(colors.red | error.message, file=sys.stderr)
         return 1
@@ -479,7 +478,7 @@ class CopierCheckUpdateSubApp(_Subcommand):
                 working directory is used.
         """
 
-        def inner() -> None:
+        def inner() -> int:
             update_available, current_version, latest_version = get_update_data(
                 dst_path=destination_path,
                 use_prereleases=self.prereleases,
@@ -495,22 +494,24 @@ class CopierCheckUpdateSubApp(_Subcommand):
 
             if update_available:
                 if self.quiet:
-                    raise SubprojectOutdatedError()
+                    return 2
                 else:
                     if self.output_format == "json":
                         # TODO Unify printing tools
                         print(update_json, file=sys.stdout)
-                    raise SubprojectOutdatedError(
-                        "New template version available.\n"
-                        f"Current version is {current_version}, "
-                        f"latest version is {latest_version}."
-                    )
+                    else:
+                        print(
+                            "New template version available.\n"
+                            f"Current version is {current_version}, "
+                            f"latest version is {latest_version}."
+                        )
             elif not self.quiet:
                 if self.output_format == "json":
                     # TODO Unify printing tools
                     print(update_json, file=sys.stdout)
                 else:
                     # TODO Unify printing tools
-                    print("Project is up-to-date!", file=sys.stderr)
+                    print("Project is up-to-date!", file=sys.stdout)
+            return 0
 
         return _handle_exceptions(inner)
