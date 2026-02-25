@@ -1,11 +1,11 @@
 {
-  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.15.0/.schema/devbox.schema.json",
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.16.0/.schema/devbox.schema.json",
   "packages": [
-    "difftastic@0.64.0",
-    "editorconfig-checker@3.3.0",
-    "git@2.50.0",
+    "difftastic@0.67.0",
+    "editorconfig-checker@3.6.1",
+    "git@2.52.0",
     "nodePackages.prettier@3.3.3",
-    "uv@0.7.21"
+    "uv@0.10.2"
   ],
   "env": {
     "GIT_EXTERNAL_DIFF": "difft"

@@ -5,13 +5,13 @@ from __future__ import annotations
 import re
 import sys
 from collections import ChainMap, defaultdict
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from contextlib import suppress
 from dataclasses import field
 from functools import cached_property
 from pathlib import Path, PurePosixPath
 from shutil import rmtree
-from typing import Any, Callable, Literal, Optional
+from typing import Any, Literal
 from warnings import warn
 
 import dunamai
@@ -99,7 +99,9 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
         if PurePosixPath(include_file).is_absolute():
             raise ValueError("YAML include file path must be a relative path")
         return [
-            yaml.load(path.read_bytes(), Loader=type(loader))
+            lflatten(
+                filter(None, yaml.load_all(path.read_bytes(), Loader=type(loader)))
+            )
             for path in conf_path.parent.glob(include_file)
         ]
 
@@ -487,7 +489,7 @@ class Template:
 
     def question_by_answer_key(
         self, answer_key: str, *filters: Callable[[AnyByStrDict], bool]
-    ) -> Optional[AnyByStrDict]:
+    ) -> AnyByStrDict | None:
         """Get a question by its answer key.
 
         Args:
@@ -499,7 +501,7 @@ class Template:
         """
         answer_paths = parse_dpath_path(answer_key)
         questions = self.questions_data
-        q: Optional[AnyByStrDict] = None
+        q: AnyByStrDict | None = None
         for i, p in enumerate(answer_paths):
             if i == 0:
                 if p not in questions:

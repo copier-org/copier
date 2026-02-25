@@ -4,23 +4,26 @@ from __future__ import annotations
 
 import os
 import platform
+import stat
 import subprocess
 import sys
-from collections.abc import Iterable, Mapping, Sequence
+import warnings
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from contextlib import suppress
 from contextvars import ContextVar
 from dataclasses import field, replace
 from filecmp import dircmp
 from functools import cached_property, partial, wraps
 from itertools import chain
-from pathlib import Path
+from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
 from shutil import rmtree
 from tempfile import TemporaryDirectory
 from types import TracebackType
 from typing import (
     Any,
-    Callable,
+    Final,
     Literal,
+    ParamSpec,
     TypeVar,
     get_args,
     overload,
@@ -28,7 +31,8 @@ from typing import (
 from unicodedata import normalize
 
 from jinja2.loaders import FileSystemLoader
-from pathspec import PathSpec
+from packaging.version import Version
+from pathspec import PathSpec, __version__ as pathspec_version
 from plumbum import ProcessExecutionError, colors
 from plumbum.machines import local
 from pydantic import ConfigDict, PositiveInt
@@ -37,6 +41,7 @@ from pydantic_core import to_jsonable_python
 from questionary import confirm
 
 from ._jinja_ext import YieldEnvironment, YieldExtension
+from ._settings import Settings, SettingsModel, is_trusted_repository
 from ._subproject import Subproject
 from ._template import Task, Template
 from ._tools import (
@@ -55,10 +60,8 @@ from ._types import (
     JSONSerializable,
     LazyDict,
     Operation,
-    ParamSpec,
     Phase,
     RelativePath,
-    StrOrPath,
     VcsRef,
     unflatten,
 )
@@ -66,18 +69,21 @@ from ._user_data import AnswersMap, GlobalState, QuestionNode, load_answersfile_
 from ._vcs import get_git
 from .errors import (
     ExtensionNotFoundError,
+    ForbiddenPathError,
     InteractiveSessionError,
     TaskError,
     UnsafeTemplateError,
     UserMessageError,
     YieldTagInFileError,
 )
-from .settings import Settings
 
 _T = TypeVar("_T")
 _P = ParamSpec("_P")
 
 _operation: ContextVar[Operation] = ContextVar("_operation")
+_pathspec_pattern: Final = (
+    "gitignore" if Version(pathspec_version) >= Version("1.0.0") else "gitwildmatch"
+)
 
 
 def as_operation(value: Operation) -> Callable[[Callable[_P, _T]], Callable[_P, _T]]:
@@ -111,9 +117,9 @@ class Worker:
 
     Then, execute one of its main methods, which are prefixed with `run_`:
 
-    -   [run_copy][copier.main.Worker.run_copy] to copy a subproject.
-    -   [run_recopy][copier.main.Worker.run_recopy] to recopy a subproject.
-    -   [run_update][copier.main.Worker.run_update] to update a subproject.
+    -   [run_copy][copier.run_copy] to copy a subproject.
+    -   [run_recopy][copier.run_recopy] to recopy a subproject.
+    -   [run_update][copier.run_update] to update a subproject.
 
     Example:
         ```python
@@ -170,12 +176,14 @@ class Worker:
             See [cleanup_on_error][].
 
         defaults:
-            When `True`, use default answers to questions, which might be null if not specified.
+            When `True`, use default answers to questions, which might be null if not
+            specified.
 
             See [defaults][].
 
         user_defaults:
-            Specify user defaults that may override a template's defaults during question prompts.
+            Specify user defaults that may override a template's defaults during
+            question prompts.
 
         overwrite:
             When `True`, Overwrite files that already exist, without asking.
@@ -224,7 +232,7 @@ class Worker:
     answers_file: RelativePath | None = None
     vcs_ref: str | VcsRef | None = None
     data: AnyByStrDict = field(default_factory=dict)
-    settings: Settings = field(default_factory=Settings.from_file)
+    settings: SettingsModel = field(default_factory=SettingsModel.from_file)
     exclude: Sequence[str] = ()
     use_prereleases: bool = False
     skip_if_exists: Sequence[str] = ()
@@ -278,7 +286,7 @@ class Worker:
 
     def _check_unsafe(self, mode: Operation) -> None:
         """Check whether a template uses unsafe features."""
-        if self.unsafe or self.settings.is_trusted(self.template.url):
+        if self.unsafe or is_trusted_repository(self.settings.trust, self.template.url):
             return
         features: set[str] = set()
         if self.template.jinja_extensions:
@@ -386,7 +394,8 @@ class Worker:
                 continue
 
             working_directory = (
-                # We can't use _render_path here, as that function has special handling for files in the template
+                # We can't use _render_path here, as that function has special handling
+                # for files in the template
                 self.subproject.local_abspath
                 / Path(self._render_string(str(task.working_directory), extra_context))
             ).absolute()
@@ -401,9 +410,9 @@ class Worker:
         """Produce render context for Jinja."""
         conf = LazyDict(
             {
-                "src_path": lambda: self.template.local_abspath,
-                "dst_path": lambda: self.dst_path,
-                "answers_file": lambda: self.answers_relpath,
+                "src_path": lambda: PurePath(self.template.local_abspath),
+                "dst_path": lambda: PurePath(self.dst_path),
+                "answers_file": lambda: PurePath(self.answers_relpath),
                 "vcs_ref": lambda: self.resolved_vcs_ref,
                 "vcs_ref_hash": lambda: self.template.commit_hash,
                 "data": lambda: self.data,
@@ -440,7 +449,7 @@ class Worker:
         """Produce a function that matches against specified patterns."""
         # TODO Is normalization really needed?
         normalized_patterns = (normalize("NFD", pattern) for pattern in patterns)
-        spec = PathSpec.from_lines("gitwildmatch", normalized_patterns)
+        spec = PathSpec.from_lines(_pathspec_pattern, normalized_patterns)
         return spec.match_file
 
     def _solve_render_conflict(self, dst_relpath: Path) -> bool:
@@ -590,6 +599,11 @@ class Worker:
         return self.template.exclude + tuple(self.exclude)
 
     @cached_property
+    def all_skip_if_exists(self) -> Sequence[str]:
+        """Combine default and template skip-if-exists patterns."""
+        return tuple(chain(self.skip_if_exists, self.template.skip_if_exists))
+
+    @cached_property
     def jinja_env(self) -> YieldEnvironment:
         """Return a pre-configured Jinja environment.
 
@@ -612,26 +626,31 @@ class Worker:
                 "Make sure to install these extensions alongside Copier itself.\n"
                 "See the docs at https://copier.readthedocs.io/en/latest/configuring/#jinja_extensions"
             )
+
+        def to_json_fallback(value: Any) -> Any:
+            if isinstance(value, LazyDict):
+                return dict(value)
+            if isinstance(value, PurePath):
+                return str(value)
+            return value
+
         # patch the `to_json` filter to support Pydantic dataclasses
         env.filters["to_json"] = partial(
             env.filters["to_json"],
-            default=partial(
-                to_jsonable_python,
-                fallback=lambda v: dict(v) if isinstance(v, LazyDict) else v,
-            ),
+            default=partial(to_jsonable_python, fallback=to_json_fallback),
         )
 
         # Add a global function to join filesystem paths.
-        separators = {
-            "posix": "/",
-            "windows": "\\",
-            "native": os.path.sep,
+        path_type = {
+            "posix": PurePosixPath,
+            "windows": PureWindowsPath,
+            "native": PurePath,
         }
 
         def _pathjoin(
             *path: str, mode: Literal["posix", "windows", "native"] = "posix"
         ) -> str:
-            return separators[mode].join(path)
+            return str(path_type[mode](*path))
 
         env.globals["pathjoin"] = _pathjoin
         return env
@@ -651,23 +670,45 @@ class Worker:
     @cached_property
     def match_skip(self) -> Callable[[Path], bool]:
         """Get a callable to match paths against all skip-if-exists patterns."""
-        return self._path_matcher(
-            map(
-                self._render_string,
-                tuple(chain(self.skip_if_exists, self.template.skip_if_exists)),
-            )
-        )
+        return self._path_matcher(map(self._render_string, self.all_skip_if_exists))
 
     def _render_template(self) -> None:
         """Render the template in the subproject root."""
         follow_symlinks = not self.template.preserve_symlinks
+        dst_root = self.dst_path.resolve()
         for src in scantree(str(self.template_copy_root), follow_symlinks):
             src_abspath = Path(src.path)
+            # If the source is a symlink, we are not preserving symlinks, and the
+            # symlink target is outside the template root, this means that we are
+            # copying a file/directory from outside the template, which is
+            # forbidden, so raise an error.
+            if (
+                src_abspath.is_symlink()
+                and not self.template.preserve_symlinks
+                and not (src_abspath.resolve()).is_relative_to(
+                    self.template.local_abspath
+                )
+            ):
+                raise ForbiddenPathError(
+                    path=src_abspath.relative_to(self.template_copy_root)
+                )
             src_relpath = Path(src_abspath).relative_to(self.template.local_abspath)
             dst_relpaths_ctxs = self._render_path(
                 Path(src_abspath).relative_to(self.template_copy_root)
             )
             for dst_relpath, ctx in dst_relpaths_ctxs:
+                dst_abspath = dst_root / dst_relpath
+                if dst_abspath.is_symlink() and self.template.preserve_symlinks:
+                    # If destination path is a symlink, it can safely point outside the
+                    # subproject dir, while still itself existing within the subproject.
+                    # (So long as nothing is templated into it (if it is a directory),
+                    # which would be caught by that path's own check.)
+                    # Therefore avoid resolving the symlink itself:
+                    dst_realpath = dst_abspath.parent.resolve() / dst_abspath.name
+                else:
+                    dst_realpath = dst_abspath.resolve()
+                if not dst_realpath.is_relative_to(dst_root):
+                    raise ForbiddenPathError(path=dst_relpath)
                 if self.match_exclude(dst_relpath):
                     continue
                 if src.is_symlink() and self.template.preserve_symlinks:
@@ -677,7 +718,7 @@ class Worker:
                 else:
                     self._render_file(src_relpath, dst_relpath, extra_context=ctx or {})
 
-    def _render_file(
+    def _render_file(  # noqa: C901
         self,
         src_relpath: Path,
         dst_relpath: Path,
@@ -729,7 +770,17 @@ class Worker:
                 # replace a symlink with a file we have to unlink it first
                 dst_abspath.unlink()
             dst_abspath.write_bytes(new_content)
-            dst_abspath.chmod(src_mode)
+            if (dst_mode := dst_abspath.stat().st_mode) != src_mode:
+                try:
+                    dst_abspath.chmod(src_mode)
+                except PermissionError:
+                    # In some filesystems (e.g., gcsfuse), `chmod` is not allowed,
+                    # so we suppress the `PermissionError` here.
+                    warnings.warn(
+                        f"Path permissions for {dst_abspath} cannot be changed from "
+                        f"{stat.filemode(dst_mode)} to {stat.filemode(src_mode)}",
+                        stacklevel=2,
+                    )
 
     def _render_symlink(self, src_relpath: Path, dst_relpath: Path) -> None:
         """Render one symlink.
@@ -811,7 +862,8 @@ class Worker:
     ) -> Iterable[tuple[Path, AnyByStrDict | None]]:
         """Render a set of parts into path and context pairs.
 
-        If a yield tag is found in a part, it will recursively yield multiple path and context pairs.
+        If a yield tag is found in a part, it will recursively yield multiple path and
+        context pairs.
         """
         if rendered_parts is None:
             rendered_parts = tuple()
@@ -834,7 +886,8 @@ class Worker:
         if not extra_context:
             extra_context = {}
 
-        # If the `part` has a yield tag, `self.jinja_env` will be set with the yield name and iterable
+        # If the `part` has a yield tag, `self.jinja_env` will be set with the yield
+        # name and iterable
         rendered_part = self._render_string(part, extra_context=extra_context)
 
         yield_name = self.jinja_env.yield_name
@@ -1106,6 +1159,10 @@ class Worker:
                 quiet=True,
                 src_path=self.subproject.template.url,  # type: ignore[union-attr]
                 vcs_ref=self.subproject.template.commit,  # type: ignore[union-attr]
+                # Exclude also paths listed in the new template version, so they
+                # won't be included in the diff as deleted paths to prevent deletion.
+                # https://github.com/orgs/copier-org/discussions/2345
+                exclude=[*self.template.exclude, *self.exclude],
             ) as old_worker:
                 old_worker.run_copy()
             # Run pre-migration tasks
@@ -1135,20 +1192,13 @@ class Worker:
                 ).splitlines()
                 exclude_plus_removed = list(
                     set(self.exclude).union(
-                        map(
-                            escape_git_path,
-                            map(
-                                normalize_git_path,
-                                (
-                                    path
-                                    for path in files_removed
-                                    if not self.match_skip(path)
-                                ),
-                            ),
-                        )
+                        f"/{escape_git_path(path)}"
+                        for path in map(normalize_git_path, files_removed)
+                        if not self.match_skip(Path(path))
                     )
                 )
-            # Clear last answers cache to load possible answers migration, if skip_answered flag is not set
+            # Clear last answers cache to load possible answers migration, if
+            # skip_answered flag is not set
             if self.skip_answered is False:
                 self.answers = AnswersMap(external=self._external_data())
                 with suppress(AttributeError):
@@ -1174,7 +1224,10 @@ class Worker:
                 data={
                     k: v
                     for k, v in self.answers.combined.items()
-                    if k not in self.answers.hidden
+                    if not k.startswith("_")
+                    and k not in self.answers.hidden
+                    and isinstance(k, JSONSerializable)
+                    and isinstance(v, JSONSerializable)
                 },
                 defaults=True,
                 quiet=True,
@@ -1219,6 +1272,24 @@ class Worker:
                     "HEAD",
                     subproject_head,
                 ]
+                # Get the list of modified files in the subproject directory
+                # that match the skip-if-exists patterns. These are relative
+                # paths anchored at the Git repo root because they will be used
+                # with `git apply --exclude` later, which expects paths relative
+                # to the repo root. Importantly, the skip-if-exists patterns
+                # are anchored at the subproject root, which may be a
+                # subdirectory of the Git repo, so we need to relativize the
+                # paths accordingly for pattern matching.
+                skip_if_exists_files = [
+                    escape_git_path(f)
+                    for f in map(
+                        normalize_git_path,
+                        diff_cmd(
+                            "-r", "--no-commit-id", "--name-only", subproject_subdir
+                        ).splitlines(),
+                    )
+                    if self.match_skip(Path(f).relative_to(subproject_subdir))
+                ]
                 try:
                     diff = diff_cmd("--inter-hunk-context=-1")
                 except ProcessExecutionError:
@@ -1231,18 +1302,22 @@ class Worker:
             compared = dircmp(old_copy, new_copy)
             # Try to apply cached diff into final destination
             with local.cwd(subproject_top):
-                apply_cmd = git["apply", "--reject", "--exclude", self.answers_relpath]
+                apply_cmd = git[
+                    "apply",
+                    "--reject",
+                    "--exclude",
+                    subproject_subdir / self.answers_relpath,
+                ]
+                # Exclude modified files that match the skip-if-exists patterns
+                # to exclude them from the patch application.
+                for filename in skip_if_exists_files:
+                    apply_cmd = apply_cmd["--exclude", filename]
                 ignored_files = git["status", "--ignored", "--porcelain"]()
                 # returns "!! file1\n !! file2\n"
-                # extra_exclude will contain: ["file1", file2"]
-                extra_exclude = [
-                    filename.split("!! ").pop()
-                    for filename in ignored_files.splitlines()
-                ]
-                for skip_pattern in chain(
-                    self.skip_if_exists, self.template.skip_if_exists, extra_exclude
-                ):
-                    apply_cmd = apply_cmd["--exclude", skip_pattern]
+                # adds `--exclude file1 --exclude file2` to `git apply` command
+                for filename in ignored_files.splitlines():
+                    if filename.startswith("!! "):
+                        apply_cmd = apply_cmd["--exclude", filename[3:]]
                 (apply_cmd << diff)(retcode=None)
                 if self.conflict == "inline":
                     conflicted = []
@@ -1263,7 +1338,15 @@ class Worker:
                         # Remove ".rej" suffix
                         fname = fname[:-4]
                         # Undo possible non-rejected chunks
-                        git("checkout", "--", fname)
+                        git(
+                            # Ignore hooks to avoid errors from them or
+                            # issues when .pre-commit-config.yaml is changed
+                            "-c",
+                            f"core.hooksPath={os.devnull}",
+                            "checkout",
+                            "--",
+                            fname,
+                        )
                         # 3-way-merge the file directly
                         git(
                             "merge-file",
@@ -1282,7 +1365,8 @@ class Worker:
                         Path(f"{fname}.rej").unlink()
                         # The 3-way merge might have resolved conflicts automatically,
                         # so we need to check if the file contains conflict markers
-                        # before storing the file name for marking it as unmerged after the loop.
+                        # before storing the file name for marking it as unmerged after
+                        # the loop.
                         with Path(fname).open("rb") as conflicts_candidate:
                             if any(
                                 line.rstrip()
@@ -1295,9 +1379,12 @@ class Worker:
                                 conflicted.append(fname)
                     # We ran `git merge-file` outside of a regular merge operation,
                     # which means no merge conflict is recorded in the index.
-                    # Only the usual stage 0 is recorded, with the hash of the current version.
+                    # Only the usual stage 0 is recorded, with the hash of the current
+                    # version.
                     # We therefore update the index with the missing stages:
-                    # 1 = current (before updating), 2 = base (last update), 3 = other (after updating).
+                    # 1 = current (before updating)
+                    # 2 = base (last update)
+                    # 3 = other (after updating)
                     # See this SO post: https://stackoverflow.com/questions/79309642/
                     # and Git docs: https://git-scm.com/docs/git-update-index#_using_index_info.
                     if conflicted:
@@ -1371,53 +1458,160 @@ class Worker:
 
 def run_copy(
     src_path: str,
-    dst_path: StrOrPath = ".",
-    data: AnyByStrDict | None = None,
-    **kwargs: Any,
+    dst_path: Path | str = ".",
+    data: dict[str, Any] | None = None,
+    *,
+    answers_file: Path | str | None = None,
+    vcs_ref: str | VcsRef | None = None,
+    settings: Settings | SettingsModel | None = None,
+    exclude: Sequence[str] = (),
+    use_prereleases: bool = False,
+    skip_if_exists: Sequence[str] = (),
+    cleanup_on_error: bool = True,
+    defaults: bool = False,
+    user_defaults: dict[str, Any] | None = None,
+    overwrite: bool = False,
+    pretend: bool = False,
+    quiet: bool = False,
+    unsafe: bool = False,
+    skip_tasks: bool = False,
 ) -> Worker:
-    """Copy a template to a destination, from zero.
-
-    This is a shortcut for [run_copy][copier.main.Worker.run_copy].
-
-    See [Worker][copier.main.Worker] fields to understand this function's args.
-    """
-    if data is not None:
-        kwargs["data"] = data
-    with Worker(src_path=src_path, dst_path=Path(dst_path), **kwargs) as worker:
+    """Copy a template to a destination, from zero."""
+    with Worker(
+        src_path=src_path,
+        dst_path=Path(dst_path),
+        data=data or {},
+        answers_file=(
+            RelativePath(answers_file)
+            if isinstance(answers_file, str)
+            else answers_file
+        ),
+        vcs_ref=vcs_ref,
+        settings=(
+            SettingsModel(defaults=settings.defaults, trust=settings.trust)
+            if isinstance(settings, Settings)
+            else (settings or SettingsModel.from_file())
+        ),
+        exclude=exclude,
+        use_prereleases=use_prereleases,
+        skip_if_exists=skip_if_exists,
+        cleanup_on_error=cleanup_on_error,
+        defaults=defaults,
+        user_defaults=user_defaults or {},
+        overwrite=overwrite,
+        pretend=pretend,
+        quiet=quiet,
+        unsafe=unsafe,
+        skip_tasks=skip_tasks,
+    ) as worker:
         worker.run_copy()
     return worker
 
 
 def run_recopy(
-    dst_path: StrOrPath = ".", data: AnyByStrDict | None = None, **kwargs: Any
+    dst_path: Path | str = ".",
+    data: dict[str, Any] | None = None,
+    *,
+    answers_file: Path | str | None = None,
+    vcs_ref: str | VcsRef | None = None,
+    settings: Settings | SettingsModel | None = None,
+    exclude: Sequence[str] = (),
+    use_prereleases: bool = False,
+    skip_if_exists: Sequence[str] = (),
+    cleanup_on_error: bool = True,
+    defaults: bool = False,
+    user_defaults: dict[str, Any] | None = None,
+    overwrite: bool = False,
+    pretend: bool = False,
+    quiet: bool = False,
+    unsafe: bool = False,
+    skip_answered: bool = False,
+    skip_tasks: bool = False,
 ) -> Worker:
-    """Update a subproject from its template, discarding subproject evolution.
-
-    This is a shortcut for [run_recopy][copier.main.Worker.run_recopy].
-
-    See [Worker][copier.main.Worker] fields to understand this function's args.
-    """
-    if data is not None:
-        kwargs["data"] = data
-    with Worker(dst_path=Path(dst_path), **kwargs) as worker:
+    """Update a subproject from its template, discarding subproject evolution."""
+    with Worker(
+        dst_path=Path(dst_path),
+        data=data or {},
+        answers_file=(
+            RelativePath(answers_file)
+            if isinstance(answers_file, str)
+            else answers_file
+        ),
+        vcs_ref=vcs_ref,
+        settings=(
+            SettingsModel(defaults=settings.defaults, trust=settings.trust)
+            if isinstance(settings, Settings)
+            else (settings or SettingsModel.from_file())
+        ),
+        exclude=exclude,
+        use_prereleases=use_prereleases,
+        skip_if_exists=skip_if_exists,
+        cleanup_on_error=cleanup_on_error,
+        defaults=defaults,
+        user_defaults=user_defaults or {},
+        overwrite=overwrite,
+        pretend=pretend,
+        quiet=quiet,
+        unsafe=unsafe,
+        skip_answered=skip_answered,
+        skip_tasks=skip_tasks,
+    ) as worker:
         worker.run_recopy()
     return worker
 
 
 def run_update(
-    dst_path: StrOrPath = ".",
-    data: AnyByStrDict | None = None,
-    **kwargs: Any,
+    dst_path: Path | str = ".",
+    data: dict[str, Any] | None = None,
+    *,
+    answers_file: Path | str | None = None,
+    vcs_ref: str | VcsRef | None = None,
+    settings: Settings | SettingsModel | None = None,
+    exclude: Sequence[str] = (),
+    use_prereleases: bool = False,
+    skip_if_exists: Sequence[str] = (),
+    cleanup_on_error: bool = True,
+    defaults: bool = False,
+    user_defaults: dict[str, Any] | None = None,
+    overwrite: bool = False,
+    pretend: bool = False,
+    quiet: bool = False,
+    conflict: Literal["inline", "rej"] = "inline",
+    context_lines: PositiveInt = 3,
+    unsafe: bool = False,
+    skip_answered: bool = False,
+    skip_tasks: bool = False,
 ) -> Worker:
-    """Update a subproject, from its template.
-
-    This is a shortcut for [run_update][copier.main.Worker.run_update].
-
-    See [Worker][copier.main.Worker] fields to understand this function's args.
-    """
-    if data is not None:
-        kwargs["data"] = data
-    with Worker(dst_path=Path(dst_path), **kwargs) as worker:
+    """Update a subproject, from its template."""
+    with Worker(
+        dst_path=Path(dst_path),
+        data=data or {},
+        answers_file=(
+            RelativePath(answers_file)
+            if isinstance(answers_file, str)
+            else answers_file
+        ),
+        vcs_ref=vcs_ref,
+        settings=(
+            SettingsModel(defaults=settings.defaults, trust=settings.trust)
+            if isinstance(settings, Settings)
+            else (settings or SettingsModel.from_file())
+        ),
+        exclude=exclude,
+        use_prereleases=use_prereleases,
+        skip_if_exists=skip_if_exists,
+        cleanup_on_error=cleanup_on_error,
+        defaults=defaults,
+        user_defaults=user_defaults or {},
+        overwrite=overwrite,
+        pretend=pretend,
+        quiet=quiet,
+        conflict=conflict,
+        context_lines=context_lines,
+        unsafe=unsafe,
+        skip_answered=skip_answered,
+        skip_tasks=skip_tasks,
+    ) as worker:
         worker.run_update()
     return worker
 

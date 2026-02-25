@@ -320,7 +320,8 @@ def test_migration_run_before(tmp_path_factory: pytest.TempPathFactory) -> None:
         build_file_tree(
             {
                 **COPIER_ANSWERS_FILE,
-                # We replace an answer in the before step, so it will be used during update
+                # We replace an answer in the before step, so it will be used during
+                # update
                 "copier.yml": (
                     """
                     hello:

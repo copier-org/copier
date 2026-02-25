@@ -4,6 +4,124 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.12.0 (2026-02-21)
+
+### Feat
+
+-   add new settings API with minimal surface
+-   re-export `Phase` enum at package level
+
+### Fix
+
+-   **updating**: apply skip-if-exists patterns as gitignore-style at subproject root in
+    update algorithm
+-   **updating**: anchor removed file paths to project root in update algorithm
+-   **updating**: normalize user-deleted paths before skip-if-exists pattern matching
+    during updates
+
+### Refactor
+
+-   **typing**: use builtin types in public API signatures
+-   deprecate public `settings` module and its symbols
+-   replace `**kwargs` with explicit parameters in `run_{copy,recopy,update}` functions
+
+## v9.11.3 (2026-01-23)
+
+### Fix
+
+-   **updating**: include non-question answers when generating fresh copy of new
+    template
+-   **updating**: ignore Git hooks on internal checkout before 3-way merging file with
+    conflicts (#2432)
+-   avoid pattern deprecation warning for `pathspec` v1.0.0+
+
+## v9.11.2 (2026-01-20)
+
+### Fix
+
+-   **updating**: restore support for preserved symlinks pointing outside subproject
+    (#2427)
+
+### Security
+
+-   disallow symlink-based includes outside template root
+-   disallow symlink-following write operations outside destination directory (#2427)
+
+## v9.11.1 (2026-01-10)
+
+### Fix
+
+-   **updating**: avoid circular reference when rendering JSON-serialized `_copier_conf`
+    variable
+
+## v9.11.0 (2025-11-20)
+
+### Feat
+
+-   **updating**: allow updating a dirty Git repository when the subproject directory is
+    clean (#2369)
+-   add support for custom question icons (#2381)
+-   add support for conditionally unsetting a question's default value
+
+### Fix
+
+-   raise warning instead of error when `chmod` is not allowed
+-   fix using default answers from settings for required questions (#2374)
+
+### Refactor
+
+-   drop support for Python 3.9
+
+## v9.10.3 (2025-10-17)
+
+### Fix
+
+-   **updating**: render templated skip-if-exists patterns before applying patch with
+    excluded paths
+-   **updating**: exclude only Git-ignored files when applying patch
+-   **updating**: ignore paths added to the `_exclude` list in new template version when
+    updating
+
+## v9.10.2 (2025-09-09)
+
+### Fix
+
+-   **deps**: remove prompt-toolkit version cap
+
+## v9.10.1 (2025-08-28)
+
+### Fix
+
+-   **deps**: cap prompt-toolkit to <3.0.52
+
+## v9.10.0 (2025-08-26)
+
+### Feat
+
+-   add support for nested multi-document includes in `copier.yml` (#2251)
+
+### Fix
+
+-   disable default answer validator for secret questions
+
+## v9.9.1 (2025-08-18)
+
+### Security
+
+-   disallow render paths outside destination directory
+-   cast Jinja context path variables to `pathlib.PurePath`
+
+## v9.9.0 (2025-08-01)
+
+### Feat
+
+-   add support for prompting filesystem paths (#2210)
+
+### Fix
+
+-   **updating**: disable secret question validator when replaying old copy
+-   **vcs**: fix cloning local dirty template repo when `core.fsmonitor=true` (#2151)
+
 ## v9.8.0 (2025-07-07)
 
 ### Feat

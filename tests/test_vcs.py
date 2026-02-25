@@ -1,20 +1,20 @@
 import os
 import shutil
-from collections.abc import Iterator, Sequence
+from collections.abc import Callable, Iterator, Sequence
 from pathlib import Path
-from typing import Callable
 
 import pytest
 from packaging.version import Version
 from plumbum import local
+from pytest_gitconfig.plugin import GitConfig
 
 from copier import run_copy, run_update
 from copier._main import Worker
 from copier._user_data import load_answersfile_data
 from copier._vcs import checkout_latest_tag, clone, get_git_version, get_repo
-from copier.errors import ShallowCloneWarning
+from copier.errors import DirtyLocalWarning, ShallowCloneWarning
 
-from .helpers import git
+from .helpers import build_file_tree, git, git_save
 
 
 def test_get_repo() -> None:
@@ -88,10 +88,37 @@ def test_local_clone() -> None:
     shutil.rmtree(local_tmp, ignore_errors=True)
 
 
+def test_local_dirty_clone(
+    tmp_path_factory: pytest.TempPathFactory, gitconfig: GitConfig
+) -> None:
+    """
+    When core.fsmonitor is enabled, normal `git checkout` command won't works.
+    """
+
+    gitconfig.set({"core.fsmonitor": "true"})
+    src = tmp_path_factory.mktemp("src")
+    print(src)
+
+    build_file_tree({src / "version.txt": "0.1.0"})
+    git_save(src)
+
+    build_file_tree({src / "version.txt": "0.2.0", src / "README.md": "hello world"})
+
+    with pytest.warns(DirtyLocalWarning):
+        local_tmp = clone(str(src))
+
+    assert local_tmp
+    assert Path(local_tmp, "version.txt").exists()
+    assert Path(local_tmp, "version.txt").read_text() == "0.2.0"
+    assert Path(local_tmp, "README.md").exists()
+    assert Path(local_tmp, "README.md").read_text() == "hello world"
+    shutil.rmtree(local_tmp, ignore_errors=True)
+
+
 @pytest.mark.impure
 def test_shallow_clone(tmp_path: Path, recwarn: pytest.WarningsRecorder) -> None:
-    # This test should always work but should be much slower if `is_git_shallow_repo()` is not
-    # checked in `clone()`.
+    # This test should always work but should be much slower if `is_git_shallow_repo()`
+    # is not checked in `clone()`.
     src_path = str(tmp_path / "autopretty")
     git("clone", "--depth=2", "https://github.com/copier-org/autopretty.git", src_path)
     assert Path(src_path, "README.md").exists()
@@ -138,7 +165,8 @@ def test_update_using_local_source_path_with_tilde(tmp_path: Path) -> None:
 
     # then prepare the user path to this clone (starting with ~)
     if os.name == "nt":
-        # in GitHub CI, the user in the temporary path is not the same as the current user:
+        # in GitHub CI, the user in the temporary path is not the same as the current
+        # user:
         # ["C:\\", "Users", "RUNNER~X"] vs. runneradmin
         user = Path(src_path).parts[2]
         user_src_path = str(Path("~", "..", user, *Path(src_path).parts[3:]))

@@ -176,7 +176,7 @@ If the repository containing the template is a shallow clone, the git process ca
 Copier might consume unusually high resources. To avoid that, use a fully-cloned
 repository.
 
-## While developing, why the template doesn't include dirty changes?
+## While developing, why doesn't the template include dirty changes?
 
 Copier follows [a specific algorithm][templates-versions] to choose what reference to
 use from the template. It also [includes dirty changes in the `HEAD` ref while
@@ -218,7 +218,7 @@ Copier skips its autodetection and just goes for the `HEAD` you already chose.
 ## How to pass credentials to Git?
 
 If you do something like this, and the template supports updates, you'll notice that the
-credentials will end up stored in [the answers file][file][the-copier-answersyml-file]:
+credentials will end up stored in [the answers file][the-copier-answersyml-file]:
 
 ```shell
 copier copy https://myuser:example.com/repo.git .

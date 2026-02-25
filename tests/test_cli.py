@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import subprocess
 import sys
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from pathlib import Path
-from typing import Callable
 
 import pytest
 import yaml
@@ -343,11 +342,7 @@ def test_read_utf_data_file(
     with monkeypatch.context() as m:
         # Override the factor that determine the default encoding when opening files.
         # data.yml should be read correctly regardless of this value.
-        if sys.version_info >= (3, 10):
-            m.setattr("io.text_encoding", lambda *_args: "cp932")
-        else:
-            m.setattr("_bootlocale.getpreferredencoding", lambda *_args: "cp932")
-
+        m.setattr("io.text_encoding", lambda *_args: "cp932")
         run_result = CopierApp.run(
             [
                 "copier",

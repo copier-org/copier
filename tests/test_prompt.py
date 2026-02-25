@@ -5,11 +5,12 @@ import subprocess
 import sys
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Protocol, Union
+from typing import Any, Protocol, TypeAlias
 
 import pexpect
 import pytest
 import yaml
+from coverage.tracer import CTracer
 from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
 
@@ -28,12 +29,6 @@ from .helpers import (
     git,
     git_save,
 )
-
-if sys.version_info < (3, 10):
-    from typing_extensions import TypeAlias
-else:
-    from typing import TypeAlias
-
 
 MARIO_TREE: Mapping[StrOrPath, str | bytes] = {
     "copier.yml": (
@@ -89,6 +84,23 @@ MARIO_TREE_WITH_NEW_FIELD: Mapping[StrOrPath, str | bytes] = {
     "[[ _copier_conf.answers_file ]].tmpl": "[[_copier_answers|to_nice_yaml]]",
 }
 
+PATH_TREE: Mapping[StrOrPath, str | bytes] = {
+    "copier.yml": (
+        f"""\
+        _templates_suffix: {SUFFIX_TMPL}
+        _envops: {BRACKET_ENVOPS_JSON}
+        current_location:
+            type: path
+            default: /dev/warppipe0
+
+        star_location:
+            type: path
+            help: "Location of a bonus star"
+        """
+    ),
+    "[[ _copier_conf.answers_file ]].tmpl": "[[_copier_answers|to_nice_yaml]]",
+}
+
 
 @pytest.mark.parametrize(
     "name, args",
@@ -103,6 +115,7 @@ def test_copy_default_advertised(
     spawn: Spawn,
     name: str,
     args: tuple[str, ...],
+    spawn_timeout: int,
 ) -> None:
     """Test that the questions for the user are OK"""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -114,7 +127,8 @@ def test_copy_default_advertised(
     with local.cwd(dst):
         # Copy the v1 template
         tui = spawn(
-            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1") + args, timeout=10
+            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1") + args,
+            timeout=spawn_timeout,
         )
         # Check what was captured
         expect_prompt(tui, "in_love", "bool")
@@ -138,7 +152,7 @@ def test_copy_default_advertised(
         # Update subproject
         git_save()
         assert load_answersfile_data(".").get("_commit") == "v1"
-        tui = spawn(COPIER_PATH + ("update",), timeout=30)
+        tui = spawn(COPIER_PATH + ("update",), timeout=spawn_timeout * 3)
         # Check what was captured
         expect_prompt(tui, "in_love", "bool")
         tui.expect_exact("(Y/n)")
@@ -156,6 +170,56 @@ def test_copy_default_advertised(
         assert load_answersfile_data(".").get("_commit") == "v2"
 
 
+@pytest.mark.skipif(
+    condition=platform.system() == "Windows",
+    reason="pexpect.spawn does not work on Windows",
+)
+def test_path_completion(
+    tmp_path_factory: pytest.TempPathFactory, spawn_timeout: int
+) -> None:
+    """Test that file paths can handle tab completion."""
+    from pexpect.pty_spawn import spawn as pexpect_spawn
+
+    src, dst, completedir = map(tmp_path_factory.mktemp, ("src", "dst", "my-directory"))
+    with local.cwd(src):
+        build_file_tree(PATH_TREE)
+        git_save(tag="v1")
+        git("commit", "--allow-empty", "-m", "v2")
+        git("tag", "v2")
+    with local.cwd(dst):
+        # Disable subprocess timeout if debugging (except coverage)
+        # See https://stackoverflow.com/a/67065084/1468388
+        tracer = getattr(sys, "gettrace", lambda: None)()
+        timeout = (
+            None
+            if not isinstance(tracer, (CTracer, type(None))) or spawn_timeout == 0
+            else spawn_timeout
+        )
+
+        # Copy the v1 template
+        cmd = COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1")
+        tui = pexpect_spawn(cmd[0], list(cmd[1:]), timeout=timeout)
+
+        # Check that default values are maintained
+        expect_prompt(tui, "current_location", "path")
+        tui.sendline()
+
+        # Check tab completion of a filesystem path (/path/to/my-direct<TAB> should
+        # complete to /path/to/my-directory0)
+        expect_prompt(tui, "star_location", "path", help="Location of a bonus star")
+        tui.send(str(completedir)[:-4])
+        tui.send(Keyboard.Tab)
+        tui.sendline()
+        tui.sendline()
+
+        tui.expect_exact(pexpect.EOF)
+
+        answers = load_answersfile_data(".")
+        assert answers.get("_commit") == "v1"
+        assert answers.get("current_location") == "/dev/warppipe0"
+        assert answers.get("star_location") == str(completedir)
+
+
 @pytest.mark.parametrize(
     "name, args",
     [
@@ -171,6 +235,7 @@ def test_update_skip_answered(
     name: str,
     update_action: str,
     args: tuple[str, ...],
+    spawn_timeout: int,
 ) -> None:
     """Test that the questions for the user are OK"""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -182,7 +247,8 @@ def test_update_skip_answered(
     with local.cwd(dst):
         # Copy the v1 template
         tui = spawn(
-            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1") + args, timeout=10
+            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1") + args,
+            timeout=spawn_timeout,
         )
         # Check what was captured
         expect_prompt(tui, "in_love", "bool")
@@ -211,7 +277,7 @@ def test_update_skip_answered(
                 update_action,
                 "--skip-answered",
             ),
-            timeout=30,
+            timeout=spawn_timeout * 3,
         )
         # Check what was captured
         expect_prompt(tui, "your_enemy", "str", help="Secret enemy name")
@@ -234,6 +300,7 @@ def test_update_with_new_field_in_new_version_skip_answered(
     spawn: Spawn,
     name: str,
     args: tuple[str, ...],
+    spawn_timeout: int,
 ) -> None:
     """Test that the questions for the user are OK"""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -245,7 +312,8 @@ def test_update_with_new_field_in_new_version_skip_answered(
     with local.cwd(dst):
         # Copy the v1 template
         tui = spawn(
-            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1") + args, timeout=10
+            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1") + args,
+            timeout=spawn_timeout,
         )
         # Check what was captured
         expect_prompt(tui, "in_love", "bool")
@@ -274,7 +342,7 @@ def test_update_with_new_field_in_new_version_skip_answered(
                 "update",
                 "-A",
             ),
-            timeout=30,
+            timeout=spawn_timeout * 3,
         )
         # Check what was captured
         expect_prompt(tui, "your_enemy", "str", help="Secret enemy name")
@@ -398,7 +466,7 @@ def test_when(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
     expect_prompt(tui, "question_1", type(question_1).__name__)
     tui.sendline()
     if asks:
@@ -472,7 +540,7 @@ def test_placeholder(tmp_path_factory: pytest.TempPathFactory, spawn: Spawn) -> 
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
     expect_prompt(tui, "question_1", "str")
     tui.expect_exact("answer 1")
     tui.sendline()
@@ -485,6 +553,91 @@ def test_placeholder(tmp_path_factory: pytest.TempPathFactory, spawn: Spawn) -> 
         "_src_path": str(src),
         "question_1": "answer 1",
         "question_2": "",
+    }
+
+
+def test_qmark(tmp_path_factory: pytest.TempPathFactory, spawn: Spawn) -> None:
+    """Test that custom qmark parameter is displayed for questions."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): yaml.dump(
+                {
+                    "_envops": BRACKET_ENVOPS,
+                    "_templates_suffix": SUFFIX_TMPL,
+                    "favorite_color": {
+                        "type": "str",
+                        "default": "blue",
+                        "qmark": "❤️",
+                    },
+                    "api_key": {
+                        "type": "str",
+                        "default": "secret123",
+                        "secret": True,
+                        "qmark": "🔐",
+                    },
+                },
+                sort_keys=False,
+            ),
+            (src / "[[ _copier_conf.answers_file ]].tmpl"): (
+                "[[ _copier_answers|to_nice_yaml ]]"
+            ),
+        }
+    )
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
+    tui.expect_exact("❤️")
+    tui.expect_exact("favorite_color")
+    tui.expect_exact("blue")
+    tui.sendline()
+    tui.expect_exact("🔐")
+    tui.expect_exact("api_key")
+    tui.sendline()
+    tui.expect_exact(pexpect.EOF)
+    answers = load_answersfile_data(dst)
+    assert answers == {
+        "_src_path": str(src),
+        "favorite_color": "blue",
+    }
+
+
+def test_qmark_default(tmp_path_factory: pytest.TempPathFactory, spawn: Spawn) -> None:
+    """Test that default qmark emojis are used when qmark is not specified."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): yaml.dump(
+                {
+                    "_envops": BRACKET_ENVOPS,
+                    "_templates_suffix": SUFFIX_TMPL,
+                    "name": {
+                        "type": "str",
+                        "default": "John",
+                    },
+                    "password": {
+                        "type": "str",
+                        "default": "secret",
+                        "secret": True,
+                    },
+                }
+            ),
+            (src / "[[ _copier_conf.answers_file ]].tmpl"): (
+                "[[ _copier_answers|to_nice_yaml ]]"
+            ),
+        }
+    )
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
+    tui.expect_exact("🎤")
+    tui.expect_exact("name")
+    tui.expect_exact("John")
+    tui.sendline()
+    tui.expect_exact("🕵️")
+    tui.expect_exact("password")
+    tui.sendline()
+    tui.expect_exact(pexpect.EOF)
+    answers = load_answersfile_data(dst)
+    assert answers == {
+        "_src_path": str(src),
+        "name": "John",
     }
 
 
@@ -517,7 +670,7 @@ def test_multiline(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
     expect_prompt(tui, "question_1", "str")
     tui.expect_exact("answer 1")
     tui.sendline()
@@ -592,7 +745,7 @@ def test_update_choice(
         git("commit", "-m one")
         git("tag", "v1")
     # Copy
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
     expect_prompt(tui, "pick_one", "float")
     tui.sendline(Keyboard.Up)
     tui.expect_exact(pexpect.EOF)
@@ -608,8 +761,7 @@ def test_update_choice(
         + (
             "update",
             str(dst),
-        ),
-        timeout=10,
+        )
     )
     expect_prompt(tui, "pick_one", "float")
     tui.sendline(Keyboard.Down)
@@ -653,7 +805,7 @@ def test_multiline_defaults(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
     expect_prompt(tui, "yaml_single", "yaml")
     # This test will always fail here, because python prompt toolkit gives
     # syntax highlighting to YAML and JSON outputs, encoded into terminal
@@ -698,7 +850,7 @@ def test_partial_interrupt(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
     expect_prompt(tui, "question_1", "str")
     tui.expect_exact("answer 1")
     # Answer the first question using the default.
@@ -738,7 +890,7 @@ def test_var_name_value_allowed(
         }
     )
     # Copy
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
     expect_prompt(tui, "value", "str")
     tui.expect_exact("string")
     tui.send(Keyboard.Alt + Keyboard.Enter)
@@ -779,7 +931,7 @@ def test_required_text_question(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
     expect_prompt(tui, "question", type_name)
     tui.expect_exact("")
     tui.sendline()
@@ -813,7 +965,7 @@ def test_required_bool_question(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
     expect_prompt(tui, "question", "bool")
     tui.expect_exact("(y/N)")
     tui.sendline()
@@ -860,7 +1012,7 @@ def test_required_choice_question(
             ),
         }
     )
-    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)), timeout=10)
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst)))
     expect_prompt(tui, "question", type_name)
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
@@ -872,7 +1024,7 @@ def test_required_choice_question(
 
 
 QuestionType: TypeAlias = str
-QuestionChoices: TypeAlias = Union[list[Any], dict[str, Any]]
+QuestionChoices: TypeAlias = list[Any] | dict[str, Any]
 ParsedValues: TypeAlias = list[Any]
 
 _CHOICES: dict[str, tuple[QuestionType, QuestionChoices, ParsedValues]] = {
@@ -937,7 +1089,7 @@ def test_multiselect_choices_question_single_answer(
     values: ParsedValues,
 ) -> None:
     src, dst = question_tree(type=type_name, choices=choices, multiselect=True)
-    tui = copier("copy", str(src), str(dst), timeout=10)
+    tui = copier("copy", str(src), str(dst))
     expect_prompt(tui, "question", type_name)
     tui.send(" ")  # select 1
     tui.sendline()
@@ -955,7 +1107,7 @@ def test_multiselect_choices_question_multiple_answers(
     values: ParsedValues,
 ) -> None:
     src, dst = question_tree(type=type_name, choices=choices, multiselect=True)
-    tui = copier("copy", str(src), str(dst), timeout=10)
+    tui = copier("copy", str(src), str(dst))
     expect_prompt(tui, "question", type_name)
     tui.send(" ")  # select 0
     tui.send(Keyboard.Down)
@@ -977,7 +1129,7 @@ def test_multiselect_choices_question_with_default(
     src, dst = question_tree(
         type=type_name, choices=choices, multiselect=True, default=values
     )
-    tui = copier("copy", str(src), str(dst), timeout=10)
+    tui = copier("copy", str(src), str(dst))
     expect_prompt(tui, "question", type_name)
     tui.send(" ")  # toggle first
     tui.sendline()
@@ -1006,7 +1158,7 @@ def test_update_multiselect_choices(
         git("tag", "v1")
 
     # Copy
-    tui = copier("copy", str(src), str(dst), timeout=10)
+    tui = copier("copy", str(src), str(dst))
     expect_prompt(tui, "question", type_name)
     tui.send(" ")  # toggle first
     tui.sendline()
@@ -1020,7 +1172,7 @@ def test_update_multiselect_choices(
         git("commit", "-m1")
 
     # Update
-    tui = copier("update", str(dst), timeout=10)
+    tui = copier("update", str(dst))
     expect_prompt(tui, "question", type_name)
     tui.send(" ")  # toggle first
     tui.sendline()
@@ -1040,7 +1192,7 @@ def test_multiselect_choices_validator(
         validator=("[%- if not question -%]At least one choice required[%- endif -%]"),
     )
 
-    tui = copier("copy", str(src), str(dst), timeout=10)
+    tui = copier("copy", str(src), str(dst))
     expect_prompt(tui, "question", "str")
     tui.sendline()
     tui.expect_exact("At least one choice required")
@@ -1051,11 +1203,11 @@ def test_multiselect_choices_validator(
     assert answers["question"] == ["one"]
 
 
+@pytest.mark.parametrize("default", ["s3cret", ""])
 def test_secret_validator(
-    question_tree: QuestionTreeFixture, copier: CopierFixture
+    question_tree: QuestionTreeFixture, copier: CopierFixture, default: str
 ) -> None:
     """Secret question answer is validated."""
-    default = "s3cret"
     src, dst = question_tree(
         type="str",
         default=default,
@@ -1063,15 +1215,15 @@ def test_secret_validator(
         validator="[% if question|length < 3 %]too short[% endif %]",
     )
 
-    tui = copier("copy", str(src), str(dst), timeout=10)
+    tui = copier("copy", str(src), str(dst))
     expect_prompt(tui, "question", "str")
     # Delete default value to fail validation
     for _ in range(len(default)):
         tui.send(Keyboard.Backspace)
     tui.sendline()
     tui.expect_exact("too short")
-    # Enter default value again to pass validation
-    tui.sendline(default)
+    # Enter the valid answer again to pass validation
+    tui.sendline("s3cret")
     tui.expect_exact("******")
     tui.expect_exact(pexpect.EOF)
 
@@ -1082,7 +1234,7 @@ def test_secret_validator(
     reason="prompt-toolkit in subprocess call fails on Windows",
 )
 def test_interactive_session_required_for_question_prompt(
-    question_tree: QuestionTreeFixture,
+    question_tree: QuestionTreeFixture, spawn_timeout: int
 ) -> None:
     """Answering a question prompt requires an interactive session."""
     src, dst = question_tree(type="str")
@@ -1090,7 +1242,7 @@ def test_interactive_session_required_for_question_prompt(
         (*COPIER_PATH, "copy", str(src), str(dst)),
         stdin=subprocess.PIPE,  # Prevents interactive input
         capture_output=True,
-        timeout=10,
+        timeout=spawn_timeout or None,
     )
     assert process.returncode == 1
     assert (
@@ -1104,7 +1256,7 @@ def test_interactive_session_required_for_question_prompt(
     reason="prompt-toolkit in subprocess call fails on Windows",
 )
 def test_interactive_session_required_for_overwrite_prompt(
-    tmp_path_factory: pytest.TempPathFactory,
+    tmp_path_factory: pytest.TempPathFactory, spawn_timeout: int
 ) -> None:
     """Overwriting a file without `--overwrite` flag requires an interactive session."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -1118,7 +1270,7 @@ def test_interactive_session_required_for_overwrite_prompt(
         (*COPIER_PATH, "copy", str(src), str(dst)),
         stdin=subprocess.PIPE,  # Prevents interactive input
         capture_output=True,
-        timeout=10,
+        timeout=spawn_timeout or None,
     )
     assert process.returncode == 1
     assert (

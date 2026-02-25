@@ -9,7 +9,7 @@ from collections.abc import Mapping
 from enum import Enum
 from hashlib import sha1
 from pathlib import Path
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
@@ -21,6 +21,9 @@ from pytest_gitconfig.plugin import DEFAULT_GIT_USER_EMAIL, DEFAULT_GIT_USER_NAM
 
 import copier
 from copier._types import StrOrPath
+
+if TYPE_CHECKING:
+    from pexpect.spawnbase import SpawnBase
 
 PROJECT_TEMPLATE = Path(__file__).parent / "demo"
 
@@ -68,11 +71,14 @@ COPIER_ANSWERS_FILE: Mapping[StrOrPath, str | bytes | Path] = {
 
 
 class Spawn(Protocol):
-    def __call__(self, cmd: tuple[str, ...], *, timeout: int | None) -> PopenSpawn: ...
+    def __call__(
+        self, cmd: tuple[str, ...], *, timeout: int | None = ...
+    ) -> PopenSpawn: ...
 
 
 class Keyboard(str, Enum):
     ControlH = REVERSE_ANSI_SEQUENCES[Keys.ControlH]
+    ControlI = REVERSE_ANSI_SEQUENCES[Keys.ControlI]
     ControlC = REVERSE_ANSI_SEQUENCES[Keys.ControlC]
     Enter = "\r"
     Esc = REVERSE_ANSI_SEQUENCES[Keys.Escape]
@@ -89,6 +95,7 @@ class Keyboard(str, Enum):
     # further explanations
     Alt = Esc
     Backspace = ControlH
+    Tab = ControlI
 
 
 def render(tmp_path: Path, **kwargs: Any) -> None:
@@ -120,7 +127,7 @@ def build_file_tree(
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         if isinstance(contents, Path):
-            os.symlink(str(contents), path)
+            path.symlink_to(contents)
         else:
             binary = isinstance(contents, bytes)
             if not binary and dedent:
@@ -133,7 +140,10 @@ def build_file_tree(
 
 
 def expect_prompt(
-    tui: PopenSpawn, name: str, expected_type: str, help: str | None = None
+    tui: SpawnBase,
+    name: str,
+    expected_type: str,
+    help: str | None = None,
 ) -> None:
     """Check that we get a prompt in the standard form"""
     if help:

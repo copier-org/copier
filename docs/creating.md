@@ -98,7 +98,7 @@ suitable to [autoupdate your project safely][the-copier-answersyml-file]:
 !!! note
 
     - `_copier_conf` contains JSON-serializable data.
-    - `_copier_conf` can be serialized with `{{ _copier_conf|to_json }}`.
+    - `_copier_conf` can be serialized with `#!jinja {{ _copier_conf|to_json }}`.
     - ⚠️ `_copier_conf` may contain secret answers inside its `.data` key.
     - Modifying `_copier_conf` doesn't alter the current rendering configuration.
 
@@ -106,13 +106,13 @@ Attributes:
 
 | Name               | Type                                                          | Description                                                                                                                                                                                                                                                |
 | ------------------ | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `answers_file`     | `Path`                                                        | The path for [the answers file][the-copier-answersyml-file] relative to `dst_path`.<br>See the [`answers_file`][] setting for related information.                                                                                                         |
+| `answers_file`     | `PurePath`                                                    | The path for [the answers file][the-copier-answersyml-file] relative to `dst_path`.<br>See the [`answers_file`][] setting for related information.                                                                                                         |
 | `cleanup_on_error` | `bool`                                                        | When `True`, delete `dst_path` if there's an error.<br>See the [`cleanup_on_error`][] setting for related information.                                                                                                                                     |
 | `conflict`         | `Literal["inline", "rej"]`                                    | The output format of a diff code hunk when [updating][updating-a-project] a file yields conflicts.<br>See the [`conflict`][] setting for related information.                                                                                              |
 | `context_lines`    | `PositiveInt`                                                 | Lines of context to consider when solving conflicts in updates.<br>See the [`context_lines`][] setting for related information.                                                                                                                            |
 | `data`             | `dict[str, Any]`                                              | Answers to the questionnaire, defined in the template, provided via CLI (`-d,--data`) or API (`data`).<br>See the [`data`][] setting for related information.<br>⚠️ May contain secret answers.                                                            |
 | `defaults`         | `bool`                                                        | When `True`, use default answers to questions.<br>See the [`defaults`][] setting for related information.                                                                                                                                                  |
-| `dst_path`         | `Path`                                                        | Destination path where to render the subproject.<br>⚠️ When [updating a project][updating-a-project], it may be a temporary directory, as Copier's update algorithm generates fresh copies using the old and new template versions in temporary locations. |
+| `dst_path`         | `PurePath`                                                    | Destination path where to render the subproject.<br>⚠️ When [updating a project][updating-a-project], it may be a temporary directory, as Copier's update algorithm generates fresh copies using the old and new template versions in temporary locations. |
 | `exclude`          | `Sequence[str]`                                               | Specified additional [file exclusion patterns][patterns-syntax].<br>See the [`exclude`][] setting for related information.                                                                                                                                 |
 | `os`               | <code>Literal["linux", "macos", "windows"] &vert; None</code> | The detected operating system, `None` if it could not be detected.                                                                                                                                                                                         |
 | `overwrite`        | `bool`                                                        | When `True`, overwrite files that already exist, without asking.<br>See the [`overwrite`][] setting for related information.                                                                                                                               |
@@ -123,7 +123,7 @@ Attributes:
 | `skip_answered`    | `bool`                                                        | When `True`, skip questions that have already been answered.<br>See the [`skip_answered`][] setting for related information.                                                                                                                               |
 | `skip_if_exists`   | `Sequence[str]`                                               | Specified additional [file skip patterns][patterns-syntax].<br>See the [`skip_if_exists`][] setting for related information.                                                                                                                               |
 | `skip_tasks`       | `bool`                                                        | When `True`, skip [template tasks execution][tasks].<br>See the [`skip_tasks`][] setting for related information.                                                                                                                                          |
-| `src_path`         | `Path`                                                        | The absolute path to the (cloned/downloaded) template on disk.                                                                                                                                                                                             |
+| `src_path`         | `PurePath`                                                    | The absolute path to the (cloned/downloaded) template on disk.                                                                                                                                                                                             |
 | `unsafe`           | `bool`                                                        | When `True`, allow usage of unsafe templates.<br>See the [`unsafe`][] setting for related information.                                                                                                                                                     |
 | `use_prereleases`  | `bool`                                                        | When `True`, `vcs_ref`/`vcs_ref_hash` may refer to a prerelease version of the template.<br>See the [`use_prereleases`][] setting for related information.                                                                                                 |
 | `user_defaults`    | `dict[str, Any]`                                              | Specified user defaults that may override a template's defaults during question prompts.                                                                                                                                                                   |
@@ -180,10 +180,12 @@ Some rendering contexts provide variables unique to them:
 You can use the special `yield` tag in file and directory names to generate multiple
 files or directories based on a list of items.
 
-In the path name, `{% yield item from list_of_items %}{{ item }}{% endyield %}` will
-loop over the `list_of_items` and replace `{{ item }}` with each item in the list.
+In the path name, `#!jinja {% yield item from list_of_items %}{{ item }}{% endyield %}`
+will loop over the `list_of_items` and replace `#!jinja {{ item }}` with each item in
+the list.
 
-A looped `{{ item }}` will be available in the scope of generated files and directories.
+A looped `#!jinja {{ item }}` will be available in the scope of generated files and
+directories.
 
 ```yaml title="copier.yml"
 commands:
