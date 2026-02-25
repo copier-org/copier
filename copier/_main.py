@@ -30,6 +30,7 @@ from typing import (
 )
 from unicodedata import normalize
 
+import yaml
 from jinja2.loaders import FileSystemLoader
 from packaging.version import Version
 from pathspec import PathSpec, __version__ as pathspec_version
@@ -1116,6 +1117,237 @@ class Worker:
         with replace(self, src_path=self.subproject.template.url) as new_worker:
             new_worker.run_copy()
 
+    @as_operation("copy")
+    def run_adopt(self) -> None:
+        """Adopt a template for an existing project.
+
+        This command brings an existing project under Copier management by:
+
+        1. Rendering the template into a temporary directory
+        2. For each rendered file:
+            - If the file doesn't exist in the project: copy it in
+            - If the file exists and is identical: skip (no-op)
+            - If the file exists and differs: merge with conflict markers
+        3. Writing .copier-answers.yml with the current template version
+
+        After adoption, the project has a valid answers file, so future
+        `copier update` calls work with proper 3-way merge.
+        """
+        with suppress(AttributeError):
+            del self.match_exclude
+
+        self._check_unsafe("copy")
+        self._print_message(self.template.message_before_copy)
+        with Phase.use(Phase.PROMPT):
+            self._ask()
+
+        if not self.quiet:
+            print(
+                f"\nAdopting template version {self.template.version}",
+                file=sys.stderr,
+            )
+
+        with TemporaryDirectory(prefix=f"{__name__}.adopt.") as temp_copy:
+            temp_path = Path(temp_copy)
+            # Render template into temporary directory with the same answers
+            with replace(
+                self,
+                dst_path=temp_path,
+                data={
+                    k: v
+                    for k, v in self.answers.combined.items()
+                    if not k.startswith("_")
+                    and k not in self.answers.hidden
+                    and isinstance(k, JSONSerializable)
+                    and isinstance(v, JSONSerializable)
+                },
+                defaults=True,
+                overwrite=True,
+                quiet=True,
+                skip_tasks=True,  # Don't run tasks in temp dir
+            ) as temp_worker:
+                temp_worker.run_copy()
+
+            # Now merge the rendered template with the existing project
+            with Phase.use(Phase.RENDER):
+                self._merge_adopt(temp_path)
+
+        if not self.quiet:
+            print("")  # padding space
+
+        # Skip tasks by default in adopt mode since conflicts need to be resolved first
+        # User can manually run tasks after resolving conflicts
+        if not self.skip_tasks and not self.quiet:
+            print(
+                colors.warn
+                | "Note: Skipping tasks because conflicts may need resolution first.",
+                file=sys.stderr,
+            )
+            print(
+                colors.info
+                | "After resolving conflicts, run the template tasks manually.",
+                file=sys.stderr,
+            )
+
+        self._print_message(self.template.message_after_copy)
+        if not self.quiet:
+            print("")  # padding space
+
+    def _merge_adopt(self, temp_path: Path) -> None:  # noqa: C901
+        """Merge rendered template from temp_path into dst_path with conflict markers.
+
+        Args:
+            temp_path:
+                Path to the temporary directory containing the rendered template.
+        """
+        dst = self.subproject.local_abspath
+
+        for src_file in temp_path.rglob("*"):
+            if src_file.is_dir():
+                continue
+
+            rel_path = src_file.relative_to(temp_path)
+            dst_file = dst / rel_path
+
+            if self.match_exclude(rel_path):
+                continue
+
+            # For adopt, skip files that match _skip_if_exists AND already exist
+            # This respects the template's intent to not overwrite certain files
+            if dst_file.exists() and self.match_skip(rel_path):
+                if not self.quiet:
+                    printf("skip", str(rel_path), style=Style.IGNORE)
+                continue
+
+            src_content = src_file.read_bytes()
+            self._adopt_file(src_file, dst_file, rel_path, src_content)
+
+        self._write_adopt_answers(dst)
+
+    def _adopt_file(
+        self, src_file: Path, dst_file: Path, rel_path: Path, src_content: bytes
+    ) -> None:
+        """Handle a single file during adopt: create, skip, or merge.
+
+        Args:
+            src_file:
+                Path to the source file in the rendered template.
+            dst_file:
+                Path to the destination file in the project.
+            rel_path:
+                Relative path for display purposes.
+            src_content:
+                Content of the source file.
+        """
+        if not dst_file.exists():
+            if not self.pretend:
+                dst_file.parent.mkdir(parents=True, exist_ok=True)
+                dst_file.write_bytes(src_content)
+                dst_file.chmod(src_file.stat().st_mode)
+            if not self.quiet:
+                printf("create", str(rel_path), style=Style.OK)
+            return
+
+        dst_content = dst_file.read_bytes()
+        if src_content == dst_content:
+            if not self.quiet:
+                printf("identical", str(rel_path), style=Style.IGNORE)
+        else:
+            if not self.pretend:
+                self._merge_file_with_conflicts(dst_file, dst_content, src_content)
+            if not self.quiet:
+                printf("conflict", str(rel_path), style=Style.DANGER)
+
+    def _write_adopt_answers(self, dst: Path) -> None:
+        """Write the answers file for adopt.
+
+        Args:
+            dst:
+                Path to the destination project directory.
+        """
+        if self.pretend:
+            return
+        answers_path = dst / self.answers_relpath
+        answers_path.parent.mkdir(parents=True, exist_ok=True)
+        answers_content = (
+            "# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY\n"
+            + yaml.safe_dump(
+                self._answers_to_remember(),
+                default_flow_style=False,
+                allow_unicode=True,
+                sort_keys=False,
+            )
+        )
+        answers_path.write_text(answers_content)
+        if not self.quiet:
+            printf("create", str(self.answers_relpath), style=Style.OK)
+
+    def _is_binary(self, content: bytes) -> bool:
+        """Check if content appears to be binary (contains null bytes)."""
+        return b"\x00" in content[:8192]
+
+    def _merge_file_with_conflicts(
+        self,
+        dst_file: Path,
+        dst_content: bytes,
+        src_content: bytes,
+    ) -> None:
+        """Merge two file versions using conflict markers or .rej files.
+
+        Uses git merge-file with an empty base to create a 3-way merge.
+        Since there's no common ancestor, this effectively shows all differences
+        as conflicts with git-style markers.
+
+        For binary files, always creates a .rej file since conflict markers
+        would corrupt the file.
+
+        Args:
+            dst_file:
+                Path to the destination file to be modified.
+            dst_content:
+                Current content of the destination file ("ours").
+            src_content:
+                Content from the template ("theirs").
+        """
+        # Binary files can't have inline conflict markers - always use .rej
+        is_binary = self._is_binary(dst_content) or self._is_binary(src_content)
+        if self.conflict == "rej" or is_binary:
+            # Write rejection file
+            rej_file = dst_file.with_suffix(dst_file.suffix + ".rej")
+            rej_file.write_bytes(src_content)
+        else:
+            # Use git merge-file for inline conflict markers
+            # Create temporary files for the 3-way merge
+            with TemporaryDirectory(prefix=f"{__name__}.merge.") as merge_dir:
+                merge_path = Path(merge_dir)
+                # "ours" = existing project file
+                ours = merge_path / "ours"
+                ours.write_bytes(dst_content)
+                # "base" = empty file (no common ancestor)
+                base = merge_path / "base"
+                base.write_bytes(b"")
+                # "theirs" = template file
+                theirs = merge_path / "theirs"
+                theirs.write_bytes(src_content)
+
+                git = get_git()
+                # git merge-file modifies the first file in place
+                git(
+                    "merge-file",
+                    "-L",
+                    "existing",
+                    "-L",
+                    "empty",
+                    "-L",
+                    "template",
+                    ours,
+                    base,
+                    theirs,
+                    retcode=None,  # merge-file returns non-zero on conflicts
+                )
+                # Write the merged result back
+                dst_file.write_bytes(ours.read_bytes())
+
     def _print_template_update_info(self, subproject_template: Template) -> None:
         # TODO Unify printing tools
         if not self.quiet:
@@ -1604,6 +1836,25 @@ def run_recopy(
         skip_tasks=skip_tasks,
     ) as worker:
         worker.run_recopy()
+    return worker
+
+
+def run_adopt(
+    src_path: str,
+    dst_path: StrOrPath = ".",
+    data: AnyByStrDict | None = None,
+    **kwargs: Any,
+) -> Worker:
+    """Adopt a template for an existing project.
+
+    This is a shortcut for [run_adopt][copier.main.Worker.run_adopt].
+
+    See [Worker][copier.main.Worker] fields to understand this function's args.
+    """
+    if data is not None:
+        kwargs["data"] = data
+    with Worker(src_path=src_path, dst_path=Path(dst_path), **kwargs) as worker:
+        worker.run_adopt()
     return worker
 
 

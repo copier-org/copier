@@ -340,6 +340,68 @@ class CopierRecopySubApp(_Subcommand):
         return _handle_exceptions(inner)
 
 
+@CopierApp.subcommand("adopt")
+class CopierAdoptSubApp(_Subcommand):
+    """The `copier adopt` subcommand.
+
+    Use this subcommand to adopt a template for an existing project that was not
+    originally created with Copier. This enables future `copier update` calls.
+    """
+
+    DESCRIPTION = "Adopt a template for an existing project."
+    DESCRIPTION_MORE = dedent(
+        """\
+        Use this command to bring an existing project under Copier management.
+        Unlike `copy`, this command will merge template files with existing files
+        using conflict markers, rather than overwriting them.
+
+        After adoption, the project will have a valid answers file, enabling
+        future `copier update` calls to work with proper 3-way merge.
+        """
+    )
+
+    conflict = cli.SwitchAttr(
+        ["-o", "--conflict"],
+        cli.Set("rej", "inline"),
+        default="inline",
+        help=(
+            "Behavior on conflict: Create .rej files, or add inline conflict markers."
+        ),
+    )
+    defaults = cli.Flag(
+        ["-l", "--defaults"],
+        help="Use default answers to questions, which might be null if not specified.",
+    )
+
+    def main(
+        self, template_src: str, destination_path: cli.ExistingDirectory = "."
+    ) -> int:
+        """Call [run_adopt][copier.main.Worker.run_adopt].
+
+        Params:
+            template_src:
+                Indicate where to get the template from.
+
+                This can be a git URL or a local path.
+
+            destination_path:
+                The existing project to adopt the template for.
+                If not specified, the currently working directory is used.
+        """
+
+        def inner() -> None:
+            with self._worker(
+                template_src,
+                destination_path,
+                conflict=self.conflict,
+                defaults=self.defaults,
+                overwrite=False,  # Never overwrite in adopt mode
+            ) as worker:
+                worker.run_adopt()
+
+        return _handle_exceptions(inner)
+
+
 @CopierApp.subcommand("update")
 class CopierUpdateSubApp(_Subcommand):
     """The `copier update` subcommand.
