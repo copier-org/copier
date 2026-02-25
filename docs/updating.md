@@ -293,7 +293,7 @@ Current version is 1.0.0, latest version is 2.0.0a0.
 To facilitate automated checking for updates, `copier check-update` provides two
 options:
 
-1. JSON output via the flag `--output-format json`..
+1. JSON output via the flag `--output-format json`
 2. Exit code output via the flag `--quiet`
 
 Sample output is provided for different scenarios:
