@@ -495,23 +495,23 @@ class CopierCheckUpdateSubApp(_Subcommand):
             if update_available:
                 if self.quiet:
                     return 2
+                if self.output_format == "json":
+                    # TODO Unify printing tools
+                    print(update_json)
                 else:
-                    if self.output_format == "json":
-                        # TODO Unify printing tools
-                        print(update_json, file=sys.stdout)
-                    else:
-                        print(
-                            "New template version available.\n"
-                            f"Current version is {current_version}, "
-                            f"latest version is {latest_version}."
-                        )
+                    # TODO Unify printing tools
+                    print(
+                        "New template version available.\n"
+                        f"Current version is {current_version}, "
+                        f"latest version is {latest_version}."
+                    )
             elif not self.quiet:
                 if self.output_format == "json":
                     # TODO Unify printing tools
-                    print(update_json, file=sys.stdout)
+                    print(update_json)
                 else:
                     # TODO Unify printing tools
-                    print("Project is up-to-date!", file=sys.stdout)
+                    print("Project is up-to-date!")
             return 0
 
         return _handle_exceptions(inner)
