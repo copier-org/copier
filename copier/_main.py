@@ -1675,10 +1675,7 @@ def get_update_data(
 
     See [checking a project][checking-a-project].
     """
-    with Worker(
-        dst_path=Path(dst_path),
-        use_prereleases=use_prereleases,
-    ) as worker:
+    with Worker(dst_path=Path(dst_path), use_prereleases=use_prereleases) as worker:
         if worker.subproject.template is None or worker.subproject.template.ref is None:
             raise UserMessageError(
                 "Cannot check because cannot obtain old template references "
