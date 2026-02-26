@@ -253,7 +253,7 @@ class QuestionNode:
             # subquestions but silently, just to get their defaults.
             _silent = True
 
-        if not _silent:
+        if not _silent and not self.state.defaults:
             message = ""
             if "help" in self.config:
                 message = self._render_value(self.config["help"])
