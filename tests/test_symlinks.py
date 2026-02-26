@@ -1,11 +1,13 @@
 import os
+import re
 from pathlib import Path
+from tempfile import gettempdir
 
 import pytest
 from plumbum import local
 
 from copier import run_copy, run_update
-from copier.errors import DirtyLocalWarning
+from copier.errors import DirtyLocalWarning, ForbiddenPathError
 
 from .helpers import build_file_tree, git
 
@@ -256,7 +258,7 @@ def test_update_symlink(tmp_path_factory: pytest.TempPathFactory) -> None:
     with local.cwd(src):
         # test updating a symlink
         Path("symlink.txt").unlink()
-        os.symlink("bbbb.txt", "symlink.txt")
+        Path("symlink.txt").symlink_to("bbbb.txt")
 
     # dst must be vcs-tracked to use run_update
     with local.cwd(dst):
@@ -312,7 +314,7 @@ def test_update_file_to_symlink(tmp_path_factory: pytest.TempPathFactory) -> Non
     with local.cwd(src):
         # test updating a symlink
         Path("bbbb.txt").unlink()
-        os.symlink("aaaa.txt", "bbbb.txt")
+        Path("bbbb.txt").symlink_to("aaaa.txt")
         Path("cccc.txt").unlink()
         with Path("cccc.txt").open("w+") as f:
             f.write("Lorem ipsum")
@@ -461,3 +463,186 @@ def test_symlinked_dir_expanded(tmp_path_factory: pytest.TempPathFactory) -> Non
     assert (dst / "a_dir" / "a_file.txt").read_text() == "some content"
     assert (dst / "a_symlinked_dir" / "a_file.txt").read_text() == "some content"
     assert (dst / "a_nested" / "symlink" / "a_file.txt").read_text() == "some content"
+
+
+@pytest.mark.xfail(
+    os.name == "nt", reason="Absolute paths not created as symlinks on Windows"
+)
+def test_symlinked_to_outside_destination_absolute(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst, other = map(tmp_path_factory.mktemp, ("src", "dst", "other"))
+    build_file_tree(
+        {
+            src / ".copier-answers.yml.jinja": """\
+                # Changes here will be overwritten by Copier
+                {{ _copier_answers|to_nice_yaml }}
+            """,
+            src / "copier.yaml": """\
+            _preserve_symlinks: true
+            """,
+            src / "a_file.txt": "some content",
+            src / "a_symlink.txt": other / "outside.txt",
+            src / "symlink_dir": other,
+            other / "outside.txt": "outside",
+        }
+    )
+
+    with local.cwd(src):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m", "first commit on src")
+
+    with local.cwd(dst):
+        run_copy(str(src), dst, defaults=True, overwrite=True)
+
+    assert (dst / "symlink_dir").is_symlink()
+    assert (dst / "symlink_dir" / "outside.txt").read_text() == "outside"
+    assert (dst / "a_symlink.txt").is_symlink()
+    assert (dst / "a_symlink.txt").read_text() == "outside"
+
+    # dst must be vcs-tracked to use run_update
+    with local.cwd(dst):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m", "first commit on dst")
+
+    # While update appears like a no-op, this part of the test captures
+    # possible changes in behaviour when the symlinks actually exist
+    # (having been created by the initial copy) as was the case for
+    # https://github.com/copier-org/copier/issues/2426
+    run_update(dst, defaults=True, overwrite=True)
+
+    assert (dst / "symlink_dir").is_symlink()
+    assert (dst / "symlink_dir" / "outside.txt").read_text() == "outside"
+    assert (dst / "a_symlink.txt").is_symlink()
+    assert (dst / "a_symlink.txt").read_text() == "outside"
+
+
+def test_symlinked_to_outside_destination_relative(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst_parent = map(tmp_path_factory.mktemp, ("src", "dst_parent"))
+    (dst := dst_parent / "dst").mkdir()
+    (other := dst_parent / "other").mkdir()
+    other_rel = Path("../") / "other"
+    build_file_tree(
+        {
+            src / ".copier-answers.yml.jinja": """\
+                # Changes here will be overwritten by Copier
+                {{ _copier_answers|to_nice_yaml }}
+            """,
+            src / "copier.yaml": """\
+            _preserve_symlinks: true
+            """,
+            src / "a_file.txt": "some content",
+            src / "a_symlink.txt": other_rel / "outside.txt",
+            src / "symlink_dir": other_rel,
+            other / "outside.txt": "outside",
+        }
+    )
+
+    with local.cwd(src):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m", "first commit on src")
+
+    with local.cwd(dst):
+        run_copy(str(src), dst, defaults=True, overwrite=True)
+
+    assert (dst / "symlink_dir").is_symlink()
+    assert (dst / "symlink_dir" / "outside.txt").read_text() == "outside"
+    assert (dst / "a_symlink.txt").is_symlink()
+    assert (dst / "a_symlink.txt").read_text() == "outside"
+
+    # dst must be vcs-tracked to use run_update
+    with local.cwd(dst):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m", "first commit on dst")
+
+    # While update appears like a no-op, this part of the test captures
+    # possible changes in behaviour when the symlinks actually exist
+    # (having been created by the initial copy) as was the case for
+    # https://github.com/copier-org/copier/issues/2426
+    run_update(dst, defaults=True, overwrite=True)
+
+    assert (dst / "symlink_dir").is_symlink()
+    assert (dst / "symlink_dir" / "outside.txt").read_text() == "outside"
+    assert (dst / "a_symlink.txt").is_symlink()
+    assert (dst / "a_symlink.txt").read_text() == "outside"
+
+
+def test_resolve_relative_symlink_outside_template_root_raises_error(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst, other = map(tmp_path_factory.mktemp, ("src", "dst", "other"))
+
+    build_file_tree(
+        {
+            src / ".copier-answers.yml.jinja": """\
+            # Changes here will be overwritten by Copier
+            {{ _copier_answers|to_nice_yaml }}
+            """,
+            src / "copier.yaml": """\
+            _preserve_symlinks: false
+            """,
+            src / "symlink.txt": Path(
+                # HACK: This is the path to `outside.txt` relative to  the location the
+                # symlink file in the template's local clone location. To construct
+                # this path dynamically, we rely on internal knowledge where Copier
+                # clones the template.
+                os.path.relpath(other, start=Path(gettempdir(), "template-clone")),
+                "outside.txt",
+            ),
+            other / "outside.txt": "outside",
+        }
+    )
+
+    with local.cwd(src):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m", "init")
+
+    with pytest.raises(
+        ForbiddenPathError,
+        match=re.escape('"symlink.txt" is forbidden'),
+    ):
+        run_copy(str(src), dst, defaults=True, overwrite=True, cleanup_on_error=False)
+
+    assert not (dst / "symlink.txt").exists()
+
+
+@pytest.mark.skipif(
+    os.name == "nt", reason="Absolute paths not created as symlinks on Windows"
+)
+def test_resolve_absolute_symlink_outside_template_root_raises_error(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst, other = map(tmp_path_factory.mktemp, ("src", "dst", "other"))
+    build_file_tree(
+        {
+            src / ".copier-answers.yml.jinja": """\
+            # Changes here will be overwritten by Copier
+            {{ _copier_answers|to_nice_yaml }}
+            """,
+            src / "copier.yaml": """\
+            _preserve_symlinks: false
+            """,
+            src / "symlink.txt": other / "outside.txt",
+            other / "outside.txt": "outside",
+        }
+    )
+
+    with local.cwd(src):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m", "init")
+
+    with pytest.raises(
+        ForbiddenPathError,
+        match=re.escape('"symlink.txt" is forbidden'),
+    ):
+        run_copy(str(src), dst, defaults=True, overwrite=True)
+
+    assert not (dst / "symlink.txt").exists()

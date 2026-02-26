@@ -72,8 +72,8 @@ to ask users for data. To use it, the value must be a dict.
 
 Supported keys:
 
--   **type**: User input must match this type. Options are: `bool`, `dict`, `float`, `int`,
-    `json`, `str`, `yaml` (default).
+-   **type**: User input must match this type. Options are: `bool`, `dict`, `float`,
+    `int`, `json`, `path`, `str`, `yaml` (default).
 -   **help**: Additional text to help the user know what's this question for.
 -   **choices**: To restrict possible values.
 
@@ -149,7 +149,7 @@ Supported keys:
         message but cannot be selected.
 
         When combining dynamic choices with validators, make sure to escape the
-        validator template using `{% raw %}...{% endraw %}`.
+        validator template using `#!jinja {% raw %}...{% endraw %}`.
 
     !!! warning
 
@@ -189,9 +189,9 @@ Supported keys:
     `list[T]` instead of a `T` where `T` is of type `type`.
 -   **default**: Leave empty to force the user to answer. Provide a default to save them
     from typing it if it's quite common. When using `choices`, the default must be the
-    choice _value_, not its _key_, and it must match its _type_. When using `dict` the default
-    must resolve to a `boolean` and is used only in case its _when_ resolves to `false`. If values are quite
-    long, you can use
+    choice _value_, not its _key_, and it must match its _type_. When using `dict` the
+    default must resolve to a `boolean` and is used only in case its _when_ resolves to
+    `false`. If values are quite long, you can use
     [YAML anchors](https://confluence.atlassian.com/bitbucket/yaml-anchors-960154027.html).
 
     !!! note "Dynamic default value of a multiselect choice question"
@@ -212,6 +212,37 @@ Supported keys:
         +    default: '["[", "]"]' # ✔️ RIGHT
         ```
 
+    If the default value does not apply to all cases, i.e., an answer is required under
+    certain conditions, then the default can be unset by rendering the special `UNSET`
+    variable to force the user to provide an answer:
+
+    !!! example
+
+        ```yaml title="copier.yml"
+        database_engine:
+            type: str
+            help: Database engine
+            choices:
+                - postgres
+                - mysql
+                - other
+            default: postgres
+
+        database_url:
+            type: str
+            help: Database URL
+            default: >-
+                {%- if database_engine == 'postgres' -%}
+                postgresql://user:pass@localhost:5432/dbname
+                {%- elif database_engine == 'mysql' -%}
+                mysql://user:pass@localhost:3306/dbname
+                {%- else -%}
+                {{ UNSET }}
+                {%- endif -%}
+            # Simplified for illustration purposes
+            validator: "{% if '://' not in database_url %}Invalid{% endif %}"
+        ```
+
 -   **secret**: When `true`, it hides the prompt displaying asterisks (`*****`) and
     doesn't save the answer in [the answers file][the-copier-answersyml-file]. When
     `true`, a default value is required.
@@ -224,6 +255,19 @@ Supported keys:
         Multiline placeholders are not supported currently, due to
         [this upstream bug](https://github.com/prompt-toolkit/python-prompt-toolkit/issues/1267).
 
+-   **qmark**: Custom emoji or mark to display before the question. If not specified,
+    defaults to 🎤 for regular questions and 🕵️ for secret questions. This is useful for
+    customizing the visual appearance of your prompts.
+
+    !!! example
+
+        ```yaml title="copier.yml"
+        love_copier:
+            type: bool
+            qmark: "❤️"
+            help: Do you love Copier?
+        ```
+
 -   **multiline**: When set to `true`, it allows multiline input. This is especially
     useful when `type` is `json` or `yaml`.
 
@@ -231,7 +275,8 @@ Supported keys:
     will be rendered with the combined answers as variables; it should render _nothing_
     if the value is valid, and an error message to show to the user otherwise.
 
--   **when**: Condition that, if `false`, skips the question (and all subquestions in case of `dict` _type_).
+-   **when**: Condition that, if `false`, skips the question (and all subquestions in
+    case of `dict` _type_).
 
     If it is a boolean, it is used directly. Setting it to `false` is useful for
     creating a computed value.
@@ -240,8 +285,8 @@ Supported keys:
     only for boolean values. The string can be [templated][prompt-templating].
 
     If a question is skipped, its answer is not recorded, but its default value is
-    available in the render context. For `dict` type question this happens only if
-    its _default_ resolves to `true`. In this case all subquestions defaults will be
+    available in the render context. For `dict` type question this happens only if its
+    _default_ resolves to `true`. In this case all subquestions defaults will be
     available in the render context, otherwise the whole question group is skipped.
 
     !!! example
@@ -269,6 +314,11 @@ Supported keys:
             # Only ask for copyright if project is not in the public domain
             when: "{{ project_license != 'Public domain' }}"
         ```
+
+    If the default value of a skipped question is not meaningful, then it can be unset
+    by rendering the special `UNSET` variable, so the question's variable is undefined
+    in the render context. See an example using `UNSET` in the section for `default`
+    above.
 
 !!! example
 
@@ -1173,7 +1223,7 @@ on them, so they are always installed when Copier is installed.
         -   [loop controls](https://jinja.palletsprojects.com/en/3.1.x/extensions/#loop-controls), which adds the `break` and `continue`
             keywords for Jinja loops.
         -   [debug extension](https://jinja.palletsprojects.com/en/3.1.x/extensions/#debug-extension), which can dump the current context
-            thanks to the added `{% debug %}` tag.
+            thanks to the added `#!jinja {% debug %}` tag.
 
     -   From [cookiecutter](https://cookiecutter.readthedocs.io/en/1.7.2/):
 
@@ -1759,7 +1809,7 @@ Imagine that the template supports updates and contains these 2 Git tags: `v1.0.
 `v2.0.0a1`. Copier will copy by default `v1.0.0` unless you add `--prereleases`.
 
 <!-- prettier-ignore-start -->
-Also, if you run [`copier update`][copier.cli.CopierUpdateSubApp], Copier would ignore
+Also, if you run `copier update`, Copier would ignore
 the `v2.0.0a1` tag unless this flag is enabled.
 <!-- prettier-ignore-end -->
 
@@ -1824,9 +1874,9 @@ file][the-copieryml-file].
 This makes projects easier to update because when the user is asked, the default answers
 will be the last ones they used.
 
-The file **must be called exactly `{{ _copier_conf.answers_file }}.jinja`** (or ended
-with [your chosen suffix][templates_suffix]) in your template's root folder) to allow
-[applying multiple templates to the same
+The file **must be called exactly `#!jinja {{ _copier_conf.answers_file }}.jinja`** (or
+ended with [your chosen suffix][templates_suffix]) in your template's root folder) to
+allow [applying multiple templates to the same
 subproject][applying-multiple-templates-to-the-same-subproject].
 
 The default name will be `.copier-answers.yml`, but [you can define a different default
@@ -1880,9 +1930,9 @@ All 3 templates are completely independent:
     matter their pre-commit configuration or the framework they rely on.
 
 Well, don't worry. Copier has you covered. You just need to use a different answers file
-for each one. All of them contain a `{{ _copier_conf.answers_file }}.jinja` file [as
-specified above][the-copier-answersyml-file]. Then you apply all the templates to the
-same project:
+for each one. All of them contain a `#!jinja {{ _copier_conf.answers_file }}.jinja` file
+[as specified above][the-copier-answersyml-file]. Then you apply all the templates to
+the same project:
 
 ```shell
 mkdir my-project

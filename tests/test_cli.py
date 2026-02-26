@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import subprocess
 import sys
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from pathlib import Path
-from typing import Callable
 
 import pytest
 import yaml
@@ -170,6 +169,7 @@ def test_data_file_parsed_by_question_type(
     assert answers["_src_path"] == str(src)
     assert answers["question"] == "answer"
 
+
 @pytest.mark.parametrize(
     "path, answer, expected",
     [
@@ -188,7 +188,7 @@ def test_cli_data_question_path(
     build_file_tree(
         {
             (src / "copier.yml"): (
-                f"""\
+                """\
                 question:
                     type: str
                     default: "default"
@@ -224,7 +224,15 @@ def test_cli_data_question_path(
         }
     )
     run_result = CopierApp.run(
-        ["copier", "copy", f"--data={path}={answer}", "--defaults", str(src), str(dst), "--quiet"],
+        [
+            "copier",
+            "copy",
+            f"--data={path}={answer}",
+            "--defaults",
+            str(src),
+            str(dst),
+            "--quiet",
+        ],
         exit=False,
     )
     assert run_result[1] == 0
@@ -334,11 +342,7 @@ def test_read_utf_data_file(
     with monkeypatch.context() as m:
         # Override the factor that determine the default encoding when opening files.
         # data.yml should be read correctly regardless of this value.
-        if sys.version_info >= (3, 10):
-            m.setattr("io.text_encoding", lambda *_args: "cp932")
-        else:
-            m.setattr("_bootlocale.getpreferredencoding", lambda *_args: "cp932")
-
+        m.setattr("io.text_encoding", lambda *_args: "cp932")
         run_result = CopierApp.run(
             [
                 "copier",

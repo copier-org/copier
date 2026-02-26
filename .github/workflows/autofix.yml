@@ -9,17 +9,17 @@ permissions:
 
 env:
   # renovate: datasource=github-tags depName=devbox packageName=jetify-com/devbox
-  DEVBOX_VERSION: "0.14.2"
+  DEVBOX_VERSION: "0.16.0"
 
 jobs:
   autofix:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # Install Devbox
       - name: Install devbox
-        uses: jetify-com/devbox-install-action@v0.13.0
+        uses: jetify-com/devbox-install-action@v0.14.0
         with:
           devbox-version: ${{ env.DEVBOX_VERSION }}
           enable-cache: "true"

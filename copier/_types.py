@@ -2,35 +2,26 @@
 
 from __future__ import annotations
 
-import sys
-from collections.abc import Iterator, Mapping, MutableMapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, MutableMapping, Sequence
 from contextlib import contextmanager
 from contextvars import ContextVar
-import dpath
 from enum import Enum
 from pathlib import Path
 from typing import (
     Annotated,
     Any,
-    Callable,
     Literal,
     NewType,
-    Optional,
     TypeVar,
-    Union,
 )
 
+import dpath
 from pydantic import AfterValidator
 
 from ._tools import parse_dpath_path
 
-if sys.version_info >= (3, 10):
-    from typing import ParamSpec as ParamSpec
-else:
-    from typing_extensions import ParamSpec as ParamSpec
-
 # simple types
-StrOrPath = Union[str, Path]
+StrOrPath = str | Path
 AnyByStrDict = dict[str, Any]
 AnyByStrMutableMapping = MutableMapping[str, Any]
 
@@ -39,8 +30,8 @@ IntSeq = Sequence[int]
 PathSeq = Sequence[Path]
 
 # optional types
-OptBool = Optional[bool]
-OptStrOrPath = Optional[StrOrPath]
+OptBool = bool | None
+OptStrOrPath = StrOrPath | None
 
 # miscellaneous
 T = TypeVar("T")
@@ -144,9 +135,8 @@ class VcsRef(Enum):
     template should be used.
     """
 
-def unflatten(
-    answers: Mapping[str, Any]
-) -> AnyByStrDict:
+
+def unflatten(answers: Mapping[str, Any]) -> AnyByStrDict:
     """Unflatten a dictionary with dot-separated keys."""
     result: AnyByStrDict = {}
     for key, value in answers.items():

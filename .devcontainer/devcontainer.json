@@ -1,16 +1,19 @@
 {
-  "image": "docker.io/jetpackio/devbox:0.14.2",
+  "build": {
+    "dockerfile": "./Dockerfile",
+    "context": ".."
+  },
   "remoteUser": "devbox",
   "mounts": [
     "type=bind,source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/devbox/.ssh,readonly"
   ],
-  "postCreateCommand": "devbox shell",
   "customizations": {
     "vscode": {
       "extensions": [
         "bpruitt-goddard.mermaid-markdown-syntax-highlighting",
         "editorconfig.editorconfig",
         "elagil.pre-commit-helper",
+        "jetpack-io.devbox",
         "ms-python.python"
       ],
       "settings": {

@@ -5,13 +5,13 @@ from __future__ import annotations
 import re
 import sys
 from collections import ChainMap, defaultdict
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from contextlib import suppress
 from dataclasses import field
 from functools import cached_property
 from pathlib import Path, PurePosixPath
 from shutil import rmtree
-from typing import Any, Callable, Literal, Optional
+from typing import Any, Literal
 from warnings import warn
 
 import dunamai
@@ -60,6 +60,7 @@ def filter_config(data: AnyByStrDict) -> tuple[AnyByStrDict, AnyByStrDict]:
             questions_data[k] = _normalize_question_data(v)
     return config_data, questions_data
 
+
 def _normalize_question_data(q: Any) -> dict[str, Any]:
     """Normalize question data to ensure it has a dictionary structure."""
     if not isinstance(q, dict):
@@ -98,7 +99,9 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
         if PurePosixPath(include_file).is_absolute():
             raise ValueError("YAML include file path must be a relative path")
         return [
-            yaml.load(path.read_bytes(), Loader=type(loader))
+            lflatten(
+                filter(None, yaml.load_all(path.read_bytes(), Loader=type(loader)))
+            )
             for path in conf_path.parent.glob(include_file)
         ]
 
@@ -484,7 +487,9 @@ class Template:
                 result[key]["secret"] = True
         return result
 
-    def question_by_answer_key(self, answer_key: str, *filters: Callable[[AnyByStrDict], bool]) -> Optional[AnyByStrDict]:
+    def question_by_answer_key(
+        self, answer_key: str, *filters: Callable[[AnyByStrDict], bool]
+    ) -> AnyByStrDict | None:
         """Get a question by its answer key.
 
         Args:
@@ -496,14 +501,16 @@ class Template:
         """
         answer_paths = parse_dpath_path(answer_key)
         questions = self.questions_data
-        q: Optional[AnyByStrDict] = None
+        q: AnyByStrDict | None = None
         for i, p in enumerate(answer_paths):
             if i == 0:
                 if p not in questions:
                     return None
                 q = questions[p]
                 continue
-            questions = q["items"] if q is not None and q.get("type", "yaml") == "dict" else {}
+            questions = (
+                q["items"] if q is not None and q.get("type", "yaml") == "dict" else {}
+            )
             if p not in questions:
                 return None
             q = questions[p]

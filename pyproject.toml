@@ -3,17 +3,17 @@ name = "copier"
 dynamic = ["version"]
 description = "A library for rendering project templates."
 license = { text = "MIT" }
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
 ]
 authors = [{ name = "Ben Felder", email = "ben@felder.io" }]
 readme = "README.md"
@@ -31,7 +31,6 @@ dependencies = [
   "pygments>=2.7.1",
   "pyyaml>=5.3.1",
   "questionary>=1.8.1",
-  "eval-type-backport>=0.1.3,<0.3.0; python_version < '3.10'",
   "platformdirs>=4.3.6",
   "typing-extensions>=4.0.0,<5.0.0; python_version < '3.11'",
 ]
@@ -47,27 +46,28 @@ copier = "copier.__main__:CopierApp.run"
 [dependency-groups]
 dev = [
   "codespell[toml]==2.4.1",
-  "commitizen==4.8.3",
-  "mypy==1.16.1",
+  "commitizen==4.13.8",
+  "mypy==1.19.1",
   "pexpect==4.9.0",
-  "poethepoet==0.36.0",
-  "pre-commit==4.2.0",
-  "pytest==8.4.1",
-  "pytest-cov==6.2.1",
-  "pytest-gitconfig==0.7.0",
+  "poethepoet==0.42.0",
+  "pre-commit==4.5.1",
+  "pytest==9.0.2",
+  "pytest-cov==7.0.0",
+  "pytest-gitconfig==0.9.0",
   "pytest-xdist==3.8.0",
-  "ruff==0.12.2",
+  "ruff==0.15.2",
   "taplo==0.9.3",
   "types-backports==0.1.3",
-  "types-colorama==0.4.15.20240311",
-  "types-pygments==2.19.0.20250516",
-  "types-pyyaml==6.0.12.20250516",
-  "typing-extensions==4.14.1; python_version < '<3.10'",
+  "types-colorama==0.4.15.20250801",
+  "types-pygments==2.19.0.20251121",
+  "types-pyyaml==6.0.12.20250915",
+  "typing-extensions==4.15.0; python_version < '<3.10'",
 ]
 docs = [
-  "markdown-exec==1.11.0",
-  "mkdocs-material==9.6.15",
-  "mkdocstrings[python]==0.29.1",
+  "markdown-exec==1.12.1",
+  "mkdocs-material==9.7.3",
+  "mkdocs-redirects==1.2.2",
+  "mkdocstrings[python]==1.0.3",
 ]
 
 [tool.poe.tasks.coverage]
@@ -108,6 +108,7 @@ extend-select = [
   "PGH",
   "PTH",
   "UP",
+  "W505", # doc-line-too-long
 ]
 extend-ignore = ['B028', "B904", "D105", "D107", "E501"]
 
@@ -120,6 +121,10 @@ known-first-party = ["copier"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 88
+ignore-overlong-task-comments = true
 
 [tool.ruff.lint.pyupgrade]
 keep-runtime-typing = true
@@ -180,7 +185,7 @@ annotated_tag = true
 changelog_incremental = true
 tag_format = "v$version"
 update_changelog_on_bump = true
-version = "9.8.0"
+version = "9.12.0"
 
 [tool.codespell]
 # Ref: https://github.com/codespell-project/codespell#using-a-config-file

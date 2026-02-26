@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import platform
+import stat
 from pathlib import Path
 from shutil import rmtree
 from textwrap import dedent
@@ -480,6 +481,67 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
         assert Path(f"{life}.rej").is_file()
 
 
+def test_post_checkout_hook_ignored(tmp_path_factory: pytest.TempPathFactory) -> None:
+    """Ignore post-checkout hook when conflicts are encountered."""
+    # Prepare source template v1
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yml": (
+                    f"""
+                    _envops: {BRACKET_ENVOPS_JSON}
+                    _templates_suffix: {SUFFIX_TMPL}
+                    """
+                ),
+                "[[ _copier_conf.answers_file ]].tmpl": (
+                    """
+                    [[ _copier_answers|to_nice_yaml ]]
+                    """
+                ),
+                "test.txt": "This is a file",
+            }
+        )
+        git("init")
+        git("add", ".")
+        git("commit", "-m", "feat: commit 1")
+        git("tag", "v1")
+    # Copy source template
+    run_copy(
+        src_path=str(src),
+        dst_path=dst,
+    )
+    with local.cwd(dst):
+        git("init")
+        git("add", ".")
+        # Commit initial copy
+        git("commit", "-am", "feat: copied v1")
+        # Introduce conflict
+        Path("test.txt").write_text("This is a conflicting change")
+        git("add", ".")
+        git("commit", "-am", "feat: edit test.txt")
+        # Add post-checkout hook that fails
+        hook_file = Path(".git") / "hooks" / "post-checkout"
+        hook_file.write_text("exit 1")
+        hook_file.chmod(hook_file.stat().st_mode | stat.S_IXUSR)
+    # Evolve source template to v2
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "test.txt": "This is an edited file in v2",
+            }
+        )
+        git("add", ".")
+        git("commit", "-m", "feat: Update post-checkout")
+        git("tag", "v2")
+    # Update subproject to v2
+    # No errors should be raised due to post-checkout hook
+    run_update(
+        dst_path=dst,
+        overwrite=True,
+    )
+
+
 def test_update_from_tagged_to_head(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     # Build a template
@@ -515,12 +577,19 @@ def test_update_from_tagged_to_head(tmp_path_factory: pytest.TempPathFactory) ->
     assert load_answersfile_data(dst)["_commit"] == f"v1-1-g{sha}"
 
 
-def test_skip_update(tmp_path_factory: pytest.TempPathFactory) -> None:
+@pytest.mark.parametrize("subproject_path", [Path(), Path("subproject")])
+@pytest.mark.parametrize("skip_pattern", ["skip_me", "/skip_me"])
+def test_skip_update(
+    tmp_path_factory: pytest.TempPathFactory,
+    skip_pattern: str,
+    subproject_path: Path,
+) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    dst_subproject = dst / subproject_path
     with local.cwd(src):
         build_file_tree(
             {
-                "copier.yaml": "_skip_if_exists: [skip_me]",
+                "copier.yaml": f"_skip_if_exists: ['{skip_pattern}']",
                 "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
                 "skip_me": "1",
             }
@@ -529,9 +598,9 @@ def test_skip_update(tmp_path_factory: pytest.TempPathFactory) -> None:
         git("add", ".")
         git("commit", "-m1")
         git("tag", "1.0.0")
-    run_copy(str(src), dst, defaults=True, overwrite=True)
-    skip_me = dst / "skip_me"
-    answers = load_answersfile_data(dst)
+    run_copy(str(src), dst_subproject, defaults=True, overwrite=True)
+    skip_me = dst_subproject / "skip_me"
+    answers = load_answersfile_data(dst_subproject)
     assert skip_me.read_text() == "1"
     assert answers["_commit"] == "1.0.0"
     skip_me.write_text("2")
@@ -543,11 +612,11 @@ def test_skip_update(tmp_path_factory: pytest.TempPathFactory) -> None:
         build_file_tree({"skip_me": "3"})
         git("commit", "-am2")
         git("tag", "2.0.0")
-    run_update(dst, defaults=True, overwrite=True)
-    answers = load_answersfile_data(dst)
+    run_update(dst_subproject, defaults=True, overwrite=True)
+    answers = load_answersfile_data(dst_subproject)
     assert skip_me.read_text() == "2"
     assert answers["_commit"] == "2.0.0"
-    assert not (dst / "skip_me.rej").exists()
+    assert not (dst_subproject / "skip_me.rej").exists()
 
 
 @pytest.mark.parametrize(
@@ -593,6 +662,13 @@ def test_skip_update(tmp_path_factory: pytest.TempPathFactory) -> None:
                 reason="Disallowed characters in file name",
             ),
         ),
+        pytest.param(
+            "sk\\ip_with_backslash_in_skip_pattern",
+            marks=pytest.mark.skipif(
+                platform.system() == "Windows",
+                reason="Disallowed characters in file name",
+            ),
+        ),
     ),
 )
 def test_skip_update_deleted(
@@ -607,7 +683,7 @@ def test_skip_update_deleted(
     with local.cwd(src):
         build_file_tree(
             {
-                "copier.yaml": "_skip_if_exists: ['*skip*']",
+                "copier.yaml": "_skip_if_exists: ['*skip*', '*sk\\ip*']",
                 "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
                 file_name: "1",
                 "another_file": "foobar",
@@ -734,6 +810,41 @@ def test_update_deleted_path(
     assert dont_wildmatch.exists()
     assert dont_wildmatch.read_text() == "baz"
     assert not updated_file.exists()
+
+
+def test_update_deleted_path_not_used_as_pattern(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """
+    Test that user-deleted paths don't cause deletion of other paths matching
+    the same pattern when updating a project.
+    """
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    build_file_tree(
+        {
+            src / "{{ _copier_conf.answers_file }}.jinja": (
+                "{{ _copier_answers|to_yaml }}"
+            ),
+            src / "test.txt": "remove",
+            src / "foo" / "test.txt": "keep",
+            src / "foo" / "bar" / "test.txt": "keep",
+        }
+    )
+    git_save(src, message="initial commit")
+
+    run_copy(str(src), dst)
+    assert (dst / "test.txt").read_text() == "remove"
+    assert (dst / "foo" / "test.txt").read_text() == "keep"
+    assert (dst / "foo" / "bar" / "test.txt").read_text() == "keep"
+
+    (dst / "test.txt").unlink()
+    git_save(dst, message="remove test.txt")
+
+    run_update(str(dst), overwrite=True)
+    assert not (dst / "test.txt").exists()
+    assert (dst / "foo" / "test.txt").read_text() == "keep"
+    assert (dst / "foo" / "bar" / "test.txt").read_text() == "keep"
 
 
 @pytest.mark.parametrize(
@@ -903,7 +1014,7 @@ def test_update_inline_changed_answers_and_questions(
         git("tag", "2")
     # Init project
     if interactive:
-        tui = spawn(COPIER_PATH + ("copy", "-r1", str(src), str(dst)), timeout=10)
+        tui = spawn(COPIER_PATH + ("copy", "-r1", str(src), str(dst)))
         tui.expect_exact("b (bool)")
         tui.expect_exact("(y/N)")
         tui.send("y")
@@ -929,7 +1040,7 @@ def test_update_inline_changed_answers_and_questions(
         git("commit", "-am2")
         # Update from template, inline, with answer changes
         if interactive:
-            tui = spawn(COPIER_PATH + ("update", "--conflict=inline"), timeout=10)
+            tui = spawn(COPIER_PATH + ("update", "--conflict=inline"))
             tui.expect_exact("b (bool)")
             tui.expect_exact("(Y/n)")
             tui.sendline()
@@ -1982,3 +2093,135 @@ def test_conditional_computed_value(tmp_path_factory: pytest.TempPathFactory) ->
     assert answers["first"] is True
     assert answers["second"] is True
     assert (dst / "log.txt").read_text() == "True True"
+
+
+def test_disable_secret_validator_on_replay(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    build_file_tree(
+        {
+            src / "copier.yml": (
+                """\
+                token:
+                    type: str
+                    secret: true
+                    default: ""
+                    validator: "{% if token == '' %}Must not be empty{% endif %}"
+                """
+            ),
+            src / "{{ _copier_conf.answers_file }}.jinja": (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+            src / ".gitignore": ".env",
+            src / ".env.jinja": "TOKEN={{ token }}",
+        }
+    )
+    with local.cwd(src):
+        git_init("v1")
+        git("tag", "v1")
+
+    run_copy(str(src), dst, defaults=True)
+    answers = load_answersfile_data(dst)
+    assert answers == {"_src_path": str(src), "_commit": "v1"}
+    assert (dst / ".env").read_text() == "TOKEN="
+
+    with local.cwd(dst):
+        git_init("v1")
+
+    run_update(dst, data={"token": "$up3r-$3cr3t"}, overwrite=True)
+    answers = load_answersfile_data(dst)
+    assert answers == {"_src_path": str(src), "_commit": "v1"}
+    assert (dst / ".env").read_text() == "TOKEN=$up3r-$3cr3t"
+
+
+def test_exclude_added_in_new_version(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "copy-only": "foo",
+                "copy-and-update": "foo",
+            }
+        )
+        git_save(tag="v1")
+        build_file_tree(
+            {
+                "copier.yml": "_exclude:\n - copy-only",
+                "copy-only": "bar",
+                "copy-and-update": "bar",
+            }
+        )
+        git_save(tag="v2")
+    copy_only = dst / "copy-only"
+    copy_and_update = dst / "copy-and-update"
+
+    run_copy(str(src), dst, defaults=True, overwrite=True, vcs_ref="v1")
+    for file in (copy_only, copy_and_update):
+        assert file.exists()
+        assert file.read_text() == "foo"
+
+    with local.cwd(dst):
+        git_save()
+
+    run_update(str(dst), overwrite=True)
+    assert copy_only.read_text() == "foo"
+    assert copy_and_update.read_text() == "bar"
+
+
+def test_skip_if_exists_templated(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yml": """\
+                    _skip_if_exists:
+                        - "{{ 'skip-if-exists.txt' }}"
+                """,
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "skip-if-exists.txt": "foo",
+            }
+        )
+        git_save(tag="v1")
+        build_file_tree({"skip-if-exists.txt": "bar"})
+        git_save(tag="v2")
+
+    run_copy(str(src), dst, defaults=True, overwrite=True, vcs_ref="v1")
+    assert (dst / "skip-if-exists.txt").read_text() == "foo"
+
+    with local.cwd(dst):
+        git_save()
+        build_file_tree({"skip-if-exists.txt": "baz"})
+        git_save()
+
+    run_update(str(dst), overwrite=True)
+    assert (dst / "skip-if-exists.txt").read_text() == "baz"
+
+
+def test_render_copier_conf_as_json_without_circular_reference(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """See https://github.com/copier-org/copier/issues/2448."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "copier_conf.json.jinja": "{{ _copier_conf|to_json }}",
+            }
+        )
+        git_save(tag="v1")
+
+    run_copy(str(src), dst, overwrite=True, unsafe=True)
+    assert (dst / "copier_conf.json").exists()
+
+    with local.cwd(dst):
+        git_save()
+
+    run_update(str(dst), overwrite=True, unsafe=True)
+    assert (dst / "copier_conf.json").exists()

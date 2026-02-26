@@ -24,6 +24,7 @@ repos:
       - id: prettier
         name: prettier
         entry: prettier --write --list-different --ignore-unknown
+        stages: [pre-commit]
         language: system
         types: [text]
         exclude: |

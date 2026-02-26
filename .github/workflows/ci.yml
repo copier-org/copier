@@ -19,9 +19,9 @@ env:
   PYTEST_ADDOPTS: ${{ github.event.inputs.pytest_addopts }}
   PYTHONIOENCODING: "UTF-8"
   # renovate: datasource=devbox depName=uv
-  UV_VERSION: "0.7.19"
+  UV_VERSION: "0.10.2"
   # renovate: datasource=github-tags depName=devbox packageName=jetify-com/devbox
-  DEVBOX_VERSION: "0.14.2"
+  DEVBOX_VERSION: "0.16.0"
 
 jobs:
   build:
@@ -32,26 +32,39 @@ jobs:
           - macos-latest
           - ubuntu-latest
           - windows-latest
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        include:
+          # HACK: Limit the number of pytest workers on macOS to 3 to avoid a
+          #   timeout for a few test cases. For unknown reasons, the number of
+          #   auto-configured workers on macOS runners increased from 3 to 6 on
+          #   2025-07-08.
+          # FIXME: Remove this hack when the issue has been fixed.
+          - os: macos-latest
+            pytest-xdist-maxprocesses: 3
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0 # Needs all tags to compute dynamic version
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
         with:
           version: ${{ env.UV_VERSION }}
+          python-version: ${{ matrix.python-version }}
           enable-cache: "true"
           cache-suffix: ${{ matrix.python-version }}
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: uv sync --frozen
       - name: Run pytest
-        run: uv run poe test --cov=./ --cov-report=xml -ra .
+        run:
+          uv run poe test --cov=./ --cov-report=xml -ra
+          ${PYTEST_XDIST_MAXPROCESSES:+--maxprocesses=$PYTEST_XDIST_MAXPROCESSES} .
+        env:
+          PYTEST_XDIST_MAXPROCESSES: ${{ matrix.pytest-xdist-maxprocesses }}
       - name: Upload coverage to Codecov
         continue-on-error: true
         uses: codecov/codecov-action@v5
@@ -73,16 +86,28 @@ jobs:
         os:
           - macos-latest
           - ubuntu-latest
+        include:
+          # HACK: Limit the number of pytest workers on macOS to 3 to avoid a
+          #   timeout for a few test cases. For unknown reasons, the number of
+          #   auto-configured workers on macOS runners increased from 3 to 6 on
+          #   2025-07-08.
+          # FIXME: Remove this hack when the issue has been fixed.
+          - os: macos-latest
+            pytest-xdist-maxprocesses: 3
     runs-on: ${{ matrix.os }}
     permissions:
       contents: write # Allow pushing back pre-commit changes
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install devbox
-        uses: jetify-com/devbox-install-action@v0.13.0
+        uses: jetify-com/devbox-install-action@v0.14.0
         with:
           devbox-version: ${{ env.DEVBOX_VERSION }}
           enable-cache: "true"
       - run: devbox run -- uv run copier --version
       - run: devbox run -- uv run pre-commit run --all-files --show-diff-on-failure
-      - run: devbox run test
+      - run:
+          devbox run test
+          ${PYTEST_XDIST_MAXPROCESSES:+--maxprocesses=$PYTEST_XDIST_MAXPROCESSES}
+        env:
+          PYTEST_XDIST_MAXPROCESSES: ${{ matrix.pytest-xdist-maxprocesses }}

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 from textwrap import dedent
 
@@ -116,7 +115,10 @@ def test_answersfile(
     assert log["group.one"] == "one"
     assert log["group.subgroup.one"] == "group.one value is one"
     assert log["group.subgroup.two"] == "subgroup.two"
-    assert log["group.three"] == "group.one value is one and group.subgroup.two value is subgroup.two"
+    assert (
+        log["group.three"]
+        == "group.one value is one and group.subgroup.two value is subgroup.two"
+    )
 
     # Check 2nd round is properly executed and remembered
     copier.run_copy(
@@ -343,11 +345,7 @@ def test_external_data_with_unicode_characters(
 
     with monkeypatch.context() as m:
         # Override the factor that determines the default encoding when opening files.
-        if sys.version_info >= (3, 10):
-            m.setattr("io.text_encoding", lambda *_args: "cp932")
-        else:
-            m.setattr("_bootlocale.getpreferredencoding", lambda *_args: "cp932")
-
+        m.setattr("io.text_encoding", lambda *_args: "cp932")
         copier.run_copy(str(src), dst, defaults=True, overwrite=True)
 
     answers = load_answersfile_data(dst)

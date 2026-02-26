@@ -2,6 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended",
+    "customManagers:dockerfileVersions",
     "customManagers:githubActionsVersions",
     ":semanticCommitTypeAll(build)"
   ],
@@ -19,6 +20,12 @@
       "matchManagers": ["pep621"],
       "matchDepTypes": ["dependency-groups"],
       "rangeStrategy": "pin"
+    },
+    {
+      "description": "Don't update Prettier to v3.4.0+ because it breaks some Markdown syntax extensions (https://github.com/prettier/prettier/issues/16929)",
+      "matchDatasources": ["devbox"],
+      "matchPackageNames": ["nodePackages.prettier"],
+      "allowedVersions": "<3.4.0"
     },
     {
       "matchCategories": ["python"],
