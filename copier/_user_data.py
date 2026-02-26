@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import json
+import re
 import warnings
 from collections import ChainMap
 from collections.abc import Callable, Mapping, Sequence
 from copy import deepcopy
 from dataclasses import field
 from datetime import datetime
+from enum import Enum
 from functools import cached_property
 from hashlib import sha512
 from os import urandom
@@ -23,11 +25,13 @@ from pydantic import ConfigDict, Field, field_validator
 from pydantic.dataclasses import dataclass
 from pydantic_core.core_schema import ValidationInfo
 from pygments.lexers.data import JsonLexer, YamlLexer
+from questionary import unsafe_prompt
 from questionary.prompts.common import Choice
 
 from copier._jinja_ext import UnsetError
 from copier._settings import SettingsModel
 
+from ._template import Template
 from ._tools import cast_to_bool, cast_to_str, force_str_end
 from ._types import (
     MISSING,
@@ -36,8 +40,15 @@ from ._types import (
     LazyDict,
     MissingType,
     StrOrPath,
+    unflatten,
 )
-from .errors import InvalidTypeError, MissingFileWarning, UserMessageError
+from .errors import (
+    CopierAnswersInterrupt,
+    InteractiveSessionError,
+    InvalidTypeError,
+    MissingFileWarning,
+    UserMessageError,
+)
 
 
 # TODO Remove these two functions as well as DEFAULT_DATA in a future release
@@ -134,6 +145,235 @@ class AnswersMap:
 
 
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True))
+class GlobalState:
+    _context_renderer: Callable[[], Mapping[str, Any]]
+    context: Mapping[str, Any] = field(init=False, default_factory=dict)
+    template: Template
+    answers: AnswersMap
+    jinja_env: SandboxedEnvironment
+    settings: SettingsModel = field(default_factory=SettingsModel)
+    defaults: bool = False
+    skip_answered: bool = False
+
+    def refresh_context(self) -> None:
+        """Refresh the context from the context renderer."""
+        self.context = self._context_renderer()
+
+    def render_value(
+        self,
+        value: Any,
+        extra_context: AnyByStrDict | AnyByStrMutableMapping | None = None,
+    ) -> Any:
+        """Render a single templated value using Jinja.
+
+        If the value cannot be used as a template, it will be returned as is.
+        `extra_answers` are combined with `self.context` when rendering
+        the template.
+        """
+        try:
+            template = self.jinja_env.from_string(value)
+        except TypeError:
+            # value was not a string
+            return (
+                [self.render_value(item) for item in value]
+                if isinstance(value, list)
+                else value
+            )
+        try:
+            return template.render({**self.context, **(extra_context or {})})
+        except UnsetError:
+            raise
+        except UndefinedError as error:
+            raise UserMessageError(str(error)) from error
+
+
+class QuestionNodeType(Enum):
+    LEAF = "leaf"
+    DICT = "dict"
+
+
+@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
+class QuestionNode:
+    """A node in a question tree.
+
+    This is used to represent a question and its sub-questions in a tree-like structure
+    as well as list of same questions
+    It is used to build the question tree for the user to answer.
+    """
+
+    name: str
+    config: Any
+    state: GlobalState
+    level: int = 0
+    parent: QuestionNode | None = None
+
+    _type: QuestionNodeType = QuestionNodeType.LEAF
+    _path: str = ""
+
+    def __post_init__(self) -> None:
+        self.state.refresh_context()
+
+        if "items" in self.config:
+            self._type = QuestionNodeType.DICT
+        else:
+            self._type = QuestionNodeType.LEAF
+
+        self._path = self.name.replace(".", "\\.")
+        if self.parent is not None:
+            self._path = f"{self.parent._path}.{self._path}"
+
+    def process(self, silent: bool = False) -> None:
+        if self._type == QuestionNodeType.DICT:
+            self._process_as_dict(silent)
+        else:
+            self._process_as_leaf(silent)
+
+    def _process_as_dict(self, silent: bool) -> None:
+        _silent = silent
+        # Skip a question when the skip condition is met.
+        if not self._get_when():
+            # Delete last sub answers to re-compute the answer from the default
+            # value (if it exists).
+
+            for k in list(self.state.answers.last.keys()):
+                match = re.search(rf"^{self._path}\..+", k)
+                if not match:
+                    continue
+                del self.state.answers.last[k]
+
+            # Skip immediately to the next question when it has no default
+            # value.
+            if "default" not in self.config:
+                return
+
+            if not cast_to_bool(self._render_value(self.config["default"])):
+                return
+
+            # For dict question if default value is True, we need to process
+            # subquestions but silently, just to get their defaults.
+            _silent = True
+
+        if not _silent and not self.state.defaults:
+            message = ""
+            if "help" in self.config:
+                message = self._render_value(self.config["help"])
+
+            # Show the help message for the dictionary
+            unsafe_prompt(
+                [
+                    {
+                        "type": "print",
+                        "message": f"{self._get_prompt_padding()} ▷ {message}",
+                        "when": lambda _: self._get_when(),
+                    }
+                ],
+                style="bold",
+            )
+
+        for name, config in self.config["items"].items():
+            node = QuestionNode(
+                name=name,
+                config=config,
+                state=self.state,
+                parent=self,
+                level=self.level + 1,
+            )
+            node.process(_silent)
+
+    def _process_as_leaf(self, silent: bool) -> None:
+        question = Question(
+            var_name=self._path,
+            state=self.state,
+            **self.config,
+        )
+
+        # Delete last answer if it cannot be parsed or validated, so a new
+        # valid answer can be provided.
+        if question.var_name in self.state.answers.last:
+            try:
+                answer = question.parse_answer(
+                    self.state.answers.last[question.var_name]
+                )
+                question.validate_answer(answer)
+            except Exception:
+                del self.state.answers.last[question.var_name]
+
+        if silent:
+            question.when = False
+
+        if not question.get_when():
+            # Omit its answer from the answers file.
+            self.state.answers.hide(question.var_name)
+            # Delete last answers to re-compute the answer from the default
+            # value (if it exists).
+            if question.var_name in self.state.answers.last:
+                del self.state.answers.last[question.var_name]
+            # Skip immediately to the next question when it has no default
+            # value.
+            if question.get_default() is MISSING:
+                return
+
+        if question.var_name in self.state.answers.init:
+            # Try to parse and validate (if the question has a validator)
+            # the answer value.
+            answer = question.parse_answer(self.state.answers.init[question.var_name])
+            question.validate_answer(answer)
+            # At this point, the answer value is valid. Do not ask the
+            # question again, but set answer as the user's answer instead.
+            self.state.answers.user[question.var_name] = answer
+
+            return
+
+        # Skip if already answered
+        if self.state.skip_answered and question.var_name in self.state.answers.last:
+            return
+
+        self._ask_question(question)
+
+    def _ask_question(self, question: Question) -> None:
+        """Ask the question to the user and store the answer."""
+        try:
+            # Handle getting an answer
+            if self.state.defaults:
+                new_answer = question.get_default()
+                if new_answer is MISSING:
+                    raise ValueError(f'Question "{question.var_name}" is required')
+            else:
+                try:
+                    new_answer = unsafe_prompt(
+                        [
+                            question.get_questionary_structure(
+                                self._get_prompt_padding()
+                            )
+                        ],
+                        answers={question.var_name: question.get_default()},
+                    )[question.var_name]
+                except EOFError as err:
+                    raise InteractiveSessionError(
+                        "Use `--defaults` and/or `--data`/`--data-file`"
+                    ) from err
+
+        except KeyboardInterrupt as err:
+            raise CopierAnswersInterrupt(
+                self.state.answers, question, self.state.template
+            ) from err
+
+        self.state.answers.user[question.var_name] = new_answer
+
+    def _get_when(self) -> bool:
+        if "when" not in self.config:
+            return True
+        return cast_to_bool(self._render_value(self.config["when"]))
+
+    def _get_prompt_padding(self) -> str:
+        return " " * (self.level * 2) + " " if self.level else ""
+
+    def _render_value(self, value: Any) -> Any:
+        """Render a value using the worker's Jinja environment."""
+        return self.state.render_value(value)
+
+
+@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
 class Question:
     """One question asked to the user.
 
@@ -143,14 +383,9 @@ class Question:
         var_name:
             Question name in the answers dict.
 
-        answers:
-            A map containing the answers provided by the user.
-
-        context:
-            A map containing the full rendering context.
-
-        jinja_env:
-            The Jinja environment used to rendering answers.
+        state:
+            Global state of the question, including answers, template and
+            Jinja environment.
 
         choices:
             Selections available for the user if the question requires them.
@@ -204,10 +439,7 @@ class Question:
     """
 
     var_name: str
-    answers: AnswersMap
-    context: Mapping[str, Any]
-    jinja_env: SandboxedEnvironment
-    settings: SettingsModel = field(default_factory=SettingsModel)
+    state: GlobalState
     choices: Sequence[Any] | dict[Any, Any] | str = field(default_factory=list)
     multiselect: bool = False
     default: Any = MISSING
@@ -267,17 +499,19 @@ class Question:
     def get_default(self) -> Any:
         """Get the default value for this question, casted to its expected type."""
         try:
-            result = self.answers.init[self.var_name]
+            result = self.state.answers.init[self.var_name]
         except KeyError:
             try:
-                result = self.answers.last[self.var_name]
+                result = self.state.answers.last[self.var_name]
             except KeyError:
                 try:
-                    result = self.answers.user_defaults[self.var_name]
+                    result = self.state.answers.user_defaults[self.var_name]
                 except KeyError:
                     try:
                         result = self.render_value(
-                            self.settings.defaults.get(self.var_name, self.default),
+                            self.state.settings.defaults.get(
+                                self.var_name, self.default
+                            ),
                             extra_answers={
                                 "UNSET": StrictUndefined("UNSET", exc=UnsetError)
                             },
@@ -370,19 +604,18 @@ class Question:
     def get_message(self) -> str:
         """Get the message that will be printed to the user."""
         if self.help:
-            if rendered_help := self.render_value(self.help):
-                return force_str_end(rendered_help) + "  "
+            return self.render_value(self.help)
         # Otherwise, there's no help message defined.
         message = self.var_name
         if (answer_type := self.get_type_name()) != "str":
             message += f" ({answer_type})"
-        return message + "\n  "
+        return message
 
     def get_placeholder(self) -> str:
         """Render and obtain the placeholder."""
         return self.render_value(self.placeholder)
 
-    def get_questionary_structure(self) -> AnyByStrDict:  # noqa: C901
+    def get_questionary_structure(self, padding: str = "") -> AnyByStrDict:  # noqa: C901
         """Get the question in a format that the questionary lib understands."""
 
         def _validate(answer: str) -> str | Literal[True]:
@@ -396,13 +629,15 @@ class Question:
                 return str(exc)
             return True
 
+        msg = f"{force_str_end(self.get_message())}  {padding}"
+        qmark = self.qmark or ("🕵️" if self.secret else "🎤")
         lexer = None
         result: AnyByStrDict = {
             "filter": self.cast_answer,
-            "message": self.get_message(),
+            "message": msg,
             "mouse_support": True,
             "name": self.var_name,
-            "qmark": self.qmark or ("🕵️" if self.secret else "🎤"),
+            "qmark": f"{padding}{qmark}️",
             "when": lambda _: self.get_when(),
         }
         default = self.get_default_rendered()
@@ -460,7 +695,9 @@ class Question:
     def validate_answer(self, answer: Any) -> None:
         """Validate user answer."""
         try:
-            err_msg = self.render_value(self.validator, {self.var_name: answer}).strip()
+            err_msg = self.render_value(
+                self.validator, unflatten({self.var_name: answer})
+            ).strip()
         except Exception as error:
             err_msg = str(error)
         if err_msg:
@@ -473,29 +710,20 @@ class Question:
         return cast_to_bool(self.render_value(self.when))
 
     def render_value(
-        self, value: Any, extra_answers: AnyByStrDict | None = None
+        self,
+        value: Any,
+        extra_answers: AnyByStrDict | AnyByStrMutableMapping | None = None,
     ) -> Any:
         """Render a single templated value using Jinja.
 
         If the value cannot be used as a template, it will be returned as is.
-        `extra_answers` are combined with `self.context` when rendering
-        the template.
+        `extra_answers` and self.extra_context are combined with `self.state.context`
+        when rendering the template.
         """
-        try:
-            template = self.jinja_env.from_string(value)
-        except TypeError:
-            # value was not a string
-            return (
-                [self.render_value(item) for item in value]
-                if isinstance(value, list)
-                else value
-            )
-        try:
-            return template.render({**self.context, **(extra_answers or {})})
-        except UnsetError:
-            raise
-        except UndefinedError as error:
-            raise UserMessageError(str(error)) from error
+        extra_context = {
+            **(extra_answers or {}),
+        }
+        return self.state.render_value(value, extra_context)
 
     def parse_answer(self, answer: Any) -> Any:
         """Parse the answer according to the question's type."""
@@ -532,7 +760,9 @@ class Question:
 
 
 def parse_yaml_string(string: str) -> Any:
-    """Parse a YAML string and raise a ValueError if parsing failed.
+    """Parse a YAML string.
+
+    It raises a ValueError if parsing failed.
 
     This method is needed because :meth:`prompt` requires a ``ValueError``
     to repeat failed questions.
@@ -541,6 +771,18 @@ def parse_yaml_string(string: str) -> Any:
         return yaml.safe_load(string)
     except yaml.error.YAMLError as error:
         raise ValueError(str(error))
+
+
+# Parse a YAML string specifically as a dictionary
+def parse_dict_string(string: str) -> dict[str, Any]:
+    """Parse a YAML string as a dictionary.
+
+    It raises a ValueError if parsing failed or result isn't a dict.
+    """
+    result = parse_yaml_string(string)
+    if not isinstance(result, dict):
+        raise ValueError("Input must be a dictionary")
+    return result
 
 
 def parse_yaml_list(string: str) -> list[str]:
