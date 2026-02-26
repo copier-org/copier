@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 import sys
 from collections import ChainMap, defaultdict
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from contextlib import suppress
 from dataclasses import field
 from functools import cached_property
@@ -22,7 +22,7 @@ from packaging.version import Version, parse
 from plumbum.machines import local
 from pydantic.dataclasses import dataclass
 
-from ._tools import copier_version, handle_remove_readonly
+from ._tools import copier_version, handle_remove_readonly, parse_dpath_path
 from ._types import AnyByStrDict, VCSTypes
 from ._vcs import checkout_latest_tag, clone, get_git, get_repo
 from .errors import (
@@ -57,10 +57,19 @@ def filter_config(data: AnyByStrDict) -> tuple[AnyByStrDict, AnyByStrDict]:
             config_data[k[1:]] = v
         else:
             # Transform simplified questions format into complex
-            if not isinstance(v, dict):
-                v = {"default": v}
-            questions_data[k] = v
+            questions_data[k] = _normalize_question_data(v)
     return config_data, questions_data
+
+
+def _normalize_question_data(q: Any) -> dict[str, Any]:
+    """Normalize question data to ensure it has a dictionary structure."""
+    if not isinstance(q, dict):
+        return {"default": q}
+    if q.get("type", "yaml") == "dict":
+        subq = q.get("items", {})
+        for k, v in subq.items():
+            q["items"][k] = _normalize_question_data(v)
+    return q
 
 
 def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
@@ -478,17 +487,40 @@ class Template:
                 result[key]["secret"] = True
         return result
 
-    @cached_property
-    def secret_questions(self) -> set[str]:
-        """Get names of secret questions from the template.
+    def question_by_answer_key(
+        self, answer_key: str, *filters: Callable[[AnyByStrDict], bool]
+    ) -> AnyByStrDict | None:
+        """Get a question by its answer key.
 
-        These questions shouldn't be saved into the answers file.
+        Args:
+            answer_key: The key of the answer to find the question for.
+            filters: Optional filters to apply to the question data.
+
+        Returns:
+            The question data if found, or `None` if not found.
         """
-        result = set(self.config_data.get("secret_questions", []))
-        for key, value in self.questions_data.items():
-            if value.get("secret"):
-                result.add(key)
-        return result
+        answer_paths = parse_dpath_path(answer_key)
+        questions = self.questions_data
+        q: AnyByStrDict | None = None
+        for i, p in enumerate(answer_paths):
+            if i == 0:
+                if p not in questions:
+                    return None
+                q = questions[p]
+                continue
+            questions = (
+                q["items"] if q is not None and q.get("type", "yaml") == "dict" else {}
+            )
+            if p not in questions:
+                return None
+            q = questions[p]
+
+        if q is not None:
+            for filter_func in filters:
+                if not filter_func(q):
+                    return None
+
+        return q
 
     @cached_property
     def skip_if_exists(self) -> Sequence[str]:
