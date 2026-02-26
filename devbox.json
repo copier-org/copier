@@ -3,7 +3,7 @@
   "packages": [
     "difftastic@0.67.0",
     "editorconfig-checker@3.6.1",
-    "git@2.52.0",
+    "git@2.53.0",
     "nodePackages.prettier@3.3.3",
     "uv@0.10.2"
   ],
