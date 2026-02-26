@@ -7,7 +7,7 @@ on:
 
 env:
   # renovate: datasource=devbox depName=uv
-  UV_VERSION: "0.10.2"
+  UV_VERSION: "0.10.4"
 
 jobs:
   build:
