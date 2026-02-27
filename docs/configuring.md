@@ -185,8 +185,163 @@ Supported keys:
                 Some array: "[str, keeps, this, as, a, str]"
         ```
 
+-   **use_shortcuts**: When set to `true`, numbers the choices while allowing for cursor
+    selection by pressing the corresponding number. Only works when `multiselect` is
+    `false`.
+
+    !!! example
+
+        ```yaml title="copier.yml"
+        language:
+            type: str
+            help: Which programming language do you use?
+            use_shortcuts: true
+            choices:
+                - python
+                - node
+                - c
+                - c++
+                - rust
+                - zig
+                - asm
+        ```
+
+        Will result in:
+
+        <pre>
+        <span style="font-weight:bold">🎤 Which programming language do you use?</span>
+           (Use shortcuts or arrow keys)
+         » 1) python
+           2) node
+           3) c
+           4) c++
+           5) rust
+           6) zig
+           7) asm
+        </pre>
+
+        Pressing `5` gives:
+
+        <pre>
+        <span style="font-weight:bold">🎤 Which programming language do you use?</span>
+           (Use shortcuts or arrow keys)
+           1) python
+           2) node
+           3) c
+           4) c++
+         » 5) rust
+           6) zig
+           7) asm
+        </pre>
+
 -   **multiselect**: When set to `true`, allows multiple choices. The answer will be a
     `list[T]` instead of a `T` where `T` is of type `type`.
+
+-   **use_search_filter**: When set to `true`, . Also deactivates the use of `j`/`k`
+    keys for navigation, as these are captured as prompts for the search filter.
+
+    !!! note
+
+        If `multiselect` is `true`, you cannot use `Space` in the search as this would actually just still select the option. If it is `false`, the `Space` character can be used in the search filter.
+
+    !!! note
+
+        If `use_shortcuts` & `use_search_filter` are both `true`, then only `use_search_filter` is activated.
+
+    !!! example
+
+        ```yaml title="copier.yml"
+        language:
+            type: str
+            help: Which programming language do you use?
+            use_search_filter: true
+            choices:
+                - python
+                - node
+                - c
+                - c++
+                - rust
+                - zig
+                - asm
+                - a new language
+                - a good one
+                - an average one
+                - a not so good one
+        ```
+
+        <pre>
+        <span style="font-weight:bold">🎤 Which programming language do you use?</span>
+           (Use arrow keys, type to filter)
+         » python
+           node
+           c
+           c++
+           rust
+           zig
+           asm
+           a new language
+           a good one
+           an average one
+           a not so good one
+
+        </pre>
+
+        ---
+
+
+        Typing `c`:
+
+        <pre>
+        <span style="font-weight:bold">🎤 Which programming language do you use?</span>
+           (Use arrow keys, type to filter)
+         » c
+           c++
+
+
+        / <span style="color:green;font-weight:bold">c</span>...
+        </pre>
+
+        ---
+
+        Typing `an`:
+
+        <pre>
+        <span style="font-weight:bold">🎤 Which programming language do you use?</span>
+           (Use arrow keys, type to filter)
+         » a new language
+           an average one
+
+        / <span style="color:green;font-weight:bold">an</span>...
+        </pre>
+
+        ---
+
+        Typing `ago`
+
+        <pre>
+        <span style="font-weight:bold">🎤 Which programming language do you use?</span>
+           (Use arrow keys, type to filter)
+         » python
+           node
+           c
+           c++
+           rust
+           zig
+           asm
+           a new language
+           a good one
+           an average one
+           a not so good one
+
+        / <span style="color:red;font-weight:bold">ago</span>...
+        </pre>
+
+        When the filter fails, all options are displayed.
+
+        ---
+
+        You can use `Backspace` to modify the search filter.
+
 -   **default**: Leave empty to force the user to answer. Provide a default to save them
     from typing it if it's quite common. When using `choices`, the default must be the
     choice _value_, not its _key_, and it must match its _type_. If values are quite

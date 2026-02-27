@@ -201,6 +201,16 @@ class Question:
             If it is a boolean, it is used directly. If it is a str, it is
             converted to boolean using a parser similar to YAML, but only for
             boolean values.
+
+        use_shortcuts:
+            Condition that, if `True`, will use `use_shortcuts` in `select` question,
+            allowing for selection via automatically numbered shortcut. Will be
+            deactivated if `use_search_filter` is `True`.
+
+        use_search_filter:
+            Condition that, if `True`, uses `use_search_filter` in `checkbox`/`select`
+            question while deactivating `use_jk_keys`, allowing for selection via
+            filtering.
     """
 
     var_name: str
@@ -219,6 +229,8 @@ class Question:
     type: str = Field(default="", validate_default=True)
     validator: str = ""
     when: str | bool = True
+    use_shortcuts: bool = False
+    use_search_filter: bool = False
 
     @field_validator("var_name")
     @classmethod
@@ -417,6 +429,13 @@ class Question:
                 result["default"] = False
         if self.choices:
             questionary_type = "checkbox" if self.multiselect else "select"
+
+            if self.use_search_filter:
+                result["use_search_filter"] = True
+                result["use_jk_keys"] = False
+            elif self.use_shortcuts and questionary_type == "select":
+                result["use_shortcuts"] = True
+
             choices = self._formatted_choices
             # Select default choices for a multiselect question.
             if self.multiselect and isinstance(
