@@ -21,16 +21,7 @@ def template_path(tmp_path_factory: pytest.TempPathFactory) -> str:
                 {{ _copier_answers|to_nice_yaml }}
                 """
             ),
-            src / "copier.yml": (
-                """\
-                version: 1.0.0
-                """
-            ),
-            src / "README.md.jinja": (
-                """\
-                # Version {{ version }}
-                """
-            ),
+            src / "README.md.jinja": "# Version 1.0.0\n",
         }
     )
     with local.cwd(src):
