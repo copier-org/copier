@@ -1663,6 +1663,41 @@ def run_update(
     return worker
 
 
+def get_update_data(
+    dst_path: Path | str = ".", use_prereleases: bool = False
+) -> tuple[bool, str, str]:
+    """Gets data regarding if a subproject has updates.
+
+    Returns a tuple containing a bool for if the project has an update,
+    a string containing a project's current version, and a string containing
+    the latest version of the template available.
+
+    See [checking a project][checking-a-project].
+    """
+    with Worker(dst_path=Path(dst_path), use_prereleases=use_prereleases) as worker:
+        if worker.subproject.template is None or worker.subproject.template.ref is None:
+            raise UserMessageError(
+                "Cannot check because cannot obtain old template references "
+                f"from `{worker.subproject.answers_relpath}`."
+            )
+        if worker.template.commit is None:
+            raise UserMessageError(
+                "Checking is only supported in git-tracked templates."
+            )
+        if not worker.subproject.template.version:
+            raise UserMessageError(
+                "Cannot check: version from last update not detected."
+            )
+        if not worker.template.version:
+            raise UserMessageError("Cannot check: version from template not detected.")
+
+        update_available = worker.template.version > worker.subproject.template.version
+        current_version = str(worker.subproject.template.version)
+        latest_version = str(worker.template.version)
+
+    return (update_available, current_version, latest_version)
+
+
 def _remove_old_files(prefix: Path, cmp: dircmp[str], rm_common: bool = False) -> None:
     """Remove files and directories only found in "old" template.
 
