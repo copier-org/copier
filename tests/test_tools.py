@@ -5,7 +5,7 @@ from tempfile import TemporaryDirectory
 import pytest
 from poethepoet.app import PoeThePoet
 
-from copier._tools import normalize_git_path
+from copier._tools import cast_to_bool, normalize_git_path
 
 from .helpers import git
 
@@ -56,3 +56,21 @@ def test_temporary_directory_with_git_repo_deletion() -> None:
 )
 def test_normalizing_git_paths(path: str, normalized: str) -> None:
     assert normalize_git_path(path) == normalized
+
+def test_cast_to_bool_whitespace_only_strings_are_false() -> None:
+    """Test that whitespace-only strings are False and valid keywords with surrounding whitespace still work."""
+    # Whitespace-only strings should be False
+    assert cast_to_bool("") is False
+    assert cast_to_bool(" ") is False
+    assert cast_to_bool("\n") is False
+    assert cast_to_bool("   \n\t") is False
+
+    # Whitespace around valid keywords should still work
+    assert cast_to_bool(" yes ") is True
+    assert cast_to_bool(" YES ") is True
+    assert cast_to_bool(" no ") is False
+    assert cast_to_bool(" NO ") is False
+    assert cast_to_bool(" true ") is True
+    assert cast_to_bool(" false ") is False
+
+
