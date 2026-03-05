@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.13.0 (2026-03-05)
+
+### Feat
+
+-   add CLI subcommand `check-update` to check for new template version (#2463)
+
+### Refactor
+
+-   **cli**: call public `run_*` functions instead of internal `Worker.run_*` methods
+
 ## v9.12.0 (2026-02-21)
 
 ### Feat
