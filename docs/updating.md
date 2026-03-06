@@ -136,12 +136,6 @@ echo "updated_question: my new answer" > /tmp/data-file.yaml
 copier update --defaults --data-file /tmp/data-file.yaml
 ```
 
-!!! note
-
-    Due to [issue #1474](https://github.com/copier-org/copier/issues/1474),
-    it is not yet possible to update a multiselect choice using ˋ--dataˋ.
-    Use ˋ--data-fileˋ instead for now.
-
 If you want to update the answers to all questions, but not the template:
 
 ```shell
