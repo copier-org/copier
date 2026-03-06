@@ -40,6 +40,7 @@ from pydantic.dataclasses import dataclass
 from pydantic_core import to_jsonable_python
 from questionary import confirm, unsafe_prompt
 
+from ._deprecation import deprecate_answers_file_template_path
 from ._jinja_ext import YieldEnvironment, YieldExtension
 from ._settings import Settings, SettingsModel, is_trusted_repository
 from ._subproject import Subproject
@@ -885,22 +886,7 @@ class Worker:
             dst_abspath = self.subproject.local_abspath / dst_relpath
             dst_abspath.mkdir(parents=True, exist_ok=True)
 
-    def _adjust_rendered_part(self, rendered_part: str) -> str:
-        """Adjust the rendered part if necessary.
-
-        If `{{ _copier_conf.answers_file }}` becomes the full path,
-        restore part to be just the end leaf.
-
-        Args:
-            rendered_part:
-                The rendered part of the path to adjust.
-
-        """
-        if str(self.answers_relpath) == rendered_part:
-            return Path(rendered_part).name
-        return rendered_part
-
-    def _render_parts(
+    def _render_parts(  # noqa: C901
         self,
         parts: tuple[str, ...],
         rendered_parts: tuple[str, ...] | None = None,
@@ -942,7 +928,11 @@ class Worker:
             for value in self.jinja_env.yield_iterable or ():
                 new_context = {**extra_context, yield_name: value}
                 rendered_part = self._render_string(part, extra_context=new_context)
-                rendered_part = self._adjust_rendered_part(rendered_part)
+                if str(self.answers_relpath) == rendered_part:
+                    if rendered_parts:
+                        deprecate_answers_file_template_path()
+                    yield self.answers_relpath, new_context
+                    continue
 
                 # Skip if any part is rendered as an empty string
                 if not rendered_part:
@@ -958,7 +948,11 @@ class Worker:
         if not rendered_part:
             return
 
-        rendered_part = self._adjust_rendered_part(rendered_part)
+        if str(self.answers_relpath) == rendered_part:
+            if rendered_parts:
+                deprecate_answers_file_template_path()
+            yield (self.answers_relpath, extra_context)
+            return
 
         yield from self._render_parts(
             parts, rendered_parts + (rendered_part,), extra_context, is_template
