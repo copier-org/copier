@@ -38,7 +38,7 @@ def get_git_version() -> Version:
     """Get the installed git version."""
     git = get_git()
 
-    return Version(re.findall(r"\d+\.\d+\.\d+", git("version"))[0])
+    return Version(re.findall(r"\d+\.\d+(?:\.\d+)?", git("version"))[0])
 
 
 GIT_PREFIX = ("git@", "git://", "git+", "https://github.com/", "https://gitlab.com/")
