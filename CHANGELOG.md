@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.13.1 (2026-03-09)
+
+### Fix
+
+-   **vcs**: make Git version parsing robust to vendor-suffixed patch versions
+
 ## v9.13.0 (2026-03-05)
 
 ### Feat
