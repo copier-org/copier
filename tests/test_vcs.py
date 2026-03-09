@@ -2,6 +2,7 @@ import os
 import shutil
 from collections.abc import Callable, Iterator, Sequence
 from pathlib import Path
+from unittest import mock
 
 import pytest
 from packaging.version import Version
@@ -238,3 +239,21 @@ def test_select_latest_version_tag(
     assert (dst / filename).read_text() == "v1.0.1"
     answers = load_answersfile_data(dst)
     assert answers["_commit"] == "v1.0.1"
+
+
+@pytest.mark.parametrize(
+    ("git_version_output", "expected_version"),
+    [
+        ("git version 2.53.0\n", Version("2.53.0")),
+        ("git version 2.53.GIT\n", Version("2.53.0")),
+    ],
+)
+def test_get_git_version(git_version_output: str, expected_version: Version) -> None:
+    def _mock_git(*args: str) -> str:
+        assert args == ("version",)
+        return git_version_output
+
+    with mock.patch(
+        "copier._vcs.get_git", return_value=mock.MagicMock(side_effect=_mock_git)
+    ):
+        assert get_git_version() == expected_version
