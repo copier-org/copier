@@ -2225,3 +2225,36 @@ def test_render_copier_conf_as_json_without_circular_reference(
 
     run_update(str(dst), overwrite=True, unsafe=True)
     assert (dst / "copier_conf.json").exists()
+
+
+def test_tasks_run_in_git_repo_with_subproject_config(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """Test that tasks run in a Git repo with the subproject's Git config."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    build_file_tree(
+        {
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_yaml }}"
+            ),
+            (src / "copier.yml"): (
+                f"""\
+                _tasks:
+                -   command: git remote get-url origin >> {dst / "git-origin-task.txt"}
+                    when: "{{{{ _copier_operation == 'update' }}}}"
+                """
+            ),
+        }
+    )
+    git_save(src)
+
+    run_copy(str(src), dst, unsafe=True)
+
+    with local.cwd(dst):
+        git_save()
+        git("remote", "add", "origin", remote := "http://example.com/repo.git")
+
+    run_update(dst, unsafe=True, overwrite=True)
+
+    assert (dst / "git-origin-task.txt").read_text() == f"{remote}\n" * 3
