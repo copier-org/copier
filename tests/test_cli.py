@@ -367,16 +367,131 @@ def test_help() -> None:
     assert "copier update [SWITCHES] [destination_path=.]" in _help
 
 
-def test_copy_help() -> None:
-    _help = COPIER_CMD("copy", "--help")
-    assert "copier copy [SWITCHES] template_src destination_path" in _help
+def test_copy_help(capsys: pytest.CaptureFixture[str]) -> None:
+    with patch("plumbum.cli.application.get_terminal_size", return_value=(80, 1)):
+        _, status = CopierApp.run(["copier", "copy", "--help"], exit=False)
+    assert status == 0
+    header, body = capsys.readouterr().out.split("\n", 1)
+    assert header.startswith("copier copy")
+    assert body == snapshot("""\
+
+Copy from a template source to a destination.
+
+Usage:
+    copier copy [SWITCHES] template_src destination_path
+
+Meta-switches:
+    -h, --help                      Prints this help message and quits
+    --help-all                      Prints help messages of all sub-commands and
+                                    quits
+    -v, --version                   Prints the program's version and quits
+
+Switches:
+    -C, --no-cleanup                On error, do not delete destination if it
+                                    was created by Copier.
+    -T, --skip-tasks                Skip template tasks execution
+    --UNSAFE, --trust               Allow templates with unsafe features (Jinja
+                                    extensions, migrations, tasks)
+    -a, --answers-file VALUE:str    Update using this path (relative to
+                                    `destination_path`) to find the answers file
+    -d, --data VARIABLE=VALUE:str   Make VARIABLE available as VALUE when
+                                    rendering the template; may be given
+                                    multiple times
+    --data-file PATH:ExistingFile   Load data from a YAML file
+    -f, --force                     Same as `--defaults --overwrite`.
+    -g, --prereleases               Use prereleases to compare template VCS
+                                    tags.
+    -l, --defaults                  Use default answers to questions, which
+                                    might be null if not specified.
+    -n, --pretend                   Run but do not make any changes
+    -q, --quiet                     Suppress status output
+    -r, --vcs-ref VALUE:str         Git reference to checkout in `template_src`.
+                                    If you do not specify it, it will try to
+                                    checkout the latest git tag, as sorted using
+                                    the PEP 440 algorithm. If you want to
+                                    checkout always the latest version, use
+                                    `--vcs-ref=HEAD`. Use the special value
+                                    `:current:` to refer to the current
+                                    reference of the template if it already
+                                    exists.
+    -s, --skip VALUE:str            Skip specified files if they exist already;
+                                    may be given multiple times
+    -w, --overwrite                 Overwrite files that already exist, without
+                                    asking.
+    -x, --exclude VALUE:str         A name or shell-style pattern matching files
+                                    or folders that must not be copied; may be
+                                    given multiple times
+
+""")
 
 
-def test_update_help() -> None:
-    _help = COPIER_CMD("update", "--help")
-    assert "-o, --conflict" in _help
-    assert "copier update [SWITCHES] [destination_path=.]" in _help
-    assert "--skip-answered" in _help
+def test_update_help(capsys: pytest.CaptureFixture[str]) -> None:
+    with patch("plumbum.cli.application.get_terminal_size", return_value=(80, 1)):
+        _, status = CopierApp.run(["copier", "update", "--help"], exit=False)
+    assert status == 0
+    header, body = capsys.readouterr().out.split("\n", 1)
+    assert header.startswith("copier update")
+    assert body == snapshot("""\
+
+Update a subproject from its original template
+
+The copy must have a valid answers file which contains info from the last Copier
+execution, including the source template (it must be a key called `_src_path`).
+
+If that file contains also `_commit`, and `destination_path` is a git
+repository, this command will do its best to respect the diff that you have
+generated since the last `copier` execution. To avoid that, use `copier recopy`
+instead.
+
+Usage:
+    copier update [SWITCHES] [destination_path=.]
+
+Meta-switches:
+    -h, --help                      Prints this help message and quits
+    --help-all                      Prints help messages of all sub-commands and
+                                    quits
+    -v, --version                   Prints the program's version and quits
+
+Switches:
+    -A, --skip-answered             Skip questions that have already been
+                                    answered
+    -T, --skip-tasks                Skip template tasks execution
+    --UNSAFE, --trust               Allow templates with unsafe features (Jinja
+                                    extensions, migrations, tasks)
+    -a, --answers-file VALUE:str    Update using this path (relative to
+                                    `destination_path`) to find the answers file
+    -c, --context-lines VALUE:int   Lines of context to use for detecting
+                                    conflicts. Increase for accuracy, decrease
+                                    for resilience.; the default is 3
+    -d, --data VARIABLE=VALUE:str   Make VARIABLE available as VALUE when
+                                    rendering the template; may be given
+                                    multiple times
+    --data-file PATH:ExistingFile   Load data from a YAML file
+    -g, --prereleases               Use prereleases to compare template VCS
+                                    tags.
+    -l, -f, --defaults              Use default answers to questions, which
+                                    might be null if not specified.
+    -n, --pretend                   Run but do not make any changes
+    -o, --conflict VALUE:{rej, inline} Behavior on conflict: Create .rej files, or
+                                    add inline conflict markers.; the default is
+                                    inline
+    -q, --quiet                     Suppress status output
+    -r, --vcs-ref VALUE:str         Git reference to checkout in `template_src`.
+                                    If you do not specify it, it will try to
+                                    checkout the latest git tag, as sorted using
+                                    the PEP 440 algorithm. If you want to
+                                    checkout always the latest version, use
+                                    `--vcs-ref=HEAD`. Use the special value
+                                    `:current:` to refer to the current
+                                    reference of the template if it already
+                                    exists.
+    -s, --skip VALUE:str            Skip specified files if they exist already;
+                                    may be given multiple times
+    -x, --exclude VALUE:str         A name or shell-style pattern matching files
+                                    or folders that must not be copied; may be
+                                    given multiple times
+
+""")
 
 
 def test_check_update_help(capsys: pytest.CaptureFixture[str]) -> None:
