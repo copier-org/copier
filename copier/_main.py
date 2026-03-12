@@ -1664,7 +1664,9 @@ def run_update(
 
 
 def get_update_data(
-    dst_path: Path | str = ".", use_prereleases: bool = False
+    dst_path: Path | str = ".",
+    answers_file: Path | str | None = None,
+    use_prereleases: bool = False,
 ) -> tuple[bool, str, str]:
     """Gets data regarding if a subproject has updates.
 
@@ -1674,7 +1676,15 @@ def get_update_data(
 
     See [checking a project][checking-a-project].
     """
-    with Worker(dst_path=Path(dst_path), use_prereleases=use_prereleases) as worker:
+    with Worker(
+        dst_path=Path(dst_path),
+        answers_file=(
+            RelativePath(answers_file)
+            if isinstance(answers_file, str)
+            else answers_file
+        ),
+        use_prereleases=use_prereleases,
+    ) as worker:
         if worker.subproject.template is None or worker.subproject.template.ref is None:
             raise UserMessageError(
                 "Cannot check because cannot obtain old template references "

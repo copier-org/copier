@@ -494,3 +494,57 @@ def test_with_prerelease_template_prereleases_and_quiet_opts(
     assert run_result[1] == 2
     captured = capsys.readouterr()
     assert captured.out == ""
+
+
+def test_with_custom_answers_file_path_opt(
+    capsys: pytest.CaptureFixture[str],
+    tmp_path_factory: pytest.TempPathFactory,
+    template_path: str,
+) -> None:
+    src = template_path
+    dst = tmp_path_factory.mktemp("dst")
+    answers_file = ".my-answers.yml"
+
+    CopierApp.run(
+        [
+            "copier",
+            "copy",
+            src,
+            str(dst),
+            "--quiet",
+            "--overwrite",
+            "--vcs-ref=v1.0.0",
+            "--answers-file",
+            answers_file,
+        ],
+        exit=False,
+    )
+    assert (dst / ".my-answers.yml").exists()
+
+    run_result = CopierApp.run(
+        [
+            "copier",
+            "check-update",
+            str(dst),
+        ],
+        exit=False,
+    )
+    assert run_result[1] == 1
+    capsys.readouterr()
+
+    run_result = CopierApp.run(
+        [
+            "copier",
+            "check-update",
+            str(dst),
+            "--answers-file",
+            answers_file,
+        ],
+        exit=False,
+    )
+    assert run_result[1] == 0
+    captured = capsys.readouterr()
+    assert (
+        "New template version available.\nCurrent version is 1.0.0, latest version is 2.0.0."
+        in captured.out
+    )
