@@ -12,7 +12,7 @@ from pytest_gitconfig.plugin import GitConfig
 from copier import run_copy, run_update
 from copier._main import Worker
 from copier._user_data import load_answersfile_data
-from copier._vcs import checkout_latest_tag, clone, get_git_version, get_repo
+from copier._vcs import clone, get_git_version, get_latest_tag, get_repo
 from copier.errors import DirtyLocalWarning, ShallowCloneWarning
 
 from .helpers import build_file_tree, git, git_save
@@ -210,8 +210,7 @@ def test_invalid_version(tmp_path: Path) -> None:
         sample.write_text("3")
         git("commit", "-am3")
         assert git("describe", "--tags").strip() != "v2"
-        checkout_latest_tag(tmp_path)
-        assert git("describe", "--tags").strip() == "v2"
+        assert get_latest_tag(str(tmp_path)) == "v2"
 
 
 @pytest.mark.parametrize("sorter", [iter, reversed])
