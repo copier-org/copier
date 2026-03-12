@@ -38,6 +38,43 @@ def test_copy(tmp_path_factory: pytest.TempPathFactory) -> None:
         assert bool(git("status", "--porcelain").strip())
 
 
+def test_copy_with_tag(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "tracked": "",
+            src / "untracked": "",
+        }
+    )
+    with local.cwd(src):
+        git("init")
+        git("add", "tracked")
+        git("commit", "-m1")
+        git("tag", "v1")
+    copier.run_copy(str(src), dst, vcs_ref=None)
+    assert (dst / "tracked").exists()
+    assert not (dst / "untracked").exists()
+
+
+def test_copy_with_tag_and_ref_head(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "tracked": "",
+            src / "untracked": "",
+        }
+    )
+    with local.cwd(src):
+        git("init")
+        git("add", "tracked")
+        git("commit", "-m1")
+        git("tag", "v1")
+    with pytest.warns(DirtyLocalWarning):
+        copier.run_copy(str(src), dst, vcs_ref="HEAD")
+    assert (dst / "tracked").exists()
+    assert (dst / "untracked").exists()
+
+
 def test_copy_dirty_head(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
