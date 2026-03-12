@@ -459,6 +459,14 @@ class CopierCheckUpdateSubApp(cli.Application):  # type: ignore[misc]
         """
     )
 
+    answers_file = cli.SwitchAttr(
+        ["-a", "--answers-file"],
+        default=None,
+        help=(
+            "Check for updates using this path (relative to `destination_path`) "
+            "to find the answers file"
+        ),
+    )
     quiet = cli.Flag(
         ["-q", "--quiet"],
         help=(
@@ -492,6 +500,7 @@ class CopierCheckUpdateSubApp(cli.Application):  # type: ignore[misc]
         def inner() -> int:
             update_available, current_version, latest_version = get_update_data(
                 dst_path=destination_path,
+                answers_file=self.answers_file,
                 use_prereleases=self.prereleases,
             )
 

@@ -406,6 +406,9 @@ Meta-switches:
     -v, --version                   Prints the program's version and quits
 
 Switches:
+    -a, --answers-file VALUE:str    Check for updates using this path (relative
+                                    to `destination_path`) to find the answers
+                                    file
     -g, --prereleases               Use prereleases to compare template VCS
                                     tags.
     --output-format VALUE:{plain, json} Output format, either 'plain' (the default)
