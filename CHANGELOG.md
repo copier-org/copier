@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.14.0 (2026-03-13)
+
+### Feat
+
+-   **cli**: add `--answers-file` flag to `check-update` command
+
+### Fix
+
+-   only warn about dirty template when checking out `HEAD`
+-   **cli**: show only supported flags in `check-update` command help output
+
 ## v9.13.1 (2026-03-09)
 
 ### Fix
