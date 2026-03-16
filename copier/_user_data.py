@@ -19,8 +19,9 @@ import yaml
 from jinja2 import StrictUndefined, UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
 from prompt_toolkit.lexers import PygmentsLexer
-from pydantic import ConfigDict, Field, field_validator
+from pydantic import ConfigDict, Field, ValidationError, field_validator
 from pydantic.dataclasses import dataclass
+from pydantic_core import PydanticCustomError
 from pydantic_core.core_schema import ValidationInfo
 from pygments.lexers.data import JsonLexer, YamlLexer
 from questionary.prompts.common import Choice
@@ -433,7 +434,36 @@ class Question:
             if self.use_search_filter:
                 result["use_search_filter"] = True
                 result["use_jk_keys"] = False
-            elif self.use_shortcuts and questionary_type == "select":
+            if self.use_shortcuts:
+                if self.multiselect:
+                    raise ValidationError.from_exception_data(
+                        title=f"`{self.var_name}`",
+                        line_errors=[
+                            {
+                                "type": PydanticCustomError(
+                                    '"`use_shortcuts` & `multiselect` are mutually exclusive"',
+                                    "Use either `use_shortcuts: true` or `multiselect: true`",
+                                ),
+                                "input": {"use_shortcuts": True, "multiselect": True},
+                            }
+                        ],
+                    )
+                if self.use_search_filter:
+                    raise ValidationError.from_exception_data(
+                        title=f"`{self.var_name}`",
+                        line_errors=[
+                            {
+                                "type": PydanticCustomError(
+                                    '"`use_shortcuts` & `use_search_filter` are mutually exclusive"',
+                                    "Use either `use_shortcuts: true` or `use_search_filter: true`",
+                                ),
+                                "input": {
+                                    "use_shortcuts": True,
+                                    "use_search_filter": True,
+                                },
+                            }
+                        ],
+                    )
                 result["use_shortcuts"] = True
 
             choices = self._formatted_choices
