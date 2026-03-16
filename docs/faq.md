@@ -218,7 +218,7 @@ Copier skips its autodetection and just goes for the `HEAD` you already chose.
 ## How to pass credentials to Git?
 
 If you do something like this, and the template supports updates, you'll notice that the
-credentials will end up stored in [the answers file][file][the-copier-answersyml-file]:
+credentials will end up stored in [the answers file][the-copier-answersyml-file]:
 
 ```shell
 copier copy https://myuser:example.com/repo.git .

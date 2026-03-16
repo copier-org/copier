@@ -12,18 +12,7 @@ nav:
   - Generating a project: "generating.md"
   - Updating a project: "updating.md"
   - Settings: "settings.md"
-  - Reference:
-      - cli.py: "reference/cli.md"
-      - errors.py: "reference/errors.md"
-      - jinja_ext.py: "reference/jinja_ext.md"
-      - main.py: "reference/main.md"
-      - settings.py: "reference/settings.md"
-      - subproject.py: "reference/subproject.md"
-      - template.py: "reference/template.md"
-      - tools.py: "reference/tools.md"
-      - types.py: "reference/types.md"
-      - user_data.py: "reference/user_data.md"
-      - vcs.py: "reference/vcs.md"
+  - Reference: reference/api.md
   - Comparisons: comparisons.md
   - Frequently Asked Questions: faq.md
   - Contributing: "contributing.md"
@@ -79,4 +68,38 @@ plugins:
   - autorefs
   - search
   - markdown-exec
-  - mkdocstrings
+  - mkdocstrings:
+      handlers:
+        python:
+          inventories:
+            - https://docs.python.org/3/objects.inv
+          options:
+            docstring_options:
+              ignore_init_summary: true
+            docstring_section_style: table
+            filters: public
+            heading_level: 1
+            inherited_members: true
+            merge_init_into_class: true
+            separate_signature: true
+            show_root_heading: true
+            show_root_full_path: false
+            show_signature_annotations: true
+            show_source: false
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            signature_crossrefs: true
+            summary: true
+  - redirects:
+      redirect_maps:
+        "reference/cli.md": "reference/api.md"
+        "reference/errors.md": "reference/api.md#copier.errors"
+        "reference/jinja_ext.md": "reference/api.md"
+        "reference/main.md": "reference/api.md"
+        "reference/settings.md": "reference/api.md#copier.settings"
+        "reference/subproject.md": "reference/api.md"
+        "reference/template.md": "reference/api.md"
+        "reference/tools.md": "reference/api.md"
+        "reference/types.md": "reference/api.md"
+        "reference/user_data.md": "reference/api.md"
+        "reference/vcs.md": "reference/api.md"

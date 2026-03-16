@@ -7,7 +7,7 @@ on:
 
 env:
   # renovate: datasource=devbox depName=uv
-  UV_VERSION: "0.9.21"
+  UV_VERSION: "0.10.9"
 
 jobs:
   build:
@@ -39,7 +39,7 @@ jobs:
         run: uv build
 
       - name: Upload artifact containing distribution files
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/
@@ -58,7 +58,7 @@ jobs:
 
     steps:
       - name: Download artifact containing distribution files
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist/
@@ -82,7 +82,7 @@ jobs:
 
     steps:
       - name: Download artifact containing distribution files
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist/

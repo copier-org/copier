@@ -37,7 +37,7 @@ the templates. The arguments can be any valid Python value, even a function.
 Use the `--vcs-ref` command-line argument to checkout a particular Git ref before
 generating the project.
 
-[All the available options][copier.cli] are described with the `--help-all` option.
+All the available options are described with the `--help-all` option.
 
 ## Templates versions
 

@@ -2,6 +2,7 @@ import os
 import shutil
 from collections.abc import Callable, Iterator, Sequence
 from pathlib import Path
+from unittest import mock
 
 import pytest
 from packaging.version import Version
@@ -11,7 +12,7 @@ from pytest_gitconfig.plugin import GitConfig
 from copier import run_copy, run_update
 from copier._main import Worker
 from copier._user_data import load_answersfile_data
-from copier._vcs import checkout_latest_tag, clone, get_git_version, get_repo
+from copier._vcs import clone, get_git_version, get_latest_tag, get_repo
 from copier.errors import DirtyLocalWarning, ShallowCloneWarning
 
 from .helpers import build_file_tree, git, git_save
@@ -117,8 +118,8 @@ def test_local_dirty_clone(
 
 @pytest.mark.impure
 def test_shallow_clone(tmp_path: Path, recwarn: pytest.WarningsRecorder) -> None:
-    # This test should always work but should be much slower if `is_git_shallow_repo()` is not
-    # checked in `clone()`.
+    # This test should always work but should be much slower if `is_git_shallow_repo()`
+    # is not checked in `clone()`.
     src_path = str(tmp_path / "autopretty")
     git("clone", "--depth=2", "https://github.com/copier-org/autopretty.git", src_path)
     assert Path(src_path, "README.md").exists()
@@ -165,7 +166,8 @@ def test_update_using_local_source_path_with_tilde(tmp_path: Path) -> None:
 
     # then prepare the user path to this clone (starting with ~)
     if os.name == "nt":
-        # in GitHub CI, the user in the temporary path is not the same as the current user:
+        # in GitHub CI, the user in the temporary path is not the same as the current
+        # user:
         # ["C:\\", "Users", "RUNNER~X"] vs. runneradmin
         user = Path(src_path).parts[2]
         user_src_path = str(Path("~", "..", user, *Path(src_path).parts[3:]))
@@ -208,8 +210,7 @@ def test_invalid_version(tmp_path: Path) -> None:
         sample.write_text("3")
         git("commit", "-am3")
         assert git("describe", "--tags").strip() != "v2"
-        checkout_latest_tag(tmp_path)
-        assert git("describe", "--tags").strip() == "v2"
+        assert get_latest_tag(str(tmp_path)) == "v2"
 
 
 @pytest.mark.parametrize("sorter", [iter, reversed])
@@ -237,3 +238,21 @@ def test_select_latest_version_tag(
     assert (dst / filename).read_text() == "v1.0.1"
     answers = load_answersfile_data(dst)
     assert answers["_commit"] == "v1.0.1"
+
+
+@pytest.mark.parametrize(
+    ("git_version_output", "expected_version"),
+    [
+        ("git version 2.53.0\n", Version("2.53.0")),
+        ("git version 2.53.GIT\n", Version("2.53.0")),
+    ],
+)
+def test_get_git_version(git_version_output: str, expected_version: Version) -> None:
+    def _mock_git(*args: str) -> str:
+        assert args == ("version",)
+        return git_version_output
+
+    with mock.patch(
+        "copier._vcs.get_git", return_value=mock.MagicMock(side_effect=_mock_git)
+    ):
+        assert get_git_version() == expected_version

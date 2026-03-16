@@ -81,7 +81,8 @@ def default_git_user_email() -> Any:
 @pytest.fixture(scope="session", autouse=True)
 def default_gitconfig(default_gitconfig: GitConfig) -> GitConfig:
     """
-    Use a clean and isolated default gitconfig avoiding user settings to break some tests.
+    Use a clean and isolated default gitconfig avoiding user settings to break some
+    tests.
 
     Add plumbum support to the original session-scoped fixture.
     """
@@ -109,7 +110,7 @@ def gitconfig(gitconfig: GitConfig) -> Iterator[GitConfig]:
 def config_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[Path]:
     config_path = tmp_path / "config"
     monkeypatch.delenv("COPIER_SETTINGS_PATH", raising=False)
-    with patch("copier.settings.user_config_path", return_value=config_path):
+    with patch("copier._settings.user_config_path", return_value=config_path):
         yield config_path
 
 

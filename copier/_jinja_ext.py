@@ -20,9 +20,9 @@ class YieldEnvironment(SandboxedEnvironment):
     This is simple environment class that extends the SandboxedEnvironment
     for use with the YieldExtension, mainly for avoiding type errors.
 
-    We use the SandboxedEnvironment because we want to minimize the risk of hidden malware
-    in the templates. Of course we still have the post-copy tasks to worry about, but at least
-    they are more visible to the final user.
+    We use the SandboxedEnvironment because we want to minimize the risk of hidden
+    malware in the templates. Of course we still have the post-copy tasks to worry
+    about, but at least they are more visible to the final user.
     """
 
     yield_name: str | None
@@ -43,15 +43,17 @@ class YieldExtension(Extension):
     - `yield_iterable`: The variable that will be looped over.
 
     Note that this extension just sets the attributes but renders templates as usual.
-    It is the caller's responsibility to use the `yield_context` attribute in the template to
-    generate the desired output.
+    It is the caller's responsibility to use the `yield_context` attribute in the
+    template to generate the desired output.
 
     !!! example
 
         ```pycon
         >>> from copier.jinja_ext import YieldEnvironment, YieldExtension
         >>> env = YieldEnvironment(extensions=[YieldExtension])
-        >>> template = env.from_string("{% yield single_var from looped_var %}{{ single_var }}{% endyield %}")
+        >>> template = env.from_string(
+        ...     "{% yield single_var from looped_var %}{{ single_var }}{% endyield %}"
+        ... )
         >>> template.render({"looped_var": [1, 2, 3]})
         ''
         >>> env.yield_name
@@ -98,8 +100,9 @@ class YieldExtension(Extension):
     ) -> str:
         """Support function for the yield tag.
 
-        Sets the `yield_name` and `yield_iterable` attributes in the environment then calls
-        the provided caller function. If an UndefinedError is raised, it returns an empty string.
+        Sets the `yield_name` and `yield_iterable` attributes in the environment then
+        calls the provided caller function. If an UndefinedError is raised, it returns
+        an empty string.
         """
         if (
             self.environment.yield_name is not None
