@@ -31,6 +31,7 @@ from typing import (
 from unicodedata import normalize
 
 from jinja2.loaders import FileSystemLoader
+from jinja2.sandbox import SandboxedEnvironment
 from packaging.version import Version
 from pathspec import PathSpec, __version__ as pathspec_version
 from plumbum import ProcessExecutionError, colors
@@ -40,7 +41,7 @@ from pydantic.dataclasses import dataclass
 from pydantic_core import to_jsonable_python
 from questionary import confirm, unsafe_prompt
 
-from ._jinja_ext import YieldEnvironment, YieldExtension
+from ._jinja_ext import YieldExtension, get_yield_context
 from ._settings import Settings, SettingsModel, is_trusted_repository
 from ._subproject import Subproject
 from ._template import Task, Template
@@ -651,7 +652,7 @@ class Worker:
         return tuple(chain(self.skip_if_exists, self.template.skip_if_exists))
 
     @cached_property
-    def jinja_env(self) -> YieldEnvironment:
+    def jinja_env(self) -> SandboxedEnvironment:
         """Return a pre-configured Jinja environment.
 
         Respects template settings.
@@ -664,7 +665,7 @@ class Worker:
         ]
         extensions = default_extensions + list(self.template.jinja_extensions)
         try:
-            env = YieldEnvironment(
+            env = SandboxedEnvironment(
                 loader=loader, extensions=extensions, **self.template.envops
             )
         except ModuleNotFoundError as error:
@@ -800,7 +801,7 @@ class Worker:
                 new_content = tpl.render(
                     **self._render_context(), **(extra_context or {})
                 ).encode()
-                if self.jinja_env.yield_name:
+                if get_yield_context(self.jinja_env).yield_name:
                     raise YieldTagInFileError(
                         f"File {src_relpath} contains a yield tag, but it is not allowed."
                     )
@@ -937,9 +938,10 @@ class Worker:
         # name and iterable
         rendered_part = self._render_string(part, extra_context=extra_context)
 
-        yield_name = self.jinja_env.yield_name
+        ctx = get_yield_context(self.jinja_env)
+        yield_name = ctx.yield_name
         if yield_name:
-            for value in self.jinja_env.yield_iterable or ():
+            for value in ctx.yield_iterable or ():
                 new_context = {**extra_context, yield_name: value}
                 rendered_part = self._render_string(part, extra_context=new_context)
                 rendered_part = self._adjust_rendered_part(rendered_part)
