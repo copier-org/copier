@@ -204,14 +204,15 @@ class Question:
             boolean values.
 
         use_shortcuts:
-            Condition that, if `True`, will use `use_shortcuts` in `select` question,
-            allowing for selection via automatically numbered shortcut. Will be
-            deactivated if `use_search_filter` is `True`.
+            Condition that, if `True`, allows selecting choice question items via
+            number shortcuts. Mutually exclusive with `multiselect` and
+            `use_search_filter`.
 
         use_search_filter:
-            Condition that, if `True`, uses `use_search_filter` in `checkbox`/`select`
-            question while deactivating `use_jk_keys`, allowing for selection via
-            filtering.
+            Condition that, if `True`, enables filtering choice question items by
+            typing a search string. Disables j/k navigation, as "j" and "k" can be part
+            of a prefix and therefore cannot be used for navigation.  Mutually exclusive
+            with `use_shortcuts`.
     """
 
     var_name: str
