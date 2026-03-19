@@ -24,8 +24,8 @@ read-only).
 
 The "template" parameter can be a local path, an URL, or a shortcut URL:
 
--   GitHub: `gh:namespace/project`
--   GitLab: `gl:namespace/project`
+- GitHub: `gh:namespace/project`
+- GitLab: `gl:namespace/project`
 
 If Copier doesn't detect your remote URL as a Git repository, make sure it starts with
 one of `git+https://`, `git+ssh://`, `git@` or `git://`, or it ends with `.git`.
@@ -52,8 +52,8 @@ modifications made, Copier will use this modified working copy of the template t
 development of new template features.
 
 If you would like to override the version of template being installed, the
-[`--vcs-ref`][vcs_ref] argument can be used to specify a branch, tag or other reference
-to use.
+[`--vcs-ref`](configuring.md#vcs_ref) argument can be used to specify a branch, tag or
+other reference to use.
 
 For example to use the latest master branch from a public repository:
 
@@ -75,6 +75,6 @@ will just reapply the template on it, keeping answers but ignoring previous hist
 
 !!! warning
 
-    This is not [the recommended approach for updating a project][updating-a-project],
+    This is not [the recommended approach for updating a project](updating.md),
     where you usually want Copier to respect the project evolution wherever it doesn't
     conflict with the template evolution.

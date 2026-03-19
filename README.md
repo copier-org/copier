@@ -9,14 +9,14 @@
 [![PyPI](https://img.shields.io/pypi/v/copier?logo=pypi&logoColor=%23959DA5)](https://pypi.org/project/copier/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Documentation Status](https://img.shields.io/readthedocs/copier/latest?logo=readthedocs)](https://copier.readthedocs.io/en/latest)
-[![](https://img.shields.io/badge/Gurubase-Ask%20Copier%20Guru-006BFF)](https://gurubase.io/g/copier)
+[![Gurubase](https://img.shields.io/badge/Gurubase-Ask%20Copier%20Guru-006BFF)](https://gurubase.io/g/copier)
 
 A library and CLI app for rendering project templates.
 
--   Works with **local** paths and **Git URLs**.
--   Your project can include any file and Copier can dynamically replace values in any
+- Works with **local** paths and **Git URLs**.
+- Your project can include any file and Copier can dynamically replace values in any
     kind of text file.
--   It generates a beautiful output and takes care of not overwriting existing files
+- It generates a beautiful output and takes care of not overwriting existing files
     unless instructed to do so.
 
 ![Sample output](https://github.com/copier-org/copier/raw/master/img/copier-output.png)
@@ -79,13 +79,13 @@ Content of the `{{_copier_conf.answers_file}}.jinja` file:
 
 To generate a project from the template:
 
--   On the command-line:
+- On the command-line:
 
     ```shell
     copier copy path/to/project/template path/to/destination
     ```
 
--   Or in Python code, programmatically:
+- Or in Python code, programmatically:
 
     ```python
     from copier import run_copy
@@ -115,13 +115,13 @@ Copier is composed of these main concepts:
 
 Copier targets these main human audiences:
 
-1.  **Template creators**. Programmers that repeat code too much and prefer a tool to do
+1. **Template creators**. Programmers that repeat code too much and prefer a tool to do
     it for them.
 
     **_Tip:_** Copier doesn't replace the DRY principle... but sometimes you simply
     can't be DRY and you need a DRYing machine...
 
-1.  **Template consumers**. Programmers that want to start a new project quickly, or
+1. **Template consumers**. Programmers that want to start a new project quickly, or
     that want to evolve it comfortably.
 
 Non-humans should be happy also by using Copier's CLI or API, as long as their
@@ -164,34 +164,32 @@ If you're using Copier, consider adding the Copier badge to your project's `READ
 
 ...or, as HTML:
 
-<!-- prettier-ignore-start -->
 ```html
 <a href="https://github.com/copier-org/copier"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-orange.json" alt="Copier" style="max-width:100%;"/></a>
 ```
-<!-- prettier-ignore-end -->
 
 ### Copier badge variations
 
 1. Badge Grayscale Border
-   [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-border.json)](https://github.com/copier-org/copier)
+    [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-border.json)](https://github.com/copier-org/copier)
 
 1. Badge Grayscale Inverted Border
-   [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border.json)](https://github.com/copier-org/copier)
+    [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border.json)](https://github.com/copier-org/copier)
 
 1. Badge Grayscale Inverted Border Orange
-   [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-orange.json)](https://github.com/copier-org/copier)
+    [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-orange.json)](https://github.com/copier-org/copier)
 
 1. Badge Grayscale Inverted Border Red
-   [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-red.json)](https://github.com/copier-org/copier)
+    [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-red.json)](https://github.com/copier-org/copier)
 
 1. Badge Grayscale Inverted Border Teal
-   [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-teal.json)](https://github.com/copier-org/copier)
+    [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-teal.json)](https://github.com/copier-org/copier)
 
 1. Badge Grayscale Inverted Border Purple
-   [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)
+    [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-purple.json)](https://github.com/copier-org/copier)
 
 1. Badge Black
-   [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-black.json)](https://github.com/copier-org/copier)
+    [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-black.json)](https://github.com/copier-org/copier)
 
 ## Credits
 
@@ -213,6 +211,8 @@ codebase.
 
 And thanks to all financial supporters and folks that give us a shiny star! ⭐
 
+<!-- rumdl-capture -->
+<!-- rumdl-disable MD033 -->
 <a href="https://star-history.com/#copier-org/copier&Date">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=copier-org/copier&type=Date&theme=dark" />
@@ -220,3 +220,4 @@ And thanks to all financial supporters and folks that give us a shiny star! ⭐
     <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=copier-org/copier&type=Date" />
   </picture>
 </a>
+<!-- rumdl-restore -->

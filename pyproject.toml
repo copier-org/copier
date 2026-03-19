@@ -56,6 +56,7 @@ dev = [
   "pytest-gitconfig==0.9.0",
   "pytest-xdist==3.8.0",
   "ruff==0.15.6",
+  "rumdl==0.1.57",
   "taplo==0.9.3",
   "types-backports==0.1.3",
   "types-colorama==0.4.15.20250801",
@@ -162,6 +163,10 @@ warn_return_any = false
 module = ["tests.test_cli", "tests.test_prompt"]
 disable_error_code = ["no-untyped-def"]
 
+[[tool.mypy.overrides]]
+module = "mkdocs_hooks"
+disable_error_code = ["import-not-found"]
+
 [tool.pytest.ini_options]
 addopts = "-n auto -ra"
 markers = ["impure: needs network or is not 100% reproducible"]
@@ -193,6 +198,23 @@ skip = '.git*,*.svg,*.lock,*.css,pyproject.toml,.mypy_cache,.venv'
 check-hidden = true
 ignore-regex = '\bla vie\b'
 ignore-words-list = 'ans'
+
+[tool.rumdl]
+flavor = "mkdocs"
+line_length = 88
+
+[tool.rumdl.MD013]
+reflow = true
+code-blocks = false
+
+[tool.rumdl.MD029]
+style = "one"
+
+[tool.rumdl.MD033]
+allowed-elements = ["br", "code"]
+
+[tool.rumdl.MD060]
+enabled = true
 
 [tool.hatch.version]
 source = "vcs"
