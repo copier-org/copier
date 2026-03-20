@@ -4,7 +4,7 @@
     "difftastic@0.67.0",
     "editorconfig-checker@3.6.1",
     "git@2.53.0",
-    "nodePackages.prettier@3.5.3",
+    "prettier@3.6.2",
     "uv@0.10.10"
   ],
   "env": {
