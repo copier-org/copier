@@ -12,7 +12,13 @@ from pytest_gitconfig.plugin import GitConfig
 from copier import run_copy, run_update
 from copier._main import Worker
 from copier._user_data import load_answersfile_data
-from copier._vcs import clone, get_git_version, get_latest_tag, get_repo
+from copier._vcs import (
+    ProcessExecutionError,
+    clone,
+    get_git_version,
+    get_latest_tag,
+    get_repo,
+)
 from copier.errors import DirtyLocalWarning, ShallowCloneWarning
 
 from .helpers import build_file_tree, git, git_save
@@ -211,6 +217,15 @@ def test_invalid_version(tmp_path: Path) -> None:
         git("commit", "-am3")
         assert git("describe", "--tags").strip() != "v2"
         assert get_latest_tag(str(tmp_path)) == "v2"
+
+
+def test_get_latest_tag_falls_back_to_head_on_ls_remote_error() -> None:
+    mock_git = mock.MagicMock(
+        side_effect=ProcessExecutionError(["git", "ls-remote"], 128, "", "auth")
+    )
+
+    with mock.patch("copier._vcs.get_git", return_value=mock_git):
+        assert get_latest_tag("https://x-access-token:token@github.com/org/private.git") == "HEAD"
 
 
 @pytest.mark.parametrize("sorter", [iter, reversed])

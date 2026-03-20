@@ -140,9 +140,19 @@ def get_latest_tag(url: str, use_prereleases: OptBool = False) -> str:
         The latest git tag, or `HEAD` if no valid tags are found.
     """
     git = get_git()
+    try:
+        tags_output = git("ls-remote", "--tags", "--refs", url)
+    except ProcessExecutionError:
+        print(
+            colors.warn
+            | "Could not list remote tags from template; using HEAD as ref",
+            file=sys.stderr,
+        )
+        return "HEAD"
+
     all_tags = (
         tag.split("\t", 1)[1].removeprefix("refs/tags/")
-        for tag in git("ls-remote", "--tags", "--refs", url).splitlines()
+        for tag in tags_output.splitlines()
     )
     all_tags = (tag for tag in all_tags if valid_version(tag))
     if not use_prereleases:
