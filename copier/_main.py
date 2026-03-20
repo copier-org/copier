@@ -9,10 +9,9 @@ import subprocess
 import sys
 import warnings
 from collections.abc import Callable, Iterable, Mapping, Sequence
-from contextlib import suppress
+from contextlib import ExitStack, suppress
 from contextvars import ContextVar
 from dataclasses import field, replace
-from filecmp import dircmp
 from functools import cached_property, partial, wraps
 from itertools import chain
 from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
@@ -36,7 +35,7 @@ from packaging.version import Version
 from pathspec import PathSpec, __version__ as pathspec_version
 from plumbum import ProcessExecutionError, colors
 from plumbum.machines import local
-from pydantic import ConfigDict, PositiveInt
+from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 from pydantic_core import to_jsonable_python
 from questionary import confirm, unsafe_prompt
@@ -49,11 +48,8 @@ from ._tools import (
     OS,
     Style,
     cast_to_bool,
-    escape_git_path,
-    normalize_git_path,
     printf,
     scantree,
-    set_git_alternates,
 )
 from ._types import (
     MISSING,
@@ -202,18 +198,6 @@ class Worker:
 
             See [quiet][].
 
-        conflict:
-            One of "inline" (default), "rej".
-
-        context_lines:
-            Lines of context to consider when solving conflicts in updates.
-
-            With more lines, context resolution is more accurate, but it will
-            also produce more conflicts if your subproject has evolved.
-
-            With less lines, context resolution is less accurate, but it will
-            respect better the evolution of your subproject.
-
         unsafe:
             When `True`, allow usage of unsafe templates.
 
@@ -244,8 +228,6 @@ class Worker:
     overwrite: bool = False
     pretend: bool = False
     quiet: bool = False
-    conflict: Literal["inline", "rej"] = "inline"
-    context_lines: PositiveInt = 3
     unsafe: bool = False
     skip_answered: bool = False
     skip_tasks: bool = False
@@ -425,8 +407,6 @@ class Worker:
                 "overwrite": lambda: self.overwrite,
                 "pretend": lambda: self.pretend,
                 "quiet": lambda: self.quiet,
-                "conflict": lambda: self.conflict,
-                "context_lines": lambda: self.context_lines,
                 "unsafe": lambda: self.unsafe,
                 "skip_answered": lambda: self.skip_answered,
                 "skip_tasks": lambda: self.skip_tasks,
@@ -1190,6 +1170,21 @@ class Worker:
             ).strip()
         )
         subproject_subdir = self.subproject.local_abspath.relative_to(subproject_top)
+        subproject_gitpath = git["-C", subproject_top, "rev-parse", "--git-path"]
+
+        # Collect all paths in the subproject except those in the `.git` directory.
+        with local.cwd(self.subproject.local_abspath):
+            subproject_paths = set(
+                p
+                for entry in scantree(".", follow_symlinks=False)
+                if (p := Path(entry.path)).parts[0] != ".git"
+            )
+        # Filter all paths in the subproject that match a skip-if-exists pattern for
+        # further processing below. Convert them to POSIX-style absolute paths to make
+        # them Gitignore patterns matching exact paths anchored at the subproject root.
+        subproject_skip_paths = set(
+            f"/{p.as_posix()}" for p in subproject_paths if self.match_skip(p)
+        )
 
         with (
             TemporaryDirectory(
@@ -1199,7 +1194,8 @@ class Worker:
                 prefix=f"{__name__}.new_copy.",
             ) as new_copy,
         ):
-            # Copy old template into a temporary destination
+            # Create a fresh copy based on the old template into a temporary
+            # destination.
             with replace(
                 self,
                 dst_path=old_copy / subproject_subdir,
@@ -1211,298 +1207,185 @@ class Worker:
                 # Exclude also paths listed in the new template version, so they
                 # won't be included in the diff as deleted paths to prevent deletion.
                 # https://github.com/orgs/copier-org/discussions/2345
-                exclude=[*self.template.exclude, *self.exclude],
+                exclude=[
+                    *map(str, subproject_skip_paths),
+                    *self.template.exclude,
+                    *self.exclude,
+                ],
             ) as old_worker:
                 old_worker.run_copy()
-            # Run pre-migration tasks
+
+            # Run pre-migration tasks.
             with Phase.use(Phase.MIGRATE):
                 self._execute_tasks(
                     self.template.migration_tasks("before", self.subproject.template)  # type: ignore[arg-type]
                 )
-            # Create a Git tree object from the current (possibly dirty) index
-            # and keep the object reference.
-            with local.cwd(subproject_top):
-                subproject_head = git("write-tree").strip()
-            with local.cwd(old_copy):
-                self._git_initialize_repo()
-                # Configure borrowing Git objects from the real destination.
-                set_git_alternates(subproject_top)
-                # Save a list of files that were intentionally removed in the generated
-                # project to avoid recreating them during the update.
-                # Files listed in `skip_if_exists` should only be skipped if they exist.
-                # They should even be recreated if deleted intentionally.
-                files_removed = git(
-                    "diff-tree",
-                    "-r",
-                    "--diff-filter=D",
-                    "--name-only",
-                    "HEAD",
-                    subproject_head,
-                ).splitlines()
-                exclude_plus_removed = list(
-                    set(self.exclude).union(
-                        f"/{escape_git_path(path)}"
-                        for path in map(normalize_git_path, files_removed)
-                        if not self.match_skip(Path(path))
-                    )
-                )
-            # Clear last answers cache to load possible answers migration, if
-            # skip_answered flag is not set
+
+            # Clear last answers cache to load possible answers migration if the
+            # `skip_answered` flag is not set.
             if self.skip_answered is False:
                 self.answers = AnswersMap(external=self._external_data())
                 with suppress(AttributeError):
                     del self.subproject.last_answers
-            # Do a normal update in final destination
-            with replace(
-                self,
-                # Don't regenerate intentionally deleted paths
-                exclude=exclude_plus_removed,
-                # Files can change due to the historical diff, and those
-                # changes are not detected in this process, so it's better to
-                # say nothing than lie.
-                # TODO
-                quiet=True,
-            ) as current_worker:
-                current_worker.run_copy()
-                self.answers = current_worker.answers
-                self.answers.external = self._external_data()
-            # Render with the same answers in an empty dir to avoid pollution
+
+            # Copy new template into a temporary destination.
             with replace(
                 self,
                 dst_path=new_copy / subproject_subdir,
-                data={
-                    k: v
-                    for k, v in self.answers.combined.items()
-                    if not k.startswith("_")
-                    and k not in self.answers.hidden
-                    and isinstance(k, JSONSerializable)
-                    and isinstance(v, JSONSerializable)
-                },
-                defaults=True,
-                quiet=True,
                 src_path=self.subproject.template.url,  # type: ignore[union-attr]
-                exclude=exclude_plus_removed,
                 vcs_ref=self.resolved_vcs_ref,
+                exclude=[*map(str, subproject_skip_paths), *self.exclude],
             ) as new_worker:
+                # HACK: Use the recorded answers from the subproject's answers file.
+                new_worker.subproject.last_answers = self.subproject.last_answers
                 new_worker.run_copy()
-            with local.cwd(new_copy):
-                self._git_initialize_repo()
-                new_copy_head = git("rev-parse", "HEAD").strip()
-            # Extract diff between temporary destination and real destination
-            # with some special handling of newly added files in both the project
-            # and the template.
-            with local.cwd(old_copy):
-                # Configure borrowing Git objects from the real destination and
-                # temporary destination of the new template.
-                set_git_alternates(subproject_top, Path(new_copy))
-                # Create an empty file in the temporary destination when the
-                # same file was added in *both* the project and the temporary
-                # destination of the new template. With this minor change, the
-                # diff between the temporary destination and the real
-                # destination for such files will use the "update file mode"
-                # instead of the "new file mode" which avoids deleting the file
-                # content previously added in the project.
-                diff_added_cmd = git[
-                    "diff-tree", "-r", "--diff-filter=A", "--name-only"
-                ]
-                for filename in (
-                    set(diff_added_cmd("HEAD", subproject_head).splitlines())
-                ) & set(diff_added_cmd("HEAD", new_copy_head).splitlines()):
-                    f = Path(filename)
-                    f.parent.mkdir(parents=True, exist_ok=True)
-                    f.touch((subproject_top / filename).stat().st_mode)
-                    git("add", "--force", filename)
-                self._git_commit("add new empty files")
-                # Extract diff between temporary destination and real
-                # destination
-                diff_cmd = git[
-                    "diff-tree",
-                    f"--unified={self.context_lines}",
-                    "HEAD",
-                    subproject_head,
-                ]
-                # Get the list of modified files in the subproject directory
-                # that match the skip-if-exists patterns. These are relative
-                # paths anchored at the Git repo root because they will be used
-                # with `git apply --exclude` later, which expects paths relative
-                # to the repo root. Importantly, the skip-if-exists patterns
-                # are anchored at the subproject root, which may be a
-                # subdirectory of the Git repo, so we need to relativize the
-                # paths accordingly for pattern matching.
-                skip_if_exists_files = [
-                    escape_git_path(f)
-                    for f in map(
-                        normalize_git_path,
-                        diff_cmd(
-                            "-r", "--no-commit-id", "--name-only", subproject_subdir
-                        ).splitlines(),
+                # HACK: Assign the new answers to the current worker.
+                self.answers = new_worker.answers
+
+            # Construct the Git tree of the fresh copy based on the new template.
+            with (
+                local.cwd(new_copy),
+                # Reuse the Git object directory of the subproject's Git repository,
+                # so the blob and tree objects stored there.
+                local.env(
+                    GIT_OBJECT_DIRECTORY=(
+                        subproject_top / subproject_gitpath("objects").strip()
                     )
-                    if self.match_skip(Path(f).relative_to(subproject_subdir))
-                ]
-                try:
-                    diff = diff_cmd("--inter-hunk-context=-1")
-                except ProcessExecutionError:
-                    print(
-                        colors.warn
-                        | "Make sure Git >= 2.24 is installed to improve updates.",
-                        file=sys.stderr,
+                ),
+            ):
+                # Collect all files of the fresh copy based on the new template for
+                # later use.
+                new_copy_files = set(
+                    Path(entry.path) for entry in scantree(".", follow_symlinks=False)
+                )
+
+                # Initialize a Git repository.
+                git("init")
+                # Stage all files including Git-ignored ones.
+                git("add", "-f", ".")
+                # Make a commit to run Git hooks if applicable.
+                self._git_commit()
+
+                # Get the Git tree ID.
+                tree_id_new = git("rev-parse", "--verify", "HEAD^{tree}").strip()
+
+            # Construct the Git tree of the fresh copy based on the old template.
+            with (
+                local.cwd(old_copy),
+                # Reuse the Git object directory of the subproject's Git repository,
+                # so the blob and tree objects stored there.
+                local.env(
+                    GIT_OBJECT_DIRECTORY=(
+                        subproject_top / subproject_gitpath("objects").strip()
                     )
-                    diff = diff_cmd("--inter-hunk-context=0")
-            compared = dircmp(old_copy, new_copy)
-            # Try to apply cached diff into final destination
-            with local.cwd(subproject_top):
-                apply_cmd = git[
-                    "apply",
-                    "--reject",
-                    "--exclude",
-                    subproject_subdir / self.answers_relpath,
-                ]
-                # Exclude modified files that match the skip-if-exists patterns
-                # to exclude them from the patch application.
-                for filename in skip_if_exists_files:
-                    apply_cmd = apply_cmd["--exclude", filename]
-                ignored_files = git["status", "--ignored", "--porcelain"]()
-                # returns "!! file1\n !! file2\n"
-                # adds `--exclude file1 --exclude file2` to `git apply` command
-                for filename in ignored_files.splitlines():
-                    if filename.startswith("!! "):
-                        apply_cmd = apply_cmd["--exclude", filename[3:]]
-                (apply_cmd << diff)(retcode=None)
-                if self.conflict == "inline":
-                    conflicted = []
-                    old_path = Path(old_copy)
-                    new_path = Path(new_copy)
-                    status = git("status", "--porcelain").strip().splitlines()
-                    for line in status:
-                        # Filter merge rejections (part 1/2)
-                        if not line.startswith("?? "):
-                            continue
-                        # Remove "?? " prefix
-                        fname = line[3:]
-                        # Normalize name
-                        fname = normalize_git_path(fname)
-                        # Filter merge rejections (part 2/2)
-                        if not fname.endswith(".rej"):
-                            continue
-                        # Remove ".rej" suffix
-                        fname = fname[:-4]
-                        # Undo possible non-rejected chunks
-                        git(
+                ),
+            ):
+                # Remove all files present in the new copy but missing in the current
+                # subproject if they match a skip-if-exists pattern and are present in
+                # the old copy. This way, `git merge` will re-create files that were
+                # deleted in the subproject but match a skip-if-exists pattern.
+                old_copy_files = set(
+                    Path(entry.path) for entry in scantree(".", follow_symlinks=False)
+                )
+                for path in new_copy_files - subproject_paths:
+                    if self.match_skip(path) and path in old_copy_files:
+                        path.unlink()
+
+                # Initialize a Git repository.
+                git("init")
+                # Stage all files including Git-ignored ones.
+                git("add", "-f", ".")
+                # Make a commit to run Git hooks if applicable.
+                self._git_commit()
+
+                # Get the Git tree ID.
+                tree_id_old = git("rev-parse", "--verify", "HEAD^{tree}").strip()
+
+            if not self.pretend:
+                with local.cwd(subproject_top):
+                    # Create the Git tree of the subproject including changes from
+                    # pre-migration tasks.
+                    git("add", "-u", ".")
+                    tree_id_head = git("write-tree").strip()
+
+                    git_commit_tree = git["commit-tree", "--no-gpg-sign"]
+                    # Create a synthetic commit graph that reflects the relationship
+                    # between the fresh copy based on the old template ...
+                    commit_id_old = git_commit_tree(
+                        "-m", "old copy", tree_id_old
+                    ).strip()
+                    # ... and the fresh copy based on the new template ...
+                    commit_id_new = git_commit_tree(
+                        "-m", "new copy", "-p", commit_id_old, tree_id_new
+                    ).strip()
+                    # ... and the current subproject.
+                    commit_id_head = git_commit_tree(
+                        "-m", "current subproject", "-p", commit_id_old, tree_id_head
+                    ).strip()
+
+                    with ExitStack() as stack:
+                        current_branch = git(
+                            "rev-parse", "--abbrev-ref", "HEAD"
+                        ).strip()
+
+                        git_checkout = git[
                             # Ignore hooks to avoid errors from them or
                             # issues when .pre-commit-config.yaml is changed
-                            "-c",
-                            f"core.hooksPath={os.devnull}",
-                            "checkout",
-                            "--",
-                            fname,
-                        )
-                        # 3-way-merge the file directly
-                        git(
-                            "merge-file",
-                            "-L",
-                            "before updating",
-                            "-L",
-                            "last update",
-                            "-L",
-                            "after updating",
-                            fname,
-                            old_path / fname,
-                            new_path / fname,
-                            retcode=None,
-                        )
-                        # Remove rejection witness
-                        Path(f"{fname}.rej").unlink()
-                        # The 3-way merge might have resolved conflicts automatically,
-                        # so we need to check if the file contains conflict markers
-                        # before storing the file name for marking it as unmerged after
-                        # the loop.
-                        with Path(fname).open("rb") as conflicts_candidate:
-                            if any(
-                                line.rstrip()
-                                in {
-                                    b"<<<<<<< before updating",
-                                    b">>>>>>> after updating",
-                                }
-                                for line in conflicts_candidate
-                            ):
-                                conflicted.append(fname)
-                    # We ran `git merge-file` outside of a regular merge operation,
-                    # which means no merge conflict is recorded in the index.
-                    # Only the usual stage 0 is recorded, with the hash of the current
-                    # version.
-                    # We therefore update the index with the missing stages:
-                    # 1 = current (before updating)
-                    # 2 = base (last update)
-                    # 3 = other (after updating)
-                    # See this SO post: https://stackoverflow.com/questions/79309642/
-                    # and Git docs: https://git-scm.com/docs/git-update-index#_using_index_info.
-                    if conflicted:
-                        input_lines = []
-                        for line in (
-                            git("ls-files", "--stage", *conflicted).strip().splitlines()
-                        ):
-                            perms_sha_mode, path = line.split("\t")
-                            perms, sha, _ = perms_sha_mode.split()
-                            input_lines.append(f"0 {'0' * 40}\t{path}")
-                            input_lines.append(f"{perms} {sha} 2\t{path}")
-                            with suppress(ProcessExecutionError):
-                                # The following command will fail
-                                # if the file did not exist in the previous version.
-                                old_sha = git(
-                                    "hash-object",
-                                    "-w",
-                                    old_path / normalize_git_path(path),
-                                ).strip()
-                                input_lines.append(f"{perms} {old_sha} 1\t{path}")
-                            with suppress(ProcessExecutionError):
-                                # The following command will fail
-                                # if the file was deleted in the latest version.
-                                new_sha = git(
-                                    "hash-object",
-                                    "-w",
-                                    new_path / normalize_git_path(path),
-                                ).strip()
-                                input_lines.append(f"{perms} {new_sha} 3\t{path}")
-                        (
-                            git["update-index", "--index-info"]
-                            << "\n".join(input_lines)
-                        )()
-            # Trigger recursive removal of deleted files in last template version
-            _remove_old_files(subproject_top, compared)
+                            "-c", f"core.hooksPath={os.devnull}", "checkout"
+                        ]
 
-        # Run post-migration tasks
+                        # Check out the `HEAD` commit as detached `HEAD`.
+                        git_checkout(commit_id_head)
+                        # Defer reattaching `HEAD` to the previously checked out branch.
+                        # This way, `HEAD` will point to the previous branch ref again
+                        # while the working tree and index remain exactly as-is,
+                        # retaining possible merge conflicts and mid-merge state.
+                        stack.callback(
+                            lambda: Path(
+                                git("rev-parse", "--absolute-git-dir").strip(), "HEAD"
+                            ).write_text(f"ref: refs/heads/{current_branch}\n", "utf-8")
+                        )
+
+                        ref = "copier/after-updating"
+                        # Create a namespaced ref that points to the synthetic commit of
+                        # the fresh copy based on the new template. When using this ref
+                        # in the `git merge` command below, it is used as the label of
+                        # the conflict marker for incoming changes.
+                        git("update-ref", f"refs/{ref}", commit_id_new)
+                        # Defer deleting the namespaced ref.
+                        stack.callback(lambda: git("update-ref", "-d", f"refs/{ref}"))
+
+                        # Perform a 3-way squash-merge without committing the changes.
+                        git("merge", "--no-commit", "--squash", ref, retcode=None)
+
+                        # Always use the answers file from the fresh copy based on the
+                        # new template.
+                        git_checkout(
+                            "-f",
+                            tree_id_new,
+                            "--",
+                            subproject_subdir / self.answers_relpath,
+                        )
+
+            if not self.skip_tasks:
+                with Phase.use(Phase.TASKS):
+                    self._execute_tasks(self.template.tasks)
+
+        # Run post-migration tasks.
         with Phase.use(Phase.MIGRATE):
             self._execute_tasks(
                 self.template.migration_tasks("after", self.subproject.template)  # type: ignore[arg-type]
             )
 
-    def _git_initialize_repo(self) -> None:
-        """Initialize a git repository in the current directory."""
-        git = get_git()
-        git("init", retcode=None)
-        git("add", ".")
-        self._git_commit()
-
     def _git_commit(self, message: str = "dumb commit") -> None:
         git = get_git()
         # 1st commit could fail if any pre-commit hook reformats code
         # 2nd commit uses --no-verify to disable pre-commit-like checks
-        git(
-            "commit",
-            "--allow-empty",
-            "-am",
-            f"{message} 1",
-            "--no-gpg-sign",
-            retcode=None,
-        )
-        git(
-            "commit",
-            "--allow-empty",
-            "-am",
-            f"{message} 2",
-            "--no-gpg-sign",
-            "--no-verify",
-        )
+        cmd = git["commit", "--allow-empty", "-am", message, "--no-gpg-sign"]
+        try:
+            cmd()
+        except ProcessExecutionError:
+            cmd("--no-verify")
 
 
 def run_copy(
@@ -1625,8 +1508,6 @@ def run_update(
     overwrite: bool = False,
     pretend: bool = False,
     quiet: bool = False,
-    conflict: Literal["inline", "rej"] = "inline",
-    context_lines: PositiveInt = 3,
     unsafe: bool = False,
     skip_answered: bool = False,
     skip_tasks: bool = False,
@@ -1655,8 +1536,6 @@ def run_update(
         overwrite=overwrite,
         pretend=pretend,
         quiet=quiet,
-        conflict=conflict,
-        context_lines=context_lines,
         unsafe=unsafe,
         skip_answered=skip_answered,
         skip_tasks=skip_tasks,
@@ -1708,50 +1587,3 @@ def get_update_data(
         latest_version = str(worker.template.version)
 
     return (update_available, current_version, latest_version)
-
-
-def _remove_old_files(prefix: Path, cmp: dircmp[str], rm_common: bool = False) -> None:
-    """Remove files and directories only found in "old" template.
-
-    This is an internal helper method used to process a comparison of 2
-    directories, where the left one is considered the "old" one, and the
-    right one is the "new" one.
-
-    Then, it will recursively try to remove anything that is only in the old
-    directory.
-
-    Args:
-        prefix:
-            Where we start removing. It can be different from the directories
-            being compared.
-        cmp:
-            The comparison result.
-        rm_common:
-            Should we remove common files and directories?
-    """
-    # Gather files and dirs to remove
-    to_rm = []
-    subdirs = {}
-    with suppress(NotADirectoryError, FileNotFoundError):
-        to_rm = cmp.left_only
-        if rm_common:
-            to_rm += cmp.common_files + cmp.common_dirs
-        subdirs = cmp.subdirs
-    # Remove files found only in old template copy
-    for name in to_rm:
-        target = prefix / name
-        if target.is_file():
-            target.unlink()
-        else:
-            # Recurse in dirs totally removed in latest template
-            _remove_old_files(target, dircmp(Path(cmp.left, name), target), True)
-            # Remove subdir if it ends empty
-            with suppress(OSError):
-                target.rmdir()  # Raises if dir not empty
-    # Recurse
-    for key, value in subdirs.items():
-        subdir = prefix / key
-        _remove_old_files(subdir, value)
-        # Remove subdir if it ends empty
-        with suppress(OSError):
-            subdir.rmdir()  # Raises if dir not empty

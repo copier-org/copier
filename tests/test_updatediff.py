@@ -5,7 +5,6 @@ import stat
 from pathlib import Path
 from shutil import rmtree
 from textwrap import dedent
-from typing import Literal
 
 import pexpect
 import pytest
@@ -13,7 +12,6 @@ from plumbum import local
 
 from copier._cli import CopierApp
 from copier._main import Worker, run_copy, run_update
-from copier._tools import normalize_git_path
 from copier._types import VcsRef
 from copier._user_data import load_answersfile_data
 from copier.errors import UserMessageError
@@ -28,6 +26,7 @@ from .helpers import (
     git,
     git_init,
     git_save,
+    normalize_git_path,
 )
 
 
@@ -343,13 +342,6 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
                         rev: v3.12.0
                         hooks:
                         -   id: commitizen
-                    -   repo: local
-                        hooks:
-                        -   id: forbidden-files
-                            name: forbidden files
-                            entry: found forbidden files; remove them
-                            language: fail
-                            files: "\\.rej$"
                     """
                 ),
                 "life.yml.tmpl": (
@@ -406,14 +398,7 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
         git("commit", "-m", "feat: commit 2")
         git("tag", "v2")
     # Update subproject to v2
-    run_update(
-        dst_path=dst1,
-        defaults=True,
-        overwrite=True,
-        conflict="rej",
-        context_lines=1,
-        unsafe=True,
-    )
+    run_update(dst_path=dst1, defaults=True, overwrite=True, unsafe=True)
     with local.cwd(dst1):
         git("commit", "-am", "feat: copied v2")
         assert life.read_text() == dedent(
@@ -426,59 +411,6 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
             Line 5: bye bye world
             """
         )
-        # No .rej files created (update diff was smart)
-        assert not git("status", "--porcelain")
-        # Subproject evolves
-        life.write_text(
-            dedent(
-                """\
-                Line 1: hello world
-                Line 2: grow up
-                Line 2.5: make friends
-                Line 3: grog
-                Line 4: grow old
-                Line 4.5: no more work
-                Line 5: bye bye world
-                """
-            )
-        )
-        git("commit", "-am", "chore: subproject is evolved")
-    # A new subproject appears, which is a shallow clone of the 1st one.
-    # Using file:// prefix to allow local shallow clones.
-    git("clone", "--depth=1", f"file://{dst1}", dst2)
-    with local.cwd(dst2):
-        # Subproject re-updates just to change some values
-        run_update(
-            data={"what": "study"},
-            defaults=True,
-            overwrite=True,
-            conflict="rej",
-            context_lines=1,
-            unsafe=True,
-        )
-        git("commit", "-am", "chore: re-updated to change values after evolving")
-        # Subproject evolution was respected up to sane possibilities.
-        # In an ideal world, this file would be exactly the same as what's written
-        # a few lines above, just changing "grog" for "study". However, that's nearly
-        # impossible to achieve, because each change hunk needs at least 1 line of
-        # context to let git apply that patch smartly, and that context couldn't be
-        # found because we changed data when updating, so the sanest thing we can
-        # do is to provide a .rej file to notify those
-        # unresolvable diffs. OTOH, some other changes are be applied.
-        # If some day you are able to produce that ideal result, you should be
-        # happy to modify these asserts.
-        assert life.read_text() == dedent(
-            """\
-            Line 1: hello world
-            Line 2: grow up
-            Line 3: study
-            Line 4: grow old
-            Line 4.5: no more work
-            Line 5: bye bye world
-            """
-        )
-        # This time a .rej file is unavoidable
-        assert Path(f"{life}.rej").is_file()
 
 
 def test_post_checkout_hook_ignored(tmp_path_factory: pytest.TempPathFactory) -> None:
@@ -721,8 +653,22 @@ def test_skip_update_deleted(
         ),
         "file with whitespace",
         " leading_whitespace",
-        "trailing_whitespace ",
-        "   multi_whitespace   ",
+        pytest.param(
+            "trailing_whitespace ",
+            # https://learn.microsoft.com/en-us/troubleshoot/windows-client/shell-experience/file-folder-name-whitespace-characters#summary
+            marks=pytest.mark.skipif(
+                platform.system() == "Windows",
+                reason="OS filesystem strips trailing whitespaces",
+            ),
+        ),
+        pytest.param(
+            "   multi_whitespace   ",
+            # https://learn.microsoft.com/en-us/troubleshoot/windows-client/shell-experience/file-folder-name-whitespace-characters#summary
+            marks=pytest.mark.skipif(
+                platform.system() == "Windows",
+                reason="OS filesystem strips trailing whitespaces",
+            ),
+        ),
         pytest.param(
             "\tother_whitespace\t\\t",
             marks=pytest.mark.skipif(
@@ -809,7 +755,11 @@ def test_update_deleted_path(
     run_update(dst, overwrite=True)
     assert dont_wildmatch.exists()
     assert dont_wildmatch.read_text() == "baz"
-    assert not updated_file.exists()
+    assert updated_file.exists()
+    assert updated_file.read_text() == "bar"
+    assert git(
+        "-C", dst, "ls-files", "-z", "--unmerged", "--format=%(stage) %(path)"
+    ).strip() == (f"1 {file_name}\x003 {file_name}\x00")
 
 
 def test_update_deleted_path_not_used_as_pattern(
@@ -949,8 +899,8 @@ def test_file_removed(tmp_path_factory: pytest.TempPathFactory) -> None:
         with pytest.raises(
             UserMessageError, match="Enable overwrite to update a subproject."
         ):
-            run_update(conflict="rej")
-        run_update(conflict="rej", overwrite=True)
+            run_update()
+        run_update(overwrite=True)
     # Check what must still exist
     assert (dst / ".copier-answers.yml").is_file()
     assert (dst / "I.txt").is_file()
@@ -1040,7 +990,7 @@ def test_update_inline_changed_answers_and_questions(
         git("commit", "-am2")
         # Update from template, inline, with answer changes
         if interactive:
-            tui = spawn(COPIER_PATH + ("update", "--conflict=inline"))
+            tui = spawn(COPIER_PATH + ("update",))
             tui.expect_exact("b (bool)")
             tui.expect_exact("(Y/n)")
             tui.sendline()
@@ -1049,27 +999,22 @@ def test_update_inline_changed_answers_and_questions(
             tui.send("y")
             tui.expect_exact(pexpect.EOF)
         else:
-            run_update(
-                data={"c": True}, defaults=True, overwrite=True, conflict="inline"
-            )
+            run_update(data={"c": True}, defaults=True, overwrite=True)
         assert Path("content").read_text() == dedent(
             """\
             aaa
             bbb
-            <<<<<<< before updating
+            <<<<<<< HEAD
             jjj
             =======
             ccc
-            >>>>>>> after updating
+            >>>>>>> copier/after-updating
             zzz
             """
         )
 
 
-@pytest.mark.parametrize("conflict", ["rej", "inline"])
-def test_update_in_repo_subdirectory(
-    tmp_path_factory: pytest.TempPathFactory, conflict: Literal["rej", "inline"]
-) -> None:
+def test_update_in_repo_subdirectory(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     subdir = Path("subdir")
 
@@ -1107,50 +1052,24 @@ def test_update_in_repo_subdirectory(
         git("commit", "-m2")
         git("tag", "v2")
 
-    run_update(dst / subdir, overwrite=True, conflict=conflict)
+    run_update(dst / subdir, overwrite=True)
 
     assert (dst / subdir / ".copier-answers.yml").is_file()
     assert (dst / subdir / "version.txt").is_file()
-    if conflict == "rej":
-        assert (dst / subdir / "version.txt").read_text() == "v2"
-        assert (dst / subdir / "version.txt.rej").is_file()
-    else:
-        assert (dst / subdir / "version.txt").read_text() == dedent(
-            """\
-            <<<<<<< before updating
-            v1 edited
-            =======
-            v2
-            >>>>>>> after updating
-            """
-        )
+    assert (dst / subdir / "version.txt").read_text() == dedent(
+        """\
+        <<<<<<< HEAD
+        v1 edited
+        =======
+        v2
+        >>>>>>> copier/after-updating
+        """
+    )
 
 
-@pytest.mark.parametrize(
-    "context_lines",
-    [
-        pytest.param(
-            1,
-            marks=pytest.mark.xfail(
-                raises=AssertionError,
-                reason="Not enough context lines to resolve the conflict.",
-                strict=True,
-            ),
-        ),
-        pytest.param(
-            2,
-            marks=pytest.mark.xfail(
-                raises=AssertionError,
-                reason="Not enough context lines to resolve the conflict.",
-                strict=True,
-            ),
-        ),
-        3,
-    ],
-)
 @pytest.mark.parametrize("api", [True, False])
-def test_update_needs_more_context(
-    tmp_path_factory: pytest.TempPathFactory, context_lines: int, api: bool
+def test_update_has_enough_context(
+    tmp_path_factory: pytest.TempPathFactory, api: bool
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     # Create a template where some code blocks are similar
@@ -1247,14 +1166,9 @@ def test_update_needs_more_context(
         git("tag", "v2")
     # Update the project
     if api:
-        run_update(dst, overwrite=True, conflict="inline", context_lines=context_lines)
+        run_update(dst, overwrite=True)
     else:
-        COPIER_CMD(
-            "update",
-            str(dst),
-            "--conflict=inline",
-            f"--context-lines={context_lines}",
-        )
+        COPIER_CMD("update", str(dst))
     # Check the update result
     assert (dst / "sample.py").read_text() == dedent(
         """\
@@ -1339,7 +1253,7 @@ def test_conflicted_files_are_marked_unmerged(
         git("tag", "v2")
 
     # Finally, update the generated project
-    run_update(dst_path=dst, defaults=True, overwrite=True, conflict="inline")
+    run_update(dst_path=dst, defaults=True, overwrite=True)
     assert load_answersfile_data(dst).get("_commit") == "v2"
 
     # Assert that the file still exists, has inline conflict markers,
@@ -1348,11 +1262,11 @@ def test_conflicted_files_are_marked_unmerged(
 
     expected_contents = dedent(
         """\
-        <<<<<<< before updating
+        <<<<<<< HEAD
         upstream version 1 + downstream
         =======
         upstream version 2
-        >>>>>>> after updating
+        >>>>>>> copier/after-updating
         """
     )
     assert (dst / filename).read_text().splitlines() == expected_contents.splitlines()
@@ -1413,7 +1327,7 @@ def test_3way_merged_files_without_conflicts_are_not_marked_unmerged(
         git("tag", "v2")
 
     # Finally, update the generated project
-    run_update(dst_path=dst, defaults=True, overwrite=True, conflict="inline")
+    run_update(dst_path=dst, defaults=True, overwrite=True)
     assert load_answersfile_data(dst).get("_commit") == "v2"
 
     # Assert that the file still exists, does not have inline conflict markers,
@@ -1486,14 +1400,14 @@ def test_update_with_new_file_in_template_and_project(
         git("commit", "-m", "v2")
         git("tag", "v2")
 
-    run_update(dst_path=dst, defaults=True, overwrite=True, conflict="inline")
+    run_update(dst_path=dst, defaults=True, overwrite=True)
     assert load_answersfile_data(dst).get("_commit") == "v2"
     assert (dst / ".gitlab-ci.yml").read_text() == dedent(
         """\
         tests:
             stage: test
             script:
-        <<<<<<< before updating
+        <<<<<<< HEAD
                 - ./test.sh
 
         pages:
@@ -1502,7 +1416,7 @@ def test_update_with_new_file_in_template_and_project(
                 - ./deploy.sh
         =======
                 - ./test.sh --slow
-        >>>>>>> after updating
+        >>>>>>> copier/after-updating
         """
     )
 
@@ -1608,13 +1522,11 @@ def test_update_with_new_file_in_template_and_project_via_migration(
         git("commit", "-m", "v2")
         git("tag", "v2")
 
-    run_update(
-        dst_path=dst, defaults=True, overwrite=True, conflict="inline", unsafe=True
-    )
+    run_update(dst_path=dst, defaults=True, overwrite=True, unsafe=True)
     assert load_answersfile_data(dst).get("_commit") == "v2"
     assert (dst / ".gitlab-ci.yml").read_text() == dedent(
         """\
-        <<<<<<< before updating
+        <<<<<<< HEAD
         tests:
             stage: test
             script:
@@ -1627,7 +1539,7 @@ def test_update_with_new_file_in_template_and_project_via_migration(
         =======
         include:
             - local: .gitlab/ci/main.yml
-        >>>>>>> after updating
+        >>>>>>> copier/after-updating
         """
     )
     assert (dst / ".gitlab" / "ci" / "main.yml").read_text() == dedent(
@@ -1635,7 +1547,7 @@ def test_update_with_new_file_in_template_and_project_via_migration(
         tests:
             stage: test
             script:
-        <<<<<<< before updating
+        <<<<<<< HEAD
                 - ./test.sh
 
         pages:
@@ -1644,7 +1556,7 @@ def test_update_with_new_file_in_template_and_project_via_migration(
                 - ./deploy.sh
         =======
                 - ./test.sh --slow
-        >>>>>>> after updating
+        >>>>>>> copier/after-updating
         """
     )
 
@@ -2028,16 +1940,16 @@ def test_conflict_on_update_with_unicode_in_content(
         )
         git("commit", "-am2")
         # Update from template, inline, with answer changes
-        run_update(data={"c": True}, defaults=True, overwrite=True, conflict="inline")
+        run_update(data={"c": True}, defaults=True, overwrite=True)
         assert Path("content").read_text(encoding="utf-8") == dedent(
             """\
             aaa🐍
             bbb🐍
-            <<<<<<< before updating
+            <<<<<<< HEAD
             jjj🐍
             =======
             ccc🐍
-            >>>>>>> after updating
+            >>>>>>> copier/after-updating
             zzz🐍
             """
         )

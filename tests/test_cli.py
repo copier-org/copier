@@ -460,9 +460,6 @@ Switches:
                                     extensions, migrations, tasks)
     -a, --answers-file VALUE:str    Update using this path (relative to
                                     `destination_path`) to find the answers file
-    -c, --context-lines VALUE:int   Lines of context to use for detecting
-                                    conflicts. Increase for accuracy, decrease
-                                    for resilience.; the default is 3
     -d, --data VARIABLE=VALUE:str   Make VARIABLE available as VALUE when
                                     rendering the template; may be given
                                     multiple times
@@ -472,9 +469,6 @@ Switches:
     -l, -f, --defaults              Use default answers to questions, which
                                     might be null if not specified.
     -n, --pretend                   Run but do not make any changes
-    -o, --conflict VALUE:{rej, inline} Behavior on conflict: Create .rej files, or
-                                    add inline conflict markers.; the default is
-                                    inline
     -q, --quiet                     Suppress status output
     -r, --vcs-ref VALUE:str         Git reference to checkout in `template_src`.
                                     If you do not specify it, it will try to
