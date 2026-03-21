@@ -38,7 +38,7 @@ def get_git_version() -> Version:
     """Get the installed git version."""
     git = get_git()
 
-    return Version(re.findall(r"\d+\.\d+\.\d+", git("version"))[0])
+    return Version(re.findall(r"\d+\.\d+(?:\.\d+)?", git("version"))[0])
 
 
 GIT_PREFIX = ("git@", "git://", "git+", "https://github.com/", "https://gitlab.com/")
@@ -126,37 +126,39 @@ def get_repo(url: str) -> str | None:
     return None
 
 
-def checkout_latest_tag(local_repo: StrOrPath, use_prereleases: OptBool = False) -> str:
-    """Checkout latest git tag and check it out, sorted by PEP 440.
+def get_latest_tag(url: str, use_prereleases: OptBool = False) -> str:
+    """Get latest git tag, sorted by PEP 440.
 
-    Parameters:
-        local_repo:
-            A git repository in the local filesystem.
+    Args:
+        url:
+            Git-parseable URL of the repo. As returned by
+            [get_repo][copier.vcs.get_repo].
         use_prereleases:
             If `False`, skip prerelease git tags.
+
+    Returns:
+        The latest git tag, or `HEAD` if no valid tags are found.
     """
     git = get_git()
-    with local.cwd(local_repo):
-        all_tags = filter(valid_version, git("tag").split())
-        if not use_prereleases:
-            all_tags = filter(
-                lambda tag: not version.parse(tag).is_prerelease, all_tags
-            )
-        sorted_tags = sorted(all_tags, key=version.parse, reverse=True)
-        try:
-            latest_tag = str(sorted_tags[0])
-        except IndexError:
-            print(
-                colors.warn | "No git tags found in template; using HEAD as ref",
-                file=sys.stderr,
-            )
-            latest_tag = "HEAD"
-        git("checkout", "--force", latest_tag)
-        git("submodule", "update", "--checkout", "--init", "--recursive", "--force")
-        return latest_tag
+    all_tags = (
+        tag.split("\t", 1)[1].removeprefix("refs/tags/")
+        for tag in git("ls-remote", "--tags", "--refs", url).splitlines()
+    )
+    all_tags = (tag for tag in all_tags if valid_version(tag))
+    if not use_prereleases:
+        all_tags = (tag for tag in all_tags if not version.parse(tag).is_prerelease)
+    sorted_tags = sorted(all_tags, key=version.parse, reverse=True)
+    try:
+        return str(sorted_tags[0])
+    except IndexError:
+        print(
+            colors.warn | "No git tags found in template; using HEAD as ref",
+            file=sys.stderr,
+        )
+        return "HEAD"
 
 
-def clone(url: str, ref: str | None = None) -> str:
+def clone(url: str, ref: str = "HEAD") -> str:
     """Clone repo into some temporary destination.
 
     Includes dirty changes for local templates by copying into a temp
@@ -190,7 +192,7 @@ def clone(url: str, ref: str | None = None) -> str:
     _clone()
     # Include dirty changes if checking out a local HEAD
     url_abspath = Path(url).absolute()
-    if ref in {None, "HEAD"} and url_abspath.is_dir():
+    if ref == "HEAD" and url_abspath.is_dir():
         is_dirty = False
         with local.cwd(url):
             is_dirty = bool(git("status", "--porcelain").strip())
@@ -212,9 +214,10 @@ def clone(url: str, ref: str | None = None) -> str:
                 )
 
     with local.cwd(location):
-        ## The `git checkout -f <ref>` command doesn't works when repo is local, dirty and core.fsmonitor is enabled
+        ## The `git checkout -f <ref>` command doesn't works when repo is local, dirty
+        ## and core.fsmonitor is enabled
         ## ref: https://github.com/copier-org/copier/issues/1887
-        git("-c", "core.fsmonitor=false", "checkout", "-f", ref or "HEAD")
+        git("-c", "core.fsmonitor=false", "checkout", "-f", ref)
         git("submodule", "update", "--checkout", "--init", "--recursive", "--force")
 
     return location

@@ -25,7 +25,7 @@ from pydantic.dataclasses import dataclass
 from ._tools import copier_version, handle_remove_readonly
 from ._types import AnyByStrDict, VCSTypes
 from ._user_data import DEFAULT_ANSWERS_FILE_YML
-from ._vcs import checkout_latest_tag, clone, get_git, get_repo
+from ._vcs import clone, get_git, get_latest_tag, get_repo
 from .errors import (
     InvalidConfigFileError,
     MultipleConfigFilesError,
@@ -567,9 +567,12 @@ class Template:
         """
         result = Path(self.url)
         if self.vcs == "git":
-            result = Path(clone(self.url_expanded, self.ref))
-            if self.ref is None:
-                checkout_latest_tag(result, self.use_prereleases)
+            result = Path(
+                clone(
+                    self.url_expanded,
+                    self.ref or get_latest_tag(self.url_expanded, self.use_prereleases),
+                )
+            )
         if not result.is_dir():
             raise ValueError("Local template must be a directory.")
         with suppress(OSError):

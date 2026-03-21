@@ -560,7 +560,8 @@ def test_user_defaults(
                 """
             ),
         ),
-        # User provided defaults takes precedence over initial defaults and settings defaults.
+        # User provided defaults takes precedence over initial defaults and settings
+        # defaults.
         # The output should remain unchanged following the update operation.
         (
             {
