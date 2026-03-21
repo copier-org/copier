@@ -15,7 +15,7 @@ from pydantic.dataclasses import dataclass
 
 from ._template import Template
 from ._types import AbsolutePath, AnyByStrDict, VCSTypes
-from ._user_data import load_answersfile_data
+from ._user_data import load_answersfile_data, resolve_answersfile_path
 from ._vcs import get_git, is_in_git_repo
 
 
@@ -29,10 +29,11 @@ class Subproject:
 
         answers_relpath:
             Relative path to [the answers file][the-copier-answersyml-file].
+            If None, auto-detects between .copier-answers.yml and .copier-answers.yaml.
     """
 
     local_abspath: AbsolutePath
-    answers_relpath: Path = Path(".copier-answers.yml")
+    answers_relpath: Path | None = None
 
     _cleanup_hooks: list[Callable[[], None]] = field(default_factory=list, init=False)
 
@@ -52,6 +53,17 @@ class Subproject:
         """Remove temporary files and folders created by the subproject."""
         for method in self._cleanup_hooks:
             method()
+
+    @cached_property
+    def resolved_answers_relpath(self) -> Path:
+        """Get the resolved answers file path.
+
+        If answers_relpath was explicitly set, return it.
+        Otherwise, auto-detect based on existing files (.yml takes precedence).
+        """
+        if self.answers_relpath is not None:
+            return self.answers_relpath
+        return resolve_answersfile_path(self.local_abspath)
 
     @property
     def _raw_answers(self) -> AnyByStrDict:
