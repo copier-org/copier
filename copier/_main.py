@@ -66,7 +66,7 @@ from ._types import (
     RelativePath,
     VcsRef,
 )
-from ._user_data import AnswersMap, Question, load_answersfile_data, resolve_answersfile_path
+from ._user_data import AnswersMap, Question, load_answersfile_data
 from ._vcs import get_git
 from .errors import (
     CopierAnswersInterrupt,
@@ -1033,8 +1033,8 @@ class Worker:
     @cached_property
     def subproject(self) -> Subproject:
         """Get related subproject."""
-        # answers_file=None means auto-detect based on existing files
-        # The Subproject will use resolve_answersfile_path to determine which file to use
+        # answers_file=None means auto-detect based on existing
+        # files via resolve_answersfile_path
         result = Subproject(
             local_abspath=self.dst_path.absolute(),
             answers_relpath=self.answers_file,

@@ -603,33 +603,8 @@ def load_answersfile_data(
     Returns:
         The loaded answers data, or an empty dict if not found.
     """
-    dst = Path(dst_path)
-
-    # If answers_file is None, auto-detect
     if answers_file is None:
-        yml_path = dst / DEFAULT_ANSWERS_FILE_YML
-        yaml_path = dst / DEFAULT_ANSWERS_FILE_YAML
-
-        yml_exists = yml_path.is_file()
-        yaml_exists = yaml_path.is_file()
-
-        # Warn if both files exist
-        if yml_exists and yaml_exists:
-            warnings.warn(
-                f"Both {DEFAULT_ANSWERS_FILE_YML} and {DEFAULT_ANSWERS_FILE_YAML} "
-                f"exist in {dst_path}. Using {DEFAULT_ANSWERS_FILE_YML}. "
-                "Please remove the duplicate file.",
-                stacklevel=2,
-            )
-
-        # .yml takes precedence, fall back to .yaml
-        if yml_exists:
-            answers_file = DEFAULT_ANSWERS_FILE_YML
-        elif yaml_exists:
-            answers_file = DEFAULT_ANSWERS_FILE_YAML
-        else:
-            # Default to .yml when neither exists
-            answers_file = DEFAULT_ANSWERS_FILE_YML
+        answers_file = resolve_answersfile_path(dst_path)
 
     try:
         with Path(dst_path, answers_file).open("rb") as fd:
@@ -676,7 +651,7 @@ def resolve_answersfile_path(dst_path: StrOrPath) -> Path:
     # .yml takes precedence for reading/updating
     if yml_exists:
         return Path(DEFAULT_ANSWERS_FILE_YML)
-    # If only .yaml exists, use it (maintains backwards compatibility for .yaml projects)
+    # If only .yaml exists, use it (backwards compat)
     elif yaml_exists:
         return Path(DEFAULT_ANSWERS_FILE_YAML)
     # Default to .yml for new files
