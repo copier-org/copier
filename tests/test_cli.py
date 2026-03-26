@@ -534,6 +534,36 @@ Switches:
 """)
 
 
+def test_inspect_help(capsys: pytest.CaptureFixture[str]) -> None:
+    with patch("plumbum.cli.application.get_terminal_size", return_value=(80, 1)):
+        _, status = CopierApp.run(["copier", "inspect", "--help"], exit=False)
+    assert status == 0
+    header, body = capsys.readouterr().out.split("\n", 1)
+    assert header.startswith("copier inspect")
+    assert body == snapshot("""\
+
+Inspect a template's questions and metadata
+
+Usage:
+    copier inspect [SWITCHES] template_src
+
+Meta-switches:
+    -h, --help                      Prints this help message and quits
+    --help-all                      Prints help messages of all sub-commands and
+                                    quits
+    -v, --version                   Prints the program's version and quits
+
+Switches:
+    -g, --prereleases               Use prereleases to compare template VCS
+                                    tags.
+    --output-format VALUE:{json, plain, yaml} Output format: 'plain' (default),
+                                    'json', or 'yaml'.; the default is plain
+    -q, --quiet                     Suppress status output
+    -r, --vcs-ref VALUE:str         Git reference to checkout in `template_src`.
+
+""")
+
+
 def test_python_run() -> None:
     cmd = [sys.executable, "-m", "copier", "--help-all"]
     assert subprocess.run(cmd, check=True).returncode == 0

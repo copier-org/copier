@@ -22,6 +22,7 @@ except importlib.metadata.PackageNotFoundError:
 
 def __getattr__(name: str) -> Any:
     if not name.startswith("_") and name not in {
+        "get_questions_data",
         "run_copy",
         "run_recopy",
         "run_update",
@@ -31,6 +32,7 @@ def __getattr__(name: str) -> Any:
 
 
 __all__ = [
+    "get_questions_data",  # noqa: F405
     "load_settings",
     "run_copy",  # noqa: F405
     "run_recopy",  # noqa: F405
