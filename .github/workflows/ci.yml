@@ -67,7 +67,7 @@ jobs:
           PYTEST_XDIST_MAXPROCESSES: ${{ matrix.pytest-xdist-maxprocesses }}
       - name: Upload coverage to Codecov
         continue-on-error: true
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         env:
           OS: ${{ matrix.os }}
           PYTHON: ${{ matrix.python-version }}
