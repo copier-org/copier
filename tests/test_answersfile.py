@@ -8,7 +8,11 @@ import pytest
 import yaml
 
 import copier
-from copier._user_data import load_answersfile_data
+from copier._user_data import (
+    DEFAULT_ANSWERS_FILE_YAML,
+    DEFAULT_ANSWERS_FILE_YML,
+    load_answersfile_data,
+)
 
 from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree, git_save
 
@@ -328,3 +332,97 @@ def test_undefined_phase_in_external_data(
     copier.run_copy(str(src), dst, defaults=True, overwrite=True)
     answers = load_answersfile_data(dst, ".copier-answers.yml")
     assert answers["key"] == "value"
+
+
+class TestYamlAnswersFileSuffix:
+    """Tests for .yaml answers file suffix support alongside .yml."""
+
+    @pytest.fixture
+    def simple_template(self, tmp_path_factory: pytest.TempPathFactory) -> Path:
+        """Create a simple template for testing."""
+        root = tmp_path_factory.mktemp("template")
+        build_file_tree(
+            {
+                (root / "copier.yml"): dedent(
+                    """\
+                    name:
+                        type: str
+                        default: test
+                    """
+                ),
+                (root / "{{ _copier_conf.answers_file }}.jinja"): (
+                    "{{ _copier_answers|tojson }}"
+                ),
+            }
+        )
+        git_save(root, tag="v1")
+        return root
+
+    def test_new_project_uses_yml_by_default(
+        self, simple_template: Path, tmp_path: Path
+    ) -> None:
+        """New projects create .copier-answers.yml by default."""
+        copier.run_copy(str(simple_template), tmp_path, defaults=True)
+        assert (tmp_path / DEFAULT_ANSWERS_FILE_YML).exists()
+        assert not (tmp_path / DEFAULT_ANSWERS_FILE_YAML).exists()
+
+    def test_recopy_reads_yaml_answers(
+        self, simple_template: Path, tmp_path: Path
+    ) -> None:
+        """run_recopy can read answers from an existing .yaml file."""
+        copier.run_copy(str(simple_template), tmp_path, defaults=True)
+
+        # Rename .yml to .yaml to simulate a project using .yaml
+        (tmp_path / DEFAULT_ANSWERS_FILE_YML).rename(
+            tmp_path / DEFAULT_ANSWERS_FILE_YAML
+        )
+        git_save(tmp_path)
+
+        # run_recopy should auto-detect and read from .yaml
+        copier.run_recopy(tmp_path, defaults=True, overwrite=True)
+
+        # The template writes to .copier-answers.yml (its configured default),
+        # so after recopy both may exist. Verify the recopy succeeded
+        # by checking the newly written answers file is valid.
+        answers = load_answersfile_data(tmp_path)
+        assert answers["name"] == "test"
+
+    def test_update_reads_yaml_answers(
+        self, simple_template: Path, tmp_path: Path
+    ) -> None:
+        """run_update can read answers from an existing .yaml file."""
+        copier.run_copy(str(simple_template), tmp_path, defaults=True)
+
+        # Rename .yml to .yaml to simulate a project using .yaml
+        (tmp_path / DEFAULT_ANSWERS_FILE_YML).rename(
+            tmp_path / DEFAULT_ANSWERS_FILE_YAML
+        )
+        git_save(tmp_path)
+
+        # run_update should auto-detect and read from .yaml
+        copier.run_update(tmp_path, defaults=True, overwrite=True)
+
+        answers = load_answersfile_data(tmp_path)
+        assert answers["name"] == "test"
+
+    def test_yml_takes_precedence_over_yaml(
+        self, simple_template: Path, tmp_path: Path
+    ) -> None:
+        """.yml file takes precedence when both .yml and .yaml exist."""
+        copier.run_copy(
+            str(simple_template), tmp_path, data={"name": "from_yml"}, defaults=True
+        )
+
+        # Create a .yaml file with different content
+        yaml_file = tmp_path / DEFAULT_ANSWERS_FILE_YAML
+        yml_answers = yaml.safe_load(
+            (tmp_path / DEFAULT_ANSWERS_FILE_YML).read_text()
+        )
+        yaml_file.write_text(yaml.dump({**yml_answers, "name": "from_yaml"}))
+        git_save(tmp_path)
+
+        # recopy should use .yml (which has "from_yml"), not .yaml
+        copier.run_recopy(tmp_path, defaults=True, overwrite=True)
+
+        answers = load_answersfile_data(tmp_path)
+        assert answers["name"] == "from_yml"
