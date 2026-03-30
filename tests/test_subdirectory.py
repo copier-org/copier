@@ -7,6 +7,7 @@ from plumbum import local
 
 import copier
 from copier._user_data import load_answersfile_data
+from copier.errors import ForbiddenPathError
 
 from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree, git, git_init
 
@@ -333,3 +334,69 @@ def test_new_version_changes_subdirectory(
     # Also assert the subdirectories themselves were not rendered
     assert not (dst / "subdir1").exists()
     assert not (dst / "subdir2").exists()
+
+
+@pytest.mark.parametrize("is_absolute", [False, True])
+def test_subdirectory_path_outside_template_root_on_copy_raises_error(
+    tmp_path_factory: pytest.TempPathFactory,
+    is_absolute: bool,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "template" / "copier.yml": (
+                f"_subdirectory: {src / 'forbidden' if is_absolute else '../forbidden'}"
+            ),
+            src / "forbidden" / "forbidden.txt": "forbidden",
+        }
+    )
+    with pytest.raises(ForbiddenPathError, match="forbidden"):
+        copier.run_copy(str(src / "template"), dst)
+
+
+@pytest.mark.parametrize("is_absolute", [False, True])
+def test_subdirectory_path_outside_template_root_on_update_raises_error(
+    tmp_path_factory: pytest.TempPathFactory,
+    is_absolute: bool,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "template" / "copier.yml": "_subdirectory: subdir",
+            src / "template" / "subdir" / "{{ _copier_conf.answers_file }}.jinja": (
+                "{{ _copier_answers | to_nice_yaml }}"
+            ),
+            src / "template" / "subdir" / "file.txt": "v1 contents",
+        }
+    )
+    with local.cwd(src / "template"):
+        git("init")
+        git("add", ".")
+        git("commit", "-m", "v1")
+        git("tag", "v1")
+
+    copier.run_copy(str(src / "template"), dst)
+    assert load_answersfile_data(dst).get("_commit") == "v1"
+    assert (dst / "file.txt").exists()
+    assert (dst / "file.txt").read_text() == "v1 contents"
+
+    with local.cwd(dst):
+        git("init")
+        git("add", ".")
+        git("commit", "-m", "v1")
+
+    build_file_tree(
+        {
+            src / "template" / "copier.yml": (
+                f"_subdirectory: {src / 'forbidden' if is_absolute else '../forbidden'}"
+            ),
+            src / "forbidden" / "forbidden.txt": "forbidden",
+        }
+    )
+    with local.cwd(src / "template"):
+        git("add", ".")
+        git("commit", "-m", "v2")
+        git("tag", "v2")
+
+    with pytest.raises(ForbiddenPathError, match="forbidden"):
+        copier.run_update(dst, overwrite=True)

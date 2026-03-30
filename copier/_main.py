@@ -1059,7 +1059,10 @@ class Worker:
         It points to the cloned template local abspath + the rendered subdir, if any.
         """
         subdir = self._render_string(self.template.subdirectory) or ""
-        return self.template.local_abspath / subdir
+        path = (self.template.local_abspath / subdir).resolve()
+        if not path.is_relative_to(self.template.local_abspath):
+            raise ForbiddenPathError(path=Path(subdir))
+        return path
 
     # Main operations
     @as_operation("copy")
