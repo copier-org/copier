@@ -117,8 +117,8 @@ class PathNotRelativeError(PathError):
 class ForbiddenPathError(PathError):
     """The path is forbidden in the given context."""
 
-    def __init__(self, *, path: Path) -> None:
-        super().__init__(f'"{path}" is forbidden')
+    def __init__(self, *, path: Path, hint: str = "") -> None:
+        super().__init__(f'"{path}" is forbidden' + (f"\n\n{hint}" if hint else ""))
 
 
 class ExtensionNotFoundError(UserMessageError):

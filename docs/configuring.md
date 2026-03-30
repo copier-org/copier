@@ -1005,6 +1005,12 @@ strings, where:
     password: "{{ password }}"
     ```
 
+!!! attention "Reading external data from outside subproject root"
+
+    Reading data from outside the subproject root is supported, but only when explicitly
+    enabled with [`--trust`/`--UNSAFE`](#unsafe) (or `unsafe=True` via API) to prevent
+    unauthorized filesystem access.
+
 ### `envops`
 
 - Format: `dict`

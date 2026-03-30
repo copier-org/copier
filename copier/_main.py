@@ -321,14 +321,31 @@ class Worker:
             with Phase.use(Phase.UNDEFINED):
                 return self._render_string(path)
 
+        def _load_external_data(path: str) -> Any:
+            if (
+                not (
+                    (self.dst_path / (path := _render(path)))
+                    .resolve()
+                    .is_relative_to(self.subproject.local_abspath)
+                )
+                and not self.unsafe
+            ):
+                raise ForbiddenPathError(
+                    path=Path(path),
+                    hint=(
+                        "If you trust this path, you can override the check:\n"
+                        "  - CLI: `--trust`/`--UNSAFE`\n"
+                        "  - API: `trust=True`"
+                    ),
+                )
+            return load_answersfile_data(self.dst_path, path, warn_on_missing=True)
+
         # Given those values are lazily rendered on 1st access then cached
         # the phase value is irrelevant and could be misleading.
         # As a consequence it is explicitly set to "undefined".
         return LazyDict(
             {
-                name: lambda path=path: load_answersfile_data(  # type: ignore[misc]
-                    self.dst_path, _render(path), warn_on_missing=True
-                )
+                name: lambda path=path: _load_external_data(path)  # type: ignore[misc]
                 for name, path in self.template.external_data.items()
             }
         )
