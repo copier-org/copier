@@ -424,16 +424,19 @@ class Template:
                     )
             else:
                 # New configuration format
+                v_start = self.envops.get("variable_start_string", "{{")
+                v_end = self.envops.get("variable_end_string", "}}")
+                default_condition = f'{v_start} _stage == "after" {v_end}'
                 if isinstance(migration, (str, list)):
                     result.append(
                         Task(
                             cmd=migration,
                             extra_vars=extra_vars,
-                            condition='{{ _stage == "after" }}',
+                            condition=default_condition,
                         )
                     )
                 else:
-                    condition = migration.get("when", '{{ _stage == "after" }}')
+                    condition = migration.get("when", default_condition)
                     working_directory = Path(migration.get("working_directory", "."))
                     if "version" in migration:
                         current = parse(migration["version"])

@@ -1,4 +1,7 @@
+import json
+from collections.abc import Mapping, Sequence
 from pathlib import Path
+from typing import Any
 
 import pytest
 from plumbum import local
@@ -8,6 +11,7 @@ from copier._user_data import load_answersfile_data
 from copier.errors import UnsafeTemplateError, UserMessageError
 
 from .helpers import (
+    BRACKET_ENVOPS,
     COPIER_ANSWERS_FILE,
     PROJECT_TEMPLATE,
     build_file_tree,
@@ -30,6 +34,57 @@ def test_basic_migration(tmp_path_factory: pytest.TempPathFactory) -> None:
                     """\
                     _migrations:
                         - touch foo
+                    """
+                ),
+            }
+        )
+        git_save(tag="v1")
+    with local.cwd(dst):
+        run_copy(src_path=str(src))
+        git_save()
+
+    assert not (dst / "foo").exists()  # Migrations don't run on initial copy
+
+    with local.cwd(src):
+        git("tag", "v2")
+    with local.cwd(dst):
+        run_update(defaults=True, overwrite=True, unsafe=True)
+
+    assert (dst / "foo").is_file()
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "touch foo",
+        ["touch", "foo"],
+        {"command": "touch foo"},
+        {"command": ["touch", "foo"]},
+    ],
+)
+@pytest.mark.parametrize("envops", [{}, BRACKET_ENVOPS])
+def test_post_migration_by_default(
+    tmp_path_factory: pytest.TempPathFactory,
+    envops: Mapping[str, Any],
+    command: str | Sequence[str] | Mapping[str, Any],
+) -> None:
+    """Test a basic migration running on every version"""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    v_start = envops.get("variable_start_string", "{{")
+    v_end = envops.get("variable_end_string", "}}")
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                f"{v_start} _copier_conf.answers_file {v_end}.jinja": (
+                    f"{v_start} _copier_answers|tojson {v_end}"
+                ),
+                "copier.yml": (
+                    f"""\
+                    _envops: {json.dumps(envops)}
+                    _migrations:
+                        - {json.dumps(command)}
                     """
                 ),
             }
