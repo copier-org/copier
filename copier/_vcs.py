@@ -55,7 +55,9 @@ def is_git_repo_root(path: StrOrPath) -> bool:
     """Indicate if a given path is a git repo root directory."""
     try:
         return (
-            Path(get_git()("-C", path, "rev-parse", "--show-toplevel").strip()).resolve()
+            Path(
+                get_git()("-C", path, "rev-parse", "--show-toplevel").strip()
+            ).resolve()
             == Path(path).resolve()
         )
     except (OSError, ProcessExecutionError):
