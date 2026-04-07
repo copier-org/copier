@@ -54,9 +54,11 @@ REPLACEMENTS = (
 def is_git_repo_root(path: StrOrPath) -> bool:
     """Indicate if a given path is a git repo root directory."""
     try:
-        with local.cwd(Path(path, ".git")):
-            return get_git()("rev-parse", "--is-inside-git-dir").strip() == "true"
-    except OSError:
+        return (
+            Path(get_git()("-C", path, "rev-parse", "--show-toplevel").strip()).resolve()
+            == Path(path).resolve()
+        )
+    except (OSError, ProcessExecutionError):
         return False
 
 
