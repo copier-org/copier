@@ -362,7 +362,11 @@ class Worker:
         answers: AnyByStrDict = {}
         commit = self.template.commit
         src = self.template.url
-        for key, value in (("_commit", commit), ("_src_path", src)):
+        version_subscription = self.template.version_subscription
+        for key, value in (
+            ("_commit", commit), ("_src_path", src),
+            ("_version_subscription", version_subscription),
+        ):
             if value is not None:
                 answers[key] = value
         # Other data goes next
@@ -1067,11 +1071,13 @@ class Worker:
                 raise TypeError("Template not found")
             url = str(self.subproject.template.url)
         ref = self.resolved_vcs_ref
+        version_subscription = self.version_subscription or \
+            self.subproject.last_answers.get("_version_subscription", None)
         result = Template(
             url=url,
             ref=ref,
             use_prereleases=self.use_prereleases,
-            version_subscription=self.version_subscription
+            version_subscription=version_subscription
         )
         self._cleanup_hooks.append(result._cleanup)
         return result
