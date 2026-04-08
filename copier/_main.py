@@ -32,6 +32,7 @@ from unicodedata import normalize
 
 from jinja2.loaders import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
+from jinja2.utils import import_string
 from packaging.version import Version
 from pathspec import PathSpec, __version__ as pathspec_version
 from plumbum import ProcessExecutionError, colors
@@ -681,10 +682,28 @@ class Worker:
             YieldExtension,
         ]
         extensions = default_extensions + list(self.template.jinja_extensions)
-        try:
-            env = SandboxedEnvironment(
-                loader=loader, extensions=extensions, **self.template.envops
+        envops = dict(self.template.envops)
+
+        if "undefined" in envops:
+            undefined_class = envops["undefined"]
+
+            if undefined_class in {"jinja2.Undefined", "jinja2.StrictUndefined"}:
+                envops["undefined"] = import_string("jinja2.StrictUndefined")
+            else:
+                raise UserMessageError(
+                    f"Unsupported envops.undefined value specified: {undefined_class}. "
+                    'Supported values are "jinja2.Undefined" and "jinja2.StrictUndefined".'
+                )
+        else:
+            warnings.warn(
+                "Copier does not detect undefined variables in templates unless `undefined: jinja2.StrictUndefined` is specified. "
+                "Consider enabling StrictUndefined to find undefined variables in your templates. "
+                "This may be enabled by default in the future."
+                "To silence this warning, set `undefined: jinja2.Undefined` in your template's _envops.",
+                FutureWarning,
             )
+        try:
+            env = SandboxedEnvironment(loader=loader, extensions=extensions, **envops)
         except ModuleNotFoundError as error:
             raise ExtensionNotFoundError(
                 f"Copier could not load some Jinja extensions:\n{error}\n"
