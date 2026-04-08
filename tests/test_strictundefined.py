@@ -76,6 +76,7 @@ def test_strictundefined_silenced_warning(
                     undefined: jinja2.Undefined
                 """
             ),
+            (src / "test.jinja"): "{{ undefined_variable }}",
         }
     )
 

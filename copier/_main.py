@@ -688,7 +688,7 @@ class Worker:
             undefined_class = envops["undefined"]
 
             if undefined_class in {"jinja2.Undefined", "jinja2.StrictUndefined"}:
-                envops["undefined"] = import_string("jinja2.StrictUndefined")
+                envops["undefined"] = import_string(undefined_class)
             else:
                 raise UserMessageError(
                     f"Unsupported envops.undefined value specified: {undefined_class}. "
