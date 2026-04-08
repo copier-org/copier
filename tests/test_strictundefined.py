@@ -17,6 +17,7 @@ def test_strictundefined_default() -> None:
     assert "undefined" not in tpl.envops
 
 
+@pytest.mark.xfail(reason="The warning will only be emitted in a future major version")
 def test_strictundefined_warning(tmp_path: Path) -> None:
     with pytest.warns(
         FutureWarning,
@@ -50,7 +51,7 @@ def test_strictundefined_invalid_value(
 
     with pytest.raises(
         UserMessageError,
-        match='Unsupported envops.undefined value specified: jinja2.ChainableUndefined. Supported values are "jinja2.Undefined" and "jinja2.StrictUndefined".',
+        match="Unsupported envops.undefined value specified: jinja2.ChainableUndefined.",
     ):
         copier.run_copy(str(src), dst)
 

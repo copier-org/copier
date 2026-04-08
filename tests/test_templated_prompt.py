@@ -17,6 +17,7 @@ from copier.errors import InvalidTypeError
 
 from .helpers import (
     BRACKET_ENVOPS,
+    BRACKET_ENVOPS_JSON,
     COPIER_PATH,
     SUFFIX_TMPL,
     Keyboard,
@@ -226,15 +227,12 @@ def test_templated_prompt_custom_envops(
 
 def test_templated_prompt_builtins(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
-    envops = BRACKET_ENVOPS.copy()
-    # suppress FutureWarning about StrictUndefined
-    envops["undefined"] = "jinja2.Undefined"
     build_file_tree(
         {
             (src / "copier.yaml"): (
                 f"""\
                 _templates_suffix: {SUFFIX_TMPL}
-                _envops: {json.dumps(envops)}
+                _envops: {BRACKET_ENVOPS_JSON}
                 question1:
                     default: "[[ now() ]]"
                 question2:

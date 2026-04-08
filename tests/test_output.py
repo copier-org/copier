@@ -111,8 +111,6 @@ def test_messages_with_inline_text(
                 _message_after_copy: Project {{ project_name }} successfully created
                 _message_before_update: Updating on {{ _copier_conf.os }}
                 _message_after_update: Project {{ project_name }} successfully updated
-                _envops:
-                    undefined: jinja2.Undefined
                 """
             ),
             (src / "{{ _copier_conf.answers_file }}.jinja"): (
@@ -233,8 +231,6 @@ def test_messages_with_included_text(
                 _message_after_copy: "{% include 'message_after_copy.md.jinja' %}"
                 _message_before_update: "{% include 'message_before_update.md.jinja' %}"
                 _message_after_update: "{% include 'message_after_update.md.jinja' %}"
-                _envops:
-                    undefined: jinja2.Undefined
                 """
             ),
             (src / "message_before_copy.md.jinja"): (
