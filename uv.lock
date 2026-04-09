@@ -318,7 +318,7 @@ dev = [
     { name = "rumdl", specifier = "==0.1.68" },
     { name = "taplo", specifier = "==0.9.3" },
     { name = "types-backports", specifier = "==0.1.3" },
-    { name = "types-colorama", specifier = "==0.4.15.20250801" },
+    { name = "types-colorama", specifier = "==0.4.15.20260408" },
     { name = "types-pygments", specifier = "==2.19.0.20251121" },
     { name = "types-pyyaml", specifier = "==6.0.12.20250915" },
     { name = "typing-extensions", specifier = "==4.15.0" },
@@ -1719,11 +1719,11 @@ wheels = [
 
 [[package]]
 name = "types-colorama"
-version = "0.4.15.20250801"
+version = "0.4.15.20260408"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/99/37/af713e7d73ca44738c68814cbacf7a655aa40ddd2e8513d431ba78ace7b3/types_colorama-0.4.15.20250801.tar.gz", hash = "sha256:02565d13d68963d12237d3f330f5ecd622a3179f7b5b14ee7f16146270c357f5", size = 10437, upload-time = "2025-08-01T03:48:22.605Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/83/c0/1c02ed9edf3462a392f4ea4bda80fa10c538c63d1d7be255dc7dcb545007/types_colorama-0.4.15.20260408.tar.gz", hash = "sha256:9a816657927489463edec1b7b47933b73fe737d37a3616bf596b7de843441032", size = 10623, upload-time = "2026-04-08T04:28:31.763Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/95/3a/44ccbbfef6235aeea84c74041dc6dfee6c17ff3ddba782a0250e41687ec7/types_colorama-0.4.15.20250801-py3-none-any.whl", hash = "sha256:b6e89bd3b250fdad13a8b6a465c933f4a5afe485ea2e2f104d739be50b13eea9", size = 10743, upload-time = "2025-08-01T03:48:21.774Z" },
+    { url = "https://files.pythonhosted.org/packages/b9/65/d03948be8ae9362ad26f36443eab051fe5524295fe008126cd65792f9833/types_colorama-0.4.15.20260408-py3-none-any.whl", hash = "sha256:7327a51c760d94f7df2e8c72c275a4468c03c3abb606d23995cb37e3d24d9132", size = 10763, upload-time = "2026-04-08T04:28:30.688Z" },
 ]
 
 [[package]]
