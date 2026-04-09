@@ -7,6 +7,7 @@ import sys
 from contextlib import suppress
 from pathlib import Path
 from tempfile import TemporaryDirectory, mkdtemp
+from urllib.parse import urlparse
 from warnings import warn
 
 from packaging import version
@@ -143,6 +144,15 @@ def get_latest_tag(url: str, use_prereleases: OptBool = False) -> str:
     Returns:
         The latest git tag, or `HEAD` if no valid tags are found.
     """
+    # For local Git repos, `git ls-remote` requires an absolute path to work correctly,
+    # it behaves unexpectedly with some relative paths, especially with parent path
+    # traversal.
+    #
+    # See:
+    # - https://github.com/copier-org/copier/issues/2589
+    # - https://stackoverflow.com/q/59981939
+    if urlparse(url).scheme in {"", "file"}:
+        url = Path(url).resolve().as_posix()
     git = get_git()
     all_tags = (
         tag.split("\t", 1)[1].removeprefix("refs/tags/")
