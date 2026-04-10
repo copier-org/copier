@@ -512,6 +512,7 @@ class Worker:
         is_dir: bool = False,
         is_symlink: bool = False,
         expected_contents: bytes | Path = b"",
+        expected_mode: int | None = None,
     ) -> bool:
         """Determine if a file or directory can be rendered.
 
@@ -525,6 +526,12 @@ class Worker:
             expected_contents:
                 Used to compare existing file contents with them. Allows to know if
                 rendering is needed.
+            expected_mode:
+                Used to compare the existing file's mode bits with the
+                template's, so a mode-only change between template versions
+                is not misclassified as "identical". Only the executable bits
+                (``0o111``) are compared, since those are the only mode bits
+                tracked by git.
         """
         assert not dst_relpath.is_absolute()
         assert not expected_contents or not is_dir, "Dirs cannot have expected content"
@@ -551,8 +558,18 @@ class Worker:
                 raise
         except IsADirectoryError:
             assert is_dir
+        mode_matches = True
+        if expected_mode is not None and not previous_is_symlink and not is_dir:
+            try:
+                dst_exec_bits = dst_abspath.stat().st_mode & 0o111
+            except (FileNotFoundError, PermissionError):
+                dst_exec_bits = None
+            else:
+                mode_matches = dst_exec_bits == (expected_mode & 0o111)
         if is_dir or (
-            previous_content == expected_contents and previous_is_symlink == is_symlink
+            previous_content == expected_contents
+            and previous_is_symlink == is_symlink
+            and mode_matches
         ):
             printf(
                 "identical",
@@ -835,8 +852,30 @@ class Worker:
         else:
             new_content = src_abspath.read_bytes()
         dst_abspath = self.subproject.local_abspath / dst_relpath
-        src_mode = src_abspath.stat().st_mode
-        if not self._render_allowed(dst_relpath, expected_contents=new_content):
+        # Prefer the template's git-index mode over ``stat().st_mode`` so
+        # that executable bits committed by the template author are
+        # honored even on filesystems that don't represent them on disk
+        # (notably Windows). ``stat().st_mode`` is used for
+        # non-executable-bit flags (user/group/world read/write, etc.)
+        # and as a fallback when the file isn't tracked in the
+        # template's git index — e.g. local directory templates without
+        # a git repo, or untracked files.
+        stat_mode = src_abspath.stat().st_mode
+        git_mode = self.template.git_index_modes.get(
+            PurePosixPath(src_relpath.as_posix())
+        )
+        if git_mode is None:
+            src_mode = stat_mode
+        else:
+            # Merge the git-tracked executable bits with the filesystem's
+            # non-exec bits so we don't lose read/write flags that matter
+            # for the destination chmod.
+            src_mode = (stat_mode & ~0o111) | (git_mode & 0o111)
+        if not self._render_allowed(
+            dst_relpath,
+            expected_contents=new_content,
+            expected_mode=src_mode,
+        ):
             return
         if not self.pretend:
             dst_abspath.parent.mkdir(parents=True, exist_ok=True)
@@ -856,6 +895,93 @@ class Worker:
                         f"{stat.filemode(dst_mode)} to {stat.filemode(src_mode)}",
                         stacklevel=2,
                     )
+            self._sync_git_index_executable_bit(dst_relpath, src_mode)
+
+    def _sync_git_index_executable_bit(self, dst_relpath: Path, src_mode: int) -> None:
+        """Propagate executable-bit changes to the destination's git index.
+
+        Only needed when ``core.fileMode`` is ``false`` (the Windows default
+        and a common opt-out elsewhere): in that case git ignores on-disk
+        mode bits, so the ``chmod`` performed by :meth:`_render_file` is
+        invisible to git, and the executable bit would be silently lost on
+        the user's next commit. To keep the destination's index in sync
+        with the template, we explicitly rewrite the entry's mode via
+        ``git update-index --cacheinfo``.
+
+        When ``core.fileMode`` is ``true`` (or unset, the unix default),
+        this method is a no-op: git already picks up the on-disk ``chmod``
+        as an *unstaged* modification, which matches copier's normal
+        behavior of leaving rendered changes unstaged for user review.
+
+        Also a no-op when the destination is not in a git repository, when
+        the file is not yet tracked (the user's eventual ``git add`` will
+        record the on-disk mode where the platform allows it), or when git
+        is unavailable. All git failures are swallowed so that copying or
+        updating cannot be broken by an unrelated git problem.
+
+        .. note::
+
+            ``git update-index --chmod=±x`` cannot be used here even
+            though it looks simpler: it has a side effect of also
+            re-staging the current working-tree content as the blob (it
+            implicitly refreshes the index entry). During ``copier
+            update`` the working tree has already been overwritten with
+            the new template content at the time this method runs, so
+            ``--chmod`` would stomp the downstream-edited blob that the
+            update flow needs to reconstruct merge conflicts.
+            ``--cacheinfo`` rewrites the mode on the *existing* blob
+            SHA only, leaving the rest of the entry (and therefore the
+            conflict-reconstruction flow) untouched.
+        """
+        subproject_root = self.subproject.local_abspath
+        git = get_git(context_dir=subproject_root)
+        try:
+            # ``--type=bool`` normalizes truthy/falsy spellings to
+            # ``true``/``false``.  Exits 1 if the key is unset.
+            file_mode_setting = git(
+                "config", "--type=bool", "--get", "core.fileMode"
+            ).strip()
+        except ProcessExecutionError:
+            # Not a git repo, or ``core.fileMode`` is unset — unix default
+            # is ``true``, so plain ``chmod`` is enough; nothing to do.
+            return
+        if file_mode_setting != "false":
+            # git will pick up the plain on-disk ``chmod`` from
+            # :meth:`_render_file`; no index manipulation needed.
+            return
+        try:
+            # TODO: simplify with ``--format %(objectmode)`` once the
+            # minimum git version is raised to 2.38+ (--format cannot be
+            # combined with --stage; see git-ls-files(1)).
+            result = git("ls-files", "--stage", "--", str(dst_relpath)).strip()
+        except ProcessExecutionError:
+            # git can't read the index — fall back to a silent no-op.
+            return
+        if not result:
+            # File is not tracked yet; nothing to update.
+            return
+        # Format: "<mode> <sha> <stage>\t<path>"
+        meta = result.split("\t", 1)[0].split()
+        current_index_mode = int(meta[0], 8)
+        current_index_sha = meta[1]
+        desired_executable = bool(src_mode & 0o111)
+        current_executable = bool(current_index_mode & 0o111)
+        if desired_executable == current_executable:
+            return
+        new_mode = "100755" if desired_executable else "100644"
+        try:
+            # ``--cacheinfo`` rewrites the entry's mode on the *existing*
+            # blob SHA. Unlike ``--chmod``, it does NOT re-read the
+            # working tree or restage its content.
+            git(
+                "update-index",
+                "--cacheinfo",
+                f"{new_mode},{current_index_sha},{dst_relpath}",
+            )
+        except (OSError, ProcessExecutionError):
+            # git not installed, or some other unrelated git failure
+            # — silently fall back so we never break the render path.
+            pass
 
     def _render_symlink(self, src_relpath: Path, dst_relpath: Path) -> None:
         """Render one symlink.

@@ -9,6 +9,7 @@ from typing import Literal
 
 import pexpect
 import pytest
+from inline_snapshot import snapshot
 from plumbum import local
 
 from copier._cli import CopierApp
@@ -2225,3 +2226,348 @@ def test_render_copier_conf_as_json_without_circular_reference(
 
     run_update(str(dst), overwrite=True, unsafe=True)
     assert (dst / "copier_conf.json").exists()
+
+
+@pytest.mark.skipif(
+    condition=platform.system() == "Windows",
+    reason="Windows does not have UNIX-like permissions",
+)
+@pytest.mark.parametrize("file_mode", [True, False])
+def test_update_propagates_executable_bit_addition(
+    tmp_path_factory: pytest.TempPathFactory,
+    file_mode: bool,
+) -> None:
+    """A template that gains ``+x`` between versions (without changing the
+    file's content) must propagate that bit to existing destinations on
+    ``copier update``.
+    """
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    # Template v1: launcher.sh is NOT executable.
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+                "launcher.sh": "#!/bin/sh\necho hi\n",
+            }
+        )
+        git_save(tag="v1")
+
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    assert (dst / "launcher.sh").stat().st_mode & 0o111 == 0
+    with local.cwd(dst):
+        git("init")
+        git("config", "core.fileMode", str(file_mode).lower())
+        git("add", "-A")
+        git("commit", "-m", "init")
+        # TODO: simplify with ``--format %(objectmode)`` once the minimum
+        # git version is raised to 2.38+ (--format cannot be combined with
+        # --stage; see git-ls-files(1)).
+        mode = git("ls-files", "--stage", "--", "launcher.sh").strip().split()[0]
+    assert mode == "100644"
+
+    # Template v2: launcher.sh gains +x with no content change.
+    with local.cwd(src):
+        Path("launcher.sh").chmod(
+            Path("launcher.sh").stat().st_mode
+            | stat.S_IXUSR
+            | stat.S_IXGRP
+            | stat.S_IXOTH
+        )
+        git("commit", "-am", "make executable")
+        git("tag", "v2")
+
+    run_update(str(dst), defaults=True, overwrite=True)
+
+    # On disk, the bit must be set after the update.
+    assert (dst / "launcher.sh").stat().st_mode & 0o111 != 0
+    with local.cwd(dst):
+        # TODO: simplify with ``--format %(objectmode)`` once the minimum
+        # git version is raised to 2.38+ (--format cannot be combined with
+        # --stage; see git-ls-files(1)).
+        mode = git("ls-files", "--stage", "--", "launcher.sh").strip().split()[0]
+        # Preserve the leading space — porcelain columns are index (XY) and
+        # worktree, and a leading space distinguishes " M" (unstaged) from
+        # "M " (staged). ``.strip()`` would swallow the space.
+        status = git("status", "--porcelain", "--", "launcher.sh").rstrip("\n")
+    if file_mode:
+        # With ``core.fileMode=true``, copier must NOT stage the index mode
+        # change — git picks up the on-disk ``chmod`` as an unstaged
+        # modification, matching copier's normal behavior of leaving
+        # rendered changes unstaged for user review. Guards against
+        # auto-staging regression.
+        assert mode == "100644"
+        assert status.startswith(" M"), f"expected unstaged change, got {status!r}"
+        # A subsequent ``git add`` records 100755 via git's normal flow.
+        with local.cwd(dst):
+            git("add", "--", "launcher.sh")
+            mode_after_add = (
+                git("ls-files", "--stage", "--", "launcher.sh").strip().split()[0]
+            )
+        assert mode_after_add == "100755"
+    else:
+        # With ``core.fileMode=false``, git would ignore the on-disk chmod,
+        # so copier must explicitly call ``git update-index --chmod=+x``
+        # to record the new mode in the index.
+        assert mode == "100755"
+
+
+@pytest.mark.skipif(
+    condition=platform.system() == "Windows",
+    reason="Windows does not have UNIX-like permissions",
+)
+@pytest.mark.parametrize("file_mode", [True, False])
+def test_update_propagates_executable_bit_removal(
+    tmp_path_factory: pytest.TempPathFactory,
+    file_mode: bool,
+) -> None:
+    """When a template drops the executable bit between versions, the
+    destination's on-disk mode and git index must lose ``+x`` too.
+    """
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+                "launcher.sh": "#!/bin/sh\necho hi\n",
+            }
+        )
+        Path("launcher.sh").chmod(
+            Path("launcher.sh").stat().st_mode
+            | stat.S_IXUSR
+            | stat.S_IXGRP
+            | stat.S_IXOTH
+        )
+        git_save(tag="v1")
+
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    with local.cwd(dst):
+        git("init")
+        git("config", "core.fileMode", str(file_mode).lower())
+        git("add", "-A")
+        if not file_mode:
+            # With core.fileMode=false, git add ignores on-disk exec bits,
+            # so we must set the index mode explicitly to start at 100755.
+            git("update-index", "--chmod=+x", "--", "launcher.sh")
+        git("commit", "-m", "init")
+        # TODO: simplify with ``--format %(objectmode)`` once the minimum
+        # git version is raised to 2.38+ (--format cannot be combined with
+        # --stage; see git-ls-files(1)).
+        mode = git("ls-files", "--stage", "--", "launcher.sh").strip().split()[0]
+    assert mode == "100755"
+
+    # Template v2: drop +x (no content change).
+    with local.cwd(src):
+        Path("launcher.sh").chmod(
+            Path("launcher.sh").stat().st_mode
+            & ~(stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+        )
+        git("commit", "-am", "drop executable")
+        git("tag", "v2")
+
+    run_update(str(dst), defaults=True, overwrite=True)
+
+    assert (dst / "launcher.sh").stat().st_mode & 0o111 == 0
+    with local.cwd(dst):
+        # TODO: simplify with ``--format %(objectmode)`` once the minimum
+        # git version is raised to 2.38+ (--format cannot be combined with
+        # --stage; see git-ls-files(1)).
+        mode = git("ls-files", "--stage", "--", "launcher.sh").strip().split()[0]
+        # Preserve the leading space — porcelain columns are index (XY) and
+        # worktree, and a leading space distinguishes " M" (unstaged) from
+        # "M " (staged). ``.strip()`` would swallow the space.
+        status = git("status", "--porcelain", "--", "launcher.sh").rstrip("\n")
+    if file_mode:
+        # Same rationale as the addition test: with ``core.fileMode=true``
+        # the chmod should be visible to git as unstaged, and copier must
+        # not pre-stage it via ``git update-index --chmod``.
+        assert mode == "100755"
+        assert status.startswith(" M"), f"expected unstaged change, got {status!r}"
+        with local.cwd(dst):
+            git("add", "--", "launcher.sh")
+            mode_after_add = (
+                git("ls-files", "--stage", "--", "launcher.sh").strip().split()[0]
+            )
+        assert mode_after_add == "100644"
+    else:
+        assert mode == "100644"
+
+
+@pytest.mark.skipif(
+    condition=platform.system() != "Windows",
+    reason="Exercises the Windows code path where the filesystem does not "
+    "represent UNIX-like mode bits.",
+)
+def test_update_preserves_exec_bit_authored_on_unix(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """A Windows user running ``copier update`` on a template that was
+    authored on Linux/macOS must see executable-bit changes propagate
+    to the destination's git index.
+
+    On Windows, git's default ``core.fileMode=false`` means the
+    executable bit is never represented on disk, only in the index.
+    Copier cannot rely on ``os.stat().st_mode`` to read the template's
+    intended mode — it must consult the template's git index instead.
+    This test sets up the template using only ``git update-index
+    --chmod`` (no on-disk ``chmod``, which would be a no-op on Windows
+    anyway) and verifies the bit survives end-to-end into the
+    destination's index.
+    """
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    # Template v1: launcher.sh is NOT executable. Set up the git index
+    # entry without touching on-disk mode bits — mimics how a
+    # Linux-authored commit appears to a Windows clone.
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+                "launcher.sh": "#!/bin/sh\necho hi\n",
+            }
+        )
+        git_save(tag="v1")
+
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    with local.cwd(dst):
+        git("init")
+        # Windows default — explicit here to avoid relying on it.
+        git("config", "core.fileMode", "false")
+        git("add", "-A")
+        git("commit", "-m", "init")
+        # TODO: simplify with ``--format %(objectmode)`` once the minimum
+        # git version is raised to 2.38+ (--format cannot be combined with
+        # --stage; see git-ls-files(1)).
+        mode = git("ls-files", "--stage", "--", "launcher.sh").strip().split()[0]
+    assert mode == "100644"
+
+    # Template v2: launcher.sh gains +x via ``git update-index --chmod``
+    # only. No on-disk ``chmod`` — this is the scenario where the
+    # template author committed ``100755`` from Linux, and the
+    # destination is a filesystem that does not carry exec bits.
+    with local.cwd(src):
+        git("update-index", "--chmod=+x", "launcher.sh")
+        git("commit", "-am", "make executable")
+        git("tag", "v2")
+
+    run_update(str(dst), defaults=True, overwrite=True)
+
+    # The destination's git index must record 100755, even though
+    # ``src_abspath.stat().st_mode`` on Windows would not show the exec
+    # bit. This only works because copier reads the template's intended
+    # mode from its git index via ``Template.git_index_modes``.
+    with local.cwd(dst):
+        mode = git("ls-files", "--stage", "--", "launcher.sh").strip().split()[0]
+    assert mode == "100755"
+
+
+@pytest.mark.skipif(
+    condition=platform.system() == "Windows",
+    reason="Windows does not have UNIX-like permissions",
+)
+@pytest.mark.parametrize("file_mode", [True, False])
+def test_update_with_exec_bit_change_and_merge_conflict(
+    tmp_path_factory: pytest.TempPathFactory,
+    file_mode: bool,
+) -> None:
+    """``copier update`` on a file that gains ``+x`` AND has a
+    conflicting local edit must register a proper merge conflict in the
+    index — the executable-bit plumbing must not silently collapse the
+    conflict stages.
+
+    Regression guard: ``git update-index --chmod`` on a file with
+    stages 1/2/3 collapses them into stage 0, destroying the conflict.
+    Copier only avoids this because ``_sync_git_index_executable_bit``
+    runs in ``_render_file`` *before* the conflict registration in
+    ``_apply_update``. This test locks in that ordering guarantee
+    against future refactors.
+    """
+    filename = "launcher.sh"
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    # Template v1: non-exec launcher.sh with one line of content.
+    build_file_tree(
+        {
+            (src / filename): "upstream version 1",
+            (src / "{{_copier_conf.answers_file}}.jinja"): (
+                "{{_copier_answers|to_nice_yaml}}"
+            ),
+        }
+    )
+    with local.cwd(src):
+        git_init("hello template")
+        git("tag", "v1")
+
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    with local.cwd(dst):
+        git_init("hello project")
+        if not file_mode:
+            git("config", "core.fileMode", "false")
+        # Downstream edit that conflicts with template v2.
+        Path(filename).write_text("upstream version 1 + downstream")
+        git("commit", "-am", "downstream edit")
+
+    # Template v2: gain +x AND change the same line (conflicts with the
+    # downstream edit above).
+    with local.cwd(src):
+        Path(filename).write_text("upstream version 2")
+        Path(filename).chmod(
+            Path(filename).stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+        )
+        git("add", ".", "-A")
+        git("commit", "-m", "make executable and update content")
+        git("tag", "v2")
+
+    run_update(dst_path=dst, defaults=True, overwrite=True, conflict="inline")
+
+    # The conflict must still be registered. If our ``update-index``
+    # index manipulation were called after stages 1/2/3 were registered,
+    # it would collapse them into stage 0 and the conflict would
+    # silently disappear. Quick human-readable sanity check that
+    # conflict markers were written to the working tree:
+    assert "<<<<<<< before updating" in (dst / filename).read_text()
+    # Snapshot the full human-readable ``git status`` — a natural user
+    # view of the post-update state. If ``_sync_git_index_executable_bit``
+    # ever regresses into stomping conflict stages, this snapshot will
+    # diverge immediately. ``git diff`` is scoped to ``filename`` to
+    # avoid unstable tmp-path strings that otherwise appear in the
+    # ``.copier-answers.yml`` diff (``_src_path`` points at the test's
+    # tmp dir).
+    # ``editorconfig-checker-disable`` / ``-enable`` wrap the snapshots
+    # below because git's output format (2-space indents on hints, tabs
+    # on unmerged-path entries, 1-space diff context prefix) violates
+    # copier's ``.editorconfig`` rules, which the CI pre-commit hook
+    # enforces. The snapshots are literal copies of git's output, so
+    # editing them would defeat the regression guard.
+    with local.cwd(dst):
+        # editorconfig-checker-disable
+        assert git("status") == snapshot("""\
+On branch main
+Unmerged paths:
+  (use "git restore --staged <file>..." to unstage)
+  (use "git add <file>..." to mark resolution)
+	both modified:   launcher.sh
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   .copier-answers.yml
+
+no changes added to commit (use "git add" and/or "git commit -a")
+""")
+        assert git("diff", "--", filename) == snapshot("""\
+diff --cc launcher.sh
+index f163f4b,d20125d..0000000
+--- a/launcher.sh
++++ b/launcher.sh
+@@@ -1,1 -1,1 +1,5 @@@
+- upstream version 1 + downstream
+ -upstream version 2
+++<<<<<<< before updating
+++upstream version 1 + downstream
+++=======
+++upstream version 2
+++>>>>>>> after updating
+""")
+        # editorconfig-checker-enable
