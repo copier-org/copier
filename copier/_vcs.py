@@ -7,7 +7,6 @@ import sys
 from contextlib import suppress
 from pathlib import Path
 from tempfile import TemporaryDirectory, mkdtemp
-from urllib.parse import urlparse
 from warnings import warn
 
 from packaging import version
@@ -20,6 +19,10 @@ from .errors import DirtyLocalWarning, ShallowCloneWarning
 
 GIT_USER_NAME = "Copier"
 GIT_USER_EMAIL = "copier@copier"
+
+
+class _PathStr(str):
+    """A string that represents a path."""
 
 
 def get_git(context_dir: OptStrOrPath = None) -> LocalCommand:
@@ -126,7 +129,7 @@ def get_repo(url: str) -> str | None:
         url_path = url_path.expanduser()
 
     if is_git_repo_root(url_path) or is_git_bundle(url_path):
-        return url_path.as_posix()
+        return _PathStr(url_path.as_posix())
 
     return None
 
@@ -151,7 +154,7 @@ def get_latest_tag(url: str, use_prereleases: OptBool = False) -> str:
     # See:
     # - https://github.com/copier-org/copier/issues/2589
     # - https://stackoverflow.com/q/59981939
-    if urlparse(url).scheme in {"", "file"}:
+    if isinstance(url, _PathStr):
         url = Path(url).resolve().as_posix()
     git = get_git()
     all_tags = (
