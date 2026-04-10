@@ -15,6 +15,7 @@ from dataclasses import field, replace
 from filecmp import dircmp
 from functools import cached_property, partial, wraps
 from itertools import chain
+from packaging.specifiers import SpecifierSet
 from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
 from shutil import rmtree
 from tempfile import TemporaryDirectory
@@ -249,6 +250,7 @@ class Worker:
     unsafe: bool = False
     skip_answered: bool = False
     skip_tasks: bool = False
+    version_subscription: str | None = None
 
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
     _cleanup_hooks: list[Callable[[], None]] = field(default_factory=list, init=False)
@@ -360,7 +362,11 @@ class Worker:
         answers: AnyByStrDict = {}
         commit = self.template.commit
         src = self.template.url
-        for key, value in (("_commit", commit), ("_src_path", src)):
+        version_subscription = self.template.version_subscription
+        for key, value in (
+            ("_commit", commit), ("_src_path", src),
+            ("_version_subscription", version_subscription),
+        ):
             if value is not None:
                 answers[key] = value
         # Other data goes next
@@ -1065,7 +1071,14 @@ class Worker:
                 raise TypeError("Template not found")
             url = str(self.subproject.template.url)
         ref = self.resolved_vcs_ref
-        result = Template(url=url, ref=ref, use_prereleases=self.use_prereleases)
+        version_subscription = self.version_subscription or \
+            self.subproject.last_answers.get("_version_subscription", None)
+        result = Template(
+            url=url,
+            ref=ref,
+            use_prereleases=self.use_prereleases,
+            version_subscription=version_subscription
+        )
         self._cleanup_hooks.append(result._cleanup)
         return result
 
@@ -1195,6 +1208,12 @@ class Worker:
             # We might have switched operation context, ensure the cached property
             # is regenerated to re-render templates.
             del self.match_exclude
+        if self.version_subscription:
+            if not SpecifierSet(self.version_subscription).contains(self.template.version):
+                raise UserMessageError(
+                    f"Cannot update: new version {self.template.version}, as it does "
+                    f"not adhere to specification \"{self.version_subscription}\"."
+                )
 
         self._apply_update()
         self._print_message(self.template.message_after_update)
@@ -1544,6 +1563,7 @@ def run_copy(
     quiet: bool = False,
     unsafe: bool = False,
     skip_tasks: bool = False,
+    version_subscription: SpecifierSet | None = None,
 ) -> Worker:
     """Copy a template to a destination, from zero."""
     with Worker(
@@ -1572,6 +1592,7 @@ def run_copy(
         quiet=quiet,
         unsafe=unsafe,
         skip_tasks=skip_tasks,
+        version_subscription=version_subscription,
     ) as worker:
         worker.run_copy()
     return worker
@@ -1596,6 +1617,7 @@ def run_recopy(
     unsafe: bool = False,
     skip_answered: bool = False,
     skip_tasks: bool = False,
+    version_subscription: SpecifierSet | None = None,
 ) -> Worker:
     """Update a subproject from its template, discarding subproject evolution."""
     with Worker(
@@ -1624,6 +1646,7 @@ def run_recopy(
         unsafe=unsafe,
         skip_answered=skip_answered,
         skip_tasks=skip_tasks,
+        version_subscription=version_subscription,
     ) as worker:
         worker.run_recopy()
     return worker
@@ -1650,6 +1673,7 @@ def run_update(
     unsafe: bool = False,
     skip_answered: bool = False,
     skip_tasks: bool = False,
+    version_subscription: SpecifierSet | None = None,
 ) -> Worker:
     """Update a subproject, from its template."""
     with Worker(
@@ -1680,6 +1704,7 @@ def run_update(
         unsafe=unsafe,
         skip_answered=skip_answered,
         skip_tasks=skip_tasks,
+        version_subscription=version_subscription,
     ) as worker:
         worker.run_update()
     return worker
