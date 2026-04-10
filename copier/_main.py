@@ -510,6 +510,7 @@ class Worker:
         is_dir: bool = False,
         is_symlink: bool = False,
         expected_contents: bytes | Path = b"",
+        expected_mode: int | None = None,
     ) -> bool:
         """Determine if a file or directory can be rendered.
 
@@ -523,6 +524,12 @@ class Worker:
             expected_contents:
                 Used to compare existing file contents with them. Allows to know if
                 rendering is needed.
+            expected_mode:
+                Used to compare the existing file's mode bits with the
+                template's, so a mode-only change between template versions
+                is not misclassified as "identical". Only the executable bits
+                (``0o111``) are compared, since those are the only mode bits
+                tracked by git.
         """
         assert not dst_relpath.is_absolute()
         assert not expected_contents or not is_dir, "Dirs cannot have expected content"
@@ -549,8 +556,18 @@ class Worker:
                 raise
         except IsADirectoryError:
             assert is_dir
+        mode_matches = True
+        if expected_mode is not None and not previous_is_symlink and not is_dir:
+            try:
+                dst_exec_bits = dst_abspath.stat().st_mode & 0o111
+            except (FileNotFoundError, PermissionError):
+                dst_exec_bits = None
+            else:
+                mode_matches = dst_exec_bits == (expected_mode & 0o111)
         if is_dir or (
-            previous_content == expected_contents and previous_is_symlink == is_symlink
+            previous_content == expected_contents
+            and previous_is_symlink == is_symlink
+            and mode_matches
         ):
             printf(
                 "identical",
@@ -826,7 +843,11 @@ class Worker:
             new_content = src_abspath.read_bytes()
         dst_abspath = self.subproject.local_abspath / dst_relpath
         src_mode = src_abspath.stat().st_mode
-        if not self._render_allowed(dst_relpath, expected_contents=new_content):
+        if not self._render_allowed(
+            dst_relpath,
+            expected_contents=new_content,
+            expected_mode=src_mode,
+        ):
             return
         if not self.pretend:
             dst_abspath.parent.mkdir(parents=True, exist_ok=True)
@@ -846,6 +867,52 @@ class Worker:
                         f"{stat.filemode(dst_mode)} to {stat.filemode(src_mode)}",
                         stacklevel=2,
                     )
+            self._sync_git_index_executable_bit(dst_relpath, src_mode)
+
+    def _sync_git_index_executable_bit(self, dst_relpath: Path, src_mode: int) -> None:
+        """Propagate executable-bit changes to the destination's git index.
+
+        On filesystems where ``core.fileMode`` is ``false`` (the Windows
+        default, and a common opt-out elsewhere), git ignores on-disk
+        mode bits, so the on-disk ``chmod`` performed by
+        :meth:`_render_file` is invisible to git. To keep the
+        destination's index in sync with the template, we explicitly tell
+        git about the new executable bit when the destination is a git
+        repository and the file is already tracked.
+
+        No-op when the destination is not in a git repository, when the
+        file is not yet tracked (the user's eventual ``git add`` will
+        record the on-disk mode where the platform allows it), or when
+        git is unavailable. All git failures are swallowed so that
+        copying or updating cannot be broken by an unrelated git
+        problem.
+        """
+        subproject_root = self.subproject.local_abspath
+        git = get_git(context_dir=subproject_root)
+        try:
+            # TODO: simplify with ``--format %(objectmode)`` once the
+            # minimum git version is raised to 2.38+ (--format cannot be
+            # combined with --stage; see git-ls-files(1)).
+            result = git("ls-files", "--stage", "--", str(dst_relpath)).strip()
+        except ProcessExecutionError:
+            # Not a git repo, or git can't read the index — fall back
+            # to a silent no-op.
+            return
+        if not result:
+            # File is not tracked yet; nothing to update.
+            return
+        current_index_mode = int(result.split()[0], 8)
+        desired_executable = bool(src_mode & 0o111)
+        current_executable = bool(current_index_mode & 0o111)
+        if desired_executable == current_executable:
+            return
+        flag = "+x" if desired_executable else "-x"
+        try:
+            git("update-index", f"--chmod={flag}", "--", str(dst_relpath))
+        except (OSError, ProcessExecutionError):
+            # git not installed, or some other unrelated git failure
+            # — silently fall back so we never break the render path.
+            pass
 
     def _render_symlink(self, src_relpath: Path, dst_relpath: Path) -> None:
         """Render one symlink.

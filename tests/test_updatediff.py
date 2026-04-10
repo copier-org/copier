@@ -2225,3 +2225,135 @@ def test_render_copier_conf_as_json_without_circular_reference(
 
     run_update(str(dst), overwrite=True, unsafe=True)
     assert (dst / "copier_conf.json").exists()
+
+
+@pytest.mark.skipif(
+    condition=platform.system() == "Windows",
+    reason="Windows does not have UNIX-like permissions",
+)
+@pytest.mark.parametrize("file_mode", [True, False])
+def test_update_propagates_executable_bit_addition(
+    tmp_path_factory: pytest.TempPathFactory,
+    file_mode: bool,
+) -> None:
+    """A template that gains ``+x`` between versions (without changing the
+    file's content) must propagate that bit to existing destinations on
+    ``copier update``.
+    """
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    # Template v1: launcher.sh is NOT executable.
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+                "launcher.sh": "#!/bin/sh\necho hi\n",
+            }
+        )
+        git_save(tag="v1")
+
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    with local.cwd(dst):
+        git("init")
+        git("config", "core.fileMode", str(file_mode).lower())
+        git("add", "-A")
+        git("commit", "-m", "init")
+    assert (dst / "launcher.sh").stat().st_mode & 0o111 == 0
+    with local.cwd(dst):
+        # TODO: simplify with ``--format %(objectmode)`` once the minimum
+        # git version is raised to 2.38+ (--format cannot be combined with
+        # --stage; see git-ls-files(1)).
+        mode = git("ls-files", "--stage", "--", "launcher.sh").strip().split()[0]
+    assert mode == "100644"
+
+    # Template v2: launcher.sh gains +x with no content change.
+    with local.cwd(src):
+        Path("launcher.sh").chmod(
+            Path("launcher.sh").stat().st_mode
+            | stat.S_IXUSR
+            | stat.S_IXGRP
+            | stat.S_IXOTH
+        )
+        git("update-index", "--chmod=+x", "launcher.sh")
+        git("commit", "-am", "make executable")
+        git("tag", "v2")
+
+    run_update(str(dst), defaults=True, overwrite=True)
+
+    # On disk, the bit must be set after the update.
+    assert (dst / "launcher.sh").stat().st_mode & 0o111 != 0
+    # The destination's git index must record 100755.  With
+    # ``core.fileMode=false`` this only works because copier explicitly
+    # calls ``git update-index --chmod=+x``.
+    with local.cwd(dst):
+        # TODO: simplify with ``--format %(objectmode)`` once the minimum
+        # git version is raised to 2.38+ (--format cannot be combined with
+        # --stage; see git-ls-files(1)).
+        mode = git("ls-files", "--stage", "--", "launcher.sh").strip().split()[0]
+    assert mode == "100755"
+
+
+@pytest.mark.skipif(
+    condition=platform.system() == "Windows",
+    reason="Windows does not have UNIX-like permissions",
+)
+@pytest.mark.parametrize("file_mode", [True, False])
+def test_update_propagates_executable_bit_removal(
+    tmp_path_factory: pytest.TempPathFactory,
+    file_mode: bool,
+) -> None:
+    """When a template drops the executable bit between versions, the
+    destination's on-disk mode and git index must lose ``+x`` too.
+    """
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+                "launcher.sh": "#!/bin/sh\necho hi\n",
+            }
+        )
+        Path("launcher.sh").chmod(
+            Path("launcher.sh").stat().st_mode
+            | stat.S_IXUSR
+            | stat.S_IXGRP
+            | stat.S_IXOTH
+        )
+        git_save(tag="v1")
+
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    with local.cwd(dst):
+        git("init")
+        git("config", "core.fileMode", str(file_mode).lower())
+        git("add", "-A")
+        if not file_mode:
+            # With core.fileMode=false, git add ignores on-disk exec bits,
+            # so we must set the index mode explicitly to start at 100755.
+            git("update-index", "--chmod=+x", "--", "launcher.sh")
+        git("commit", "-m", "init")
+        # TODO: simplify with ``--format %(objectmode)`` once the minimum
+        # git version is raised to 2.38+ (--format cannot be combined with
+        # --stage; see git-ls-files(1)).
+        mode = git("ls-files", "--stage", "--", "launcher.sh").strip().split()[0]
+    assert mode == "100755"
+
+    # Template v2: drop +x (no content change).
+    with local.cwd(src):
+        Path("launcher.sh").chmod(
+            Path("launcher.sh").stat().st_mode
+            & ~(stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+        )
+        git("update-index", "--chmod=-x", "launcher.sh")
+        git("commit", "-am", "drop executable")
+        git("tag", "v2")
+
+    run_update(str(dst), defaults=True, overwrite=True)
+
+    assert (dst / "launcher.sh").stat().st_mode & 0o111 == 0
+    with local.cwd(dst):
+        # TODO: simplify with ``--format %(objectmode)`` once the minimum
+        # git version is raised to 2.38+ (--format cannot be combined with
+        # --stage; see git-ls-files(1)).
+        mode = git("ls-files", "--stage", "--", "launcher.sh").strip().split()[0]
+    assert mode == "100644"
