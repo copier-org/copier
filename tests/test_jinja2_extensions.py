@@ -7,6 +7,7 @@ from jinja2 import Environment
 from jinja2.ext import Extension
 
 import copier
+from copier.errors import ExtensionNotFoundError
 
 from .helpers import PROJECT_TEMPLATE, build_file_tree
 
@@ -50,6 +51,31 @@ def test_additional_jinja2_extensions(tmp_path: Path) -> None:
     super_file = tmp_path / "super_file.md"
     assert super_file.exists()
     assert super_file.read_text() == "super var! super func! super filter!\n"
+
+
+def test_additional_jinja2_extensions_error(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / ".copier-answers.yml.jinja"): (
+                """\
+                # Changes here will be overwritten by Copier
+                {{ _copier_answers|to_nice_yaml }}
+                """
+            ),
+            (src / "copier.yaml"): (
+                """\
+                _jinja_extensions:
+                    - non.existent.Extension
+                """
+            ),
+        }
+    )
+
+    with pytest.raises(ExtensionNotFoundError, match="No module named 'non'"):
+        copier.run_copy(str(src), dst, unsafe=True)
 
 
 def test_to_json_filter_with_conf(tmp_path_factory: pytest.TempPathFactory) -> None:
