@@ -18,8 +18,8 @@ import dunamai
 import packaging.version
 import yaml
 from funcy import lflatten
-from packaging.version import Version, parse
 from packaging.specifiers import SpecifierSet
+from packaging.version import Version, parse
 from plumbum.machines import local
 from pydantic.dataclasses import dataclass
 
@@ -572,11 +572,13 @@ class Template:
             result = Path(
                 clone(
                     self.url_expanded,
-                    self.ref or get_latest_tag(
+                    self.ref
+                    or get_latest_tag(
                         self.url_expanded,
                         self.use_prereleases,
-                        self.version_subscription and \
-                        SpecifierSet(self.version_subscription) or None,
+                        self.version_subscription
+                        and SpecifierSet(self.version_subscription)
+                        or None,
                     ),
                 )
             )

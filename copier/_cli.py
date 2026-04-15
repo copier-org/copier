@@ -244,7 +244,7 @@ class CopierCopySubApp(_Subcommand):
         str,
         default=None,
         help="Prevent copying from a version of the template that does not adhere to "
-            "the version specification.",
+        "the version specification.",
     )
 
     def main(self, template_src: str, destination_path: str) -> int:
@@ -331,7 +331,7 @@ class CopierRecopySubApp(_Subcommand):
         str,
         default=None,
         help="Prevent copying from a version of the template that does not adhere to "
-            "the version specification.",
+        "the version specification.",
     )
 
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
@@ -422,7 +422,7 @@ class CopierUpdateSubApp(_Subcommand):
         str,
         default=None,
         help="Prevent updates to any version that does not adhere to the version "
-            "specification.",
+        "specification.",
     )
 
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:

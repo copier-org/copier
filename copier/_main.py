@@ -15,7 +15,6 @@ from dataclasses import field, replace
 from filecmp import dircmp
 from functools import cached_property, partial, wraps
 from itertools import chain
-from packaging.specifiers import SpecifierSet
 from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
 from shutil import rmtree
 from tempfile import TemporaryDirectory
@@ -33,6 +32,7 @@ from unicodedata import normalize
 
 from jinja2.loaders import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
+from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 from pathspec import PathSpec, __version__ as pathspec_version
 from plumbum import ProcessExecutionError, colors
@@ -364,7 +364,8 @@ class Worker:
         src = self.template.url
         version_subscription = self.template.version_subscription
         for key, value in (
-            ("_commit", commit), ("_src_path", src),
+            ("_commit", commit),
+            ("_src_path", src),
             ("_version_subscription", version_subscription),
         ):
             if value is not None:
@@ -1071,13 +1072,15 @@ class Worker:
                 raise TypeError("Template not found")
             url = str(self.subproject.template.url)
         ref = self.resolved_vcs_ref
-        version_subscription = self.version_subscription or \
-            self.subproject.last_answers.get("_version_subscription", None)
+        version_subscription = (
+            self.version_subscription
+            or self.subproject.last_answers.get("_version_subscription", None)
+        )
         result = Template(
             url=url,
             ref=ref,
             use_prereleases=self.use_prereleases,
-            version_subscription=version_subscription
+            version_subscription=version_subscription,
         )
         self._cleanup_hooks.append(result._cleanup)
         return result
@@ -1202,18 +1205,19 @@ class Worker:
             # review the diff before committing; so we can safely avoid
             # asking for confirmation
             raise UserMessageError("Enable overwrite to update a subproject.")
+        if self.version_subscription and not SpecifierSet(
+            self.version_subscription
+        ).contains(self.template.version):
+            raise UserMessageError(
+                f"Cannot update: new version {self.template.version}, as it does "
+                f'not adhere to specification "{self.version_subscription}".'
+            )
         self._print_message(self.template.message_before_update)
         self._print_template_update_info(self.subproject.template)
         with suppress(AttributeError):
             # We might have switched operation context, ensure the cached property
             # is regenerated to re-render templates.
             del self.match_exclude
-        if self.version_subscription:
-            if not SpecifierSet(self.version_subscription).contains(self.template.version):
-                raise UserMessageError(
-                    f"Cannot update: new version {self.template.version}, as it does "
-                    f"not adhere to specification \"{self.version_subscription}\"."
-                )
 
         self._apply_update()
         self._print_message(self.template.message_after_update)

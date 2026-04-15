@@ -127,7 +127,9 @@ def get_repo(url: str) -> str | None:
     return None
 
 
-def get_latest_tag(url: str, use_prereleases: OptBool = False, spec: SpecifierSet | None = None) -> str:
+def get_latest_tag(
+    url: str, use_prereleases: OptBool = False, spec: SpecifierSet | None = None
+) -> str:
     """Get latest git tag, sorted by PEP 440.
 
     Args:
@@ -136,6 +138,9 @@ def get_latest_tag(url: str, use_prereleases: OptBool = False, spec: SpecifierSe
             [get_repo][copier.vcs.get_repo].
         use_prereleases:
             If `False`, skip prerelease git tags.
+        spec:
+            An optional pep440 specifier set to filter the available tags
+            with.
 
     Returns:
         The latest git tag, or `HEAD` if no valid tags are found.
@@ -155,7 +160,9 @@ def get_latest_tag(url: str, use_prereleases: OptBool = False, spec: SpecifierSe
         return str(sorted_tags[0])
     except IndexError as e:
         if spec:
-            raise UserMessageError(f"No git tag found that matches version spec {spec}.") from e
+            raise UserMessageError(
+                f"No git tag found that matches version spec {spec}."
+            ) from e
         print(
             colors.warn | "No git tags found in template; using HEAD as ref",
             file=sys.stderr,
