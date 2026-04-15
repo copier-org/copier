@@ -18,6 +18,7 @@ import dunamai
 import packaging.version
 import yaml
 from funcy import lflatten
+from packaging.specifiers import SpecifierSet
 from packaging.version import Version, parse
 from plumbum.machines import local
 from pydantic.dataclasses import dataclass
@@ -219,6 +220,7 @@ class Template:
     url: str
     ref: str | None = None
     use_prereleases: bool = False
+    version_subscription: str | None = None
 
     def _cleanup(self) -> None:
         if temp_clone := self._temp_clone():
@@ -570,7 +572,14 @@ class Template:
             result = Path(
                 clone(
                     self.url_expanded,
-                    self.ref or get_latest_tag(self.url_expanded, self.use_prereleases),
+                    self.ref
+                    or get_latest_tag(
+                        self.url_expanded,
+                        self.use_prereleases,
+                        self.version_subscription
+                        and SpecifierSet(self.version_subscription)
+                        or None,
+                    ),
                 )
             )
         if not result.is_dir():

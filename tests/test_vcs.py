@@ -219,10 +219,20 @@ def test_invalid_version(tmp_path: Path) -> None:
         assert get_latest_tag(str(tmp_path)) == "v2"
 
 
-@pytest.mark.parametrize("sorter", [iter, reversed])
+@pytest.mark.parametrize(
+    ("sorter", "expected_version", "version_subscription"),
+    [
+        (iter, "v1.0.1", ""),
+        (reversed, "v1.0.1", ""),
+        (iter, "v1", "==1.0.0"),
+        (iter, "v1.0.1", ">=1.0.0"),
+    ],
+)
 def test_select_latest_version_tag(
     tmp_path_factory: pytest.TempPathFactory,
     sorter: Callable[[Sequence[str]], Iterator[str]],
+    expected_version: str,
+    version_subscription: str,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     filename = "version.txt"
@@ -238,12 +248,18 @@ def test_select_latest_version_tag(
             git("commit", "-m", version)
             git("tag", version)
 
-    run_copy(str(src), dst)
+    args = {
+        "src_path": str(src),
+        "dst_path": dst,
+    }
+    if version_subscription:
+        args["version_subscription"] = version_subscription
+    run_copy(**args)
 
     assert (dst / filename).is_file()
-    assert (dst / filename).read_text() == "v1.0.1"
+    assert (dst / filename).read_text() == expected_version
     answers = load_answersfile_data(dst)
-    assert answers["_commit"] == "v1.0.1"
+    assert answers["_commit"] == expected_version
 
 
 def test_is_git_repo_root_worktree(tmp_path: Path) -> None:

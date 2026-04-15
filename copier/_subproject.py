@@ -67,7 +67,8 @@ class Subproject:
         return {
             key: value
             for key, value in self._raw_answers.items()
-            if key in {"_src_path", "_commit"} or not key.startswith("_")
+            if key in {"_src_path", "_commit", "_version_subscription"}
+            or not key.startswith("_")
         }
 
     @cached_property

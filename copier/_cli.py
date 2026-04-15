@@ -239,6 +239,13 @@ class CopierCopySubApp(_Subcommand):
         ["-w", "--overwrite"],
         help="Overwrite files that already exist, without asking.",
     )
+    version_subscription = cli.SwitchAttr(
+        ["-V", "--version-subscription"],
+        str,
+        default=None,
+        help="Prevent copying from a version of the template that does not adhere to "
+        "the version specification.",
+    )
 
     def main(self, template_src: str, destination_path: str) -> int:
         """Call [run_copy][copier.run_copy].
@@ -270,6 +277,7 @@ class CopierCopySubApp(_Subcommand):
                 quiet=self.quiet,
                 unsafe=self.unsafe,
                 skip_tasks=self.skip_tasks,
+                version_subscription=self.version_subscription,
             )
 
         return _handle_exceptions(inner)
@@ -318,6 +326,13 @@ class CopierRecopySubApp(_Subcommand):
         default=False,
         help="Skip questions that have already been answered",
     )
+    version_subscription = cli.SwitchAttr(
+        ["-V", "--version-subscription"],
+        str,
+        default=None,
+        help="Prevent copying from a version of the template that does not adhere to "
+        "the version specification.",
+    )
 
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
         """Call [run_recopy][copier.run_recopy].
@@ -347,6 +362,7 @@ class CopierRecopySubApp(_Subcommand):
                 unsafe=self.unsafe,
                 skip_answered=self.skip_answered,
                 skip_tasks=self.skip_tasks,
+                version_subscription=self.version_subscription,
             )
 
         return _handle_exceptions(inner)
@@ -401,6 +417,13 @@ class CopierUpdateSubApp(_Subcommand):
         default=False,
         help="Skip questions that have already been answered",
     )
+    version_subscription = cli.SwitchAttr(
+        ["-V", "--version-subscription"],
+        str,
+        default=None,
+        help="Prevent updates to any version that does not adhere to the version "
+        "specification.",
+    )
 
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
         """Call [run_update][copier.run_update].
@@ -432,6 +455,7 @@ class CopierUpdateSubApp(_Subcommand):
                 unsafe=self.unsafe,
                 skip_answered=self.skip_answered,
                 skip_tasks=self.skip_tasks,
+                version_subscription=self.version_subscription,
             )
 
         return _handle_exceptions(inner)

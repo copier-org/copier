@@ -10,12 +10,13 @@ from tempfile import TemporaryDirectory, mkdtemp
 from warnings import warn
 
 from packaging import version
+from packaging.specifiers import SpecifierSet
 from packaging.version import InvalidVersion, Version
 from plumbum import TF, ProcessExecutionError, colors, local
 from plumbum.machines import LocalCommand
 
 from ._types import OptBool, OptStrOrPath, StrOrPath
-from .errors import DirtyLocalWarning, ShallowCloneWarning
+from .errors import DirtyLocalWarning, ShallowCloneWarning, UserMessageError
 
 GIT_USER_NAME = "Copier"
 GIT_USER_EMAIL = "copier@copier"
@@ -134,7 +135,9 @@ def get_repo(url: str) -> str | None:
     return None
 
 
-def get_latest_tag(url: str, use_prereleases: OptBool = False) -> str:
+def get_latest_tag(
+    url: str, use_prereleases: OptBool = False, spec: SpecifierSet | None = None
+) -> str:
     """Get latest git tag, sorted by PEP 440.
 
     Args:
@@ -143,6 +146,9 @@ def get_latest_tag(url: str, use_prereleases: OptBool = False) -> str:
             [get_repo][copier.vcs.get_repo].
         use_prereleases:
             If `False`, skip prerelease git tags.
+        spec:
+            An optional pep440 specifier set to filter the available tags
+            with.
 
     Returns:
         The latest git tag, or `HEAD` if no valid tags are found.
@@ -164,10 +170,16 @@ def get_latest_tag(url: str, use_prereleases: OptBool = False) -> str:
     all_tags = (tag for tag in all_tags if valid_version(tag))
     if not use_prereleases:
         all_tags = (tag for tag in all_tags if not version.parse(tag).is_prerelease)
+    if spec:
+        all_tags = spec.filter(all_tags, use_prereleases)
     sorted_tags = sorted(all_tags, key=version.parse, reverse=True)
     try:
         return str(sorted_tags[0])
-    except IndexError:
+    except IndexError as e:
+        if spec:
+            raise UserMessageError(
+                f"No git tag found that matches version spec {spec}."
+            ) from e
         print(
             colors.warn | "No git tags found in template; using HEAD as ref",
             file=sys.stderr,
