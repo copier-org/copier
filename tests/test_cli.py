@@ -392,6 +392,10 @@ Switches:
     -T, --skip-tasks                Skip template tasks execution
     --UNSAFE, --trust               Allow templates with unsafe features (Jinja
                                     extensions, migrations, tasks)
+    -V, --version-subscription VALUE:str
+                                    Prevent copying from a version of the
+                                    template that does not adhere to the version
+                                    specification.
     -a, --answers-file VALUE:str    Update using this path (relative to
                                     `destination_path`) to find the answers file
     -d, --data VARIABLE=VALUE:str   Make VARIABLE available as VALUE when
@@ -458,6 +462,9 @@ Switches:
     -T, --skip-tasks                Skip template tasks execution
     --UNSAFE, --trust               Allow templates with unsafe features (Jinja
                                     extensions, migrations, tasks)
+    -V, --version-subscription VALUE:str
+                                    Prevent updates to any version that does not
+                                    adhere to the version specification.
     -a, --answers-file VALUE:str    Update using this path (relative to
                                     `destination_path`) to find the answers file
     -c, --context-lines VALUE:int   Lines of context to use for detecting
