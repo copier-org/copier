@@ -1,6 +1,6 @@
 """Command line entrypoint. This module declares the Copier CLI applications.
 
-Basically, there are 4 different commands you can run:
+Basically, there are 5 different commands you can run:
 
 -   `copier`, the main app, which is a shortcut for the
     `copy` and `update` subapps.
@@ -39,6 +39,15 @@ Basically, there are 4 different commands you can run:
         copier update
         ```
 
+-   `copier inspect` to inspect a template's questions
+    and metadata without copying.
+
+    !!! example
+
+        ```sh
+        copier inspect gh:copier-org/autopretty
+        ```
+
 -   `copier check-update` to check if a preexisting
     project is using the latest version of its template.
 
@@ -67,9 +76,9 @@ from textwrap import dedent
 import yaml
 from plumbum import cli, colors
 
-from ._main import get_update_data, run_copy, run_recopy, run_update
-from ._tools import copier_version, try_enum
-from ._types import AnyByStrDict, VcsRef
+from ._main import get_questions_data, get_update_data, run_copy, run_recopy, run_update
+from ._tools import cast_to_bool, copier_version, try_enum
+from ._types import MISSING, AnyByStrDict, VcsRef
 from .errors import UnsafeTemplateError, UserMessageError
 
 
@@ -433,6 +442,149 @@ class CopierUpdateSubApp(_Subcommand):
                 skip_answered=self.skip_answered,
                 skip_tasks=self.skip_tasks,
             )
+
+        return _handle_exceptions(inner)
+
+
+def _is_computed(when: object) -> bool:
+    """Check if a ``when`` value is trivially false (computed/derived question).
+
+    String values containing ``{{`` are Jinja2 templates that need runtime
+    evaluation — these are conditional, not computed. Other strings (e.g.
+    ``"false"``, ``"no"``) are evaluated via :func:`cast_to_bool`.
+    """
+    if isinstance(when, str) and "{{" in when:
+        return False
+    return not cast_to_bool(when)
+
+
+def _enrich_questions(questions: AnyByStrDict) -> AnyByStrDict:
+    """Add ``computed: true`` marker to questions with trivially false ``when``."""
+    enriched: AnyByStrDict = {}
+    for name, details in questions.items():
+        entry = dict(details)
+        if _is_computed(details.get("when", True)):
+            entry["computed"] = True
+        enriched[name] = entry
+    return enriched
+
+
+def _print_questions_plain(questions: AnyByStrDict) -> None:
+    """Print template questions in human-readable plain text format."""
+    for var_name, details in questions.items():
+        when = details.get("when", True)
+
+        # Skip computed/derived questions (when is trivially false)
+        if _is_computed(when):
+            continue
+
+        type_name = details.get("type", "")
+        default = details.get("default", MISSING)
+        choices = details.get("choices") or []
+        help_text = details.get("help", "")
+        secret = details.get("secret", False)
+        multiselect = details.get("multiselect", False)
+
+        # Infer type from default if not specified
+        if not type_name and default is not MISSING:
+            default_type = type(default).__name__
+            type_name = (
+                default_type
+                if default_type in {"str", "int", "float", "bool"}
+                else "yaml"
+            )
+        elif not type_name:
+            type_name = "yaml"
+
+        # Build header line
+        parts = [f"{var_name} ({type_name})"]
+        if default is MISSING:
+            parts.append("REQUIRED")
+        else:
+            parts.append(f"default: {default}")
+        print("  ".join(parts))
+
+        # Detail lines
+        if choices:
+            label = "multi-choices" if multiselect else "choices"
+            if isinstance(choices, str):
+                # Jinja2 expression — print raw
+                print(f"  {label}: {choices}")
+            elif isinstance(choices, dict):
+                print(
+                    f"  {label}: {', '.join(str(c) for c in choices.keys())}"
+                )
+            else:
+                print(f"  {label}: {', '.join(str(c) for c in choices)}")
+        if when is not True:
+            print(f"  when: {when}")
+        if help_text:
+            print(f"  help: {help_text}")
+        if secret:
+            print("  secret: true")
+        print()
+
+
+@CopierApp.subcommand("inspect")
+class CopierInspectSubApp(cli.Application):  # type: ignore[misc]
+    """The ``copier inspect`` subcommand.
+
+    Use this subcommand to inspect a template's questions without
+    copying or updating. Useful for discovering which ``--data``
+    parameters a template expects.
+
+    Conditional questions are shown with their raw ``when`` expressions.
+    The actual question set may depend on answers to earlier questions.
+    Questions with ``when: false`` (computed/derived values) are hidden
+    in plain output but included in JSON/YAML output with a
+    ``computed: true`` marker.
+    """
+
+    DESCRIPTION = "Inspect a template's questions and metadata"
+
+    vcs_ref = cli.SwitchAttr(
+        ["-r", "--vcs-ref"],
+        str,
+        help="Git reference to checkout in `template_src`.",
+    )
+    quiet = cli.Flag(["-q", "--quiet"], help="Suppress status output")
+    prereleases = cli.Flag(
+        ["-g", "--prereleases"],
+        help="Use prereleases to compare template VCS tags.",
+    )
+    output_format = cli.SwitchAttr(
+        ["--output-format"],
+        cli.Set("plain", "json", "yaml"),
+        default="plain",
+        help="Output format: 'plain' (default), 'json', or 'yaml'.",
+    )
+
+    def main(self, template_src: str) -> int:
+        """Inspect a template's questions.
+
+        Params:
+            template_src:
+                Indicate where to get the template from.
+
+                This can be a git URL or a local path.
+        """
+
+        def inner() -> None:
+            questions = get_questions_data(
+                src_path=template_src,
+                vcs_ref=try_enum(VcsRef, self.vcs_ref),
+                use_prereleases=self.prereleases,
+            )
+            if self.quiet:
+                return
+            if self.output_format in ("json", "yaml"):
+                enriched = _enrich_questions(questions)
+                if self.output_format == "json":
+                    print(json.dumps(enriched, indent=2, default=str))
+                else:
+                    print(yaml.dump(enriched, default_flow_style=False, sort_keys=False), end="")
+            else:
+                _print_questions_plain(questions)
 
         return _handle_exceptions(inner)
 
