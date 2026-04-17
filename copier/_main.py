@@ -674,8 +674,14 @@ class Worker:
 
         Respects template settings.
         """
-        paths = [str(self.template.local_abspath)]
-        loader = FileSystemLoader(paths)
+        template_path = str(self.template.local_abspath)
+        loader = FileSystemLoader([template_path])
+        # Add template directory to sys.path so that template-local Python packages
+        # are importable as or by Jinja extensions and their transitive imports.
+        if template_path not in sys.path and (
+            self.unsafe or is_trusted_repository(self.settings.trust, self.template.url)
+        ):
+            sys.path.insert(0, template_path)
         default_extensions = [
             "jinja2_ansible_filters.AnsibleCoreFiltersExtension",
             YieldExtension,
