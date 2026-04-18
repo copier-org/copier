@@ -183,7 +183,11 @@ def test_update_using_local_source_path_with_tilde(tmp_path: Path) -> None:
 
     # generate project and assert correct path in answers
     worker = run_copy(
-        src_path=user_src_path, dst_path=tmp_path, defaults=True, unsafe=True
+        src_path=user_src_path,
+        dst_path=tmp_path,
+        defaults=True,
+        unsafe=True,
+        skip_tasks=True,
     )
     assert worker.answers.combined["_src_path"] == user_src_path
 
@@ -198,6 +202,7 @@ def test_update_using_local_source_path_with_tilde(tmp_path: Path) -> None:
         overwrite=True,
         answers_file=".copier-answers.autopretty.yml",
         unsafe=True,
+        skip_tasks=True,
     )
     assert worker.answers.combined["_src_path"] == user_src_path
 

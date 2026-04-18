@@ -1210,6 +1210,15 @@ class Worker:
             ).strip()
         )
         subproject_subdir = self.subproject.local_abspath.relative_to(subproject_top)
+        subproject_git_config_path = Path(
+            git(
+                "-C",
+                self.subproject.local_abspath,
+                "rev-parse",
+                "--absolute-git-dir",
+            ).strip(),
+            "config",
+        )
 
         with (
             TemporaryDirectory(
@@ -1233,6 +1242,13 @@ class Worker:
                 # https://github.com/orgs/copier-org/discussions/2345
                 exclude=[*self.template.exclude, *self.exclude],
             ) as old_worker:
+                # Initialize a Git repository in the temporary destination and configure
+                # it to include the Git configuration of the real destination, so
+                # tasks/migrations that rely on Git configuration (e.g., GitHub CLI) can
+                # work properly when running in the temporary destination.
+                with local.cwd(old_copy):
+                    git("init")
+                    git("config", "include.path", subproject_git_config_path)
                 old_worker.run_copy()
             # Run pre-migration tasks
             with Phase.use(Phase.MIGRATE):
@@ -1244,7 +1260,8 @@ class Worker:
             with local.cwd(subproject_top):
                 subproject_head = git("write-tree").strip()
             with local.cwd(old_copy):
-                self._git_initialize_repo()
+                git("add", ".")
+                self._git_commit()
                 # Configure borrowing Git objects from the real destination.
                 set_git_alternates(subproject_top)
                 # Save a list of files that were intentionally removed in the generated
@@ -1304,9 +1321,17 @@ class Worker:
                 exclude=exclude_plus_removed,
                 vcs_ref=self.resolved_vcs_ref,
             ) as new_worker:
+                # Initialize a Git repository in the temporary destination and configure
+                # it to include the Git configuration of the real destination, so
+                # tasks/migrations that rely on Git configuration (e.g., GitHub CLI) can
+                # work properly when running in the temporary destination.
+                with local.cwd(new_copy):
+                    git("init")
+                    git("config", "include.path", subproject_git_config_path)
                 new_worker.run_copy()
             with local.cwd(new_copy):
-                self._git_initialize_repo()
+                git("add", ".")
+                self._git_commit()
                 new_copy_head = git("rev-parse", "HEAD").strip()
             # Extract diff between temporary destination and real destination
             # with some special handling of newly added files in both the project
@@ -1495,13 +1520,6 @@ class Worker:
             self._execute_tasks(
                 self.template.migration_tasks("after", self.subproject.template)  # type: ignore[arg-type]
             )
-
-    def _git_initialize_repo(self) -> None:
-        """Initialize a git repository in the current directory."""
-        git = get_git()
-        git("init", retcode=None)
-        git("add", ".")
-        self._git_commit()
 
     def _git_commit(self, message: str = "dumb commit") -> None:
         git = get_git()
