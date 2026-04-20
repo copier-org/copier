@@ -1023,6 +1023,14 @@ possible. The only exception at the moment is that
 end of a template file. If you want to remove those, either remove them from the
 template or set `keep_trailing_newline` to `false`.
 
+To configure Copier to raise an error for undefined variables in your templates,
+set `undefined` to `jinja2.StrictUndefined`:
+
+```yaml
+_envops:
+    undefined: jinja2.StrictUndefined
+```
+
 See [upstream docs](https://jinja.palletsprojects.com/en/3.1.x/api/#jinja2.Environment)
 to know available options.
 
