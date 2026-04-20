@@ -1,76 +1,61 @@
-from pathlib import Path
-
 import pytest
 from jinja2.exceptions import UndefinedError
 
 import copier
-from copier._template import Template
-from copier.errors import UserMessageError
+from copier.errors import ConfigFileError
 
 from .helpers import build_file_tree
 
 
-def test_strictundefined_default() -> None:
-    tpl = Template("./tests/demo")
-
-    # not enabled by default
-    assert "undefined" not in tpl.envops
-
-
-@pytest.mark.xfail(reason="The warning will only be emitted in a future major version")
-def test_strictundefined_warning(tmp_path: Path) -> None:
-    with pytest.warns(
-        FutureWarning,
-        match="Copier does not detect undefined variables in templates unless `undefined: jinja2.StrictUndefined` is specified.",
-    ):
-        copier.run_copy("./tests/demo_config_empty", tmp_path)
-
-
-def test_strictundefined_invalid_value(
+def test_default(
     tmp_path_factory: pytest.TempPathFactory,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
     build_file_tree(
         {
-            (src / ".copier-answers.yml.jinja"): (
-                """\
-                # Changes here will be overwritten by Copier
-                {{ _copier_answers|to_nice_yaml }}
-                """
-            ),
             (src / "copier.yaml"): (
                 """\
-                _envops:
-                    undefined: jinja2.ChainableUndefined
                 """
             ),
             (src / "test.jinja"): "{{ undefined_variable }}",
         }
     )
 
-    with pytest.raises(
-        UserMessageError,
-        match="Unsupported envops.undefined value specified: jinja2.ChainableUndefined.",
-    ):
-        copier.run_copy(str(src), dst)
+    copier.run_copy(str(src), dst)
+    assert (dst / "test").read_text() == ""
 
 
-# fail on warnings
-@pytest.mark.filterwarnings("error")
-def test_strictundefined_silenced_warning(
+def test_invalid_value(
     tmp_path_factory: pytest.TempPathFactory,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
     build_file_tree(
         {
-            (src / ".copier-answers.yml.jinja"): (
+            (src / "copier.yaml"): (
                 """\
-                # Changes here will be overwritten by Copier
-                {{ _copier_answers|to_nice_yaml }}
+                _envops:
+                    undefined: jinja2.ChainableUndefined
                 """
             ),
+        }
+    )
+
+    with pytest.raises(
+        ConfigFileError,
+        match="Unsupported envops.undefined value specified: jinja2.ChainableUndefined.",
+    ):
+        copier.run_copy(str(src), dst)
+
+
+def test_undefined(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    build_file_tree(
+        {
             (src / "copier.yaml"): (
                 """\
                 _envops:
@@ -82,6 +67,7 @@ def test_strictundefined_silenced_warning(
     )
 
     copier.run_copy(str(src), dst)
+    assert (dst / "test").read_text() == ""
 
 
 def test_strictundefined_undefined_variable(
@@ -91,12 +77,6 @@ def test_strictundefined_undefined_variable(
 
     build_file_tree(
         {
-            (src / ".copier-answers.yml.jinja"): (
-                """\
-                # Changes here will be overwritten by Copier
-                {{ _copier_answers|to_nice_yaml }}
-                """
-            ),
             (src / "copier.yaml"): (
                 """\
                 _envops:

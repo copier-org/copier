@@ -70,6 +70,7 @@ from ._types import (
 from ._user_data import AnswersMap, Question, load_answersfile_data
 from ._vcs import get_git
 from .errors import (
+    ConfigFileError,
     CopierAnswersInterrupt,
     ExtensionNotFoundError,
     ForbiddenPathError,
@@ -684,13 +685,11 @@ class Worker:
         extensions = default_extensions + list(self.template.jinja_extensions)
         envops = dict(self.template.envops)
 
-        if "undefined" in envops:
-            undefined_class = envops["undefined"]
-
+        if undefined_class := envops.get("undefined"):
             if undefined_class in {"jinja2.Undefined", "jinja2.StrictUndefined"}:
                 envops["undefined"] = import_string(undefined_class)
             else:
-                raise UserMessageError(
+                raise ConfigFileError(
                     f"Unsupported envops.undefined value specified: {undefined_class}.\n"
                     'Supported values are "jinja2.Undefined" and "jinja2.StrictUndefined".'
                 )
