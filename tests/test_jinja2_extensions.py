@@ -7,6 +7,7 @@ from jinja2 import Environment
 from jinja2.ext import Extension
 
 import copier
+from copier.errors import ExtensionNotFoundError
 
 from .helpers import PROJECT_TEMPLATE, build_file_tree
 
