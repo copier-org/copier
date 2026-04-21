@@ -1426,3 +1426,22 @@ def test_warn_if_chmod_raises_permission_error(
 
     assert (dst / "test.txt").stat().st_mode == dst_file_mode
     assert (dst / "test.txt").read_text("utf-8") == "foo"
+
+
+@pytest.mark.parametrize("depth", [1, 2, 3])
+def test_copy_with_relative_path_to_local_git_template_through_multiple_parents(
+    tmp_path_factory: pytest.TempPathFactory, depth: int
+) -> None:
+    root = tmp_path_factory.mktemp("root")
+    (src := root / "src").mkdir()
+    (dst := root.joinpath(*["dst"] * depth)).mkdir(parents=True)
+
+    build_file_tree({src / "test.txt.jinja": "test"})
+    git_save(src, tag="v1")
+
+    git_save(root / "dst", allow_empty=True)
+    with local.cwd(dst):
+        run_copy("../" * depth + "src", dst)
+
+    assert (dst / "test.txt").is_file()
+    assert (dst / "test.txt").read_text() == "test"
