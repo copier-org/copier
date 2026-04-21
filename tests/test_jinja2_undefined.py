@@ -14,10 +14,7 @@ def test_default(
 
     build_file_tree(
         {
-            (src / "copier.yaml"): (
-                """\
-                """
-            ),
+            (src / "copier.yaml"): "",
             (src / "test.jinja"): "{{ undefined_variable }}",
         }
     )
@@ -87,8 +84,5 @@ def test_strictundefined_undefined_variable(
         }
     )
 
-    with pytest.raises(
-        UndefinedError,
-        match="'undefined_variable' is undefined",
-    ):
+    with pytest.raises(UndefinedError, match="'undefined_variable' is undefined"):
         copier.run_copy(str(src), dst)
