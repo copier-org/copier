@@ -32,6 +32,7 @@ from unicodedata import normalize
 
 from jinja2.loaders import FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment
+from jinja2.utils import import_string
 from packaging.version import Version
 from pathspec import PathSpec, __version__ as pathspec_version
 from plumbum import ProcessExecutionError, colors
@@ -69,6 +70,7 @@ from ._types import (
 from ._user_data import AnswersMap, Question, load_answersfile_data
 from ._vcs import get_git
 from .errors import (
+    ConfigFileError,
     CopierAnswersInterrupt,
     ExtensionNotFoundError,
     ForbiddenPathError,
@@ -681,10 +683,18 @@ class Worker:
             YieldExtension,
         ]
         extensions = default_extensions + list(self.template.jinja_extensions)
+        envops = dict(self.template.envops)
+
+        if undefined_class := envops.get("undefined"):
+            if undefined_class in {"jinja2.Undefined", "jinja2.StrictUndefined"}:
+                envops["undefined"] = import_string(undefined_class)
+            else:
+                raise ConfigFileError(
+                    f"Unsupported envops.undefined value specified: {undefined_class}.\n"
+                    'Supported values are "jinja2.Undefined" and "jinja2.StrictUndefined".'
+                )
         try:
-            env = SandboxedEnvironment(
-                loader=loader, extensions=extensions, **self.template.envops
-            )
+            env = SandboxedEnvironment(loader=loader, extensions=extensions, **envops)
         except ModuleNotFoundError as error:
             raise ExtensionNotFoundError(
                 f"Copier could not load some Jinja extensions:\n{error}\n"
