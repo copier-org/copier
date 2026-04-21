@@ -7,9 +7,7 @@ from copier.errors import ConfigFileError
 from .helpers import build_file_tree
 
 
-def test_default(
-    tmp_path_factory: pytest.TempPathFactory,
-) -> None:
+def test_default(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
     build_file_tree(
@@ -23,9 +21,7 @@ def test_default(
     assert (dst / "test").read_text() == ""
 
 
-def test_invalid_value(
-    tmp_path_factory: pytest.TempPathFactory,
-) -> None:
+def test_invalid_value(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
     build_file_tree(
@@ -46,9 +42,7 @@ def test_invalid_value(
         copier.run_copy(str(src), dst)
 
 
-def test_undefined(
-    tmp_path_factory: pytest.TempPathFactory,
-) -> None:
+def test_undefined(tmp_path_factory: pytest.TempPathFactory) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
 
     build_file_tree(
