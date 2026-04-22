@@ -1535,6 +1535,30 @@ class Worker:
         )
 
 
+def get_questions_data(
+    src_path: str,
+    vcs_ref: str | VcsRef | None = None,
+    use_prereleases: bool = False,
+) -> AnyByStrDict:
+    """Get template questions metadata without requiring a full Worker.
+
+    Args:
+        src_path: Template source (git URL or local path).
+        vcs_ref: Git reference to checkout in ``src_path``.
+        use_prereleases: Consider prereleases when detecting the latest tag.
+
+    Returns:
+        A dict mapping question variable names to their metadata dicts.
+    """
+    template = Template(url=src_path, ref=vcs_ref, use_prereleases=use_prereleases)
+    try:
+        return dict(template.questions_data)
+    except ValueError as e:
+        raise UserMessageError(str(e)) from e
+    finally:
+        template._cleanup()
+
+
 def run_copy(
     src_path: str,
     dst_path: Path | str = ".",
