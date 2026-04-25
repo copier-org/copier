@@ -55,7 +55,7 @@ dev = [
   "pytest-cov==7.1.0",
   "pytest-gitconfig==0.9.0",
   "pytest-xdist==3.8.0",
-  "ruff==0.15.11",
+  "ruff==0.15.12",
   "rumdl==0.1.81",
   "taplo==0.9.3",
   "types-backports==0.1.3",
