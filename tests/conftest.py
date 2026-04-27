@@ -119,3 +119,9 @@ def settings_path(config_path: Path) -> Path:
     config_path.mkdir()
     settings_path = config_path / "settings.yml"
     return settings_path
+
+
+@pytest.fixture(autouse=True)
+def sys_path_cleanup(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Ensure that `sys.path` is restored after each test
+    monkeypatch.setattr("sys.path", [*sys.path])
