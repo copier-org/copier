@@ -216,9 +216,11 @@ def escape_git_path(path: str) -> str:
     Returns:
         str: The escaped Git path.
     """
-    # GitWildMatchPattern.escape does not escape backslashes
+    # Prior to PathSpec v1.1.0, `GitWildMatchPattern.escape` does not escape backslashes
     # or trailing whitespace.
-    path = path.replace("\\", "\\\\")
+    # TODO: Remove this workaround when support for PathSpec prior to v1.1.0 is dropped.
+    if GitWildMatchPattern.escape("\\") == "\\":
+        path = path.replace("\\", "\\\\")
     path = GitWildMatchPattern.escape(path)
     return _re_whitespace.sub(
         lambda match: "".join(f"\\{whitespace}" for whitespace in match.group()),

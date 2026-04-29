@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.14.3 (2026-04-10)
+
+### Fix
+
+- **vcs**: fix Git tag lookup for template SSH URLs without `ssh://` scheme
+
+## v9.14.2 (2026-04-09)
+
+### Fix
+
+- **vcs**: fix Git tag lookup for relative local template paths
+- **vcs**: support git worktrees in `is_git_repo_root` (#2586)
+- **migrations**: use configurable Jinja delimiters for default migration condition
+
 ## v9.14.1 (2026-03-31)
 
 ### Refactor

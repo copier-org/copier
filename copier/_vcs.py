@@ -21,6 +21,10 @@ GIT_USER_NAME = "Copier"
 GIT_USER_EMAIL = "copier@copier"
 
 
+class _PathStr(str):
+    """A string that represents a path."""
+
+
 def get_git(context_dir: OptStrOrPath = None) -> LocalCommand:
     """Gets `git` command, or fails if it's not available."""
     command = local["git"].with_env(
@@ -125,7 +129,7 @@ def get_repo(url: str) -> str | None:
         url_path = url_path.expanduser()
 
     if is_git_repo_root(url_path) or is_git_bundle(url_path):
-        return url_path.as_posix()
+        return _PathStr(url_path.as_posix())
 
     return None
 
@@ -143,6 +147,15 @@ def get_latest_tag(url: str, use_prereleases: OptBool = False) -> str:
     Returns:
         The latest git tag, or `HEAD` if no valid tags are found.
     """
+    # For local Git repos, `git ls-remote` requires an absolute path to work correctly,
+    # it behaves unexpectedly with some relative paths, especially with parent path
+    # traversal.
+    #
+    # See:
+    # - https://github.com/copier-org/copier/issues/2589
+    # - https://stackoverflow.com/q/59981939
+    if isinstance(url, _PathStr):
+        url = Path(url).resolve().as_posix()
     git = get_git()
     all_tags = (
         tag.split("\t", 1)[1].removeprefix("refs/tags/")

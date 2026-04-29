@@ -19,6 +19,7 @@ import packaging.version
 import yaml
 from funcy import lflatten
 from packaging.version import Version, parse
+from plumbum.commands.processes import ProcessExecutionError
 from plumbum.machines import local
 from pydantic.dataclasses import dataclass
 
@@ -578,6 +579,46 @@ class Template:
         with suppress(OSError):
             result = result.resolve()
         return result
+
+    @cached_property
+    def git_index_modes(self) -> Mapping[PurePosixPath, int]:
+        """Read file modes from the template's git index.
+
+        This returns the mode bits for every tracked file as recorded in
+        git's index, keyed by POSIX path relative to
+        :attr:`local_abspath`. Git always records executable-bit
+        information in the index (as mode ``100755``/``100644``), even
+        on filesystems where the bit can't be represented on disk — most
+        notably Windows, where ``os.stat().st_mode`` never reports
+        ``S_IXUSR``/``S_IXGRP``/``S_IXOTH`` for regular files.
+
+        Callers that want to know the template's *intended* file mode
+        (as committed by the template author) should consult this
+        mapping before falling back to ``Path.stat().st_mode``.
+
+        Returns an empty mapping when the template is not a git
+        checkout, when git is unavailable, or when git fails for any
+        other reason — callers must be ready to fall back.
+        """
+        if self.vcs != "git":
+            return {}
+        try:
+            git = get_git(context_dir=self.local_abspath)
+            # TODO: simplify with ``--format`` once the minimum git
+            # version is raised to 2.38+ (--format cannot be combined
+            # with --stage; see git-ls-files(1)).
+            raw = git("ls-files", "--stage").strip()
+        except (OSError, ProcessExecutionError):
+            return {}
+        modes: dict[PurePosixPath, int] = {}
+        for line in raw.splitlines():
+            # Format: "<mode> <sha> <stage>\t<path>"
+            if "\t" not in line:
+                continue
+            meta, path = line.split("\t", 1)
+            mode_str = meta.split(" ", 1)[0]
+            modes[PurePosixPath(path)] = int(mode_str, 8)
+        return modes
 
     @cached_property
     def url_expanded(self) -> str:
