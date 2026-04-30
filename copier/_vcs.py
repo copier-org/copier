@@ -20,6 +20,8 @@ from .errors import DirtyLocalWarning, ShallowCloneWarning
 GIT_USER_NAME = "Copier"
 GIT_USER_EMAIL = "copier@copier"
 
+CLONE_PREFIX = f"{__name__}.clone."
+
 
 class _PathStr(str):
     """A string that represents a path."""
@@ -175,7 +177,7 @@ def get_latest_tag(url: str, use_prereleases: OptBool = False) -> str:
         return "HEAD"
 
 
-def clone(url: str, ref: str = "HEAD") -> str:
+def clone(url: str, ref: str = "HEAD", location: str | None = None) -> str:
     """Clone repo into some temporary destination.
 
     Includes dirty changes for local templates by copying into a temp
@@ -187,10 +189,14 @@ def clone(url: str, ref: str = "HEAD") -> str:
             [get_repo][copier.vcs.get_repo].
         ref:
             Reference to checkout. For Git repos, defaults to `HEAD`.
+        location:
+            Pre-allocated empty directory to clone into. When `None`, a new
+            temporary directory is created.
     """
     git = get_git()
     git_version = get_git_version()
-    location = mkdtemp(prefix=f"{__name__}.clone.")
+    if location is None:
+        location = mkdtemp(prefix=CLONE_PREFIX)
     _clone = git["clone", "--no-checkout", url, location]
     # Faster clones if possible
     if git_version >= Version("2.27"):
