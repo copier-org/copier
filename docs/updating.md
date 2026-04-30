@@ -97,6 +97,28 @@ repos:
     you can add both hooks to your `pre-commit-config.yaml` file, making sure that no
     unresolved merge conflicts are committed.
 
+## How Copier registers new files in your Git index
+
+When `copier update` adds files that didn't exist in your project before — say, the
+template gained a new helper script in its latest version — Copier marks them in your
+Git index with
+[`git add --intent-to-add`](https://git-scm.com/docs/git-add#Documentation/git-add.txt---intent-to-add).
+They show up in `git status` as `A` (added with intent) instead of `??` (untracked),
+signalling that they're deliberate template output and not something you happened to
+drop in the directory yourself.
+
+You still need to run `git add <file>` to actually stage the file's content
+for committing.
+
+There's a second reason: on filesystems that don't preserve the executable bit
+on disk, most notably Windows (where `core.fileMode` is `false` by default),
+having an existing index entry lets Copier record the file's mode as `100755`
+directly, so the executable bit isn't silently dropped on your next `git add`.
+
+If you change your mind, [aborting an update](#aborting-an-update) still works
+the same way: `git reset` removes the intent-to-add markers, then `git clean`
+picks up the new files like any other untracked content.
+
 ## Never change the answers file manually
 
 !!! important

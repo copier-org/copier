@@ -895,7 +895,49 @@ class Worker:
                         f"{stat.filemode(dst_mode)} to {stat.filemode(src_mode)}",
                         stacklevel=2,
                     )
+            self._register_in_git_index(dst_relpath)
             self._sync_git_index_executable_bit(dst_relpath, src_mode)
+
+    def _register_in_git_index(self, dst_relpath: Path) -> None:
+        """Register a freshly-rendered file in the destination's git index.
+
+        Runs ``git add --intent-to-add`` on the file when the destination
+        is a git repository and the file is not yet tracked, regardless
+        of the executable bit or ``core.fileMode``. This makes the file
+        appear in ``git status`` as ``A`` (added with intent) rather
+        than ``??`` (untracked), accurately reflecting that the file is
+        deliberate template output rather than random user-created
+        content. It also gives :meth:`_sync_git_index_executable_bit`
+        an existing index entry whose mode it can rewrite via
+        ``update-index --cacheinfo`` on filesystems that don't preserve
+        executable bits.
+
+        No-op when the destination is not a git repository, when the
+        file is already tracked, or when git is unavailable. All git
+        failures are swallowed so copying or updating cannot be broken
+        by an unrelated git problem — most notably, ``git add
+        --intent-to-add`` fails on gitignored files, and that's the
+        user's explicit signal not to track them.
+        """
+        subproject_root = self.subproject.local_abspath
+        git = get_git(context_dir=subproject_root)
+        try:
+            # TODO: simplify with ``--format %(objectmode)`` once the
+            # minimum git version is raised to 2.38+ (--format cannot be
+            # combined with --stage; see git-ls-files(1)).
+            result = git("ls-files", "--stage", "--", str(dst_relpath)).strip()
+        except ProcessExecutionError:
+            # Not a git repo, or git can't read the index.
+            return
+        if result:
+            # Already tracked; nothing to do.
+            return
+        try:
+            git("add", "--intent-to-add", "--", str(dst_relpath))
+        except (OSError, ProcessExecutionError):
+            # Most likely the file is gitignored (or git is unavailable);
+            # silently fall back so we never break the render path.
+            pass
 
     def _sync_git_index_executable_bit(self, dst_relpath: Path, src_mode: int) -> None:
         """Propagate executable-bit changes to the destination's git index.
@@ -914,9 +956,10 @@ class Worker:
         behavior of leaving rendered changes unstaged for user review.
 
         Also a no-op when the destination is not in a git repository, when
-        the file is not yet tracked (the user's eventual ``git add`` will
-        record the on-disk mode where the platform allows it), or when git
-        is unavailable. All git failures are swallowed so that copying or
+        the file is not in the index (a previous call to
+        :meth:`_register_in_git_index` would normally have intent-to-add'd
+        it, but a gitignored file may not have an entry), or when git is
+        unavailable. All git failures are swallowed so that copying or
         updating cannot be broken by an unrelated git problem.
 
         .. note::
@@ -958,7 +1001,7 @@ class Worker:
             # git can't read the index — fall back to a silent no-op.
             return
         if not result:
-            # File is not tracked yet; nothing to update.
+            # File isn't in the index (e.g. gitignored). Nothing to update.
             return
         # Format: "<mode> <sha> <stage>\t<path>"
         meta = result.split("\t", 1)[0].split()

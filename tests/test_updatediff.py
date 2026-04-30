@@ -2571,3 +2571,246 @@ index f163f4b,d20125d..0000000
 ++>>>>>>> after updating
 """)
         # editorconfig-checker-enable
+
+
+@pytest.mark.skipif(
+    condition=platform.system() == "Windows",
+    reason="Windows does not have UNIX-like permissions",
+)
+@pytest.mark.parametrize("file_mode", [True, False])
+def test_update_introduces_new_executable_file(
+    tmp_path_factory: pytest.TempPathFactory,
+    file_mode: bool,
+) -> None:
+    """A template that introduces a NEW executable file between versions
+    must end up registered in the destination's git index after
+    ``copier update``. With ``core.fileMode=false`` the index entry
+    must record ``100755``, since git ignores on-disk mode bits in that
+    config and the user's eventual ``git add`` would otherwise silently
+    drop the executable bit.
+    """
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    # Template v1: only an answers file. No launcher.sh.
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+            }
+        )
+        git_save(tag="v1")
+
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    with local.cwd(dst):
+        git("init")
+        git("config", "core.fileMode", str(file_mode).lower())
+        git("add", "-A")
+        git("commit", "-m", "init")
+
+    # Template v2: introduces launcher.sh as a NEW executable file.
+    with local.cwd(src):
+        Path("launcher.sh").write_text("#!/bin/sh\necho hi\n")
+        Path("launcher.sh").chmod(
+            Path("launcher.sh").stat().st_mode
+            | stat.S_IXUSR
+            | stat.S_IXGRP
+            | stat.S_IXOTH
+        )
+        git("add", "-A")
+        git("commit", "-m", "introduce launcher.sh")
+        git("tag", "v2")
+
+    run_update(str(dst), defaults=True, overwrite=True)
+
+    assert (dst / "launcher.sh").exists()
+    with local.cwd(dst):
+        # TODO: simplify with ``--format %(objectmode)`` once the minimum
+        # git version is raised to 2.38+ (--format cannot be combined with
+        # --stage; see git-ls-files(1)).
+        ls = git("ls-files", "--stage", "--", "launcher.sh").strip()
+        porcelain = git("status", "--porcelain", "--", "launcher.sh").rstrip("\n")
+    # The file should be registered in the index as deliberate new
+    # template output, not random untracked content (``??`` in
+    # porcelain).
+    assert ls, "expected launcher.sh to be registered in the index"
+    assert not porcelain.startswith("??"), (
+        f"expected launcher.sh to be tracked, got {porcelain!r}"
+    )
+    # The index entry must record ``100755`` regardless of
+    # ``core.fileMode`` — otherwise the user's eventual ``git add``
+    # would silently drop the executable bit when ``core.fileMode=false``
+    # (Windows default). The two parametrizations exercise different
+    # code paths to arrive at this state: with ``fileMode=true`` the
+    # intent-to-add call reads the on-disk chmod directly, while with
+    # ``fileMode=false`` Copier additionally rewrites the entry's mode
+    # since the on-disk chmod is invisible to git.
+    meta = ls.split("\t", 1)[0].split()
+    assert meta[0] == "100755"
+
+
+@pytest.mark.skipif(
+    condition=platform.system() == "Windows",
+    reason="Windows does not have UNIX-like permissions",
+)
+@pytest.mark.parametrize("file_mode", [True, False])
+def test_update_introduces_new_non_executable_file(
+    tmp_path_factory: pytest.TempPathFactory,
+    file_mode: bool,
+) -> None:
+    """A template that introduces a NEW non-executable file must also
+    be registered in the destination's git index after ``copier
+    update`` — distinguishing it from random untracked content the
+    user might have laying around — but with the default ``100644``
+    mode (no exec-bit override needed).
+    """
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+            }
+        )
+        git_save(tag="v1")
+
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    with local.cwd(dst):
+        git("init")
+        git("config", "core.fileMode", str(file_mode).lower())
+        git("add", "-A")
+        git("commit", "-m", "init")
+
+    # Template v2: introduces a plain README.
+    with local.cwd(src):
+        Path("README.md").write_text("# Hello\n")
+        git("add", "-A")
+        git("commit", "-m", "introduce README")
+        git("tag", "v2")
+
+    run_update(str(dst), defaults=True, overwrite=True)
+
+    assert (dst / "README.md").exists()
+    with local.cwd(dst):
+        ls = git("ls-files", "--stage", "--", "README.md").strip()
+        porcelain = git("status", "--porcelain", "--", "README.md").rstrip("\n")
+    assert ls, "expected README.md to be registered in the index"
+    assert not porcelain.startswith("??"), (
+        f"expected README.md to be tracked, got {porcelain!r}"
+    )
+    meta = ls.split("\t", 1)[0].split()
+    assert meta[0] == "100644"
+
+
+def test_update_introduces_new_executable_file_then_user_commits(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """End-to-end chain with ``core.fileMode=false``: after ``copier
+    update`` introduces a new executable file, the user must be able
+    to ``git add`` and ``git commit`` it and have the resulting commit
+    tree record ``100755`` — so a colleague checking out the repo on a
+    platform that respects exec bits sees the file as executable.
+
+    The template is set up via ``git update-index --chmod`` (rather
+    than an on-disk ``Path.chmod``) so the test exercises the same
+    code path on every platform — including Windows, where
+    ``Path.chmod`` is a no-op for exec bits.
+    """
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    # Template v1: only an answers file, no launcher.sh.
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+            }
+        )
+        git_save(tag="v1")
+
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    with local.cwd(dst):
+        git("init")
+        git("config", "core.fileMode", "false")
+        git("add", "-A")
+        git("commit", "-m", "init")
+
+    # Template v2: introduces launcher.sh as a NEW executable file. Use
+    # ``git update-index --chmod=+x`` so the template commits ``100755``
+    # regardless of the platform the test runs on.
+    with local.cwd(src):
+        Path("launcher.sh").write_text("#!/bin/sh\necho hi\n")
+        git("add", "-A")
+        git("update-index", "--chmod=+x", "launcher.sh")
+        git("commit", "-m", "introduce launcher.sh")
+        git("tag", "v2")
+
+    run_update(str(dst), defaults=True, overwrite=True)
+
+    # The user stages the rendered file and commits — the natural
+    # finish to a copier-update cycle.
+    with local.cwd(dst):
+        git("add", "--", "launcher.sh")
+        git("commit", "-m", "introduce launcher.sh")
+        # The committed tree must record ``100755`` so that a colleague
+        # cloning this repo on a platform that respects exec bits sees
+        # an executable file.
+        tree_entry = git("ls-tree", "HEAD", "--", "launcher.sh").strip()
+        meta = tree_entry.split()
+        committed_content = git("cat-file", "blob", meta[2])
+    assert meta[0] == "100755"
+    # And the file's actual content survived the round trip.
+    assert committed_content == "#!/bin/sh\necho hi\n"
+
+
+def test_update_introduces_new_file_can_be_aborted(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """The "Aborting an update" flow documented in ``docs/updating.md``
+    must continue to work after Copier marks new files as
+    intent-to-add: ``git reset`` should drop the intent-to-add markers
+    so the files become untracked again, after which ``git clean``
+    will pick them up like any other untracked content.
+    """
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+            }
+        )
+        git_save(tag="v1")
+
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    with local.cwd(dst):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m", "init")
+
+    with local.cwd(src):
+        Path("README.md").write_text("# Hello\n")
+        git("add", "-A")
+        git("commit", "-m", "introduce README")
+        git("tag", "v2")
+
+    run_update(str(dst), defaults=True, overwrite=True)
+
+    # After update, README.md is intent-to-add'd in the index.
+    with local.cwd(dst):
+        ls_before = git("ls-files", "--stage", "--", "README.md").strip()
+    assert ls_before, "expected README.md to be in the index before reset"
+
+    # Run the documented abort flow.
+    with local.cwd(dst):
+        git("reset")
+        # After reset, the intent-to-add marker is gone; the file is
+        # untracked, just like any other unwanted leftover.
+        ls_after = git("ls-files", "--stage", "--", "README.md").strip()
+        porcelain = git("status", "--porcelain", "--", "README.md").rstrip("\n")
+        # ``git clean`` (non-interactive equivalent of ``git clean -d -i``)
+        # then removes it.
+        git("clean", "-fd", "--", "README.md")
+    assert ls_after == "", f"expected README.md untracked post-reset, got {ls_after!r}"
+    assert porcelain.startswith("??"), (
+        f"expected README.md untracked post-reset, got {porcelain!r}"
+    )
+    assert not (dst / "README.md").exists()
