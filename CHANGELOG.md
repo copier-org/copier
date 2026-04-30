@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.15.0 (2026-04-30)
+
+### Feat
+
+- add support for enabling `StrictUndefined` in Jinja environment (#2587)
+
+### Fix
+
+- clean up temporary clone directory when internal `git clone` is interrupted
+- avoid double-escaping backslashes in Git paths with PathSpec v1.1.0+
+- **updating**: propagate executable-bit changes even when Git ignores file mode changes
+
 ## v9.14.3 (2026-04-10)
 
 ### Fix
