@@ -11,6 +11,7 @@ from dataclasses import field
 from functools import cached_property
 from pathlib import Path, PurePosixPath
 from shutil import rmtree
+from tempfile import mkdtemp
 from typing import Any, Literal
 from warnings import warn
 
@@ -25,7 +26,7 @@ from pydantic.dataclasses import dataclass
 
 from ._tools import copier_version, handle_remove_readonly
 from ._types import AnyByStrDict, VCSTypes
-from ._vcs import clone, get_git, get_latest_tag, get_repo
+from ._vcs import CLONE_PREFIX, clone, get_git, get_latest_tag, get_repo
 from .errors import (
     InvalidConfigFileError,
     MultipleConfigFilesError,
@@ -220,36 +221,26 @@ class Template:
     url: str
     ref: str | None = None
     use_prereleases: bool = False
+    _temp_clone_path: Path | None = field(
+        default=None, init=False, repr=False, compare=False
+    )
 
     def _cleanup(self) -> None:
-        if temp_clone := self._temp_clone():
-            if sys.version_info >= (3, 12):
-                rmtree(
-                    temp_clone,
-                    ignore_errors=False,
-                    onexc=handle_remove_readonly,
-                )
-            else:
-                rmtree(
-                    temp_clone,
-                    ignore_errors=False,
-                    onerror=handle_remove_readonly,
-                )
-
-    def _temp_clone(self) -> Path | None:
-        """Get the path to the temporary clone of the template.
-
-        If the template hasn't yet been cloned, or if it was a local template,
-        then there's no temporary clone and this will return `None`.
-        """
-        if "local_abspath" not in self.__dict__:
-            return None
-        original_path = Path(self.url).expanduser()
-        with suppress(OSError):  # triggered for URLs on Windows
-            original_path = original_path.resolve()
-        if (clone_path := self.local_abspath) != original_path:
-            return clone_path
-        return None
+        temp_clone = self._temp_clone_path
+        if temp_clone is None or not temp_clone.exists():
+            return
+        if sys.version_info >= (3, 12):
+            rmtree(
+                temp_clone,
+                ignore_errors=False,
+                onexc=handle_remove_readonly,
+            )
+        else:
+            rmtree(
+                temp_clone,
+                ignore_errors=False,
+                onerror=handle_remove_readonly,
+            )
 
     @cached_property
     def _raw_config(self) -> AnyByStrDict:
@@ -568,10 +559,12 @@ class Template:
         """
         result = Path(self.url)
         if self.vcs == "git":
+            self._temp_clone_path = Path(mkdtemp(prefix=CLONE_PREFIX))
             result = Path(
                 clone(
                     self.url_expanded,
                     self.ref or get_latest_tag(self.url_expanded, self.use_prereleases),
+                    location=str(self._temp_clone_path),
                 )
             )
         if not result.is_dir():
