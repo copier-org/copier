@@ -710,6 +710,14 @@ class Worker:
                     f"Unsupported envops.undefined value specified: {undefined_class}.\n"
                     'Supported values are "jinja2.Undefined" and "jinja2.StrictUndefined".'
                 )
+        else:
+            warnings.warn(
+                "Copier does not detect undefined variables in templates unless `undefined: jinja2.StrictUndefined` is specified. "
+                "Consider enabling StrictUndefined to find undefined variables in your templates. "
+                "This may be enabled by default in the future."
+                "To silence this warning, set `undefined: jinja2.Undefined` in your template's _envops.",
+                FutureWarning,
+            )
         try:
             env = SandboxedEnvironment(loader=loader, extensions=extensions, **envops)
         except ModuleNotFoundError as error:
