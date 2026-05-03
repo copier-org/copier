@@ -11,6 +11,7 @@ from dataclasses import field
 from functools import cached_property
 from pathlib import Path, PurePosixPath
 from shutil import rmtree
+from tempfile import mkdtemp
 from typing import Any, Literal
 from warnings import warn
 
@@ -19,12 +20,13 @@ import packaging.version
 import yaml
 from funcy import lflatten
 from packaging.version import Version, parse
+from plumbum.commands.processes import ProcessExecutionError
 from plumbum.machines import local
 from pydantic.dataclasses import dataclass
 
 from ._tools import copier_version, handle_remove_readonly
 from ._types import AnyByStrDict, VCSTypes
-from ._vcs import clone, get_git, get_latest_tag, get_repo
+from ._vcs import CLONE_PREFIX, clone, get_git, get_latest_tag, get_repo
 from .errors import (
     InvalidConfigFileError,
     MultipleConfigFilesError,
@@ -219,36 +221,26 @@ class Template:
     url: str
     ref: str | None = None
     use_prereleases: bool = False
+    _temp_clone_path: Path | None = field(
+        default=None, init=False, repr=False, compare=False
+    )
 
     def _cleanup(self) -> None:
-        if temp_clone := self._temp_clone():
-            if sys.version_info >= (3, 12):
-                rmtree(
-                    temp_clone,
-                    ignore_errors=False,
-                    onexc=handle_remove_readonly,
-                )
-            else:
-                rmtree(
-                    temp_clone,
-                    ignore_errors=False,
-                    onerror=handle_remove_readonly,
-                )
-
-    def _temp_clone(self) -> Path | None:
-        """Get the path to the temporary clone of the template.
-
-        If the template hasn't yet been cloned, or if it was a local template,
-        then there's no temporary clone and this will return `None`.
-        """
-        if "local_abspath" not in self.__dict__:
-            return None
-        original_path = Path(self.url).expanduser()
-        with suppress(OSError):  # triggered for URLs on Windows
-            original_path = original_path.resolve()
-        if (clone_path := self.local_abspath) != original_path:
-            return clone_path
-        return None
+        temp_clone = self._temp_clone_path
+        if temp_clone is None or not temp_clone.exists():
+            return
+        if sys.version_info >= (3, 12):
+            rmtree(
+                temp_clone,
+                ignore_errors=False,
+                onexc=handle_remove_readonly,
+            )
+        else:
+            rmtree(
+                temp_clone,
+                ignore_errors=False,
+                onerror=handle_remove_readonly,
+            )
 
     @cached_property
     def _raw_config(self) -> AnyByStrDict:
@@ -424,16 +416,19 @@ class Template:
                     )
             else:
                 # New configuration format
+                v_start = self.envops.get("variable_start_string", "{{")
+                v_end = self.envops.get("variable_end_string", "}}")
+                default_condition = f'{v_start} _stage == "after" {v_end}'
                 if isinstance(migration, (str, list)):
                     result.append(
                         Task(
                             cmd=migration,
                             extra_vars=extra_vars,
-                            condition='{{ _stage == "after" }}',
+                            condition=default_condition,
                         )
                     )
                 else:
-                    condition = migration.get("when", '{{ _stage == "after" }}')
+                    condition = migration.get("when", default_condition)
                     working_directory = Path(migration.get("working_directory", "."))
                     if "version" in migration:
                         current = parse(migration["version"])
@@ -564,10 +559,12 @@ class Template:
         """
         result = Path(self.url)
         if self.vcs == "git":
+            self._temp_clone_path = Path(mkdtemp(prefix=CLONE_PREFIX))
             result = Path(
                 clone(
                     self.url_expanded,
                     self.ref or get_latest_tag(self.url_expanded, self.use_prereleases),
+                    location=str(self._temp_clone_path),
                 )
             )
         if not result.is_dir():
@@ -575,6 +572,46 @@ class Template:
         with suppress(OSError):
             result = result.resolve()
         return result
+
+    @cached_property
+    def git_index_modes(self) -> Mapping[PurePosixPath, int]:
+        """Read file modes from the template's git index.
+
+        This returns the mode bits for every tracked file as recorded in
+        git's index, keyed by POSIX path relative to
+        :attr:`local_abspath`. Git always records executable-bit
+        information in the index (as mode ``100755``/``100644``), even
+        on filesystems where the bit can't be represented on disk — most
+        notably Windows, where ``os.stat().st_mode`` never reports
+        ``S_IXUSR``/``S_IXGRP``/``S_IXOTH`` for regular files.
+
+        Callers that want to know the template's *intended* file mode
+        (as committed by the template author) should consult this
+        mapping before falling back to ``Path.stat().st_mode``.
+
+        Returns an empty mapping when the template is not a git
+        checkout, when git is unavailable, or when git fails for any
+        other reason — callers must be ready to fall back.
+        """
+        if self.vcs != "git":
+            return {}
+        try:
+            git = get_git(context_dir=self.local_abspath)
+            # TODO: simplify with ``--format`` once the minimum git
+            # version is raised to 2.38+ (--format cannot be combined
+            # with --stage; see git-ls-files(1)).
+            raw = git("ls-files", "--stage").strip()
+        except (OSError, ProcessExecutionError):
+            return {}
+        modes: dict[PurePosixPath, int] = {}
+        for line in raw.splitlines():
+            # Format: "<mode> <sha> <stage>\t<path>"
+            if "\t" not in line:
+                continue
+            meta, path = line.split("\t", 1)
+            mode_str = meta.split(" ", 1)[0]
+            modes[PurePosixPath(path)] = int(mode_str, 8)
+        return modes
 
     @cached_property
     def url_expanded(self) -> str:

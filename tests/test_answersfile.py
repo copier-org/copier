@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from contextlib import AbstractContextManager, nullcontext as does_not_raise
 from pathlib import Path
 from textwrap import dedent
 
@@ -9,6 +10,7 @@ import yaml
 
 import copier
 from copier._user_data import load_answersfile_data
+from copier.errors import ForbiddenPathError
 
 from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree, git_save
 
@@ -328,3 +330,98 @@ def test_undefined_phase_in_external_data(
     copier.run_copy(str(src), dst, defaults=True, overwrite=True)
     answers = load_answersfile_data(dst, ".copier-answers.yml")
     assert answers["key"] == "value"
+
+
+@pytest.mark.parametrize(
+    ("unsafe", "expected"),
+    [(False, pytest.raises(ForbiddenPathError)), (True, does_not_raise())],
+)
+@pytest.mark.parametrize("is_absolute", [False, True], ids=["relative", "absolute"])
+def test_external_data_path_outside_destination_root_is_unsafe_on_copy(
+    tmp_path_factory: pytest.TempPathFactory,
+    is_absolute: bool,
+    unsafe: bool,
+    expected: AbstractContextManager[None],
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    project = dst / "project"
+    project.mkdir()
+
+    secret_file = dst / "secret.yml"
+    secret_file.write_text("secret_key: s3cr3t")
+
+    external_data_path = secret_file if is_absolute else Path("..", "secret.yml")
+
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                f"""\
+                _external_data:
+                    secret: {external_data_path}
+
+                secret: "{{{{ _external_data.secret.secret_key }}}}"
+                """
+            ),
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers | to_nice_yaml }}"
+            ),
+        }
+    )
+    git_save(src, tag="v1")
+
+    with expected:
+        copier.run_copy(str(src), project, defaults=True, unsafe=unsafe)
+
+
+@pytest.mark.parametrize(
+    ("unsafe", "expected"),
+    [(False, pytest.raises(ForbiddenPathError)), (True, does_not_raise())],
+)
+@pytest.mark.parametrize("is_absolute", [False, True], ids=["relative", "absolute"])
+def test_external_data_path_outside_destination_root_is_unsafe_on_update(
+    tmp_path_factory: pytest.TempPathFactory,
+    is_absolute: bool,
+    unsafe: bool,
+    expected: AbstractContextManager[None],
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    project = dst / "project"
+    project.mkdir()
+
+    build_file_tree(
+        {
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers | to_nice_yaml }}"
+            ),
+        }
+    )
+    git_save(src, tag="v1")
+
+    copier.run_copy(str(src), project)
+    assert load_answersfile_data(project).get("_commit") == "v1"
+
+    git_save(project)
+
+    secret_file = dst / "secret.yml"
+    secret_file.write_text("secret_key: s3cr3t")
+
+    external_data_path = secret_file if is_absolute else Path("..", "secret.yml")
+
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                f"""\
+                _external_data:
+                    secret: {external_data_path}
+
+                secret: "{{{{ _external_data.secret.secret_key }}}}"
+                """
+            ),
+        }
+    )
+    git_save(src, tag="v2")
+
+    with expected:
+        copier.run_update(project, defaults=True, overwrite=True, unsafe=unsafe)

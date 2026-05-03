@@ -9,9 +9,9 @@ Report bugs at <https://github.com/copier-org/copier/issues>.
 
 If you are reporting a bug, please include:
 
--   Your operating system name and version.
--   Any details about your local setup that might be helpful in troubleshooting.
--   Detailed steps to reproduce the bug.
+- Your operating system name and version.
+- Any details about your local setup that might be helpful in troubleshooting.
+- Detailed steps to reproduce the bug.
 
 ## Fix Bugs
 
@@ -35,9 +35,9 @@ The best way to send feedback is to file an issue at
 
 If you are proposing a feature:
 
--   Explain in detail how it would work.
--   Keep the scope as narrow as possible, to make it easier to implement.
--   Remember that this is a volunteer-driven project, and that contributions are
+- Explain in detail how it would work.
+- Keep the scope as narrow as possible, to make it easier to implement.
+- Remember that this is a volunteer-driven project, and that contributions are
     welcome. :)
 
 ## Discuss
@@ -50,7 +50,7 @@ Feel free to discuss with our community through
 The recommended way is:
 
 1. Click on
-   [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/copier-org/copier)
+    [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/copier-org/copier)
 1. Wait until the terminal that pops up is ready.
 1. Accept the direnv pop-ups that appear.
 
@@ -63,9 +63,9 @@ For local or more complex setups, continue reading.
 We use some tools as part of our development workflow which you'll need to install into
 your host environment:
 
--   [Devbox](https://www.jetify.com/docs/devbox/) to provide a reproducible development
+- [Devbox](https://www.jetify.com/docs/devbox/) to provide a reproducible development
     environment.
--   [Direnv](https://direnv.net/) to load that environment automatically in your shell.
+- [Direnv](https://direnv.net/) to load that environment automatically in your shell.
 
 ### Without Devbox/Nix
 
@@ -88,19 +88,20 @@ will kindly auto-format code for you and push it back to your branch.
 
 [uv]: https://docs.astral.sh/uv/
 
-## Get Started!
+## Get Started
 
 Ready to contribute? Here's how to set up the project for local development.
 
-1.  Fork the Copier repo on GitHub.
-1.  Clone your fork locally:
+1. Fork the Copier repo on GitHub.
+
+1. Clone your fork locally:
 
     ```shell
     git clone git@github.com:my-user/copier.git
     cd copier
     ```
 
-1.  Use Direnv (or Devbox directly) to set up a development environment:
+1. Use Direnv (or Devbox directly) to set up a development environment:
 
     ```shell
     # Let direnv do its magic ...
@@ -114,7 +115,7 @@ Ready to contribute? Here's how to set up the project for local development.
     development dependencies, including [uv][], and it will use it to create a
     virtualenv and install Copier with all its development dependencies too.
 
-1.  Create a branch for local development:
+1. Create a branch for local development:
 
     ```shell
     git checkout -b name-of-your-bugfix-or-feature
@@ -122,7 +123,7 @@ Ready to contribute? Here's how to set up the project for local development.
 
     Now you can make your changes locally.
 
-1.  When you're done making changes, check that your changes pass all tests:
+1. When you're done making changes, check that your changes pass all tests:
 
     ```shell
     uv run poe test
@@ -151,7 +152,7 @@ Ready to contribute? Here's how to set up the project for local development.
         }
         ```
 
-1.  Optionally, use pyclean to remove Python bytecode and build artifacts, e.g.
+1. Optionally, use pyclean to remove Python bytecode and build artifacts, e.g.
 
     ```shell
     uvx pyclean . --debris --verbose
@@ -163,7 +164,7 @@ Ready to contribute? Here's how to set up the project for local development.
     pipx run pyclean . --debris --verbose
     ```
 
-1.  Commit your changes and push your branch to GitHub:
+1. Commit your changes and push your branch to GitHub:
 
     ```shell
     git add .
@@ -171,15 +172,15 @@ Ready to contribute? Here's how to set up the project for local development.
     git push origin name-of-your-bugfix-or-feature
     ```
 
-1.  Submit a pull request through the GitHub website.
+1. Submit a pull request through the GitHub website.
 
 ## Pull Request Guidelines
 
 Before you submit a pull request, check that it meets these guidelines:
 
-1.  The pull request has code, it should include tests.
-1.  Check that all checks pass on GitHub CI.
-1.  If something significant changed, modify docs.
+1. The pull request has code, it should include tests.
+1. Check that all checks pass on GitHub CI.
+1. If something significant changed, modify docs.
 
 ### Commit message guidelines
 
@@ -187,7 +188,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) st
 
 We use [Commitizen](https://commitizen-tools.github.io/commitizen/) to handle Copier
 releases. This tool generates the appropriate tag based on that standard. It also writes
-our [changelog](changelog.md). Changes that are included there are of type `fix`, `feat`
+our [changelog](CHANGELOG.md). Changes that are included there are of type `fix`, `feat`
 and `refactor`; also `BREAKING CHANGE:` trailers will appear. If your change is not
 meaningful in the changelog, then please don't use one of those categories.
 
@@ -237,7 +238,7 @@ Now the tag is released, but GitHub won't display it in the releases page. For t
 1. [Draft a new release](https://github.com/copier-org/copier/releases/new).
 1. Choose the tag you just pushed.
 1. Set the tag also as release title.
-1. Copy the just added changelog entry from [CHANGELOG](changelog.md) and paste it as a
+1. Copy the just added changelog entry from [CHANGELOG](CHANGELOG.md) and paste it as a
    description.
 1. Enable "Set as the latest release".
 1. Optionally, enable "Create a discussion for this release".

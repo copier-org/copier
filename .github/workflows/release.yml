@@ -7,7 +7,7 @@ on:
 
 env:
   # renovate: datasource=devbox depName=uv
-  UV_VERSION: "0.10.9"
+  UV_VERSION: "0.11.7"
 
 jobs:
   build:
@@ -20,7 +20,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v8.1.0
         with:
           version: ${{ env.UV_VERSION }}
 

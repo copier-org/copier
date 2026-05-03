@@ -60,3 +60,18 @@ repos:
         language: system
         types: [toml]
         require_serial: true
+
+      - id: rumdl
+        name: rumdl
+        entry: uv run rumdl check --fix
+        language: system
+        types: [markdown]
+        require_serial: true
+        exclude: |
+          (?x)(
+            # Those files have wrong syntax and would fail
+            ^tests/demo_invalid/copier\.yml$|
+            ^tests/demo_transclude_invalid(_multi)?/demo/copier\.yml$|
+            # HACK https://github.com/prettier/prettier/issues/9430
+            ^tests/demo
+          )

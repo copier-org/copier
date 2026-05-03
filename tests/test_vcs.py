@@ -12,7 +12,13 @@ from pytest_gitconfig.plugin import GitConfig
 from copier import run_copy, run_update
 from copier._main import Worker
 from copier._user_data import load_answersfile_data
-from copier._vcs import clone, get_git_version, get_latest_tag, get_repo
+from copier._vcs import (
+    clone,
+    get_git_version,
+    get_latest_tag,
+    get_repo,
+    is_git_repo_root,
+)
 from copier.errors import DirtyLocalWarning, ShallowCloneWarning
 
 from .helpers import build_file_tree, git, git_save
@@ -238,6 +244,40 @@ def test_select_latest_version_tag(
     assert (dst / filename).read_text() == "v1.0.1"
     answers = load_answersfile_data(dst)
     assert answers["_commit"] == "v1.0.1"
+
+
+def test_is_git_repo_root_worktree(tmp_path: Path) -> None:
+    """is_git_repo_root should return True for git worktrees where .git is a file."""
+    main_repo = tmp_path / "main"
+    main_repo.mkdir()
+    with local.cwd(main_repo):
+        git("init")
+        git("commit", "--allow-empty", "-m", "init")
+        git("branch", "wt-branch")
+    worktree = tmp_path / "worktree"
+    with local.cwd(main_repo):
+        git("worktree", "add", str(worktree), "wt-branch")
+
+    # Sanity: .git in worktree is a file, not a directory
+    assert (worktree / ".git").is_file()
+    assert not (worktree / ".git").is_dir()
+
+    assert is_git_repo_root(worktree)
+
+
+def test_get_repo_worktree(tmp_path: Path) -> None:
+    """get_repo should recognise a git worktree as a valid local repo."""
+    main_repo = tmp_path / "main"
+    main_repo.mkdir()
+    with local.cwd(main_repo):
+        git("init")
+        git("commit", "--allow-empty", "-m", "init")
+        git("branch", "wt-branch")
+    worktree = tmp_path / "worktree"
+    with local.cwd(main_repo):
+        git("worktree", "add", str(worktree), "wt-branch")
+
+    assert get_repo(str(worktree)) == worktree.as_posix()
 
 
 @pytest.mark.parametrize(

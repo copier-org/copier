@@ -104,3 +104,6 @@ plugins:
         "reference/types.md": "reference/api.md"
         "reference/user_data.md": "reference/api.md"
         "reference/vcs.md": "reference/api.md"
+
+hooks:
+  - mkdocs_hooks.py
