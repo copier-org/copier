@@ -19,8 +19,9 @@ import yaml
 from jinja2 import StrictUndefined, UndefinedError
 from jinja2.sandbox import SandboxedEnvironment
 from prompt_toolkit.lexers import PygmentsLexer
-from pydantic import ConfigDict, Field, field_validator
+from pydantic import ConfigDict, Field, ValidationError, field_validator
 from pydantic.dataclasses import dataclass
+from pydantic_core import PydanticCustomError
 from pydantic_core.core_schema import ValidationInfo
 from pygments.lexers.data import JsonLexer, YamlLexer
 from questionary.prompts.common import Choice
@@ -201,6 +202,17 @@ class Question:
             If it is a boolean, it is used directly. If it is a str, it is
             converted to boolean using a parser similar to YAML, but only for
             boolean values.
+
+        use_shortcuts:
+            Condition that, if `True`, allows selecting choice question items via
+            number shortcuts. Mutually exclusive with `multiselect` and
+            `use_search_filter`.
+
+        use_search_filter:
+            Condition that, if `True`, enables filtering choice question items by
+            typing a search string. Disables j/k navigation, as "j" and "k" can be part
+            of a prefix and therefore cannot be used for navigation.  Mutually exclusive
+            with `use_shortcuts`.
     """
 
     var_name: str
@@ -219,6 +231,8 @@ class Question:
     type: str = Field(default="", validate_default=True)
     validator: str = ""
     when: str | bool = True
+    use_shortcuts: bool = False
+    use_search_filter: bool = False
 
     @field_validator("var_name")
     @classmethod
@@ -417,6 +431,42 @@ class Question:
                 result["default"] = False
         if self.choices:
             questionary_type = "checkbox" if self.multiselect else "select"
+
+            if self.use_search_filter:
+                result["use_search_filter"] = True
+                result["use_jk_keys"] = False
+            if self.use_shortcuts:
+                if self.multiselect:
+                    raise ValidationError.from_exception_data(
+                        title=f"`{self.var_name}`",
+                        line_errors=[
+                            {
+                                "type": PydanticCustomError(
+                                    '"`use_shortcuts` & `multiselect` are mutually exclusive"',
+                                    "Use either `use_shortcuts: true` or `multiselect: true`",
+                                ),
+                                "input": {"use_shortcuts": True, "multiselect": True},
+                            }
+                        ],
+                    )
+                if self.use_search_filter:
+                    raise ValidationError.from_exception_data(
+                        title=f"`{self.var_name}`",
+                        line_errors=[
+                            {
+                                "type": PydanticCustomError(
+                                    '"`use_shortcuts` & `use_search_filter` are mutually exclusive"',
+                                    "Use either `use_shortcuts: true` or `use_search_filter: true`",
+                                ),
+                                "input": {
+                                    "use_shortcuts": True,
+                                    "use_search_filter": True,
+                                },
+                            }
+                        ],
+                    )
+                result["use_shortcuts"] = True
+
             choices = self._formatted_choices
             # Select default choices for a multiselect question.
             if self.multiselect and isinstance(
