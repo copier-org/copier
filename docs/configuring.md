@@ -190,6 +190,9 @@ Supported keys:
                 Some array: "[str, keeps, this, as, a, str]"
         ```
 
+- **multiselect**: When set to `true`, allows multiple choices. The answer will be a
+    `list[T]` instead of a `T` where `T` is of type `type`.
+
 - **use_shortcuts**: When set to `true`, allows selecting choice question items via
     number shortcuts. Mutually exclusive with `multiselect` and `use_search_filter`.
 
@@ -237,9 +240,6 @@ Supported keys:
            6) zig
            7) asm
         </pre>
-
-- **multiselect**: When set to `true`, allows multiple choices. The answer will be a
-    `list[T]` instead of a `T` where `T` is of type `type`.
 
 - **use_search_filter**: When set to `true`, enables filtering choice question items
     by typing a search string. Also deactivates the use of `j`/`k` keys for navigation,
