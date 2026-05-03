@@ -124,10 +124,13 @@ def test_multiselect_with_shortcuts_not_supported(
     tui.expect_exact(pexpect.EOF)
     assert tui.exitstatus != 0
     assert tui.proc.returncode != 0
-    assert (
-        "pydantic_core._pydantic_core.ValidationError: 1 validation error"
-        in str(tui.before).split("\n")[-3]
-    )
+    assert [
+        "pydantic_core._pydantic_core.ValidationError: 1 validation error for Question",
+        "  Value error, [Question Name: `select`]",
+        "    `use_shortcuts` & `multiselect` are mutually exclusive",
+        "    Use either `use_shortcuts: true` or `multiselect: true`",
+        "    [type=value_error, input_value=ArgsKwargs((), {'answers'... 'use_shortcuts': True}), input_type=ArgsKwargs]",
+    ] == str(tui.before).split("\n")[-7:-2]
 
 
 def test_search_filter_disabled_by_default(
@@ -253,10 +256,13 @@ def test_search_filter_and_shortcut_not_supported(
     tui.expect_exact(pexpect.EOF)
     assert tui.exitstatus != 0
     assert tui.proc.returncode != 0
-    assert (
-        "pydantic_core._pydantic_core.ValidationError: 1 validation error"
-        in str(tui.before).split("\n")[-3]
-    )
+    assert [
+        "pydantic_core._pydantic_core.ValidationError: 1 validation error for Question",
+        "  Value error, [Question Name: `select`]",
+        "    `use_shortcuts` & `use_search_filter` are mutually exclusive",
+        "    Use either `use_shortcuts: true` or `use_search_filter: true`",
+        "    [type=value_error, input_value=ArgsKwargs((), {'answers'... 'use_shortcuts': True}), input_type=ArgsKwargs]",
+    ] == str(tui.before).split("\n")[-7:-2]
 
 
 def test_multiselect_with_search_filter(
