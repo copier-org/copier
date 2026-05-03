@@ -248,7 +248,8 @@ Supported keys:
 
     !!! note
 
-        If `multiselect` is `true`, you cannot use ++space++ in the search, as this would only select the choice item. If it is `false`, ++space++ can be used.
+        If `multiselect` is `true`, you cannot use ++space++ in the search, as this
+        would only select the choice item. If it is `false`, ++space++ can be used.
 
     !!! example
 
@@ -267,28 +268,16 @@ Supported keys:
                 - asm
         ```
 
-        <pre>
-        <span style="font-weight:bold">🎤 Which programming language do you use?</span>
-           (Use arrow keys, type to filter)
-         » python
-           node
-           c
-           c++
-           rust
-           zig
-           asm
+        <pre> <span style="font-weight:bold">🎤 Which programming language do you
+        use?</span> (Use arrow keys, type to filter) » python node c c++ rust zig asm
         </pre>
 
         ---
 
         Typing `o`:
 
-        <pre>
-        <span style="font-weight:bold">🎤 Which programming language do you use?</span>
-           (Use arrow keys, type to filter)
-         » python
-           node
-
+        <pre> <span style="font-weight:bold">🎤 Which programming language do you
+        use?</span> (Use arrow keys, type to filter) » python node
 
         / <span style="color:green;font-weight:bold">o</span>...
         </pre>
