@@ -267,6 +267,7 @@ Supported keys:
                 - asm
         ```
 
+        <!-- rumdl-disable -->
         <pre>
         <span style="font-weight:bold">🎤 Which programming language do you use?</span>
            (Use arrow keys, type to filter)
@@ -278,11 +279,13 @@ Supported keys:
            zig
            asm
         </pre>
+        <!-- rumdl-enable -->
 
         ---
 
         Typing `o`:
 
+        <!-- rumdl-disable -->
         <pre>
         <span style="font-weight:bold">🎤 Which programming language do you use?</span>
            (Use arrow keys, type to filter)
@@ -292,6 +295,7 @@ Supported keys:
 
         / <span style="color:green;font-weight:bold">o</span>...
         </pre>
+        <!-- rumdl-enable -->
 
         ---
 
