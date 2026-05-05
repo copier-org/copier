@@ -215,6 +215,7 @@ Supported keys:
 
         Will result in:
 
+        <!-- rumdl-disable -->
         <pre>
         <span style="font-weight:bold">🎤 Which programming language do you use?</span>
            (Use shortcuts or arrow keys)
@@ -226,9 +227,11 @@ Supported keys:
            6) zig
            7) asm
         </pre>
+        <!-- rumdl-enable -->
 
         Pressing `5` gives:
 
+        <!-- rumdl-disable -->
         <pre>
         <span style="font-weight:bold">🎤 Which programming language do you use?</span>
            (Use shortcuts or arrow keys)
@@ -240,6 +243,7 @@ Supported keys:
            6) zig
            7) asm
         </pre>
+        <!-- rumdl-enable -->
 
 - **use_search_filter**: When set to `true`, enables filtering choice question items
     by typing a search string. Also deactivates the use of `j`/`k` keys for navigation,
