@@ -17,7 +17,7 @@ from unittest import mock
 
 import pytest
 import yaml
-from plumbum import local
+from plumbum import CommandNotFound, local
 
 import copier
 from copier import run_copy
@@ -42,6 +42,35 @@ def test_project_not_found(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError):
         copier.run_copy(__file__, tmp_path)
+
+
+def test_copy_without_git(
+    tmp_path_factory: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Generating a minimal project must work even if `git` is not installed."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "hello" / "world.txt.jinja": "Hello, {{ name }}!",
+            src / "copier.yml": "name: world",
+        }
+    )
+
+    original_which = local.which
+
+    def fake_which(progname: Any) -> Any:
+        if Path(progname).name in {"git", "git.exe"}:
+            raise CommandNotFound(progname, [])
+        return original_which(progname)
+
+    monkeypatch.setattr(local, "which", fake_which)
+
+    # Sanity-check: the patch makes plumbum behave as if `git` is missing.
+    with pytest.raises(CommandNotFound):
+        local["git"]
+
+    copier.run_copy(str(src), dst, defaults=True)
+    assert (dst / "hello" / "world.txt").read_text() == "Hello, world!"
 
 
 def test_copy_with_non_version_tags(tmp_path_factory: pytest.TempPathFactory) -> None:

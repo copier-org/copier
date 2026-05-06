@@ -68,7 +68,7 @@ from ._types import (
     VcsRef,
 )
 from ._user_data import AnswersMap, Question, load_answersfile_data
-from ._vcs import get_git
+from ._vcs import get_git, is_git_available
 from .errors import (
     ConfigFileError,
     CopierAnswersInterrupt,
@@ -895,7 +895,8 @@ class Worker:
                         f"{stat.filemode(dst_mode)} to {stat.filemode(src_mode)}",
                         stacklevel=2,
                     )
-            self._sync_git_index_executable_bit(dst_relpath, src_mode)
+            if is_git_available():
+                self._sync_git_index_executable_bit(dst_relpath, src_mode)
 
     def _sync_git_index_executable_bit(self, dst_relpath: Path, src_mode: int) -> None:
         """Propagate executable-bit changes to the destination's git index.

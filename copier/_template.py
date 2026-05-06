@@ -26,7 +26,14 @@ from pydantic.dataclasses import dataclass
 
 from ._tools import copier_version, handle_remove_readonly
 from ._types import AnyByStrDict, VCSTypes
-from ._vcs import CLONE_PREFIX, clone, get_git, get_latest_tag, get_repo
+from ._vcs import (
+    CLONE_PREFIX,
+    clone,
+    get_git,
+    get_latest_tag,
+    get_repo,
+    is_git_available,
+)
 from .errors import (
     InvalidConfigFileError,
     MultipleConfigFilesError,
@@ -654,6 +661,6 @@ class Template:
     @cached_property
     def vcs(self) -> VCSTypes | None:
         """Get VCS system used by the template, if any."""
-        if get_repo(self.url):
+        if is_git_available() and get_repo(self.url):
             return "git"
         return None

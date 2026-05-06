@@ -11,7 +11,7 @@ from warnings import warn
 
 from packaging import version
 from packaging.version import InvalidVersion, Version
-from plumbum import TF, ProcessExecutionError, colors, local
+from plumbum import TF, CommandNotFound, ProcessExecutionError, colors, local
 from plumbum.machines import LocalCommand
 
 from ._types import OptBool, OptStrOrPath, StrOrPath
@@ -45,6 +45,19 @@ def get_git_version() -> Version:
     git = get_git()
 
     return Version(re.findall(r"\d+\.\d+(?:\.\d+)?", git("version"))[0])
+
+
+def is_git_available() -> bool:
+    """Indicate if `git` is available in the system."""
+    git_path: str | None = None
+    for exe in ("git", "git.exe"):
+        try:
+            git_path = local.which(exe)
+        except CommandNotFound:  # noqa: PERF203
+            continue
+        else:
+            break
+    return git_path is not None
 
 
 GIT_PREFIX = ("git@", "git://", "git+", "https://github.com/", "https://gitlab.com/")
