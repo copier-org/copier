@@ -1,51 +1,51 @@
 {
   "lockfile_version": "1",
   "packages": {
-    "difftastic@0.68.0": {
-      "last_modified": "2026-03-21T07:29:51Z",
-      "resolved": "github:NixOS/nixpkgs/09061f748ee21f68a089cd5d91ec1859cd93d0be#difftastic",
+    "difftastic@0.69.0": {
+      "last_modified": "2026-05-03T08:31:49Z",
+      "resolved": "github:NixOS/nixpkgs/90c100cb48d61a0316b9479bb03f1be36d34b92a#difftastic",
       "source": "devbox-search",
-      "version": "0.68.0",
+      "version": "0.69.0",
       "systems": {
         "aarch64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/skwx54xp4vlphvm788g2z2s839d5141a-difftastic-0.68.0",
+              "path": "/nix/store/bxzzf6zcakpl0nqlyaah0jlwbl3qcg9k-difftastic-0.69.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/skwx54xp4vlphvm788g2z2s839d5141a-difftastic-0.68.0"
+          "store_path": "/nix/store/bxzzf6zcakpl0nqlyaah0jlwbl3qcg9k-difftastic-0.69.0"
         },
         "aarch64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/vpvs2pk10hmfxz0cci61xv85avpl0xdm-difftastic-0.68.0",
+              "path": "/nix/store/b2wila0m5fxh29hlx6cywli76gjmyh7b-difftastic-0.69.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/vpvs2pk10hmfxz0cci61xv85avpl0xdm-difftastic-0.68.0"
+          "store_path": "/nix/store/b2wila0m5fxh29hlx6cywli76gjmyh7b-difftastic-0.69.0"
         },
         "x86_64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/794pz9zzcl8xplf00za5ipk91khv9ir5-difftastic-0.68.0",
+              "path": "/nix/store/2lk7gq1cvs3d4xcl59drkvrhgrfkasb3-difftastic-0.69.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/794pz9zzcl8xplf00za5ipk91khv9ir5-difftastic-0.68.0"
+          "store_path": "/nix/store/2lk7gq1cvs3d4xcl59drkvrhgrfkasb3-difftastic-0.69.0"
         },
         "x86_64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/1lyid6n8n0j2cpp8n8h01dcf3fskcnmx-difftastic-0.68.0",
+              "path": "/nix/store/7zy3g5fpghb2hykaqrpnzbbb43s02ss9-difftastic-0.69.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/1lyid6n8n0j2cpp8n8h01dcf3fskcnmx-difftastic-0.68.0"
+          "store_path": "/nix/store/7zy3g5fpghb2hykaqrpnzbbb43s02ss9-difftastic-0.69.0"
         }
       }
     },
