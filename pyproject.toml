@@ -61,7 +61,7 @@ dev = [
   "types-backports==0.1.3",
   "types-colorama==0.4.15.20260408",
   "types-pygments==2.20.0.20260408",
-  "types-pyyaml==6.0.12.20260408",
+  "types-pyyaml==6.0.12.20260510",
   "typing-extensions==4.15.0; python_version < '<3.10'",
 ]
 docs = [
