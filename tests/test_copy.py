@@ -578,7 +578,7 @@ def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> N
                 "choices": [1, ["2", {"value": None, "validator": "disabled"}], 3],
             },
             "2",
-            pytest.raises(ValueError, match="Invalid choice: disabled"),
+            pytest.raises(ValueError, match="Invalid choice for 'q': disabled"),
         ),
         (
             {"type": "int", "choices": {"one": 1, "two": 2, "three": 3}},
@@ -586,9 +586,11 @@ def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> N
             does_not_raise(),
         ),
         (
-            {"type": "int", "choices": {"one": 1, "two": 2, "three": 3}},
-            "4",
-            pytest.raises(ValueError),
+            {"type": "int", "choices": {"one": 1, "two": 2}},
+            "3",
+            pytest.raises(
+                ValueError, match="Invalid choice for 'q': 3 is not in \[1, 2\]"
+            ),
         ),
         (
             {"type": "int", "choices": {"one": 1, "two": {"value": 2}, "three": 3}},
@@ -617,7 +619,7 @@ def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> N
                 },
             },
             "2",
-            pytest.raises(ValueError, match="Invalid choice: disabled"),
+            pytest.raises(ValueError, match="Invalid choice for 'q': disabled"),
         ),
         (
             {"type": "str", "choices": {"one": None, "two": None, "three": None}},
@@ -768,7 +770,7 @@ def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> N
                 },
             },
             "key: value",
-            pytest.raises(ValueError, match="Invalid choice: disabled"),
+            pytest.raises(ValueError, match="Invalid choice for 'q': disabled"),
         ),
         (
             {"type": "yaml", "choices": {"complex": {"key": "value"}}},
@@ -811,7 +813,7 @@ def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> N
                 ],
             },
             "key: value",
-            pytest.raises(ValueError, match="Invalid choice: disabled"),
+            pytest.raises(ValueError, match="Invalid choice for 'q': disabled"),
         ),
         (
             {"type": "yaml", "choices": [["complex", {"key": "value"}]]},
@@ -832,6 +834,26 @@ def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> N
             },
             [],
             pytest.raises(ValueError, match="At least one choice required"),
+        ),
+        (
+            {"type": "str", "choices": ["one", "two"]},
+            "three",
+            pytest.raises(
+                ValueError,
+                match=r"Invalid choice for 'q': 'three' is not in \['one', 'two'\]",
+            ),
+        ),
+        (
+            {
+                "type": "str",
+                "choices": [
+                    ["one", {"value": "one", "validator": "no longer available"}]
+                ],
+            },
+            "one",
+            pytest.raises(
+                ValueError, match="Invalid choice for 'q': no longer available"
+            ),
         ),
     ],
 )

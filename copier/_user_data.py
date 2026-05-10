@@ -520,15 +520,18 @@ class Question:
         if not choices:
             return ans
         choice_error = ""
+        valid = []
         for choice in choices:
-            if ans == self.cast_answer(choice.value):
+            cast_ans = self.cast_answer(choice.value)
+            if not choice.disabled:
+                valid.append(cast_ans)
+            if ans == cast_ans:
                 if not choice.disabled:
                     return ans
                 if not choice_error:
                     choice_error = choice.disabled
-        raise ValueError(
-            f"Invalid choice: {choice_error}" if choice_error else "Invalid choice"
-        )
+        error_detail = choice_error if choice_error else f"{ans!r} is not in {valid}"
+        raise ValueError(f"Invalid choice for '{self.var_name}': {error_detail}")
 
 
 def parse_yaml_string(string: str) -> Any:
