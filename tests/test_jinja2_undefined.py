@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from jinja2.exceptions import UndefinedError
 
@@ -80,3 +82,39 @@ def test_strictundefined_undefined_variable(
 
     with pytest.raises(UndefinedError, match="'undefined_variable' is undefined"):
         copier.run_copy(str(src), dst)
+
+
+def test_futurewarning(tmp_path: Path) -> None:
+    with pytest.warns(
+        FutureWarning,
+        match="Copier does not detect undefined variables in templates unless `undefined: jinja2.StrictUndefined` is specified.",
+    ):
+        copier.run_copy("./tests/demo_config_empty", tmp_path)
+
+
+# fail on warnings
+@pytest.mark.filterwarnings("error")
+def test_silenced_warning(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    build_file_tree(
+        {
+            (src / ".copier-answers.yml.jinja"): (
+                """\
+                # Changes here will be overwritten by Copier
+                {{ _copier_answers|to_nice_yaml }}
+                """
+            ),
+            (src / "copier.yaml"): (
+                """\
+                _envops:
+                    undefined: jinja2.Undefined
+                """
+            ),
+            (src / "test.jinja"): "{{ undefined_variable }}",
+        }
+    )
+
+    copier.run_copy(str(src), dst)

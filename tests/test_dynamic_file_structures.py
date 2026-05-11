@@ -20,6 +20,7 @@ def test_folder_loop(tmp_path_factory: pytest.TempPathFactory) -> None:
     )
     with warnings.catch_warnings():
         warnings.simplefilter("error")
+        warnings.filterwarnings("ignore", message=".*jinja2.StrictUndefined.*")
         copier.run_copy(
             str(src),
             dst,
@@ -56,6 +57,7 @@ def test_nested_folder_loop(tmp_path_factory: pytest.TempPathFactory) -> None:
     )
     with warnings.catch_warnings():
         warnings.simplefilter("error")
+        warnings.filterwarnings("ignore", message=".*jinja2.StrictUndefined.*")
         copier.run_copy(
             str(src),
             dst,
@@ -95,6 +97,7 @@ def test_file_loop(tmp_path_factory: pytest.TempPathFactory) -> None:
     )
     with warnings.catch_warnings():
         warnings.simplefilter("error")
+        warnings.filterwarnings("ignore", message=".*jinja2.StrictUndefined.*")
         copier.run_copy(
             str(src),
             dst,
@@ -153,6 +156,7 @@ def test_folder_loop_dict_items(tmp_path_factory: pytest.TempPathFactory) -> Non
 
     with warnings.catch_warnings():
         warnings.simplefilter("error")
+        warnings.filterwarnings("ignore", message=".*jinja2.StrictUndefined.*")
 
         copier.run_copy(
             str(src),
