@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.15.1 (2026-05-13)
+
+### Fix
+
+- enrich invalid choice error message with variable name and valid choices (#2662)
+- restore support for `copier copy` when `git` is not available
+
 ## v9.15.0 (2026-04-30)
 
 ### Feat
