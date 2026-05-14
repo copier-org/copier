@@ -1284,6 +1284,7 @@ def test_update_needs_more_context(
     )
 
 
+@pytest.mark.parametrize("gitignore_rej", [False, True])
 @pytest.mark.parametrize(
     "filename",
     [
@@ -1297,6 +1298,7 @@ def test_update_needs_more_context(
 def test_conflicted_files_are_marked_unmerged(
     tmp_path_factory: pytest.TempPathFactory,
     filename: str,
+    gitignore_rej: bool,
 ) -> None:
     # Template in v1 has a file with a single line;
     # in v2 it changes that line.
@@ -1324,6 +1326,17 @@ def test_conflicted_files_are_marked_unmerged(
     # Start versioning the generated project
     with local.cwd(dst):
         git_init("hello project")
+
+        # Optionally gitignore .rej files. Inline-conflict resolution
+        # must still produce inline markers — the .rej is just an
+        # internal artifact of the resolution, never something the
+        # downstream user wants to see, so it's reasonable for them to
+        # ignore it. Regression for the case where copier's `git status
+        # --porcelain` invocation silently dropped ignored .rej files.
+        if gitignore_rej:
+            Path(".gitignore").write_text("*.rej\n")
+            git("add", ".gitignore")
+            git("commit", "-m", "ignore .rej files")
 
         # After first commit, change the file, commit again
         Path(filename).write_text("upstream version 1 + downstream")
