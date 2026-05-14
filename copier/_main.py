@@ -1529,12 +1529,16 @@ class Worker:
                     conflicted = []
                     old_path = Path(old_copy)
                     new_path = Path(new_copy)
-                    status = git("status", "--porcelain").strip().splitlines()
+                    # `--ignored` so we still find .rej files when the
+                    # destination has a `*.rej` ignore rule.
+                    status = (
+                        git("status", "--porcelain", "--ignored").strip().splitlines()
+                    )
                     for line in status:
                         # Filter merge rejections (part 1/2)
-                        if not line.startswith("?? "):
+                        if not line.startswith(("?? ", "!! ")):
                             continue
-                        # Remove "?? " prefix
+                        # Remove prefix
                         fname = line[3:]
                         # Normalize name
                         fname = normalize_git_path(fname)
