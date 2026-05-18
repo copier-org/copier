@@ -129,7 +129,9 @@ def cast_to_bool(value: Any) -> bool:
         return bool(float(value))
     # Assume it's a string
     with suppress(AttributeError):
-        lower = value.lower()
+        lower = value.strip().lower()
+        if not lower:
+            return False
         if lower in {"y", "yes", "t", "true", "on"}:
             return True
         elif lower in {"n", "no", "f", "false", "off", "~", "null", "none"}:
