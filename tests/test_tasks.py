@@ -68,6 +68,30 @@ def test_copy_tasks(template_path: str, tmp_path: Path) -> None:
     assert not (tmp_path / "false").exists()
 
 
+def test_task_with_blank_rendered_when_is_skipped(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "copier.yml": """\
+            _tasks:
+                -   command: touch should-not-exist
+                    when: |
+                        {% if false %}
+                        true
+                        {% endif %}
+            """
+        }
+    )
+
+    copier.run_copy(
+        str(src), dst, quiet=True, defaults=True, overwrite=True, unsafe=True
+    )
+
+    assert not (dst / "should-not-exist").exists()
+
+
 def test_copy_skip_tasks(template_path: str, tmp_path: Path) -> None:
     copier.run_copy(
         template_path,
