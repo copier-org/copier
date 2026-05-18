@@ -251,6 +251,7 @@ class Worker:
     unsafe: bool = False
     skip_answered: bool = False
     skip_tasks: bool = False
+    _exclude_context: AnyByStrDict = field(default_factory=dict, init=False)
 
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
     _cleanup_hooks: list[Callable[[], None]] = field(default_factory=list, init=False)
@@ -753,10 +754,22 @@ class Worker:
         # Include the current operation in the rendering context.
         # Note: This method is a cached property, it needs to be regenerated
         # when reusing an instance in different contexts.
-        extra_context = {"_copier_operation": _operation.get()}
+        operation_context = {"_copier_operation": _operation.get()}
+        extra_context = {
+            **self._exclude_context,
+            **operation_context,
+        }
         return self._path_matcher(
-            self._render_string(exclusion, extra_context=extra_context)
-            for exclusion in self.all_exclusions
+            chain(
+                (
+                    self._render_string(exclusion, extra_context=operation_context)
+                    for exclusion in self.template.exclude
+                ),
+                (
+                    self._render_string(exclusion, extra_context=extra_context)
+                    for exclusion in self.exclude
+                ),
+            )
         )
 
     @cached_property
@@ -1152,7 +1165,7 @@ class Worker:
                 Additional variables to use for rendering the template.
         """
         tpl = self.jinja_env.from_string(string)
-        return tpl.render(**self._render_context(), **(extra_context or {}))
+        return tpl.render({**self._render_context(), **(extra_context or {})})
 
     def _render_value(
         self, value: _T, extra_context: AnyByStrDict | None = None
@@ -1193,6 +1206,44 @@ class Worker:
         )
         self._cleanup_hooks.append(result._cleanup)
         return result
+
+    def _question_defaults_data(self) -> AnyByStrDict:
+        """Return available answers for defaulted template questions.
+
+        This is used during update while rendering new-template exclusion
+        patterns against an old-template copy. New exclusion patterns may refer
+        to questions that did not exist in the old template yet.
+        """
+        previous_answers = self.answers
+        self.answers = AnswersMap(
+            user_defaults=self.user_defaults,
+            init=self.data,
+            last=self.subproject.last_answers,
+            metadata=self.template.metadata,
+            external=self._external_data(),
+        )
+        try:
+            defaults: AnyByStrDict = {}
+            for var_name, details in self.template.questions_data.items():
+                question = Question(
+                    answers=self.answers,
+                    context=self._render_context(),
+                    jinja_env=self.jinja_env,
+                    settings=self.settings,
+                    var_name=var_name,
+                    **details,
+                )
+                if var_name in self.answers.init:
+                    answer = question.parse_answer(self.answers.init[var_name])
+                else:
+                    answer = question.get_default()
+                    if answer is MISSING:
+                        continue
+                self.answers.user[var_name] = answer
+                defaults[var_name] = answer
+            return defaults
+        finally:
+            self.answers = previous_answers
 
     @cached_property
     def template(self) -> Template:
@@ -1357,6 +1408,7 @@ class Worker:
             ) as new_copy,
         ):
             # Copy old template into a temporary destination
+            new_template_defaults = self._question_defaults_data()
             with replace(
                 self,
                 dst_path=old_copy / subproject_subdir,
@@ -1370,6 +1422,7 @@ class Worker:
                 # https://github.com/orgs/copier-org/discussions/2345
                 exclude=[*self.template.exclude, *self.exclude],
             ) as old_worker:
+                old_worker._exclude_context = new_template_defaults
                 old_worker.run_copy()
             # Run pre-migration tasks
             with Phase.use(Phase.MIGRATE):

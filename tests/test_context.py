@@ -153,6 +153,79 @@ def test_exclude_templating_with_operation_added_in_new_version(
     assert copy_and_update.read_text() == "bar"
 
 
+@pytest.mark.parametrize(
+    ("data", "expected_copy_only"),
+    [
+        ({}, "foo"),
+        ({"manage_copy_only": True}, "bar"),
+    ],
+)
+def test_update_exclude_added_in_new_version_can_use_new_answer(
+    tmp_path_factory: pytest.TempPathFactory,
+    data: dict[str, bool],
+    expected_copy_only: str,
+) -> None:
+    """
+    Ensure a templated `_exclude` item added by a new template version can
+    reference an answer introduced by that same new version during update.
+    """
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "copier.yml": (
+                    """\
+                    _envops:
+                        undefined: jinja2.StrictUndefined
+                    """
+                ),
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+                "copy-only": "foo",
+                "copy-and-update": "foo",
+            }
+        )
+        git_save(tag="1.0.0")
+        build_file_tree(
+            {
+                "copier.yml": (
+                    """\
+                    _envops:
+                        undefined: jinja2.StrictUndefined
+
+                    _exclude:
+                        - "{% if not manage_copy_only %}copy-only{% endif %}"
+
+                    manage_copy_only:
+                        type: bool
+                        default: false
+
+                    unused_hidden:
+                        type: str
+                        when: false
+                    """
+                ),
+                "copy-only": "bar",
+                "copy-and-update": "bar",
+            }
+        )
+        git_save(tag="2.0.0")
+
+    copy_only = dst / "copy-only"
+    copy_and_update = dst / "copy-and-update"
+
+    copier.run_copy(str(src), dst, defaults=True, overwrite=True, vcs_ref="1.0.0")
+    assert copy_only.read_text() == "foo"
+    assert copy_and_update.read_text() == "foo"
+
+    with local.cwd(dst):
+        git_save()
+
+    copier.run_update(str(dst), data=data, defaults=True, overwrite=True)
+    assert copy_only.read_text() == expected_copy_only
+    assert copy_and_update.read_text() == "bar"
+
+
 def test_task_templating_with_operation(
     tmp_path_factory: pytest.TempPathFactory, tmp_path: Path
 ) -> None:
