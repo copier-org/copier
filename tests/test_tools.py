@@ -5,7 +5,7 @@ from tempfile import TemporaryDirectory
 import pytest
 from poethepoet.app import PoeThePoet
 
-from copier._tools import normalize_git_path
+from copier._tools import cast_to_bool, normalize_git_path
 
 from .helpers import git
 
@@ -14,6 +14,33 @@ def test_types() -> None:
     """Ensure source code static typing."""
     result = PoeThePoet(Path())(["types"])
     assert result == 0
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "",
+        " ",
+        "\t",
+        "\n",
+        "  \n\t  ",
+    ],
+)
+def test_cast_to_bool_treats_blank_strings_as_false(value: str) -> None:
+    assert cast_to_bool(value) is False
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (" true ", True),
+        ("\nfalse\n", False),
+    ],
+)
+def test_cast_to_bool_ignores_surrounding_whitespace(
+    value: str, expected: bool
+) -> None:
+    assert cast_to_bool(value) is expected
 
 
 def test_temporary_directory_with_readonly_files_deletion() -> None:
