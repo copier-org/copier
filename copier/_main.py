@@ -1040,19 +1040,22 @@ class Worker:
             dst_abspath = self.subproject.local_abspath / dst_relpath
             dst_abspath.mkdir(parents=True, exist_ok=True)
 
-    def _adjust_rendered_part(self, rendered_part: str) -> str:
-        """Adjust the rendered part if necessary.
+    def _adjust_rendered_part(
+        self, rendered_parts: tuple[str, ...], rendered_part: str
+    ) -> str:
+        """Avoid duplicating already rendered path prefixes.
 
-        If `{{ _copier_conf.answers_file }}` becomes the full path,
-        restore part to be just the end leaf.
-
-        Args:
-            rendered_part:
-                The rendered part of the path to adjust.
-
+        If a path part renders to the full answers file path while the current
+        rendered path already contains its parent directory, keep only the leaf
+        name. Otherwise, preserve the rendered part as-is.
         """
-        if str(self.answers_relpath) == rendered_part:
-            return Path(rendered_part).name
+        rendered_path = Path(rendered_part)
+        current_path = Path(*rendered_parts) if rendered_parts else Path()
+        if (
+            rendered_path == self.answers_relpath
+            and rendered_path.parent == current_path
+        ):
+            return rendered_path.name
         return rendered_part
 
     def _render_parts(
@@ -1094,12 +1097,18 @@ class Worker:
 
         ctx = get_yield_context(self.jinja_env)
         yield_name = ctx.yield_name
+        yield_iterable = ctx.yield_iterable
         if yield_name:
-            for value in ctx.yield_iterable or ():
+            ctx.yield_name = None
+            ctx.yield_iterable = None
+            for value in yield_iterable or ():
                 new_context = {**extra_context, yield_name: value}
                 rendered_part = self._render_string(part, extra_context=new_context)
-                rendered_part = self._adjust_rendered_part(rendered_part)
-
+                ctx.yield_name = None
+                ctx.yield_iterable = None
+                rendered_part = self._adjust_rendered_part(
+                    rendered_parts, rendered_part
+                )
                 # Skip if any part is rendered as an empty string
                 if not rendered_part:
                     continue
@@ -1110,11 +1119,11 @@ class Worker:
 
             return
 
+        rendered_part = self._adjust_rendered_part(rendered_parts, rendered_part)
+
         # Skip if any part is rendered as an empty string
         if not rendered_part:
             return
-
-        rendered_part = self._adjust_rendered_part(rendered_part)
 
         yield from self._render_parts(
             parts, rendered_parts + (rendered_part,), extra_context, is_template

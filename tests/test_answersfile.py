@@ -56,6 +56,24 @@ def template_path(tmp_path_factory: pytest.TempPathFactory) -> str:
     return str(root)
 
 
+def test_answers_file_keeps_configured_subdirectory(tmp_path: Path) -> None:
+    """The configured answers file path should keep its relative directory."""
+    src = tmp_path / "src"
+    dst = tmp_path / "dst"
+    build_file_tree(
+        {
+            src / "copier.yml": "_answers_file: subdir/.custom-answers.yml",
+            src
+            / "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_yaml }}",
+        }
+    )
+
+    copier.run_copy(str(src), dst, defaults=True, overwrite=True)
+
+    assert (dst / "subdir" / ".custom-answers.yml").exists()
+    assert not (dst / ".custom-answers.yml").exists()
+
+
 @pytest.mark.parametrize("answers_file", [None, ".changed-by-user.yaml"])
 def test_answersfile(
     template_path: str, tmp_path: Path, answers_file: str | None
