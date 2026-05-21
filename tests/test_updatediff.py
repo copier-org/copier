@@ -2329,6 +2329,111 @@ def test_update_propagates_executable_bit_addition(
     condition=platform.system() == "Windows",
     reason="Windows does not have UNIX-like permissions",
 )
+def test_update_leaves_new_non_executable_files_unstaged_with_filemode_false(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """New non-executable files should not get an intent-to-add index entry."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    filename = "notes.txt"
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+                "README.md": "hello\n",
+            }
+        )
+        git_save(tag="v1")
+
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+
+    with local.cwd(dst):
+        git("init")
+        git("config", "core.fileMode", "false")
+        git("add", "-A")
+        git("commit", "-m", "init")
+
+    with local.cwd(src):
+        Path(filename).write_text("plain text\n")
+        git("add", "-A")
+        git("commit", "-m", "add non-executable file")
+        git("tag", "v2")
+
+    run_update(str(dst), defaults=True, overwrite=True)
+
+    with local.cwd(dst):
+        status = git("status", "--porcelain=v1", "--", filename).rstrip("\n")
+        staged = git("ls-files", "--stage", "--", filename).strip()
+
+    assert status == f"?? {filename}"
+    assert staged == ""
+
+
+@pytest.mark.skipif(
+    condition=platform.system() == "Windows",
+    reason="Windows does not have UNIX-like permissions",
+)
+def test_update_preserves_executable_bit_for_new_files_with_filemode_false(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """New executable files introduced during update must keep ``+x`` when
+    later added by the user in repositories with ``core.fileMode=false``.
+    """
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    filename = "script.sh"
+
+    # Template v1: no script.sh yet.
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+                "README.md": "hello\n",
+            }
+        )
+        git_save(tag="v1")
+
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    assert not (dst / filename).exists()
+
+    with local.cwd(dst):
+        git("init")
+        git("config", "core.fileMode", "false")
+        git("add", "-A")
+        git("commit", "-m", "init")
+
+    # Template v2: add a new executable file.
+    with local.cwd(src):
+        Path(filename).write_text("#!/bin/sh\necho hi\n")
+        Path(filename).chmod(
+            Path(filename).stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+        )
+        git("add", "-A")
+        git("commit", "-m", "add executable script")
+        git("tag", "v2")
+
+    run_update(str(dst), defaults=True, overwrite=True)
+
+    assert (dst / filename).stat().st_mode & 0o111 != 0
+    with local.cwd(dst):
+        status = git("status", "--porcelain=v1", "--", filename).rstrip("\n")
+        staged = git("ls-files", "--stage", "--", filename).strip().split()
+        cached_diff = git("diff", "--cached", "--", filename)
+
+    assert status == f"AM {filename}"
+    assert staged[0] == "100755"
+    assert "#!/bin/sh" not in cached_diff
+
+    with local.cwd(dst):
+        git("add", "--", filename)
+        mode = git("ls-files", "--stage", "--", filename).strip().split()[0]
+
+    assert mode == "100755"
+
+
+@pytest.mark.skipif(
+    condition=platform.system() == "Windows",
+    reason="Windows does not have UNIX-like permissions",
+)
 @pytest.mark.parametrize("file_mode", [True, False])
 def test_update_propagates_executable_bit_removal(
     tmp_path_factory: pytest.TempPathFactory,

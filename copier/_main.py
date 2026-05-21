@@ -915,11 +915,12 @@ class Worker:
         as an *unstaged* modification, which matches copier's normal
         behavior of leaving rendered changes unstaged for user review.
 
-        Also a no-op when the destination is not in a git repository, when
-        the file is not yet tracked (the user's eventual ``git add`` will
-        record the on-disk mode where the platform allows it), or when git
-        is unavailable. All git failures are swallowed so that copying or
-        updating cannot be broken by an unrelated git problem.
+        Also a no-op when the destination is not in a git repository, or
+        when git is unavailable. New executable files are first registered
+        with ``git add --intent-to-add`` so an empty index entry exists; then
+        only that entry's executable mode is prepared, without staging the
+        rendered file contents. All git failures are swallowed so that copying
+        or updating cannot be broken by an unrelated git problem.
 
         .. note::
 
@@ -951,6 +952,7 @@ class Worker:
             # git will pick up the plain on-disk ``chmod`` from
             # :meth:`_render_file`; no index manipulation needed.
             return
+        desired_executable = bool(src_mode & 0o111)
         try:
             # TODO: simplify with ``--format %(objectmode)`` once the
             # minimum git version is raised to 2.38+ (--format cannot be
@@ -960,13 +962,19 @@ class Worker:
             # git can't read the index — fall back to a silent no-op.
             return
         if not result:
-            # File is not tracked yet; nothing to update.
-            return
+            if desired_executable:
+                # For a new executable file, create an empty intent-to-add index
+                # entry first. The later ``--cacheinfo`` call can then set the
+                # entry mode to 100755 without staging the rendered file contents.
+                with suppress(OSError, ProcessExecutionError):
+                    git("add", "--intent-to-add", "--", str(dst_relpath))
+                    result = git("ls-files", "--stage", "--", str(dst_relpath)).strip()
+            if not result:
+                return
         # Format: "<mode> <sha> <stage>\t<path>"
         meta = result.split("\t", 1)[0].split()
         current_index_mode = int(meta[0], 8)
         current_index_sha = meta[1]
-        desired_executable = bool(src_mode & 0o111)
         current_executable = bool(current_index_mode & 0o111)
         if desired_executable == current_executable:
             return
