@@ -22,7 +22,7 @@ from plumbum import CommandNotFound, local
 import copier
 from copier import run_copy
 from copier._types import AnyByStrDict
-from copier.errors import ForbiddenPathError
+from copier.errors import ForbiddenPathError, UserMessageError
 
 from .helpers import (
     BRACKET_ENVOPS,
@@ -1335,6 +1335,31 @@ def test_copier_phase_variable(tmp_path_factory: pytest.TempPathFactory) -> None
     copier.run_copy(str(src), dst)
     assert (dst / "render").exists()
     assert (dst / "render").read_text() == "render"
+
+
+def test_invalid_jinja_in_rendered_path_reports_template_path(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    broken_path = "some-{{{{ jinja_error }}}}"
+    build_file_tree({src / broken_path: "content"})
+
+    with pytest.raises(UserMessageError, match=re.escape(broken_path)):
+        copier.run_copy(str(src), dst, overwrite=True)
+
+
+def test_invalid_jinja_in_nested_rendered_path_reports_failing_path_part(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    broken_part = "some-{{{{ jinja_error }}}}"
+    build_file_tree({src / "parent" / broken_part / "child.txt": "content"})
+
+    with pytest.raises(UserMessageError) as error:
+        copier.run_copy(str(src), dst, overwrite=True)
+
+    assert str(Path("parent", broken_part)) in str(error.value)
+    assert str(Path("parent", broken_part, "child.txt")) not in str(error.value)
 
 
 def test_relative_render_path_outside_destination_raises_error(
