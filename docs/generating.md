@@ -45,6 +45,13 @@ By default, Copier will copy from the last release found in template Git tags, s
 [PEP 440](https://peps.python.org/pep-0440/), regardless of whether the template is from
 a URL or a local clone of a Git repository.
 
+!!! warning
+
+    Template version tags should be stable. Avoid moving Git tags after projects have
+    been generated from them, especially if those tags are valid PEP 440 versions. For
+    moving development refs, prefer branches or pass the desired ref explicitly with
+    [`--vcs-ref`](configuring.md#vcs_ref).
+
 ### Copying dirty changes
 
 If you use a local clone of a template repository that has had any uncommitted
