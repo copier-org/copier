@@ -1,9 +1,10 @@
 import warnings
+from pathlib import Path
 
 import pytest
 
 import copier
-from copier.errors import MultipleYieldTagsError, YieldTagInFileError
+from copier.errors import MultipleYieldTagsError, UserMessageError, YieldTagInFileError
 from tests.helpers import build_file_tree
 
 
@@ -40,6 +41,35 @@ def test_folder_loop(tmp_path_factory: pytest.TempPathFactory) -> None:
         unexpected_files = set(all_files) - set(expected_files)
 
         assert not unexpected_files, f"Unexpected files found: {unexpected_files}"
+
+
+def test_folder_loop_reports_path_when_yielded_part_rendering_fails(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    broken_part = (
+        "{% yield item from items %}"
+        "{% if item is defined %}{% include 'missing-template.jinja' %}{% endif %}"
+        "{% endyield %}"
+    )
+    build_file_tree(
+        {
+            src / "copier.yml": "",
+            src / "folder_loop" / broken_part / "child.txt": "Hello",
+        }
+    )
+
+    with pytest.raises(UserMessageError) as error:
+        copier.run_copy(
+            str(src),
+            dst,
+            data={"items": [{}]},
+            defaults=True,
+            overwrite=True,
+        )
+
+    assert str(Path("folder_loop", broken_part)) in str(error.value)
+    assert str(Path("folder_loop", broken_part, "child.txt")) not in str(error.value)
 
 
 def test_nested_folder_loop(tmp_path_factory: pytest.TempPathFactory) -> None:
