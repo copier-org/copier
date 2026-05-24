@@ -281,6 +281,18 @@ Supported keys:
     will be rendered with the combined answers as variables; it should render _nothing_
     if the value is valid, and an error message to show to the user otherwise.
 
+    !!! example "Validate a slug with `regex_search`"
+
+        ```yaml title="copier.yml"
+        project_slug:
+            type: str
+            help: Project slug
+            validator: >-
+                {% if not (project_slug | regex_search('^[a-z][a-z0-9-]+$')) %}
+                Use lowercase letters, digits, and dashes; start with a letter.
+                {% endif %}
+        ```
+
 - **when**: Condition that, if `false`, skips the question.
 
     If it is a boolean, it is used directly. Setting it to `false` is useful for
