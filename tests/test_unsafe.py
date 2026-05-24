@@ -95,6 +95,48 @@ def test_copy(
         run_copy(str(src), dst, unsafe=unsafe)
 
 
+def test_copy_with_configured_skip_tasks_is_not_unsafe(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ["src", "dst"])
+    build_file_tree(
+        {
+            (src / "copier.yaml"): yaml.safe_dump(
+                {
+                    "_skip_tasks": True,
+                    "_tasks": ["touch task.txt"],
+                }
+            )
+        }
+    )
+
+    run_copy(str(src), dst)
+
+    assert not (dst / "task.txt").exists()
+
+
+def test_copy_with_configured_skip_tasks_false_is_unsafe(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ["src", "dst"])
+    build_file_tree(
+        {
+            (src / "copier.yaml"): yaml.safe_dump(
+                {
+                    "_skip_tasks": "false",
+                    "_tasks": ["touch task.txt"],
+                }
+            )
+        }
+    )
+
+    with pytest.raises(
+        UnsafeTemplateError,
+        match="Template uses potentially unsafe feature: tasks.",
+    ):
+        run_copy(str(src), dst)
+
+
 @pytest.mark.parametrize("unsafe", [False, True])
 @pytest.mark.parametrize("trusted_from_settings", [False, True])
 def test_copy_cli(

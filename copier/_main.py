@@ -296,7 +296,7 @@ class Worker:
         features: set[str] = set()
         if self.template.jinja_extensions:
             features.add("jinja_extensions")
-        if self.template.tasks and not self.skip_tasks:
+        if self.template.tasks and not self.effective_skip_tasks:
             features.add("tasks")
         if mode == "update" and self.subproject.template:
             if self.subproject.template.jinja_extensions:
@@ -449,7 +449,7 @@ class Worker:
                 "context_lines": lambda: self.context_lines,
                 "unsafe": lambda: self.unsafe,
                 "skip_answered": lambda: self.skip_answered,
-                "skip_tasks": lambda: self.skip_tasks,
+                "skip_tasks": lambda: self.effective_skip_tasks,
                 "sep": lambda: os.sep,
                 "os": lambda: OS,
             }
@@ -687,6 +687,13 @@ class Worker:
     def all_skip_if_exists(self) -> Sequence[str]:
         """Combine default and template skip-if-exists patterns."""
         return tuple(chain(self.skip_if_exists, self.template.skip_if_exists))
+
+    @cached_property
+    def effective_skip_tasks(self) -> bool:
+        """Check whether template tasks should be skipped."""
+        return self.skip_tasks or cast_to_bool(
+            self.template.config_data.get("skip_tasks", False)
+        )
 
     @cached_property
     def jinja_env(self) -> SandboxedEnvironment:
@@ -1246,7 +1253,7 @@ class Worker:
             if not self.quiet:
                 # TODO Unify printing tools
                 print("")  # padding space
-            if not self.skip_tasks:
+            if not self.effective_skip_tasks:
                 with Phase.use(Phase.TASKS):
                     self._execute_tasks(self.template.tasks)
         except Exception:
