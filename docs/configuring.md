@@ -1079,7 +1079,8 @@ to know available options.
 - CLI flags: `-x`, `--exclude`
 - Default value: `["copier.yaml", "copier.yml", "~*", "*.py[co]", "__pycache__", ".git", ".DS_Store", ".svn"]` <!-- rumdl-disable-line MD013 -->
 
-[Patterns](#patterns-syntax) for files/folders that must not be copied.
+[Patterns](#patterns-syntax) for files/folders that must not be copied. These patterns
+are evaluated against destination paths, not template/source paths.
 
 The CLI option can be passed several times to add several patterns.
 
