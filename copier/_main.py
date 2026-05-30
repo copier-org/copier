@@ -43,6 +43,7 @@ from pydantic.dataclasses import dataclass
 from pydantic_core import to_jsonable_python
 from questionary import confirm, unsafe_prompt
 
+from ._ask_pattern import AskPattern
 from ._deprecation import deprecate_answers_file_template_path
 from ._jinja_ext import YieldExtension, get_yield_context
 from ._settings import Settings, SettingsModel, is_trusted_repository
@@ -228,6 +229,9 @@ class Worker:
 
         skip_tasks:
             When `True`, skip template tasks execution.
+
+        ask:
+            List of question names to ask, even if they would be skipped by `skip_answered` or `defaults`. Can also include wildcards.
     """
 
     # NOTE: attributes are fully documented in [creating.md](../docs/creating.md)
@@ -253,6 +257,7 @@ class Worker:
     unsafe: bool = False
     skip_answered: bool = False
     skip_tasks: bool = False
+    ask: Sequence[str] = ()
 
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
     _cleanup_hooks: list[Callable[[], None]] = field(default_factory=list, init=False)
@@ -289,6 +294,13 @@ class Worker:
         """Execute all stored cleanup methods."""
         for method in self._cleanup_hooks:
             method()
+    
+    def _check_unneccessary_ask(self) -> None:
+        """Warn about `--ask` patterns that have no effect."""
+        if self.ask and not (self.skip_answered or self.defaults):
+            warnings.warn(
+                "All questions are asked by default, --ask has no effect without --defaults or --skip-answered.",
+            )
 
     def _check_unsafe(self, mode: Operation) -> None:
         """Check whether a template uses unsafe features."""
@@ -592,6 +604,7 @@ class Worker:
             metadata=self.template.metadata,
             external=self._external_data(),
         )
+        asks = [AskPattern(pattern) for pattern in self.ask]
 
         for var_name, details in self.template.questions_data.items():
             question = Question(
@@ -633,24 +646,36 @@ class Worker:
                 continue
             # Skip a question when the user already answered it.
             if self.skip_answered and var_name in self.answers.last:
-                continue
+                implicitly_skipped = True
+            elif self.defaults:
+                answer = question.get_default()
+                if answer is MISSING:
+                    raise ValueError(f'Question "{var_name}" is required')
+                # Note that this answer will be ignored if the user has
+                # explicitly unkipped the question with `--ask`
+                self.answers.user[var_name] = answer
+                implicitly_skipped = True
+            else:
+                implicitly_skipped = False
+
+            if implicitly_skipped:
+                # skip the question unless the user explicitly asked for it with `--ask`
+                for ask_pattern in asks:
+                    if ask_pattern.matches(var_name):
+                        break
+                else:
+                    continue
 
             # Display TUI and ask user interactively only without --defaults
             try:
-                if self.defaults:
-                    new_answer = question.get_default()
-                    if new_answer is MISSING:
-                        raise ValueError(f'Question "{var_name}" is required')
-                else:
-                    try:
-                        new_answer = unsafe_prompt(
-                            [question.get_questionary_structure()],
-                            answers={question.var_name: question.get_default()},
-                        )[question.var_name]
-                    except EOFError as err:
-                        raise InteractiveSessionError(
-                            "Use `--defaults` and/or `--data`/`--data-file`"
-                        ) from err
+                new_answer = unsafe_prompt(
+                    [question.get_questionary_structure()],
+                    answers={question.var_name: question.get_default()},
+                )[question.var_name]
+            except EOFError as err:
+                raise InteractiveSessionError(
+                    "Use `--defaults` and/or `--data`/`--data-file`"
+                ) from err
             except KeyboardInterrupt as err:
                 raise CopierAnswersInterrupt(
                     self.answers, question, self.template
@@ -659,6 +684,12 @@ class Worker:
 
         # Reload external data, which may depend on answers
         self.answers.external = self._external_data()
+        for ask_pattern in asks:
+            if not ask_pattern.was_matched:
+                warnings.warn(
+                    f"Asked pattern {ask_pattern.orginal!r} did not match any question that would be skipped."
+                    " Did you specify it in --data?"
+                )
 
     @property
     def answers_relpath(self) -> Path:
@@ -1253,6 +1284,7 @@ class Worker:
 
         self._check_unsafe("copy")
         self._print_message(self.template.message_before_copy)
+        self._check_unneccessary_ask()
         with Phase.use(Phase.PROMPT):
             self._ask()
         was_existing = self.subproject.local_abspath.exists()
@@ -1288,6 +1320,7 @@ class Worker:
                 "Cannot recopy because cannot obtain old template references "
                 f"from `{self.subproject.answers_relpath}`."
             )
+        self._check_unneccessary_ask()
         with replace(self, src_path=self.subproject.template.url) as new_worker:
             new_worker.run_copy()
 
@@ -1342,6 +1375,7 @@ class Worker:
             # review the diff before committing; so we can safely avoid
             # asking for confirmation
             raise UserMessageError("Enable overwrite to update a subproject.")
+        self._check_unneccessary_ask()
         self._print_message(self.template.message_before_update)
         self._print_template_update_info(self.subproject.template)
         with suppress(AttributeError):
@@ -1385,6 +1419,7 @@ class Worker:
                 # won't be included in the diff as deleted paths to prevent deletion.
                 # https://github.com/orgs/copier-org/discussions/2345
                 exclude=[*self.template.exclude, *self.exclude],
+                ask = (),
             ) as old_worker:
                 old_worker.run_copy()
             # Run pre-migration tasks
@@ -1456,6 +1491,7 @@ class Worker:
                 src_path=self.subproject.template.url,  # type: ignore[union-attr]
                 exclude=exclude_plus_removed,
                 vcs_ref=self.resolved_vcs_ref,
+                ask = (),
             ) as new_worker:
                 new_worker.run_copy()
             with local.cwd(new_copy):
@@ -1701,6 +1737,7 @@ def run_copy(
     quiet: bool = False,
     unsafe: bool = False,
     skip_tasks: bool = False,
+    ask: Sequence[str] = (),
 ) -> Worker:
     """Copy a template to a destination, from zero."""
     with Worker(
@@ -1729,6 +1766,7 @@ def run_copy(
         quiet=quiet,
         unsafe=unsafe,
         skip_tasks=skip_tasks,
+        ask=ask,
     ) as worker:
         worker.run_copy()
     return worker
@@ -1753,6 +1791,7 @@ def run_recopy(
     unsafe: bool = False,
     skip_answered: bool = False,
     skip_tasks: bool = False,
+    ask: Sequence[str] = (),
 ) -> Worker:
     """Update a subproject from its template, discarding subproject evolution."""
     with Worker(
@@ -1781,6 +1820,7 @@ def run_recopy(
         unsafe=unsafe,
         skip_answered=skip_answered,
         skip_tasks=skip_tasks,
+        ask=ask,
     ) as worker:
         worker.run_recopy()
     return worker
@@ -1807,6 +1847,7 @@ def run_update(
     unsafe: bool = False,
     skip_answered: bool = False,
     skip_tasks: bool = False,
+    ask: Sequence[str] = (),
 ) -> Worker:
     """Update a subproject, from its template."""
     with Worker(
@@ -1837,6 +1878,7 @@ def run_update(
         unsafe=unsafe,
         skip_answered=skip_answered,
         skip_tasks=skip_tasks,
+        ask=ask,
     ) as worker:
         worker.run_update()
     return worker

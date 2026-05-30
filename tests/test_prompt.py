@@ -286,6 +286,68 @@ def test_update_skip_answered(
         tui.expect_exact(pexpect.EOF)
         assert load_answersfile_data(".").get("_commit") == "v2"
 
+@pytest.mark.parametrize(
+    "ask",
+    (
+        ("*enemy*",),
+        ("what_enemy_does"),
+        ("what_enemy_does", "your_enemy"),
+    ),
+)
+@pytest.mark.parametrize("update_action", ("update", "recopy"))
+def test_update_skip_answered_with_ask(
+    ask,
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    update_action: str,
+    spawn_timeout: int,
+) -> None:
+    """Test that the questions for the user are OK"""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(MARIO_TREE)
+        git_save(tag="v1")
+        git("commit", "--allow-empty", "-m", "v2")
+        git("tag", "v2")
+    with local.cwd(dst):
+        # Copy the v1 template
+        tui = spawn(
+            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1", "--data=your_name=Mario"),
+            timeout=spawn_timeout,
+        )
+        # Check what was captured
+        expect_prompt(tui, "in_love", "bool")
+        tui.expect_exact("(Y/n)")
+        tui.sendline()
+        tui.expect_exact("Yes")
+        expect_prompt(tui, "your_enemy", "str", help="Secret enemy name")
+        tui.expect_exact("******")
+        tui.sendline()
+        expect_prompt(tui, "what_enemy_does", "str")
+        tui.expect_exact("Bowser hates Mario")
+        tui.sendline()
+        tui.expect_exact(pexpect.EOF)
+        assert load_answersfile_data(".").get("_commit") == "v1"
+        # Update subproject
+        git_save()
+        tui = spawn(
+            COPIER_PATH
+            + (
+                update_action,
+                "--skip-answered",
+                f"--ask={ask}",
+            ),
+            timeout=spawn_timeout * 3,
+        )
+        # Check what was captured
+        expect_prompt(tui, "your_enemy", "str", help="Secret enemy name")
+        tui.expect_exact("******")
+        tui.sendline()
+        expect_prompt(tui, "what_enemy_does", "str")
+        tui.expect_exact("Bowser hates Mario")
+        tui.sendline()
+        tui.expect_exact(pexpect.EOF)
+        assert load_answersfile_data(".").get("_commit") == "v2"
 
 @pytest.mark.parametrize(
     "name, args",

@@ -503,7 +503,11 @@ Switches:
     -x, --exclude VALUE:str         A name or shell-style pattern matching files
                                     or folders that must not be copied; may be
                                     given multiple times
-
+    -k, --ask VALUE:str             Ask the questions matching the given pattern,
+                                    even if they would be skipped by 
+                                    --skip-answered or --defaults. May include "*"
+                                    as a wildcard character. May be given multiple
+                                    times.
 """)
 
 

@@ -808,6 +808,17 @@ Don't forget to read [the docs about the answers file](#the-copier-answersyml-fi
     _answers_file: .my-custom-answers.yml
     ```
 
+### `ask`
+
+- Format: `List[str]`
+- CLI flags: `-k`, `--ask`
+
+Ask the questions specified, even if they would be skipped by [defaults](#defaults) or [skip-answered](#skip_answered). Names may include "*" to match zero or more characters.
+
+!!! info
+
+    Not supported in `copier.yml`.
+
 ### `cleanup_on_error`
 
 - Format: `bool`

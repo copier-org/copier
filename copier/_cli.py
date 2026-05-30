@@ -239,6 +239,14 @@ class CopierCopySubApp(_Subcommand):
         ["-w", "--overwrite"],
         help="Overwrite files that already exist, without asking.",
     )
+    ask = cli.SwitchAttr(
+        ["-k", "--ask"],
+        str,
+        list=True,
+        help=(
+            'Ask the questions matching the given pattern, even if they would be skipped by --defaults. May include "*" as a wildcard character. May be given multiple times.'
+        ),
+    )
 
     def main(self, template_src: str, destination_path: str) -> int:
         """Call [run_copy][copier.run_copy].
@@ -317,6 +325,14 @@ class CopierRecopySubApp(_Subcommand):
         ["-A", "--skip-answered"],
         default=False,
         help="Skip questions that have already been answered",
+    )
+    ask = cli.SwitchAttr(
+        ["-k", "--ask"],
+        str,
+        list=True,
+        help=(
+            'Ask the questions matching the given pattern, even if they would be skipped by --skip-answered or --defaults. May include "*" as a wildcard character. May be given multiple times.'
+        ),
     )
 
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
@@ -400,6 +416,14 @@ class CopierUpdateSubApp(_Subcommand):
         ["-A", "--skip-answered"],
         default=False,
         help="Skip questions that have already been answered",
+    )
+    ask = cli.SwitchAttr(
+        ["-k", "--ask"],
+        str,
+        list=True,
+        help=(
+            'Ask the questions matching the given pattern, even if they would be skipped by --skip-answered or --defaults. May include "*" as a wildcard character. May be given multiple times.'
+        ),
     )
 
     def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
