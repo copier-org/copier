@@ -93,6 +93,51 @@ def test_copy_dirty_head(tmp_path_factory: pytest.TempPathFactory) -> None:
     assert (dst / "untracked").exists()
 
 
+def test_copy_dirty_head_with_empty_nested_git_repo(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "copier.yml": "",
+            src / "tracked": "",
+        }
+    )
+    with local.cwd(src):
+        git("init")
+        git("add", "copier.yml", "tracked")
+        git("commit", "-m1")
+        git("init", "empty_repo")
+
+    copier.run_copy(str(src), dst, vcs_ref="HEAD", defaults=True)
+
+    assert (dst / "tracked").exists()
+
+
+def test_copy_dirty_head_with_empty_nested_git_repo_and_dirty_file(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "copier.yml": "",
+            src / "tracked": "",
+        }
+    )
+    with local.cwd(src):
+        git("init")
+        git("add", "copier.yml", "tracked")
+        git("commit", "-m1")
+        git("init", "empty_repo")
+    (src / "dirty.txt").write_text("dirty")
+
+    with pytest.warns(DirtyLocalWarning):
+        copier.run_copy(str(src), dst, vcs_ref="HEAD", defaults=True)
+
+    assert (dst / "tracked").exists()
+    assert (dst / "dirty.txt").read_text() == "dirty"
+
+
 def test_copy_dirty_head_with_gpg(
     tmp_path_factory: pytest.TempPathFactory, gitconfig: GitConfig
 ) -> None:

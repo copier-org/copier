@@ -190,6 +190,20 @@ def get_latest_tag(url: str, use_prereleases: OptBool = False) -> str:
         return "HEAD"
 
 
+def _nested_empty_git_repo_excludes(root: Path) -> list[str]:
+    """Build Git pathspec excludes for nested repositories without checked-out HEAD."""
+    excludes = []
+    for git_dir in root.glob("**/.git"):
+        repo = git_dir.parent
+        if repo == root:
+            continue
+        try:
+            get_git()("-C", repo, "rev-parse", "--verify", "HEAD")
+        except ProcessExecutionError:
+            excludes.append(f":(exclude){repo.relative_to(root).as_posix()}")
+    return excludes
+
+
 def clone(url: str, ref: str = "HEAD", location: str | None = None) -> str:
     """Clone repo into some temporary destination.
 
@@ -234,20 +248,39 @@ def clone(url: str, ref: str = "HEAD", location: str | None = None) -> str:
             is_dirty = bool(git("status", "--porcelain").strip())
         if is_dirty:
             with local.cwd(location):
-                git("--git-dir=.git", f"--work-tree={url_abspath}", "add", "-A")
                 git(
                     "--git-dir=.git",
                     f"--work-tree={url_abspath}",
-                    "commit",
-                    "-m",
-                    "Copier automated commit for draft changes",
-                    "--no-verify",
-                    "--no-gpg-sign",
+                    "add",
+                    "-A",
+                    "--",
+                    ".",
+                    *_nested_empty_git_repo_excludes(url_abspath),
                 )
-                warn(
-                    "Dirty template changes included automatically.",
-                    DirtyLocalWarning,
+                has_staged_changes = (
+                    git[
+                        "--git-dir=.git",
+                        f"--work-tree={url_abspath}",
+                        "diff",
+                        "--cached",
+                        "--quiet",
+                    ].run(retcode=(0, 1))[0]
+                    == 1
                 )
+                if has_staged_changes:
+                    git(
+                        "--git-dir=.git",
+                        f"--work-tree={url_abspath}",
+                        "commit",
+                        "-m",
+                        "Copier automated commit for draft changes",
+                        "--no-verify",
+                        "--no-gpg-sign",
+                    )
+                    warn(
+                        "Dirty template changes included automatically.",
+                        DirtyLocalWarning,
+                    )
 
     with local.cwd(location):
         ## The `git checkout -f <ref>` command doesn't works when repo is local, dirty
