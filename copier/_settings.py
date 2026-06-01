@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import os
+import posixpath
 import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from os.path import expanduser
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit, urlunsplit
 
 import yaml
 from platformdirs import user_config_path
@@ -138,10 +140,11 @@ def _is_trusted(
         if isinstance(trust_or_settings, SettingsModel)
         else trust_or_settings
     )
+    normalized_repository = _normalize(repository)
     return any(
-        repository.startswith(_normalize(t))
+        normalized_repository.startswith(_normalize(t))
         if t.endswith("/")
-        else repository == _normalize(t)
+        else normalized_repository == _normalize(t)
         for t in trust
     )
 
@@ -149,4 +152,15 @@ def _is_trusted(
 def _normalize(url: str) -> str:
     if url.startswith("~"):  # Only expand on str to avoid messing with URLs
         url = expanduser(url)  # noqa: PTH111
-    return url
+    if "://" in url:
+        parts = urlsplit(url)
+        path = posixpath.normpath(parts.path) if parts.path else parts.path
+        if parts.path.endswith("/") and not path.endswith("/"):
+            path += "/"
+        return urlunsplit(
+            (parts.scheme, parts.netloc, path, parts.query, parts.fragment)
+        )
+    normalized = os.path.normpath(url)
+    if url.endswith(("/", os.sep)) and not normalized.endswith(os.sep):
+        normalized += os.sep
+    return normalized

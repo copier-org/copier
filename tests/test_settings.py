@@ -159,12 +159,32 @@ def test_load_settings_with_invalid_data(
         ("https://github.com/user/repo.git", {"https://github.com/user"}, False),
         ("https://github.com/user/repo.git", {"https://github.com/"}, True),
         ("https://github.com/user/repo.git", {"https://github.com"}, False),
+        (
+            "https://github.com/user/../evil/repo.git",
+            {"https://github.com/user/"},
+            False,
+        ),
+        (
+            "https://github.com/user/../evil/repo.git",
+            {"https://github.com/user/../evil/repo.git"},
+            True,
+        ),
         (f"{Path.home()}/template", [], False),
         (f"{Path.home()}/template", {f"{Path.home()}/template"}, True),
         (f"{Path.home()}/template", {"~/template"}, True),
         (f"{Path.home()}/path/to/template", {"~/path/to/template"}, True),
         (f"{Path.home()}/path/to/template", {"~/path/to/"}, True),
         (f"{Path.home()}/path/to/template", {"~/path/to"}, False),
+        (
+            f"{Path.home()}/trusted/../attacker/template",
+            {f"{Path.home()}/trusted/"},
+            False,
+        ),
+        (
+            f"{Path.home()}/trusted/../attacker/template",
+            {"~/trusted/"},
+            False,
+        ),
     ],
 )
 def test_is_trusted(repository: str, trust: Sequence[str], expected: bool) -> None:
