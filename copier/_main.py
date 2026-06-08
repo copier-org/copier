@@ -364,6 +364,12 @@ class Worker:
         answers: AnyByStrDict = {}
         commit = self.template.commit
         src = self.template.url
+        # For local template paths, store as absolute so the path remains
+        # valid if the CWD changes between copy and update operations
+        if src:
+            src_path = Path(src)
+            if src_path.exists():
+                src = str(src_path.resolve())
         for key, value in (("_commit", commit), ("_src_path", src)):
             if value is not None:
                 answers[key] = value
