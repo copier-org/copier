@@ -364,12 +364,20 @@ class Worker:
         answers: AnyByStrDict = {}
         commit = self.template.commit
         src = self.template.url
-        # For local template paths, store as absolute so the path remains
-        # valid if the CWD changes between copy and update operations
+        # Resolve template path to a relative one when possible
         if src:
             src_path = Path(src)
-            if src_path.exists():
-                src = str(src_path.resolve())
+            # Only resolve local relative paths that exist on disk
+            if not src_path.is_absolute() and src_path.exists():
+                src_resolved = src_path.resolve()
+                dst_resolved = self.subproject.local_abspath.resolve()
+                try:
+                    src = os.path.relpath(
+                        str(src_resolved), str(dst_resolved)
+                    )
+                except ValueError:
+                    # Fallback for cross-drive paths on Windows
+                    src = str(src_resolved)
         for key, value in (("_commit", commit), ("_src_path", src)):
             if value is not None:
                 answers[key] = value
