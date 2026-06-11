@@ -13,7 +13,10 @@ from copier import run_copy, run_update
 from copier._main import Worker
 from copier._user_data import load_answersfile_data
 from copier._vcs import (
+    _is_remote,
+    _mirror_path,
     clone,
+    get_git,
     get_git_version,
     get_latest_tag,
     get_repo,
@@ -93,6 +96,116 @@ def test_local_clone() -> None:
     assert local_tmp
     assert Path(local_tmp, "README.md").exists()
     shutil.rmtree(local_tmp, ignore_errors=True)
+
+
+def _make_remote_repo(path: Path) -> str:
+    """Create a small local git repo and return a ``file://`` URL to it.
+
+    A ``file://`` URL is treated as remote by ``clone()``, so this exercises
+    the mirror-cache code path without requiring network access.
+    """
+    path.mkdir(parents=True, exist_ok=True)
+    with local.cwd(path):
+        git("init")
+        Path("README.md").write_text("hello world")
+        git("add", "-A")
+        git("commit", "-m", "init")
+        git("tag", "v1.0.0")
+    return path.as_uri()
+
+
+def test_is_remote() -> None:
+    assert _is_remote("https://github.com/copier-org/copier.git")
+    assert _is_remote("git@github.com:copier-org/copier.git")
+    assert _is_remote("file:///some/where/repo.git")
+    # Local, on-disk paths are not remote.
+    assert not _is_remote(str(Path.cwd()))
+    # `get_repo` marks resolved local repos so they keep the old behavior.
+    assert not _is_remote(get_repo(str(Path.cwd())) or "")
+
+
+def test_remote_clone_creates_and_reuses_mirror(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("COPIER_CACHE_DIR", str(tmp_path / "cache"))
+    url = _make_remote_repo(tmp_path / "remote")
+
+    # First use creates the mirror and checks out a worktree.
+    dst1 = clone(url)
+    mirror = _mirror_path(url)
+    assert (mirror / "objects").is_dir()
+    assert Path(dst1, "README.md").read_text() == "hello world"
+
+    # Drop a sentinel inside the mirror; if the second use re-clones from
+    # scratch the mirror directory (and the sentinel) would be recreated.
+    sentinel = mirror / "copier-cache-sentinel"
+    sentinel.write_text("kept")
+
+    dst2 = clone(url)
+    assert sentinel.exists(), "mirror was re-created instead of reused"
+    assert Path(dst2, "README.md").exists()
+    assert dst2 != dst1  # a fresh worktree per use
+
+    shutil.rmtree(dst1, ignore_errors=True)
+    shutil.rmtree(dst2, ignore_errors=True)
+
+
+def test_remote_clone_checks_out_ref(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("COPIER_CACHE_DIR", str(tmp_path / "cache"))
+    url = _make_remote_repo(tmp_path / "remote")
+
+    dst = clone(url, "v1.0.0")
+    assert Path(dst, "README.md").read_text() == "hello world"
+    shutil.rmtree(dst, ignore_errors=True)
+
+
+def test_remote_clone_prunes_stale_worktree(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("COPIER_CACHE_DIR", str(tmp_path / "cache"))
+    url = _make_remote_repo(tmp_path / "remote")
+    mirror = _mirror_path(url)
+
+    # Simulate Copier's cleanup: the worktree directory is removed, leaving a
+    # stale registration behind in the mirror.
+    dst1 = clone(url)
+    shutil.rmtree(dst1, ignore_errors=True)
+    assert not Path(dst1).exists()
+
+    # The next use must prune the stale registration and succeed.
+    dst2 = clone(url)
+    assert Path(dst2, "README.md").exists()
+    worktrees = get_git()("-C", str(mirror), "worktree", "list", "--porcelain")
+    assert Path(dst1).as_posix() not in worktrees.replace("\\", "/")
+    shutil.rmtree(dst2, ignore_errors=True)
+
+
+def test_remote_clone_recovers_from_corrupt_mirror(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("COPIER_CACHE_DIR", str(tmp_path / "cache"))
+    url = _make_remote_repo(tmp_path / "remote")
+
+    dst1 = clone(url)
+    shutil.rmtree(dst1, ignore_errors=True)
+    mirror = _mirror_path(url)
+
+    # Simulate a partial/corrupt cache entry: the `objects` directory survives
+    # but the rest of the repository is gone (e.g. an interrupted deletion).
+    for child in mirror.iterdir():
+        if child.name != "objects":
+            if child.is_dir():
+                shutil.rmtree(child, ignore_errors=True)
+            else:
+                child.unlink()
+    assert (mirror / "objects").is_dir()
+
+    # The next use must discard the corrupt mirror and rebuild it.
+    dst2 = clone(url)
+    assert Path(dst2, "README.md").read_text() == "hello world"
+    shutil.rmtree(dst2, ignore_errors=True)
 
 
 def test_local_dirty_clone(
