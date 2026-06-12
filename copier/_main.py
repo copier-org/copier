@@ -422,7 +422,7 @@ class Worker:
 
             extra_env = {k[1:].upper(): str(v) for k, v in extra_context.items()}
             with local.cwd(working_directory), local.env(**extra_env):
-                process = subprocess.run(task_cmd, shell=use_shell, env=local.env)
+                process = subprocess.run(task_cmd, shell=use_shell, env=dict(local.env))
                 if process.returncode:
                     raise TaskError.from_process(process)
 

@@ -18,6 +18,7 @@ from unittest import mock
 import pytest
 import yaml
 from plumbum import CommandNotFound, local
+from plumbum.machines.local import LocalMachine
 
 import copier
 from copier import run_copy
@@ -58,12 +59,12 @@ def test_copy_without_git(
 
     original_which = local.which
 
-    def fake_which(progname: Any) -> Any:
+    def fake_which(_cls: LocalMachine, progname: Any) -> Any:
         if Path(progname).name in {"git", "git.exe"}:
             raise CommandNotFound(progname, [])
         return original_which(progname)
 
-    monkeypatch.setattr(local, "which", fake_which)
+    monkeypatch.setattr(LocalMachine, "which", fake_which)
 
     # Sanity-check: the patch makes plumbum behave as if `git` is missing.
     with pytest.raises(CommandNotFound):

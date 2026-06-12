@@ -60,12 +60,12 @@ copier --help-all
 import json
 import sys
 from collections.abc import Callable, Iterable
-from os import PathLike
 from pathlib import Path
 from textwrap import dedent
+from typing import Literal, cast
 
 import yaml
-from plumbum import cli, colors
+from plumbum import LocalPath, cli, colors
 
 from ._main import get_update_data, run_copy, run_recopy, run_update
 from ._tools import copier_version, try_enum
@@ -92,7 +92,7 @@ def _handle_exceptions(method: Callable[[], int | None]) -> int:
     return 0
 
 
-class CopierApp(cli.Application):  # type: ignore[misc]
+class CopierApp(cli.Application):
     """The Copier CLI application."""
 
     DESCRIPTION = "Create a new project from a template."
@@ -110,14 +110,14 @@ class CopierApp(cli.Application):  # type: ignore[misc]
                 """
         )
     )
-    VERSION = copier_version()
+    VERSION = str(copier_version())
     CALL_MAIN_IF_NESTED_COMMAND = False
 
 
-class _Subcommand(cli.Application):  # type: ignore[misc]
+class _Subcommand(cli.Application):
     """Base class for Copier subcommands."""
 
-    def __init__(self, executable: PathLike[str]) -> None:
+    def __init__(self, executable: str | None = None) -> None:
         self.data: AnyByStrDict = {}
         super().__init__(executable)
 
@@ -174,7 +174,7 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
         help="Skip template tasks execution",
     )
 
-    @cli.switch(  # type: ignore[untyped-decorator]
+    @cli.switch(
         ["-d", "--data"],
         str,
         "VARIABLE=VALUE",
@@ -192,12 +192,12 @@ class _Subcommand(cli.Application):  # type: ignore[misc]
             key, value = arg.split("=", 1)
             self.data[key] = value
 
-    @cli.switch(  # type: ignore[untyped-decorator]
+    @cli.switch(
         ["--data-file"],
         cli.ExistingFile,
         help="Load data from a YAML file",
     )
-    def data_file_switch(self, path: cli.ExistingFile) -> None:
+    def data_file_switch(self, path: LocalPath) -> None:
         """Update [data][] with provided values.
 
         Arguments:
@@ -319,7 +319,7 @@ class CopierRecopySubApp(_Subcommand):
         help="Skip questions that have already been answered",
     )
 
-    def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
+    def main(self, destination_path: str = ".") -> int:
         """Call [run_recopy][copier.run_recopy].
 
         Parameters:
@@ -402,7 +402,7 @@ class CopierUpdateSubApp(_Subcommand):
         help="Skip questions that have already been answered",
     )
 
-    def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
+    def main(self, destination_path: str = ".") -> int:
         """Call [run_update][copier.run_update].
 
         Parameters:
@@ -427,7 +427,7 @@ class CopierUpdateSubApp(_Subcommand):
                 overwrite=True,
                 pretend=self.pretend,
                 quiet=self.quiet,
-                conflict=self.conflict,
+                conflict=cast(Literal["rej", "inline"], self.conflict),
                 context_lines=self.context_lines,
                 unsafe=self.unsafe,
                 skip_answered=self.skip_answered,
@@ -438,7 +438,7 @@ class CopierUpdateSubApp(_Subcommand):
 
 
 @CopierApp.subcommand("check-update")
-class CopierCheckUpdateSubApp(cli.Application):  # type: ignore[misc]
+class CopierCheckUpdateSubApp(cli.Application):
     """The `copier check-update` subcommand.
 
     Use this subcommand to check if an existing subproject is using the
@@ -485,7 +485,7 @@ class CopierCheckUpdateSubApp(cli.Application):  # type: ignore[misc]
         help="Output format, either 'plain' (the default) or 'json'.",
     )
 
-    def main(self, destination_path: cli.ExistingDirectory = ".") -> int:
+    def main(self, destination_path: str = ".") -> int:
         """Call get_update_data, parse its output, and write to console.
 
         Parameters:
