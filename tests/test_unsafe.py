@@ -361,7 +361,7 @@ def test_update_cli(
     settings_path: Path,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ["src", "dst"])
-    unsafe_args = [unsafe] if unsafe else []
+    unsafe_args = [unsafe] if isinstance(unsafe, str) else []
 
     with local.cwd(src):
         build_file_tree(

@@ -12,7 +12,7 @@ from warnings import warn
 from packaging import version
 from packaging.version import InvalidVersion, Version
 from plumbum import TF, CommandNotFound, ProcessExecutionError, colors, local
-from plumbum.machines import LocalCommand
+from plumbum.commands.base import BaseCommand
 
 from ._types import OptBool, OptStrOrPath, StrOrPath
 from .errors import DirtyLocalWarning, ShallowCloneWarning
@@ -27,7 +27,7 @@ class _PathStr(str):
     """A string that represents a path."""
 
 
-def get_git(context_dir: OptStrOrPath = None) -> LocalCommand:
+def get_git(context_dir: OptStrOrPath = None) -> BaseCommand:
     """Gets `git` command, or fails if it's not available."""
     command = local["git"].with_env(
         GIT_AUTHOR_NAME=GIT_USER_NAME,

@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any, Protocol
 from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
 from plumbum.cmd import git as _git
-from plumbum.machines import LocalCommand
+from plumbum.commands.base import BaseCommand
 from prompt_toolkit.input.ansi_escape_sequences import REVERSE_ANSI_SEQUENCES
 from prompt_toolkit.keys import Keys
 from pytest_gitconfig.plugin import DEFAULT_GIT_USER_EMAIL, DEFAULT_GIT_USER_NAME
@@ -154,7 +154,7 @@ def expect_prompt(
             tui.expect_exact(f"({expected_type})")
 
 
-git: LocalCommand = _git.with_env(
+git: BaseCommand = _git.with_env(
     GIT_AUTHOR_NAME=DEFAULT_GIT_USER_NAME,
     GIT_AUTHOR_EMAIL=DEFAULT_GIT_USER_EMAIL,
     GIT_COMMITTER_NAME=DEFAULT_GIT_USER_NAME,

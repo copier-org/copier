@@ -394,6 +394,7 @@ Usage:
     copier copy [SWITCHES] template_src destination_path
 
 Meta-switches:
+    --completions SHELL:{bash, fish} Prints shell completion script and quits
     -h, --help                      Prints this help message and quits
     --help-all                      Prints help messages of all sub-commands and
                                     quits
@@ -460,6 +461,7 @@ Usage:
     copier update [SWITCHES] [destination_path=.]
 
 Meta-switches:
+    --completions SHELL:{bash, fish} Prints shell completion script and quits
     -h, --help                      Prints this help message and quits
     --help-all                      Prints help messages of all sub-commands and
                                     quits
@@ -528,6 +530,7 @@ Usage:
     copier check-update [SWITCHES] [destination_path=.]
 
 Meta-switches:
+    --completions SHELL:{bash, fish} Prints shell completion script and quits
     -h, --help                      Prints this help message and quits
     --help-all                      Prints help messages of all sub-commands and
                                     quits
