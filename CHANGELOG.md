@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.15.2 (2026-06-12)
+
+### Fix
+
+- report template path for Jinja errors in path segments (#2686)
+- fix answers file override/setting to use full path and not only filename
+- treat blank boolean strings as false (#2675)
+- **updating**: don't skip gitignored `.rej` files when converting to inline conflict
+    markers (#2668)
+
+### Refactor
+
+- deprecate locating `{{ _copier_conf.answers_file }}.jinja` file in non-root directory
+
+### Security
+
+- prevent trust bypass via path traversal in trusted template URLs
+
 ## v9.15.1 (2026-05-13)
 
 ### Fix
