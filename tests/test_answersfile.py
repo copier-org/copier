@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from contextlib import AbstractContextManager, nullcontext as does_not_raise
 from pathlib import Path
 from textwrap import dedent
@@ -549,3 +550,89 @@ def test_external_data_path_outside_destination_root_is_unsafe_on_update(
 
     with expected:
         copier.run_update(project, defaults=True, overwrite=True, unsafe=unsafe)
+
+
+
+def test_relative_template_path_stored_as_absolute_when_outside_destination(
+    tmp_path: Path,
+) -> None:
+    """Template path not under destination -> stored as absolute."""
+    root = tmp_path
+    template_dir = root / "template"
+    project_dir = root / "project"
+
+    build_file_tree(
+        {
+            (template_dir / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+        }
+    )
+
+    project_dir.mkdir(exist_ok=True)
+
+    old_cwd = Path.cwd()
+    try:
+        os.chdir(root)
+        copier.run_copy("./template", "./project", defaults=True, overwrite=True)
+    finally:
+        os.chdir(old_cwd)
+
+    answers = load_answersfile_data(project_dir)
+    assert answers["_src_path"] == str(template_dir.resolve())
+
+
+def test_relative_template_path_stored_as_relative_when_inside_destination(
+    tmp_path: Path,
+) -> None:
+    """Template path inside destination -> stored as relative."""
+    root = tmp_path
+    project_dir = root / "project"
+    hidden_template_dir = project_dir / ".hidden_template"
+
+    build_file_tree(
+        {
+            (hidden_template_dir / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+        }
+    )
+
+    project_dir.mkdir(exist_ok=True)
+
+    old_cwd = Path.cwd()
+    try:
+        os.chdir(root)
+        copier.run_copy(
+            "./project/.hidden_template", "./project", defaults=True, overwrite=True
+        )
+    finally:
+        os.chdir(old_cwd)
+
+    answers = load_answersfile_data(project_dir)
+    assert answers["_src_path"] == ".hidden_template"
+
+
+def test_absolute_template_path_stored_as_is(
+    tmp_path: Path,
+) -> None:
+    """Absolute template path -> stored unchanged (skips resolution block)."""
+    template_dir = tmp_path / "template"
+    project_dir = tmp_path / "project"
+
+    build_file_tree(
+        {
+            (template_dir / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+        }
+    )
+
+    project_dir.mkdir(exist_ok=True)
+
+    copier.run_copy(
+        str(template_dir), str(project_dir), defaults=True, overwrite=True
+    )
+
+    answers = load_answersfile_data(project_dir)
+    assert answers["_src_path"] == str(template_dir)
