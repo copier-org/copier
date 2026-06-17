@@ -10,6 +10,7 @@ from hashlib import sha256
 from pathlib import Path
 from shutil import rmtree
 from tempfile import TemporaryDirectory, mkdtemp
+from urllib.parse import urlsplit, urlunsplit
 from warnings import warn
 
 from packaging import version
@@ -198,7 +199,7 @@ def get_latest_tag(url: str, use_prereleases: OptBool = False) -> str:
         return "HEAD"
 
 
-def get_cache_dir() -> Path:
+def _get_cache_dir() -> Path:
     """Get the directory where cached git mirrors are stored.
 
     Defaults to a per-user cache directory (via `platformdirs`), but can be
@@ -207,13 +208,29 @@ def get_cache_dir() -> Path:
     override = os.environ.get(CACHE_DIR_ENV_VAR)
     if override:
         return Path(override)
-    return Path(user_cache_dir("copier")) / "git"
+    # `appauthor=False` avoids a redundant "copier" path segment on Windows,
+    # e.g. `.../copier/Cache` instead of `.../copier/copier/Cache`.
+    return Path(user_cache_dir("copier", appauthor=False)) / "git"
 
 
-def _mirror_path(url: str) -> Path:
+def _strip_credentials(url: str) -> str:
+    """Remove any embedded `user:password@` credentials from `url`.
+
+    Used to build the cache key so that the same repository accessed with
+    different credentials maps to a single mirror, and so secrets never
+    influence the cache layout.
+    """
+    parts = urlsplit(url)
+    if parts.netloc and "@" in parts.netloc:
+        netloc = parts.netloc.rsplit("@", 1)[1]
+        return urlunsplit(parts._replace(netloc=netloc))
+    return url
+
+
+def _get_mirror_path(url: str) -> Path:
     """Compute the deterministic on-disk location of the mirror for `url`."""
-    digest = sha256(url.encode("utf-8")).hexdigest()
-    return get_cache_dir() / f"{digest}.git"
+    digest = sha256(_strip_credentials(url).encode("utf-8")).hexdigest()
+    return _get_cache_dir() / f"{digest}.git"
 
 
 def _is_remote(url: str) -> bool:
@@ -259,7 +276,7 @@ def _is_valid_mirror(mirror: Path) -> bool:
     return out == "true"
 
 
-def get_or_create_mirror(url: str) -> Path:
+def _get_or_create_mirror(url: str) -> Path:
     """Get a cached `--mirror` clone of `url`, creating or refreshing it.
 
     On first use the remote is mirror-cloned into the cache. On subsequent
@@ -268,7 +285,7 @@ def get_or_create_mirror(url: str) -> Path:
     corrupt or partial cache entry is discarded and re-created.
     """
     git = get_git()
-    mirror = _mirror_path(url)
+    mirror = _get_mirror_path(url)
     if _is_valid_mirror(mirror):
         # Refreshing the existing mirror. Use `--git-dir` explicitly when
         # operating on the bare repository so this works even when Git is
@@ -282,32 +299,31 @@ def get_or_create_mirror(url: str) -> Path:
         if mirror.exists():
             _force_rmtree(mirror)
 
-        '''Creating the mirror atomically: clone into a staging directory, then
-        move it into place. If a concurrent Copier process created the
-        mirror first, discard ours and reuse theirs. This avoids colliding
-        on a half-written mirror without requiring full inter-process locks.
-        A fresh `--mirror` clone already has every ref, so no fetch is needed.'''
-
+        # Creating the mirror atomically: clone into a staging directory, then
+        # move it into place. If a concurrent Copier process created the
+        # mirror first, discard ours and reuse theirs. This avoids colliding
+        # on a half-written mirror without requiring full inter-process locks.
+        # A fresh `--mirror` clone already has every ref, so no fetch is needed.
         mirror.parent.mkdir(parents=True, exist_ok=True)
-        staging = Path(mkdtemp(prefix=CLONE_PREFIX, dir=mirror.parent))
-        try:
-            staging_repo = staging / "repo.git"
+        with TemporaryDirectory(
+            prefix=CLONE_PREFIX, dir=mirror.parent, ignore_cleanup_errors=True
+        ) as staging:
+            staging_repo = Path(staging) / "repo.git"
             git("clone", "--mirror", url, str(staging_repo))
             try:
                 staging_repo.rename(mirror)
             except OSError:
                 if not _is_valid_mirror(mirror):
                     raise
-        finally:
-            rmtree(staging, ignore_errors=True)
     return mirror
 
 
 def _clone_via_cache(ref: str, location: str, mirror: Path) -> str:
     """Create a temporary worktree of `mirror` at `ref` in `location`.
-    
+
     `git worktree add` refuses a path that already exists, so remove the
-    pre-allocated (empty) placeholder directory and let git recreate it."""
+    pre-allocated (empty) placeholder directory and let git recreate it.
+    """
     git = get_git()
     placeholder = Path(location)
     if placeholder.exists():
@@ -347,7 +363,7 @@ def clone(url: str, ref: str = "HEAD", location: str | None = None) -> str:
         location = mkdtemp(prefix=CLONE_PREFIX)
     # Remote templates: use a cached mirror + temporary worktree.
     if _is_remote(url):
-        mirror = get_or_create_mirror(url)
+        mirror = _get_or_create_mirror(url)
         return _clone_via_cache(ref, location, mirror)
     # Local templates: keep the original clone behavior.
     _clone = git["clone", "--no-checkout", url, location]
