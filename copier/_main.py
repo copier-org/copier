@@ -1412,13 +1412,13 @@ class Worker:
                     "HEAD",
                     subproject_head,
                 ).splitlines()
-                exclude_plus_removed = list(
-                    set(self.exclude).union(
-                        f"/{escape_git_path(path)}"
-                        for path in map(normalize_git_path, files_removed)
-                        if not self.match_skip(Path(path))
-                    )
-                )
+                removed_paths = []
+                for path in map(normalize_git_path, files_removed):
+                    if (subproject_top / path).exists():
+                        continue
+                    if not self.match_skip(Path(path)):
+                        removed_paths.append(f"/{escape_git_path(path)}")
+                exclude_plus_removed = list(set(self.exclude).union(removed_paths))
             # Clear last answers cache to load possible answers migration, if
             # skip_answered flag is not set
             if self.skip_answered is False:
@@ -1543,9 +1543,7 @@ class Worker:
                         # Don't exclude template-generated files that happen to
                         # be gitignored — they should still be updated.
                         # Fixes #2729, regression of #1162.
-                        if (
-                            Path(new_copy) / normalize_git_path(filepath)
-                        ).exists():
+                        if (Path(new_copy) / normalize_git_path(filepath)).exists():
                             continue
                         apply_cmd = apply_cmd["--exclude", filepath]
                 (apply_cmd << diff)(retcode=None)
