@@ -1416,7 +1416,8 @@ class Worker:
                     set(self.exclude).union(
                         f"/{escape_git_path(path)}"
                         for path in map(normalize_git_path, files_removed)
-                        if not self.match_skip(Path(path))
+                        if not (subproject_top / path).exists()
+                        and not self.match_skip(Path(path))
                     )
                 )
             # Clear last answers cache to load possible answers migration, if
@@ -1539,7 +1540,13 @@ class Worker:
                 # adds `--exclude file1 --exclude file2` to `git apply` command
                 for filename in ignored_files.splitlines():
                     if filename.startswith("!! "):
-                        apply_cmd = apply_cmd["--exclude", filename[3:]]
+                        filepath = filename[3:]
+                        # Don't exclude template-generated files that happen to
+                        # be gitignored — they should still be updated.
+                        # Fixes #2729, regression of #1162.
+                        if (Path(new_copy) / normalize_git_path(filepath)).exists():
+                            continue
+                        apply_cmd = apply_cmd["--exclude", filepath]
                 (apply_cmd << diff)(retcode=None)
                 if self.conflict == "inline":
                     conflicted = []

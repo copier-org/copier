@@ -1943,6 +1943,41 @@ def test_gitignore_file_unignored(
     assert load_answersfile_data(dst).get("_commit") == "v3"
 
 
+def test_update_keeps_template_generated_gitignored_file(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    build_file_tree(
+        {
+            src / "{{ _copier_conf.answers_file }}.jinja": (
+                "{{ _copier_answers|to_yaml }}"
+            ),
+            src / ".env.jinja": "VERSION=v1",
+        }
+    )
+    with local.cwd(src):
+        git_init("v1")
+        git("tag", "v1")
+
+    build_file_tree({src / ".env.jinja": "VERSION=v2"})
+    with local.cwd(src):
+        git("commit", "-am2")
+        git("tag", "v2")
+
+    run_copy(str(src), dst, vcs_ref="v1")
+    assert (dst / ".env").read_text() == "VERSION=v1"
+    with local.cwd(dst):
+        Path(".gitignore").write_text(".env\n")
+        git("init")
+        git("add", ".")
+        assert ".env" not in git("ls-files", "--", ".env").splitlines()
+        git("commit", "-m1")
+
+    run_update(dst, overwrite=True)
+    assert (dst / ".env").read_text() == "VERSION=v2"
+
+
 def test_update_with_answers_with_umlaut(
     tmp_path_factory: pytest.TempPathFactory,
 ) -> None:
