@@ -1,7 +1,6 @@
 import os
 import shutil
 from collections.abc import Callable, Iterator, Sequence
-from contextlib import ExitStack
 from pathlib import Path
 from unittest import mock
 
@@ -100,16 +99,20 @@ def test_local_clone() -> None:
 
 
 @pytest.fixture
-def remote_repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> str:
+def remote_repo(
+    tmp_path_factory: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch
+) -> str:
     """A small local git repo exposed via a ``file://`` URL (treated as remote).
 
     A ``file://`` URL is treated as remote by ``clone()``, so this exercises
     the mirror-cache code path without requiring network access. The mirror
     cache is redirected to a temp dir to keep the test isolated.
+
+    Uses ``tmp_path_factory`` rather than ``tmp_path`` so the repo and cache
+    don't share a path with a test's own ``tmp_path``.
     """
-    monkeypatch.setenv("COPIER_CACHE_DIR", str(tmp_path / "cache"))
-    path = tmp_path / "remote"
-    path.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("COPIER_CACHE_DIR", str(tmp_path_factory.mktemp("cache")))
+    path = tmp_path_factory.mktemp("remote_repo")
     with local.cwd(path):
         git("init")
         Path("README.md").write_text("hello world")
@@ -117,22 +120,6 @@ def remote_repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> str:
         git("commit", "-m", "init")
         git("tag", "v1.0.0")
     return path.as_uri()
-
-
-@pytest.fixture
-def clone_cleanup() -> Iterator[Callable[[str], str]]:
-    """Register clone destinations to remove on teardown, even on failure.
-
-    Returns a function that records and returns its argument, so test
-    assertions can't leak temporary worktrees when they fail.
-    """
-    with ExitStack() as stack:
-
-        def register(dst: str) -> str:
-            stack.callback(shutil.rmtree, dst, ignore_errors=True)
-            return dst
-
-        yield register
 
 
 def test_is_remote() -> None:
@@ -154,10 +141,13 @@ def test_mirror_path_ignores_credentials() -> None:
 
 
 def test_remote_clone_creates_and_reuses_mirror(
-    remote_repo: str, clone_cleanup: Callable[[str], str]
+    remote_repo: str, tmp_path_factory: pytest.TempPathFactory
 ) -> None:
-    # First use creates the mirror and checks out a worktree.
-    dst1 = clone_cleanup(clone(remote_repo))
+    # First use creates the mirror and checks out a worktree. Passing an
+    # explicit, test-managed location keeps the worktree from leaking. Distinct
+    # subpaths under one base dir avoids `mktemp` reusing a deleted name.
+    clones = tmp_path_factory.mktemp("clones")
+    dst1 = clone(remote_repo, location=str(clones / "first"))
     mirror = _get_mirror_path(remote_repo)
     assert (mirror / "objects").is_dir()
     assert Path(dst1, "README.md").read_text() == "hello world"
@@ -167,41 +157,43 @@ def test_remote_clone_creates_and_reuses_mirror(
     sentinel = mirror / "copier-cache-sentinel"
     sentinel.write_text("kept")
 
-    dst2 = clone_cleanup(clone(remote_repo))
+    dst2 = clone(remote_repo, location=str(clones / "second"))
     assert sentinel.exists(), "mirror was re-created instead of reused"
     assert Path(dst2, "README.md").exists()
     assert dst2 != dst1  # a fresh worktree per use
 
 
 def test_remote_clone_checks_out_ref(
-    remote_repo: str, clone_cleanup: Callable[[str], str]
+    remote_repo: str, tmp_path_factory: pytest.TempPathFactory
 ) -> None:
-    dst = clone_cleanup(clone(remote_repo, "v1.0.0"))
+    dst = clone(remote_repo, "v1.0.0", location=str(tmp_path_factory.mktemp("clone")))
     assert Path(dst, "README.md").read_text() == "hello world"
 
 
 def test_remote_clone_prunes_stale_worktree(
-    remote_repo: str, clone_cleanup: Callable[[str], str]
+    remote_repo: str, tmp_path_factory: pytest.TempPathFactory
 ) -> None:
     mirror = _get_mirror_path(remote_repo)
+    clones = tmp_path_factory.mktemp("clones")
 
     # Simulate Copier's cleanup: the worktree directory is removed, leaving a
     # stale registration behind in the mirror.
-    dst1 = clone(remote_repo)
+    dst1 = clone(remote_repo, location=str(clones / "stale"))
     shutil.rmtree(dst1, ignore_errors=True)
     assert not Path(dst1).exists()
 
     # The next use must prune the stale registration and succeed.
-    dst2 = clone_cleanup(clone(remote_repo))
+    dst2 = clone(remote_repo, location=str(clones / "fresh"))
     assert Path(dst2, "README.md").exists()
     worktrees = get_git()("-C", str(mirror), "worktree", "list", "--porcelain")
     assert Path(dst1).as_posix() not in worktrees.replace("\\", "/")
 
 
 def test_remote_clone_recovers_from_corrupt_mirror(
-    remote_repo: str, clone_cleanup: Callable[[str], str]
+    remote_repo: str, tmp_path_factory: pytest.TempPathFactory
 ) -> None:
-    dst1 = clone(remote_repo)
+    clones = tmp_path_factory.mktemp("clones")
+    dst1 = clone(remote_repo, location=str(clones / "orig"))
     shutil.rmtree(dst1, ignore_errors=True)
     mirror = _get_mirror_path(remote_repo)
 
@@ -216,7 +208,7 @@ def test_remote_clone_recovers_from_corrupt_mirror(
     assert (mirror / "objects").is_dir()
 
     # The next use must discard the corrupt mirror and rebuild it.
-    dst2 = clone_cleanup(clone(remote_repo))
+    dst2 = clone(remote_repo, location=str(clones / "rebuilt"))
     assert Path(dst2, "README.md").read_text() == "hello world"
 
 

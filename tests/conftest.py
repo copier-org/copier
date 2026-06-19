@@ -95,6 +95,19 @@ def default_gitconfig(default_gitconfig: GitConfig) -> GitConfig:
     return default_gitconfig
 
 
+@pytest.fixture(scope="session", autouse=True)
+def copier_cache_dir(tmp_path_factory: pytest.TempPathFactory) -> Iterator[None]:
+    """Redirect the git template mirror cache to a temporary directory.
+
+    Avoids polluting the user's real Copier cache with the templates cloned
+    during the test suite.
+    """
+    cache_dir = tmp_path_factory.mktemp("copier_cache")
+    with pytest.MonkeyPatch.context() as monkeypatch:
+        monkeypatch.setenv("COPIER_CACHE_DIR", str(cache_dir))
+        yield
+
+
 @pytest.fixture
 def gitconfig(gitconfig: GitConfig) -> Iterator[GitConfig]:
     """
