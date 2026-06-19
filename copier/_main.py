@@ -1412,13 +1412,14 @@ class Worker:
                     "HEAD",
                     subproject_head,
                 ).splitlines()
-                removed_paths = []
-                for path in map(normalize_git_path, files_removed):
-                    if (subproject_top / path).exists():
-                        continue
-                    if not self.match_skip(Path(path)):
-                        removed_paths.append(f"/{escape_git_path(path)}")
-                exclude_plus_removed = list(set(self.exclude).union(removed_paths))
+                exclude_plus_removed = list(
+                    set(self.exclude).union(
+                        f"/{escape_git_path(path)}"
+                        for path in map(normalize_git_path, files_removed)
+                        if not (subproject_top / path).exists()
+                        and not self.match_skip(Path(path))
+                    )
+                )
             # Clear last answers cache to load possible answers migration, if
             # skip_answered flag is not set
             if self.skip_answered is False:
