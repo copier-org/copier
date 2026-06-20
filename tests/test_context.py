@@ -1,5 +1,4 @@
 import json
-import sys
 from pathlib import Path
 from uuid import uuid4
 
@@ -12,7 +11,7 @@ from .helpers import build_file_tree, git_save
 
 
 def test_no_path_variables(
-    tmp_path_factory: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch
+    tmp_path_factory: pytest.TempPathFactory,
 ) -> None:
     """Test that there are no context variables of type `pathlib.Path`."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -60,7 +59,6 @@ def test_no_path_variables(
             src / "test.txt.jinja": "{{ __assert() | default('', true) }}",
         }
     )
-    monkeypatch.setattr("sys.path", [str(src), *sys.path])
     copier.run_copy(str(src), dst, unsafe=True)
     assert (dst / "test.txt").read_text("utf-8") == ""
 
