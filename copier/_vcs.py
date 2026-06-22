@@ -329,8 +329,14 @@ def _clone_via_cache(ref: str, location: str, mirror: Path) -> str:
     if placeholder.exists():
         placeholder.rmdir()
     git(
-        "--git-dir", str(mirror),
-        "worktree", "add", "--detach", "--force", location, ref,
+        "--git-dir",
+        str(mirror),
+        "worktree",
+        "add",
+        "--detach",
+        "--force",
+        location,
+        ref,
     )
     with local.cwd(location):
         git("submodule", "update", "--checkout", "--init", "--recursive", "--force")
