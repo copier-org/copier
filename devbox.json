@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.17.3/.schema/devbox.schema.json",
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.17.4/.schema/devbox.schema.json",
   "packages": [
     "difftastic@0.69.0",
     "editorconfig-checker@3.7.0",

@@ -41,7 +41,7 @@ def lint() -> None:
                     "--name=copier-lint-v1",
                     f"--volume={HERE}:{HERE}:rw,z",
                     f"--workdir={HERE}",
-                    "docker.io/jetpackio/devbox:0.17.3",
+                    "docker.io/jetpackio/devbox:0.17.4",
                     "devbox",
                 ][args]
                 & TEE
