@@ -99,19 +99,17 @@ def test_local_clone() -> None:
 
 
 @pytest.fixture
-def remote_repo(
-    tmp_path_factory: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch
-) -> str:
+def remote_repo(tmp_path_factory: pytest.TempPathFactory) -> str:
     """A small local git repo exposed via a ``file://`` URL (treated as remote).
 
     A ``file://`` URL is treated as remote by ``clone()``, so this exercises
     the mirror-cache code path without requiring network access. The mirror
-    cache is redirected to a temp dir to keep the test isolated.
+    cache itself is redirected to a temp dir by the session-wide ``_cache_dir``
+    fixture in ``conftest.py``.
 
-    Uses ``tmp_path_factory`` rather than ``tmp_path`` so the repo and cache
-    don't share a path with a test's own ``tmp_path``.
+    Uses ``tmp_path_factory`` rather than ``tmp_path`` so the repo doesn't share
+    a path with a test's own ``tmp_path``.
     """
-    monkeypatch.setenv("COPIER_CACHE_DIR", str(tmp_path_factory.mktemp("cache")))
     path = tmp_path_factory.mktemp("remote_repo")
     with local.cwd(path):
         git("init")
