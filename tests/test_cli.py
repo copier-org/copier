@@ -407,6 +407,10 @@ Switches:
                                     extensions, migrations, tasks)
     -a, --answers-file VALUE:str    Update using this path (relative to
                                     `destination_path`) to find the answers file
+    --ask VALUE:str                 Ask the questions matching the given
+                                    fnmatch-pattern, even if they would be
+                                    skipped by --defaults; may be given multiple
+                                    times
     -d, --data VARIABLE=VALUE:str   Make VARIABLE available as VALUE when
                                     rendering the template; may be given
                                     multiple times
@@ -473,6 +477,10 @@ Switches:
                                     extensions, migrations, tasks)
     -a, --answers-file VALUE:str    Update using this path (relative to
                                     `destination_path`) to find the answers file
+    --ask VALUE:str                 Ask the questions matching the given
+                                    fnmatch-pattern, even if they would be
+                                    skipped by --skip-answered or --defaults;
+                                    may be given multiple times
     -c, --context-lines VALUE:int   Lines of context to use for detecting
                                     conflicts. Increase for accuracy, decrease
                                     for resilience.; the default is 3
@@ -503,11 +511,7 @@ Switches:
     -x, --exclude VALUE:str         A name or shell-style pattern matching files
                                     or folders that must not be copied; may be
                                     given multiple times
-    -k, --ask VALUE:str             Ask the questions matching the given pattern,
-                                    even if they would be skipped by 
-                                    --skip-answered or --defaults. May include "*"
-                                    as a wildcard character. May be given multiple
-                                    times.
+
 """)
 
 

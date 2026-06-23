@@ -811,9 +811,9 @@ Don't forget to read [the docs about the answers file](#the-copier-answersyml-fi
 ### `ask`
 
 - Format: `List[str]`
-- CLI flags: `-k`, `--ask`
+- CLI flags: `--ask`
 
-Ask the questions specified, even if they would be skipped by [defaults](#defaults) or [skip-answered](#skip_answered). Names may include "*" to match zero or more characters.
+Ask the questions specified, even if they would be skipped by [defaults](#defaults) or [skip-answered](#skip_answered). Names may include fnmatch-style wildcards
 
 !!! info
 

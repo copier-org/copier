@@ -110,12 +110,20 @@ PATH_TREE: Mapping[StrOrPath, str | bytes] = {
         ("None", ("--data=your_name=None",)),
     ],
 )
+@pytest.mark.parametrize(
+    "ask",
+    (
+        ("your*",),
+        (),
+    )
+)
 def test_copy_default_advertised(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
     name: str,
     args: tuple[str, ...],
     spawn_timeout: int,
+    ask: tuple[str, ...],
 ) -> None:
     """Test that the questions for the user are OK"""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -127,9 +135,19 @@ def test_copy_default_advertised(
     with local.cwd(dst):
         # Copy the v1 template
         tui = spawn(
-            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1") + args,
+            COPIER_PATH + (
+                "copy",
+                str(src),
+                ".",
+                "--vcs-ref=v1",
+                # this ask is always a no-op
+                *(f"--ask={a}" for a in ask)
+            ) + args,
             timeout=spawn_timeout,
         )
+        if ask:
+            # if we sent a no-op ask, we should see a warning about it
+            tui.expect_exact("All questions are asked by default, --ask has no effect without --defaults or --skip-answered.")
         # Check what was captured
         expect_prompt(tui, "in_love", "bool")
         tui.expect_exact("(Y/n)")
@@ -229,6 +247,13 @@ def test_path_completion(
     ],
 )
 @pytest.mark.parametrize("update_action", ("update", "recopy"))
+@pytest.mark.parametrize(
+    "ask",
+    (
+        ("__missing__",),
+        (),
+    )
+)
 def test_update_skip_answered(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
@@ -236,6 +261,7 @@ def test_update_skip_answered(
     update_action: str,
     args: tuple[str, ...],
     spawn_timeout: int,
+    ask: tuple[str, ...],
 ) -> None:
     """Test that the questions for the user are OK"""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -276,6 +302,8 @@ def test_update_skip_answered(
             + (
                 update_action,
                 "--skip-answered",
+                # this ask is always a no-op
+                *(f"--ask={a}" for a in ask),
             ),
             timeout=spawn_timeout * 3,
         )
@@ -283,69 +311,9 @@ def test_update_skip_answered(
         expect_prompt(tui, "your_enemy", "str", help="Secret enemy name")
         tui.expect_exact("******")
         tui.sendline()
-        tui.expect_exact(pexpect.EOF)
-        assert load_answersfile_data(".").get("_commit") == "v2"
-
-@pytest.mark.parametrize(
-    "ask",
-    (
-        ("*enemy*",),
-        ("what_enemy_does"),
-        ("what_enemy_does", "your_enemy"),
-    ),
-)
-@pytest.mark.parametrize("update_action", ("update", "recopy"))
-def test_update_skip_answered_with_ask(
-    ask,
-    tmp_path_factory: pytest.TempPathFactory,
-    spawn: Spawn,
-    update_action: str,
-    spawn_timeout: int,
-) -> None:
-    """Test that the questions for the user are OK"""
-    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
-    with local.cwd(src):
-        build_file_tree(MARIO_TREE)
-        git_save(tag="v1")
-        git("commit", "--allow-empty", "-m", "v2")
-        git("tag", "v2")
-    with local.cwd(dst):
-        # Copy the v1 template
-        tui = spawn(
-            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1", "--data=your_name=Mario"),
-            timeout=spawn_timeout,
-        )
-        # Check what was captured
-        expect_prompt(tui, "in_love", "bool")
-        tui.expect_exact("(Y/n)")
-        tui.sendline()
-        tui.expect_exact("Yes")
-        expect_prompt(tui, "your_enemy", "str", help="Secret enemy name")
-        tui.expect_exact("******")
-        tui.sendline()
-        expect_prompt(tui, "what_enemy_does", "str")
-        tui.expect_exact("Bowser hates Mario")
-        tui.sendline()
-        tui.expect_exact(pexpect.EOF)
-        assert load_answersfile_data(".").get("_commit") == "v1"
-        # Update subproject
-        git_save()
-        tui = spawn(
-            COPIER_PATH
-            + (
-                update_action,
-                "--skip-answered",
-                f"--ask={ask}",
-            ),
-            timeout=spawn_timeout * 3,
-        )
-        # Check what was captured
-        expect_prompt(tui, "your_enemy", "str", help="Secret enemy name")
-        tui.expect_exact("******")
-        tui.sendline()
-        expect_prompt(tui, "what_enemy_does", "str")
-        tui.expect_exact("Bowser hates Mario")
-        tui.sendline()
+        if ask:
+            # we asked for a question that doesn't exist, so we should see a warning about it
+            tui.expect_exact("Asked pattern '__missing__' did not match any question in the template.")
         tui.expect_exact(pexpect.EOF)
         assert load_answersfile_data(".").get("_commit") == "v2"
 
@@ -1264,3 +1232,336 @@ def test_interactive_session_required_for_overwrite_prompt(
     assert (
         b"Interactive session required: Consider using `--overwrite`" in process.stderr
     )
+
+ANIMAL_TREE: Mapping[StrOrPath, str | bytes] = {
+    "copier.yml": (
+        f"""\
+        _templates_suffix: {SUFFIX_TMPL}
+        _envops: {BRACKET_ENVOPS_JSON}
+        animal_name:
+            type: str
+            default: mouse
+        animal_sound:
+            type: str
+            default: squeak
+        what_does_it_eat:
+            type: str
+            default: cheese
+        """
+    ),
+    "[[ _copier_conf.answers_file ]].tmpl": "[[_copier_answers|to_nice_yaml]]",
+}
+
+ANIMAL_TREE_WITH_NEW_FIELD: Mapping[StrOrPath, str | bytes] = {
+    "copier.yml": (
+        f"""\
+        _templates_suffix: {SUFFIX_TMPL}
+        _envops: {BRACKET_ENVOPS_JSON}
+        animal_name:
+            type: str
+            default: mouse
+        animal_sound:
+            type: str
+            default: squeak
+        what_does_it_eat:
+            type: str
+            default: cheese
+        can_it_fly:
+            type: bool
+            default: false
+        """
+    ),
+    "[[ _copier_conf.answers_file ]].tmpl": "[[_copier_answers|to_nice_yaml]]",
+}
+
+@pytest.mark.parametrize(
+    "ask",
+    (
+        ("*it*",),
+        ("what_does_it_eat",),
+        ("what_does_it_eat", "can_it_fly"),
+    ),
+)
+@pytest.mark.parametrize("update_action", (
+    "update",
+    "recopy"
+))
+def test_update_skip_answered_with_ask(
+    ask: tuple[str, ...],
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    update_action: str,
+    spawn_timeout: int,
+) -> None:
+    """Test that the questions for the user are OK"""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(ANIMAL_TREE)
+        git_save(tag="v1")
+        build_file_tree(ANIMAL_TREE_WITH_NEW_FIELD)
+        git_save(tag="v2")
+    with local.cwd(dst):
+        # Copy the v1 template
+        tui = spawn(
+            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1", "--data=animal_name=dog", "--data=animal_sound=woof", "--data=what_does_it_eat=meat"),
+            timeout=spawn_timeout,
+        )
+        tui.expect_exact(pexpect.EOF)
+        assert load_answersfile_data(".").get("_commit") == "v1"
+        # Update subproject
+        git_save()
+        tui = spawn(
+            COPIER_PATH
+            + (
+                update_action,
+                "--skip-answered",
+                *(f"--ask={a}" for a in ask)
+            ),
+            timeout=spawn_timeout * 3,
+        )
+        # Check what was captured
+        expect_prompt(tui, "what_does_it_eat", "str")
+        tui.expect_exact("meat")
+        tui.sendline()
+        expect_prompt(tui, "can_it_fly", "bool")
+        tui.expect_exact("(y/N)")
+        tui.sendline()
+        tui.expect_exact(pexpect.EOF)
+        assert load_answersfile_data(".").get("_commit") == "v2"
+
+@pytest.mark.parametrize(
+    "ask",
+    (
+        ("*it*",),
+        ("what_does_it_eat",),
+        ("what_does_it_eat", "can_it_fly"),
+    ),
+)
+@pytest.mark.parametrize("update_action", (
+    "update",
+    "recopy"
+))
+def test_update_skip_answered_with_ask_and_data(
+    ask: tuple[str, ...],
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    update_action: str,
+    spawn_timeout: int,
+) -> None:
+    """Test that the questions for the user are OK"""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(ANIMAL_TREE)
+        git_save(tag="v1")
+        build_file_tree(ANIMAL_TREE_WITH_NEW_FIELD)
+        git_save(tag="v2")
+    with local.cwd(dst):
+        # Copy the v1 template
+        tui = spawn(
+            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1", "--data=animal_name=dog", "--data=animal_sound=woof", "--data=what_does_it_eat=meat"),
+            timeout=spawn_timeout,
+        )
+        tui.expect_exact(pexpect.EOF)
+        assert load_answersfile_data(".").get("_commit") == "v1"
+        # Update subproject
+        git_save()
+        tui = spawn(
+            COPIER_PATH
+            + (
+                update_action,
+                "--skip-answered",
+                *(f"--ask={a}" for a in ask),
+                "--data=what_does_it_eat=chow",
+            ),
+            timeout=spawn_timeout * 3,
+        )
+        # Check what was captured
+        expect_prompt(tui, "can_it_fly", "bool")
+        tui.expect_exact("(y/N)")
+        tui.sendline()
+        tui.expect_exact(pexpect.EOF)
+        loaded_answers = load_answersfile_data(".")
+        assert loaded_answers.get("_commit") == "v2"
+        assert loaded_answers.get("what_does_it_eat") == "chow"
+
+@pytest.mark.parametrize(
+    "ask",
+    (
+        ("*it*",),
+        ("what_does_it_eat", "can_it_fly"),
+    ),
+)
+@pytest.mark.parametrize("update_action", (
+    "update",
+    "recopy"
+))
+def test_update_defaults_with_ask(
+    ask: tuple[str, ...],
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    update_action: str,
+    spawn_timeout: int,
+) -> None:
+    """Test that the questions for the user are OK"""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(ANIMAL_TREE)
+        git_save(tag="v1")
+        build_file_tree(ANIMAL_TREE_WITH_NEW_FIELD)
+        git_save(tag="v2")
+    with local.cwd(dst):
+        # Copy the v1 template
+        tui = spawn(
+            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1", "--data=animal_name=dog", "--data=animal_sound=woof", "--data=what_does_it_eat=meat"),
+            timeout=spawn_timeout,
+        )
+        tui.expect_exact(pexpect.EOF)
+        assert load_answersfile_data(".").get("_commit") == "v1"
+        # Update subproject
+        git_save()
+        tui = spawn(
+            COPIER_PATH
+            + (
+                update_action,
+                "--defaults",
+                *(f"--ask={a}" for a in ask)
+            ),
+            timeout=spawn_timeout * 3,
+        )
+        # Check what was captured
+        expect_prompt(tui, "what_does_it_eat", "str")
+        tui.expect_exact("meat")
+        tui.sendline()
+        expect_prompt(tui, "can_it_fly", "bool")
+        tui.expect_exact("(y/N)")
+        tui.sendline()
+        tui.expect_exact(pexpect.EOF)
+        assert load_answersfile_data(".").get("_commit") == "v2"
+
+@pytest.mark.parametrize(
+    "ask",
+    (
+        ("*it*",),
+        ("what_does_it_eat", "can_it_fly"),
+    ),
+)
+@pytest.mark.parametrize("update_action", (
+    "update",
+    "recopy"
+))
+def test_update_defaults_with_ask_and_data(
+    ask: tuple[str, ...],
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    update_action: str,
+    spawn_timeout: int,
+) -> None:
+    """Test that the questions for the user are OK"""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(ANIMAL_TREE)
+        git_save(tag="v1")
+        build_file_tree(ANIMAL_TREE_WITH_NEW_FIELD)
+        git_save(tag="v2")
+    with local.cwd(dst):
+        # Copy the v1 template
+        tui = spawn(
+            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1", "--data=animal_name=dog", "--data=animal_sound=woof", "--data=what_does_it_eat=meat"),
+            timeout=spawn_timeout,
+        )
+        tui.expect_exact(pexpect.EOF)
+        assert load_answersfile_data(".").get("_commit") == "v1"
+        # Update subproject
+        git_save()
+        tui = spawn(
+            COPIER_PATH
+            + (
+                update_action,
+                "--defaults",
+                *(f"--ask={a}" for a in ask),
+                "--data=what_does_it_eat=chow",
+            ),
+            timeout=spawn_timeout * 3,
+        )
+        # Check what was captured
+        expect_prompt(tui, "can_it_fly", "bool")
+        tui.expect_exact("(y/N)")
+        tui.sendline()
+        tui.expect_exact(pexpect.EOF)
+        loaded_answers = load_answersfile_data(".")
+        assert loaded_answers.get("_commit") == "v2"
+        assert loaded_answers.get("what_does_it_eat") == "chow"
+
+@pytest.mark.parametrize(
+    "ask",
+    (
+        ("*it*",),
+        ("what_does_it_eat", "can_it_fly"),
+    ),
+)
+def test_copy_defaults_with_ask(
+    ask: tuple[str, ...],
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    spawn_timeout: int,
+) -> None:
+    """Test that the questions for the user are OK"""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(ANIMAL_TREE_WITH_NEW_FIELD)
+        git_save(tag="v1")
+    with local.cwd(dst):
+        # Copy the v1 template
+        tui = spawn(
+            COPIER_PATH + (
+                "copy", str(src), ".",
+                "--defaults",
+                *(f"--ask={a}" for a in ask)
+            ),
+            timeout=spawn_timeout,
+        )
+        expect_prompt(tui, "what_does_it_eat", "str")
+        tui.expect_exact("cheese")
+        tui.sendline(" and milk")
+        expect_prompt(tui, "can_it_fly", "str")
+        tui.expect_exact("(y/N)")
+        tui.sendline()
+        tui.expect_exact(pexpect.EOF)
+        loaded_answers = load_answersfile_data(".")
+        assert loaded_answers.get("what_does_it_eat") == "cheese and milk"
+
+@pytest.mark.parametrize(
+    "ask",
+    (
+        ("*it*",),
+        ("what_does_it_eat", "can_it_fly"),
+    ),
+)
+def test_copy_defaults_with_ask_and_data(
+    ask: tuple[str, ...],
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    spawn_timeout: int,
+) -> None:
+    """Test that the questions for the user are OK"""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(ANIMAL_TREE_WITH_NEW_FIELD)
+        git_save(tag="v1")
+    with local.cwd(dst):
+        # Copy the v1 template
+        tui = spawn(
+            COPIER_PATH + (
+                "copy", str(src), ".",
+                "--defaults",
+                *(f"--ask={a}" for a in ask),
+                "--data=what_does_it_eat=milk"
+            ),
+            timeout=spawn_timeout,
+        )
+        expect_prompt(tui, "can_it_fly", "str")
+        tui.expect_exact("(y/N)")
+        tui.sendline()
+        tui.expect_exact(pexpect.EOF)
+        loaded_answers = load_answersfile_data(".")
+        assert loaded_answers.get("what_does_it_eat") == "milk"

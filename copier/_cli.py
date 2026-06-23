@@ -240,11 +240,11 @@ class CopierCopySubApp(_Subcommand):
         help="Overwrite files that already exist, without asking.",
     )
     ask = cli.SwitchAttr(
-        ["-k", "--ask"],
+        ["--ask"],
         str,
         list=True,
         help=(
-            'Ask the questions matching the given pattern, even if they would be skipped by --defaults. May include "*" as a wildcard character. May be given multiple times.'
+            'Ask the questions matching the given fnmatch-pattern, even if they would be skipped by --defaults'
         ),
     )
 
@@ -278,6 +278,7 @@ class CopierCopySubApp(_Subcommand):
                 quiet=self.quiet,
                 unsafe=self.unsafe,
                 skip_tasks=self.skip_tasks,
+                ask=self.ask,
             )
 
         return _handle_exceptions(inner)
@@ -327,11 +328,11 @@ class CopierRecopySubApp(_Subcommand):
         help="Skip questions that have already been answered",
     )
     ask = cli.SwitchAttr(
-        ["-k", "--ask"],
+        ["--ask"],
         str,
         list=True,
         help=(
-            'Ask the questions matching the given pattern, even if they would be skipped by --skip-answered or --defaults. May include "*" as a wildcard character. May be given multiple times.'
+            'Ask the questions matching the given fnamtch-pattern, even if they would be skipped by --skip-answered or --defaults'
         ),
     )
 
@@ -363,6 +364,7 @@ class CopierRecopySubApp(_Subcommand):
                 unsafe=self.unsafe,
                 skip_answered=self.skip_answered,
                 skip_tasks=self.skip_tasks,
+                ask=self.ask,
             )
 
         return _handle_exceptions(inner)
@@ -418,11 +420,11 @@ class CopierUpdateSubApp(_Subcommand):
         help="Skip questions that have already been answered",
     )
     ask = cli.SwitchAttr(
-        ["-k", "--ask"],
+        ["--ask"],
         str,
         list=True,
         help=(
-            'Ask the questions matching the given pattern, even if they would be skipped by --skip-answered or --defaults. May include "*" as a wildcard character. May be given multiple times.'
+            'Ask the questions matching the given fnmatch-pattern, even if they would be skipped by --skip-answered or --defaults'
         ),
     )
 
@@ -456,6 +458,7 @@ class CopierUpdateSubApp(_Subcommand):
                 unsafe=self.unsafe,
                 skip_answered=self.skip_answered,
                 skip_tasks=self.skip_tasks,
+                ask=self.ask
             )
 
         return _handle_exceptions(inner)

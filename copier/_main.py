@@ -13,6 +13,7 @@ from contextlib import suppress
 from contextvars import ContextVar
 from dataclasses import field, replace
 from filecmp import dircmp
+from fnmatch import fnmatchcase
 from functools import cached_property, partial, wraps
 from itertools import chain
 from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
@@ -43,7 +44,6 @@ from pydantic.dataclasses import dataclass
 from pydantic_core import to_jsonable_python
 from questionary import confirm, unsafe_prompt
 
-from ._ask_pattern import AskPattern
 from ._deprecation import deprecate_answers_file_template_path
 from ._jinja_ext import YieldExtension, get_yield_context
 from ._settings import Settings, SettingsModel, is_trusted_repository
@@ -231,7 +231,7 @@ class Worker:
             When `True`, skip template tasks execution.
 
         ask:
-            List of question names to ask, even if they would be skipped by `skip_answered` or `defaults`. Can also include wildcards.
+            List of question names to ask, even if they would be skipped by `skip_answered` or `defaults`. Can also fnmatch-style include wildcards.
     """
 
     # NOTE: attributes are fully documented in [creating.md](../docs/creating.md)
@@ -294,13 +294,30 @@ class Worker:
         """Execute all stored cleanup methods."""
         for method in self._cleanup_hooks:
             method()
-    
+
     def _check_unneccessary_ask(self) -> None:
         """Warn about `--ask` patterns that have no effect."""
         if self.ask and not (self.skip_answered or self.defaults):
             warnings.warn(
                 "All questions are asked by default, --ask has no effect without --defaults or --skip-answered.",
             )
+
+    def _warn_unused_ask(self, ask: AskPattern) -> None:
+        """Warn about `--ask` patterns that haven't matched any question."""
+        assert not ask.was_matched
+        # our message depends on whether answers matching the pattern appear in self.answers.init (--data)
+        in_init = sorted(k for k in self.answers.init if ask.matches(k))
+        if in_init:
+            questions = ", ".join(repr(k) for k in in_init)
+            warnings.warn(
+                f"Asked pattern {ask.pattern!r} did not match any question in the template except for {questions},"
+                " which were already provided in --data not asked."
+            )
+        else:
+            warnings.warn(
+                f"Asked pattern {ask.pattern!r} did not match any question in the template."
+            )
+
 
     def _check_unsafe(self, mode: Operation) -> None:
         """Check whether a template uses unsafe features."""
@@ -644,27 +661,22 @@ class Worker:
                 # question again, but set answer as the user's answer instead.
                 self.answers.user[var_name] = answer
                 continue
-            # Skip a question when the user already answered it.
-            if self.skip_answered and var_name in self.answers.last:
-                implicitly_skipped = True
-            elif self.defaults:
-                answer = question.get_default()
-                if answer is MISSING:
-                    raise ValueError(f'Question "{var_name}" is required')
-                # Note that this answer will be ignored if the user has
-                # explicitly unkipped the question with `--ask`
-                self.answers.user[var_name] = answer
-                implicitly_skipped = True
-            else:
-                implicitly_skipped = False
 
-            if implicitly_skipped:
-                # skip the question unless the user explicitly asked for it with `--ask`
-                for ask_pattern in asks:
-                    if ask_pattern.matches(var_name):
-                        break
-                else:
+            for ask_pattern in asks:
+                if ask_pattern.matches(var_name):
+                    break
+            else:
+                # If the user didn't explicitly request the question be asked,
+                # skip it when the user already answered it.
+                if self.skip_answered and var_name in self.answers.last:
                     continue
+                if self.defaults:
+                    answer = question.get_default()
+                    if answer is MISSING:
+                        raise ValueError(f'Question "{var_name}" is required')
+                    self.answers.user[var_name] = answer
+                    continue
+
 
             # Display TUI and ask user interactively only without --defaults
             try:
@@ -686,10 +698,7 @@ class Worker:
         self.answers.external = self._external_data()
         for ask_pattern in asks:
             if not ask_pattern.was_matched:
-                warnings.warn(
-                    f"Asked pattern {ask_pattern.orginal!r} did not match any question that would be skipped."
-                    " Did you specify it in --data?"
-                )
+                self._warn_unused_ask(ask_pattern)
 
     @property
     def answers_relpath(self) -> Path:
@@ -1974,3 +1983,17 @@ def _remove_old_files(prefix: Path, cmp: dircmp[str], rm_common: bool = False) -
         # Remove subdir if it ends empty
         with suppress(OSError):
             subdir.rmdir()  # Raises if dir not empty
+
+class AskPattern:
+    """A string pattern for questions for usage in `--ask` arguments."""
+
+    def __init__(self, pattern: str) -> None:
+        self.pattern = pattern
+        self.was_matched = False
+
+    def matches(self, input: str) -> bool:
+        """Check if the pattern matches a string."""
+        ret = fnmatchcase(input, self.pattern)
+        if ret:
+            self.was_matched = True
+        return ret
