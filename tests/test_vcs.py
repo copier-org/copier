@@ -103,12 +103,7 @@ def remote_repo(tmp_path_factory: pytest.TempPathFactory) -> str:
     """A small local git repo exposed via a ``file://`` URL (treated as remote).
 
     A ``file://`` URL is treated as remote by ``clone()``, so this exercises
-    the mirror-cache code path without requiring network access. The mirror
-    cache itself is redirected to a temp dir by the session-wide ``_cache_dir``
-    fixture in ``conftest.py``.
-
-    Uses ``tmp_path_factory`` rather than ``tmp_path`` so the repo doesn't share
-    a path with a test's own ``tmp_path``.
+    the mirror-cache code path without requiring network access.
     """
     path = tmp_path_factory.mktemp("remote_repo")
     with local.cwd(path):
