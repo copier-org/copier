@@ -208,8 +208,6 @@ def _get_cache_dir() -> Path:
     override = os.environ.get(CACHE_DIR_ENV_VAR)
     if override:
         return Path(override)
-    # `appauthor=False` avoids a redundant "copier" path segment on Windows,
-    # e.g. `.../copier/Cache` instead of `.../copier/copier/Cache`.
     return Path(user_cache_dir("copier", appauthor=False)) / "git"
 
 
