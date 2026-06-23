@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.16.0 (2026-06-23)
+
+### Feat
+
+- cache remote git templates as local mirrors with worktrees (#2720)
+
+### Fix
+
+- **updating**: preserve and update template-managed gitignored files (#2730)
+
 ## v9.15.2 (2026-06-12)
 
 ### Fix
