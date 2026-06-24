@@ -3,7 +3,7 @@
 **Contribution Number:** 1
 **Student:** Karen Emily Muhwezi
 **Issue:** https://github.com/copier-org/copier/issues/1451
-**Status:** Phase II In Progress
+**Status:** Phase III In Progress
 
 ---
 
@@ -55,7 +55,7 @@ and running multiple commands every single time a change is made.
 ### Affected Components
 
 - Copier's CLI layer — a new `preview` or `watch` command needs to be added
-- Core template rendering pipeline in `copier/main.py` — the existing render 
+- Core template rendering pipeline in `copier/_main.py` — the existing render 
   logic will be reused
 - A new file watching component using the `watchfiles` library to detect 
   changes and trigger re-renders
@@ -80,9 +80,13 @@ x Failed to build copier @ file:///C:/Users/Administrator/codepath-copier
 |-> error sending request for url (https://files.pythonhosted.org/...)
 
 `-> operation timed out
-This appears to be a network connectivity issue on the current machine rather
-than a project configuration problem. Will retry on a stable network
-connection.
+
+Resolved by retrying on a stable network connection. Confirmed working
+environment by running `python -m uv run copier --version` which returned
+`copier 0.1.dev2247+g735b2ed0e`.
+
+Note: `uv` is not on the system PATH on Windows, so all commands must be
+run as `python -m uv` instead of `uv` directly.
 
 ### Steps to Reproduce
 
@@ -96,7 +100,9 @@ connection.
 
 - **Commit showing reproduction:** [Link to commit in your fork]
 - **Screenshots/logs:** Network timeout error documented above
-- **My findings:** [What you discovered during reproduction]
+- **My findings:** The issue is a missing feature — there is no existing 
+  preview or watch command in Copier's CLI. Confirmed by searching the 
+  codebase for any existing preview functionality and finding none.
 
 ---
 
@@ -104,11 +110,18 @@ connection.
 
 ### Analysis
 
-[Your analysis of the root cause - what's causing the issue?]
+This is a missing feature rather than a bug. Copier currently only supports
+rendering templates on demand via `copier copy` or `copier update`. There is
+no mechanism to watch a template directory for changes and re-render
+automatically. The root cause is that the CLI and rendering pipeline were
+built for one-shot use, not continuous development workflows.
 
 ### Proposed Solution
 
-[High-level description of your fix approach]
+Added a new `run_preview` function that renders the template into a
+destination directory and then watches the template directory for file
+changes using the `watchfiles` library, re-rendering automatically on every
+change detected.
 
 ### Implementation Plan
 
@@ -118,26 +131,34 @@ Using UMPIRE framework (adapted):
 locally without a full commit-push-update cycle. We need a live preview
 command that watches for changes and re-renders automatically.
 
-**Match:** The existing `copier copy` and `copier update` commands in
-`copier/main.py` show how rendering is triggered. The new command will reuse
-the same rendering logic but wrap it in a file watcher loop.
+**Match:** The existing `run_copy` and `run_update` methods in `copier/_main.py` 
+show how rendering is triggered inside the `Worker` class. The new 
+`run_preview` method follows the exact same pattern, reusing `_render_template()` 
+and wrapping it in a `watchfiles` loop. The standalone function pattern was 
+modelled on `run_recopy`.
 
 **Plan:**
-1. Add `watchfiles` as a dependency in `pyproject.toml`
-2. Create a new `preview` or `watch` function in `copier/main.py` that
-   accepts a template path and output path
-3. On first call, render the template into a temporary directory
-4. Start a `watchfiles` watcher on the template directory
-5. On every detected change, re-render and show a diff of what changed
-6. Expose the new function as a CLI command via the existing CLI layer
-7. Add tests for the new command
+1. ✅ Add `watchfiles` as a dependency in `pyproject.toml`
+2. ✅ Add `from watchfiles import watch` to module-level imports in `_main.py`
+3. ✅ Add `run_preview` method to the `Worker` class decorated with 
+   `@as_operation("copy")`
+4. ✅ Add standalone `run_preview` function following the same pattern as 
+   `run_recopy`
+5. ✅ Write and pass test for the new command
+6. ⬜ Expose the new function as a CLI command via the existing CLI layer
+7. ⬜ Add additional edge case tests
 
 **Implement:** https://github.com/karenemily/codepath-copier/tree/fix-issue-live-preview
 
-**Review:** [Self-review checklist - does it follow the project's contribution
-guidelines?]
+**Review:**
+- [ ] Follows Copier's code style
+- [ ] New command is documented
+- [ ] Existing tests still pass
+- [ ] New tests added and passing
+- [ ] CHANGELOG updated if required
 
-**Evaluate:** [What tests will confirm your fix works?]
+**Evaluate:** Test `test_preview_renders_template` confirms the initial render
+works correctly. Still need to test the hot-reload/watch loop behavior.
 
 ---
 
@@ -145,18 +166,25 @@ guidelines?]
 
 ### Unit Tests
 
-- [ ] Test case 1: [Description]
-- [ ] Test case 2: [Description]
-- [ ] Test case 3: [Description]
+- [x] Test case 1: `test_preview_renders_template` — confirms that 
+      `run_preview` correctly renders template files into the destination 
+      directory on initial run. Test passes.
+- [ ] Test case 2: Re-render triggered correctly after a file change is 
+      detected by the watcher
+- [ ] Test case 3: Preview handles template errors gracefully without 
+      crashing the watcher
 
 ### Integration Tests
 
-- [ ] Integration scenario 1
-- [ ] Integration scenario 2
+- [ ] Integration scenario 1: Full preview workflow from template edit to 
+      re-render
+- [ ] Integration scenario 2: Preview works correctly with Jinja templating 
+      and variable substitution
 
 ### Manual Testing
 
-[What you tested manually and results]
+Manual testing not yet performed. Will test by running `run_preview` directly
+on a sample template and editing files to confirm hot-reload behavior.
 
 ---
 
@@ -164,18 +192,32 @@ guidelines?]
 
 ### Week 1 Progress
 
-Environment setup attempted. Hit network timeout during `uv sync`. Branch
-`fix-issue-live-preview` created and pushed. Codebase exploration in progress.
+- Reviewed `CONTRIBUTING.md` and understood code style, testing, and commit 
+  message requirements (Conventional Commits format)
+- Explored codebase — identified `_main.py` as the correct file, studied 
+  `run_copy` and `run_update` patterns
+- Added `watchfiles>=0.20` to `pyproject.toml` dependencies
+- Added `from watchfiles import watch` to module-level imports in `_main.py`
+- Added `run_preview` method to the `Worker` class using `@as_operation("copy")` 
+  decorator to satisfy operation context requirements
+- Added standalone `run_preview` function with `src_path`, `dst_path`, `data`, 
+  `defaults`, `overwrite`, and `quiet` parameters
+- Wrote and passed test `test_preview_renders_template` in `tests/test_copy.py`
+- Debugged multiple errors including SyntaxError from misplaced import, 
+  LookupError from missing operation context, and mock patching issues
 
-### Week [Y] Progress
+### Week 2 Progress
 
 [Continue documenting as you work]
 
 ### Code Changes
 
-- **Files modified:** [List]
-- **Key commits:** [Links to important commits]
-- **Approach decisions:** [Why you chose certain approaches]
+- **Files modified:** `copier/_main.py`, `pyproject.toml`, `tests/test_copy.py`
+- **Key commits:** [Paste your latest commit hash here]
+- **Approach decisions:** Used `@as_operation("copy")` decorator on the 
+  `run_preview` method to satisfy the internal operation context requirement. 
+  Mocked `watchfiles.watch` in tests to avoid actual file watching during 
+  test runs. Moved `watchfiles` import to module level to allow proper mocking.
 
 ---
 
@@ -183,13 +225,13 @@ Environment setup attempted. Hit network timeout during `uv sync`. Branch
 
 **PR Link:** [GitHub PR URL when submitted]
 
-**PR Description:** [Draft or final PR description]
+**PR Description:** [TBD — will write in Phase IV]
 
 **Maintainer Feedback:**
 - [Date]: [Summary of feedback received]
 - [Date]: [How you addressed it]
 
-**Status:** [Awaiting review / Iterating / Approved / Merged]
+**Status:** Not yet submitted
 
 ---
 
@@ -197,15 +239,28 @@ Environment setup attempted. Hit network timeout during `uv sync`. Branch
 
 ### Technical Skills Gained
 
-[What you learned technically]
+- Learned how to navigate a large unfamiliar Python codebase
+- Understood the `Worker` class pattern and how Copier's operations are 
+  structured
+- Learned how to use `unittest.mock` to mock third-party library calls in tests
+- Learned about Python `ContextVar` and operation context requirements
+- Practised Conventional Commits format for commit messages
 
 ### Challenges Overcome
 
-[What was hard and how you solved it]
+- `uv` not on PATH on Windows — resolved by using `python -m uv` prefix
+- Network timeout during `uv sync` — resolved by retrying on stable network
+- SyntaxError from placing `from watchfiles import watch` before 
+  `from __future__ import annotations` — resolved by moving it to the correct 
+  position in the imports section
+- `LookupError` for missing operation context — resolved by adding 
+  `@as_operation("copy")` decorator to the method
+- Mock patching failing because import was local — resolved by moving import 
+  to module level
 
 ### What I'd Do Differently Next Time
 
-[Reflection on your process]
+[TBD — will reflect on this at the end of the project]
 
 ---
 
@@ -215,3 +270,4 @@ Environment setup attempted. Hit network timeout during `uv sync`. Branch
 - https://github.com/copier-org/copier/issues/1451 — Issue being addressed
 - https://github.com/samuelcolvin/watchfiles — Suggested file watching library
 - Copier documentation: https://copier.readthedocs.io
+- Copier CONTRIBUTING.md — Code style, testing and commit message guidelines
