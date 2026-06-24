@@ -1,6 +1,8 @@
 """Main functions and classes, used to generate or update projects."""
 
+
 from __future__ import annotations
+
 
 import os
 import platform
@@ -18,6 +20,7 @@ from functools import cached_property, partial, wraps
 from itertools import chain
 from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
 from shutil import rmtree
+from watchfiles import watch
 from tempfile import TemporaryDirectory
 from types import TracebackType
 from typing import (
@@ -1359,9 +1362,9 @@ class Worker:
         self._apply_update()
         self._print_message(self.template.message_after_update)
     
+    @as_operation("copy")
     def run_preview(self, dst_path: Path) -> None:
         """Preview a template with hot-reloading as changes are made."""
-        from watchfiles import watch
 
         print(f"\nStarting preview of template at {self.template.local_abspath}")
         print("Watching for changes... (Ctrl+C to stop)\n")
@@ -1831,6 +1834,7 @@ def run_recopy(
 def run_preview(
     src_path: Path | str,
     dst_path: Path | str = ".",
+    data: dict[str, Any] | None = None,
     defaults: bool = True,
     overwrite: bool = True,
     quiet: bool = False,
@@ -1839,6 +1843,7 @@ def run_preview(
     with Worker(
         src_path=src_path,
         dst_path=Path(dst_path),
+        data=data or {},
         defaults=defaults,
         overwrite=overwrite,
         quiet=quiet,
