@@ -99,9 +99,10 @@ class Phase(str, Enum):
     """The known execution phases."""
 
     PROMPT = "prompt"
+    RENDER = "render"
+    POSTRENDER = "postrender"
     TASKS = "tasks"
     MIGRATE = "migrate"
-    RENDER = "render"
     UNDEFINED = "undefined"
 
     def __str__(self) -> str:
