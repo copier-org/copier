@@ -553,10 +553,10 @@ def test_external_data_path_outside_destination_root_is_unsafe_on_update(
 
 
 
-def test_relative_template_path_stored_as_absolute_when_outside_destination(
+def test_relative_template_path_stored_as_relative_when_outside_destination(
     tmp_path: Path,
 ) -> None:
-    """Template path not under destination -> stored as absolute."""
+    """Template path not under destination -> stored as relative."""
     root = tmp_path
     template_dir = root / "template"
     project_dir = root / "project"
@@ -579,7 +579,7 @@ def test_relative_template_path_stored_as_absolute_when_outside_destination(
         os.chdir(old_cwd)
 
     answers = load_answersfile_data(project_dir)
-    assert answers["_src_path"] == str(template_dir.resolve())
+    assert answers["_src_path"] == os.path.relpath(str(template_dir.resolve()), str(project_dir.resolve()))
 
 
 def test_relative_template_path_stored_as_relative_when_inside_destination(
@@ -610,7 +610,7 @@ def test_relative_template_path_stored_as_relative_when_inside_destination(
         os.chdir(old_cwd)
 
     answers = load_answersfile_data(project_dir)
-    assert answers["_src_path"] == ".hidden_template"
+    assert answers["_src_path"] == os.path.relpath(str(hidden_template_dir.resolve()), str(project_dir.resolve()))
 
 
 def test_absolute_template_path_stored_as_is(
@@ -636,3 +636,95 @@ def test_absolute_template_path_stored_as_is(
 
     answers = load_answersfile_data(project_dir)
     assert answers["_src_path"] == str(template_dir)
+
+
+def test_relative_template_path_resolved_relative_to_project_root(
+    tmp_path: Path,
+) -> None:
+    """Template path resolved relative to project root on update, even if CWD is different."""
+    root = tmp_path
+    template_dir = root / "template"
+    project_dir = root / "project"
+
+    build_file_tree(
+        {
+            (template_dir / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+        }
+    )
+    git_save(template_dir, tag="v1")
+
+    project_dir.mkdir(exist_ok=True)
+
+    # Initial copy
+    old_cwd = Path.cwd()
+    try:
+        os.chdir(root)
+        copier.run_copy("./template", "./project", defaults=True, overwrite=True)
+    finally:
+        os.chdir(old_cwd)
+
+    answers = load_answersfile_data(project_dir)
+    # Verify it was saved as relative
+    assert answers["_src_path"] == os.path.relpath(str(template_dir.resolve()), str(project_dir.resolve()))
+
+    # Initialize project as git repository and commit answers file
+    git_save(project_dir)
+
+    # Run update from a completely different directory (so relative to CWD would fail)
+    other_dir = root / "other"
+    other_dir.mkdir(exist_ok=True)
+    try:
+        os.chdir(other_dir)
+        # update should succeed because template path is resolved relative to project root
+        copier.run_update(str(project_dir), defaults=True, overwrite=True)
+    finally:
+        os.chdir(old_cwd)
+
+
+def test_relative_template_path_fallback_resolved_relative_to_cwd(
+    tmp_path: Path,
+) -> None:
+    """Template path fallback resolved relative to CWD if not found relative to project root."""
+    root = tmp_path
+    template_dir = root / "template"
+    project_dir = root / "project"
+
+    build_file_tree(
+        {
+            (template_dir / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+        }
+    )
+    git_save(template_dir, tag="v1")
+
+    project_dir.mkdir(exist_ok=True)
+
+    # Initial copy
+    old_cwd = Path.cwd()
+    try:
+        os.chdir(root)
+        copier.run_copy("./template", "./project", defaults=True, overwrite=True)
+    finally:
+        os.chdir(old_cwd)
+
+    # Manually modify _src_path to be "template" (which is relative to CWD 'root',
+    # but "project/template" does not exist).
+    answers_file = project_dir / ".copier-answers.yml"
+    content = answers_file.read_text()
+    # Replace relative path (e.g. "../template") with "template"
+    rel_path = os.path.relpath(str(template_dir.resolve()), str(project_dir.resolve()))
+    assert rel_path in content
+    answers_file.write_text(content.replace(rel_path, "template"))
+
+    # Initialize project as git repository and commit answers file
+    git_save(project_dir)
+
+    try:
+        os.chdir(root)
+        # update should succeed because fallback resolves "template" relative to CWD (root)
+        copier.run_update(str(project_dir), defaults=True, overwrite=True)
+    finally:
+        os.chdir(old_cwd)
