@@ -231,7 +231,8 @@ class Worker:
             When `True`, skip template tasks execution.
 
         ask:
-            List of question names to ask, even if they would be skipped by other options. Supports glob-style patterns.
+            List of question names to ask, even if they would be skipped by other
+            options. Supports glob-style patterns.
     """
 
     # NOTE: attributes are fully documented in [creating.md](../docs/creating.md)
@@ -628,10 +629,7 @@ class Worker:
                 if question.get_default() is MISSING:
                     continue
 
-            for ask_pattern in self.ask:
-                if fnmatchcase(var_name, ask_pattern):
-                    break
-            else:
+            if not any(fnmatchcase(var_name, ask_pattern) for ask_pattern in self.ask):
                 # If the user didn't explicitly request the question be asked,
                 # it may now be skipped by `--data`, `--skip-answered`, or `--defaults`.
                 if var_name in self.answers.init:

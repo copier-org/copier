@@ -244,7 +244,8 @@ class CopierCopySubApp(_Subcommand):
         str,
         list=True,
         help=(
-            "Ask the questions matching the given glob-pattern, even if they would be skipped by other options"
+            "Ask the questions matching the given glob-pattern, even if they would be "
+            "skipped by other options"
         ),
     )
 
@@ -424,7 +425,8 @@ class CopierUpdateSubApp(_Subcommand):
         str,
         list=True,
         help=(
-            "Ask the questions matching the given glob-pattern, even if they would be skipped by other options"
+            "Ask the questions matching the given glob-pattern, even if they would be "
+            "skipped by other options"
         ),
     )
 

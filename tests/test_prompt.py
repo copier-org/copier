@@ -127,14 +127,7 @@ def test_copy_default_advertised(
     with local.cwd(dst):
         # Copy the v1 template
         tui = spawn(
-            COPIER_PATH
-            + (
-                "copy",
-                str(src),
-                ".",
-                "--vcs-ref=v1",
-            )
-            + args,
+            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1") + args,
             timeout=spawn_timeout,
         )
         # Check what was captured
@@ -1213,9 +1206,7 @@ def test_interactive_session_required_for_overwrite_prompt(
 
 ANIMAL_TREE: Mapping[StrOrPath, str | bytes] = {
     "copier.yml": (
-        f"""\
-        _templates_suffix: {SUFFIX_TMPL}
-        _envops: {BRACKET_ENVOPS_JSON}
+        """\
         animal_name:
             type: str
             default: mouse
@@ -1227,14 +1218,12 @@ ANIMAL_TREE: Mapping[StrOrPath, str | bytes] = {
             default: cheese
         """
     ),
-    "[[ _copier_conf.answers_file ]].tmpl": "[[_copier_answers|to_nice_yaml]]",
+    "{{ _copier_conf.answers_file }}.jinja": "{{_copier_answers|to_nice_yaml}}",
 }
 
 ANIMAL_TREE_WITH_NEW_FIELD: Mapping[StrOrPath, str | bytes] = {
     "copier.yml": (
-        f"""\
-        _templates_suffix: {SUFFIX_TMPL}
-        _envops: {BRACKET_ENVOPS_JSON}
+        """\
         animal_name:
             type: str
             default: mouse
@@ -1249,7 +1238,7 @@ ANIMAL_TREE_WITH_NEW_FIELD: Mapping[StrOrPath, str | bytes] = {
             default: false
         """
     ),
-    "[[ _copier_conf.answers_file ]].tmpl": "[[_copier_answers|to_nice_yaml]]",
+    "{{ _copier_conf.answers_file }}.jinja": "{{_copier_answers|to_nice_yaml}}",
 }
 
 
