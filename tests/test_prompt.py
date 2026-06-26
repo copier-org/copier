@@ -110,20 +110,12 @@ PATH_TREE: Mapping[StrOrPath, str | bytes] = {
         ("None", ("--data=your_name=None",)),
     ],
 )
-@pytest.mark.parametrize(
-    "ask",
-    (
-        ("your*",),
-        (),
-    )
-)
 def test_copy_default_advertised(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
     name: str,
     args: tuple[str, ...],
     spawn_timeout: int,
-    ask: tuple[str, ...],
 ) -> None:
     """Test that the questions for the user are OK"""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -140,14 +132,9 @@ def test_copy_default_advertised(
                 str(src),
                 ".",
                 "--vcs-ref=v1",
-                # this ask is always a no-op
-                *(f"--ask={a}" for a in ask)
             ) + args,
             timeout=spawn_timeout,
         )
-        if ask:
-            # if we sent a no-op ask, we should see a warning about it
-            tui.expect_exact("All questions are asked by default, --ask has no effect without --defaults or --skip-answered.")
         # Check what was captured
         expect_prompt(tui, "in_love", "bool")
         tui.expect_exact("(Y/n)")
@@ -247,13 +234,6 @@ def test_path_completion(
     ],
 )
 @pytest.mark.parametrize("update_action", ("update", "recopy"))
-@pytest.mark.parametrize(
-    "ask",
-    (
-        ("__missing__",),
-        (),
-    )
-)
 def test_update_skip_answered(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
@@ -261,7 +241,6 @@ def test_update_skip_answered(
     update_action: str,
     args: tuple[str, ...],
     spawn_timeout: int,
-    ask: tuple[str, ...],
 ) -> None:
     """Test that the questions for the user are OK"""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -302,8 +281,6 @@ def test_update_skip_answered(
             + (
                 update_action,
                 "--skip-answered",
-                # this ask is always a no-op
-                *(f"--ask={a}" for a in ask),
             ),
             timeout=spawn_timeout * 3,
         )
@@ -311,9 +288,6 @@ def test_update_skip_answered(
         expect_prompt(tui, "your_enemy", "str", help="Secret enemy name")
         tui.expect_exact("******")
         tui.sendline()
-        if ask:
-            # we asked for a question that doesn't exist, so we should see a warning about it
-            tui.expect_exact("Asked pattern '__missing__' did not match any question in the template.")
         tui.expect_exact(pexpect.EOF)
         assert load_answersfile_data(".").get("_commit") == "v2"
 
@@ -1376,6 +1350,9 @@ def test_update_skip_answered_with_ask_and_data(
             timeout=spawn_timeout * 3,
         )
         # Check what was captured
+        expect_prompt(tui, "what_does_it_eat", "str")
+        tui.expect_exact("chow")
+        tui.sendline()
         expect_prompt(tui, "can_it_fly", "bool")
         tui.expect_exact("(y/N)")
         tui.sendline()
@@ -1484,6 +1461,9 @@ def test_update_defaults_with_ask_and_data(
             timeout=spawn_timeout * 3,
         )
         # Check what was captured
+        expect_prompt(tui, "what_does_it_eat", "str")
+        tui.expect_exact("chow")
+        tui.sendline()
         expect_prompt(tui, "can_it_fly", "bool")
         tui.expect_exact("(y/N)")
         tui.sendline()
@@ -1559,9 +1539,12 @@ def test_copy_defaults_with_ask_and_data(
             ),
             timeout=spawn_timeout,
         )
+        expect_prompt(tui, "what_does_it_eat", "str")
+        tui.expect_exact("milk")
+        tui.sendline(" and cookies")
         expect_prompt(tui, "can_it_fly", "str")
         tui.expect_exact("(y/N)")
         tui.sendline()
         tui.expect_exact(pexpect.EOF)
         loaded_answers = load_answersfile_data(".")
-        assert loaded_answers.get("what_does_it_eat") == "milk"
+        assert loaded_answers.get("what_does_it_eat") == "milk and cookies"

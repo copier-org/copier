@@ -231,7 +231,7 @@ class Worker:
             When `True`, skip template tasks execution.
 
         ask:
-            List of question names to ask, even if they would be skipped by `skip_answered` or `defaults`. Can also fnmatch-style include wildcards.
+            List of question names to ask, even if they would be skipped by other options. Supports glob-style patterns.
     """
 
     # NOTE: attributes are fully documented in [creating.md](../docs/creating.md)
@@ -294,30 +294,6 @@ class Worker:
         """Execute all stored cleanup methods."""
         for method in self._cleanup_hooks:
             method()
-
-    def _check_unneccessary_ask(self) -> None:
-        """Warn about `--ask` patterns that have no effect."""
-        if self.ask and not (self.skip_answered or self.defaults):
-            warnings.warn(
-                "All questions are asked by default, --ask has no effect without --defaults or --skip-answered.",
-            )
-
-    def _warn_unused_ask(self, ask: AskPattern) -> None:
-        """Warn about `--ask` patterns that haven't matched any question."""
-        assert not ask.was_matched
-        # our message depends on whether answers matching the pattern appear in self.answers.init (--data)
-        in_init = sorted(k for k in self.answers.init if ask.matches(k))
-        if in_init:
-            questions = ", ".join(repr(k) for k in in_init)
-            warnings.warn(
-                f"Asked pattern {ask.pattern!r} did not match any question in the template except for {questions},"
-                " which were already provided in --data not asked."
-            )
-        else:
-            warnings.warn(
-                f"Asked pattern {ask.pattern!r} did not match any question in the template."
-            )
-
 
     def _check_unsafe(self, mode: Operation) -> None:
         """Check whether a template uses unsafe features."""
@@ -621,7 +597,6 @@ class Worker:
             metadata=self.template.metadata,
             external=self._external_data(),
         )
-        asks = [AskPattern(pattern) for pattern in self.ask]
 
         for var_name, details in self.template.questions_data.items():
             question = Question(
@@ -652,22 +627,20 @@ class Worker:
                 # value.
                 if question.get_default() is MISSING:
                     continue
-            if var_name in self.answers.init:
-                # Try to parse and validate (if the question has a validator)
-                # the answer value.
-                answer = question.parse_answer(self.answers.init[var_name])
-                question.validate_answer(answer)
-                # At this point, the answer value is valid. Do not ask the
-                # question again, but set answer as the user's answer instead.
-                self.answers.user[var_name] = answer
-                continue
 
-            for ask_pattern in asks:
-                if ask_pattern.matches(var_name):
+            for ask_pattern in self.ask:
+                if fnmatchcase(var_name, ask_pattern):
                     break
             else:
                 # If the user didn't explicitly request the question be asked,
-                # skip it when the user already answered it.
+                # it may now be skipped by `--data`, `--skip-answered`, or `--defaults`.
+                if var_name in self.answers.init:
+                    # Try to parse and validate (if the question has a validator)
+                    # the answer value.
+                    answer = question.parse_answer(self.answers.init[var_name])
+                    question.validate_answer(answer)
+                    self.answers.user[var_name] = answer
+                    continue
                 if self.skip_answered and var_name in self.answers.last:
                     continue
                 if self.defaults:
@@ -696,9 +669,6 @@ class Worker:
 
         # Reload external data, which may depend on answers
         self.answers.external = self._external_data()
-        for ask_pattern in asks:
-            if not ask_pattern.was_matched:
-                self._warn_unused_ask(ask_pattern)
 
     @property
     def answers_relpath(self) -> Path:
@@ -1293,7 +1263,6 @@ class Worker:
 
         self._check_unsafe("copy")
         self._print_message(self.template.message_before_copy)
-        self._check_unneccessary_ask()
         with Phase.use(Phase.PROMPT):
             self._ask()
         was_existing = self.subproject.local_abspath.exists()
@@ -1329,7 +1298,6 @@ class Worker:
                 "Cannot recopy because cannot obtain old template references "
                 f"from `{self.subproject.answers_relpath}`."
             )
-        self._check_unneccessary_ask()
         with replace(self, src_path=self.subproject.template.url) as new_worker:
             new_worker.run_copy()
 
@@ -1384,7 +1352,6 @@ class Worker:
             # review the diff before committing; so we can safely avoid
             # asking for confirmation
             raise UserMessageError("Enable overwrite to update a subproject.")
-        self._check_unneccessary_ask()
         self._print_message(self.template.message_before_update)
         self._print_template_update_info(self.subproject.template)
         with suppress(AttributeError):
@@ -1983,17 +1950,3 @@ def _remove_old_files(prefix: Path, cmp: dircmp[str], rm_common: bool = False) -
         # Remove subdir if it ends empty
         with suppress(OSError):
             subdir.rmdir()  # Raises if dir not empty
-
-class AskPattern:
-    """A string pattern for questions for usage in `--ask` arguments."""
-
-    def __init__(self, pattern: str) -> None:
-        self.pattern = pattern
-        self.was_matched = False
-
-    def matches(self, input: str) -> bool:
-        """Check if the pattern matches a string."""
-        ret = fnmatchcase(input, self.pattern)
-        if ret:
-            self.was_matched = True
-        return ret

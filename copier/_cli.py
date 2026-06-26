@@ -244,7 +244,7 @@ class CopierCopySubApp(_Subcommand):
         str,
         list=True,
         help=(
-            'Ask the questions matching the given fnmatch-pattern, even if they would be skipped by --defaults'
+            'Ask the questions matching the given glob-pattern, even if they would be skipped by other options'
         ),
     )
 
@@ -332,7 +332,7 @@ class CopierRecopySubApp(_Subcommand):
         str,
         list=True,
         help=(
-            'Ask the questions matching the given fnamtch-pattern, even if they would be skipped by --skip-answered or --defaults'
+            'Ask the questions matching the given fnamtch-pattern, even if they would be skipped by other options'
         ),
     )
 
@@ -424,7 +424,7 @@ class CopierUpdateSubApp(_Subcommand):
         str,
         list=True,
         help=(
-            'Ask the questions matching the given fnmatch-pattern, even if they would be skipped by --skip-answered or --defaults'
+            'Ask the questions matching the given glob-pattern, even if they would be skipped by other options'
         ),
     )
 
