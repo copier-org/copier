@@ -167,8 +167,8 @@ disable_error_code = ["no-untyped-def"]
 module = "mkdocs_hooks"
 disable_error_code = ["import-not-found"]
 
-[tool.pytest.ini_options]
-addopts = "-n auto -ra"
+[tool.pytest]
+addopts = ["-n", "auto", "-ra"]
 markers = ["impure: needs network or is not 100% reproducible"]
 
 [tool.coverage.run]
