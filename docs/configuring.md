@@ -813,7 +813,9 @@ Don't forget to read [the docs about the answers file](#the-copier-answersyml-fi
 - Format: `List[str]`
 - CLI flags: `--ask`
 
-Ask the matched questions, even if they would be skipped by other options such as [defaults](#defaults), [skip-answered](#skip_answered), or [data](#data). Names may be glob-style patterns.
+Ask the matched questions, even if they would be skipped by other options such as
+[defaults](#defaults), [skip-answered](#skip_answered), or [data](#data). Names may be
+glob-style patterns.
 
 !!! info
 

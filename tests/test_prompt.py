@@ -127,12 +127,14 @@ def test_copy_default_advertised(
     with local.cwd(dst):
         # Copy the v1 template
         tui = spawn(
-            COPIER_PATH + (
+            COPIER_PATH
+            + (
                 "copy",
                 str(src),
                 ".",
                 "--vcs-ref=v1",
-            ) + args,
+            )
+            + args,
             timeout=spawn_timeout,
         )
         # Check what was captured
@@ -290,6 +292,7 @@ def test_update_skip_answered(
         tui.sendline()
         tui.expect_exact(pexpect.EOF)
         assert load_answersfile_data(".").get("_commit") == "v2"
+
 
 @pytest.mark.parametrize(
     "name, args",
@@ -1207,6 +1210,7 @@ def test_interactive_session_required_for_overwrite_prompt(
         b"Interactive session required: Consider using `--overwrite`" in process.stderr
     )
 
+
 ANIMAL_TREE: Mapping[StrOrPath, str | bytes] = {
     "copier.yml": (
         f"""\
@@ -1248,6 +1252,7 @@ ANIMAL_TREE_WITH_NEW_FIELD: Mapping[StrOrPath, str | bytes] = {
     "[[ _copier_conf.answers_file ]].tmpl": "[[_copier_answers|to_nice_yaml]]",
 }
 
+
 @pytest.mark.parametrize(
     "ask",
     (
@@ -1256,10 +1261,7 @@ ANIMAL_TREE_WITH_NEW_FIELD: Mapping[StrOrPath, str | bytes] = {
         ("what_does_it_eat", "can_it_fly"),
     ),
 )
-@pytest.mark.parametrize("update_action", (
-    "update",
-    "recopy"
-))
+@pytest.mark.parametrize("update_action", ("update", "recopy"))
 def test_update_skip_answered_with_ask(
     ask: tuple[str, ...],
     tmp_path_factory: pytest.TempPathFactory,
@@ -1277,7 +1279,16 @@ def test_update_skip_answered_with_ask(
     with local.cwd(dst):
         # Copy the v1 template
         tui = spawn(
-            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1", "--data=animal_name=dog", "--data=animal_sound=woof", "--data=what_does_it_eat=meat"),
+            COPIER_PATH
+            + (
+                "copy",
+                str(src),
+                ".",
+                "--vcs-ref=v1",
+                "--data=animal_name=dog",
+                "--data=animal_sound=woof",
+                "--data=what_does_it_eat=meat",
+            ),
             timeout=spawn_timeout,
         )
         tui.expect_exact(pexpect.EOF)
@@ -1286,11 +1297,7 @@ def test_update_skip_answered_with_ask(
         git_save()
         tui = spawn(
             COPIER_PATH
-            + (
-                update_action,
-                "--skip-answered",
-                *(f"--ask={a}" for a in ask)
-            ),
+            + (update_action, "--skip-answered", *(f"--ask={a}" for a in ask)),
             timeout=spawn_timeout * 3,
         )
         # Check what was captured
@@ -1303,6 +1310,7 @@ def test_update_skip_answered_with_ask(
         tui.expect_exact(pexpect.EOF)
         assert load_answersfile_data(".").get("_commit") == "v2"
 
+
 @pytest.mark.parametrize(
     "ask",
     (
@@ -1311,10 +1319,7 @@ def test_update_skip_answered_with_ask(
         ("what_does_it_eat", "can_it_fly"),
     ),
 )
-@pytest.mark.parametrize("update_action", (
-    "update",
-    "recopy"
-))
+@pytest.mark.parametrize("update_action", ("update", "recopy"))
 def test_update_skip_answered_with_ask_and_data(
     ask: tuple[str, ...],
     tmp_path_factory: pytest.TempPathFactory,
@@ -1332,7 +1337,16 @@ def test_update_skip_answered_with_ask_and_data(
     with local.cwd(dst):
         # Copy the v1 template
         tui = spawn(
-            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1", "--data=animal_name=dog", "--data=animal_sound=woof", "--data=what_does_it_eat=meat"),
+            COPIER_PATH
+            + (
+                "copy",
+                str(src),
+                ".",
+                "--vcs-ref=v1",
+                "--data=animal_name=dog",
+                "--data=animal_sound=woof",
+                "--data=what_does_it_eat=meat",
+            ),
             timeout=spawn_timeout,
         )
         tui.expect_exact(pexpect.EOF)
@@ -1361,6 +1375,7 @@ def test_update_skip_answered_with_ask_and_data(
         assert loaded_answers.get("_commit") == "v2"
         assert loaded_answers.get("what_does_it_eat") == "chow"
 
+
 @pytest.mark.parametrize(
     "ask",
     (
@@ -1368,10 +1383,7 @@ def test_update_skip_answered_with_ask_and_data(
         ("what_does_it_eat", "can_it_fly"),
     ),
 )
-@pytest.mark.parametrize("update_action", (
-    "update",
-    "recopy"
-))
+@pytest.mark.parametrize("update_action", ("update", "recopy"))
 def test_update_defaults_with_ask(
     ask: tuple[str, ...],
     tmp_path_factory: pytest.TempPathFactory,
@@ -1389,7 +1401,16 @@ def test_update_defaults_with_ask(
     with local.cwd(dst):
         # Copy the v1 template
         tui = spawn(
-            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1", "--data=animal_name=dog", "--data=animal_sound=woof", "--data=what_does_it_eat=meat"),
+            COPIER_PATH
+            + (
+                "copy",
+                str(src),
+                ".",
+                "--vcs-ref=v1",
+                "--data=animal_name=dog",
+                "--data=animal_sound=woof",
+                "--data=what_does_it_eat=meat",
+            ),
             timeout=spawn_timeout,
         )
         tui.expect_exact(pexpect.EOF)
@@ -1397,12 +1418,7 @@ def test_update_defaults_with_ask(
         # Update subproject
         git_save()
         tui = spawn(
-            COPIER_PATH
-            + (
-                update_action,
-                "--defaults",
-                *(f"--ask={a}" for a in ask)
-            ),
+            COPIER_PATH + (update_action, "--defaults", *(f"--ask={a}" for a in ask)),
             timeout=spawn_timeout * 3,
         )
         # Check what was captured
@@ -1415,6 +1431,7 @@ def test_update_defaults_with_ask(
         tui.expect_exact(pexpect.EOF)
         assert load_answersfile_data(".").get("_commit") == "v2"
 
+
 @pytest.mark.parametrize(
     "ask",
     (
@@ -1422,10 +1439,7 @@ def test_update_defaults_with_ask(
         ("what_does_it_eat", "can_it_fly"),
     ),
 )
-@pytest.mark.parametrize("update_action", (
-    "update",
-    "recopy"
-))
+@pytest.mark.parametrize("update_action", ("update", "recopy"))
 def test_update_defaults_with_ask_and_data(
     ask: tuple[str, ...],
     tmp_path_factory: pytest.TempPathFactory,
@@ -1443,7 +1457,16 @@ def test_update_defaults_with_ask_and_data(
     with local.cwd(dst):
         # Copy the v1 template
         tui = spawn(
-            COPIER_PATH + ("copy", str(src), ".", "--vcs-ref=v1", "--data=animal_name=dog", "--data=animal_sound=woof", "--data=what_does_it_eat=meat"),
+            COPIER_PATH
+            + (
+                "copy",
+                str(src),
+                ".",
+                "--vcs-ref=v1",
+                "--data=animal_name=dog",
+                "--data=animal_sound=woof",
+                "--data=what_does_it_eat=meat",
+            ),
             timeout=spawn_timeout,
         )
         tui.expect_exact(pexpect.EOF)
@@ -1471,6 +1494,7 @@ def test_update_defaults_with_ask_and_data(
         loaded_answers = load_answersfile_data(".")
         assert loaded_answers.get("_commit") == "v2"
         assert loaded_answers.get("what_does_it_eat") == "chow"
+
 
 @pytest.mark.parametrize(
     "ask",
@@ -1493,11 +1517,8 @@ def test_copy_defaults_with_ask(
     with local.cwd(dst):
         # Copy the v1 template
         tui = spawn(
-            COPIER_PATH + (
-                "copy", str(src), ".",
-                "--defaults",
-                *(f"--ask={a}" for a in ask)
-            ),
+            COPIER_PATH
+            + ("copy", str(src), ".", "--defaults", *(f"--ask={a}" for a in ask)),
             timeout=spawn_timeout,
         )
         expect_prompt(tui, "what_does_it_eat", "str")
@@ -1509,6 +1530,7 @@ def test_copy_defaults_with_ask(
         tui.expect_exact(pexpect.EOF)
         loaded_answers = load_answersfile_data(".")
         assert loaded_answers.get("what_does_it_eat") == "cheese and milk"
+
 
 @pytest.mark.parametrize(
     "ask",
@@ -1531,11 +1553,14 @@ def test_copy_defaults_with_ask_and_data(
     with local.cwd(dst):
         # Copy the v1 template
         tui = spawn(
-            COPIER_PATH + (
-                "copy", str(src), ".",
+            COPIER_PATH
+            + (
+                "copy",
+                str(src),
+                ".",
                 "--defaults",
                 *(f"--ask={a}" for a in ask),
-                "--data=what_does_it_eat=milk"
+                "--data=what_does_it_eat=milk",
             ),
             timeout=spawn_timeout,
         )

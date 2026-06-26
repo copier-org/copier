@@ -650,7 +650,6 @@ class Worker:
                     self.answers.user[var_name] = answer
                     continue
 
-
             # Display TUI and ask user interactively only without --defaults
             try:
                 new_answer = unsafe_prompt(
@@ -1395,7 +1394,7 @@ class Worker:
                 # won't be included in the diff as deleted paths to prevent deletion.
                 # https://github.com/orgs/copier-org/discussions/2345
                 exclude=[*self.template.exclude, *self.exclude],
-                ask = (),
+                ask=(),
             ) as old_worker:
                 old_worker.run_copy()
             # Run pre-migration tasks
@@ -1467,7 +1466,7 @@ class Worker:
                 src_path=self.subproject.template.url,  # type: ignore[union-attr]
                 exclude=exclude_plus_removed,
                 vcs_ref=self.resolved_vcs_ref,
-                ask = (),
+                ask=(),
             ) as new_worker:
                 new_worker.run_copy()
             with local.cwd(new_copy):
