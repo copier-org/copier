@@ -13,6 +13,7 @@ from contextlib import suppress
 from contextvars import ContextVar
 from dataclasses import field, replace
 from filecmp import dircmp
+from fnmatch import fnmatchcase
 from functools import cached_property, partial, wraps
 from itertools import chain
 from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
@@ -228,6 +229,10 @@ class Worker:
 
         skip_tasks:
             When `True`, skip template tasks execution.
+
+        ask:
+            List of question names to ask, even if they would be skipped by other
+            options. Supports glob-style patterns.
     """
 
     # NOTE: attributes are fully documented in [creating.md](../docs/creating.md)
@@ -253,6 +258,7 @@ class Worker:
     unsafe: bool = False
     skip_answered: bool = False
     skip_tasks: bool = False
+    ask: Sequence[str] = ()
 
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
     _cleanup_hooks: list[Callable[[], None]] = field(default_factory=list, init=False)
@@ -622,35 +628,36 @@ class Worker:
                 # value.
                 if question.get_default() is MISSING:
                     continue
-            if var_name in self.answers.init:
-                # Try to parse and validate (if the question has a validator)
-                # the answer value.
-                answer = question.parse_answer(self.answers.init[var_name])
-                question.validate_answer(answer)
-                # At this point, the answer value is valid. Do not ask the
-                # question again, but set answer as the user's answer instead.
-                self.answers.user[var_name] = answer
-                continue
-            # Skip a question when the user already answered it.
-            if self.skip_answered and var_name in self.answers.last:
-                continue
+
+            if not any(fnmatchcase(var_name, ask_pattern) for ask_pattern in self.ask):
+                # If the user didn't explicitly request the question be asked,
+                # it may now be skipped by `--data`, `--skip-answered`, or `--defaults`.
+                if var_name in self.answers.init:
+                    # Try to parse and validate (if the question has a validator)
+                    # the answer value.
+                    answer = question.parse_answer(self.answers.init[var_name])
+                    question.validate_answer(answer)
+                    self.answers.user[var_name] = answer
+                    continue
+                if self.skip_answered and var_name in self.answers.last:
+                    continue
+                if self.defaults:
+                    answer = question.get_default()
+                    if answer is MISSING:
+                        raise ValueError(f'Question "{var_name}" is required')
+                    self.answers.user[var_name] = answer
+                    continue
 
             # Display TUI and ask user interactively only without --defaults
             try:
-                if self.defaults:
-                    new_answer = question.get_default()
-                    if new_answer is MISSING:
-                        raise ValueError(f'Question "{var_name}" is required')
-                else:
-                    try:
-                        new_answer = unsafe_prompt(
-                            [question.get_questionary_structure()],
-                            answers={question.var_name: question.get_default()},
-                        )[question.var_name]
-                    except EOFError as err:
-                        raise InteractiveSessionError(
-                            "Use `--defaults` and/or `--data`/`--data-file`"
-                        ) from err
+                new_answer = unsafe_prompt(
+                    [question.get_questionary_structure()],
+                    answers={question.var_name: question.get_default()},
+                )[question.var_name]
+            except EOFError as err:
+                raise InteractiveSessionError(
+                    "Use `--defaults` and/or `--data`/`--data-file`"
+                ) from err
             except KeyboardInterrupt as err:
                 raise CopierAnswersInterrupt(
                     self.answers, question, self.template
@@ -1385,6 +1392,7 @@ class Worker:
                 # won't be included in the diff as deleted paths to prevent deletion.
                 # https://github.com/orgs/copier-org/discussions/2345
                 exclude=[*self.template.exclude, *self.exclude],
+                ask=(),
             ) as old_worker:
                 old_worker.run_copy()
             # Run pre-migration tasks
@@ -1457,6 +1465,7 @@ class Worker:
                 src_path=self.subproject.template.url,  # type: ignore[union-attr]
                 exclude=exclude_plus_removed,
                 vcs_ref=self.resolved_vcs_ref,
+                ask=(),
             ) as new_worker:
                 new_worker.run_copy()
             with local.cwd(new_copy):
@@ -1708,6 +1717,7 @@ def run_copy(
     quiet: bool = False,
     unsafe: bool = False,
     skip_tasks: bool = False,
+    ask: Sequence[str] = (),
 ) -> Worker:
     """Copy a template to a destination, from zero."""
     with Worker(
@@ -1736,6 +1746,7 @@ def run_copy(
         quiet=quiet,
         unsafe=unsafe,
         skip_tasks=skip_tasks,
+        ask=ask,
     ) as worker:
         worker.run_copy()
     return worker
@@ -1760,6 +1771,7 @@ def run_recopy(
     unsafe: bool = False,
     skip_answered: bool = False,
     skip_tasks: bool = False,
+    ask: Sequence[str] = (),
 ) -> Worker:
     """Update a subproject from its template, discarding subproject evolution."""
     with Worker(
@@ -1788,6 +1800,7 @@ def run_recopy(
         unsafe=unsafe,
         skip_answered=skip_answered,
         skip_tasks=skip_tasks,
+        ask=ask,
     ) as worker:
         worker.run_recopy()
     return worker
@@ -1814,6 +1827,7 @@ def run_update(
     unsafe: bool = False,
     skip_answered: bool = False,
     skip_tasks: bool = False,
+    ask: Sequence[str] = (),
 ) -> Worker:
     """Update a subproject, from its template."""
     with Worker(
@@ -1844,6 +1858,7 @@ def run_update(
         unsafe=unsafe,
         skip_answered=skip_answered,
         skip_tasks=skip_tasks,
+        ask=ask,
     ) as worker:
         worker.run_update()
     return worker

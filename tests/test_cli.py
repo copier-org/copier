@@ -408,6 +408,9 @@ Switches:
                                     extensions, migrations, tasks)
     -a, --answers-file VALUE:str    Update using this path (relative to
                                     `destination_path`) to find the answers file
+    --ask VALUE:str                 Ask the questions matching the given glob-
+                                    pattern, even if they would be skipped by
+                                    other options; may be given multiple times
     -d, --data VARIABLE=VALUE:str   Make VARIABLE available as VALUE when
                                     rendering the template; may be given
                                     multiple times
@@ -475,6 +478,9 @@ Switches:
                                     extensions, migrations, tasks)
     -a, --answers-file VALUE:str    Update using this path (relative to
                                     `destination_path`) to find the answers file
+    --ask VALUE:str                 Ask the questions matching the given glob-
+                                    pattern, even if they would be skipped by
+                                    other options; may be given multiple times
     -c, --context-lines VALUE:int   Lines of context to use for detecting
                                     conflicts. Increase for accuracy, decrease
                                     for resilience.; the default is 3
