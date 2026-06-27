@@ -370,6 +370,21 @@ class Worker:
         answers: AnyByStrDict = {}
         commit = self.template.commit
         src = self.template.url
+        # Check if the original path was relative
+        src_path = Path(self.src_path) if self.src_path else None
+        if src_path is None:
+            last_src = self.subproject.last_answers.get("_src_path")
+            src_path = Path(last_src) if last_src else None
+        was_relative = src_path is not None and not src_path.is_absolute()
+
+        # If original was relative and it is not a remote Git repo, save as relative to the subproject root
+        if was_relative and src and not src.startswith(("http://", "https://", "git@", "git+", "gh:", "gl:", "bb:")):
+            try:
+                src_resolved = Path(src).resolve()
+                dst_resolved = self.subproject.local_abspath.resolve()
+                src = os.path.relpath(str(src_resolved), str(dst_resolved))
+            except (ValueError, OSError):
+                pass
         for key, value in (("_commit", commit), ("_src_path", src)):
             if value is not None:
                 answers[key] = value
