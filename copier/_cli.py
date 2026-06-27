@@ -333,7 +333,8 @@ class CopierRecopySubApp(_Subcommand):
         str,
         list=True,
         help=(
-            "Ask the questions matching the given fnamtch-pattern, even if they would be skipped by other options"
+            "Ask the questions matching the given fnamtch-pattern, even if they would be "
+            "skipped by other options"
         ),
     )
 
