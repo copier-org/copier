@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from os.path import expanduser
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlsplit, urlunsplit
+from urllib.parse import unquote, urlsplit, urlunsplit
 
 import yaml
 from platformdirs import user_config_path
@@ -154,8 +154,16 @@ def _normalize(url: str) -> str:
         url = expanduser(url)  # noqa: PTH111
     if "://" in url:
         parts = urlsplit(url)
-        path = posixpath.normpath(parts.path) if parts.path else parts.path
-        if parts.path.endswith("/") and not path.endswith("/"):
+        # Percent-decode before normalizing so that encoded dot segments (e.g.
+        # `%2e%2e`) and encoded separators (e.g. `%2f`) are collapsed by
+        # `posixpath.normpath`. Backslashes (literal or `%5c`) are folded to
+        # forward slashes because some servers and intermediaries treat them
+        # as path separators while `posixpath.normpath` does not. Otherwise
+        # the form used for the trust check could differ from what the
+        # HTTP/Git layer ultimately resolves, allowing a trust-prefix bypass.
+        decoded_path = unquote(parts.path).replace("\\", "/")
+        path = posixpath.normpath(decoded_path) if decoded_path else decoded_path
+        if decoded_path.endswith("/") and not path.endswith("/"):
             path += "/"
         return urlunsplit(
             (parts.scheme, parts.netloc, path, parts.query, parts.fragment)
