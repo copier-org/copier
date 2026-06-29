@@ -3,7 +3,7 @@
 **Contribution Number:** 1
 **Student:** Karen Emily Muhwezi
 **Issue:** https://github.com/copier-org/copier/issues/1451
-**Status:** Phase III In Progress
+**Status:** Phase IV Complete
 
 ---
 
@@ -11,8 +11,8 @@
 
 As someone with a Python background who has worked with ML models, I'm drawn
 to tooling problems that slow developers down in real, tangible ways. This
-issue describes a genuinely frustrating workflow — having to commit, push, and
-run updates just to preview a template change — and proposes a solution that
+issue describes a genuinely frustrating workflow, having to commit, push, and
+run updates just to preview a template change, and proposes a solution that
 would make the development experience significantly better. That kind of
 quality-of-life improvement is something I find meaningful to work on because
 the impact is immediately visible.
@@ -20,7 +20,7 @@ the impact is immediately visible.
 This issue also aligns well with my learning goals. Copier is a Python
 project, which plays to my existing strengths, but building a live preview
 feature means I'll be working with file watching, CLI design, and real-time
-rendering pipelines — areas I haven't worked in deeply before. I want to grow
+rendering pipelines, areas I haven't worked in deeply before. I want to grow
 my problem-solving skills by tackling something that has genuine complexity
 underneath a simple-sounding description, and see that solution actually ship
 in a tool that real developers use every day.
@@ -34,7 +34,7 @@ in a tool that real developers use every day.
 Copier currently has no way to preview how a template renders during 
 development. To see any changes, a developer must commit their changes, push 
 to GitHub, switch to a downstream project, run `copier update`, and observe 
-the output — then repeat the entire cycle for every fix. This makes template 
+the output, then repeat the entire cycle for every fix. This makes template 
 development extremely slow and tedious.
 
 ### Expected Behavior
@@ -42,7 +42,7 @@ development extremely slow and tedious.
 A template developer should be able to run a single command like 
 `copier preview` that renders their template locally into a temporary 
 directory and automatically re-renders it every time they save a change, 
-without any manual steps in between — similar to hot-reloading in React 
+without any manual steps in between, similar to hot-reloading in React 
 development.
 
 ### Current Behavior
@@ -69,16 +69,12 @@ and running multiple commands every single time a change is made.
 Cloned fork from https://github.com/karenemily/codepath-copier.git
 
 Ran `python -m uv sync` and hit a network timeout trying to fetch `hatch_vcs`:
+
 x Failed to build copier @ file:///C:/Users/Administrator/codepath-copier
-
 |-> Failed to resolve requirements from build-system.requires
-
 |-> No solution found when resolving: hatchling, hatch-vcs
-
 |-> Request failed after 3 retries in 84.0s
-
 |-> error sending request for url (https://files.pythonhosted.org/...)
-
 `-> operation timed out
 
 Resolved by retrying on a stable network connection. Confirmed working
@@ -98,11 +94,15 @@ run as `python -m uv` instead of `uv` directly.
 
 ### Reproduction Evidence
 
-- **Commit showing reproduction:** [Link to commit in your fork]
+- **Commit showing reproduction:** https://github.com/karenemily/codepath-copier/commit/65b7fcaad88c0ac22ffe5a245e03d74a056789f8
 - **Screenshots/logs:** Network timeout error documented above
 - **My findings:** The issue is a missing feature — there is no existing 
   preview or watch command in Copier's CLI. Confirmed by searching the 
-  codebase for any existing preview functionality and finding none.
+  codebase for any `preview` or `watch` functionality and finding none. 
+  Identified `_main.py` as the correct file to add the feature by studying 
+  how `run_copy` and `run_update` are structured. Confirmed the feature 
+  was fully missing by successfully running `copier --help` and seeing no 
+  preview command listed.
 
 ---
 
@@ -145,20 +145,21 @@ modelled on `run_recopy`.
 4. ✅ Add standalone `run_preview` function following the same pattern as 
    `run_recopy`
 5. ✅ Write and pass test for the new command
-6. ⬜ Expose the new function as a CLI command via the existing CLI layer
+6. ✅ Expose the new function as a CLI command via the existing CLI layer
 7. ⬜ Add additional edge case tests
 
 **Implement:** https://github.com/karenemily/codepath-copier/tree/fix-issue-live-preview
 
 **Review:**
-- [ ] Follows Copier's code style
-- [ ] New command is documented
-- [ ] Existing tests still pass
-- [ ] New tests added and passing
-- [ ] CHANGELOG updated if required
+- [x] Follows Copier's code style
+- [x] New command is documented in PR description
+- [x] Existing tests still pass
+- [x] New tests added and passing
+- [ ] CHANGELOG updated if required by maintainer
 
 **Evaluate:** Test `test_preview_renders_template` confirms the initial render
-works correctly. Still need to test the hot-reload/watch loop behavior.
+works correctly. Manual end-to-end testing confirmed hot-reload re-renders
+correctly when template files are saved.
 
 ---
 
@@ -183,8 +184,10 @@ works correctly. Still need to test the hot-reload/watch loop behavior.
 
 ### Manual Testing
 
-Manual testing not yet performed. Will test by running `run_preview` directly
-on a sample template and editing files to confirm hot-reload behavior.
+Manually tested by running `copier preview` on a local test template. Created
+a template with a `hello.txt` file, ran the preview command, edited the file,
+and confirmed the output directory updated automatically without any manual
+steps. Hot-reload confirmed working end to end.
 
 ---
 
@@ -208,30 +211,43 @@ on a sample template and editing files to confirm hot-reload behavior.
 
 ### Week 2 Progress
 
-[Continue documenting as you work]
+- Added `CopierPreviewSubApp` class to `copier/_cli.py` to expose `run_preview`
+  as a `copier preview` CLI subcommand
+- Imported `run_preview` into the CLI module alongside existing commands
+- Rebased branch on `upstream/master` to stay up to date
+- Ran full test suite — 246 passed, 2 pre-existing Windows-only failures 
+  unrelated to our changes
+- Performed manual end-to-end testing — confirmed hot-reload works correctly
+- Submitted PR #2747 to the upstream Copier repository
+- Tagged maintainer @sisp for review
 
 ### Code Changes
 
-- **Files modified:** `copier/_main.py`, `pyproject.toml`, `tests/test_copy.py`
-- **Key commits:** [Paste your latest commit hash here]
+- **Files modified:** `copier/_main.py`, `copier/_cli.py`, `pyproject.toml`, 
+  `tests/test_copy.py`
+- **Key commits:** https://github.com/karenemily/codepath-copier/tree/fix-issue-live-preview
 - **Approach decisions:** Used `@as_operation("copy")` decorator on the 
   `run_preview` method to satisfy the internal operation context requirement. 
   Mocked `watchfiles.watch` in tests to avoid actual file watching during 
   test runs. Moved `watchfiles` import to module level to allow proper mocking.
+  Followed the existing `CopierCopySubApp` pattern exactly when building the 
+  CLI subcommand.
 
 ---
 
 ## Pull Request
 
-**PR Link:** [GitHub PR URL when submitted]
+**PR Link:** https://github.com/copier-org/copier/pull/2747
 
-**PR Description:** [TBD — will write in Phase IV]
+**PR Description:** Added a new `copier preview` CLI command that renders 
+a template locally and automatically re-renders it whenever a file change 
+is detected using `watchfiles`, implementing the hot-reloading feature 
+requested in issue #1451.
 
 **Maintainer Feedback:**
-- [Date]: [Summary of feedback received]
-- [Date]: [How you addressed it]
+- Awaiting review from @sisp
 
-**Status:** Not yet submitted
+**Status:** Awaiting review
 
 ---
 
@@ -245,6 +261,9 @@ on a sample template and editing files to confirm hot-reload behavior.
 - Learned how to use `unittest.mock` to mock third-party library calls in tests
 - Learned about Python `ContextVar` and operation context requirements
 - Practised Conventional Commits format for commit messages
+- Learned how CLI frameworks work and how to add new subcommands
+- Gained experience with Git rebasing and working with upstream remotes
+- Learned how to submit a real open source pull request
 
 ### Challenges Overcome
 
@@ -257,10 +276,16 @@ on a sample template and editing files to confirm hot-reload behavior.
   `@as_operation("copy")` decorator to the method
 - Mock patching failing because import was local — resolved by moving import 
   to module level
+- Git rebase failing because default branch is `master` not `main` — resolved 
+  by using `upstream/master`
 
 ### What I'd Do Differently Next Time
 
-[TBD — will reflect on this at the end of the project]
+- Set up the development environment on a Linux or Mac machine to avoid 
+  Windows-specific issues with symlinks, PATH, and missing commands like `cat`
+- Comment on the issue before starting work to confirm it is still wanted 
+  by maintainers and get implementation guidance early
+- Write tests alongside the code rather than after to catch issues sooner
 
 ---
 
@@ -268,6 +293,7 @@ on a sample template and editing files to confirm hot-reload behavior.
 
 - https://github.com/copier-org/copier — Main repository
 - https://github.com/copier-org/copier/issues/1451 — Issue being addressed
+- https://github.com/copier-org/copier/pull/2747 — Submitted pull request
 - https://github.com/samuelcolvin/watchfiles — Suggested file watching library
 - Copier documentation: https://copier.readthedocs.io
 - Copier CONTRIBUTING.md — Code style, testing and commit message guidelines
