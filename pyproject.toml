@@ -62,7 +62,7 @@ dev = [
   "types-colorama==0.4.15.20260508",
   "types-pygments==2.20.0.20260518",
   "types-pyyaml==6.0.12.20260518",
-  "typing-extensions==4.15.0; python_version < '<3.10'",
+  "typing-extensions==4.16.0; python_version < '<3.10'",
 ]
 docs = [
   "markdown-exec==1.12.1",
