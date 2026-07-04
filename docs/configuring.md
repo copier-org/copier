@@ -1213,6 +1213,15 @@ The following extensions are _always_ loaded:
 You don't need to tell your template users to install these extensions: Copier depends
 on them, so they are always installed when Copier is installed.
 
+!!! note
+
+    While rendering the subproject, the current working directory is the destination
+    path, so filesystem-related filters, functions and tags provided by Jinja
+    extensions (e.g., the `fileglob` filter) operate relative to the destination path.
+    Keep in mind that Copier generates files in no particular order, so the result of
+    filesystem operations may depend on whether the files being queried were already
+    generated.
+
 !!! warning
 
     Including an extension allows Copier to execute uncontrolled code, thus making the

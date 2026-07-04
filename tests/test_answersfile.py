@@ -7,6 +7,7 @@ from textwrap import dedent
 
 import pytest
 import yaml
+from plumbum import local
 
 import copier
 from copier._user_data import load_answersfile_data
@@ -549,3 +550,30 @@ def test_external_data_path_outside_destination_root_is_unsafe_on_update(
 
     with expected:
         copier.run_update(project, defaults=True, overwrite=True, unsafe=unsafe)
+
+
+def test_external_data_lazily_loaded_while_rendering(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """External data loads while rendering with a relative destination path.
+
+    While rendering, the working directory is the destination path
+    (https://github.com/copier-org/copier/issues/1708), and external data may
+    be loaded lazily on first access while rendering a file.
+    """
+    src, invocation = map(tmp_path_factory.mktemp, ("src", "invocation"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                """\
+                _external_data:
+                    other: other-data.yml
+                """
+            ),
+            (src / "out.txt.jinja"): "{{ _external_data.other.key }}",
+            (invocation / "dst" / "other-data.yml"): "key: value",
+        }
+    )
+    with local.cwd(invocation):
+        copier.run_copy(str(src), "dst", defaults=True, overwrite=True)
+    assert (invocation / "dst" / "out.txt").read_text() == "value"
