@@ -596,7 +596,7 @@ def test_update_render_cwd_is_destination(
         git_init("v1")
         git("tag", "v1")
     run_copy(str(src), dst, defaults=True, overwrite=True)
-    build_file_tree({(dst / "a.txt"): "", (invocation / "decoy.txt"): ""})
+    build_file_tree({(invocation / "decoy.txt"): ""})
     with local.cwd(dst):
         git_init("copied")
     with local.cwd(src):
@@ -608,7 +608,13 @@ def test_update_render_cwd_is_destination(
         cwd_before = Path.cwd()
         run_update(dst, defaults=True, overwrite=True)
         assert Path.cwd() == cwd_before
-    assert (dst / "fileglob.txt").read_text() == "['a.txt', 'version.txt']"
+    # NOTE: Deliberately assert only files rendered by the template, not files
+    # added by the user in the destination. Whether the latter are visible to
+    # filesystem filters during an update depends on whether the update
+    # algorithm renders into the user-specified destination, which is an
+    # implementation detail that may change.
+    # https://github.com/copier-org/copier/pull/2754#discussion_r3529453935
+    assert (dst / "fileglob.txt").read_text() == "['version.txt']"
 
 
 @pytest.mark.parametrize("subproject_path", [Path(), Path("subproject")])
