@@ -3,7 +3,7 @@
 **Contribution Number:** 1
 **Student:** Karen Emily Muhwezi
 **Issue:** https://github.com/copier-org/copier/issues/1451
-**Status:** Phase IV Complete
+**Status:** Phase IV Pending
 
 ---
 
@@ -245,9 +245,12 @@ is detected using `watchfiles`, implementing the hot-reloading feature
 requested in issue #1451.
 
 **Maintainer Feedback:**
-- Awaiting review from @sisp
+"I don't think the current implementation is a correct solution to the problem.
 
-**Status:** Awaiting review
+It is insufficient to run Worker._render_template on source file changes – this ignores changes in the questionnaire, which likely affects the render context, and doesn't (re)run tasks, which may be essential to the render output.
+It doesn't remove files that were previously rendered but are no longer rendered after a template change – files are only added or replaced. I imagine a (more) correct solution might involve making a full copy (using run_copy) in a temporary destination, computing the filetree diff between the temporary copy and the user-specified destination, and syncing the latter to the former. But this is just the first idea that has come to my mind right now. I imagine the devil is in the details. For example, for good UX you'll likely want to ask only questions that were changed in copier.yml, but a template might not render an answers file which is what copier update --skip-answered uses. On [CONTRIBUTION.md](https://github.com/copier-org/copier/pull/2747#discussion_r3529591928): I don't understand this file, it doesn't belong in this repo."
+
+**Status:** Awaiting review and working on implementing the feedback
 
 ---
 
