@@ -124,7 +124,9 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
             if option in result:
                 merged_options[option].extend(result[option])
 
-    return dict(ChainMap(dict(merged_options), *reversed(flattened_result)))
+    result = dict(ChainMap(dict(merged_options), *reversed(flattened_result)))
+    result.pop("$schema", None)
+    return result
 
 
 def verify_copier_version(version_str: str) -> None:
