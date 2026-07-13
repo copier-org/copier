@@ -352,6 +352,7 @@ class Question:
             # Extract the extended syntax for dict-like (dict-style or
             # tuple-style) choices if applicable
             disabled = ""
+            checked = None  # Use None to indicate "not explicitly set"
             if isinstance(choice, (tuple, list)) and isinstance(value, dict):
                 if "value" not in value:
                     raise KeyError("Property 'value' is required")
@@ -359,8 +360,15 @@ class Question:
                     raise ValueError("Property 'validator' must be a string")
 
                 disabled = self.render_value(value.get("validator", ""))
+                # Support default=false for multi-select choices
+                if "default" in value:
+                    checked = cast_to_bool(self.render_value(value["default"]))
                 value = value["value"]
-            c = Choice(name, self.render_value(value), disabled=disabled)
+            # Only pass checked if explicitly set; otherwise use questionary's default (False)
+            if checked is not None:
+                c = Choice(name, self.render_value(value), disabled=disabled, checked=checked)
+            else:
+                c = Choice(name, self.render_value(value), disabled=disabled)
             # Try to cast the value according to the question's type to raise
             # an error in case the value is incompatible.
             self.cast_answer(c.value)
@@ -419,11 +427,15 @@ class Question:
             questionary_type = "checkbox" if self.multiselect else "select"
             choices = self._formatted_choices
             # Select default choices for a multiselect question.
-            if self.multiselect and isinstance(
-                default_choices := self.get_default(), list
-            ):
-                for choice in (choices := deepcopy(choices)):
-                    choice.checked = self.cast_answer(choice.value) in default_choices
+            if self.multiselect:
+                default_choices = self.get_default()
+                if isinstance(default_choices, list):
+                    # Apply question-level defaults, overriding choice-level defaults
+                    for choice in (choices := deepcopy(choices)):
+                        choice.checked = self.cast_answer(choice.value) in default_choices
+                elif default_choices is MISSING:
+                    # No question-level default; use choice-level defaults (already set)
+                    choices = deepcopy(choices)
             result["choices"] = choices
         if questionary_type == "input":
             if self.secret:
