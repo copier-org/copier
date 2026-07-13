@@ -1,6 +1,8 @@
 """Main functions and classes, used to generate or update projects."""
 
+
 from __future__ import annotations
+
 
 import os
 import platform
@@ -18,6 +20,7 @@ from functools import cached_property, partial, wraps
 from itertools import chain
 from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
 from shutil import rmtree
+from watchfiles import watch
 from tempfile import TemporaryDirectory
 from types import TracebackType
 from typing import (
@@ -1358,6 +1361,29 @@ class Worker:
 
         self._apply_update()
         self._print_message(self.template.message_after_update)
+    
+    @as_operation("copy")
+    def run_preview(self, dst_path: Path) -> None:
+        """Preview a template with hot-reloading as changes are made."""
+
+        print(f"\nStarting preview of template at {self.template.local_abspath}")
+        print("Watching for changes... (Ctrl+C to stop)\n")
+
+        # Do initial render
+        with Phase.use(Phase.RENDER):
+            self._render_template()
+        print("Initial render complete.")
+
+        # Watch for changes and re-render
+        try:
+            for changes in watch(self.template.local_abspath):
+                print(f"\nDetected changes: {changes}")
+                print("Re-rendering template...")
+                with Phase.use(Phase.RENDER):
+                    self._render_template()
+                print("Re-render complete.")
+        except KeyboardInterrupt:
+            print("\nPreview stopped.")
 
     def _apply_update(self) -> None:  # noqa: C901
         git = get_git()
@@ -1805,6 +1831,26 @@ def run_recopy(
         worker.run_recopy()
     return worker
 
+def run_preview(
+    src_path: Path | str,
+    dst_path: Path | str = ".",
+    data: dict[str, Any] | None = None,
+    defaults: bool = True,
+    overwrite: bool = True,
+    quiet: bool = False,
+) -> Worker:
+    """Preview a template with hot-reloading as you develop it."""
+    with Worker(
+        src_path=src_path,
+        dst_path=Path(dst_path),
+        data=data or {},
+        defaults=defaults,
+        overwrite=overwrite,
+        quiet=quiet,
+    ) as worker:
+        worker.run_preview(Path(dst_path))
+    return worker
+
 
 def run_update(
     dst_path: Path | str = ".",
@@ -1862,6 +1908,7 @@ def run_update(
     ) as worker:
         worker.run_update()
     return worker
+
 
 
 def get_update_data(
