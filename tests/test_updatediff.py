@@ -10,6 +10,7 @@ from typing import Literal
 import pexpect
 import pytest
 from inline_snapshot import snapshot
+from packaging.version import Version
 from plumbum import local
 
 from copier._cli import CopierApp
@@ -17,6 +18,7 @@ from copier._main import Worker, run_copy, run_update
 from copier._tools import normalize_git_path
 from copier._types import VcsRef
 from copier._user_data import load_answersfile_data
+from copier._vcs import get_git_version
 from copier.errors import UserMessageError
 
 from .helpers import (
@@ -302,6 +304,13 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
         )
 
 
+@pytest.mark.xfail(
+    get_git_version() >= Version("2.55.0"),
+    reason=(
+        "Git v2.55.0+ no longer supports `--inter-hunk-context=-1` "
+        "(https://github.com/copier-org/copier/issues/2759)"
+    ),
+)
 # This fails on Windows because there's some problem while detecting
 # the diff. It seems like an older Git version were being used, while
 # that's not the case...
