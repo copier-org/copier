@@ -76,7 +76,17 @@ class Subproject:
         last_url = self.last_answers.get("_src_path")
         last_ref = self.last_answers.get("_commit")
         if last_url:
-            result = Template(url=last_url, ref=last_ref)
+            url = last_url
+            if not last_url.startswith(("http://", "https://", "git@", "git+", "gh:", "gl:", "bb:")):
+                try:
+                    path = Path(last_url)
+                    if not path.is_absolute():
+                        resolved_path = (self.local_abspath / path).resolve()
+                        if resolved_path.is_dir():
+                            url = str(resolved_path)
+                except OSError:
+                    pass
+            result = Template(url=url, ref=last_ref)
             self._cleanup_hooks.append(result._cleanup)
             return result
         return None
