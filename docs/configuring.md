@@ -40,6 +40,21 @@ for two purposes:
 - [Applying template settings](#available-settings) (excluding files, setting arguments
     defaults, etc.).
 
+### IDE support with `$schema`
+
+You can add a `$schema` key to your `copier.yml` to enable autocompletion, inline
+documentation, and validation in compatible IDEs (VS Code, JetBrains, etc.):
+
+```yaml
+$schema: ./copier.schema.json
+```
+
+To generate the schema, run:
+
+```sh
+copier schema -o copier.schema.json
+```
+
 ### Questions
 
 For each key found, Copier will prompt the user to fill or confirm the values before
