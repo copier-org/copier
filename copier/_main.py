@@ -9,7 +9,7 @@ import subprocess
 import sys
 import warnings
 from collections.abc import Callable, Iterable, Mapping, Sequence
-from contextlib import suppress
+from contextlib import nullcontext, suppress
 from contextvars import ContextVar
 from dataclasses import field, replace
 from filecmp import dircmp
@@ -332,9 +332,13 @@ class Worker:
                 return self._render_string(path)
 
         def _load_external_data(path: str) -> Any:
+            # NOTE: Use the absolute destination path instead of `self.dst_path`,
+            # which may be relative to the original working directory, because
+            # data may be loaded lazily while rendering, when the working
+            # directory is the destination path.
             if (
                 not (
-                    (self.dst_path / (path := _render(path)))
+                    (self.subproject.local_abspath / (path := _render(path)))
                     .resolve()
                     .is_relative_to(self.subproject.local_abspath)
                 )
@@ -348,7 +352,9 @@ class Worker:
                         "  - API: `trust=True`"
                     ),
                 )
-            return load_answersfile_data(self.dst_path, path, warn_on_missing=True)
+            return load_answersfile_data(
+                self.subproject.local_abspath, path, warn_on_missing=True
+            )
 
         # Given those values are lazily rendered on 1st access then cached
         # the phase value is irrelevant and could be misleading.
@@ -777,47 +783,58 @@ class Worker:
         """Render the template in the subproject root."""
         follow_symlinks = not self.template.preserve_symlinks
         dst_root = self.dst_path.resolve()
-        for src in scantree(str(self.template_copy_root), follow_symlinks):
-            src_abspath = Path(src.path)
-            # If the source is a symlink, we are not preserving symlinks, and the
-            # symlink target is outside the template root, this means that we are
-            # copying a file/directory from outside the template, which is
-            # forbidden, so raise an error.
-            if (
-                src_abspath.is_symlink()
-                and not self.template.preserve_symlinks
-                and not (src_abspath.resolve()).is_relative_to(
-                    self.template.local_abspath
+        if not self.pretend:
+            dst_root.mkdir(parents=True, exist_ok=True)
+        # Render with the subproject root as the working directory, so that
+        # filesystem-related Jinja filters and extensions (e.g. `fileglob`)
+        # operate relative to the destination path. In pretend mode, a missing
+        # destination folder is not created, and the working directory is left
+        # unchanged.
+        with local.cwd(dst_root) if dst_root.is_dir() else nullcontext():
+            for src in scantree(str(self.template_copy_root), follow_symlinks):
+                src_abspath = Path(src.path)
+                # If the source is a symlink, we are not preserving symlinks, and the
+                # symlink target is outside the template root, this means that we are
+                # copying a file/directory from outside the template, which is
+                # forbidden, so raise an error.
+                if (
+                    src_abspath.is_symlink()
+                    and not self.template.preserve_symlinks
+                    and not (src_abspath.resolve()).is_relative_to(
+                        self.template.local_abspath
+                    )
+                ):
+                    raise ForbiddenPathError(
+                        path=src_abspath.relative_to(self.template_copy_root)
+                    )
+                src_relpath = Path(src_abspath).relative_to(self.template.local_abspath)
+                dst_relpaths_ctxs = self._render_path(
+                    Path(src_abspath).relative_to(self.template_copy_root)
                 )
-            ):
-                raise ForbiddenPathError(
-                    path=src_abspath.relative_to(self.template_copy_root)
-                )
-            src_relpath = Path(src_abspath).relative_to(self.template.local_abspath)
-            dst_relpaths_ctxs = self._render_path(
-                Path(src_abspath).relative_to(self.template_copy_root)
-            )
-            for dst_relpath, ctx in dst_relpaths_ctxs:
-                dst_abspath = dst_root / dst_relpath
-                if dst_abspath.is_symlink() and self.template.preserve_symlinks:
-                    # If destination path is a symlink, it can safely point outside the
-                    # subproject dir, while still itself existing within the subproject.
-                    # (So long as nothing is templated into it (if it is a directory),
-                    # which would be caught by that path's own check.)
-                    # Therefore avoid resolving the symlink itself:
-                    dst_realpath = dst_abspath.parent.resolve() / dst_abspath.name
-                else:
-                    dst_realpath = dst_abspath.resolve()
-                if not dst_realpath.is_relative_to(dst_root):
-                    raise ForbiddenPathError(path=dst_relpath)
-                if self.match_exclude(dst_relpath):
-                    continue
-                if src.is_symlink() and self.template.preserve_symlinks:
-                    self._render_symlink(src_relpath, dst_relpath)
-                elif src.is_dir(follow_symlinks=follow_symlinks):
-                    self._render_folder(dst_relpath)
-                else:
-                    self._render_file(src_relpath, dst_relpath, extra_context=ctx or {})
+                for dst_relpath, ctx in dst_relpaths_ctxs:
+                    dst_abspath = dst_root / dst_relpath
+                    if dst_abspath.is_symlink() and self.template.preserve_symlinks:
+                        # If destination path is a symlink, it can safely point
+                        # outside the subproject dir, while still itself existing
+                        # within the subproject. (So long as nothing is templated
+                        # into it (if it is a directory), which would be caught by
+                        # that path's own check.) Therefore avoid resolving the
+                        # symlink itself:
+                        dst_realpath = dst_abspath.parent.resolve() / dst_abspath.name
+                    else:
+                        dst_realpath = dst_abspath.resolve()
+                    if not dst_realpath.is_relative_to(dst_root):
+                        raise ForbiddenPathError(path=dst_relpath)
+                    if self.match_exclude(dst_relpath):
+                        continue
+                    if src.is_symlink() and self.template.preserve_symlinks:
+                        self._render_symlink(src_relpath, dst_relpath)
+                    elif src.is_dir(follow_symlinks=follow_symlinks):
+                        self._render_folder(dst_relpath)
+                    else:
+                        self._render_file(
+                            src_relpath, dst_relpath, extra_context=ctx or {}
+                        )
 
     def _render_file(  # noqa: C901
         self,
