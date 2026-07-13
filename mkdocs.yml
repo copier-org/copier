@@ -59,6 +59,7 @@ markdown_extensions:
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.emoji
+  - pymdownx.keys
   - pymdownx.magiclink
   - toc:
       permalink: true
