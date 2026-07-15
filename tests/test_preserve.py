@@ -14,6 +14,7 @@ from copier._preserve import (
     PreserveMarkerError,
     _apply_regions,
     _parse_regions,
+    _RegionKey,
     capture_preserved_regions,
     find_marker_files,
     restore_preserved_regions,
@@ -59,7 +60,7 @@ def test_apply_regions_replaces_only_matching_bodies() -> None:
         f"# {PRESERVE_START_TOKEN} keep\nUSER\n# {PRESERVE_END_TOKEN} keep\n"
         f"# {PRESERVE_START_TOKEN} other\nOTHER-USER\n# {PRESERVE_END_TOKEN} other\n"
     )
-    captured = {
+    captured: dict[_RegionKey, str] = {
         key: region.body
         for key, region in zip(("keep", "other"), _parse_regions(original), strict=True)
     }
@@ -77,7 +78,7 @@ def test_apply_regions_replaces_only_matching_bodies() -> None:
 
 
 def test_apply_regions_keeps_updated_marker_lines() -> None:
-    captured = {"x": "USER\n"}
+    captured: dict[_RegionKey, str] = {"x": "USER\n"}
     # Template moved the region and changed the marker's comment style.
     new_render = f"// {PRESERVE_START_TOKEN} x\nTEMPLATE\n// {PRESERVE_END_TOKEN} x\n"
     result = _apply_regions(new_render, captured)
@@ -85,7 +86,7 @@ def test_apply_regions_keeps_updated_marker_lines() -> None:
 
 
 def test_apply_regions_ignores_new_region() -> None:
-    captured: dict[str, str] = {}  # nothing captured
+    captured: dict[_RegionKey, str] = {}  # nothing captured
     new_render = (
         f"# {PRESERVE_START_TOKEN} fresh\nDUMMY\n# {PRESERVE_END_TOKEN} fresh\n"
     )
