@@ -132,7 +132,7 @@ project_half("half migrated<br>project")
 project_updated("updated project")
 project_full("fully updated<br>and migrated project")
 
-update["3-way merge<br>& run tasks again"]
+update["3-way merge"]
 regen_current["generate and run tasks"]
 regen_latest["generate and run tasks"]
 

@@ -1562,10 +1562,6 @@ class Worker:
                             subproject_subdir / self.answers_relpath,
                         )
 
-        if not self.skip_tasks:
-            with Phase.use(Phase.TASKS):
-                self._execute_tasks(self.template.tasks)
-
         # Run post-migration tasks.
         with Phase.use(Phase.MIGRATE):
             self._execute_tasks(
