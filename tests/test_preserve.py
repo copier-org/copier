@@ -23,6 +23,7 @@ from .helpers import build_file_tree, git
 
 # Unit tests for the parsing / capture / restore primitives.
 
+
 def test_parse_regions_named_and_anonymous() -> None:
     text = (
         f"head\n# {PRESERVE_START_TOKEN} foo\nA\nB\n# {PRESERVE_END_TOKEN} foo\n"

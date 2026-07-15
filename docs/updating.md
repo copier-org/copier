@@ -296,8 +296,8 @@ changed the placeholder, while `HEADER` and `FOOTER` still receive template upda
 
 The optional identifier after the token (`greeting` above) lets Copier match a region to
 its counterpart even if the region moves within the file between template versions. When
-omitted, regions are matched by their order of appearance in the file. Nested markers are
-not supported, and a file with unbalanced markers is left untouched.
+omitted, regions are matched by their order of appearance in the file. Nested markers
+are not supported, and a file with unbalanced markers is left untouched.
 
 ## Checking for updates
 
