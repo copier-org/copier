@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from inline_snapshot import snapshot
 from plumbum import local
 
 from copier import run_copy, run_update
@@ -511,6 +512,84 @@ def test_migration_env_variables(
 
     for variable, value in current_only_variables.items():
         assert (f"{variable}={value}" in env) == with_version
+
+
+def test_pre_migration_runs_on_old_copy(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    build_file_tree(
+        {
+            src / "copier.yml": "_subdirectory: template/",
+            src / "template" / "{{ _copier_conf.answers_file }}.jinja": (
+                "{{ _copier_answers|to_yaml }}"
+            ),
+            src / "template" / "pyproject.toml.jinja": (
+                """\
+                [tool.poetry.group.dev.dependencies]
+                pytest = "*"
+                """
+            ),
+        }
+    )
+    git_save(src, tag="v1")
+
+    build_file_tree(
+        {
+            src / "copier.yml": (
+                """\
+                _subdirectory: template/
+
+                _migrations:
+                -   version: v2
+                    when: "{{ _stage == 'before' }}"
+                    command: "{{ _copier_python }} {{ _copier_conf.src_path / 'migrate_pep735.py' }}"
+                """
+            ),
+            src / "template" / "pyproject.toml.jinja": (
+                """\
+                [dependency-groups]
+                dev = ["pytest"]
+                """
+            ),
+            src / "migrate_pep735.py": (
+                """\
+                from pathlib import Path
+                import tomlkit
+
+                pyproject = Path("pyproject.toml")
+                doc = tomlkit.parse(pyproject.read_bytes())
+                print(pyproject.read_bytes())
+
+                deps = sorted(doc["tool"]["poetry"]["group"]["dev"]["dependencies"])
+                del doc["tool"]["poetry"]["group"]["dev"]
+
+                dep_groups = tomlkit.table()
+                dep_groups.add("dev", deps)
+                doc.add("dependency-groups", dep_groups)
+
+                pyproject.write_text(tomlkit.dumps(doc).lstrip())
+                """
+            ),
+        }
+    )
+    git_save(src, tag="v2")
+
+    run_copy(str(src), dst, vcs_ref="v1")
+
+    git_save(dst, "init")
+    pyproject = dst / "pyproject.toml"
+    pyproject.write_text(pyproject.read_text() + 'mypy = "*"\n')
+    git_save(dst, "add mypy in poetry group")
+
+    run_update(dst, overwrite=True, unsafe=True)
+    assert pyproject.read_text() == snapshot(
+        """\
+[dependency-groups]
+dev = ["mypy", "pytest"]
+"""
+    )
 
 
 @pytest.mark.parametrize("with_version", [True, False])

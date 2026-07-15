@@ -368,11 +368,15 @@ class Worker:
         )
         return answers
 
-    def _execute_tasks(self, tasks: Sequence[Task]) -> None:
+    def _execute_tasks(
+        self, tasks: Sequence[Task], *, directory: Path | None = None
+    ) -> None:
         """Run the given tasks.
 
         Arguments:
             tasks: The list of tasks to run.
+            directory: The working directory to run the tasks in. Defaults to the
+                subproject's path.
         """
         operation = _operation.get()
         for i, task in enumerate(tasks):
@@ -404,7 +408,7 @@ class Worker:
             working_directory = (
                 # We can't use _render_path here, as that function has special handling
                 # for files in the template
-                self.subproject.local_abspath
+                (directory or self.subproject.local_abspath)
                 / Path(self._render_string(str(task.working_directory), extra_context))
             ).absolute()
 
@@ -1410,11 +1414,13 @@ class Worker:
             ) as old_worker:
                 old_worker.run_copy()
 
-            # Run pre-migration tasks.
             with Phase.use(Phase.MIGRATE):
-                self._execute_tasks(
-                    self.template.migration_tasks("before", self.subproject.template)  # type: ignore[arg-type]
+                pre_migration_tasks = self.template.migration_tasks(
+                    "before",
+                    self.subproject.template,  # type: ignore[arg-type]
                 )
+                # Run pre-migration tasks on the current project.
+                self._execute_tasks(pre_migration_tasks)
 
             # Clear last answers cache to load possible answers migration if the
             # `skip_answered` flag is not set.
@@ -1488,6 +1494,10 @@ class Worker:
                     if self.match_skip(path) and path in old_copy_files:
                         path.unlink()
 
+                # Run pre-migration tasks on old copy.
+                self._execute_tasks(
+                    pre_migration_tasks, directory=old_copy / subproject_subdir
+                )
                 # Stage all files including Git-ignored ones.
                 git("add", "-f", ".")
                 # Make a commit to run Git hooks if applicable.

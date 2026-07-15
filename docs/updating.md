@@ -133,7 +133,7 @@ project_updated("updated project")
 project_full("fully updated<br>and migrated project")
 
 update["3-way merge"]
-regen_current["generate and run tasks"]
+regen_current["generate and run tasks<br>& apply pre-migrations"]
 regen_latest["generate and run tasks"]
 
 %% edges ----------------------------------------------------------
@@ -161,7 +161,8 @@ class regen_current,regen_latest,update blackborder;
 As you can see here, `copier` does several things:
 
 - Regenerate the project fresh from the **current** template version, using the
-    project's existing answers – this becomes the merge-base.
+    project's existing answers (with pre-migrations applied afterwards) – this becomes
+    the merge-base.
 - Regenerate the project fresh from the **latest** template version, using the same
     answers (with pre-migrations applied to the project beforehand).
 - Build a synthetic Git commit graph from these three states: the current-version
