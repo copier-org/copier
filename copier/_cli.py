@@ -62,7 +62,6 @@ import sys
 from collections.abc import Callable, Iterable
 from pathlib import Path
 from textwrap import dedent
-from typing import Literal, cast
 
 import yaml
 from plumbum import LocalPath, cli, colors
@@ -395,23 +394,6 @@ class CopierUpdateSubApp(_Subcommand):
         """
     )
 
-    conflict = cli.SwitchAttr(
-        ["-o", "--conflict"],
-        cli.Set("rej", "inline"),
-        default="inline",
-        help=(
-            "Behavior on conflict: Create .rej files, or add inline conflict markers."
-        ),
-    )
-    context_lines = cli.SwitchAttr(
-        ["-c", "--context-lines"],
-        int,
-        default=3,
-        help=(
-            "Lines of context to use for detecting conflicts. Increase for "
-            "accuracy, decrease for resilience."
-        ),
-    )
     defaults = cli.Flag(
         ["-l", "-f", "--defaults"],
         help="Use default answers to questions, which might be null if not specified.",
@@ -456,8 +438,6 @@ class CopierUpdateSubApp(_Subcommand):
                 overwrite=True,
                 pretend=self.pretend,
                 quiet=self.quiet,
-                conflict=cast(Literal["rej", "inline"], self.conflict),
-                context_lines=self.context_lines,
                 unsafe=self.unsafe,
                 skip_answered=self.skip_answered,
                 skip_tasks=self.skip_tasks,

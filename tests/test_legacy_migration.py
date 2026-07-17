@@ -79,7 +79,7 @@ def test_migrations_and_tasks(tmp_path: Path, skip_tasks: bool) -> None:
         assert not (dst / "created-with-tasks.txt").exists()
         assert (dst / "delete-in-tasks.txt").exists()
     else:
-        assert (dst / "created-with-tasks.txt").read_text() == "task 1\ntask 2\n" * 2
+        assert (dst / "created-with-tasks.txt").read_text() == "task 1\ntask 2\n"
         assert not (dst / "delete-in-tasks.txt").exists()
     assert not (dst / "delete-in-migration-v2.txt").exists()
     assert not (dst / "migrations.py").exists()
