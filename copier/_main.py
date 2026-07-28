@@ -461,15 +461,20 @@ class Worker:
                 "os": lambda: OS,
             }
         )
-        return dict(
+        context = dict(
             **self.answers.combined,
             _copier_answers=self._answers_to_remember(),
             _copier_conf=conf,
             _folder_name=self.subproject.local_abspath.name,
             _copier_python=sys.executable,
             _copier_phase=Phase.current(),
-            _copier_operation=_operation.get(),
         )
+        # ``_copier_operation`` is only defined within a copy/update/recopy run.
+        # Outside of one (e.g. ``check_update`` or other bare-``Worker`` use),
+        # leave it unset so rendering doesn't require an active operation.
+        if (operation := _operation.get(None)) is not None:
+            context["_copier_operation"] = operation
+        return context
 
     def _path_matcher(self, patterns: Iterable[str]) -> Callable[[Path], bool]:
         """Produce a function that matches against specified patterns."""
