@@ -122,4 +122,57 @@ class YieldExtension(Extension):
         return res
 
 
+class IgnoreExtension(Extension):
+    r"""Jinja2 extension for the `ignore` tag.
+
+    Wraps a block of *developer-owned* template content that should be rendered
+    on initial generation (`copier copy`) but omitted from the renders Copier
+    produces internally during `copier update`. Because the block is absent from
+    both the old and new template renders that feed the 3-way merge, template
+    changes inside it never reach the diff, so the developer's own version of the
+    region in the generated project is left untouched on every update.
+
+    Unlike literal marker comments, nothing about this tag survives into the
+    rendered file, so it is language-agnostic and never leaks Copier syntax into
+    generated projects.
+
+    The tag compiles to the equivalent of::
+
+        {% if _copier_operation != 'update' %}...{% endif %}
+
+    so it relies solely on the `_copier_operation` render context variable and
+    needs no runtime support hook.
+
+    !!! example
+
+        ```pycon
+        >>> from jinja2.sandbox import SandboxedEnvironment
+        >>> from copier._jinja_ext import IgnoreExtension
+        >>> env = SandboxedEnvironment(extensions=[IgnoreExtension])
+        >>> template = env.from_string(
+        ...     "keep\n{% ignore %}scaffold{% endignore %}\nkeep"
+        ... )
+        >>> template.render({"_copier_operation": "copy"})
+        'keep\nscaffold\nkeep'
+        >>> template.render({"_copier_operation": "update"})
+        'keep\n\nkeep'
+        ```
+    """
+
+    tags = {"ignore"}
+
+    def parse(self, parser: Parser) -> nodes.Node:
+        """Parse the `ignore` tag into a conditional on the current operation."""
+        lineno = next(parser.stream).lineno
+        body = parser.parse_statements(("name:endignore",), drop_needle=True)
+        # Render the body for every operation except `update`; during an update
+        # Copier omits it so the region stays developer-owned.
+        test = nodes.Compare(
+            nodes.Name("_copier_operation", "load", lineno=lineno),
+            [nodes.Operand("ne", nodes.Const("update", lineno=lineno))],
+            lineno=lineno,
+        )
+        return nodes.If(test, body, [], [], lineno=lineno)
+
+
 class UnsetError(UndefinedError): ...

@@ -45,12 +45,7 @@ from pydantic_core import to_jsonable_python
 from questionary import confirm, unsafe_prompt
 
 from ._deprecation import deprecate_answers_file_template_path
-from ._jinja_ext import YieldExtension, get_yield_context
-from ._preserve import (
-    capture_preserved_regions,
-    find_marker_files,
-    restore_preserved_regions,
-)
+from ._jinja_ext import IgnoreExtension, YieldExtension, get_yield_context
 from ._settings import Settings, SettingsModel, is_trusted_repository
 from ._subproject import Subproject
 from ._template import Task, Template
@@ -473,6 +468,7 @@ class Worker:
             _folder_name=self.subproject.local_abspath.name,
             _copier_python=sys.executable,
             _copier_phase=Phase.current(),
+            _copier_operation=_operation.get(),
         )
 
     def _path_matcher(self, patterns: Iterable[str]) -> Callable[[Path], bool]:
@@ -712,6 +708,7 @@ class Worker:
         default_extensions = [
             "jinja2_ansible_filters.AnsibleCoreFiltersExtension",
             YieldExtension,
+            IgnoreExtension,
         ]
         extensions = default_extensions + list(self.template.jinja_extensions)
         envops = dict(self.template.envops)
@@ -857,7 +854,7 @@ class Worker:
                 new_content = src_abspath.read_bytes()
             else:
                 new_content = tpl.render(
-                    **self._render_context(), **(extra_context or {})
+                    {**self._render_context(), **(extra_context or {})}
                 ).encode()
                 if get_yield_context(self.jinja_env).yield_name:
                     raise YieldTagInFileError(
@@ -1180,7 +1177,7 @@ class Worker:
                 Additional variables to use for rendering the template.
         """
         tpl = self.jinja_env.from_string(string)
-        return tpl.render(**self._render_context(), **(extra_context or {}))
+        return tpl.render({**self._render_context(), **(extra_context or {})})
 
     def _render_value(
         self, value: _T, extra_context: AnyByStrDict | None = None
@@ -1400,20 +1397,6 @@ class Worker:
                 ask=(),
             ) as old_worker:
                 old_worker.run_copy()
-            # Capture developer-owned regions marked for preservation.
-            # The old render tells us which template-managed files can contain
-            # markers, so we read the developer's current content only from
-            # those files (not the whole project tree). The captured content is
-            # then injected into every intermediate render so the merge sees
-            # identical region content on all sides and keeps it.
-            old_copy_root = old_copy / subproject_subdir
-            preserved = capture_preserved_regions(
-                self.subproject.local_abspath, find_marker_files(old_copy_root)
-            )
-            # Inject preserved regions into the old render (the merge base) so
-            # it matches the current project there - this keeps template changes
-            # inside those regions out of the computed diff.
-            restore_preserved_regions(old_copy_root, preserved)
             # Run pre-migration tasks
             with Phase.use(Phase.MIGRATE):
                 self._execute_tasks(
@@ -1467,10 +1450,6 @@ class Worker:
                 current_worker.run_copy()
                 self.answers = current_worker.answers
                 self.answers.external = self._external_data()
-            # Inject preserved regions into the freshly rendered destination so
-            # the developer's content survives regardless of how the historical
-            # diff below applies.
-            restore_preserved_regions(self.subproject.local_abspath, preserved)
             # Render with the same answers in an empty dir to avoid pollution
             with replace(
                 self,
@@ -1491,10 +1470,6 @@ class Worker:
                 ask=(),
             ) as new_worker:
                 new_worker.run_copy()
-            # Inject preserved regions into the new render (the merge "other"
-            # side) so it agrees with the base and current sides, leaving the
-            # region conflict-free during the merge.
-            restore_preserved_regions(new_copy / subproject_subdir, preserved)
             with local.cwd(new_copy):
                 self._git_initialize_repo()
                 new_copy_head = git("rev-parse", "HEAD").strip()
