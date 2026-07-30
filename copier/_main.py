@@ -70,7 +70,7 @@ from ._types import (
     VcsRef,
 )
 from ._user_data import AnswersMap, Question, load_answersfile_data
-from ._vcs import get_git, is_git_available
+from ._vcs import get_git, is_git_available, is_remote_url
 from .errors import (
     ConfigFileError,
     CopierAnswersInterrupt,
@@ -372,7 +372,7 @@ class Worker:
         was_relative = src_path is not None and not src_path.is_absolute()
 
         # If original was relative and it is not a remote Git repo, save as relative to the subproject root
-        if was_relative and src and not src.startswith(("http://", "https://", "git@", "git+", "gh:", "gl:", "bb:")):
+        if was_relative and src and not is_remote_url(src):
             try:
                 src_resolved = Path(src).resolve()
                 dst_resolved = self.subproject.local_abspath.resolve()

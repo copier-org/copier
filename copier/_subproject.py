@@ -16,7 +16,7 @@ from pydantic.dataclasses import dataclass
 from ._template import Template
 from ._types import AbsolutePath, AnyByStrDict, VCSTypes
 from ._user_data import load_answersfile_data
-from ._vcs import get_git, is_in_git_repo
+from ._vcs import get_git, is_in_git_repo, is_remote_url
 
 
 @dataclass
@@ -77,7 +77,7 @@ class Subproject:
         last_ref = self.last_answers.get("_commit")
         if last_url:
             url = last_url
-            if not last_url.startswith(("http://", "https://", "git@", "git+", "gh:", "gl:", "bb:")):
+            if not is_remote_url(last_url):
                 try:
                     path = Path(last_url)
                     if not path.is_absolute():
