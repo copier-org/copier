@@ -205,7 +205,7 @@ def test_remote_clone_recovers_from_corrupt_mirror(
     assert Path(dst2, "README.md").read_text() == "hello world"
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def allow_file_submodules() -> None:
     """Allow the fixture repos below to be used as submodules.
 
@@ -213,9 +213,12 @@ def allow_file_submodules() -> None:
     (see GHSA-3wp6-j8xr-qw85), so local submodules require this setting. Set
     it via the environment so it also applies to Copier's own subprocesses.
     """
-    local.env["GIT_CONFIG_COUNT"] = "1"
-    local.env["GIT_CONFIG_KEY_0"] = "protocol.file.allow"
-    local.env["GIT_CONFIG_VALUE_0"] = "always"
+    with local.env(
+        GIT_CONFIG_COUNT="1",
+        GIT_CONFIG_KEY_0="protocol.file.allow",
+        GIT_CONFIG_VALUE_0="always",
+    ):
+        yield
 
 
 def test_remote_clone_submodule_with_moved_url(
