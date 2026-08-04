@@ -1,9 +1,10 @@
-"""Jinja2 extensions built for Copier."""
+"""Custom Jinja2 components built for Copier."""
 
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
+from pathlib import PurePath
 from typing import Any
 from weakref import WeakKeyDictionary
 
@@ -11,8 +12,39 @@ from jinja2 import Environment, nodes
 from jinja2.exceptions import UndefinedError
 from jinja2.ext import Extension
 from jinja2.parser import Parser
+from jinja2.sandbox import SandboxedEnvironment as _SandboxedEnvironment
+from pydantic import BaseModel
 
 from copier.errors import MultipleYieldTagsError
+
+from ._settings import SettingsModel
+
+# Pydantic's deprecated loaders: `parse_raw` unpickles when asked to, and
+# `parse_file` reads arbitrary paths.
+_UNSAFE_MODEL_ATTRIBUTES = frozenset({"parse_file", "parse_raw"})
+
+# Copier's own settings loader, which reads arbitrary paths.
+_UNSAFE_SETTINGS_ATTRIBUTES = frozenset({"from_file"})
+
+
+class SandboxedEnvironment(_SandboxedEnvironment):
+    """A Jinja sandbox that keeps capable objects away from templates."""
+
+    def is_safe_attribute(self, obj: Any, attr: str, value: Any) -> bool:
+        """Check if the attribute of an object is safe to access.
+
+        Args:
+            obj: The object the attribute is read from.
+            attr: The name of the attribute.
+            value: The value the attribute resolved to.
+        """
+        if isinstance(obj, PurePath) and attr == "parser":
+            return False
+        if isinstance(obj, BaseModel) and attr in _UNSAFE_MODEL_ATTRIBUTES:
+            return False
+        if isinstance(obj, SettingsModel) and attr in _UNSAFE_SETTINGS_ATTRIBUTES:
+            return False
+        return super().is_safe_attribute(obj, attr, value)
 
 
 @dataclass

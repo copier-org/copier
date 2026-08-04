@@ -17,7 +17,6 @@ from typing import Any, Literal
 
 import yaml
 from jinja2 import StrictUndefined, UndefinedError
-from jinja2.sandbox import SandboxedEnvironment
 from prompt_toolkit.lexers import PygmentsLexer
 from pydantic import ConfigDict, Field, field_validator
 from pydantic.dataclasses import dataclass
@@ -25,7 +24,7 @@ from pydantic_core.core_schema import ValidationInfo
 from pygments.lexers.data import JsonLexer, YamlLexer
 from questionary.prompts.common import Choice
 
-from copier._jinja_ext import UnsetError
+from copier._jinja_ext import SandboxedEnvironment, UnsetError
 from copier._settings import SettingsModel
 
 from ._tools import cast_to_bool, cast_to_str, force_str_end

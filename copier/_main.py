@@ -33,7 +33,6 @@ from unicodedata import normalize
 
 from jinja2.exceptions import TemplateError
 from jinja2.loaders import FileSystemLoader
-from jinja2.sandbox import SandboxedEnvironment
 from jinja2.utils import import_string
 from packaging.version import Version
 from pathspec import PathSpec, __version__ as pathspec_version
@@ -45,7 +44,7 @@ from pydantic_core import to_jsonable_python
 from questionary import confirm, unsafe_prompt
 
 from ._deprecation import deprecate_answers_file_template_path
-from ._jinja_ext import YieldExtension, get_yield_context
+from ._jinja_ext import SandboxedEnvironment, YieldExtension, get_yield_context
 from ._settings import Settings, SettingsModel, is_trusted_repository
 from ._subproject import Subproject
 from ._template import Task, Template
