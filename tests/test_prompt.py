@@ -403,7 +403,7 @@ def test_update_with_new_field_in_new_version_skip_answered(
 def test_when(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
-    question_1: str | int | float | bool,
+    question_1: str | float | bool,
     question_2_when: bool | str,
     asks: bool,
 ) -> None:

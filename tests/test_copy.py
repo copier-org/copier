@@ -590,7 +590,7 @@ def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> N
             {"type": "int", "choices": {"one": 1, "two": 2}},
             "3",
             pytest.raises(
-                ValueError, match="Invalid choice for 'q': 3 is not in \[1, 2\]"
+                ValueError, match=r"Invalid choice for 'q': 3 is not in \[1, 2\]"
             ),
         ),
         (

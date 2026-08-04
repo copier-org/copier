@@ -1273,7 +1273,7 @@ class Worker:
                 self._render_template()
             if not self.quiet:
                 # TODO Unify printing tools
-                print("")  # padding space
+                print()  # padding space
             if not self.skip_tasks:
                 with Phase.use(Phase.TASKS):
                     self._execute_tasks(self.template.tasks)
@@ -1284,7 +1284,7 @@ class Worker:
         self._print_message(self.template.message_after_copy)
         if not self.quiet:
             # TODO Unify printing tools
-            print("")  # padding space
+            print()  # padding space
 
     @as_operation("copy")
     def run_recopy(self) -> None:

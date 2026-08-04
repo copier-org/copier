@@ -88,7 +88,7 @@ def printf_exception(
 ) -> None:
     """Print exception with common format."""
     if not quiet:
-        print("", file=sys.stderr)
+        print(file=sys.stderr)
         printf(action, msg=msg, style=Style.DANGER, indent=indent, file_=sys.stderr)
         print(HLINE, file=sys.stderr)
         print(e, file=sys.stderr)

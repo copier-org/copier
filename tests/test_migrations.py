@@ -129,9 +129,8 @@ def test_requires_unsafe(tmp_path_factory: pytest.TempPathFactory) -> None:
 
     with local.cwd(src):
         git("tag", "v2")
-    with local.cwd(dst):
-        with pytest.raises(UnsafeTemplateError):
-            run_update(defaults=True, overwrite=True, unsafe=False)
+    with local.cwd(dst), pytest.raises(UnsafeTemplateError):
+        run_update(defaults=True, overwrite=True, unsafe=False)
 
     assert not (dst / "foo").exists()
 
