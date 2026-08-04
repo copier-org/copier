@@ -89,7 +89,7 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
         InvalidConfigFileError: When the file is formatted badly.
     """
 
-    class _Loader(yaml.FullLoader):
+    class _Loader(yaml.SafeLoader):
         """Intermediate class to avoid monkey-patching main loader."""
 
     def _include(loader: yaml.Loader, node: yaml.Node) -> Any:
@@ -110,7 +110,7 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
     with conf_path.open("rb") as f:
         try:
             flattened_result = lflatten(filter(None, yaml.load_all(f, Loader=_Loader)))
-        except yaml.parser.ParserError as e:
+        except yaml.YAMLError as e:
             raise InvalidConfigFileError(conf_path, quiet) from e
 
     merged_options = defaultdict(list)
