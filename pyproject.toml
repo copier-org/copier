@@ -202,6 +202,10 @@ ignore-words-list = 'ans'
 [tool.rumdl]
 flavor = "mkdocs"
 line_length = 88
+exclude = ["CLAUDE.md"]
+
+[tool.rumdl.per-file-flavor]
+"AGENTS.md" = "standard"
 
 [tool.rumdl.MD013]
 reflow = true
