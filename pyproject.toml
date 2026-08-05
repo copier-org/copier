@@ -206,6 +206,7 @@ exclude = ["CLAUDE.md"]
 
 [tool.rumdl.per-file-flavor]
 "AGENTS.md" = "standard"
+"AI_POLICY.md" = "standard"
 
 [tool.rumdl.MD013]
 reflow = true
