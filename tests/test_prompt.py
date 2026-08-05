@@ -1169,6 +1169,7 @@ def test_interactive_session_required_for_question_prompt(
         stdin=subprocess.PIPE,  # Prevents interactive input
         capture_output=True,
         timeout=spawn_timeout or None,
+        check=False,
     )
     assert process.returncode == 1
     assert (
@@ -1197,6 +1198,7 @@ def test_interactive_session_required_for_overwrite_prompt(
         stdin=subprocess.PIPE,  # Prevents interactive input
         capture_output=True,
         timeout=spawn_timeout or None,
+        check=False,
     )
     assert process.returncode == 1
     assert (

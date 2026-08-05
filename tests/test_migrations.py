@@ -567,7 +567,7 @@ def test_migration_jinja_variables(
 
     assert (dst / "vars.txt").is_file()
     raw_vars = (dst / "vars.txt").read_text().split("\n")
-    vars = map(lambda x: x.strip(), raw_vars)
+    vars = {v.strip() for v in raw_vars}
     for variable, value in variables.items():
         assert f"{variable}={value}" in vars
 

@@ -351,7 +351,7 @@ def test_include_value_must_be_scalar_node(tmp_path: Path, include_value: str) -
         }
     )
     template = Template(str(tmp_path))
-    with pytest.raises(ValueError, match=r"^Unsupported YAML node:"):
+    with pytest.raises(TypeError, match=r"^Unsupported YAML node:"):
         template.config_data  # noqa: B018
 
 

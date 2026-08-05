@@ -94,7 +94,7 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
 
     def _include(loader: yaml.Loader, node: yaml.Node) -> Any:
         if not isinstance(node, yaml.ScalarNode):
-            raise ValueError(f"Unsupported YAML node: {node!r}")
+            raise TypeError(f"Unsupported YAML node: {node!r}")
         include_file = str(loader.construct_scalar(node))
         if PurePosixPath(include_file).is_absolute():
             raise ValueError("YAML include file path must be a relative path")

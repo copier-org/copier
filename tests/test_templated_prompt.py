@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pexpect
 import pytest
@@ -247,7 +247,7 @@ def test_templated_prompt_builtins(tmp_path_factory: pytest.TempPathFactory) -> 
         Worker(str(src), dst, defaults=True, overwrite=True).run_copy()
     assert len([w for w in warnings if w.category is FutureWarning]) == 2
     that_now = datetime.fromisoformat((dst / "now").read_text())
-    assert that_now <= datetime.utcnow()
+    assert that_now <= datetime.now(tz=timezone.utc)
     assert len((dst / "make_secret").read_text()) == 128
 
 

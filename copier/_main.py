@@ -83,6 +83,11 @@ from .errors import (
     YieldTagInFileError,
 )
 
+if sys.version_info < (3, 11):
+    from typing_extensions import Self
+else:
+    from typing import Self
+
 _T = TypeVar("_T")
 _P = ParamSpec("_P")
 
@@ -262,7 +267,7 @@ class Worker:
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
     _cleanup_hooks: list[Callable[[], None]] = field(default_factory=list, init=False)
 
-    def __enter__(self) -> Worker:
+    def __enter__(self) -> Self:
         """Allow using worker as a context manager."""
         return self
 
@@ -427,7 +432,9 @@ class Worker:
 
             extra_env = {k[1:].upper(): str(v) for k, v in extra_context.items()}
             with local.cwd(working_directory), local.env(**extra_env):
-                process = subprocess.run(task_cmd, shell=use_shell, env=dict(local.env))
+                process = subprocess.run(
+                    task_cmd, shell=use_shell, check=False, env=dict(local.env)
+                )
                 if process.returncode:
                     raise TaskError.from_process(process)
 
@@ -613,7 +620,7 @@ class Worker:
                 try:
                     answer = question.parse_answer(self.answers.last[var_name])
                     question.validate_answer(answer)
-                except Exception:
+                except Exception:  # noqa: BLE001
                     del self.answers.last[var_name]
             # Skip a question when the skip condition is met.
             if not question.get_when():
@@ -1062,7 +1069,7 @@ class Worker:
         context pairs.
         """
         if rendered_parts is None:
-            rendered_parts = tuple()
+            rendered_parts = ()
 
         if not parts:
             rendered_path = Path(*rendered_parts)
