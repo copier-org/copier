@@ -8,7 +8,7 @@ from collections import ChainMap
 from collections.abc import Callable, Mapping, Sequence
 from copy import deepcopy
 from dataclasses import field
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import cached_property
 from hashlib import sha512
 from os import urandom
@@ -47,7 +47,7 @@ def _now() -> datetime:
         "strftime format reference https://strftime.org/",
         FutureWarning,
     )
-    return datetime.utcnow()
+    return datetime.now(tz=timezone.utc)
 
 
 def _make_secret() -> str:
@@ -368,9 +368,8 @@ class Question:
 
     def get_message(self) -> str:
         """Get the message that will be printed to the user."""
-        if self.help:
-            if rendered_help := self.render_value(self.help):
-                return force_str_end(rendered_help) + "  "
+        if self.help and (rendered_help := self.render_value(self.help)):
+            return force_str_end(rendered_help) + "  "
         # Otherwise, there's no help message defined.
         message = self.var_name
         if (answer_type := self.get_type_name()) != "str":
@@ -387,11 +386,11 @@ class Question:
         def _validate(answer: str) -> str | Literal[True]:
             try:
                 ans = self.parse_answer(answer)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 return "Invalid input"
             try:
                 self.validate_answer(ans)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 return str(exc)
             return True
 
@@ -460,7 +459,7 @@ class Question:
         """Validate user answer."""
         try:
             err_msg = self.render_value(self.validator, {self.var_name: answer}).strip()
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001
             err_msg = str(error)
         if err_msg:
             raise ValueError(
@@ -557,12 +556,12 @@ def parse_yaml_list(string: str) -> list[str]:
         The parsed list of raw items.
 
     Raises:
-        ValueError: If the YAML string is not a list.
+        TypeError: If the YAML string is not a list.
     """
     node = yaml.compose(string, Loader=yaml.SafeLoader)
 
     if not isinstance(node, yaml.nodes.SequenceNode):
-        raise ValueError(f"Not a YAML list: {string!r}")
+        raise TypeError(f"Not a YAML list: {string!r}")
 
     items = []
     for item in node.value:
@@ -571,12 +570,13 @@ def parse_yaml_list(string: str) -> list[str]:
         if (
             isinstance(item, yaml.nodes.ScalarNode)
             and item.tag == "tag:yaml.org,2002:str"
-        ):
             # Strip quotes if the value is quoted to avoid double-quoting.
-            if (raw.startswith('"') and raw.endswith('"')) or (
-                raw.startswith("'") and raw.endswith("'")
-            ):
-                raw = raw[1:-1]
+            and (
+                (raw.startswith('"') and raw.endswith('"'))
+                or (raw.startswith("'") and raw.endswith("'"))
+            )
+        ):
+            raw = raw[1:-1]
 
         items.append(raw)
 

@@ -31,11 +31,11 @@ def __getattr__(name: str) -> Any:
 
 
 __all__ = [
+    "Phase",
+    "Settings",
+    "VcsRef",
     "load_settings",
     "run_copy",  # noqa: F405
     "run_recopy",  # noqa: F405
     "run_update",  # noqa: F405,
-    "Phase",
-    "Settings",
-    "VcsRef",
 ]

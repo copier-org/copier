@@ -94,7 +94,7 @@ class YieldExtension(Extension):
         ```
     """
 
-    tags = {"yield"}
+    tags = {"yield"}  # noqa: RUF012
 
     def preprocess(
         self, source: str, name: str | None, filename: str | None = None

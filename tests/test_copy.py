@@ -511,7 +511,7 @@ def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> N
         ({"type": "str"}, 1.1, does_not_raise()),
         ({"type": "str"}, True, does_not_raise()),
         ({"type": "str"}, False, does_not_raise()),
-        ({"type": "str"}, Decimal(1.1), does_not_raise()),
+        ({"type": "str"}, Decimal("1.1"), does_not_raise()),
         ({"type": "str"}, Enum("A", ["a", "b"], type=str).a, does_not_raise()),  # type: ignore[attr-defined]
         ({"type": "str"}, Enum("A", ["a", "b"]).a, pytest.raises(ValueError)),  # type: ignore[attr-defined]
         ({"type": "str"}, object(), pytest.raises(ValueError)),
@@ -590,7 +590,7 @@ def test_value_with_forward_slash(tmp_path_factory: pytest.TempPathFactory) -> N
             {"type": "int", "choices": {"one": 1, "two": 2}},
             "3",
             pytest.raises(
-                ValueError, match="Invalid choice for 'q': 3 is not in \[1, 2\]"
+                ValueError, match=r"Invalid choice for 'q': 3 is not in \[1, 2\]"
             ),
         ),
         (

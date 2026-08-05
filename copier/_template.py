@@ -94,7 +94,7 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
 
     def _include(loader: yaml.Loader, node: yaml.Node) -> Any:
         if not isinstance(node, yaml.ScalarNode):
-            raise ValueError(f"Unsupported YAML node: {node!r}")
+            raise TypeError(f"Unsupported YAML node: {node!r}")
         include_file = str(loader.construct_scalar(node))
         if PurePosixPath(include_file).is_absolute():
             raise ValueError("YAML include file path must be a relative path")
@@ -258,7 +258,7 @@ class Template:
         conf_paths = [
             p
             for p in self.local_abspath.glob("copier.*")
-            if p.is_file() and re.match(r"\.ya?ml", p.suffix, re.I)
+            if p.is_file() and re.match(r"\.ya?ml", p.suffix, re.IGNORECASE)
         ]
         if len(conf_paths) > 1:
             raise MultipleConfigFilesError(conf_paths)
