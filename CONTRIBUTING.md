@@ -3,6 +3,11 @@
 Contributions are welcome, and they are greatly appreciated! Every little bit helps, and
 credit will always be given.
 
+## Use of AI
+
+We require all use of AI in contributions to follow our
+[AI policy](https://github.com/copier-org/copier/blob/master/AI_POLICY.md).
+
 ## Report Bugs
 
 Report bugs at <https://github.com/copier-org/copier/issues>.
