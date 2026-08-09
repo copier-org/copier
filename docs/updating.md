@@ -303,34 +303,14 @@ You then replace the body with your real implementation. On the next `copier upd
 your `greeting()` is kept even if the template changed the placeholder, while `HEADER`
 and `FOOTER` still receive template updates.
 
-!!! tip "Nothing leaks into the rendered file"
+!!! note "Template changes next to the block can still cause a conflict"
 
-    Unlike a comment-based marker, the `{% ignore %}` tag is pure Jinja — it is stripped
-    during rendering, so no Copier-specific syntax ends up in your generated project. It
-    is therefore **language-agnostic**: it works in `.js`, `.go`, `.c`, `.rs` … or any
-    other text file, since it never has to be a valid comment in the target language.
-
-!!! important "Leave stable context around the block"
-
-    The `-%}` and `{%-` [whitespace-control][whitespace] markers strip the tag's own
-    lines so the output stays clean. Keep at least one unchanging line — such as the
-    blank lines above — directly around the block, and avoid editing the lines
-    immediately adjacent to it in later template versions. The update re-applies your
-    region as a diff against the surrounding lines; if the template changes a line right
-    next to the block, the merge falls back to a normal Copier
-    [conflict](#recover-from-a-broken-update) that you resolve by hand (your content is
-    never silently lost). Embedding the block among stable code, rather than at the very
-    top or bottom of a tiny file, gives the merge the anchors it needs.
-
-The tag relies on the `_copier_operation` render context variable, which is `"copy"`
-during generation and `"update"` during an update. If you prefer to be explicit, or need
-a condition the tag can't express, you can write the equivalent directly:
-
-```jinja
-{% if _copier_operation != "update" %}
-...developer-owned content...
-{% endif %}
-```
+    Your region is re-applied to the project as a diff against the lines surrounding it.
+    If a later template version changes a line immediately adjacent to the block, the
+    update can't line up that context and falls back to a normal Copier
+    [conflict](#recover-from-a-broken-update) that you resolve by hand — your content is
+    never silently lost. The `-%}` and `{%-` [whitespace-control][whitespace] markers in
+    the example strip the tag's own lines so nothing leaks into the rendered output.
 
 [whitespace]: https://jinja.palletsprojects.com/en/stable/templates/#whitespace-control
 

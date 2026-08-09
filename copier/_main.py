@@ -395,7 +395,6 @@ class Worker:
         operation = _operation.get()
         for i, task in enumerate(tasks):
             extra_context = {f"_{k}": v for k, v in task.extra_vars.items()}
-            extra_context["_copier_operation"] = operation
 
             if not cast_to_bool(self._render_value(task.condition, extra_context)):
                 continue
@@ -426,7 +425,10 @@ class Worker:
                 / Path(self._render_string(str(task.working_directory), extra_context))
             ).absolute()
 
-            extra_env = {k[1:].upper(): str(v) for k, v in extra_context.items()}
+            extra_env = {
+                k[1:].upper(): str(v)
+                for k, v in {**extra_context, "_copier_operation": operation}.items()
+            }
             with local.cwd(working_directory), local.env(**extra_env):
                 process = subprocess.run(task_cmd, shell=use_shell, env=dict(local.env))
                 if process.returncode:
@@ -766,13 +768,12 @@ class Worker:
     @cached_property
     def match_exclude(self) -> Callable[[Path], bool]:
         """Get a callable to match paths against all exclusions."""
-        # Include the current operation in the rendering context.
-        # Note: This method is a cached property, it needs to be regenerated
-        # when reusing an instance in different contexts.
-        extra_context = {"_copier_operation": _operation.get()}
+        # ``_copier_operation`` is exposed globally via the render context, so
+        # exclusion patterns can reference it directly. Note: this is a cached
+        # property; it needs to be regenerated when reusing an instance in
+        # different operation contexts.
         return self._path_matcher(
-            self._render_string(exclusion, extra_context=extra_context)
-            for exclusion in self.all_exclusions
+            self._render_string(exclusion) for exclusion in self.all_exclusions
         )
 
     @cached_property
@@ -859,7 +860,7 @@ class Worker:
                 new_content = src_abspath.read_bytes()
             else:
                 new_content = tpl.render(
-                    {**self._render_context(), **(extra_context or {})}
+                    **self._render_context(), **(extra_context or {})
                 ).encode()
                 if get_yield_context(self.jinja_env).yield_name:
                     raise YieldTagInFileError(
@@ -1182,7 +1183,7 @@ class Worker:
                 Additional variables to use for rendering the template.
         """
         tpl = self.jinja_env.from_string(string)
-        return tpl.render({**self._render_context(), **(extra_context or {})})
+        return tpl.render(**self._render_context(), **(extra_context or {}))
 
     def _render_value(
         self, value: _T, extra_context: AnyByStrDict | None = None
