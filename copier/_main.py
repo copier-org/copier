@@ -770,11 +770,15 @@ class Worker:
         # when reusing an instance in different contexts.
         extra_context = {"_copier_operation": _operation.get()}
 
-        # A single exclusion entry may render to multiple newline-separated
-        # patterns. This lets one Jinja block conditionally emit a whole list of
-        # patterns (e.g. `{% if flag %}a\nb\nc{% endif %}`) instead of repeating
-        # the condition on every entry. Blank lines (including the empty render of
-        # a false conditional) are dropped, so a no-op renders to nothing.
+        # A single exclusion entry can render multiple newline-separated patterns.
+        # This lets one Jinja block conditionally emit a whole list of patterns e.g.:
+        # {% if flag %}
+        #   - a
+        #   - b
+        #   - c
+        # {% endif %}`) instead of repeating {% if flag %} on every line
+        # Blank lines (including the empty render of a false conditional) are dropped
+        # so a no-op renders to nothing.
         def _rendered_patterns() -> Iterable[str]:
             for exclusion in self.all_exclusions:
                 rendered = self._render_string(exclusion, extra_context=extra_context)
