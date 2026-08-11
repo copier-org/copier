@@ -1112,15 +1112,10 @@ Each pattern can be templated using Jinja.
     The difference with [skip_if_exists](#skip_if_exists) is that it will never be
     rendered during an update, no matter if it exists or not.
 
- A single exclusion entry can render multiple newline-separated patterns.
- This lets one Jinja block conditionally emit a whole list of patterns e.g.:
-{% if flag %}
-    - a
-    - b
-    - c
-{% endif %}`) instead of repeating {% if flag %} on every line
-Blank lines (including the empty render of a false conditional) are dropped
-so a no-op renders to nothing.
+    A single exclusion entry may render to multiple newline-separated patterns,
+    letting one Jinja block conditionally emit a whole list instead of repeating
+    the condition on every entry. Blank lines are dropped, so an empty conditional
+    renders to nothing.
 
 !!! example
 
