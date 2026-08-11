@@ -769,10 +769,20 @@ class Worker:
         # Note: This method is a cached property, it needs to be regenerated
         # when reusing an instance in different contexts.
         extra_context = {"_copier_operation": _operation.get()}
-        return self._path_matcher(
-            self._render_string(exclusion, extra_context=extra_context)
-            for exclusion in self.all_exclusions
-        )
+
+        # A single exclusion entry may render to multiple newline-separated
+        # patterns. This lets one Jinja block conditionally emit a whole list of
+        # patterns (e.g. `{% if flag %}a\nb\nc{% endif %}`) instead of repeating
+        # the condition on every entry. Blank lines (including the empty render of
+        # a false conditional) are dropped, so a no-op renders to nothing.
+        def _rendered_patterns() -> Iterable[str]:
+            for exclusion in self.all_exclusions:
+                rendered = self._render_string(exclusion, extra_context=extra_context)
+                for line in rendered.splitlines():
+                    if line.strip():
+                        yield line
+
+        return self._path_matcher(_rendered_patterns())
 
     @cached_property
     def match_skip(self) -> Callable[[Path], bool]:
