@@ -191,7 +191,7 @@ class IgnoreExtension(Extension):
         ```
     """
 
-    tags = {"ignore"}
+    tags = {"ignore"}  # noqa: RUF012
 
     def parse(self, parser: Parser) -> nodes.Node:
         """Parse the `ignore` tag into a conditional on the current operation."""
