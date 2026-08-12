@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.17.1 (2026-08-04)
+
+### Security
+
+- prevent code execution via Jinja finalizer by disallowing YAML tags
+- prevent code execution via Jinja sandbox escape through path and settings objects
+
 ## v9.17.0 (2026-07-13)
 
 ### Feat

@@ -158,7 +158,7 @@ def test_messages_with_inline_text(
         Project\ myproj\ successfully\ created\s*$
         """,
         err,
-        flags=re.S | re.X,
+        flags=re.DOTALL | re.VERBOSE,
     )
 
     # recopy
@@ -178,7 +178,7 @@ def test_messages_with_inline_text(
         Project\ myproj_new\ successfully\ created\s*$
         """,
         err,
-        flags=re.S | re.X,
+        flags=re.DOTALL | re.VERBOSE,
     )
 
     with local.cwd(dst):
@@ -206,7 +206,7 @@ def test_messages_with_inline_text(
         Project\ myproj_new_update\ successfully\ updated\s*$
         """,
         err,
-        flags=re.S | re.X,
+        flags=re.DOTALL | re.VERBOSE,
     )
 
 
@@ -298,7 +298,7 @@ def test_messages_with_included_text(
         Project\ myproj\ successfully\ created\s*$
         """,
         err,
-        flags=re.S | re.X,
+        flags=re.DOTALL | re.VERBOSE,
     )
 
     # recopy
@@ -318,7 +318,7 @@ def test_messages_with_included_text(
         Project\ myproj_new\ successfully\ created\s*$
         """,
         err,
-        flags=re.S | re.X,
+        flags=re.DOTALL | re.VERBOSE,
     )
 
     with local.cwd(dst):
@@ -346,7 +346,7 @@ def test_messages_with_included_text(
         Project\ myproj_new_update\ successfully\ updated\s*$
         """,
         err,
-        flags=re.S | re.X,
+        flags=re.DOTALL | re.VERBOSE,
     )
 
 

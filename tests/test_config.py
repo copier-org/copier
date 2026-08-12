@@ -161,6 +161,57 @@ def test_invalid_yaml(capsys: pytest.CaptureFixture[str]) -> None:
     assert str(conf_path) in err
 
 
+# `copier.yml` is untrusted input. `yaml.FullLoader` resolves these into live
+# Python objects; `SafeLoader` must not.
+@pytest.mark.parametrize(
+    "tag",
+    [
+        "!!python/name:os.system",
+        "!!python/name:os.popen",
+        "!!python/name:builtins.eval",
+        "!!python/name:os.path",
+        "!!python/object/apply:os.system ['echo pwned']",
+        "!!python/object/new:os.system ['echo pwned']",
+        "!!python/object:pathlib.PurePosixPath {}",
+        "!!python/module:os",
+    ],
+)
+def test_config_cannot_construct_python_objects(
+    tmp_path_factory: pytest.TempPathFactory, tag: str
+) -> None:
+    """A template's own config cannot name a Python object."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree({src / "copier.yml": f"q:\n  type: str\n  default: {tag}\n"})
+
+    with pytest.raises(InvalidConfigFileError):
+        copier.run_copy(str(src), dst, defaults=True, overwrite=True, quiet=True)
+
+
+@pytest.mark.parametrize("authorization", ["none", "unsafe", "settings"])
+def test_authorization_does_not_enable_python_yaml_tags(
+    tmp_path_factory: pytest.TempPathFactory, authorization: str
+) -> None:
+    """Trust enables declared unsafe features, not arbitrary YAML constructors."""
+    src, dst, cwd = map(tmp_path_factory.mktemp, ("src", "dst", "cwd"))
+    marker = cwd / "created"
+    build_file_tree(
+        {
+            src / "copier.yml": "_envops:\n  finalize: !!python/name:os.mkdir\n",
+            src / "f.txt.jinja": "{{ 'created' }}",
+        }
+    )
+    kwargs: dict[str, Any] = {}
+    if authorization == "unsafe":
+        kwargs["unsafe"] = True
+    elif authorization == "settings":
+        kwargs["settings"] = copier.Settings(trust=[str(src)])
+
+    with local.cwd(cwd), pytest.raises(InvalidConfigFileError):
+        copier.run_copy(str(src), dst, **kwargs)
+
+    assert not marker.exists()
+
+
 @pytest.mark.parametrize(
     "conf_path, check_err",
     [
@@ -300,7 +351,7 @@ def test_include_value_must_be_scalar_node(tmp_path: Path, include_value: str) -
         }
     )
     template = Template(str(tmp_path))
-    with pytest.raises(ValueError, match=r"^Unsupported YAML node:"):
+    with pytest.raises(TypeError, match=r"^Unsupported YAML node:"):
         template.config_data  # noqa: B018
 
 

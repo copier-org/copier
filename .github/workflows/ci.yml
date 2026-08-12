@@ -19,7 +19,7 @@ env:
   PYTEST_ADDOPTS: ${{ github.event.inputs.pytest_addopts }}
   PYTHONIOENCODING: "UTF-8"
   # renovate: datasource=devbox depName=uv
-  UV_VERSION: "0.11.25"
+  UV_VERSION: "0.12.1"
   # renovate: datasource=github-tags depName=devbox packageName=jetify-com/devbox
   DEVBOX_VERSION: "0.17.5"
 
@@ -47,14 +47,14 @@ jobs:
         with:
           fetch-depth: 0 # Needs all tags to compute dynamic version
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.3.1
+        uses: astral-sh/setup-uv@v9.0.0
         with:
           version: ${{ env.UV_VERSION }}
           python-version: ${{ matrix.python-version }}
           enable-cache: "true"
           cache-suffix: ${{ matrix.python-version }}
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
