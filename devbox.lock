@@ -1,51 +1,41 @@
 {
   "lockfile_version": "1",
   "packages": {
-    "difftastic@0.69.0": {
-      "last_modified": "2026-05-21T08:15:18Z",
-      "resolved": "github:NixOS/nixpkgs/4a29d733e8a7d5b824c3d8c958a946a9867b3eb2#difftastic",
+    "difftastic@0.70.0": {
+      "last_modified": "2026-08-08T22:24:59Z",
+      "resolved": "github:NixOS/nixpkgs/fe6deff5fad4a42d0e08d2bab3f2d6c7c88f3fe5#difftastic",
       "source": "devbox-search",
-      "version": "0.69.0",
+      "version": "0.70.0",
       "systems": {
         "aarch64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/arbkpq6ww8pvrdv4748d38zkxw61583g-difftastic-0.69.0",
+              "path": "/nix/store/ndf7bf6wxrq7ad3fyqn925cdyfp2ybbn-difftastic-0.70.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/arbkpq6ww8pvrdv4748d38zkxw61583g-difftastic-0.69.0"
+          "store_path": "/nix/store/ndf7bf6wxrq7ad3fyqn925cdyfp2ybbn-difftastic-0.70.0"
         },
         "aarch64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/6ipvl7bjfmpni3iqs33dp6wh6l6nq8k5-difftastic-0.69.0",
+              "path": "/nix/store/d0b8x553qzk4hn8mqxwk54jf9r89nnrl-difftastic-0.70.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/6ipvl7bjfmpni3iqs33dp6wh6l6nq8k5-difftastic-0.69.0"
-        },
-        "x86_64-darwin": {
-          "outputs": [
-            {
-              "name": "out",
-              "path": "/nix/store/sqhpb5bv6jbcza4mkvk9yp079c08jmga-difftastic-0.69.0",
-              "default": true
-            }
-          ],
-          "store_path": "/nix/store/sqhpb5bv6jbcza4mkvk9yp079c08jmga-difftastic-0.69.0"
+          "store_path": "/nix/store/d0b8x553qzk4hn8mqxwk54jf9r89nnrl-difftastic-0.70.0"
         },
         "x86_64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/8dd6fb033djn93vi5a3x61fgwcawhcpa-difftastic-0.69.0",
+              "path": "/nix/store/kiijhc7xpkp66q80c9jwbjzs2z1hhf1g-difftastic-0.70.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/8dd6fb033djn93vi5a3x61fgwcawhcpa-difftastic-0.69.0"
+          "store_path": "/nix/store/kiijhc7xpkp66q80c9jwbjzs2z1hhf1g-difftastic-0.70.0"
         }
       }
     },
