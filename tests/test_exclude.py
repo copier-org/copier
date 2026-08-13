@@ -68,15 +68,19 @@ def test_config_exclude_multiline_conditional(
     build_file_tree(
         {
             src / "copier.yml": (
-                "skip: {type: bool}\n"
-                "_exclude:\n"
-                '  - "copier.yml"\n'
-                "  - |\n"
-                "    {% if skip %}\n"
-                "    a.txt\n"
-                "    b.txt\n"
-                "    sub/c.txt\n"
-                "    {% endif %}\n"
+                """\
+                skip:
+                    type: bool
+
+                _exclude:
+                    - copier.yml
+                    - |
+                        {% if skip %}
+                        /a.txt
+                        /b.txt
+                        /sub/c.txt
+                        {% endif %}
+                """
             ),
             src / "a.txt": "",
             src / "b.txt": "",
