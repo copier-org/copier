@@ -91,17 +91,10 @@ def test_config_exclude_multiline_conditional(
     run_copy(str(src), dst, quiet=True, data={"skip": skip})
     # keep.txt is never in the block, so it is always copied.
     assert (dst / "keep.txt").exists()
-
-    if skip:
-        # When skip=True, the conditional block renders patterns, so files are excluded
-        assert not (dst / "a.txt").exists()
-        assert not (dst / "b.txt").exists()
-        assert not (dst / "sub" / "c.txt").exists()
-    else:
-        # When skip=False, the conditional block renders empty, so files are copied
-        assert (dst / "a.txt").exists()
-        assert (dst / "b.txt").exists()
-        assert (dst / "sub" / "c.txt").exists()
+    # Files are excluded when skip=True
+    assert (dst / "a.txt").exists() is not skip
+    assert (dst / "b.txt").exists() is not skip
+    assert (dst / "sub" / "c.txt").exists() is not skip
 
 
 @pytest.mark.xfail(
