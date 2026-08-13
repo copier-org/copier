@@ -1113,9 +1113,7 @@ Each pattern can be templated using Jinja.
     rendered during an update, no matter if it exists or not.
 
     A single exclusion entry may render to multiple newline-separated patterns,
-    letting one Jinja block conditionally emit a whole list instead of repeating
-    the condition on every entry. Blank lines are dropped, so an empty conditional
-    renders to nothing.
+    equivalent to a complete gitignore file including comments and blank lines.
 
 !!! example
 
