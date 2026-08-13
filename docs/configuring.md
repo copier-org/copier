@@ -1126,11 +1126,11 @@ Each pattern can be templated using Jinja.
 
     _exclude:
         - |
-          {% if skip_ci %}
-          .github/workflows/ci.yml
-          .github/workflows/deploy.yml
-          docs/ci/
-          {% endif %}
+            {% if skip_ci %}
+            /.github/workflows/ci.yml
+            /.github/workflows/deploy.yml
+            /docs/ci/
+            {% endif %}
     ```
 
     When `skip_ci` is `false` the block renders empty and nothing extra is excluded.
