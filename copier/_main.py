@@ -769,18 +769,12 @@ class Worker:
         # Note: This method is a cached property, it needs to be regenerated
         # when reusing an instance in different contexts.
         extra_context = {"_copier_operation": _operation.get()}
-
-        # A single exclusion entry may render to multiple newline-separated patterns.
-        # Blank lines are dropped, so an empty conditional renders to nothing.
-        def _rendered_patterns() -> Iterable[str]:
-            for exclusion in self.all_exclusions:
-                rendered = self._render_string(exclusion, extra_context=extra_context)
-                for line in rendered.splitlines():
-                    stripped = line.strip()
-                    if stripped:
-                        yield stripped
-
-        return self._path_matcher(_rendered_patterns())
+        return self._path_matcher(
+            chain.from_iterable(
+                self._render_string(exclusion, extra_context=extra_context).splitlines()
+                for exclusion in self.all_exclusions
+            )
+        )
 
     @cached_property
     def match_skip(self) -> Callable[[Path], bool]:
