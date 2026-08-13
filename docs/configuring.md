@@ -1133,7 +1133,7 @@ Each pattern can be templated using Jinja.
           {% endif %}
     ```
 
-    When `skip_ci` is false the block renders empty and nothing extra is excluded.
+    When `skip_ci` is `false` the block renders empty and nothing extra is excluded.
 
 !!! info
 
