@@ -1121,7 +1121,9 @@ Each pattern can be templated using Jinja.
     entry individually:
 
     ```yaml
-    skip_ci: bool
+    skip_ci:
+        type: bool
+
     _exclude:
         - |
           {% if skip_ci %}
