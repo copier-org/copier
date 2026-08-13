@@ -769,10 +769,22 @@ class Worker:
         # Note: This method is a cached property, it needs to be regenerated
         # when reusing an instance in different contexts.
         extra_context = {"_copier_operation": _operation.get()}
-        return self._path_matcher(
-            self._render_string(exclusion, extra_context=extra_context)
-            for exclusion in self.all_exclusions
-        )
+
+        def _patterns() -> Iterable[str]:
+            # These exclusions are specified on the config file,
+            # and can support multi line exclusions
+            for exclusion in self.template.exclude:
+                yield from self._render_string(
+                    exclusion, extra_context=extra_context
+                ).splitlines()
+
+            # These exclusions are matched literally. They include escaped paths
+            # paths of user-deleted files recorded during an update, it shouldn't be
+            # split since a path may itself contain newline characters.
+            for exclusion in self.exclude:
+                yield self._render_string(exclusion, extra_context=extra_context)
+
+        return self._path_matcher(_patterns())
 
     @cached_property
     def match_skip(self) -> Callable[[Path], bool]:
