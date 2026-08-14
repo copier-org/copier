@@ -4,18 +4,19 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from pathlib import PurePath
+from pathlib import Path, PurePath
 from typing import Any
 from weakref import WeakKeyDictionary
 
 from jinja2 import Environment, nodes
 from jinja2.exceptions import UndefinedError
 from jinja2.ext import Extension
+from jinja2.loaders import FileSystemLoader
 from jinja2.parser import Parser
 from jinja2.sandbox import SandboxedEnvironment as _SandboxedEnvironment
 from pydantic import BaseModel
 
-from copier.errors import MultipleYieldTagsError
+from copier.errors import ForbiddenPathError, MultipleYieldTagsError
 
 from ._settings import SettingsModel
 
@@ -45,6 +46,39 @@ class SandboxedEnvironment(_SandboxedEnvironment):
         if isinstance(obj, SettingsModel) and attr in _UNSAFE_SETTINGS_ATTRIBUTES:
             return False
         return super().is_safe_attribute(obj, attr, value)
+
+
+class CopierTemplateLoader(FileSystemLoader):
+    """Jinja2 filesystem loader for a Copier template."""
+
+    def __init__(self, template_root: Path) -> None:
+        super().__init__([str(template_root.resolve())])
+
+    def get_source(
+        self, environment: Environment, template: str
+    ) -> tuple[str, str, Callable[[], bool]]:
+        """Get the source of a template.
+
+        Args:
+            environment: The Jinja2 environment.
+            template: The name of the template to load.
+
+        Returns:
+            A tuple containing the template source, the template filename, and a
+            callable that checks if the template is up-to-date.
+
+        Raises:
+            ForbiddenPathError: If the source file path resolves to a path outside the
+                Copier template root.
+        """
+        # codespell:ignore-next-line uptodate
+        source, filename, uptodate = super().get_source(environment, template)
+        if not (path := Path(filename).resolve()).is_relative_to(self.searchpath[0]):
+            raise ForbiddenPathError(
+                path=path, hint="File path is outside the template root"
+            )
+        # codespell:ignore-next-line uptodate
+        return source, filename, uptodate
 
 
 @dataclass

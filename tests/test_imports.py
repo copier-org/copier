@@ -1,8 +1,12 @@
+import re
+from pathlib import Path
+
 import pytest
 import yaml
 
 import copier
 from copier._types import AnyByStrDict
+from copier.errors import ForbiddenPathError
 
 from .helpers import build_file_tree
 
@@ -73,6 +77,44 @@ def test_include(
     assert (dst / "the-name.txt").exists()
     assert (dst / "the-name" / "test.txt").exists()
     assert not (dst / "includes").exists()
+
+
+@pytest.mark.parametrize("absolute", [False, True])
+def test_include_resolves_symlink_outside_template_root_raises_error(
+    tmp_path_factory: pytest.TempPathFactory, absolute: bool
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "template" / "copier.yml"): "_preserve_symlinks: true",
+            (src / "template" / "symlink.txt"): (
+                (src if absolute else Path("..")) / "outside" / "secrets.txt"
+            ),
+            (src / "template" / "stolen.txt.jinja"): "{% include 'symlink.txt' %}",
+            (src / "outside" / "secrets.txt"): "s3cr3t",
+        }
+    )
+    with pytest.raises(
+        ForbiddenPathError,
+        match=re.escape(f'{src / "outside" / "secrets.txt"}" is forbidden'),
+    ):
+        copier.run_copy(str(src / "template"), dst)
+
+
+def test_include_resolves_symlink_inside_template(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): "_preserve_symlinks: true",
+            (src / "inside.txt"): "inside",
+            (src / "symlink.txt"): Path("inside.txt"),
+            (src / "result.txt.jinja"): "{% include 'symlink.txt' %}",
+        }
+    )
+    copier.run_copy(str(src), dst)
+    assert (dst / "result.txt").read_text() == "inside"
 
 
 @pytest.mark.parametrize(
