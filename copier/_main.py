@@ -44,7 +44,12 @@ from pydantic_core import to_jsonable_python
 from questionary import confirm, unsafe_prompt
 
 from ._deprecation import deprecate_answers_file_template_path
-from ._jinja_ext import SandboxedEnvironment, YieldExtension, get_yield_context
+from ._jinja_ext import (
+    IgnoreExtension,
+    SandboxedEnvironment,
+    YieldExtension,
+    get_yield_context,
+)
 from ._settings import Settings, SettingsModel, is_trusted_repository
 from ._subproject import Subproject
 from ._template import Task, Template
@@ -399,7 +404,6 @@ class Worker:
         operation = _operation.get()
         for i, task in enumerate(tasks):
             extra_context = {f"_{k}": v for k, v in task.extra_vars.items()}
-            extra_context["_copier_operation"] = operation
 
             if not cast_to_bool(self._render_value(task.condition, extra_context)):
                 continue
@@ -430,7 +434,10 @@ class Worker:
                 / Path(self._render_string(str(task.working_directory), extra_context))
             ).absolute()
 
-            extra_env = {k[1:].upper(): str(v) for k, v in extra_context.items()}
+            extra_env = {
+                k[1:].upper(): str(v)
+                for k, v in {**extra_context, "_copier_operation": operation}.items()
+            }
             with local.cwd(working_directory), local.env(**extra_env):
                 process = subprocess.run(
                     task_cmd, shell=use_shell, check=False, env=dict(local.env)
@@ -467,7 +474,7 @@ class Worker:
                 "os": lambda: OS,
             }
         )
-        return dict(
+        context = dict(
             **self.answers.combined,
             _copier_answers=self._answers_to_remember(),
             _copier_conf=conf,
@@ -475,6 +482,12 @@ class Worker:
             _copier_python=sys.executable,
             _copier_phase=Phase.current(),
         )
+        # ``_copier_operation`` is only defined within a copy/update/recopy run.
+        # Outside of one (e.g. ``check_update`` or other bare-``Worker`` use),
+        # leave it unset so rendering doesn't require an active operation.
+        if (operation := _operation.get(None)) is not None:
+            context["_copier_operation"] = operation
+        return context
 
     def _path_matcher(self, patterns: Iterable[str]) -> Callable[[Path], bool]:
         """Produce a function that matches against specified patterns."""
@@ -713,6 +726,7 @@ class Worker:
         default_extensions = [
             "jinja2_ansible_filters.AnsibleCoreFiltersExtension",
             YieldExtension,
+            IgnoreExtension,
         ]
         extensions = default_extensions + list(self.template.jinja_extensions)
         envops = dict(self.template.envops)
@@ -765,13 +779,12 @@ class Worker:
     @cached_property
     def match_exclude(self) -> Callable[[Path], bool]:
         """Get a callable to match paths against all exclusions."""
-        # Include the current operation in the rendering context.
-        # Note: This method is a cached property, it needs to be regenerated
-        # when reusing an instance in different contexts.
-        extra_context = {"_copier_operation": _operation.get()}
+        # ``_copier_operation`` is exposed globally via the render context, so
+        # exclusion patterns can reference it directly. Note: this is a cached
+        # property; it needs to be regenerated when reusing an instance in
+        # different operation contexts.
         return self._path_matcher(
-            self._render_string(exclusion, extra_context=extra_context)
-            for exclusion in self.all_exclusions
+            self._render_string(exclusion) for exclusion in self.all_exclusions
         )
 
     @cached_property
