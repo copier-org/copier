@@ -39,51 +39,41 @@
         }
       }
     },
-    "editorconfig-checker@3.8.0": {
-      "last_modified": "2026-06-29T11:10:55Z",
-      "resolved": "github:NixOS/nixpkgs/9c4c05a947a91dc14625265fab505fb695e93218#editorconfig-checker",
+    "editorconfig-checker@3.11.1": {
+      "last_modified": "2026-08-10T07:49:06Z",
+      "resolved": "github:NixOS/nixpkgs/d482ef84049d9b7276b83a06e4e4d76983830097#editorconfig-checker",
       "source": "devbox-search",
-      "version": "3.8.0",
+      "version": "3.11.1",
       "systems": {
         "aarch64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/rjhns65hrwxlh925p8z3rzj6fg77d3v3-editorconfig-checker-3.8.0",
+              "path": "/nix/store/i24ni0skj7jq68yrxifyaj824p9fzn92-editorconfig-checker-3.11.1",
               "default": true
             }
           ],
-          "store_path": "/nix/store/rjhns65hrwxlh925p8z3rzj6fg77d3v3-editorconfig-checker-3.8.0"
+          "store_path": "/nix/store/i24ni0skj7jq68yrxifyaj824p9fzn92-editorconfig-checker-3.11.1"
         },
         "aarch64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/4g9fdal6hzfq48p5b4318wra3b6gad5g-editorconfig-checker-3.8.0",
+              "path": "/nix/store/r1bswvysj59bxmazd4zzz6lg4g3nqqs0-editorconfig-checker-3.11.1",
               "default": true
             }
           ],
-          "store_path": "/nix/store/4g9fdal6hzfq48p5b4318wra3b6gad5g-editorconfig-checker-3.8.0"
-        },
-        "x86_64-darwin": {
-          "outputs": [
-            {
-              "name": "out",
-              "path": "/nix/store/mfxaz7iaxqb5ipq71h60c819vx4b1ray-editorconfig-checker-3.8.0",
-              "default": true
-            }
-          ],
-          "store_path": "/nix/store/mfxaz7iaxqb5ipq71h60c819vx4b1ray-editorconfig-checker-3.8.0"
+          "store_path": "/nix/store/r1bswvysj59bxmazd4zzz6lg4g3nqqs0-editorconfig-checker-3.11.1"
         },
         "x86_64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/x0hg00gynjv9m0i49rc1p9jsqfrww52w-editorconfig-checker-3.8.0",
+              "path": "/nix/store/q2856l45y9hrw3qlbfvap3lb5fyv7vl8-editorconfig-checker-3.11.1",
               "default": true
             }
           ],
-          "store_path": "/nix/store/x0hg00gynjv9m0i49rc1p9jsqfrww52w-editorconfig-checker-3.8.0"
+          "store_path": "/nix/store/q2856l45y9hrw3qlbfvap3lb5fyv7vl8-editorconfig-checker-3.11.1"
         }
       }
     },
