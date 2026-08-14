@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Callable
 from pathlib import Path
 from textwrap import dedent
@@ -14,7 +15,11 @@ import copier
 from copier._main import Worker
 from copier._template import DEFAULT_EXCLUDE, Task, Template, load_template_config
 from copier._types import AnyByStrDict
-from copier.errors import InvalidConfigFileError, MultipleConfigFilesError
+from copier.errors import (
+    ForbiddenPathError,
+    InvalidConfigFileError,
+    MultipleConfigFilesError,
+)
 
 from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree, git_init
 
@@ -217,9 +222,9 @@ def test_authorization_does_not_enable_python_yaml_tags(
     [
         ("tests/demo_invalid", lambda x: "INVALID" in x),
         # test key collision between including and included file
-        ("tests/demo_transclude_invalid/demo", None),
+        ("tests/demo_transclude_invalid", None),
         # test key collision between two included files
-        ("tests/demo_transclude_invalid_multi/demo", None),
+        ("tests/demo_transclude_invalid_multi", None),
     ],
 )
 def test_invalid_config_data(
@@ -355,6 +360,27 @@ def test_include_value_must_be_scalar_node(tmp_path: Path, include_value: str) -
         template.config_data  # noqa: B018
 
 
+def test_include_path_outside_template_root_raises_error(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "template" / "copier.yml": (
+                """\
+                !include ../outside/include.yml
+                """
+            ),
+            src / "outside" / "include.yml": "foo: bar",
+        }
+    )
+    with pytest.raises(
+        ForbiddenPathError,
+        match=re.escape(rf'"{src}/outside/include.yml" is forbidden'),
+    ):
+        copier.run_copy(str(src / "template"), dst, defaults=True)
+
+
 def test_config_data_empty() -> None:
     template = Template("tests/demo_config_empty")
     assert template.config_data == {}
@@ -436,12 +462,12 @@ def test_worker_config_precedence(
 
 
 def test_config_data_transclusion() -> None:
-    config = Worker("tests/demo_transclude/demo")
+    config = Worker("tests/demo_transclude")
     assert config.all_exclusions == ("exclude1", "exclude2")
 
 
 def test_config_data_nested_transclusions() -> None:
-    config = Worker("tests/demo_transclude_nested_include/demo")
+    config = Worker("tests/demo_transclude_nested_include")
     assert config.all_exclusions == ("exclude1", "exclude2")
 
 

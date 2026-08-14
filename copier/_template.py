@@ -35,6 +35,7 @@ from ._vcs import (
     is_git_available,
 )
 from .errors import (
+    ForbiddenPathError,
     InvalidConfigFileError,
     MultipleConfigFilesError,
     OldTemplateWarning,
@@ -87,6 +88,8 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
 
     Raises:
         InvalidConfigFileError: When the file is formatted badly.
+        ForbiddenPathError: When the included YAML file is outside the template
+            directory.
     """
 
     class _Loader(yaml.SafeLoader):
@@ -95,15 +98,27 @@ def load_template_config(conf_path: Path, quiet: bool = False) -> AnyByStrDict:
     def _include(loader: yaml.Loader, node: yaml.Node) -> Any:
         if not isinstance(node, yaml.ScalarNode):
             raise TypeError(f"Unsupported YAML node: {node!r}")
-        include_file = str(loader.construct_scalar(node))
-        if PurePosixPath(include_file).is_absolute():
+        include_pattern = str(loader.construct_scalar(node))
+        if PurePosixPath(include_pattern).is_absolute():
             raise ValueError("YAML include file path must be a relative path")
-        return [
-            lflatten(
-                filter(None, yaml.load_all(path.read_bytes(), Loader=type(loader)))
+        data: list[Any] = []
+        template_root = conf_path.parent.resolve()
+        for include_file in template_root.glob(include_pattern):
+            include_file = include_file.resolve()
+            if not include_file.is_relative_to(template_root):
+                raise ForbiddenPathError(
+                    path=include_file,
+                    hint="YAML include file path must be inside the template directory",
+                )
+            data.extend(
+                lflatten(
+                    filter(
+                        None,
+                        yaml.load_all(include_file.read_bytes(), Loader=type(loader)),
+                    )
+                )
             )
-            for path in conf_path.parent.glob(include_file)
-        ]
+        return data
 
     _Loader.add_constructor("!include", _include)
 
