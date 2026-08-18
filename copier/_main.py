@@ -1418,22 +1418,22 @@ class Worker:
                 # project to avoid recreating them during the update.
                 # Files listed in `skip_if_exists` should only be skipped if they exist.
                 # They should even be recreated if deleted intentionally.
-                files_removed = git(
-                    "diff-tree",
-                    "-r",
-                    "--diff-filter=D",
-                    "--name-only",
-                    "HEAD",
-                    subproject_head,
-                ).splitlines()
-                exclude_plus_removed = list(
-                    set(self.exclude).union(
-                        f"/{escape_git_path(path)}"
-                        for path in map(normalize_git_path, files_removed)
-                        if not (subproject_top / path).exists()
-                        and not self.match_skip(Path(path))
+                files_removed = [
+                    path
+                    for path in map(
+                        normalize_git_path,
+                        git(
+                            "diff-tree",
+                            "-r",
+                            "--diff-filter=D",
+                            "--name-only",
+                            "HEAD",
+                            subproject_head,
+                        ).splitlines(),
                     )
-                )
+                    if not (subproject_top / path).exists()
+                    and not self.match_skip(Path(path))
+                ]
             # Clear last answers cache to load possible answers migration, if
             # skip_answered flag is not set
             if self.skip_answered is False:
@@ -1443,8 +1443,6 @@ class Worker:
             # Do a normal update in final destination
             with replace(
                 self,
-                # Don't regenerate intentionally deleted paths
-                exclude=exclude_plus_removed,
                 # Files can change due to the historical diff, and those
                 # changes are not detected in this process, so it's better to
                 # say nothing than lie.
@@ -1454,6 +1452,9 @@ class Worker:
                 current_worker.run_copy()
                 self.answers = current_worker.answers
                 self.answers.external = self._external_data()
+            # Don't regenerate intentionally deleted paths
+            for filename in files_removed:
+                (subproject_top / filename).unlink(missing_ok=True)
             # Render with the same answers in an empty dir to avoid pollution
             with replace(
                 self,
@@ -1469,11 +1470,13 @@ class Worker:
                 defaults=True,
                 quiet=True,
                 src_path=self.subproject.template.url,  # type: ignore[union-attr]
-                exclude=exclude_plus_removed,
                 vcs_ref=self.resolved_vcs_ref,
                 ask=(),
             ) as new_worker:
                 new_worker.run_copy()
+            # Don't regenerate intentionally deleted paths
+            for filename in files_removed:
+                Path(new_copy, filename).unlink(missing_ok=True)
             with local.cwd(new_copy):
                 self._git_initialize_repo()
                 new_copy_head = git("rev-parse", "HEAD").strip()
