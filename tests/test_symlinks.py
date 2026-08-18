@@ -608,7 +608,7 @@ def test_resolve_relative_symlink_outside_template_root_raises_error(
         ForbiddenPathError,
         match=re.escape('"symlink.txt" is forbidden'),
     ):
-        run_copy(str(src), dst, defaults=True, overwrite=True, cleanup_on_error=False)
+        run_copy(str(src), dst, defaults=True, overwrite=True)
 
     assert not (dst / "symlink.txt").exists()
 
