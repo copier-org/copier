@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.17.2 (2026-08-19)
+
+### Security
+
+- disallow Jinja `{% include %}` of symlinks resolving outside template root
+- disallow config `!include` paths outside the template root
+
+### Refactor
+
+- **updating**: delete user-removed files after rendering instead of excluding them
+
 ## v9.17.1 (2026-08-04)
 
 ### Security
