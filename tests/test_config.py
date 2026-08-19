@@ -376,7 +376,7 @@ def test_include_path_outside_template_root_raises_error(
     )
     with pytest.raises(
         ForbiddenPathError,
-        match=re.escape(rf'"{src}/outside/include.yml" is forbidden'),
+        match=re.escape(f'"{src / "outside" / "include.yml"}" is forbidden'),
     ):
         copier.run_copy(str(src / "template"), dst, defaults=True)
 
