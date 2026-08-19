@@ -78,6 +78,12 @@ REPLACEMENTS = (
     (re.compile(r"^gl:/?(.*)$"), r"https://gitlab.com/\1.git"),
 )
 
+REMOTE_URL_PREFIXES = ("http://", "https://", "git@", "git+", "gh:", "gl:", "bb:")
+
+
+def is_remote_url(url: str) -> bool:
+    return url.startswith(REMOTE_URL_PREFIXES)
+
 
 def is_git_repo_root(path: StrOrPath) -> bool:
     """Indicate if a given path is a git repo root directory."""

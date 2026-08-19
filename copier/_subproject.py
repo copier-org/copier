@@ -16,7 +16,7 @@ from pydantic.dataclasses import dataclass
 from ._template import Template
 from ._types import AbsolutePath, AnyByStrDict, VCSTypes
 from ._user_data import load_answersfile_data
-from ._vcs import get_git, is_in_git_repo
+from ._vcs import get_git, is_in_git_repo, is_remote_url
 
 
 @dataclass
@@ -76,7 +76,17 @@ class Subproject:
         last_url = self.last_answers.get("_src_path")
         last_ref = self.last_answers.get("_commit")
         if last_url:
-            result = Template(url=last_url, ref=last_ref)
+            url = last_url
+            if not is_remote_url(last_url):
+                try:
+                    path = Path(last_url)
+                    if not path.is_absolute():
+                        resolved_path = (self.local_abspath / path).resolve()
+                        if resolved_path.is_dir():
+                            url = str(resolved_path)
+                except OSError:
+                    pass
+            result = Template(url=url, ref=last_ref)
             self._cleanup_hooks.append(result._cleanup)
             return result
         return None
