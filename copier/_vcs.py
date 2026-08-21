@@ -71,12 +71,15 @@ def is_git_available() -> bool:
 
 GIT_PREFIX = ("git@", "git://", "git+", "https://github.com/", "https://gitlab.com/")
 GIT_POSTFIX = ".git"
-REPLACEMENTS = (
-    (re.compile(r"^gh:/?(.*\.git)$"), r"https://github.com/\1"),
-    (re.compile(r"^gh:/?(.*)$"), r"https://github.com/\1.git"),
-    (re.compile(r"^gl:/?(.*\.git)$"), r"https://gitlab.com/\1"),
-    (re.compile(r"^gl:/?(.*)$"), r"https://gitlab.com/\1.git"),
-)
+ALIASES = {"gh:": "https://github.com", "gl:": "https://gitlab.com"}
+REPLACEMENTS = [
+    pattern
+    for alias, replacement in ALIASES.items()
+    for pattern in [
+        (re.compile(rf"^{alias}/?(.*\.git)$"), rf"{replacement}/\1"),
+        (re.compile(rf"^{alias}/?(.*)$"), rf"{replacement}/\1.git"),
+    ]
+]
 
 
 def is_git_repo_root(path: StrOrPath) -> bool:

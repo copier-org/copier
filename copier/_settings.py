@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import posixpath
+import re
 import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -17,6 +18,7 @@ from platformdirs import user_config_path
 from pydantic import BaseModel, Field, ValidationError
 
 from ._tools import OS
+from ._vcs import ALIASES
 from .errors import MissingSettingsWarning, SettingsError
 
 _ENV_VAR = "COPIER_SETTINGS_PATH"
@@ -149,26 +151,41 @@ def _is_trusted(
     )
 
 
+# Git's SCP-like syntax: [user@]host:path
+_SCP_URL = re.compile(r"^(?:[^/@:\s]+@)?[^/:\s]+:.+$")
+
+
 def _normalize(url: str) -> str:
-    if url.startswith("~"):  # Only expand on str to avoid messing with URLs
-        url = expanduser(url)  # noqa: PTH111
-    if "://" in url:
+    if "://" in url or url.startswith(tuple(ALIASES.keys())):
         parts = urlsplit(url)
-        # Percent-decode before normalizing so that encoded dot segments (e.g.
-        # `%2e%2e`) and encoded separators (e.g. `%2f`) are collapsed by
-        # `posixpath.normpath`. Backslashes (literal or `%5c`) are folded to
-        # forward slashes because some servers and intermediaries treat them
-        # as path separators while `posixpath.normpath` does not. Otherwise
-        # the form used for the trust check could differ from what the
-        # HTTP/Git layer ultimately resolves, allowing a trust-prefix bypass.
-        decoded_path = unquote(parts.path).replace("\\", "/")
-        path = posixpath.normpath(decoded_path) if decoded_path else decoded_path
-        if decoded_path.endswith("/") and not path.endswith("/"):
-            path += "/"
+        path = _normalize_url_path(parts.path)
         return urlunsplit(
             (parts.scheme, parts.netloc, path, parts.query, parts.fragment)
         )
+
+    if _SCP_URL.fullmatch(url):
+        host, path = url.split(":", 1)
+        path = _normalize_url_path(path)
+        return f"{host}:{path}"
+
+    if url.startswith("~"):  # Only expand on str to avoid messing with URLs
+        url = expanduser(url)  # noqa: PTH111
     normalized = os.path.normpath(url)
     if url.endswith(("/", os.sep)) and not normalized.endswith(os.sep):
         normalized += os.sep
     return normalized
+
+
+def _normalize_url_path(path: str) -> str:
+    # Percent-decode before normalizing so that encoded dot segments (e.g.
+    # `%2e%2e`) and encoded separators (e.g. `%2f`) are collapsed by
+    # `posixpath.normpath`. Backslashes (literal or `%5c`) are folded to
+    # forward slashes because some servers and intermediaries treat them
+    # as path separators while `posixpath.normpath` does not. Otherwise
+    # the form used for the trust check could differ from what the
+    # HTTP/Git layer ultimately resolves, allowing a trust-prefix bypass.
+    decoded_path = unquote(path).replace("\\", "/")
+    path = posixpath.normpath(decoded_path) if decoded_path else decoded_path
+    if decoded_path.endswith("/") and not path.endswith("/"):
+        path += "/"
+    return path

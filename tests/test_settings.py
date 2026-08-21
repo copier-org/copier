@@ -147,103 +147,63 @@ def test_load_settings_with_invalid_data(
 @pytest.mark.parametrize(
     ("repository", "trust", "expected"),
     [
-        ("https://github.com/user/repo.git", [], False),
-        (
-            "https://github.com/user/repo.git",
-            {"https://github.com/user/repo.git"},
-            True,
-        ),
-        ("https://github.com/user/repo", {"https://github.com/user/repo.git"}, False),
-        ("https://github.com/user/repo.git", {"https://github.com/user/"}, True),
-        ("https://github.com/user/repo.git", {"https://github.com/user/repo"}, False),
-        ("https://github.com/user/repo.git", {"https://github.com/user"}, False),
-        ("https://github.com/user/repo.git", {"https://github.com/"}, True),
-        ("https://github.com/user/repo.git", {"https://github.com"}, False),
-        (
-            "https://github.com/user/../evil/repo.git",
-            {"https://github.com/user/"},
-            False,
-        ),
-        (
-            "https://github.com/user/../evil/repo.git",
-            {"https://github.com/user/../evil/repo.git"},
-            True,
-        ),
-        (
-            "https://github.com/user/%2e%2e/evil/repo.git",
-            {"https://github.com/user/"},
-            False,
-        ),
-        (
-            "https://github.com/user/%2E%2E/evil/repo.git",
-            {"https://github.com/user/"},
-            False,
-        ),
-        (
-            "https://github.com/user/%2e%2E/evil/repo.git",
-            {"https://github.com/user/"},
-            False,
-        ),
-        (
-            "https://github.com/user/%2e./evil/repo.git",
-            {"https://github.com/user/"},
-            False,
-        ),
-        (
-            "https://github.com/user/.%2e/evil/repo.git",
-            {"https://github.com/user/"},
-            False,
-        ),
-        (
-            "https://github.com/user%2f%2e%2e%2fevil/repo.git",
-            {"https://github.com/user/"},
-            False,
-        ),
-        (
-            "https://github.com/user/%2e%2e/evil/repo.git",
-            {"https://github.com/user/%2e%2e/evil/repo.git"},
-            True,
-        ),
-        (
-            "https://github.com/user/%2e%2e/evil/repo.git",
-            {"https://github.com/user/../evil/repo.git"},
-            True,
-        ),
-        (
-            "https://github.com/user/%2e%2e%5cevil/repo.git",
-            {"https://github.com/user/"},
-            False,
-        ),
-        (
-            "https://github.com/user/%2e%2e%5Cevil/repo.git",
-            {"https://github.com/user/"},
-            False,
-        ),
-        (
-            "https://github.com/user/..%5cevil/repo.git",
-            {"https://github.com/user/"},
-            False,
-        ),
-        (
-            "https://github.com/user/..\\evil/repo.git",
-            {"https://github.com/user/"},
-            False,
-        ),
-        (
-            "https://github.com/user/%2e%2e%5cevil/repo.git",
-            {"https://github.com/user/%2e%2e%5cevil/repo.git"},
-            True,
-        ),
-        (
-            "https://github.com/user/%2e%2e%5cevil/repo.git",
-            {"https://github.com/user/..\\evil/repo.git"},
-            True,
-        ),
-        (
-            "https://github.com/user/%2e%2e%5cevil/repo.git",
-            {"https://github.com/user/../evil/repo.git"},
-            True,
-        ),
+        test
+        for base in [
+            "https://github.com",
+            "ssh://git@github.com",
+            "git@github.com:",
+            "gh:",
+            "gl:",
+        ]
+        for test in [
+            (f"{base}/user/repo.git", [], False),
+            (f"{base}/user/repo.git", {f"{base}/user/repo.git"}, True),
+            (f"{base}/user/repo", {f"{base}/user/repo.git"}, False),
+            (f"{base}/user/repo.git", {f"{base}/user/"}, True),
+            (f"{base}/user/repo.git", {f"{base}/user/repo"}, False),
+            (f"{base}/user/repo.git", {f"{base}/user"}, False),
+            (f"{base}/user/repo.git", {f"{base}/"}, True),
+            (f"{base}/user/repo.git", {f"{base}"}, False),
+            (f"{base}/user/../evil/repo.git", {f"{base}/user/"}, False),
+            (f"{base}/user/../evil/repo.git", {f"{base}/user/../evil/repo.git"}, True),
+            (f"{base}/user/%2e%2e/evil/repo.git", {f"{base}/user/"}, False),
+            (f"{base}/user/%2E%2E/evil/repo.git", {f"{base}/user/"}, False),
+            (f"{base}/user/%2e%2E/evil/repo.git", {f"{base}/user/"}, False),
+            (f"{base}/user/%2e./evil/repo.git", {f"{base}/user/"}, False),
+            (f"{base}/user/.%2e/evil/repo.git", {f"{base}/user/"}, False),
+            (f"{base}/user%2f%2e%2e%2fevil/repo.git", {f"{base}/user/"}, False),
+            (
+                f"{base}/user/%2e%2e/evil/repo.git",
+                {f"{base}/user/%2e%2e/evil/repo.git"},
+                True,
+            ),
+            (
+                f"{base}/user/%2e%2e/evil/repo.git",
+                {f"{base}/user/../evil/repo.git"},
+                True,
+            ),
+            (f"{base}/user/%2e%2e%5cevil/repo.git", {f"{base}/user/"}, False),
+            (f"{base}/user/%2e%2e%5Cevil/repo.git", {f"{base}/user/"}, False),
+            (f"{base}/user/..%5cevil/repo.git", {f"{base}/user/"}, False),
+            (f"{base}/user/..\\evil/repo.git", {f"{base}/user/"}, False),
+            (
+                f"{base}/user/%2e%2e%5cevil/repo.git",
+                {f"{base}/user/%2e%2e%5cevil/repo.git"},
+                True,
+            ),
+            (
+                f"{base}/user/%2e%2e%5cevil/repo.git",
+                {f"{base}/user/..\\evil/repo.git"},
+                True,
+            ),
+            (
+                f"{base}/user/%2e%2e%5cevil/repo.git",
+                {f"{base}/user/../evil/repo.git"},
+                True,
+            ),
+        ]
+    ]
+    + [
         (f"{Path.home()}/template", [], False),
         (f"{Path.home()}/template", {f"{Path.home()}/template"}, True),
         (f"{Path.home()}/template", {"~/template"}, True),
