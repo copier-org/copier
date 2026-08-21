@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import platform
+import re
 import stat
 import subprocess
 import sys
@@ -772,9 +773,14 @@ class Worker:
         # Note: This method is a cached property, it needs to be regenerated
         # when reusing an instance in different contexts.
         extra_context = {"_copier_operation": _operation.get()}
+        regex_linebreak = re.compile(r"\r\n|\r|\n")
         return self._path_matcher(
-            self._render_string(exclusion, extra_context=extra_context)
-            for exclusion in self.all_exclusions
+            chain.from_iterable(
+                regex_linebreak.split(
+                    self._render_string(exclusion, extra_context=extra_context),
+                )
+                for exclusion in self.all_exclusions
+            )
         )
 
     @cached_property

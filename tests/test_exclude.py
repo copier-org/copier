@@ -54,6 +54,49 @@ def test_config_include(tmp_path_factory: pytest.TempPathFactory) -> None:
     assert (dst / "copier.yml").exists()
 
 
+@pytest.mark.parametrize("skip", [True, False])
+def test_config_exclude_multiline_conditional(
+    tmp_path_factory: pytest.TempPathFactory, skip: bool
+) -> None:
+    """A single exclusion entry may render to multiple newline-separated patterns.
+
+    This lets one Jinja block conditionally emit a whole list of patterns instead of
+    repeating the condition on every entry. When the guard is false the block renders
+    empty and excludes nothing.
+    """
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "copier.yml": (
+                """\
+                skip:
+                    type: bool
+
+                _exclude:
+                    - copier.yml
+                    - |
+                        {% if skip %}
+                        /a.txt
+                        /b.txt
+                        /sub/c.txt
+                        {% endif %}
+                """
+            ),
+            src / "a.txt": "",
+            src / "b.txt": "",
+            src / "sub" / "c.txt": "",
+            src / "keep.txt": "",
+        }
+    )
+    run_copy(str(src), dst, quiet=True, data={"skip": skip})
+    # keep.txt is never in the block, so it is always copied.
+    assert (dst / "keep.txt").exists()
+    # Files are excluded when skip=True
+    assert (dst / "a.txt").exists() is not skip
+    assert (dst / "b.txt").exists() is not skip
+    assert (dst / "sub" / "c.txt").exists() is not skip
+
+
 @pytest.mark.xfail(
     condition=platform.system() == "Darwin",
     reason="OS without proper UTF-8 filesystem.",

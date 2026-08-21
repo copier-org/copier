@@ -1112,6 +1112,29 @@ Each pattern can be templated using Jinja.
     The difference with [skip_if_exists](#skip_if_exists) is that it will never be
     rendered during an update, no matter if it exists or not.
 
+    A single exclusion entry may render to multiple newline-separated patterns,
+    equivalent to a complete gitignore file including comments and blank lines.
+
+!!! example
+
+    Exclude a group of files with a single conditional block instead of guarding each
+    entry individually:
+
+    ```yaml
+    skip_ci:
+        type: bool
+
+    _exclude:
+        - |
+            {% if skip_ci %}
+            /.github/workflows/ci.yml
+            /.github/workflows/deploy.yml
+            /docs/ci/
+            {% endif %}
+    ```
+
+    When `skip_ci` is `false` the block renders empty and nothing extra is excluded.
+
 !!! info
 
     When you define this parameter in `copier.yml`, it will **replace** the default
