@@ -231,6 +231,10 @@ class MissingFileWarning(UserWarning, CopierWarning):
     """I still couldn't find what I'm looking for."""
 
 
+class CleanupWarning(UserWarning, CopierWarning):
+    """Failed to clean up the destination after an error."""
+
+
 class InteractiveSessionError(UserMessageError):
     """An interactive session is required to run this program."""
 
