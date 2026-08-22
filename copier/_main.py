@@ -77,6 +77,7 @@ from ._types import (
 from ._user_data import AnswersMap, Question, load_answersfile_data
 from ._vcs import get_git, is_git_available
 from .errors import (
+    CleanupWarning,
     ConfigFileError,
     CopierAnswersInterrupt,
     ExtensionNotFoundError,
@@ -1295,7 +1296,17 @@ class Worker:
                     self._execute_tasks(self.template.tasks)
         except Exception:
             if not was_existing and self.cleanup_on_error:
-                rmtree(self.subproject.local_abspath)
+                try:
+                    rmtree(self.subproject.local_abspath)
+                except FileNotFoundError:
+                    pass  # Nothing was created yet, so nothing to clean up.
+                except OSError as cleanup_error:
+                    # Never raise: another exception is already being handled.
+                    warnings.warn(
+                        f"Failed to clean up {self.subproject.local_abspath}: "
+                        f"{cleanup_error}",
+                        CleanupWarning,
+                    )
             raise
         self._print_message(self.template.message_after_copy)
         if not self.quiet:

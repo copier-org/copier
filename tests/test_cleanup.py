@@ -6,6 +6,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from jinja2.exceptions import UndefinedError
 from plumbum import local
 
 import copier
@@ -191,3 +192,17 @@ def test_cleanup_on_interrupt_during_git_clone(
         copier.run_copy(str(src), dst)
 
     assert list(tmp.glob("**/*")) == []
+
+
+def test_cleanup_does_not_mask_render_error(tmp_path: Path) -> None:
+    """Copier reports the render error, not a failure from its own cleanup."""
+    src = tmp_path / "src"
+    dst = tmp_path / "new_folder"
+    build_file_tree({src / "template.txt.jinja": "{{ not_a_question.value }}"})
+
+    # The template's only file fails, so `dst` is never created and cleanup has
+    # nothing to remove.
+    with pytest.raises(UndefinedError, match="'not_a_question' is undefined"):
+        copier.run_copy(str(src), dst, quiet=True)
+
+    assert not dst.exists()
