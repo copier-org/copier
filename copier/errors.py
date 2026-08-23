@@ -23,6 +23,7 @@ else:
 
 
 __all__ = [
+    "CleanupWarning",
     "ConfigFileError",
     "CopierAnswersInterrupt",
     "CopierError",
