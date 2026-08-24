@@ -23,6 +23,7 @@ else:
 
 
 __all__ = [
+    "CleanupWarning",
     "ConfigFileError",
     "CopierAnswersInterrupt",
     "CopierError",
@@ -229,6 +230,10 @@ class MissingSettingsWarning(UserWarning, CopierWarning):
 
 class MissingFileWarning(UserWarning, CopierWarning):
     """I still couldn't find what I'm looking for."""
+
+
+class CleanupWarning(UserWarning, CopierWarning):
+    """Failed to clean up the destination after an error."""
 
 
 class InteractiveSessionError(UserMessageError):
