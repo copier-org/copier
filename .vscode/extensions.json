@@ -4,6 +4,7 @@
     "charliermarsh.ruff",
     "editorconfig.editorconfig",
     "elagil.pre-commit-helper",
-    "ms-python.python"
+    "ms-python.python",
+    "rvben.rumdl"
   ]
 }

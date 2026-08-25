@@ -15,7 +15,8 @@
         "editorconfig.editorconfig",
         "elagil.pre-commit-helper",
         "jetpack-io.devbox",
-        "ms-python.python"
+        "ms-python.python",
+        "rvben.rumdl"
       ],
       "settings": {
         "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python"
