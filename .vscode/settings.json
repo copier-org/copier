@@ -13,6 +13,6 @@
   "[markdown]": {
     "editor.formatOnSave": true,
     "editor.formatOnSaveMode": "file",
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "rvben.rumdl"
   }
 }

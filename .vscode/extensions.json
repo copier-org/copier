@@ -3,6 +3,7 @@
     "bpruitt-goddard.mermaid-markdown-syntax-highlighting",
     "editorconfig.editorconfig",
     "elagil.pre-commit-helper",
-    "ms-python.python"
+    "ms-python.python",
+    "rvben.rumdl"
   ]
 }
