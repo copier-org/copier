@@ -1,6 +1,7 @@
 {
   "recommendations": [
     "bpruitt-goddard.mermaid-markdown-syntax-highlighting",
+    "charliermarsh.ruff",
     "editorconfig.editorconfig",
     "elagil.pre-commit-helper",
     "ms-python.python"
