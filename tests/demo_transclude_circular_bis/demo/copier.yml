@@ -1,0 +1,7 @@
+---
+!include ../copier_files/include_me.yml
+---
+
+_exclude:
+  - "exclude1"
+  - "exclude2"
