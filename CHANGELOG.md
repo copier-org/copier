@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.18.0 (2026-09-01)
+
+### Feat
+
+- **exclude**: add support for multiple exclude patterns in a single entry (#2804)
+
+### Fix
+
+- preserve the original error when cleanup fails (#2824)
+
+### Security
+
+- prevent trust bypass via encoded URL traversal for alias and SCP-style URLs
+
 ## v9.17.2 (2026-08-19)
 
 ### Security
