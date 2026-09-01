@@ -9,7 +9,7 @@ import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from os.path import expanduser
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any
 from urllib.parse import unquote, urlsplit, urlunsplit
 
@@ -163,7 +163,7 @@ def _normalize(url: str) -> str:
             (parts.scheme, parts.netloc, path, parts.query, parts.fragment)
         )
 
-    if _SCP_URL.fullmatch(url):
+    if not PureWindowsPath(url).is_absolute() and _SCP_URL.fullmatch(url):
         host, path = url.split(":", 1)
         path = _normalize_url_path(path)
         return f"{host}:{path}"
