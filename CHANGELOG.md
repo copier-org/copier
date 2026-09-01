@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.18.1 (2026-09-01)
+
+### Fix
+
+- disambiguate Windows paths from SCP URLs in trust check
+
 ## v9.18.0 (2026-09-01)
 
 ### Feat
