@@ -205,6 +205,83 @@ def test_remote_clone_recovers_from_corrupt_mirror(
     assert Path(dst2, "README.md").read_text() == "hello world"
 
 
+@pytest.fixture(scope="module", autouse=True)
+def allow_file_submodules() -> None:
+    """Allow the fixture repos below to be used as submodules.
+
+    Since Git 2.38.1 the file protocol is blocked for submodules by default
+    (see GHSA-3wp6-j8xr-qw85), so local submodules require this setting. Set
+    it via the environment so it also applies to Copier's own subprocesses.
+    """
+    with local.env(
+        GIT_CONFIG_COUNT="1",
+        GIT_CONFIG_KEY_0="protocol.file.allow",
+        GIT_CONFIG_VALUE_0="always",
+    ):
+        yield
+
+
+def test_remote_clone_submodule_with_moved_url(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """Submodules are resolved from each checkout's own ``.gitmodules``.
+
+    A previous worktree's `git submodule update --init` registers the
+    submodule URL in the mirror's shared config, so a submodule that moved
+    between template revisions would be fetched from the stale URL, failing
+    when the pinned commit no longer exists there.
+    """
+    # The submodule, initially hosted in one place...
+    sub1 = tmp_path_factory.mktemp("sub1")
+    with local.cwd(sub1):
+        git("init")
+        Path("sub.txt").write_text("v1")
+        git("add", "-A")
+        git("commit", "-m", "submodule v1")
+
+    # ...and later moved to a new location, with a new commit.
+    sub2 = tmp_path_factory.mktemp("sub2")
+    with local.cwd(sub2):
+        git("init")
+        Path("sub.txt").write_text("v2")
+        git("add", "-A")
+        git("commit", "-m", "submodule v2")
+
+    # The template's submodule points at the first location...
+    template = tmp_path_factory.mktemp("template")
+    with local.cwd(template):
+        git("init")
+        Path("README.md").write_text("template")
+        git("add", "-A")
+        git("commit", "-m", "init")
+        git("submodule", "add", str(sub1), "sub")
+        git("commit", "-m", "add submodule at its original location")
+        git("tag", "v1")
+
+        # ...and moves to the second location, pinning a commit that only
+        # exists there.
+        Path(".gitmodules").write_text(
+            Path(".gitmodules").read_text().replace(str(sub1), str(sub2))
+        )
+        with local.cwd("sub"):
+            git("fetch", str(sub2))
+            git("checkout", "FETCH_HEAD")
+        git("add", "-A")
+        git("commit", "-m", "move submodule to its new location")
+        git("tag", "v2")
+
+    clones = tmp_path_factory.mktemp("clones")
+    # Checking out the first revision registers the original submodule URL
+    # in the mirror's shared config.
+    dst1 = clone(template.as_uri(), "v1", location=str(clones / "first"))
+    assert Path(dst1, "sub", "sub.txt").read_text() == "v1"
+
+    # The second checkout must follow v2's `.gitmodules` instead of using
+    # the stale URL registered by the first checkout.
+    dst2 = clone(template.as_uri(), "v2", location=str(clones / "second"))
+    assert Path(dst2, "sub", "sub.txt").read_text() == "v2"
+
+
 def test_local_dirty_clone(
     tmp_path_factory: pytest.TempPathFactory, gitconfig: GitConfig
 ) -> None:
