@@ -383,6 +383,57 @@ def test_pretend_option(tmp_path: Path) -> None:
     assert not (tmp_path / "pyproject.toml").exists()
 
 
+def test_pretend_option_missing_dst(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src = tmp_path_factory.mktemp("src")
+    build_file_tree({(src / "a.txt"): ""})
+    dst = tmp_path_factory.mktemp("dst_parent") / "dst"
+    copier.run_copy(str(src), dst, pretend=True)
+    assert not dst.exists()
+
+
+def test_render_cwd_is_destination(tmp_path_factory: pytest.TempPathFactory) -> None:
+    """Filesystem-related Jinja filters operate relative to the destination.
+
+    https://github.com/copier-org/copier/issues/1708
+    """
+    src, dst, invocation = map(tmp_path_factory.mktemp, ("src", "dst", "invocation"))
+    build_file_tree(
+        {
+            (src / "fileglob.txt.jinja"): "{{ '*.txt' | fileglob | sort }}",
+            (dst / "a.txt"): "",
+            (dst / "b.txt"): "",
+            (invocation / "decoy.txt"): "",
+        }
+    )
+    with local.cwd(invocation):
+        cwd_before = Path.cwd()
+        copier.run_copy(str(src), dst, defaults=True, overwrite=True)
+        assert Path.cwd() == cwd_before
+    assert (dst / "fileglob.txt").read_text() == "['a.txt', 'b.txt']"
+
+
+def test_render_cwd_is_destination_relative_dst(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """A relative destination path works while rendering in the destination.
+
+    https://github.com/copier-org/copier/issues/1708
+    """
+    src, invocation = map(tmp_path_factory.mktemp, ("src", "invocation"))
+    build_file_tree(
+        {
+            (src / "fileglob.txt.jinja"): "{{ '*.txt' | fileglob | sort }}",
+            (invocation / "dst" / "a.txt"): "",
+            (invocation / "decoy.txt"): "",
+        }
+    )
+    with local.cwd(invocation):
+        cwd_before = Path.cwd()
+        copier.run_copy(str(src), "dst", defaults=True, overwrite=True)
+        assert Path.cwd() == cwd_before
+    assert (invocation / "dst" / "fileglob.txt").read_text() == "['a.txt']"
+
+
 @pytest.mark.parametrize("generate", [True, False])
 def test_empty_dir(tmp_path_factory: pytest.TempPathFactory, generate: bool) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
