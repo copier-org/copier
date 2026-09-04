@@ -646,3 +646,23 @@ def test_resolve_absolute_symlink_outside_template_root_raises_error(
         run_copy(str(src), dst, defaults=True, overwrite=True)
 
     assert not (dst / "symlink.txt").exists()
+
+
+@pytest.mark.parametrize("preserve_symlinks", [True, False])
+def test_destination_symlink_outside_destination_root(
+    tmp_path_factory: pytest.TempPathFactory, preserve_symlinks: bool
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "copier.yaml": f"_preserve_symlinks: {preserve_symlinks}",
+            src / "file.txt": "from template",
+            dst / "other" / "target.txt": "external",
+            dst / "project" / "file.txt": Path("..") / "other" / "target.txt",
+        }
+    )
+
+    run_copy(str(src), dst / "project", overwrite=True)
+
+    assert not (dst / "project" / "file.txt").is_symlink()
+    assert (dst / "project" / "file.txt").read_text() == "from template"
