@@ -815,7 +815,7 @@ class Worker:
             )
             for dst_relpath, ctx in dst_relpaths_ctxs:
                 dst_abspath = dst_root / dst_relpath
-                if dst_abspath.is_symlink() and self.template.preserve_symlinks:
+                if dst_abspath.is_symlink():
                     # If destination path is a symlink, it can safely point outside the
                     # subproject dir, while still itself existing within the subproject.
                     # (So long as nothing is templated into it (if it is a directory),
