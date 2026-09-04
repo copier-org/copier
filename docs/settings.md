@@ -60,3 +60,12 @@ trust:
 
     Locations ending with `/` will be matched as prefixes, trusting all templates
     starting with that path. Locations not ending with `/` will be matched exactly.
+
+    Prefix matching only applies to repository URLs whose path consists solely of
+    [RFC 3986 §2.3](https://datatracker.ietf.org/doc/html/rfc3986#section-2.3)
+    "unreserved" characters (letters, digits, `-`, `.`, `_`, `~`) and `/`, since these
+    are the only characters every compliant URL parser, Git transport, and server is
+    guaranteed to interpret identically. Any other character (e.g. percent-encoding,
+    backslashes, or doubled slashes) opens the door to a URL confusion attack, where
+    different components disagree on what the URL resolves to, so such a URL can only be
+    trusted via an exact, verbatim entry.

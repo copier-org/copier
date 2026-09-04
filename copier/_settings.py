@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from os.path import expanduser
 from pathlib import Path, PureWindowsPath
 from typing import Any
-from urllib.parse import unquote, urlsplit, urlunsplit
+from urllib.parse import urlsplit, urlunsplit
 
 import yaml
 from platformdirs import user_config_path
@@ -142,28 +142,82 @@ def _is_trusted(
         if isinstance(trust_or_settings, SettingsModel)
         else trust_or_settings
     )
+    repository_is_safe = _is_safe_url(repository)
     normalized_repository = _normalize(repository)
-    return any(
-        normalized_repository.startswith(_normalize(t))
-        if t.endswith("/")
-        else normalized_repository == _normalize(t)
-        for t in trust
-    )
+    for t in trust:
+        if repository_is_safe and _is_safe_url(t):
+            if t.endswith("/"):
+                # Safe prefix: trust anything nested under it.
+                if normalized_repository.startswith(_normalize(t)):
+                    return True
+            # Safe exact: trust only the exact normalized match.
+            elif normalized_repository == _normalize(t):
+                return True
+        # Unsafe: trust only an exact raw match.
+        elif repository == t:
+            return True
+    return False
 
 
 # Git's SCP-like syntax: [user@]host:path
 _SCP_URL = re.compile(r"^(?:[^/@:\s]+@)?[^/:\s]+:.+$")
 
+# RFC 3986 §2.3 "unreserved" characters: letters, digits, `-`, `.`, `_`, `~`.
+_SAFE_URL_PATH_SEGMENT_RE = re.compile(r"^[A-Za-z0-9._~-]+$")
+
+
+def _is_url_style(url: str) -> bool:
+    """Whether `url` is an absolute URL or uses one of Copier's alias prefixes."""
+    return "://" in url or url.startswith(tuple(ALIASES.keys()))
+
+
+def _is_scp_style(url: str) -> bool:
+    """Whether `url` uses Git's SCP-like syntax (`[user@]host:path`)."""
+    return (
+        not PureWindowsPath(url).is_absolute() and _SCP_URL.fullmatch(url) is not None
+    )
+
+
+def _is_safe_url(url: str) -> bool:
+    """Whether `url` is a local path, or a remote reference with a safe path.
+
+    Local filesystem paths are always considered safe, since percent-encoding has
+    no meaning there and a literal backslash is simply the standard, unambiguous
+    path separator on Windows. URL paths segments are considered safe if they contain
+    only RFC 3986 "unreserved" characters.
+    """
+    if _is_url_style(url):
+        path = urlsplit(url).path
+    elif _is_scp_style(url):
+        path = url.split(":", 1)[1]
+    else:
+        return True
+
+    segments = path.split("/")
+    if segments and segments[0] == "":
+        segments = segments[1:]
+    if segments and segments[-1] == "":
+        segments = segments[:-1]
+
+    return all(_SAFE_URL_PATH_SEGMENT_RE.fullmatch(segment) for segment in segments)
+
 
 def _normalize(url: str) -> str:
-    if "://" in url or url.startswith(tuple(ALIASES.keys())):
+    """Normalize `url` for trust comparison.
+
+    For URL-style and SCP-style remotes, resolves `.`/`..` path segments using
+    POSIX path semantics; see `_normalize_url_path` for why this is not full
+    RFC 3986 normalization. For local paths, expands a leading `~` and resolves
+    `.`/`..` segments using OS path semantics.
+    """
+    if _is_url_style(url):
         parts = urlsplit(url)
         path = _normalize_url_path(parts.path)
         return urlunsplit(
             (parts.scheme, parts.netloc, path, parts.query, parts.fragment)
         )
 
-    if not PureWindowsPath(url).is_absolute() and _SCP_URL.fullmatch(url):
+    if _is_scp_style(url):
         host, path = url.split(":", 1)
         path = _normalize_url_path(path)
         return f"{host}:{path}"
@@ -177,15 +231,12 @@ def _normalize(url: str) -> str:
 
 
 def _normalize_url_path(path: str) -> str:
-    # Percent-decode before normalizing so that encoded dot segments (e.g.
-    # `%2e%2e`) and encoded separators (e.g. `%2f`) are collapsed by
-    # `posixpath.normpath`. Backslashes (literal or `%5c`) are folded to
-    # forward slashes because some servers and intermediaries treat them
-    # as path separators while `posixpath.normpath` does not. Otherwise
-    # the form used for the trust check could differ from what the
-    # HTTP/Git layer ultimately resolves, allowing a trust-prefix bypass.
-    decoded_path = unquote(path).replace("\\", "/")
-    path = posixpath.normpath(decoded_path) if decoded_path else decoded_path
-    if decoded_path.endswith("/") and not path.endswith("/"):
-        path += "/"
-    return path
+    """Resolve `.`/`..` segments and collapse redundant `/` in `path`.
+
+    This uses POSIX path semantics, not RFC 3986 path normalization: in
+    particular, it collapses consecutive slashes, which RFC 3986 does not.
+    """
+    normalized = posixpath.normpath(path) if path else path
+    if path.endswith("/") and not normalized.endswith("/"):
+        normalized += "/"
+    return normalized

@@ -156,22 +156,56 @@ def test_load_settings_with_invalid_data(
             "gl:",
         ]
         for test in [
+            # Plain URLs with no dot segments: normal prefix/equality matching.
             (f"{base}/user/repo.git", [], False),
-            (f"{base}/user/repo.git", {f"{base}/user/repo.git"}, True),
-            (f"{base}/user/repo", {f"{base}/user/repo.git"}, False),
+            (f"{base}/user/repo.git", {f"{base}/user"}, False),
             (f"{base}/user/repo.git", {f"{base}/user/"}, True),
             (f"{base}/user/repo.git", {f"{base}/user/repo"}, False),
-            (f"{base}/user/repo.git", {f"{base}/user"}, False),
+            (f"{base}/user/repo.git", {f"{base}/user/repo.git"}, True),
             (f"{base}/user/repo.git", {f"{base}/"}, True),
             (f"{base}/user/repo.git", {f"{base}"}, False),
+            (f"{base}/user/repo", {f"{base}/user/repo.git"}, False),
+            # Literal `..` traversal is collapsed, so a trusted prefix still
+            # matches (or not) as expected.
             (f"{base}/user/../evil/repo.git", {f"{base}/user/"}, False),
             (f"{base}/user/../evil/repo.git", {f"{base}/user/../evil/repo.git"}, True),
+            (f"{base}/x/../user/repo.git", {f"{base}/user/"}, True),
+            # A repository URL is "ambiguous" if it contains any character with
+            # no agreed-upon meaning to every URL parser or HTTP server (e.g.
+            # percent-encoding, backslashes, doubled slashes): we can't know
+            # whether a given remote Git server or transport resolves it the
+            # same way we do, so it never satisfies a trust *prefix*, no matter
+            # what it would normalize to.
             (f"{base}/user/%2e%2e/evil/repo.git", {f"{base}/user/"}, False),
             (f"{base}/user/%2E%2E/evil/repo.git", {f"{base}/user/"}, False),
             (f"{base}/user/%2e%2E/evil/repo.git", {f"{base}/user/"}, False),
             (f"{base}/user/%2e./evil/repo.git", {f"{base}/user/"}, False),
             (f"{base}/user/.%2e/evil/repo.git", {f"{base}/user/"}, False),
             (f"{base}/user%2f%2e%2e%2fevil/repo.git", {f"{base}/user/"}, False),
+            (f"{base}/user/%2e%2e%5cevil/repo.git", {f"{base}/user/"}, False),
+            (f"{base}/user/%2e%2e%5Cevil/repo.git", {f"{base}/user/"}, False),
+            (f"{base}/user/..%5cevil/repo.git", {f"{base}/user/"}, False),
+            (f"{base}/user/..\\evil/repo.git", {f"{base}/user/"}, False),
+            (f"{base}/user%2fsub/../evil/repo.git", {f"{base}/user/"}, False),
+            (f"{base}/user%5csub/../evil/repo.git", {f"{base}/user/"}, False),
+            (f"{base}/user\\sub/../evil/repo.git", {f"{base}/user/"}, False),
+            (f"{base}/user%2fsub/../repo.git", {f"{base}/user/repo.git"}, False),
+            (f"{base}/x/%2e%2e/user/repo.git", {f"{base}/user/"}, False),
+            (f"{base}/x/%2E%2E/user/repo.git", {f"{base}/user/"}, False),
+            (
+                f"{base}/attacker/repo/%2e%2e/%2e%2e/user/repo.git",
+                {f"{base}/user/"},
+                False,
+            ),
+            (
+                f"{base}/attacker/evil/..//user/user",
+                {f"{base}/user/"},
+                False,
+            ),
+            # An ambiguous repository can still be trusted via an *exact* trust
+            # entry, but only through an exact raw string match: whatever a
+            # server does with these characters, it does identically to
+            # identical input.
             (
                 f"{base}/user/%2e%2e/evil/repo.git",
                 {f"{base}/user/%2e%2e/evil/repo.git"},
@@ -180,12 +214,8 @@ def test_load_settings_with_invalid_data(
             (
                 f"{base}/user/%2e%2e/evil/repo.git",
                 {f"{base}/user/../evil/repo.git"},
-                True,
+                False,
             ),
-            (f"{base}/user/%2e%2e%5cevil/repo.git", {f"{base}/user/"}, False),
-            (f"{base}/user/%2e%2e%5Cevil/repo.git", {f"{base}/user/"}, False),
-            (f"{base}/user/..%5cevil/repo.git", {f"{base}/user/"}, False),
-            (f"{base}/user/..\\evil/repo.git", {f"{base}/user/"}, False),
             (
                 f"{base}/user/%2e%2e%5cevil/repo.git",
                 {f"{base}/user/%2e%2e%5cevil/repo.git"},
@@ -194,16 +224,18 @@ def test_load_settings_with_invalid_data(
             (
                 f"{base}/user/%2e%2e%5cevil/repo.git",
                 {f"{base}/user/..\\evil/repo.git"},
-                True,
+                False,
             ),
             (
                 f"{base}/user/%2e%2e%5cevil/repo.git",
                 {f"{base}/user/../evil/repo.git"},
-                True,
+                False,
             ),
         ]
     ]
     + [
+        # Local filesystem paths: normal prefix/equality matching, with `~`
+        # expansion and literal `..` traversal collapse.
         (f"{Path.home()}/template", [], False),
         (f"{Path.home()}/template", {f"{Path.home()}/template"}, True),
         (f"{Path.home()}/template", {"~/template"}, True),
@@ -218,6 +250,24 @@ def test_load_settings_with_invalid_data(
         (
             f"{Path.home()}/trusted/../attacker/template",
             {"~/trusted/"},
+            False,
+        ),
+        # Percent-encoded segments are never decoded for local paths, so they're
+        # just literal, harmless directory names: they don't traverse anywhere,
+        # and they still match a trusted prefix normally.
+        (
+            f"{Path.home()}/user/%2e%2e/repo",
+            {f"{Path.home()}/user/"},
+            True,
+        ),
+        (
+            f"{Path.home()}/user/%2e%2e/repo",
+            {f"{Path.home()}/user/%2e%2e/repo"},
+            True,
+        ),
+        (
+            f"{Path.home()}/user/%2e%2e/repo",
+            {f"{Path.home()}/user/repo"},
             False,
         ),
     ],
