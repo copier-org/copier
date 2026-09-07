@@ -205,24 +205,8 @@ def test_remote_clone_recovers_from_corrupt_mirror(
     assert Path(dst2, "README.md").read_text() == "hello world"
 
 
-@pytest.fixture(scope="module", autouse=True)
-def allow_file_submodules() -> None:
-    """Allow the fixture repos below to be used as submodules.
-
-    Since Git 2.38.1 the file protocol is blocked for submodules by default
-    (see GHSA-3wp6-j8xr-qw85), so local submodules require this setting. Set
-    it via the environment so it also applies to Copier's own subprocesses.
-    """
-    with local.env(
-        GIT_CONFIG_COUNT="1",
-        GIT_CONFIG_KEY_0="protocol.file.allow",
-        GIT_CONFIG_VALUE_0="always",
-    ):
-        yield
-
-
 def test_remote_clone_submodule_with_moved_url(
-    tmp_path_factory: pytest.TempPathFactory,
+    tmp_path_factory: pytest.TempPathFactory, gitconfig: GitConfig
 ) -> None:
     """Submodules are resolved from each checkout's own ``.gitmodules``.
 
@@ -231,6 +215,10 @@ def test_remote_clone_submodule_with_moved_url(
     between template revisions would be fetched from the stale URL, failing
     when the pinned commit no longer exists there.
     """
+    # Since Git 2.38.1 the file protocol is blocked for submodules by default
+    # (see GHSA-3wp6-j8xr-qw85), so local submodules require this setting. Set
+    # it via the environment so it also applies to Copier's own subprocesses.
+    gitconfig.set({'protocol "file"': {"allow": "always"}})
     # The submodule, initially hosted in one place...
     sub1 = tmp_path_factory.mktemp("sub1")
     with local.cwd(sub1):
