@@ -242,17 +242,17 @@ def test_remote_clone_submodule_with_moved_url(
         Path("README.md").write_text("template")
         git("add", "-A")
         git("commit", "-m", "init")
-        git("submodule", "add", str(sub1), "sub")
+        git("submodule", "add", sub1.as_posix(), "sub")
         git("commit", "-m", "add submodule at its original location")
         git("tag", "v1")
 
         # ...and moves to the second location, pinning a commit that only
         # exists there.
         Path(".gitmodules").write_text(
-            Path(".gitmodules").read_text().replace(str(sub1), str(sub2))
+            Path(".gitmodules").read_text().replace(sub1.as_posix(), sub2.as_posix())
         )
         with local.cwd("sub"):
-            git("fetch", str(sub2))
+            git("fetch", sub2.as_posix())
             git("checkout", "FETCH_HEAD")
         git("add", "-A")
         git("commit", "-m", "move submodule to its new location")
