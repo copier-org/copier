@@ -105,12 +105,12 @@
               "default": true
             },
             {
-              "name": "doc",
-              "path": "/nix/store/ryn8xbxi2i1d2dharz9r7kb2ymqfgkyw-git-2.55.0-doc"
-            },
-            {
               "name": "debug",
               "path": "/nix/store/1asxbx6r55sylz2ljdzk6404i0w28iri-git-2.55.0-debug"
+            },
+            {
+              "name": "doc",
+              "path": "/nix/store/ryn8xbxi2i1d2dharz9r7kb2ymqfgkyw-git-2.55.0-doc"
             }
           ],
           "store_path": "/nix/store/clxhwm4v3gl0k3hazm0zpx14gz2w0clz-git-2.55.0"
@@ -136,8 +136,8 @@
       }
     },
     "github:NixOS/nixpkgs/nixpkgs-unstable": {
-      "last_modified": "2026-08-29T00:50:12Z",
-      "resolved": "github:NixOS/nixpkgs/e8be7818e19ada32105a8af937a6a473b38167ca?lastModified=1787964612&narHash=sha256-0N9nghg3nwzX6b6qc77EzjR9cu%2FZ%2BUR66FlfsCqiURs%3D"
+      "last_modified": "2026-09-07T01:55:52Z",
+      "resolved": "github:NixOS/nixpkgs/42f17a57f4f6e33b3de3dca0a2a5ea5233169d02?lastModified=1788746152&narHash=sha256-RaKngusl5I8pNi8RfrVvsHq3NZe7eFWzDlb01%2BhEVqY%3D"
     },
     "prettier@3.8.3": {
       "last_modified": "2026-08-27T07:16:00Z",
