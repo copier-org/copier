@@ -139,51 +139,41 @@
       "last_modified": "2026-08-29T00:50:12Z",
       "resolved": "github:NixOS/nixpkgs/e8be7818e19ada32105a8af937a6a473b38167ca?lastModified=1787964612&narHash=sha256-0N9nghg3nwzX6b6qc77EzjR9cu%2FZ%2BUR66FlfsCqiURs%3D"
     },
-    "prettier@3.8.3": {
-      "last_modified": "2026-08-27T07:16:00Z",
-      "resolved": "github:NixOS/nixpkgs/c27cdad491a991b11ed731760aa2ef8db0cb0410#prettier",
+    "prettier@3.9.6": {
+      "last_modified": "2026-08-27T23:47:58Z",
+      "resolved": "github:NixOS/nixpkgs/7d1a7c21a4c00ea653fc7ed5c083d261340f185f#prettier",
       "source": "devbox-search",
-      "version": "3.8.3",
+      "version": "3.9.6",
       "systems": {
         "aarch64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/9sb2njvllk9iykxxgxbvdn8rhwb9vj96-prettier-3.8.3",
+              "path": "/nix/store/9j82cqj3msajb0j2kikka3x5s3sh7r0v-prettier-3.9.6",
               "default": true
             }
           ],
-          "store_path": "/nix/store/9sb2njvllk9iykxxgxbvdn8rhwb9vj96-prettier-3.8.3"
+          "store_path": "/nix/store/9j82cqj3msajb0j2kikka3x5s3sh7r0v-prettier-3.9.6"
         },
         "aarch64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/03kvjlg5363zb8sw3ziz2d7k0nx207xs-prettier-3.8.3",
+              "path": "/nix/store/15dd37yjin93zikq6mzfb2llldb44sfv-prettier-3.9.6",
               "default": true
             }
           ],
-          "store_path": "/nix/store/03kvjlg5363zb8sw3ziz2d7k0nx207xs-prettier-3.8.3"
-        },
-        "x86_64-darwin": {
-          "outputs": [
-            {
-              "name": "out",
-              "path": "/nix/store/s6acj3z8zl2c63hpm9m8n79y9arknf4a-prettier-3.8.3",
-              "default": true
-            }
-          ],
-          "store_path": "/nix/store/s6acj3z8zl2c63hpm9m8n79y9arknf4a-prettier-3.8.3"
+          "store_path": "/nix/store/15dd37yjin93zikq6mzfb2llldb44sfv-prettier-3.9.6"
         },
         "x86_64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/67xnbah8m2kp5lxw4sr7kx4ff76mpbyh-prettier-3.8.3",
+              "path": "/nix/store/adglp5sp9z99rvk57bp9fn5k3ha7pq42-prettier-3.9.6",
               "default": true
             }
           ],
-          "store_path": "/nix/store/67xnbah8m2kp5lxw4sr7kx4ff76mpbyh-prettier-3.8.3"
+          "store_path": "/nix/store/adglp5sp9z99rvk57bp9fn5k3ha7pq42-prettier-3.9.6"
         }
       }
     },
