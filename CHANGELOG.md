@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.18.2 (2026-09-07)
+
+### Fix
+
+- allow overwriting destination symlinks when `preserve_symlinks: false`
+- **cache**: resolve submodules from the current checkout's .gitmodules (#2767)
+
+### Security
+
+- prevent trust bypass via ambiguous URL characters
+
+    To prevent URL confusion attacks, trusted prefix matching is now restricted to
+    repository URL paths containing only [RFC 3986 §2.3] "unreserved" characters
+    (letters, digits, `-`, `.`, `_`, `~`) and `/`. URL paths containing other
+    characters now require an exact, verbatim match.
+
+[RFC 3986 §2.3]: https://datatracker.ietf.org/doc/html/rfc3986#section-2.3
+
 ## v9.18.1 (2026-09-01)
 
 ### Fix
