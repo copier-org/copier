@@ -587,6 +587,45 @@ def test_update_from_tagged_to_head(tmp_path_factory: pytest.TempPathFactory) ->
     assert load_answersfile_data(dst)["_commit"] == f"v1-1-g{sha}"
 
 
+def test_update_render_cwd_is_destination(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """While updating, the working directory during rendering is the destination.
+
+    https://github.com/copier-org/copier/issues/1708
+    """
+    src, dst, invocation = map(tmp_path_factory.mktemp, ("src", "dst", "invocation"))
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": "{{ _copier_answers|to_nice_yaml }}",
+                "version.txt": "1",
+            }
+        )
+        git_init("v1")
+        git("tag", "v1")
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+    build_file_tree({(invocation / "decoy.txt"): ""})
+    with local.cwd(dst):
+        git_init("copied")
+    with local.cwd(src):
+        build_file_tree({"fileglob.txt.jinja": "{{ '*.txt' | fileglob | sort }}"})
+        git("add", ".")
+        git("commit", "-m2")
+        git("tag", "v2")
+    with local.cwd(invocation):
+        cwd_before = Path.cwd()
+        run_update(dst, defaults=True, overwrite=True)
+        assert Path.cwd() == cwd_before
+    # NOTE: Deliberately assert only files rendered by the template, not files
+    # added by the user in the destination. Whether the latter are visible to
+    # filesystem filters during an update depends on whether the update
+    # algorithm renders into the user-specified destination, which is an
+    # implementation detail that may change.
+    # https://github.com/copier-org/copier/pull/2754#discussion_r3529453935
+    assert (dst / "fileglob.txt").read_text() == "['version.txt']"
+
+
 @pytest.mark.parametrize("subproject_path", [Path(), Path("subproject")])
 @pytest.mark.parametrize("skip_pattern", ["skip_me", "/skip_me"])
 def test_skip_update(
