@@ -342,6 +342,13 @@ def _clone_via_cache(ref: str, location: str, mirror: Path) -> str:
         ref,
     )
     with local.cwd(location):
+        # Worktrees share the mirror's config, so `git submodule update
+        # --init` from an earlier checkout may have registered
+        # `submodule.<name>.url` entries pointing at that checkout's submodule
+        # URLs, silently overriding the current `.gitmodules` (e.g. after a
+        # submodule moved to a new repository). Synchronizing the submodule URLs
+        # ensures that the current `.gitmodules` is used.
+        git("submodule", "sync", "--recursive")
         git("submodule", "update", "--checkout", "--init", "--recursive", "--force")
     return location
 
