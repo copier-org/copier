@@ -67,7 +67,7 @@ from typing import Literal, cast
 import yaml
 from plumbum import LocalPath, cli, colors
 
-from ._main import get_update_data, run_copy, run_recopy, run_update
+from ._main import get_update_data, run_copy, run_preview, run_recopy, run_update
 from ._tools import copier_version, try_enum
 from ._types import AnyByStrDict, VcsRef
 from .errors import UnsafeTemplateError, UserMessageError
@@ -563,5 +563,48 @@ class CopierCheckUpdateSubApp(cli.Application):
                     # TODO Unify printing tools
                     print("Project is up-to-date!")
             return 0
+
+        return _handle_exceptions(inner)
+    
+@CopierApp.subcommand("preview")
+class CopierPreviewSubApp(_Subcommand):
+    """The `copier preview` subcommand.
+
+    Use this subcommand to preview how your template renders as you develop
+    it, with hot-reloading whenever you save a change.
+    """
+
+    DESCRIPTION = "Preview a template with hot-reloading as you develop it."
+
+    defaults = cli.Flag(
+        ["-l", "--defaults"],
+        help="Use default answers to questions, which might be null if not specified.",
+    )
+    overwrite = cli.Flag(
+        ["-w", "--overwrite"],
+        default=True,
+        help="Overwrite files that already exist.",
+    )
+
+    def main(self, template_src: str, destination_path: str) -> int:
+        """Call [run_preview][copier.run_preview].
+
+        Params:
+            template_src:
+                Path to the template you are developing locally.
+
+            destination_path:
+                Where to render the preview output.
+        """
+
+        def inner() -> None:
+            run_preview(
+                template_src,
+                destination_path,
+                data=self.data,
+                defaults=self.defaults,
+                overwrite=self.overwrite,
+                quiet=self.quiet,
+            )
 
         return _handle_exceptions(inner)

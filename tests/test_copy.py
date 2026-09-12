@@ -1522,3 +1522,21 @@ def test_copy_with_relative_path_to_local_git_template_through_multiple_parents(
 
     assert (dst / "test.txt").is_file()
     assert (dst / "test.txt").read_text() == "test"
+
+def test_preview_renders_template(tmp_path_factory: pytest.TempPathFactory) -> None:
+    """Test that run_preview renders the template into the destination directory."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "hello.txt": "Hello, world!",
+            src / "copier.yml": "",
+        }
+    )
+    # We mock watch to avoid actually watching for file changes in tests
+    with mock.patch("copier._main.watch") as mock_watch:
+        mock_watch.return_value = []
+        from copier._main import run_preview
+        run_preview(str(src), dst, defaults=True, overwrite=True)
+
+    assert (dst / "hello.txt").exists()
+    assert (dst / "hello.txt").read_text() == "Hello, world!"
