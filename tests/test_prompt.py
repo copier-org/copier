@@ -1564,3 +1564,99 @@ def test_copy_defaults_with_ask_and_data(
         tui.expect_exact(pexpect.EOF)
         loaded_answers = load_answersfile_data(".")
         assert loaded_answers.get("what_does_it_eat") == "milk and cookies"
+
+
+ADDRESS_TREE: Mapping[StrOrPath, str | bytes] = {
+    "copier.yml": (
+        """\
+        kind:
+            type: str
+        floor_number:
+            type: int
+            ask: '{{ kind == "apartment" }}'
+        floors_count:
+            type: int
+            ask: '{{ kind == "house" }}'
+        """
+    ),
+    "{{ _copier_conf.answers_file }}.jinja": "{{_copier_answers|to_nice_yaml}}",
+}
+
+
+def test_copy_skip_ask_false(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    spawn_timeout: int,
+) -> None:
+    """Test that the questions are skipped when their ask is false"""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(ADDRESS_TREE)
+        git_save(tag="v1")
+    with local.cwd(dst):
+        # Copy the v1 template
+        tui = spawn(
+            COPIER_PATH + ("copy", str(src), "."),
+            timeout=spawn_timeout,
+        )
+        expect_prompt(tui, "kind", "str")
+        tui.sendline("caravan")
+        tui.expect_exact(pexpect.EOF)
+        loaded_answers = load_answersfile_data(".")
+        assert loaded_answers.get("kind") == "caravan"
+        assert "floor_number" not in loaded_answers
+        assert "floors_count" not in loaded_answers
+
+
+def test_copy_prompt_ask_false_with_ask(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    spawn_timeout: int,
+) -> None:
+    """Test that the questions are prompted when their ask is false and --ask is used"""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(ADDRESS_TREE)
+        git_save(tag="v1")
+    with local.cwd(dst):
+        # Copy the v1 template
+        tui = spawn(
+            COPIER_PATH + ("copy", str(src), ".", "--ask=floor_number"),
+            timeout=spawn_timeout,
+        )
+        expect_prompt(tui, "kind", "str")
+        tui.sendline("caravan")
+        expect_prompt(tui, "floor_number", "int")
+        tui.sendline("1")
+        tui.expect_exact(pexpect.EOF)
+        loaded_answers = load_answersfile_data(".")
+        assert loaded_answers.get("kind") == "caravan"
+        assert loaded_answers.get("floor_number") == 1
+        assert "floors_count" not in loaded_answers
+
+
+def test_copy_prompt_ask_true_with_ask(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    spawn_timeout: int,
+) -> None:
+    """Test that the questions are prompted when their ask is true"""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    with local.cwd(src):
+        build_file_tree(ADDRESS_TREE)
+        git_save(tag="v1")
+    with local.cwd(dst):
+        # Copy the v1 template
+        tui = spawn(
+            COPIER_PATH + ("copy", str(src), "."),
+            timeout=spawn_timeout,
+        )
+        expect_prompt(tui, "kind", "str")
+        tui.sendline("apartment")
+        expect_prompt(tui, "floor_number", "int")
+        tui.sendline("1")
+        tui.expect_exact(pexpect.EOF)
+        loaded_answers = load_answersfile_data(".")
+        assert loaded_answers.get("kind") == "apartment"
+        assert loaded_answers.get("floor_number") == 1
+        assert "floors_count" not in loaded_answers

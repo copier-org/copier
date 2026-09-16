@@ -371,18 +371,20 @@ def test_cli_interatively_with_flag_data_and_type_casts(
 @pytest.mark.parametrize(
     "has_2_owners, owner2", [(True, "example2"), (False, "example")]
 )
+@pytest.mark.parametrize("when_param", ["when", "ask"])
 def test_tui_inherited_default(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
     has_2_owners: bool,
     owner2: str,
+    when_param: str,
 ) -> None:
     """Make sure a template inherits default as expected."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
             (src / "copier.yaml"): (
-                """\
+                f"""\
                 owner1:
                     type: str
                 has_2_owners:
@@ -390,8 +392,8 @@ def test_tui_inherited_default(
                     default: false
                 owner2:
                     type: str
-                    default: "{{ owner1 }}"
-                    when: "{{ has_2_owners }}"
+                    default: "{{{{ owner1 }}}}"
+                    {when_param}: "{{{{ has_2_owners }}}}"
                 """
             ),
             (src / "{{ _copier_conf.answers_file }}.jinja"): (
@@ -435,23 +437,26 @@ def test_tui_inherited_default(
     assert json.loads((dst / "answers.json").read_text()) == result
 
 
+@pytest.mark.parametrize("when_param", ["when", "ask"])
 def test_tui_typed_default(
-    tmp_path_factory: pytest.TempPathFactory, spawn: Spawn
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    when_param: str,
 ) -> None:
     """Make sure a template defaults are typed as expected."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
             (src / "copier.yaml"): (
-                """\
+                f"""\
                 test1:
                     type: bool
                     default: false
-                    when: false
+                    {when_param}: false
                 test2:
                     type: bool
-                    default: "{{ 'a' == 'b' }}"
-                    when: false
+                    default: "{{{{ 'a' == 'b' }}}}"
+                    {when_param}: false
                 """
             ),
             (src / "{{ _copier_conf.answers_file }}.jinja"): (
@@ -580,22 +585,24 @@ def test_multi_template_answers(tmp_path_factory: pytest.TempPathFactory) -> Non
         assert "q1" not in answers2
 
 
+@pytest.mark.parametrize("when_param", ["when", "ask"])
 def test_omit_answer_for_skipped_question(
     tmp_path_factory: pytest.TempPathFactory,
+    when_param: str,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
             (src / "copier.yml"): (
-                """\
+                f"""\
                 disabled:
                     type: str
-                    when: false
+                    {when_param}: false
 
                 disabled_with_default:
                     type: str
                     default: hello
-                    when: false
+                    {when_param}: false
                 """
             ),
             (src / "{{ _copier_conf.answers_file }}.jinja"): (
