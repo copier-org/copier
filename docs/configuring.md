@@ -335,6 +335,32 @@ Supported keys:
     in the render context. See an example using `UNSET` in the section for `default`
     above.
 
+- **ask**: Similar to `when`, but skipped questions can be asked for explicitly
+    using the [`--ask` flag](#ask).
+
+    !!! example
+
+        ```yaml title="copier.yml"
+        project_license:
+            type: str
+            choices:
+                - GPLv3
+                - Public-domain
+
+        copyright_holder:
+            ask: "{{ project_license != 'Public-domain' }}"
+        ```
+
+        When the template is rendered, the `copyright_holder` question will be skipped
+        if the `project_license` question is answered with `Public-domain`. However, if
+        the `--ask` flag is used, the `copyright_holder` question will be prompted even
+        if the `project_license` question is answered with `Public domain`.
+
+        ```bash
+        copier copy . -d project_license=Public-domain --ask=copyright_holder
+        # The copyright_holder question will be prompted
+        ```
+
 !!! example
 
     ```yaml title="copier.yml"

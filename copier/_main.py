@@ -628,8 +628,16 @@ class Worker:
                     question.validate_answer(answer)
                 except Exception:  # noqa: BLE001
                     del self.answers.last[var_name]
+
+            # whether the question was asked for explicitly
+            asked_for = any(
+                fnmatchcase(var_name, ask_pattern) for ask_pattern in self.ask
+            )
+            # whether the question should be skipped through `when` or `ask`
+            cond = question.get_when() and (question.get_ask() or asked_for)
+
             # Skip a question when the skip condition is met.
-            if not question.get_when():
+            if not cond:
                 # Omit its answer from the answers file.
                 self.answers.hide(var_name)
                 # Delete last answers to re-compute the answer from the default
@@ -641,7 +649,7 @@ class Worker:
                 if question.get_default() is MISSING:
                     continue
 
-            if not any(fnmatchcase(var_name, ask_pattern) for ask_pattern in self.ask):
+            if not asked_for:
                 # If the user didn't explicitly request the question be asked,
                 # it may now be skipped by `--data`, `--skip-answered`, or `--defaults`.
                 if var_name in self.answers.init:
@@ -663,7 +671,7 @@ class Worker:
             # Display TUI and ask user interactively only without --defaults
             try:
                 new_answer = unsafe_prompt(
-                    [question.get_questionary_structure()],
+                    [question.get_questionary_structure(cond)],
                     answers={question.var_name: question.get_default()},
                 )[question.var_name]
             except EOFError as err:
