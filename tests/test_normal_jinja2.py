@@ -24,6 +24,7 @@ def test_normal_jinja2(tmp_path_factory: pytest.TempPathFactory) -> None:
                     comment_end_string: "#}"
                     lstrip_blocks: true
                     trim_blocks: true
+                    undefined: jinja2.Undefined
                 name: Guybrush
                 todo: Become a pirate
                 """
@@ -60,6 +61,7 @@ def test_to_not_keep_trailing_newlines_in_jinja2(
                 _templates_suffix: .jinja
                 _envops:
                     keep_trailing_newline: false
+                    undefined: jinja2.Undefined
                 data: foo
                 """
             ),
