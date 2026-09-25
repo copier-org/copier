@@ -10,7 +10,6 @@ from dataclasses import field
 from functools import cached_property
 from pathlib import Path
 
-from plumbum.machines import local
 from pydantic.dataclasses import dataclass
 
 from ._template import Template
@@ -42,10 +41,11 @@ class Subproject:
         Only applicable for VCS-tracked templates.
         """
         if self.vcs == "git":
-            with local.cwd(self.local_abspath):
-                return bool(
-                    get_git()("status", self.local_abspath, "--porcelain").strip()
-                )
+            return bool(
+                get_git(self.local_abspath)(
+                    "status", "--porcelain", "--", self.local_abspath
+                ).strip()
+            )
         return False
 
     def _cleanup(self) -> None:

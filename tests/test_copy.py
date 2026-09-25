@@ -6,7 +6,7 @@ import platform
 import re
 import stat
 import sys
-from contextlib import AbstractContextManager, nullcontext as does_not_raise
+from contextlib import AbstractContextManager, nullcontext as does_not_raise, suppress
 from decimal import Decimal
 from enum import Enum
 from pathlib import Path
@@ -17,7 +17,7 @@ from unittest import mock
 
 import pytest
 import yaml
-from plumbum import CommandNotFound, local
+from plumbum import CommandNotFound, ProcessExecutionError, local
 from plumbum.machines.local import LocalMachine
 
 import copier
@@ -1522,3 +1522,16 @@ def test_copy_with_relative_path_to_local_git_template_through_multiple_parents(
 
     assert (dst / "test.txt").is_file()
     assert (dst / "test.txt").read_text() == "test"
+
+
+def test_git_argument_injection_via_url(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """Test that a malicious Git URL does not execute shell commands."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    git("init", src)
+    git("init", dst)
+    git("-C", dst, "remote", "add", "origin", str(src))
+    with local.cwd(dst), suppress(ProcessExecutionError):
+        run_copy(f"git+--upload-pack=touch {dst / 'malicious.txt'}", dst)
+    assert not (dst / "malicious.txt").exists()

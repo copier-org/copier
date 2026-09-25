@@ -236,16 +236,8 @@ def get_git_objects_dir(path: Path) -> Path:
     # `errors.py`.
     from ._vcs import get_git
 
-    git = get_git()
-    return path.joinpath(
-        git(
-            "-C",
-            path,
-            "rev-parse",
-            "--git-path",
-            "objects",
-        ).strip()
-    ).absolute()
+    git = get_git(path)
+    return path.joinpath(git("rev-parse", "--git-path", "objects").strip()).absolute()
 
 
 def set_git_alternates(*repos: Path, path: Path = Path()) -> None:

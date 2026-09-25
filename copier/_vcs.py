@@ -45,7 +45,7 @@ def get_git(context_dir: OptStrOrPath = None) -> BaseCommand:
         GIT_COMMITTER_EMAIL=GIT_USER_EMAIL,
     )
     if context_dir:
-        command = command["-C", context_dir]
+        command = command.with_cwd(context_dir)
     return command
 
 
@@ -86,9 +86,7 @@ def is_git_repo_root(path: StrOrPath) -> bool:
     """Indicate if a given path is a git repo root directory."""
     try:
         return (
-            Path(
-                get_git()("-C", path, "rev-parse", "--show-toplevel").strip()
-            ).resolve()
+            Path(get_git(path)("rev-parse", "--show-toplevel").strip()).resolve()
             == Path(path).resolve()
         )
     except (OSError, ProcessExecutionError):
@@ -98,7 +96,7 @@ def is_git_repo_root(path: StrOrPath) -> bool:
 def is_in_git_repo(path: StrOrPath) -> bool:
     """Indicate if a given path is in a git repo directory."""
     try:
-        get_git()("-C", path, "rev-parse", "--show-toplevel")
+        get_git(path)("rev-parse", "--show-toplevel")
         return True
     except (OSError, ProcessExecutionError):
         return False
@@ -107,10 +105,7 @@ def is_in_git_repo(path: StrOrPath) -> bool:
 def is_git_shallow_repo(path: StrOrPath) -> bool:
     """Indicate if a given path is a git shallow repo directory."""
     try:
-        return (
-            get_git()("-C", path, "rev-parse", "--is-shallow-repository").strip()
-            == "true"
-        )
+        return get_git(path)("rev-parse", "--is-shallow-repository").strip() == "true"
     except (OSError, ProcessExecutionError):
         return False
 
@@ -124,7 +119,7 @@ def is_git_bundle(path: Path) -> bool:
         local.cwd(dirname),
     ):
         get_git()("init")
-        return bool(get_git()["bundle", "verify", path] & TF)
+        return bool(get_git()["bundle", "verify", "--", path] & TF)
 
 
 def get_repo(url: str) -> str | None:
@@ -188,7 +183,7 @@ def get_latest_tag(url: str, use_prereleases: OptBool = False) -> str:
     git = get_git()
     all_tags = (
         tag.split("\t", 1)[1].removeprefix("refs/tags/")
-        for tag in git("ls-remote", "--tags", "--refs", url).splitlines()
+        for tag in git("ls-remote", "--tags", "--refs", "--", url).splitlines()
     )
     all_tags = (tag for tag in all_tags if valid_version(tag))
     if not use_prereleases:
@@ -271,9 +266,11 @@ def _is_valid_mirror(mirror: Path) -> bool:
     if not (mirror / "objects").is_dir():
         return False
     try:
-        out = get_git()(
-            "--git-dir", str(mirror), "rev-parse", "--is-bare-repository"
-        ).strip()
+        out = (
+            get_git()
+            .with_env(GIT_DIR=str(mirror))("rev-parse", "--is-bare-repository")
+            .strip()
+        )
     except (OSError, ProcessExecutionError):
         return False
     return out == "true"
@@ -290,13 +287,14 @@ def _get_or_create_mirror(url: str) -> Path:
     git = get_git()
     mirror = _get_mirror_path(url)
     if _is_valid_mirror(mirror):
+        git_with_mirror = git.with_env(GIT_DIR=str(mirror))
         # Refreshing the existing mirror. Use `--git-dir` explicitly when
         # operating on the bare repository so this works even when Git is
         # configured with `safe.bareRepository=explicit`.
-        git("--git-dir", str(mirror), "remote", "update", "--prune")
+        git_with_mirror("remote", "update", "--prune")
         # Dropping registrations for worktrees whose directories were already
         # removed by the cleanup step (from `Template._cleanup`).
-        git("--git-dir", str(mirror), "worktree", "prune")
+        git_with_mirror("worktree", "prune")
     else:
         # Discarding any corrupt/partial remnant before recreating.
         if mirror.exists():
@@ -312,7 +310,7 @@ def _get_or_create_mirror(url: str) -> Path:
             prefix=CLONE_PREFIX, dir=mirror.parent, ignore_cleanup_errors=True
         ) as staging:
             staging_repo = Path(staging) / "repo.git"
-            git("clone", "--mirror", url, str(staging_repo))
+            git("clone", "--mirror", "--", url, str(staging_repo))
             try:
                 staging_repo.rename(mirror)
             except OSError:
@@ -331,15 +329,8 @@ def _clone_via_cache(ref: str, location: str, mirror: Path) -> str:
     placeholder = Path(location)
     if placeholder.exists():
         placeholder.rmdir()
-    git(
-        "--git-dir",
-        str(mirror),
-        "worktree",
-        "add",
-        "--detach",
-        "--force",
-        location,
-        ref,
+    git.with_env(GIT_DIR=str(mirror))(
+        "worktree", "add", "--detach", "--force", "--", location, ref
     )
     with local.cwd(location):
         # Worktrees share the mirror's config, so `git submodule update
@@ -382,7 +373,7 @@ def clone(url: str, ref: str = "HEAD", location: str | None = None) -> str:
         mirror = _get_or_create_mirror(url)
         return _clone_via_cache(ref, location, mirror)
     # Local templates: keep the original clone behavior.
-    _clone = git["clone", "--no-checkout", url, location]
+    _clone = git["clone", "--no-checkout"]
     # Faster clones if possible
     if git_version >= Version("2.27"):
         if url_match := re.match("(file://)?(.*)", url):
@@ -397,7 +388,7 @@ def clone(url: str, ref: str = "HEAD", location: str | None = None) -> str:
             )
         else:
             _clone = _clone["--filter=blob:none"]
-    _clone()
+    _clone("--", url, location)
     # Include dirty changes if checking out a local HEAD
     url_abspath = Path(url).absolute()
     if ref == "HEAD" and url_abspath.is_dir():
@@ -406,10 +397,11 @@ def clone(url: str, ref: str = "HEAD", location: str | None = None) -> str:
             is_dirty = bool(git("status", "--porcelain").strip())
         if is_dirty:
             with local.cwd(location):
-                git("--git-dir=.git", f"--work-tree={url_abspath}", "add", "-A")
-                git(
+                git.with_env(GIT_WORK_TREE=str(url_abspath))(
+                    "--git-dir=.git", "add", "-A"
+                )
+                git.with_env(GIT_WORK_TREE=str(url_abspath))(
                     "--git-dir=.git",
-                    f"--work-tree={url_abspath}",
                     "commit",
                     "-m",
                     "Copier automated commit for draft changes",
@@ -425,7 +417,11 @@ def clone(url: str, ref: str = "HEAD", location: str | None = None) -> str:
         ## The `git checkout -f <ref>` command doesn't works when repo is local, dirty
         ## and core.fsmonitor is enabled
         ## ref: https://github.com/copier-org/copier/issues/1887
-        git("-c", "core.fsmonitor=false", "checkout", "-f", ref)
+        # `ref` may come from an untrusted source (e.g. a subproject's answers
+        # file). `--end-of-options` stops it from being parsed as an option
+        # (unlike `--`, which would make `checkout` treat it as a pathspec
+        # instead of a revision).
+        git("-c", "core.fsmonitor=false", "checkout", "-f", "--end-of-options", ref)
         git("submodule", "update", "--checkout", "--init", "--recursive", "--force")
 
     return location

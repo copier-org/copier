@@ -297,15 +297,14 @@ class Template:
     def commit(self) -> str | None:
         """If the template is VCS-tracked, get its commit description."""
         if self.vcs == "git":
-            with local.cwd(self.local_abspath):
-                return get_git()("describe", "--tags", "--always").strip()
+            return get_git(self.local_abspath)("describe", "--tags", "--always").strip()
         return None
 
     @cached_property
     def commit_hash(self) -> str | None:
         """If the template is VCS-tracked, get its commit full hash."""
         if self.vcs == "git":
-            return get_git()("-C", self.local_abspath, "rev-parse", "HEAD").strip()
+            return get_git(self.local_abspath)("rev-parse", "HEAD").strip()
         return None
 
     @cached_property
