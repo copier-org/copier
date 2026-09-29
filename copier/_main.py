@@ -630,14 +630,15 @@ class Worker:
                     del self.answers.last[var_name]
 
             # whether the question was asked for explicitly
+            when = question.get_when()
+            ask = question.get_ask()
             asked_for = any(
                 fnmatchcase(var_name, ask_pattern) for ask_pattern in self.ask
             )
-            # whether the question should be skipped through `when` or `ask`
-            cond = question.get_when() and (question.get_ask() or asked_for)
 
-            # Skip a question when the skip condition is met.
-            if not cond:
+            # if when is false, we should skip the question and discard
+            # whatever previous values we had.
+            if not when:
                 # Omit its answer from the answers file.
                 self.answers.hide(var_name)
                 # Delete last answers to re-compute the answer from the default
@@ -659,7 +660,14 @@ class Worker:
                     question.validate_answer(answer)
                     self.answers.user[var_name] = answer
                     continue
-                if self.skip_answered and var_name in self.answers.last:
+                if var_name in self.answers.last and (self.skip_answered or not ask):
+                    continue
+                if not ask:
+                    # if the question ask: False, and we don't have a previous answer,
+                    # we use the default value if it exists.
+                    answer = question.get_default()
+                    if answer is not MISSING:
+                        self.answers.user[var_name] = answer
                     continue
                 if self.defaults:
                     answer = question.get_default()
@@ -671,7 +679,7 @@ class Worker:
             # Display TUI and ask user interactively only without --defaults
             try:
                 new_answer = unsafe_prompt(
-                    [question.get_questionary_structure(cond)],
+                    [question.get_questionary_structure(when)],
                     answers={question.var_name: question.get_default()},
                 )[question.var_name]
             except EOFError as err:

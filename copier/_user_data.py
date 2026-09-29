@@ -389,7 +389,7 @@ class Question:
         """Render and obtain the placeholder."""
         return self.render_value(self.placeholder)
 
-    def get_questionary_structure(self, cond: bool) -> AnyByStrDict:  # noqa: C901
+    def get_questionary_structure(self, prompt: bool) -> AnyByStrDict:  # noqa: C901
         """Get the question in a format that the questionary lib understands."""
 
         def _validate(answer: str) -> str | Literal[True]:
@@ -410,7 +410,7 @@ class Question:
             "mouse_support": True,
             "name": self.var_name,
             "qmark": self.qmark or ("🕵️" if self.secret else "🎤"),
-            "when": lambda _: cond,
+            "when": lambda _: prompt,
         }
         default = self.get_default_rendered()
         if default is not MISSING:
@@ -476,7 +476,7 @@ class Question:
             )
 
     def get_when(self) -> bool:
-        """Get skip condition for question."""
+        """Get when condition for question."""
         return cast_to_bool(self.render_value(self.when))
 
     def get_ask(self) -> bool:

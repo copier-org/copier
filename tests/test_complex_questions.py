@@ -371,20 +371,18 @@ def test_cli_interatively_with_flag_data_and_type_casts(
 @pytest.mark.parametrize(
     "has_2_owners, owner2", [(True, "example2"), (False, "example")]
 )
-@pytest.mark.parametrize("when_param", ["when", "ask"])
 def test_tui_inherited_default(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
     has_2_owners: bool,
     owner2: str,
-    when_param: str,
 ) -> None:
     """Make sure a template inherits default as expected."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
             (src / "copier.yaml"): (
-                f"""\
+                """\
                 owner1:
                     type: str
                 has_2_owners:
@@ -392,8 +390,8 @@ def test_tui_inherited_default(
                     default: false
                 owner2:
                     type: str
-                    default: "{{{{ owner1 }}}}"
-                    {when_param}: "{{{{ has_2_owners }}}}"
+                    default: "{{ owner1 }}"
+                    when: "{{ has_2_owners }}"
                 """
             ),
             (src / "{{ _copier_conf.answers_file }}.jinja"): (
@@ -437,26 +435,24 @@ def test_tui_inherited_default(
     assert json.loads((dst / "answers.json").read_text()) == result
 
 
-@pytest.mark.parametrize("when_param", ["when", "ask"])
 def test_tui_typed_default(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
-    when_param: str,
 ) -> None:
     """Make sure a template defaults are typed as expected."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
             (src / "copier.yaml"): (
-                f"""\
+                """\
                 test1:
                     type: bool
                     default: false
-                    {when_param}: false
+                    when: false
                 test2:
                     type: bool
-                    default: "{{{{ 'a' == 'b' }}}}"
-                    {when_param}: false
+                    default: "{{ 'a' == 'b' }}"
+                    when: false
                 """
             ),
             (src / "{{ _copier_conf.answers_file }}.jinja"): (
@@ -585,10 +581,10 @@ def test_multi_template_answers(tmp_path_factory: pytest.TempPathFactory) -> Non
         assert "q1" not in answers2
 
 
-@pytest.mark.parametrize("when_param", ["when", "ask"])
+@pytest.mark.parametrize("ask", (True, False))
 def test_omit_answer_for_skipped_question(
     tmp_path_factory: pytest.TempPathFactory,
-    when_param: str,
+    ask: bool,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
@@ -597,12 +593,14 @@ def test_omit_answer_for_skipped_question(
                 f"""\
                 disabled:
                     type: str
-                    {when_param}: false
+                    when: false
+                    ask: {ask}
 
                 disabled_with_default:
                     type: str
                     default: hello
-                    {when_param}: false
+                    when: false
+                    ask: {ask}
                 """
             ),
             (src / "{{ _copier_conf.answers_file }}.jinja"): (
@@ -619,5 +617,45 @@ def test_omit_answer_for_skipped_question(
     run_copy(str(src), dst, defaults=True, data={"disabled": "hello"})
     answers = load_answersfile_data(dst)
     assert answers == {"_src_path": str(src)}
+    context = yaml.safe_load((dst / "context.yml").read_text())
+    assert context == {"disabled": "hello", "disabled_with_default": "hello"}
+
+
+def test_keep_answer_for_unask_question(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                """\
+                disabled:
+                    type: str
+                    ask: false
+
+                disabled_with_default:
+                    type: str
+                    default: hello
+                    ask: false
+                """
+            ),
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+            (src / "context.yml.jinja"): yaml.safe_dump(
+                {
+                    "disabled": "{{ disabled }}",
+                    "disabled_with_default": "{{ disabled_with_default }}",
+                }
+            ),
+        }
+    )
+    run_copy(str(src), dst, defaults=True, data={"disabled": "hello"})
+    answers = load_answersfile_data(dst)
+    assert answers == {
+        "_src_path": str(src),
+        "disabled": "hello",
+        "disabled_with_default": "hello",
+    }
     context = yaml.safe_load((dst / "context.yml").read_text())
     assert context == {"disabled": "hello", "disabled_with_default": "hello"}

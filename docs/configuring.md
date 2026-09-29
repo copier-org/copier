@@ -301,8 +301,8 @@ Supported keys:
     If it is a string, it is converted to boolean using a parser similar to YAML, but
     only for boolean values. The string can be [templated](#prompt-templating).
 
-    If a question is skipped, its answer is not recorded, but its default value is
-    available in the render context.
+    If a question is skipped, its answer is not recorded, and whatever previous answer
+    was provided is discarded, but its default value is available in the render context.
 
     !!! example
 
@@ -335,8 +335,8 @@ Supported keys:
     in the render context. See an example using `UNSET` in the section for `default`
     above.
 
-- **ask**: Similar to `when`, but skipped questions can be asked for explicitly
-    using the [`--ask` flag](#ask).
+- **ask**: Similar to `when`, but skipped questions can be asked for explicitly using
+    the [`--ask` flag](#ask).
 
     !!! example
 
@@ -360,6 +360,9 @@ Supported keys:
         copier copy . -d project_license=Public-domain --ask=copyright_holder
         # The copyright_holder question will be prompted
         ```
+
+    Note that unlike `when`, `ask` preserves previous answers, if any were provided on
+    previous runs.
 
 !!! example
 
