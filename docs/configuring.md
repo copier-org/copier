@@ -339,11 +339,10 @@ Supported keys:
     requested via the [`--ask` flag](#ask). For example, this is useful for reducing
     questionnaire complexity by hiding advanced questions whose default answer is
     appropriate for most users. If a question is skipped, its previous value, if any, is
-    retauned and used. If no previous value is available, the default value, if any, is
+    retained and used. If no previous value is available, the default value, if any, is
     used.
 
-    If it is a boolean, it is used directly. Setting it to `false` is useful for
-    creating a computed value.
+    If it is a boolean, it is used directly.
 
     If it is a string, it is converted to boolean using a parser similar to YAML, but
     only for boolean values. The string can be [templated](#prompt-templating).
@@ -357,10 +356,10 @@ Supported keys:
 
         ```yaml
         enable_experimental_feature_x:
-          type: bool
-          help: Enable experimental feature X that is not yet recommended for general use
-          default: false
-          ask: false
+            type: bool
+            help: Enable experimental feature X that is not yet recommended for general use
+            default: false
+            ask: false
         ```
 
 !!! example

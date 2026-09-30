@@ -69,10 +69,9 @@ but ensure that it doesn't change upon later Copier template updates, you can se
     The current year can be computed automatically and recorded in the answers
     file without prompting the user during project creation.
 
-    ```yaml
+    ```yaml title="copier.yml"
     copyright_year:
         type: int
-        help: Initial copyright year
         default: "{{ '%Y' | strftime }}"
         ask: false
     ```
