@@ -630,7 +630,6 @@ class Worker:
                     del self.answers.last[var_name]
 
             # whether the question was asked for explicitly
-            when = question.get_when()
             ask = question.get_ask()
             asked_for = any(
                 fnmatchcase(var_name, ask_pattern) for ask_pattern in self.ask
@@ -638,7 +637,7 @@ class Worker:
 
             # if when is false, we should skip the question and discard
             # whatever previous values we had.
-            if not when:
+            if not question.get_when():
                 # Omit its answer from the answers file.
                 self.answers.hide(var_name)
                 # Delete last answers to re-compute the answer from the default
@@ -679,7 +678,7 @@ class Worker:
             # Display TUI and ask user interactively only without --defaults
             try:
                 new_answer = unsafe_prompt(
-                    [question.get_questionary_structure(when)],
+                    [question.get_questionary_structure()],
                     answers={question.var_name: question.get_default()},
                 )[question.var_name]
             except EOFError as err:

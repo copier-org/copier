@@ -335,34 +335,33 @@ Supported keys:
     in the render context. See an example using `UNSET` in the section for `default`
     above.
 
-- **ask**: Similar to `when`, but skipped questions can be asked for explicitly using
-    the [`--ask` flag](#ask).
+- **ask**: Condition that, if `false`, does not prompt the question unless explicitly
+    requested via the [`--ask` flag](#ask). For example, this is useful for reducing
+    questionnaire complexity by hiding advanced questions whose default answer is
+    appropriate for most users. If a question is skipped, its previous value, if any, is
+    retauned and used. If no previous value is available, the default value, if any, is
+    used.
 
-    !!! example
+    If it is a boolean, it is used directly. Setting it to `false` is useful for
+    creating a computed value.
 
-        ```yaml title="copier.yml"
-        project_license:
-            type: str
-            choices:
-                - GPLv3
-                - Public-domain
+    If it is a string, it is converted to boolean using a parser similar to YAML, but
+    only for boolean values. The string can be [templated](#prompt-templating).
 
-        copyright_holder:
-            ask: "{{ project_license != 'Public-domain' }}"
+    !!! example "Experimental feature flags"
+
+        A template may provide experimental features that most users should leave
+        disabled. Setting `ask: false` keeps the question out of the default
+        questionnaire while still allowing advanced users to be prompted for it via
+        `--ask`.
+
+        ```yaml
+        enable_experimental_feature_x:
+          type: bool
+          help: Enable experimental feature X that is not yet recommended for general use
+          default: false
+          ask: false
         ```
-
-        When the template is rendered, the `copyright_holder` question will be skipped
-        if the `project_license` question is answered with `Public-domain`. However, if
-        the `--ask` flag is used, the `copyright_holder` question will be prompted even
-        if the `project_license` question is answered with `Public domain`.
-
-        ```bash
-        copier copy . -d project_license=Public-domain --ask=copyright_holder
-        # The copyright_holder question will be prompted
-        ```
-
-    Note that unlike `when`, `ask` preserves previous answers, if any were provided on
-    previous runs.
 
 !!! example
 

@@ -61,9 +61,26 @@ need more power, see [below](#how-can-i-alter-the-context-before-rendering-the-p
 
 When you want to ensure that a computed value is set or locked during project
 initialization, for example if you want to store a dynamically computed `copyright_year`
-but ensure that it doesn't change upon later Copier template updates, you can combine
-the `default` and `when: false` configuration while also explicitly dumping the value to
-YAML with the [answers file](configuring.md#the-copier-answersyml-file).
+but ensure that it doesn't change upon later Copier template updates, you can set
+`ask: false` to hide the question, and have its value retain in subsequent runs.
+
+!!! example "Recording the initial copyright year"
+
+    The current year can be computed automatically and recorded in the answers
+    file without prompting the user during project creation.
+
+    ```yaml
+    copyright_year:
+        type: int
+        help: Initial copyright year
+        default: "{{ '%Y' | strftime }}"
+        ask: false
+    ```
+
+Alternatively, you can combine the `default` and `when: false` configuration while also
+explicitly dumping the value to YAML with the
+[answers file](configuring.md#the-copier-answersyml-file). This will ensure users cannot
+change the value manually (even with `--ask`).
 
 !!! example
 

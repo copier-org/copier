@@ -436,8 +436,7 @@ def test_tui_inherited_default(
 
 
 def test_tui_typed_default(
-    tmp_path_factory: pytest.TempPathFactory,
-    spawn: Spawn,
+    tmp_path_factory: pytest.TempPathFactory, spawn: Spawn
 ) -> None:
     """Make sure a template defaults are typed as expected."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
@@ -581,26 +580,22 @@ def test_multi_template_answers(tmp_path_factory: pytest.TempPathFactory) -> Non
         assert "q1" not in answers2
 
 
-@pytest.mark.parametrize("ask", (True, False))
 def test_omit_answer_for_skipped_question(
     tmp_path_factory: pytest.TempPathFactory,
-    ask: bool,
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
         {
             (src / "copier.yml"): (
-                f"""\
+                """\
                 disabled:
                     type: str
                     when: false
-                    ask: {ask}
 
                 disabled_with_default:
                     type: str
                     default: hello
                     when: false
-                    ask: {ask}
                 """
             ),
             (src / "{{ _copier_conf.answers_file }}.jinja"): (

@@ -196,16 +196,16 @@ class Question:
             to the user otherwise.
 
         when:
-            Condition that, if `False`, skips the question. Can be templated.
-            If it is a boolean, it is used directly. If it is a str, it is
-            converted to boolean using a parser similar to YAML, but only for
-            boolean values.
+            Condition that, if `False`, skips the question and discards previous
+            answers. Can be templated. If it is a boolean, it is used directly.
+            If it is a str, it is converted to boolean using a parser similar to
+            YAML, but only for boolean values.
 
         ask:
             Condition that, if `False`, would automatically skip the question
-            (but is overridable with `--ask`). Can be templated. If it is a boolean,
-            it is used directly. If it is a str, it is converted to boolean using
-            a parser similar to YAML, but only for boolean values.
+            Can be templated. If it is a boolean, it is used directly. If it
+            is a str, it is converted to boolean using a parser similar to
+            YAML, but only for boolean values.
     """
 
     var_name: str
@@ -297,8 +297,6 @@ class Question:
         # at the moment.
         # https://github.com/copier-org/copier/issues/1779#issuecomment-2365006990
         # https://github.com/copier-org/copier/pull/1785
-        # Note that we don't do this for `ask: false` questions (because they might
-        # be enabled via --ask)
         if self.get_when() and not self.secret:
             self.validate_answer(result)
         return result
@@ -389,7 +387,7 @@ class Question:
         """Render and obtain the placeholder."""
         return self.render_value(self.placeholder)
 
-    def get_questionary_structure(self, prompt: bool) -> AnyByStrDict:  # noqa: C901
+    def get_questionary_structure(self) -> AnyByStrDict:  # noqa: C901
         """Get the question in a format that the questionary lib understands."""
 
         def _validate(answer: str) -> str | Literal[True]:
@@ -410,7 +408,7 @@ class Question:
             "mouse_support": True,
             "name": self.var_name,
             "qmark": self.qmark or ("🕵️" if self.secret else "🎤"),
-            "when": lambda _: prompt,
+            "when": lambda _: self.get_when(),
         }
         default = self.get_default_rendered()
         if default is not MISSING:

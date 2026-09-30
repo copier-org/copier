@@ -1566,143 +1566,119 @@ def test_copy_defaults_with_ask_and_data(
         assert loaded_answers.get("what_does_it_eat") == "milk and cookies"
 
 
-ADDRESS_TREE: Mapping[StrOrPath, str | bytes] = {
-    "copier.yml": (
-        """\
-        kind:
-            type: str
-        floor_number:
-            type: int
-            ask: '{{ kind == "apartment" }}'
-        floors_count:
-            type: int
-            ask: '{{ kind == "house" }}'
-        """
-    ),
-    "{{ _copier_conf.answers_file }}.jinja": "{{_copier_answers|to_nice_yaml}}",
-}
+@pytest.mark.parametrize(
+    ("when", "ask", "ask_flag", "prompted"),
+    [
+        (True, True, (), True),
+        (True, True, ("--ask=foo",), True),
+        (True, True, ("--ask=f*",), True),
+        (True, True, ("--ask=baz",), True),
+        (True, False, (), False),
+        (True, False, ("--ask=foo",), True),
+        (True, False, ("--ask=f*",), True),
+        (True, False, ("--ask=baz",), False),
+        (False, True, (), False),
+        (False, True, ("--ask=foo",), False),
+        (False, True, ("--ask=f*",), False),
+        (False, True, ("--ask=baz",), False),
+        (False, False, (), False),
+        (False, False, ("--ask=foo",), False),
+        (False, False, ("--ask=f*",), False),
+        (False, False, ("--ask=baz",), False),
+    ],
+)
+def test_copy_with_ask_setting(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    when: bool,
+    ask: bool,
+    ask_flag: tuple[str, ...],
+    prompted: bool,
+) -> None:
+    """Test copy prompting with `when`, `ask`, and `--ask` flag."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): yaml.dump(
+                {"foo": {"type": "str", "default": "bar", "when": when, "ask": ask}}
+            ),
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+        }
+    )
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst), *ask_flag))
+    if prompted:
+        expect_prompt(tui, "foo", "str")
+        tui.sendline("x")
+    tui.expect_exact(pexpect.EOF)
+    answers = load_answersfile_data(dst)
+    if when:
+        assert answers.get("foo") == ("barx" if prompted else "bar")
+    else:
+        assert "foo" not in answers
 
-ADDRESS_TREE_ERASING: Mapping[StrOrPath, str | bytes] = {
-    "copier.yml": (
-        """\
-        kind:
-            type: str
-        floor_number:
-            type: int
-            ask: '{{ kind == "apartment" }}'
-            when: false
-        floors_count:
-            type: int
-            ask: '{{ kind == "house" }}'
-            when: false
-        """
-    ),
-    "{{ _copier_conf.answers_file }}.jinja": "{{_copier_answers|to_nice_yaml}}",
-}
 
-
-def test_copy_skip_ask_false(
+@pytest.mark.parametrize(
+    ("when", "ask", "skip_answered", "ask_flag", "prompted"),
+    [
+        (True, True, False, (), True),
+        (True, True, False, ("--ask=foo",), True),
+        (True, True, False, ("--ask=baz",), True),
+        (True, True, True, (), False),
+        (True, True, True, ("--ask=foo",), True),
+        (True, True, True, ("--ask=baz",), False),
+        (True, False, False, (), False),
+        (True, False, False, ("--ask=foo",), True),
+        (True, False, False, ("--ask=baz",), False),
+        (True, False, True, (), False),
+        (True, False, True, ("--ask=foo",), True),
+        (True, False, True, ("--ask=baz",), False),
+        (False, True, False, (), False),
+        (False, False, True, ("--ask=foo",), False),
+    ],
+)
+def test_update_with_ask_setting(
     tmp_path_factory: pytest.TempPathFactory,
     spawn: Spawn,
     spawn_timeout: int,
+    when: bool,
+    ask: bool,
+    skip_answered: bool,
+    ask_flag: tuple[str, ...],
+    prompted: bool,
 ) -> None:
-    """Test that the questions are skipped when their ask is false"""
+    """Test update prompting with `when`, `ask`, `--ask`, and `--skip-answered`."""
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
-    with local.cwd(src):
-        build_file_tree(ADDRESS_TREE)
-        git_save(tag="v1")
+    build_file_tree(
+        {
+            (src / "copier.yml"): yaml.dump(
+                {"foo": {"type": "str", "default": "bar", "when": when, "ask": ask}}
+            ),
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+        }
+    )
+    git_save(src, tag="v1")
     with local.cwd(dst):
-        # Copy the v1 template
         tui = spawn(
-            COPIER_PATH + ("copy", str(src), "."),
+            COPIER_PATH + ("copy", str(src), ".", "--data=foo=prev"),
             timeout=spawn_timeout,
         )
-        expect_prompt(tui, "kind", "str")
-        tui.sendline("caravan")
         tui.expect_exact(pexpect.EOF)
-        loaded_answers = load_answersfile_data(".")
-        assert loaded_answers.get("kind") == "caravan"
-        assert "floor_number" not in loaded_answers
-        assert "floors_count" not in loaded_answers
-
-
-@pytest.mark.parametrize("ask_on_erasing", (True, False))
-def test_copy_prompt_ask_false_with_ask(
-    tmp_path_factory: pytest.TempPathFactory,
-    spawn: Spawn,
-    spawn_timeout: int,
-    ask_on_erasing: bool,
-) -> None:
-    """Test that the questions are prompted when their ask is false and --ask is used"""
-    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
-    with local.cwd(src):
-        build_file_tree(ADDRESS_TREE)
-        git_save(tag="v1")
-        build_file_tree(ADDRESS_TREE_ERASING)
-        git_save(tag="v2")
-    with local.cwd(dst):
-        # Copy the v1 template
-        tui = spawn(
-            COPIER_PATH + ("copy", str(src), ".", "--ask=floor_number", "--vcs-ref=v1"),
-            timeout=spawn_timeout,
-        )
-        expect_prompt(tui, "kind", "str")
-        tui.sendline("caravan")
-        expect_prompt(tui, "floor_number", "int")
-        tui.sendline("10")
-        tui.expect_exact(pexpect.EOF)
-        loaded_answers = load_answersfile_data(".")
-        assert loaded_answers.get("kind") == "caravan"
-        assert loaded_answers.get("floor_number") == 10
         git_save()
-        # we now check that even if the question is not asked, the previous value is
-        # preserved
         tui = spawn(
-            COPIER_PATH + ("update", "--skip-answered", "--vcs-ref=v1"),
-            timeout=spawn_timeout,
+            COPIER_PATH
+            + ("update", *(("--skip-answered",) if skip_answered else ()), *ask_flag),
+            timeout=spawn_timeout * 3,
         )
+        if prompted:
+            expect_prompt(tui, "foo", "str")
+            tui.sendline("x")
         tui.expect_exact(pexpect.EOF)
-        loaded_answers = load_answersfile_data(".")
-        assert loaded_answers.get("kind") == "caravan"
-        assert loaded_answers.get("floor_number") == 10
-        git_save(allow_empty=True)
-        # we now switch the tree to one with when: false for the questions, and check
-        # that the previous value is erased, no matter whether we ask for the question
-        # or not
-        ask_args = ["--ask", "floor_number"] if ask_on_erasing else []
-        tui = spawn(
-            COPIER_PATH + ("update", "--skip-answered", *ask_args),
-            timeout=spawn_timeout,
-        )
-        tui.expect_exact(pexpect.EOF)
-        loaded_answers = load_answersfile_data(".")
-        assert loaded_answers.get("kind") == "caravan"
-        assert "floor_number" not in loaded_answers
-        assert "floors_count" not in loaded_answers
-
-
-def test_copy_prompt_ask_true_with_ask(
-    tmp_path_factory: pytest.TempPathFactory,
-    spawn: Spawn,
-    spawn_timeout: int,
-) -> None:
-    """Test that the questions are prompted when their ask is true"""
-    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
-    with local.cwd(src):
-        build_file_tree(ADDRESS_TREE)
-        git_save(tag="v1")
-    with local.cwd(dst):
-        # Copy the v1 template
-        tui = spawn(
-            COPIER_PATH + ("copy", str(src), "."),
-            timeout=spawn_timeout,
-        )
-        expect_prompt(tui, "kind", "str")
-        tui.sendline("apartment")
-        expect_prompt(tui, "floor_number", "int")
-        tui.sendline("1")
-        tui.expect_exact(pexpect.EOF)
-        loaded_answers = load_answersfile_data(".")
-        assert loaded_answers.get("kind") == "apartment"
-        assert loaded_answers.get("floor_number") == 1
-        assert "floors_count" not in loaded_answers
+        answers = load_answersfile_data(".")
+    if when:
+        assert answers.get("foo") == ("prevx" if prompted else "prev")
+    else:
+        assert "foo" not in answers
