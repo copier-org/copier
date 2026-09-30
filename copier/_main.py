@@ -629,11 +629,7 @@ class Worker:
                 except Exception:  # noqa: BLE001
                     del self.answers.last[var_name]
 
-            # whether the question was asked for explicitly
             ask = question.get_ask()
-            asked_for = any(
-                fnmatchcase(var_name, ask_pattern) for ask_pattern in self.ask
-            )
 
             # if when is false, we should skip the question and discard
             # whatever previous values we had.
@@ -648,6 +644,10 @@ class Worker:
                 # value.
                 if question.get_default() is MISSING:
                     continue
+
+            asked_for = any(
+                fnmatchcase(var_name, ask_pattern) for ask_pattern in self.ask
+            )
 
             if not asked_for:
                 # If the user didn't explicitly request the question be asked,
