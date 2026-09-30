@@ -666,3 +666,52 @@ def test_destination_symlink_outside_destination_root(
 
     assert not (dst / "project" / "file.txt").is_symlink()
     assert (dst / "project" / "file.txt").read_text() == "from template"
+
+
+def test_update_renamed_dir_does_not_delete_symlink_target(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "copier.yml": (
+                """\
+                _preserve_symlinks: true
+
+                name:
+                    type: str
+                """
+            ),
+            src / "{{ _copier_conf.answers_file }}.jinja": (
+                """\
+                # Changes here will be overwritten by Copier
+                {{ _copier_answers|to_nice_yaml }}
+                """
+            ),
+            src / "shared" / "templates" / "file.txt": "test",
+            src / "{{ name }}" / "templates": Path("..") / "shared" / "templates",
+        }
+    )
+
+    with local.cwd(src):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m", "init")
+
+    run_copy(str(src), dst, data={"name": "foo"})
+
+    assert (dst / "foo" / "templates").is_symlink()
+    assert (dst / "foo" / "templates").readlink() == Path("..") / "shared" / "templates"
+    assert (dst / "foo" / "templates" / "file.txt").read_text() == "test"
+
+    with local.cwd(dst):
+        git("init")
+        git("add", "-A")
+        git("commit", "-m", "init")
+
+    run_update(dst, data={"name": "bar"}, overwrite=True)
+
+    # assert not (dst / "foo").exists()
+    assert (dst / "bar" / "templates").is_symlink()
+    assert (dst / "bar" / "templates").readlink() == Path("..") / "shared" / "templates"
+    assert (dst / "bar" / "templates" / "file.txt").read_text() == "test"

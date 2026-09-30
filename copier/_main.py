@@ -1968,6 +1968,8 @@ def _remove_old_files(prefix: Path, cmp: dircmp[str], rm_common: bool = False) -
     # Remove files found only in old template copy
     for name in to_rm:
         target = prefix / name
+        if target.is_symlink():
+            continue
         if target.is_file():
             target.unlink()
         else:
@@ -1979,6 +1981,8 @@ def _remove_old_files(prefix: Path, cmp: dircmp[str], rm_common: bool = False) -
     # Recurse
     for key, value in subdirs.items():
         subdir = prefix / key
+        if subdir.is_symlink():
+            continue
         _remove_old_files(subdir, value)
         # Remove subdir if it ends empty
         with suppress(OSError):
