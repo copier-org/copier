@@ -196,10 +196,16 @@ class Question:
             to the user otherwise.
 
         when:
-            Condition that, if `False`, skips the question. Can be templated.
-            If it is a boolean, it is used directly. If it is a str, it is
-            converted to boolean using a parser similar to YAML, but only for
-            boolean values.
+            Condition that, if `False`, skips the question and discards previous
+            answers. Can be templated. If it is a boolean, it is used directly.
+            If it is a str, it is converted to boolean using a parser similar to
+            YAML, but only for boolean values.
+
+        ask:
+            Condition that, if `False`, would automatically skip the question
+            Can be templated. If it is a boolean, it is used directly. If it
+            is a str, it is converted to boolean using a parser similar to
+            YAML, but only for boolean values.
     """
 
     var_name: str
@@ -218,6 +224,7 @@ class Question:
     type: str = Field(default="", validate_default=True)
     validator: str = ""
     when: str | bool = True
+    ask: str | bool = True
 
     @field_validator("var_name")
     @classmethod
@@ -467,8 +474,12 @@ class Question:
             )
 
     def get_when(self) -> bool:
-        """Get skip condition for question."""
+        """Get when condition for question."""
         return cast_to_bool(self.render_value(self.when))
+
+    def get_ask(self) -> bool:
+        """Get ask condition for question."""
+        return cast_to_bool(self.render_value(self.ask))
 
     def render_value(
         self, value: Any, extra_answers: AnyByStrDict | None = None
