@@ -1,6 +1,6 @@
 """Command line entrypoint. This module declares the Copier CLI applications.
 
-Basically, there are 4 different commands you can run:
+Basically, there are 5 different commands you can run:
 
 -   `copier`, the main app, which is a shortcut for the
     `copy` and `update` subapps.
@@ -46,6 +46,15 @@ Basically, there are 4 different commands you can run:
 
         ```sh
         copier check-update
+        ```
+
+-   `copier schema` to generate a JSON Schema for
+    `copier.yml` files.
+
+    !!! example
+
+        ```sh
+        copier schema -o copier.schema.json
         ```
 
 Below are the docs of each one of those.
@@ -563,5 +572,37 @@ class CopierCheckUpdateSubApp(cli.Application):
                     # TODO Unify printing tools
                     print("Project is up-to-date!")
             return 0
+
+        return _handle_exceptions(inner)
+
+
+@CopierApp.subcommand("schema")
+class CopierSchemaSubApp(cli.Application):
+    """The `copier schema` subcommand.
+
+    Use this subcommand to generate a JSON Schema for copier.yml files.
+    The schema can be used by IDEs for autocompletion, hints, and validation.
+    """
+
+    DESCRIPTION = "Generate a JSON Schema for copier.yml files"
+
+    output = cli.SwitchAttr(
+        ["-o", "--output"],
+        help="Write the schema to a file path instead of stdout.",
+    )
+
+    def main(self) -> int:
+        """Generate and output the JSON Schema."""
+
+        def inner() -> None:
+            from ._schema import generate_copier_yml_schema
+
+            schema = generate_copier_yml_schema()
+            text = json.dumps(schema, indent=2) + "\n"
+
+            if self.output:
+                Path(self.output).write_text(text)
+            else:
+                print(text)
 
         return _handle_exceptions(inner)
