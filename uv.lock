@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.15'",
@@ -427,7 +427,7 @@ requires-dist = [
 dev = [
     { name = "codespell", extras = ["toml"], specifier = "==2.4.3" },
     { name = "commitizen", specifier = "==4.19.0" },
-    { name = "inline-snapshot", specifier = "==0.35.4" },
+    { name = "inline-snapshot", specifier = "==0.36.0" },
     { name = "mypy", specifier = "==2.3.1" },
     { name = "pexpect", specifier = "==4.9.0" },
     { name = "poethepoet", specifier = "==0.48.0" },
@@ -725,7 +725,7 @@ wheels = [
 
 [[package]]
 name = "inline-snapshot"
-version = "0.35.4"
+version = "0.36.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "asttokens" },
@@ -735,9 +735,9 @@ dependencies = [
     { name = "tomli", marker = "python_full_version < '3.11'" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/59/46/3c459f0350e88d6a5ca58a4792a7215c3b0990cf9bb6a2b37ac8d74a2504/inline_snapshot-0.35.4.tar.gz", hash = "sha256:82432a58b7ea77a172515f5024cd26fdea8dc0f873c7a4251e4e0471a914db14", size = 2537089, upload-time = "2026-08-11T07:07:56.213Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/bc/39/05067e7dd5c27e3fd31760a21db6a8e9d6908a39b5e17b8698f473b6b7fe/inline_snapshot-0.36.0.tar.gz", hash = "sha256:c45dfc34affc42116fd23e22665fb58e59426c564ddb17114a6833f61a31b1f7", size = 2541802, upload-time = "2026-10-02T12:14:13.112Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/97/b3/dc18eb603de18daf5cacc27bb4c5e80c5403d9ca3eade7342fe4228652bf/inline_snapshot-0.35.4-py3-none-any.whl", hash = "sha256:0ad221c1bc6fe4ce249f7c1c4131284099ecac1a5c1023aa7b1a95921c07265d", size = 95725, upload-time = "2026-08-11T07:07:54.24Z" },
+    { url = "https://files.pythonhosted.org/packages/39/de/f625b9c923c4264ee8d94e416c0d5fd59194f7b6cd8fc0d6ec2f51dfc506/inline_snapshot-0.36.0-py3-none-any.whl", hash = "sha256:1079cf302098fedb418c7ac2be9cadd14f2e71461143bcaf605be1214530bef4", size = 98033, upload-time = "2026-10-02T12:14:11.398Z" },
 ]
 
 [[package]]
