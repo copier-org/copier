@@ -611,6 +611,7 @@ class Worker:
             external=self._external_data(),
         )
 
+        missing: list[str] = []
         for var_name, details in self.template.questions_data.items():
             question = Question(
                 answers=self.answers,
@@ -667,8 +668,9 @@ class Worker:
                 if self.defaults:
                     answer = question.get_default()
                     if answer is MISSING:
-                        raise ValueError(f'Question "{var_name}" is required')
-                    self.answers.user[var_name] = answer
+                        missing.append(var_name)
+                    else:
+                        self.answers.user[var_name] = answer
                     continue
 
             # Display TUI and ask user interactively only without --defaults
@@ -686,6 +688,13 @@ class Worker:
                     self.answers, question, self.template
                 ) from err
             self.answers.user[var_name] = new_answer
+
+        if missing:
+            names = ", ".join(missing)
+            raise UserMessageError(
+                f'Missing answers for required questions: {names}. '
+                'Provide them with --data/--data-file.'
+            )
 
         # Reload external data, which may depend on answers
         self.answers.external = self._external_data()

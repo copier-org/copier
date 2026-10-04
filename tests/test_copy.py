@@ -943,7 +943,10 @@ def test_required_question_without_data(
             )
         }
     )
-    with pytest.raises(ValueError, match='Question "question" is required'):
+    with pytest.raises(
+        UserMessageError,
+        match='Missing answers for required questions: question',
+    ):
         copier.run_copy(str(src), dst, defaults=True)
 
 
@@ -973,7 +976,10 @@ def test_required_choice_question_without_data(
             )
         }
     )
-    with pytest.raises(ValueError, match='Question "question" is required'):
+    with pytest.raises(
+        UserMessageError,
+        match='Missing answers for required questions: question',
+    ):
         copier.run_copy(str(src), dst, defaults=True)
 
 
