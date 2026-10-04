@@ -64,7 +64,7 @@ initialization, for example if you want to store a dynamically computed `copyrig
 but ensure that it doesn't change upon later Copier template updates, you can set
 `ask: false` to hide the question, and have its value retain in subsequent runs.
 
-!!! example "Recording the initial copyright year"
+!!! example title="Recording the initial copyright year with `ask: false`"
 
     The current year can be computed automatically and recorded in the answers
     file without prompting the user during project creation.
@@ -81,7 +81,7 @@ explicitly dumping the value to YAML with the
 [answers file](configuring.md#the-copier-answersyml-file). This will ensure users cannot
 change the value manually (even with `--ask`).
 
-!!! example
+!!! example title="Recording the initial copyright year with `when: false`"
 
     ```yaml title="copier.yaml"
     copyright_year:

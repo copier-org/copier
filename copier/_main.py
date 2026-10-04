@@ -645,11 +645,7 @@ class Worker:
                 if question.get_default() is MISSING:
                     continue
 
-            asked_for = any(
-                fnmatchcase(var_name, ask_pattern) for ask_pattern in self.ask
-            )
-
-            if not asked_for:
+            if not any(fnmatchcase(var_name, ask_pattern) for ask_pattern in self.ask):
                 # If the user didn't explicitly request the question be asked,
                 # it may now be skipped by `--data`, `--skip-answered`, or `--defaults`.
                 if var_name in self.answers.init:
