@@ -398,7 +398,6 @@ class Question:
         result: AnyByStrDict = {
             "filter": self.cast_answer,
             "message": self.get_message(),
-            "mouse_support": True,
             "name": self.var_name,
             "qmark": self.qmark or ("🕵️" if self.secret else "🎤"),
             "when": lambda _: self.get_when(),

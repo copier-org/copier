@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import platform
 import subprocess
 import sys
@@ -565,6 +566,42 @@ def test_qmark_default(tmp_path_factory: pytest.TempPathFactory, spawn: Spawn) -
         "_src_path": str(src),
         "name": "John",
     }
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        {"type": "str", "default": "foo"},
+        {"type": "str", "default": "foo", "secret": True},
+        {"type": "bool", "default": True},
+        {"type": "str", "default": "a", "choices": ["a", "b"]},
+        {"type": "str", "default": ["a"], "choices": ["a", "b"], "multiselect": True},
+    ],
+)
+@pytest.mark.skipif(
+    platform.system() == "Windows", reason="`pexpect.spawn` requires a POSIX pty"
+)
+def test_prompt_does_not_capture_mouse(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn_timeout: int,
+    question: dict[str, Any],
+) -> None:
+    """Test that prompts leave mouse events (e.g. text selection) to the terminal."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree({(src / "copier.yml"): yaml.dump({"question": question})})
+    # A real pty is needed; without one, no terminal control sequences are emitted
+    tui = pexpect.spawn(
+        COPIER_PATH[0],
+        [*COPIER_PATH[1:], "copy", str(src), str(dst)],
+        timeout=spawn_timeout or None,
+        encoding="utf-8",
+    )
+    tui.logfile_read = output = io.StringIO()
+    tui.expect_exact("question")
+    tui.sendline()
+    tui.expect_exact(pexpect.EOF)
+    # Escape sequence that enables mouse tracking in the terminal
+    assert "\x1b[?1000h" not in output.getvalue()
 
 
 @pytest.mark.parametrize("type_", ["str", "yaml", "json"])
