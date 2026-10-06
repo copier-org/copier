@@ -1564,3 +1564,121 @@ def test_copy_defaults_with_ask_and_data(
         tui.expect_exact(pexpect.EOF)
         loaded_answers = load_answersfile_data(".")
         assert loaded_answers.get("what_does_it_eat") == "milk and cookies"
+
+
+@pytest.mark.parametrize(
+    ("when", "ask", "ask_flag", "prompted"),
+    [
+        (True, True, (), True),
+        (True, True, ("--ask=foo",), True),
+        (True, True, ("--ask=f*",), True),
+        (True, True, ("--ask=baz",), True),
+        (True, False, (), False),
+        (True, False, ("--ask=foo",), True),
+        (True, False, ("--ask=f*",), True),
+        (True, False, ("--ask=baz",), False),
+        (False, True, (), False),
+        (False, True, ("--ask=foo",), False),
+        (False, True, ("--ask=f*",), False),
+        (False, True, ("--ask=baz",), False),
+        (False, False, (), False),
+        (False, False, ("--ask=foo",), False),
+        (False, False, ("--ask=f*",), False),
+        (False, False, ("--ask=baz",), False),
+    ],
+)
+def test_copy_with_ask_setting(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    when: bool,
+    ask: bool,
+    ask_flag: tuple[str, ...],
+    prompted: bool,
+) -> None:
+    """Test copy prompting with `when`, `ask`, and `--ask` flag."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): yaml.dump(
+                {"foo": {"type": "str", "default": "bar", "when": when, "ask": ask}}
+            ),
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+        }
+    )
+    tui = spawn(COPIER_PATH + ("copy", str(src), str(dst), *ask_flag))
+    if prompted:
+        expect_prompt(tui, "foo", "str")
+        tui.sendline("x")
+    tui.expect_exact(pexpect.EOF)
+    answers = load_answersfile_data(dst)
+    if when:
+        assert answers.get("foo") == ("barx" if prompted else "bar")
+    else:
+        assert "foo" not in answers
+
+
+@pytest.mark.parametrize(
+    ("when", "ask", "skip_answered", "ask_flag", "prompted"),
+    [
+        (True, True, False, (), True),
+        (True, True, False, ("--ask=foo",), True),
+        (True, True, False, ("--ask=baz",), True),
+        (True, True, True, (), False),
+        (True, True, True, ("--ask=foo",), True),
+        (True, True, True, ("--ask=baz",), False),
+        (True, False, False, (), False),
+        (True, False, False, ("--ask=foo",), True),
+        (True, False, False, ("--ask=baz",), False),
+        (True, False, True, (), False),
+        (True, False, True, ("--ask=foo",), True),
+        (True, False, True, ("--ask=baz",), False),
+        (False, True, False, (), False),
+        (False, False, True, ("--ask=foo",), False),
+    ],
+)
+def test_update_with_ask_setting(
+    tmp_path_factory: pytest.TempPathFactory,
+    spawn: Spawn,
+    spawn_timeout: int,
+    when: bool,
+    ask: bool,
+    skip_answered: bool,
+    ask_flag: tuple[str, ...],
+    prompted: bool,
+) -> None:
+    """Test update prompting with `when`, `ask`, `--ask`, and `--skip-answered`."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): yaml.dump(
+                {"foo": {"type": "str", "default": "bar", "when": when, "ask": ask}}
+            ),
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+        }
+    )
+    git_save(src, tag="v1")
+    with local.cwd(dst):
+        tui = spawn(
+            COPIER_PATH + ("copy", str(src), ".", "--data=foo=prev"),
+            timeout=spawn_timeout,
+        )
+        tui.expect_exact(pexpect.EOF)
+        git_save()
+        tui = spawn(
+            COPIER_PATH
+            + ("update", *(("--skip-answered",) if skip_answered else ()), *ask_flag),
+            timeout=spawn_timeout * 3,
+        )
+        if prompted:
+            expect_prompt(tui, "foo", "str")
+            tui.sendline("x")
+        tui.expect_exact(pexpect.EOF)
+        answers = load_answersfile_data(".")
+    if when:
+        assert answers.get("foo") == ("prevx" if prompted else "prev")
+    else:
+        assert "foo" not in answers

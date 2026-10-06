@@ -301,8 +301,8 @@ Supported keys:
     If it is a string, it is converted to boolean using a parser similar to YAML, but
     only for boolean values. The string can be [templated](#prompt-templating).
 
-    If a question is skipped, its answer is not recorded, but its default value is
-    available in the render context.
+    If a question is skipped, its answer is not recorded, and whatever previous answer
+    was provided is discarded, but its default value is available in the render context.
 
     !!! example
 
@@ -334,6 +334,33 @@ Supported keys:
     by rendering the special `UNSET` variable, so the question's variable is undefined
     in the render context. See an example using `UNSET` in the section for `default`
     above.
+
+- **ask**: Condition that, if `false`, does not prompt the question unless explicitly
+    requested via the [`--ask` flag](#ask). For example, this is useful for reducing
+    questionnaire complexity by hiding advanced questions whose default answer is
+    appropriate for most users. If a question is skipped, its previous value, if any, is
+    retained and used. If no previous value is available, the default value, if any, is
+    used.
+
+    If it is a boolean, it is used directly.
+
+    If it is a string, it is converted to boolean using a parser similar to YAML, but
+    only for boolean values. The string can be [templated](#prompt-templating).
+
+    !!! example "Experimental feature flags"
+
+        A template may provide experimental features that most users should leave
+        disabled. Setting `ask: false` keeps the question out of the default
+        questionnaire while still allowing advanced users to be prompted for it via
+        `--ask`.
+
+        ```yaml
+        enable_experimental_feature_x:
+            type: bool
+            help: Enable experimental feature X that is not yet recommended for general use
+            default: false
+            ask: false
+        ```
 
 !!! example
 

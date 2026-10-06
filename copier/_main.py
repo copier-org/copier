@@ -628,7 +628,11 @@ class Worker:
                     question.validate_answer(answer)
                 except Exception:  # noqa: BLE001
                     del self.answers.last[var_name]
-            # Skip a question when the skip condition is met.
+
+            ask = question.get_ask()
+
+            # if when is false, we should skip the question and discard
+            # whatever previous values we had.
             if not question.get_when():
                 # Omit its answer from the answers file.
                 self.answers.hide(var_name)
@@ -651,7 +655,14 @@ class Worker:
                     question.validate_answer(answer)
                     self.answers.user[var_name] = answer
                     continue
-                if self.skip_answered and var_name in self.answers.last:
+                if var_name in self.answers.last and (self.skip_answered or not ask):
+                    continue
+                if not ask:
+                    # if the question ask: False, and we don't have a previous answer,
+                    # we use the default value if it exists.
+                    answer = question.get_default()
+                    if answer is not MISSING:
+                        self.answers.user[var_name] = answer
                     continue
                 if self.defaults:
                     answer = question.get_default()

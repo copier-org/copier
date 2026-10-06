@@ -614,3 +614,43 @@ def test_omit_answer_for_skipped_question(
     assert answers == {"_src_path": str(src)}
     context = yaml.safe_load((dst / "context.yml").read_text())
     assert context == {"disabled": "hello", "disabled_with_default": "hello"}
+
+
+def test_keep_answer_for_unask_question(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                """\
+                disabled:
+                    type: str
+                    ask: false
+
+                disabled_with_default:
+                    type: str
+                    default: hello
+                    ask: false
+                """
+            ),
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+            (src / "context.yml.jinja"): yaml.safe_dump(
+                {
+                    "disabled": "{{ disabled }}",
+                    "disabled_with_default": "{{ disabled_with_default }}",
+                }
+            ),
+        }
+    )
+    run_copy(str(src), dst, defaults=True, data={"disabled": "hello"})
+    answers = load_answersfile_data(dst)
+    assert answers == {
+        "_src_path": str(src),
+        "disabled": "hello",
+        "disabled_with_default": "hello",
+    }
+    context = yaml.safe_load((dst / "context.yml").read_text())
+    assert context == {"disabled": "hello", "disabled_with_default": "hello"}
