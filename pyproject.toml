@@ -32,6 +32,7 @@ dependencies = [
   "questionary>=1.8.1",
   "platformdirs>=4.3.6",
   "typing-extensions>=4.0.0,<5.0.0; python_version < '3.11'",
+  "watchfiles>=0.20",
 ]
 
 [project.urls]
