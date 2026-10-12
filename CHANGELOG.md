@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.19.0 (2026-10-12)
+
+### Feat
+
+- add support for opt-in questions via the `ask` setting (#2849)
+
+### Fix
+
+- **vcs**: prevent argument injection via `git` subprocess calls
+- **updating**: keep symlink targets when a directory containing a symlink is renamed
+
 ## v9.18.2 (2026-09-07)
 
 ### Fix
