@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file. This projec
 adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning schema, and
 the changelog itself conforms to [Keep A Changelog](https://keepachangelog.com/).
 
+## v9.19.1 (2026-10-13)
+
+### Fix
+
+- **vcs**: restore support for Git older than 2.43.1
+
 ## v9.19.0 (2026-10-12)
 
 ### Feat
