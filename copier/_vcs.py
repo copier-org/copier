@@ -344,6 +344,35 @@ def _clone_via_cache(ref: str, location: str, mirror: Path) -> str:
     return location
 
 
+def _resolve_ref(ref: str) -> str:
+    """Resolve `ref` to a commit ID in the current repository.
+
+    Args:
+        ref: Branch, tag, commit, or other revision to resolve.
+
+    Returns:
+        The full hexadecimal object ID of the commit.
+
+    Raises:
+        ValueError: If `ref` doesn't resolve to a commit.
+    """
+    git = get_git()
+    # `ref` is passed via stdin, never argv, so it can't be parsed as an option.
+    # A newline would split it into multiple revisions.
+    if not re.search(r"[\r\n]", ref):
+        # The `origin` fallback mirrors `git checkout`'s DWIM for remote branches.
+        for candidate in (ref, f"refs/remotes/origin/{ref}"):
+            output = (
+                git["cat-file", "--batch-check=%(objectname)"]
+                << f"{candidate}^{{commit}}\n"
+            )().strip()
+            # Unresolved input is echoed back (e.g. `<ref> missing`), so only a
+            # bare object ID (SHA-1 or SHA-256) is safe to hand to `checkout`.
+            if re.fullmatch(r"[0-9a-f]{40,64}", output):
+                return output
+    raise ValueError(f"Unknown revision: {ref!r}")
+
+
 def clone(url: str, ref: str = "HEAD", location: str | None = None) -> str:
     """Clone repo into some temporary destination.
 
@@ -418,10 +447,12 @@ def clone(url: str, ref: str = "HEAD", location: str | None = None) -> str:
         ## and core.fsmonitor is enabled
         ## ref: https://github.com/copier-org/copier/issues/1887
         # `ref` may come from an untrusted source (e.g. a subproject's answers
-        # file). `--end-of-options` stops it from being parsed as an option
-        # (unlike `--`, which would make `checkout` treat it as a pathspec
-        # instead of a revision).
-        git("-c", "core.fsmonitor=false", "checkout", "-f", "--end-of-options", ref)
+        # file). Resolving it to a commit ID using `_resolve_ref` stops it from
+        # being parsed as an option (unlike `--`, which would make `checkout`
+        # treat it as a pathspec instead of a revision). `--end-of-options`
+        # would work too, but it is only available for `git checkout` as in Git
+        # v2.43.1+.
+        git("-c", "core.fsmonitor=false", "checkout", "-f", _resolve_ref(ref))
         git("submodule", "update", "--checkout", "--init", "--recursive", "--force")
 
     return location

@@ -163,6 +163,44 @@ def test_remote_clone_checks_out_ref(
     assert Path(dst, "README.md").read_text() == "hello world"
 
 
+@pytest.mark.parametrize("ref", ["v1.0.0", "HEAD", "branch"])
+def test_local_clone_checks_out_ref(
+    tmp_path_factory: pytest.TempPathFactory, ref: str
+) -> None:
+    src = tmp_path_factory.mktemp("src")
+    with local.cwd(src):
+        git("init")
+        main_branch = git("branch", "--show-current").strip()
+        Path("README.md").write_text("main")
+        git("add", "-A")
+        git("commit", "-m", "init")
+        git("tag", "v1.0.0")
+        git("checkout", "-b", "branch")
+        Path("README.md").write_text("branch")
+        git("commit", "-am", "branch")
+        git("checkout", main_branch)
+    dst = clone(str(src), ref, location=str(tmp_path_factory.mktemp("clone")))
+    assert Path(dst, "README.md").read_text() == (
+        "branch" if ref == "branch" else "main"
+    )
+
+
+@pytest.mark.parametrize(
+    "ref", ["--orphan=pwned", "--detach", "-b", "--", "HEAD\n--orphan=pwned", "missing"]
+)
+def test_local_clone_rejects_invalid_ref(
+    tmp_path_factory: pytest.TempPathFactory, ref: str
+) -> None:
+    src = tmp_path_factory.mktemp("src")
+    with local.cwd(src):
+        git("init")
+        Path("README.md").write_text("main")
+        git("add", "-A")
+        git("commit", "-m", "init")
+    with pytest.raises(ValueError, match="Unknown revision"):
+        clone(str(src), ref, location=str(tmp_path_factory.mktemp("clone")))
+
+
 def test_remote_clone_prunes_stale_worktree(
     remote_repo: str, tmp_path_factory: pytest.TempPathFactory
 ) -> None:
