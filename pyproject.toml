@@ -68,7 +68,7 @@ docs = [
   "markdown-exec==1.12.3",
   "mkdocs-material==9.7.7",
   "mkdocs-redirects==1.2.3",
-  "mkdocstrings[python]==1.0.6",
+  "mkdocstrings[python]==1.0.7",
 ]
 
 [tool.poe.tasks.coverage]
