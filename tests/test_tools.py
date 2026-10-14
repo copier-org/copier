@@ -5,7 +5,8 @@ from tempfile import TemporaryDirectory
 import pytest
 from poethepoet.app import PoeThePoet
 
-from copier._tools import cast_to_bool, normalize_git_path
+from copier._tools import OS, cast_to_bool, normalize_git_path
+from copier._user_data import Question
 
 from .helpers import git
 
@@ -83,3 +84,17 @@ def test_temporary_directory_with_git_repo_deletion() -> None:
 )
 def test_normalizing_git_paths(path: str, normalized: str) -> None:
     assert normalize_git_path(path) == normalized
+
+
+def test_multiline_instruction_uses_option_on_macos() -> None:
+    """Multiline instruction uses 'Option+Enter' on macOS."""
+    if OS == "macos":
+        assert "Option+Enter" in Question._get_multiline_instruction()
+        assert "Alt+Enter" not in Question._get_multiline_instruction()
+
+
+def test_multiline_instruction_uses_alt_on_non_macos() -> None:
+    """Multiline instruction uses 'Alt+Enter' on non-macOS platforms."""
+    if OS != "macos":
+        assert "Alt+Enter" in Question._get_multiline_instruction()
+        assert "Option+Enter" not in Question._get_multiline_instruction()

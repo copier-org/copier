@@ -27,7 +27,7 @@ from questionary.prompts.common import Choice
 from copier._jinja_ext import SandboxedEnvironment, UnsetError
 from copier._settings import SettingsModel
 
-from ._tools import cast_to_bool, cast_to_str, force_str_end
+from ._tools import OS, cast_to_bool, cast_to_str, force_str_end
 from ._types import (
     MISSING,
     AnyByStrDict,
@@ -387,6 +387,16 @@ class Question:
         """Render and obtain the placeholder."""
         return self.render_value(self.placeholder)
 
+    @staticmethod
+    def _get_multiline_instruction() -> str:
+        """Get the platform-appropriate multiline instruction text.
+
+        On macOS, the 'Alt' key is labeled 'Option', so we use 'Option+Enter'.
+        On other platforms, we use 'Alt+Enter'.
+        """
+        alt_key = "Option" if OS == "macos" else "Alt"
+        return f"(Finish with '{alt_key}+Enter' or 'Esc then Enter')\n>"
+
     def get_questionary_structure(self) -> AnyByStrDict:  # noqa: C901
         """Get the question in a format that the questionary lib understands."""
 
@@ -439,7 +449,10 @@ class Question:
                 lexer = PygmentsLexer(JsonLexer)
             if lexer:
                 result["lexer"] = lexer
-            result["multiline"] = self.get_multiline()
+            multiline = self.get_multiline()
+            result["multiline"] = multiline
+            if multiline:
+                result["instruction"] = self._get_multiline_instruction()
             if placeholder := self.get_placeholder():
                 result["placeholder"] = placeholder
         if type_name == "path":
