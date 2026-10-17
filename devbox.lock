@@ -1,41 +1,41 @@
 {
   "lockfile_version": "1",
   "packages": {
-    "difftastic@0.70.0": {
-      "last_modified": "2026-09-18T17:53:39Z",
-      "resolved": "github:NixOS/nixpkgs/2e032a04454b525daa6c6651264aaa5d3e98cf54#difftastic",
+    "difftastic@0.71.0": {
+      "last_modified": "2026-10-16T02:15:57Z",
+      "resolved": "github:NixOS/nixpkgs/f20cd90e28fe0403873f473b29e42662cd86e8c4#difftastic",
       "source": "devbox-search",
-      "version": "0.70.0",
+      "version": "0.71.0",
       "systems": {
         "aarch64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/il1j75q6wwygdqngvp697fb8jmjhzzvd-difftastic-0.70.0",
+              "path": "/nix/store/lvgr0ig75zms9m3y1ia3x3a8j944vc00-difftastic-0.71.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/il1j75q6wwygdqngvp697fb8jmjhzzvd-difftastic-0.70.0"
+          "store_path": "/nix/store/lvgr0ig75zms9m3y1ia3x3a8j944vc00-difftastic-0.71.0"
         },
         "aarch64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/h5d2qxmmgwp3k852jkdxydxk6f2khnqg-difftastic-0.70.0",
+              "path": "/nix/store/c5w82rg1lw5vk6m6px927wz178sdg7c0-difftastic-0.71.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/h5d2qxmmgwp3k852jkdxydxk6f2khnqg-difftastic-0.70.0"
+          "store_path": "/nix/store/c5w82rg1lw5vk6m6px927wz178sdg7c0-difftastic-0.71.0"
         },
         "x86_64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/875h7w8vdxdgmdgvhi4f951kav8q48r9-difftastic-0.70.0",
+              "path": "/nix/store/hws40b1ly35ziixivljqgj8x4fkxdk9h-difftastic-0.71.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/875h7w8vdxdgmdgvhi4f951kav8q48r9-difftastic-0.70.0"
+          "store_path": "/nix/store/hws40b1ly35ziixivljqgj8x4fkxdk9h-difftastic-0.71.0"
         }
       }
     },
