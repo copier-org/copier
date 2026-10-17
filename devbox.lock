@@ -139,41 +139,41 @@
       "last_modified": "2026-10-03T07:08:11Z",
       "resolved": "github:NixOS/nixpkgs/73e728ddb6b7a12d18808f510813a13ee1fe4cce?lastModified=1791011291&narHash=sha256-V6OBJccNKBo%2FktknxlJXZChPoI0NE2lembArBO3CE9k%3D"
     },
-    "prettier@3.9.6": {
-      "last_modified": "2026-10-02T22:55:44Z",
-      "resolved": "github:NixOS/nixpkgs/55ba7f49ef2962b42cbd126522b7df5f95037679#prettier",
+    "prettier@3.9.10": {
+      "last_modified": "2026-10-14T08:20:44Z",
+      "resolved": "github:NixOS/nixpkgs/319e4cebef10cbb636c6ea392137b52ad105336a#prettier",
       "source": "devbox-search",
-      "version": "3.9.6",
+      "version": "3.9.10",
       "systems": {
         "aarch64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/qj1ry3wqg58ii430rm94g76xr4v9q9qf-prettier-3.9.6",
+              "path": "/nix/store/hvb76k9gbjfybvhvnglrylrk4zsack02-prettier-3.9.10",
               "default": true
             }
           ],
-          "store_path": "/nix/store/qj1ry3wqg58ii430rm94g76xr4v9q9qf-prettier-3.9.6"
+          "store_path": "/nix/store/hvb76k9gbjfybvhvnglrylrk4zsack02-prettier-3.9.10"
         },
         "aarch64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/z2yhxh3iivkb6nfiylm182yp3j3jcn1p-prettier-3.9.6",
+              "path": "/nix/store/g9hap0bxkgm0nqwimfrs197227lm7jws-prettier-3.9.10",
               "default": true
             }
           ],
-          "store_path": "/nix/store/z2yhxh3iivkb6nfiylm182yp3j3jcn1p-prettier-3.9.6"
+          "store_path": "/nix/store/g9hap0bxkgm0nqwimfrs197227lm7jws-prettier-3.9.10"
         },
         "x86_64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/90m2czyb98c3kwcaplbs9xghf0zqh75z-prettier-3.9.6",
+              "path": "/nix/store/lkxqjk20dam7h33i6l0p004vldr9nqax-prettier-3.9.10",
               "default": true
             }
           ],
-          "store_path": "/nix/store/90m2czyb98c3kwcaplbs9xghf0zqh75z-prettier-3.9.6"
+          "store_path": "/nix/store/lkxqjk20dam7h33i6l0p004vldr9nqax-prettier-3.9.10"
         }
       }
     },
