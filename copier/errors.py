@@ -161,8 +161,9 @@ class UnsafeTemplateError(CopierError):
         assert features
         s = "s" if len(features) > 1 else ""
         super().__init__(
-            f"Template uses potentially unsafe feature{s}: {', '.join(features)}.\n"
-            "If you trust this template, consider adding the `--trust` option when running `copier copy/update`."
+            f"Refusing to generate: template uses potentially unsafe feature{s}: {', '.join(features)}.\n"
+            "Nothing was written to the destination.\n"
+            "If you trust this template, re-run with the `--trust` option, or add it to the trust list in your Copier settings."
         )
 
 
