@@ -632,9 +632,18 @@ class Worker:
 
             ask = question.get_ask()
 
+            try:
+                when = question.get_when()
+            except UserMessageError:
+                # Under StrictUndefined, `when` fails if it reads an answer that
+                # is already reported as missing; providing that answer fixes it.
+                if not missing:
+                    raise
+                continue
+
             # if when is false, we should skip the question and discard
             # whatever previous values we had.
-            if not question.get_when():
+            if not when:
                 # Omit its answer from the answers file.
                 self.answers.hide(var_name)
                 # Delete last answers to re-compute the answer from the default
@@ -669,10 +678,11 @@ class Worker:
                     try:
                         answer = question.get_default()
                     except UserMessageError:
-                        # A default that reads a missing answer raises here
-                        # under StrictUndefined; report the question as missing
-                        # alongside the ones it depends on.
-                        answer = MISSING
+                        # Same as for `when` above: the default reads an answer
+                        # that is already reported as missing.
+                        if not missing:
+                            raise
+                        continue
                     if answer is MISSING:
                         missing.append(var_name)
                     else:
@@ -698,8 +708,8 @@ class Worker:
         if missing:
             names = ", ".join(missing)
             raise UserMessageError(
-                f'Missing answers for required questions: {names}. '
-                'Provide them with --data/--data-file.'
+                f"Missing answers for required questions: {names}. "
+                "Provide them with --data/--data-file."
             )
 
         # Reload external data, which may depend on answers

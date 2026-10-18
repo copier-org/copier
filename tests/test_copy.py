@@ -945,7 +945,7 @@ def test_required_question_without_data(
     )
     with pytest.raises(
         UserMessageError,
-        match='Missing answers for required questions: question',
+        match="Missing answers for required questions: question",
     ):
         copier.run_copy(str(src), dst, defaults=True)
 
@@ -978,8 +978,78 @@ def test_required_choice_question_without_data(
     )
     with pytest.raises(
         UserMessageError,
-        match='Missing answers for required questions: question',
+        match="Missing answers for required questions: question",
     ):
+        copier.run_copy(str(src), dst, defaults=True)
+
+
+def test_required_questions_reported_together(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): yaml.safe_dump(
+                {
+                    "first": {"type": "str"},
+                    "second": {"type": "str"},
+                }
+            )
+        }
+    )
+    with pytest.raises(
+        UserMessageError,
+        match=r"Missing answers for required questions: first, second\.",
+    ):
+        copier.run_copy(str(src), dst, defaults=True)
+
+
+@pytest.mark.parametrize(
+    "dependent",
+    [
+        {"type": "str", "default": "{{ name | lower }}"},
+        {"type": "str", "when": "{{ name == 'x' }}"},
+    ],
+)
+def test_required_questions_with_strict_undefined(
+    tmp_path_factory: pytest.TempPathFactory, dependent: dict[str, str]
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): yaml.safe_dump(
+                {
+                    "_envops": {"undefined": "jinja2.StrictUndefined"},
+                    "name": {"type": "str"},
+                    "dependent": dependent,
+                    "email": {"type": "str"},
+                },
+                sort_keys=False,
+            )
+        }
+    )
+    with pytest.raises(
+        UserMessageError,
+        match=r"Missing answers for required questions: name, email\.",
+    ):
+        copier.run_copy(str(src), dst, defaults=True)
+
+
+def test_broken_default_with_strict_undefined(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): yaml.safe_dump(
+                {
+                    "_envops": {"undefined": "jinja2.StrictUndefined"},
+                    "question": {"type": "str", "default": "{{ nonexistent }}"},
+                }
+            )
+        }
+    )
+    with pytest.raises(UserMessageError, match="'nonexistent' is undefined"):
         copier.run_copy(str(src), dst, defaults=True)
 
 
