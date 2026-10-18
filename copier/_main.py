@@ -666,7 +666,13 @@ class Worker:
                         self.answers.user[var_name] = answer
                     continue
                 if self.defaults:
-                    answer = question.get_default()
+                    try:
+                        answer = question.get_default()
+                    except UserMessageError:
+                        # A default that reads a missing answer raises here
+                        # under StrictUndefined; report the question as missing
+                        # alongside the ones it depends on.
+                        answer = MISSING
                     if answer is MISSING:
                         missing.append(var_name)
                     else:
