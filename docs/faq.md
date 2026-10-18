@@ -250,3 +250,17 @@ passing HTTPS credentials to Git:
 - <https://git-scm.com/docs/gitcredentials>
 - <https://git-scm.com/book/en/v2/Git-Tools-Credential-Storage#_credential_caching>
 - <https://github.com/topics/git-credential-helper>
+
+## What exit codes does the Copier CLI use?
+
+| Exit code | Meaning                                                                       |
+|-----------|-------------------------------------------------------------------------------|
+| 0         | Success                                                                       |
+| 1         | An error occurred; a description was printed to `stderr`                      |
+| 2         | `copier check-update --quiet` found a newer template version                  |
+| 4         | The template uses unsafe features and the command ran without `--trust`; nothing was generated |
+
+The exit code `4` lets scripts distinguish a refused generation (the
+destination is left untouched) from other failures. If you trust the
+template, re-run with `--trust` or list it in the
+[settings trust list](settings.md).
