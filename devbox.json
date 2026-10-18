@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.18.4/.schema/devbox.schema.json",
   "packages": [
     "difftastic@0.71.0",
-    "editorconfig-checker@3.11.1",
+    "editorconfig-checker@4.0.2",
     "git@2.55.0",
     "prettier@3.9.10",
     "uv@0.12.5"
