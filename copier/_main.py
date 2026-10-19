@@ -442,7 +442,10 @@ class Worker:
                     task_cmd, shell=use_shell, check=False, env=dict(local.env)
                 )
                 if process.returncode:
-                    raise TaskError.from_process(process)
+                    message: str | None = None
+                    if task.failure_message:
+                        message = self._render_string(task.failure_message, extra_context)
+                    raise TaskError.from_process(process, i, message=message)
 
     def _render_context(self) -> AnyByStrMutableMapping:
         """Produce render context for Jinja."""
