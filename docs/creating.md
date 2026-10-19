@@ -151,7 +151,8 @@ The name of the project root directory.
 
 ### `_copier_phase`
 
-The current phase, one of `"prompt"`,`"tasks"`, `"migrate"` or `"render"`.
+The current phase, one of `"prompt"`, `"render"`, `"postrender"`, `"tasks"`, or
+`"migrate"`.
 
 !!! note
 
@@ -167,7 +168,33 @@ Some variables are only available in select contexts:
 
 The current operation, either `"copy"` or `"update"`.
 
-Availability: [`exclude`](configuring.md#exclude), [`tasks`](configuring.md#tasks)
+Availability: [`exclude`](configuring.md#exclude),
+[`postrender_tasks`](configuring.md#postrender_tasks), [`tasks`](configuring.md#tasks)
+
+### `_update_stage`
+
+The current update stage, indicating which rendering context is active.
+
+**Values:**
+
+-   `"current"` - Rendering to the actual destination (always during copy operations)
+-   `"previous"` - Rendering the old template version to temporary directory (update
+    only)
+-   `"new"` - Rendering the new template version to temporary directory (update only)
+
+Available as `UPDATE_STAGE` environment variable.
+
+Availability: [`postrender_tasks`](configuring.md#postrender_tasks),
+[`tasks`](configuring.md#tasks)
+
+!!! example
+
+    ```yaml title="copier.yml"
+    _postrender_tasks:
+        # Run expensive operation only on actual destination
+        - command: "python refactor.py"
+          when: "{{ _update_stage == 'current' }}"
+    ```
 
 ## Variables (context-specific)
 
