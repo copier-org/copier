@@ -611,81 +611,102 @@ class Worker:
             external=self._external_data(),
         )
 
+        missing: list[str] = []
         for var_name, details in self.template.questions_data.items():
-            question = Question(
-                answers=self.answers,
-                context=self._render_context(),
-                jinja_env=self.jinja_env,
-                settings=self.settings,
-                var_name=var_name,
-                **details,
-            )
-            # Delete last answer if it cannot be parsed or validated, so a new
-            # valid answer can be provided.
-            if var_name in self.answers.last:
-                try:
-                    answer = question.parse_answer(self.answers.last[var_name])
-                    question.validate_answer(answer)
-                except Exception:  # noqa: BLE001
-                    del self.answers.last[var_name]
-
-            ask = question.get_ask()
-
-            # if when is false, we should skip the question and discard
-            # whatever previous values we had.
-            if not question.get_when():
-                # Omit its answer from the answers file.
-                self.answers.hide(var_name)
-                # Delete last answers to re-compute the answer from the default
-                # value (if it exists).
-                if var_name in self.answers.last:
-                    del self.answers.last[var_name]
-                # Skip immediately to the next question when it has no default
-                # value.
-                if question.get_default() is MISSING:
-                    continue
-
-            if not any(fnmatchcase(var_name, ask_pattern) for ask_pattern in self.ask):
-                # If the user didn't explicitly request the question be asked,
-                # it may now be skipped by `--data`, `--skip-answered`, or `--defaults`.
-                if var_name in self.answers.init:
-                    # Try to parse and validate (if the question has a validator)
-                    # the answer value.
-                    answer = question.parse_answer(self.answers.init[var_name])
-                    question.validate_answer(answer)
-                    self.answers.user[var_name] = answer
-                    continue
-                if var_name in self.answers.last and (self.skip_answered or not ask):
-                    continue
-                if not ask:
-                    # if the question ask: False, and we don't have a previous answer,
-                    # we use the default value if it exists.
-                    answer = question.get_default()
-                    if answer is not MISSING:
-                        self.answers.user[var_name] = answer
-                    continue
-                if self.defaults:
-                    answer = question.get_default()
-                    if answer is MISSING:
-                        raise ValueError(f'Question "{var_name}" is required')
-                    self.answers.user[var_name] = answer
-                    continue
-
-            # Display TUI and ask user interactively only without --defaults
             try:
-                new_answer = unsafe_prompt(
-                    [question.get_questionary_structure()],
-                    answers={question.var_name: question.get_default()},
-                )[question.var_name]
-            except EOFError as err:
-                raise InteractiveSessionError(
-                    "Use `--defaults` and/or `--data`/`--data-file`"
-                ) from err
-            except KeyboardInterrupt as err:
-                raise CopierAnswersInterrupt(
-                    self.answers, question, self.template
-                ) from err
-            self.answers.user[var_name] = new_answer
+                question = Question(
+                    answers=self.answers,
+                    context=self._render_context(),
+                    jinja_env=self.jinja_env,
+                    settings=self.settings,
+                    var_name=var_name,
+                    **details,
+                )
+                # Delete last answer if it cannot be parsed or validated, so a new
+                # valid answer can be provided.
+                if var_name in self.answers.last:
+                    try:
+                        answer = question.parse_answer(self.answers.last[var_name])
+                        question.validate_answer(answer)
+                    except Exception:  # noqa: BLE001
+                        del self.answers.last[var_name]
+
+                ask = question.get_ask()
+
+                # if when is false, we should skip the question and discard
+                # whatever previous values we had.
+                if not question.get_when():
+                    # Omit its answer from the answers file.
+                    self.answers.hide(var_name)
+                    # Delete last answers to re-compute the answer from the default
+                    # value (if it exists).
+                    if var_name in self.answers.last:
+                        del self.answers.last[var_name]
+                    # Skip immediately to the next question when it has no default
+                    # value.
+                    if question.get_default() is MISSING:
+                        continue
+
+                if not any(
+                    fnmatchcase(var_name, ask_pattern) for ask_pattern in self.ask
+                ):
+                    # If the user didn't explicitly request the question be asked,
+                    # it may now be skipped by `--data`, `--skip-answered`, or
+                    # `--defaults`.
+                    if var_name in self.answers.init:
+                        # Try to parse and validate (if the question has a validator)
+                        # the answer value.
+                        answer = question.parse_answer(self.answers.init[var_name])
+                        question.validate_answer(answer)
+                        self.answers.user[var_name] = answer
+                        continue
+                    if var_name in self.answers.last and (
+                        self.skip_answered or not ask
+                    ):
+                        continue
+                    if not ask:
+                        # if the question ask: False, and we don't have a previous
+                        # answer, we use the default value if it exists.
+                        answer = question.get_default()
+                        if answer is not MISSING:
+                            self.answers.user[var_name] = answer
+                        continue
+                    if self.defaults:
+                        answer = question.get_default()
+                        if answer is MISSING:
+                            missing.append(var_name)
+                        else:
+                            self.answers.user[var_name] = answer
+                        continue
+
+                # Display TUI and ask user interactively only without --defaults
+                try:
+                    new_answer = unsafe_prompt(
+                        [question.get_questionary_structure()],
+                        answers={question.var_name: question.get_default()},
+                    )[question.var_name]
+                except EOFError as err:
+                    raise InteractiveSessionError(
+                        "Use `--defaults` and/or `--data`/`--data-file`"
+                    ) from err
+                except KeyboardInterrupt as err:
+                    raise CopierAnswersInterrupt(
+                        self.answers, question, self.template
+                    ) from err
+                self.answers.user[var_name] = new_answer
+            except (UserMessageError, ValueError):
+                # Under StrictUndefined, evaluating a question fails if it reads
+                # an answer that is already reported as missing; providing that
+                # answer fixes it, so report the missing answers instead.
+                if not missing:
+                    raise
+
+        if missing:
+            names = ", ".join(missing)
+            raise UserMessageError(
+                f"Missing answers for required questions: {names}. "
+                "Provide them with --data/--data-file."
+            )
 
         # Reload external data, which may depend on answers
         self.answers.external = self._external_data()
