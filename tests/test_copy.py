@@ -1005,14 +1005,24 @@ def test_required_questions_reported_together(
 
 
 @pytest.mark.parametrize(
-    "dependent",
+    "dependent, data",
     [
-        {"type": "str", "default": "{{ name | lower }}"},
-        {"type": "str", "when": "{{ name == 'x' }}"},
+        ({"type": "str", "default": "{{ name | lower }}"}, {}),
+        ({"type": "str", "when": "{{ name == 'x' }}"}, {}),
+        ({"type": "str", "default": "{{ name | lower }}", "when": False}, {}),
+        ({"type": "str", "default": "{{ name | lower }}", "ask": False}, {}),
+        ({"type": "str", "default": "x", "ask": "{{ name == 'x' }}"}, {}),
+        (
+            {"type": "str", "validator": "{% if dependent != name %}bad{% endif %}"},
+            {"dependent": "x"},
+        ),
     ],
+    ids=["default", "when", "computed", "ask_false", "ask", "validator"],
 )
 def test_required_questions_with_strict_undefined(
-    tmp_path_factory: pytest.TempPathFactory, dependent: dict[str, str]
+    tmp_path_factory: pytest.TempPathFactory,
+    dependent: dict[str, Any],
+    data: dict[str, str],
 ) -> None:
     src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
     build_file_tree(
@@ -1032,7 +1042,7 @@ def test_required_questions_with_strict_undefined(
         UserMessageError,
         match=r"Missing answers for required questions: name, email\.",
     ):
-        copier.run_copy(str(src), dst, defaults=True)
+        copier.run_copy(str(src), dst, data=data, defaults=True)
 
 
 def test_broken_default_with_strict_undefined(
