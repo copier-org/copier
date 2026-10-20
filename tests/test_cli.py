@@ -646,3 +646,26 @@ def test_data_with_multiselect_choice_question(
     )
     assert run_result[1] == 0
     assert load_answersfile_data(dst) == {"_src_path": str(src), "q": [1, 3]}
+
+
+def test_schema_output() -> None:
+    _, status = CopierApp.run(["copier", "schema"], exit=False)
+    assert status == 0
+
+
+def test_schema_file(tmp_path: Path) -> None:
+    schema_path = tmp_path / "copier.schema.json"
+    _, status = CopierApp.run(
+        ["copier", "schema", "--output", str(schema_path)], exit=False
+    )
+    assert status == 0
+    assert schema_path.is_file()
+    import json
+
+    schema = json.loads(schema_path.read_text())
+    assert schema["$schema"].startswith("https://json-schema.org/draft/2020-12")
+    assert "$defs" in schema
+    assert "task" in schema["$defs"]
+    assert "migration" in schema["$defs"]
+    assert "$schema" in schema["properties"]
+    assert "_tasks" in schema["properties"]
