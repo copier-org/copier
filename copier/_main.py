@@ -38,7 +38,7 @@ from packaging.version import Version
 from pathspec import PathSpec, __version__ as pathspec_version
 from plumbum import ProcessExecutionError, colors
 from plumbum.machines import local
-from pydantic import ConfigDict, PositiveInt
+from pydantic import ConfigDict, PositiveInt, field_validator
 from pydantic.dataclasses import dataclass
 from pydantic_core import to_jsonable_python
 from questionary import confirm, unsafe_prompt
@@ -272,6 +272,20 @@ class Worker:
 
     answers: AnswersMap = field(default_factory=AnswersMap, init=False)
     _cleanup_hooks: list[Callable[[], None]] = field(default_factory=list, init=False)
+
+    @field_validator("answers_file", mode="before")
+    @classmethod
+    def _answers_file_is_relative(cls, value: object) -> object:
+        # Raised before pydantic validation so the CLI shows a clean message
+        # instead of a `ValidationError` traceback. See #919 for why absolute
+        # paths are not supported.
+        if isinstance(value, (str, Path)) and Path(value).is_absolute():
+            raise UserMessageError(
+                f'The answers file "{value}" must be relative to the destination, '
+                "because it lives inside the generated project. To read answers "
+                "from a file elsewhere, use --data-file instead."
+            )
+        return value
 
     def __enter__(self) -> Self:
         """Allow using worker as a context manager."""

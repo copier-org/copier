@@ -10,7 +10,7 @@ import yaml
 
 import copier
 from copier._user_data import load_answersfile_data
-from copier.errors import ForbiddenPathError
+from copier.errors import ForbiddenPathError, UserMessageError
 
 from .helpers import BRACKET_ENVOPS_JSON, SUFFIX_TMPL, build_file_tree, git_save
 
@@ -200,6 +200,22 @@ def test_answersfile_with_custom_path(
         "_src_path": str(src),
         "_commit": "v2",
     }
+
+
+@pytest.mark.parametrize("as_str", [False, True], ids=["path", "str"])
+def test_absolute_answersfile_is_rejected(
+    tmp_path_factory: pytest.TempPathFactory, as_str: bool
+) -> None:
+    src, dst, elsewhere = map(tmp_path_factory.mktemp, ("src", "dst", "elsewhere"))
+    build_file_tree({(src / "copier.yml"): "question: answer"})
+    answers_file = elsewhere / "answers.yml"
+    with pytest.raises(UserMessageError, match="use --data-file instead"):
+        copier.run_copy(
+            str(src),
+            dst,
+            answers_file=str(answers_file) if as_str else answers_file,
+            defaults=True,
+        )
 
 
 def test_answersfile_template_in_subdirectory_is_deprecated(
