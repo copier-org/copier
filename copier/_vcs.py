@@ -44,6 +44,10 @@ def get_git(context_dir: OptStrOrPath = None) -> BaseCommand:
         GIT_COMMITTER_NAME=GIT_USER_NAME,
         GIT_COMMITTER_EMAIL=GIT_USER_EMAIL,
     )
+    # Disable automatic maintenance and garbage collection for any of our `git`
+    # commands to avoid side effects that may lead to race conditions.
+    # https://github.com/copier-org/copier/issues/2900.
+    command = command["-c", "maintenance.auto=false", "-c", "gc.auto=0"]
     if context_dir:
         command = command.with_cwd(context_dir)
     return command
