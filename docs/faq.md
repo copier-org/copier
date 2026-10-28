@@ -253,11 +253,11 @@ passing HTTPS credentials to Git:
 
 ## What exit codes does the Copier CLI use?
 
-| Exit code | Meaning                                                                       |
-|-----------|-------------------------------------------------------------------------------|
-| 0         | Success                                                                       |
-| 1         | An error occurred; a description was printed to `stderr`                      |
-| 2         | `copier check-update --quiet` found a newer template version                  |
+| Exit code | Meaning                                                                                        |
+| --------- | ---------------------------------------------------------------------------------------------- |
+| 0         | Success                                                                                        |
+| 1         | An error occurred; a description was printed to `stderr`                                       |
+| 2         | `copier check-update --quiet` found a newer template version                                   |
 | 4         | The template uses unsafe features and the command ran without `--trust`; nothing was generated |
 
 The exit code `4` lets scripts distinguish a refused generation (the

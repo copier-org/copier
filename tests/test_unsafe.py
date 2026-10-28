@@ -120,7 +120,10 @@ def test_copy_cli(
     else:
         assert retcode == 4
         _, err = capsys.readouterr()
-        assert "Refusing to generate: template uses potentially unsafe feature: tasks." in err
+        assert (
+            "Refusing to generate: template uses potentially unsafe feature: tasks."
+            in err
+        )
 
 
 @pytest.mark.parametrize(
@@ -415,4 +418,7 @@ def test_update_cli(
     else:
         assert retcode == 4
         _, err = capsys.readouterr()
-        assert "Refusing to generate: template uses potentially unsafe feature: tasks." in err
+        assert (
+            "Refusing to generate: template uses potentially unsafe feature: tasks."
+            in err
+        )
