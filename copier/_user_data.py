@@ -8,7 +8,7 @@ from collections import ChainMap
 from collections.abc import Callable, Mapping, Sequence
 from copy import deepcopy
 from dataclasses import field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from functools import cached_property
 from hashlib import sha512
 from os import urandom
@@ -47,7 +47,7 @@ def _now() -> datetime:
         "strftime format reference https://strftime.org/",
         FutureWarning,
     )
-    return datetime.now(tz=timezone.utc)
+    return datetime.now(tz=UTC)
 
 
 def _make_secret() -> str:

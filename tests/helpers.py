@@ -6,7 +6,7 @@ import os
 import sys
 import textwrap
 from collections.abc import Mapping
-from enum import Enum
+from enum import StrEnum
 from hashlib import sha1
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
@@ -76,7 +76,7 @@ class Spawn(Protocol):
     ) -> PopenSpawn: ...
 
 
-class Keyboard(str, Enum):
+class Keyboard(StrEnum):
     ControlH = REVERSE_ANSI_SEQUENCES[Keys.ControlH]
     ControlI = REVERSE_ANSI_SEQUENCES[Keys.ControlI]
     ControlC = REVERSE_ANSI_SEQUENCES[Keys.ControlC]

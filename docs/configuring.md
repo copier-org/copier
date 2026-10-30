@@ -929,7 +929,7 @@ questions with default answers.
     For example:
 
     ```shell
-    copier copy -fd 'python_versions=[3.10, 3.11, 3.12]'
+    copier copy -fd 'python_versions=[3.11, 3.12, 3.13]'
     ```
 
     List items are parsed according to the question's `type` and don't need to be quoted

@@ -66,7 +66,7 @@ def is_git_available() -> bool:
     for exe in ("git", "git.exe"):
         try:
             git_path = local.which(exe)
-        except CommandNotFound:  # noqa: PERF203
+        except CommandNotFound:
             continue
         else:
             break

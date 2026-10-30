@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterator, Mapping, MutableMapping, Sequence
 from contextlib import contextmanager
 from contextvars import ContextVar
-from enum import Enum
+from enum import Enum, StrEnum
 from pathlib import Path
 from typing import (
     Annotated,
@@ -95,7 +95,7 @@ class LazyDict(MutableMapping[_K, _V]):
         return len(self._pending)
 
 
-class Phase(str, Enum):
+class Phase(StrEnum):
     """The known execution phases."""
 
     PROMPT = "prompt"

@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import subprocess
-import sys
 from collections.abc import Sequence
 from pathlib import Path
 from subprocess import CompletedProcess
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 
 from ._tools import printf_exception
 from ._types import PathSeq
@@ -15,12 +14,6 @@ from ._types import PathSeq
 if TYPE_CHECKING:  # always false
     from ._template import Template
     from ._user_data import AnswersMap, Question
-
-if sys.version_info < (3, 11):
-    from typing_extensions import Self
-else:
-    from typing import Self
-
 
 __all__ = [
     "CleanupWarning",
