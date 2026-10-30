@@ -7,7 +7,7 @@
 
 ## Code conventions
 
-- ALWAYS write code compatible with Python 3.10+
+- ALWAYS write code compatible with Python 3.11+
 - ALWAYS use `snake_case` for Python functions/methods and variables, `PascalCase` for
   classes, and `UPPER_SNAKE_CASE` for constants
 - ALWAYS use full type annotations except for `self` and `cls` parameters

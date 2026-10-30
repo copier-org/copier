@@ -26,6 +26,7 @@ from typing import (
     Final,
     Literal,
     ParamSpec,
+    Self,
     TypeVar,
     get_args,
     overload,
@@ -88,11 +89,6 @@ from .errors import (
     UserMessageError,
     YieldTagInFileError,
 )
-
-if sys.version_info < (3, 11):
-    from typing_extensions import Self
-else:
-    from typing import Self
 
 _T = TypeVar("_T")
 _P = ParamSpec("_P")
