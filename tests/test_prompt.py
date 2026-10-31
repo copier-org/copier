@@ -601,7 +601,8 @@ def test_prompt_does_not_capture_mouse(
     tui.sendline()
     tui.expect_exact(pexpect.EOF)
     # Escape sequence that enables mouse tracking in the terminal
-    assert "\x1b[?1000h" not in output.getvalue()
+    mouse_tracking_enabled = "\x1b[?1000h" in output.getvalue()
+    assert not mouse_tracking_enabled, ascii(output.getvalue())
 
 
 @pytest.mark.parametrize("type_", ["str", "yaml", "json"])
