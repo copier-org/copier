@@ -420,7 +420,7 @@ dev = [
     { name = "types-pyyaml", specifier = "==6.0.12.20260906" },
 ]
 docs = [
-    { name = "markdown-exec", specifier = "==1.12.5" },
+    { name = "markdown-exec", specifier = "==1.12.6" },
     { name = "mkdocs-material", specifier = "==9.7.7" },
     { name = "mkdocs-redirects", specifier = "==1.2.3" },
     { name = "mkdocstrings", extras = ["python"], specifier = "==1.0.8" },
@@ -839,15 +839,15 @@ wheels = [
 
 [[package]]
 name = "markdown-exec"
-version = "1.12.5"
+version = "1.12.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "markupsafe" },
     { name = "pymdown-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/42/df/8f91f64f25aabdbe5d1fbfe6aedec4cd0d3d15f9761799dbd7a1c6ef8b4b/markdown_exec-1.12.5.tar.gz", hash = "sha256:f1546befc436da8bd5aacf82ce241fbee40611c7251a3e71d3280aba23b1403d", size = 82344, upload-time = "2026-10-14T10:33:28.004Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/da/96/02cd0802bc17b4e9b818b07b44096d40ce57d9699c6d35e72f25c5b61dd8/markdown_exec-1.12.6.tar.gz", hash = "sha256:31d4070b3137395fbea0f5e82f21226f9919debbbb7fc3dfcfff0c660cc64ae1", size = 84499, upload-time = "2026-10-31T13:29:27.992Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6c/12/df1cca72a7520b9384eac66ebd1d75fbd6810549735243338587f6b7a904/markdown_exec-1.12.5-py3-none-any.whl", hash = "sha256:a0d73755b90e712b3324b189bff39327f3e2800f1e024b04ed353c000fc3b48e", size = 55080, upload-time = "2026-10-14T10:33:26.718Z" },
+    { url = "https://files.pythonhosted.org/packages/c9/b5/ac82d68378beb338fa5acc5b2b8f08f3abc844d864c0ce2456da57a26d47/markdown_exec-1.12.6-py3-none-any.whl", hash = "sha256:b2dabe3c209f10f25aac2585bb8cdfcf325df691d4054f3394fba4b8c87ae4ee", size = 55034, upload-time = "2026-10-31T13:29:26.269Z" },
 ]
 
 [[package]]
