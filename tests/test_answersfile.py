@@ -209,7 +209,10 @@ def test_absolute_answersfile_is_rejected(
     src, dst, elsewhere = map(tmp_path_factory.mktemp, ("src", "dst", "elsewhere"))
     build_file_tree({(src / "copier.yml"): "question: answer"})
     answers_file = elsewhere / "answers.yml"
-    with pytest.raises(UserMessageError, match="must be relative to the destination"):
+    with pytest.raises(
+        UserMessageError,
+        match=r"answers file .+? must be relative to the destination",
+    ):
         copier.run_copy(
             str(src),
             dst,
