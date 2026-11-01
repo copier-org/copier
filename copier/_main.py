@@ -282,8 +282,7 @@ class Worker:
         if isinstance(value, (str, Path)) and Path(value).is_absolute():
             raise UserMessageError(
                 f'The answers file "{value}" must be relative to the destination, '
-                "because it lives inside the generated project. To read answers "
-                "from a file elsewhere, use --data-file instead."
+                "because it lives inside the generated project."
             )
         return value
 
