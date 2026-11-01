@@ -160,11 +160,16 @@ class UnsafeTemplateError(CopierError):
     def __init__(self, features: Sequence[str]):
         assert features
         s = "s" if len(features) > 1 else ""
-        super().__init__(
-            f"Refusing to generate: template uses potentially unsafe feature{s}: {', '.join(features)}.\n"
-            "Nothing was written to the destination.\n"
-            "If you trust this template, re-run with the `--trust` option, or add it to the trust list in your Copier settings."
-        )
+        lines = [
+            f"Refusing to generate: template uses potentially unsafe feature{s}: {', '.join(features)}.",
+            "Nothing was written to the destination.",
+            "If you trust this template, re-run with the `--trust` option, or add it to the trust list in your Copier settings.",
+        ]
+        if list(features) == ["tasks"]:
+            lines.append(
+                "Alternatively, you can re-run with `--skip-tasks` to skip running tasks."
+            )
+        super().__init__("\n".join(lines))
 
 
 class YieldTagInFileError(CopierError):

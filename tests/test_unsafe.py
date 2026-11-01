@@ -124,6 +124,7 @@ def test_copy_cli(
             "Refusing to generate: template uses potentially unsafe feature: tasks."
             in err
         )
+        assert "--skip-tasks" in err
 
 
 @pytest.mark.parametrize(
@@ -422,3 +423,16 @@ def test_update_cli(
             "Refusing to generate: template uses potentially unsafe feature: tasks."
             in err
         )
+        assert "--skip-tasks" in err
+
+
+def test_unsafe_template_error_skip_tasks_hint() -> None:
+    """When tasks are the only unsafe feature, suggest --skip-tasks."""
+    err_tasks = UnsafeTemplateError(["tasks"])
+    assert "--skip-tasks" in str(err_tasks)
+
+    err_multi = UnsafeTemplateError(["jinja_extensions", "tasks"])
+    assert "--skip-tasks" not in str(err_multi)
+
+    err_jinja = UnsafeTemplateError(["jinja_extensions"])
+    assert "--skip-tasks" not in str(err_jinja)

@@ -253,14 +253,19 @@ passing HTTPS credentials to Git:
 
 ## What exit codes does the Copier CLI use?
 
-| Exit code | Meaning                                                                                        |
-| --------- | ---------------------------------------------------------------------------------------------- |
-| 0         | Success                                                                                        |
-| 1         | An error occurred; a description was printed to `stderr`                                       |
-| 2         | `copier check-update --quiet` found a newer template version                                   |
-| 4         | The template uses unsafe features and the command ran without `--trust`; nothing was generated |
+For template generation commands (`copier copy`, `copier recopy`, `copier update`):
 
-The exit code `4` lets scripts distinguish a refused generation (the
-destination is left untouched) from other failures. If you trust the
-template, re-run with `--trust` or list it in the
-[settings trust list](settings.md).
+| Exit code | Meaning                                                              |
+| --------- | -------------------------------------------------------------------- |
+| 0         | Success                                                              |
+| 1         | An error occurred; a description was printed to `stderr`             |
+| 4         | The template uses unsafe features without `--trust`; generation refused |
+
+The exit code `4` lets scripts distinguish a refused generation (the destination is
+left untouched) from other failures. If you trust the template, re-run with `--trust`
+or add it to the [settings trust list](settings.md). When tasks are the only unsafe
+feature, you can also re-run with `--skip-tasks`.
+
+The `copier check-update` command uses different exit codes (see
+[Checking for updates](updating.md#checking-for-updates)): it exits with `2` when a
+newer template version is available under `--quiet`.
