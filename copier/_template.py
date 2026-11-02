@@ -24,7 +24,7 @@ from plumbum.commands.processes import ProcessExecutionError
 from plumbum.machines import local
 from pydantic.dataclasses import dataclass
 
-from ._tools import copier_version, handle_remove_readonly
+from ._tools import copier_version, handle_remove_readonly, split_nul
 from ._types import AnyByStrDict, VCSTypes
 from ._vcs import (
     CLONE_PREFIX,
@@ -621,11 +621,11 @@ class Template:
             # TODO: simplify with ``--format`` once the minimum git
             # version is raised to 2.38+ (--format cannot be combined
             # with --stage; see git-ls-files(1)).
-            raw = git("ls-files", "--stage").strip()
+            raw = git("ls-files", "-z", "--stage")
         except (OSError, ProcessExecutionError):
             return {}
         modes: dict[PurePosixPath, int] = {}
-        for line in raw.splitlines():
+        for line in split_nul(raw):
             # Format: "<mode> <sha> <stage>\t<path>"
             if "\t" not in line:
                 continue

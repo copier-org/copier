@@ -5,7 +5,7 @@ from tempfile import TemporaryDirectory
 import pytest
 from poethepoet.app import PoeThePoet
 
-from copier._tools import cast_to_bool, normalize_git_path
+from copier._tools import cast_to_bool, split_nul
 
 from .helpers import git
 
@@ -65,21 +65,29 @@ def test_temporary_directory_with_git_repo_deletion() -> None:
 
 
 @pytest.mark.parametrize(
-    ("path", "normalized"),
+    ("output", "entries"),
     [
-        ("readme.md", "readme.md"),
-        ('quo\\"tes', 'quo"tes'),
-        ('"surrounded"', "surrounded"),
-        ("m4\\303\\2424\\303\\2614a", "m4â4ñ4a"),
-        ("tab\\t", "tab\t"),
-        ("lf\\n", "lf\n"),
-        ("crlf\\r\\n", "crlf\r\n"),
-        ("back\\\\slash", "back\\slash"),
+        ("", []),
+        ("readme.md\0", ["readme.md"]),
+        ("\0readme.md", ["", "readme.md"]),
+        ("a\0b\0", ["a", "b"]),
+        ("a\0b", ["a", "b"]),
+        ("\0a\0\0b\0", ["", "a", "", "b"]),
+        ("\0", [""]),
+        ('quo"tes\0', ['quo"tes']),
+        ('"surrounded"\0', ['"surrounded"']),
+        ("m4â4ñ4a\0", ["m4â4ñ4a"]),
+        ("tab\t\0", ["tab\t"]),
+        ("lf\n\0", ["lf\n"]),
+        ("crlf\r\n\0", ["crlf\r\n"]),
+        ("back\\slash\0", ["back\\slash"]),
+        ('qu"o\\tes\0', ['qu"o\\tes']),
         (
-            "\\a\\b\\f\\n\\t\\vcontrol\\a\\b\\f\\n\\t\\vcharacters\\a\\b\\f\\n\\t\\v",
-            "\a\b\f\n\t\vcontrol\a\b\f\n\t\vcharacters\a\b\f\n\t\v",
+            "\a\b\f\n\t\vcontrol\a\b\f\n\t\vcharacters\a\b\f\n\t\v\0",
+            ["\a\b\f\n\t\vcontrol\a\b\f\n\t\vcharacters\a\b\f\n\t\v"],
         ),
+        ('lf\n\0qu"o\\tes\0', ["lf\n", 'qu"o\\tes']),
     ],
 )
-def test_normalizing_git_paths(path: str, normalized: str) -> None:
-    assert normalize_git_path(path) == normalized
+def test_split_nul(output: str, entries: list[str]) -> None:
+    assert split_nul(output) == entries

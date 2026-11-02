@@ -59,10 +59,10 @@ from ._tools import (
     Style,
     cast_to_bool,
     escape_git_path,
-    normalize_git_path,
     printf,
     scantree,
     set_git_alternates,
+    split_nul,
 )
 from ._types import (
     MISSING,
@@ -1444,16 +1444,16 @@ class Worker:
                 # They should even be recreated if deleted intentionally.
                 files_removed = [
                     path
-                    for path in map(
-                        normalize_git_path,
+                    for path in split_nul(
                         git(
                             "diff-tree",
+                            "-z",
                             "-r",
                             "--diff-filter=D",
                             "--name-only",
                             "HEAD",
                             subproject_head,
-                        ).splitlines(),
+                        )
                     )
                     if not (subproject_top / path).exists()
                     and not self.match_skip(Path(path))
@@ -1519,11 +1519,11 @@ class Worker:
                 # instead of the "new file mode" which avoids deleting the file
                 # content previously added in the project.
                 diff_added_cmd = git[
-                    "diff-tree", "-r", "--diff-filter=A", "--name-only"
+                    "diff-tree", "-z", "-r", "--diff-filter=A", "--name-only"
                 ]
                 for filename in (
-                    set(diff_added_cmd("HEAD", subproject_head).splitlines())
-                ) & set(diff_added_cmd("HEAD", new_copy_head).splitlines()):
+                    set(split_nul(diff_added_cmd("HEAD", subproject_head)))
+                ) & set(split_nul(diff_added_cmd("HEAD", new_copy_head))):
                     f = Path(filename)
                     f.parent.mkdir(parents=True, exist_ok=True)
                     f.touch((subproject_top / filename).stat().st_mode)
@@ -1547,15 +1547,15 @@ class Worker:
                 # paths accordingly for pattern matching.
                 skip_if_exists_files = [
                     escape_git_path(f)
-                    for f in map(
-                        normalize_git_path,
+                    for f in split_nul(
                         diff_cmd(
+                            "-z",
                             "-r",
                             "--no-commit-id",
                             "--name-only",
                             "--",
                             subproject_subdir,
-                        ).splitlines(),
+                        )
                     )
                     if self.match_skip(Path(f).relative_to(subproject_subdir))
                 ]
@@ -1580,18 +1580,18 @@ class Worker:
                 # to exclude them from the patch application.
                 for filename in skip_if_exists_files:
                     apply_cmd = apply_cmd[f"--exclude={filename}"]
-                ignored_files = git["status", "--ignored", "--porcelain"]()
-                # returns "!! file1\n !! file2\n"
+                ignored_files = git["status", "-z", "--ignored", "--porcelain"]()
+                # returns "!! file1\0!! file2\0"
                 # adds `--exclude file1 --exclude file2` to `git apply` command
-                for filename in ignored_files.splitlines():
+                for filename in split_nul(ignored_files):
                     if filename.startswith("!! "):
                         filepath = filename[3:]
                         # Don't exclude template-generated files that happen to
                         # be gitignored — they should still be updated.
                         # Fixes #2729, regression of #1162.
-                        if (Path(new_copy) / normalize_git_path(filepath)).exists():
+                        if (Path(new_copy) / filepath).exists():
                             continue
-                        apply_cmd = apply_cmd[f"--exclude={filepath}"]
+                        apply_cmd = apply_cmd[f"--exclude={escape_git_path(filepath)}"]
                 (apply_cmd << diff)(retcode=None)
                 if self.conflict == "inline":
                     conflicted = []
@@ -1599,17 +1599,13 @@ class Worker:
                     new_path = Path(new_copy)
                     # `--ignored` so we still find .rej files when the
                     # destination has a `*.rej` ignore rule.
-                    status = (
-                        git("status", "--porcelain", "--ignored").strip().splitlines()
-                    )
+                    status = split_nul(git("status", "-z", "--porcelain", "--ignored"))
                     for line in status:
                         # Filter merge rejections (part 1/2)
                         if not line.startswith(("?? ", "!! ")):
                             continue
                         # Remove prefix
                         fname = line[3:]
-                        # Normalize name
-                        fname = normalize_git_path(fname)
                         # Filter merge rejections (part 2/2)
                         if not fname.endswith(".rej"):
                             continue
@@ -1668,12 +1664,10 @@ class Worker:
                     # and Git docs: https://git-scm.com/docs/git-update-index#_using_index_info.
                     if conflicted:
                         input_lines = []
-                        for line in (
-                            git("ls-files", "--stage", "--", *conflicted)
-                            .strip()
-                            .splitlines()
+                        for line in split_nul(
+                            git("ls-files", "-z", "--stage", "--", *conflicted)
                         ):
-                            perms_sha_mode, path = line.split("\t")
+                            perms_sha_mode, path = line.split("\t", 1)
                             perms, sha, _ = perms_sha_mode.split()
                             input_lines.append(f"0 {'0' * 40}\t{path}")
                             input_lines.append(f"{perms} {sha} 2\t{path}")
@@ -1684,7 +1678,7 @@ class Worker:
                                     "hash-object",
                                     "-w",
                                     "--",
-                                    old_path / normalize_git_path(path),
+                                    old_path / path,
                                 ).strip()
                                 input_lines.append(f"{perms} {old_sha} 1\t{path}")
                             with suppress(ProcessExecutionError):
@@ -1694,12 +1688,12 @@ class Worker:
                                     "hash-object",
                                     "-w",
                                     "--",
-                                    new_path / normalize_git_path(path),
+                                    new_path / path,
                                 ).strip()
                                 input_lines.append(f"{perms} {new_sha} 3\t{path}")
                         (
-                            git["update-index", "--index-info"]
-                            << "\n".join(input_lines)
+                            git["update-index", "-z", "--index-info"]
+                            << "\0".join(input_lines) + "\0"
                         )()
             # Trigger recursive removal of deleted files in last template version
             _remove_old_files(subproject_top, compared)

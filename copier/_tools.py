@@ -181,36 +181,28 @@ def handle_remove_readonly(
 _re_whitespace = re.compile(r"^\s+|\s+$")
 
 
-def normalize_git_path(path: str) -> str:
-    r"""Convert weird characters returned by Git to normal UTF-8 path strings.
+def split_nul(output: str) -> list[str]:
+    """Split a string on NUL characters like `str.splitlines` does on newlines.
 
-    A filename like âñ will be reported by Git as "\\303\\242\\303\\261" (octal
-    notation).
-    Similarly, a filename like "<tab>foo\b<lf>ar" will be reported as "\tfoo\\b\nar".
-    This can be disabled with `git config core.quotepath off`.
+    A trailing NUL does not yield an empty last item.
 
     Args:
-        path: The Git path to normalize.
+        output: The string to split.
 
     Returns:
-        str: The normalized Git path.
+        The NUL-delimited items.
     """
-    # Remove surrounding quotes
-    if path[0] == path[-1] == '"':
-        path = path[1:-1]
-    # Repair double-quotes
-    path = path.replace('\\"', '"')
-    # Unescape escape characters
-    path = path.encode("latin-1", "backslashreplace").decode("unicode-escape")
-    # Convert octal to utf8
-    return path.encode("latin-1", "backslashreplace").decode("utf-8")
+    items = output.split("\0")
+    if not items[-1]:
+        items.pop()
+    return items
 
 
 def escape_git_path(path: str) -> str:
     """Escape paths that will be used as literal gitwildmatch patterns.
 
-    If the path was returned by a Git command, it should be unescaped completely.
-    ``normalize_git_path`` can be used for this purpose.
+    If the path was returned by a Git command, it must be unquoted, e.g., by running
+    the command with `-z`.
 
     Args:
         path: The Git path to escape.
