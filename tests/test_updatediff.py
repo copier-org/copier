@@ -15,7 +15,7 @@ from plumbum import local
 
 from copier._cli import CopierApp
 from copier._main import Worker, run_copy, run_update
-from copier._tools import normalize_git_path
+from copier._tools import split_nul
 from copier._types import VcsRef
 from copier._user_data import load_answersfile_data
 from copier._vcs import get_git_version
@@ -1382,11 +1382,8 @@ def test_conflicted_files_are_marked_unmerged(
     assert not (dst / f"{filename}.rej").exists()
 
     with local.cwd(dst):
-        lines = git("status", "--porcelain=v1").strip().splitlines()
-        assert any(
-            line.startswith("UU") and normalize_git_path(line[3:]) == filename
-            for line in lines
-        )
+        lines = split_nul(git("status", "-z", "--porcelain=v1"))
+        assert any(line.startswith("UU") and line[3:] == filename for line in lines)
 
 
 def test_3way_merged_files_without_conflicts_are_not_marked_unmerged(
@@ -1448,11 +1445,8 @@ def test_3way_merged_files_without_conflicts_are_not_marked_unmerged(
     assert not (dst / f"{filename}.rej").exists()
 
     with local.cwd(dst):
-        lines = git("status", "--porcelain=v1").strip().splitlines()
-        assert not any(
-            line.startswith("UU") and normalize_git_path(line[3:]) == filename
-            for line in lines
-        )
+        lines = split_nul(git("status", "-z", "--porcelain=v1"))
+        assert not any(line.startswith("UU") and line[3:] == filename for line in lines)
 
 
 def test_update_with_new_file_in_template_and_project(
@@ -1525,6 +1519,76 @@ def test_update_with_new_file_in_template_and_project(
                 - ./deploy.sh
         =======
                 - ./test.sh --slow
+        >>>>>>> after updating
+        """
+    )
+
+
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "m4â4ñ4a",
+        pytest.param(
+            'qu"otes',
+            marks=pytest.mark.skipif(
+                platform.system() == "Windows",
+                reason="Double quotes are not supported in file names on Windows.",
+            ),
+        ),
+        pytest.param(
+            "tab\there",
+            marks=pytest.mark.skipif(
+                platform.system() == "Windows",
+                reason="Control characters are not supported in file names on Windows.",
+            ),
+        ),
+        pytest.param(
+            "line\nbreak",
+            marks=pytest.mark.skipif(
+                platform.system() == "Windows",
+                reason="Control characters are not supported in file names on Windows.",
+            ),
+        ),
+    ],
+)
+def test_update_with_new_file_in_template_and_project_with_special_characters(
+    tmp_path_factory: pytest.TempPathFactory, filename: str
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": (
+                    "{{ _copier_answers|to_yaml }}"
+                ),
+            }
+        )
+        git_init("v1")
+        git("tag", "v1")
+
+    run_copy(str(src), dst)
+
+    with local.cwd(dst):
+        git_init("v1")
+        Path(filename).write_text("project\n")
+        git("add", ".")
+        git("commit", "-m", "v2")
+
+    with local.cwd(src):
+        Path(filename).write_text("template\n")
+        git("add", ".")
+        git("commit", "-m", "v2")
+        git("tag", "v2")
+
+    run_update(dst_path=dst, overwrite=True, conflict="inline")
+    assert load_answersfile_data(dst).get("_commit") == "v2"
+    assert (dst / filename).read_text() == dedent(
+        """\
+        <<<<<<< before updating
+        project
+        =======
+        template
         >>>>>>> after updating
         """
     )
