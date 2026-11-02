@@ -591,8 +591,7 @@ def test_prompt_does_not_capture_mouse(
     build_file_tree({(src / "copier.yml"): yaml.dump({"question": question})})
     # A real pty is needed; without one, no terminal control sequences are emitted
     tui = pexpect.spawn(
-        COPIER_PATH[0],
-        [*COPIER_PATH[1:], "copy", str(src), str(dst)],
+        COPIER_PATH + ("copy", str(src), str(dst)),
         timeout=spawn_timeout or None,
         encoding="utf-8",
     )
