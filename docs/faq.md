@@ -231,6 +231,36 @@ copier copy -r HEAD ./src ./dst
 ... then you'll notice `new-file.txt` does exist. You passed a specific ref to copy, so
 Copier skips its autodetection and just goes for the `HEAD` you already chose.
 
+## How can I preview or test my template while developing it?
+
+Copier doesn't include a command to preview a template. A common approach is snapshot
+testing: render the template with a few sets of answers, keep the generated projects in
+the template repository, and review the diff every time you change the template.
+
+[copier-template-tester](https://github.com/KyleKing/copier-template-tester) (`ctt`)
+automates this. Create a `ctt.toml` file next to your `copier.yml` and define one output
+folder per test case, with the answers to use:
+
+```toml
+[defaults]
+project_name = "placeholder"
+
+[output.".ctt/defaults"]
+
+[output.".ctt/no_license"]
+include_license = false
+```
+
+Then run `ctt` from the root of your template. It renders each output folder, so you can
+inspect the generated files and commit them as snapshots. It can also run as a
+[pre-commit](https://pre-commit.com/) hook.
+
+!!! note
+
+    `copier-template-tester` is a third-party project. It is not maintained by the
+    Copier maintainers, so check its documentation for installation and all available
+    options.
+
 ## How to pass credentials to Git?
 
 If you do something like this, and the template supports updates, you'll notice that the
