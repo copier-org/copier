@@ -35,7 +35,7 @@ class JinjaExtension(Extension): ...
             {"_tasks": ["touch task.txt"]},
             pytest.raises(
                 UnsafeTemplateError,
-                match="Template uses potentially unsafe feature: tasks.",
+                match="Refusing to generate: template uses potentially unsafe feature: tasks.",
             ),
         ),
         (
@@ -67,7 +67,7 @@ class JinjaExtension(Extension): ...
             {"_jinja_extensions": ["tests.test_unsafe.JinjaExtension"]},
             pytest.raises(
                 UnsafeTemplateError,
-                match="Template uses potentially unsafe feature: jinja_extensions.",
+                match="Refusing to generate: template uses potentially unsafe feature: jinja_extensions.",
             ),
         ),
         (
@@ -77,7 +77,7 @@ class JinjaExtension(Extension): ...
             },
             pytest.raises(
                 UnsafeTemplateError,
-                match="Template uses potentially unsafe features: jinja_extensions, tasks.",
+                match="Refusing to generate: template uses potentially unsafe features: jinja_extensions, tasks.",
             ),
         ),
     ],
@@ -120,7 +120,11 @@ def test_copy_cli(
     else:
         assert retcode == 4
         _, err = capsys.readouterr()
-        assert "Template uses potentially unsafe feature: tasks." in err
+        assert (
+            "Refusing to generate: template uses potentially unsafe feature: tasks."
+            in err
+        )
+        assert "--skip-tasks" in err
 
 
 @pytest.mark.parametrize(
@@ -141,7 +145,7 @@ def test_copy_cli(
             {},
             pytest.raises(
                 UnsafeTemplateError,
-                match="Template uses potentially unsafe feature: tasks.",
+                match="Refusing to generate: template uses potentially unsafe feature: tasks.",
             ),
         ),
         (
@@ -149,7 +153,7 @@ def test_copy_cli(
             {"_tasks": ["touch task-new.txt"]},
             pytest.raises(
                 UnsafeTemplateError,
-                match="Template uses potentially unsafe feature: tasks.",
+                match="Refusing to generate: template uses potentially unsafe feature: tasks.",
             ),
         ),
         (
@@ -157,7 +161,7 @@ def test_copy_cli(
             {"_tasks": ["touch task-new.txt"]},
             pytest.raises(
                 UnsafeTemplateError,
-                match="Template uses potentially unsafe feature: tasks.",
+                match="Refusing to generate: template uses potentially unsafe feature: tasks.",
             ),
         ),
         (
@@ -210,7 +214,7 @@ def test_copy_cli(
             },
             pytest.raises(
                 UnsafeTemplateError,
-                match="Template uses potentially unsafe feature: migrations.",
+                match="Refusing to generate: template uses potentially unsafe feature: migrations.",
             ),
         ),
         (
@@ -226,7 +230,7 @@ def test_copy_cli(
             },
             pytest.raises(
                 UnsafeTemplateError,
-                match="Template uses potentially unsafe feature: migrations.",
+                match="Refusing to generate: template uses potentially unsafe feature: migrations.",
             ),
         ),
         (
@@ -247,7 +251,7 @@ def test_copy_cli(
             },
             pytest.raises(
                 UnsafeTemplateError,
-                match="Template uses potentially unsafe feature: migrations.",
+                match="Refusing to generate: template uses potentially unsafe feature: migrations.",
             ),
         ),
         (
@@ -260,7 +264,7 @@ def test_copy_cli(
             {},
             pytest.raises(
                 UnsafeTemplateError,
-                match="Template uses potentially unsafe feature: jinja_extensions.",
+                match="Refusing to generate: template uses potentially unsafe feature: jinja_extensions.",
             ),
         ),
         (
@@ -268,7 +272,7 @@ def test_copy_cli(
             {"_jinja_extensions": ["tests.test_unsafe.JinjaExtension"]},
             pytest.raises(
                 UnsafeTemplateError,
-                match="Template uses potentially unsafe feature: jinja_extensions.",
+                match="Refusing to generate: template uses potentially unsafe feature: jinja_extensions.",
             ),
         ),
         (
@@ -276,7 +280,7 @@ def test_copy_cli(
             {"_jinja_extensions": ["tests.test_unsafe.JinjaExtension"]},
             pytest.raises(
                 UnsafeTemplateError,
-                match="Template uses potentially unsafe feature: jinja_extensions",
+                match="Refusing to generate: template uses potentially unsafe feature: jinja_extensions",
             ),
         ),
         (
@@ -300,7 +304,7 @@ def test_copy_cli(
             pytest.raises(
                 UnsafeTemplateError,
                 match=(
-                    "Template uses potentially unsafe features: "
+                    "Refusing to generate: template uses potentially unsafe features: "
                     "jinja_extensions, migrations, tasks."
                 ),
             ),
@@ -415,4 +419,20 @@ def test_update_cli(
     else:
         assert retcode == 4
         _, err = capsys.readouterr()
-        assert "Template uses potentially unsafe feature: tasks." in err
+        assert (
+            "Refusing to generate: template uses potentially unsafe feature: tasks."
+            in err
+        )
+        assert "--skip-tasks" in err
+
+
+def test_unsafe_template_error_skip_tasks_hint() -> None:
+    """When tasks are the only unsafe feature, suggest --skip-tasks."""
+    err_tasks = UnsafeTemplateError(["tasks"])
+    assert "--skip-tasks" in str(err_tasks)
+
+    err_multi = UnsafeTemplateError(["jinja_extensions", "tasks"])
+    assert "--skip-tasks" not in str(err_multi)
+
+    err_jinja = UnsafeTemplateError(["jinja_extensions"])
+    assert "--skip-tasks" not in str(err_jinja)
