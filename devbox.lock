@@ -1,41 +1,41 @@
 {
   "lockfile_version": "1",
   "packages": {
-    "difftastic@0.71.0": {
-      "last_modified": "2026-10-16T02:15:57Z",
-      "resolved": "github:NixOS/nixpkgs/f20cd90e28fe0403873f473b29e42662cd86e8c4#difftastic",
+    "difftastic@0.72.0": {
+      "last_modified": "2026-11-01T00:57:29Z",
+      "resolved": "github:NixOS/nixpkgs/d357a2b54f0b6dc4aeb4e993190a52cf151b6f24#difftastic",
       "source": "devbox-search",
-      "version": "0.71.0",
+      "version": "0.72.0",
       "systems": {
         "aarch64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/lvgr0ig75zms9m3y1ia3x3a8j944vc00-difftastic-0.71.0",
+              "path": "/nix/store/harcsh4llmlv61iflk460c8k8n51rj3r-difftastic-0.72.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/lvgr0ig75zms9m3y1ia3x3a8j944vc00-difftastic-0.71.0"
+          "store_path": "/nix/store/harcsh4llmlv61iflk460c8k8n51rj3r-difftastic-0.72.0"
         },
         "aarch64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/c5w82rg1lw5vk6m6px927wz178sdg7c0-difftastic-0.71.0",
+              "path": "/nix/store/cr388qkg86iakp5r0a7hfbjkf0ldgp3h-difftastic-0.72.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/c5w82rg1lw5vk6m6px927wz178sdg7c0-difftastic-0.71.0"
+          "store_path": "/nix/store/cr388qkg86iakp5r0a7hfbjkf0ldgp3h-difftastic-0.72.0"
         },
         "x86_64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/hws40b1ly35ziixivljqgj8x4fkxdk9h-difftastic-0.71.0",
+              "path": "/nix/store/ypbhyrxpz6fxvskclj3vs91qavvi7sgf-difftastic-0.72.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/hws40b1ly35ziixivljqgj8x4fkxdk9h-difftastic-0.71.0"
+          "store_path": "/nix/store/ypbhyrxpz6fxvskclj3vs91qavvi7sgf-difftastic-0.72.0"
         }
       }
     },
