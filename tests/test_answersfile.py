@@ -549,3 +549,86 @@ def test_external_data_path_outside_destination_root_is_unsafe_on_update(
 
     with expected:
         copier.run_update(project, defaults=True, overwrite=True, unsafe=unsafe)
+
+
+def test_answersfile_outside_nonexistent_destination(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    parent_src, child_src, dst = map(
+        tmp_path_factory.mktemp, ("parent_src", "child_src", "dst")
+    )
+
+    build_file_tree(
+        {
+            (parent_src / "copier.yml"): (
+                """\
+                project_name:
+                    type: str
+                """
+            ),
+            (parent_src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers | to_nice_yaml }}"
+            ),
+            (child_src / "copier.yml"): (
+                """\
+                project_name:
+                    type: str
+                """
+            ),
+            # The child template doesn't render the answers file because it is
+            # outside the subproject, where rendering is forbidden.
+            (child_src / "README.txt.jinja"): "Project: {{ project_name }}",
+        }
+    )
+    git_save(parent_src, tag="v1")
+    git_save(child_src, tag="v1")
+
+    copier.run_copy(str(parent_src), dst, data={"project_name": "test project"})
+    answers_file = dst / ".copier-answers.yml"
+    assert answers_file.is_file()
+    parent_answers = answers_file.read_text()
+
+    subproject = dst / "my" / "dest" / "path"
+    assert not subproject.exists()
+
+    copier.run_copy(
+        str(child_src),
+        subproject,
+        answers_file=Path("..", "..", "..", ".copier-answers.yml"),
+        defaults=True,
+    )
+
+    assert (subproject / "README.txt").read_text() == "Project: test project"
+    assert answers_file.read_text() == parent_answers
+
+
+def test_external_data_outside_nonexistent_destination(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    (dst / "secret.yml").write_text("secret_key: s3cr3t")
+
+    build_file_tree(
+        {
+            (src / "copier.yml"): (
+                """\
+                _external_data:
+                    secret: ../secret.yml
+
+                secret: "{{ _external_data.secret.secret_key }}"
+                """
+            ),
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers | to_nice_yaml }}"
+            ),
+        }
+    )
+    git_save(src, tag="v1")
+
+    project = dst / "project"
+    assert not project.exists()
+
+    copier.run_copy(str(src), project, defaults=True, unsafe=True)
+
+    assert load_answersfile_data(project)["secret"] == "s3cr3t"
