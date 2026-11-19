@@ -2728,3 +2728,32 @@ def test_update_sha256_repository(tmp_path_factory: pytest.TempPathFactory) -> N
 
     assert (dst / "README.md").read_text() == "v2"
     assert load_answersfile_data(dst).get("_commit") == "v2"
+
+
+def test_update_unreadable_git_repository(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": (
+                    "{{ _copier_answers|to_nice_yaml }}"
+                ),
+                "README.md": "v1",
+            }
+        )
+        git_init("v1")
+        git("tag", "v1")
+
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+
+    with local.cwd(dst):
+        git_init("v1")
+        # Like a SHA-256 repository read by a Git older than v2.29.0.
+        git("config", "core.repositoryformatversion", "1")
+        git("config", "extensions.copiertest", "true")
+
+    with pytest.raises(UserMessageError, match="copiertest"):
+        run_update(dst, defaults=True, overwrite=True)
