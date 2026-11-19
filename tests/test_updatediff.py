@@ -2692,3 +2692,39 @@ index f163f4b,d20125d..0000000
 ++>>>>>>> after updating
 """)
         # editorconfig-checker-enable
+
+
+@pytest.mark.skipif(
+    get_git_version() < Version("2.29.0"),
+    reason="Git v2.29.0+ is required for SHA-256 repositories",
+)
+def test_update_sha256_repository(tmp_path_factory: pytest.TempPathFactory) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                "{{ _copier_conf.answers_file }}.jinja": (
+                    "{{ _copier_answers|to_nice_yaml }}"
+                ),
+                "README.md": "v1",
+            }
+        )
+        git_init("v1")
+        git("tag", "v1")
+
+    run_copy(str(src), dst, defaults=True, overwrite=True)
+
+    with local.cwd(dst):
+        git("init", "--object-format=sha256")
+        git("add", ".")
+        git("commit", "-m", "v1")
+
+    with local.cwd(src):
+        build_file_tree({"README.md": "v2"})
+        git_save(message="v2", tag="v2")
+
+    run_update(dst, defaults=True, overwrite=True)
+
+    assert (dst / "README.md").read_text() == "v2"
+    assert load_answersfile_data(dst).get("_commit") == "v2"

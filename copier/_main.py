@@ -76,7 +76,7 @@ from ._types import (
     VcsRef,
 )
 from ._user_data import AnswersMap, Question, load_answersfile_data
-from ._vcs import get_git, is_git_available
+from ._vcs import get_git, get_git_object_format, is_git_available
 from .errors import (
     CleanupWarning,
     ConfigFileError,
@@ -1400,6 +1400,9 @@ class Worker:
             ).strip()
         )
         subproject_subdir = self.subproject.local_abspath.relative_to(subproject_top)
+        # The temporary repositories borrow Git objects from the real destination,
+        # so they must use the same object format to read them.
+        object_format = get_git_object_format(subproject_top)
 
         with (
             TemporaryDirectory(
@@ -1435,7 +1438,7 @@ class Worker:
             with local.cwd(subproject_top):
                 subproject_head = git("write-tree").strip()
             with local.cwd(old_copy):
-                self._git_initialize_repo()
+                self._git_initialize_repo(object_format)
                 # Configure borrowing Git objects from the real destination.
                 set_git_alternates(subproject_top)
                 # Save a list of files that were intentionally removed in the generated
@@ -1502,7 +1505,7 @@ class Worker:
             for filename in files_removed:
                 Path(new_copy, filename).unlink(missing_ok=True)
             with local.cwd(new_copy):
-                self._git_initialize_repo()
+                self._git_initialize_repo(object_format)
                 new_copy_head = git("rev-parse", "HEAD").strip()
             # Extract diff between temporary destination and real destination
             # with some special handling of newly added files in both the project
@@ -1704,10 +1707,19 @@ class Worker:
                 self.template.migration_tasks("after", self.subproject.template)  # type: ignore[arg-type]
             )
 
-    def _git_initialize_repo(self) -> None:
-        """Initialize a git repository in the current directory."""
+    def _git_initialize_repo(self, object_format: str = "sha1") -> None:
+        """Initialize a git repository in the current directory.
+
+        Args:
+            object_format: The object format (hash algorithm) of the repository.
+        """
         git = get_git()
-        git("init", retcode=None)
+        # Git versions older than SHA-256 support reject `--object-format`, so
+        # only pass it when the repository needs another format than the default.
+        if object_format == "sha1":
+            git("init", retcode=None)
+        else:
+            git("init", f"--object-format={object_format}", retcode=None)
         git("add", ".")
         self._git_commit()
 
