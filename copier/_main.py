@@ -20,6 +20,7 @@ from itertools import chain
 from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
 from shutil import rmtree
 from tempfile import TemporaryDirectory
+from textwrap import indent
 from types import TracebackType
 from typing import (
     Any,
@@ -1358,7 +1359,10 @@ class Worker:
             # A repository that this Git cannot read (e.g., a SHA-256 repository
             # with an old Git) looks untracked, so show why Git rejected it.
             if reason := get_git_repo_error(self.subproject.local_abspath):
-                message += f" Git reported: {reason}"
+                message += (
+                    f"\nGit could not use {self.subproject.local_abspath} as a "
+                    f"repository:\n{indent(reason.expandtabs(4), '    ')}"
+                )
             raise UserMessageError(message)
         if self.subproject.is_dirty():
             raise UserMessageError(
