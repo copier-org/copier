@@ -76,7 +76,12 @@ from ._types import (
     VcsRef,
 )
 from ._user_data import AnswersMap, Question, load_answersfile_data
-from ._vcs import get_git, get_git_object_format, is_git_available
+from ._vcs import (
+    get_git,
+    get_git_object_format,
+    get_git_repo_error,
+    is_git_available,
+)
 from .errors import (
     CleanupWarning,
     ConfigFileError,
@@ -1349,9 +1354,12 @@ class Worker:
         self._check_unsafe("update")
         # Check all you need is there
         if self.subproject.vcs != "git":
-            raise UserMessageError(
-                "Updating is only supported in git-tracked subprojects."
-            )
+            message = "Updating is only supported in git-tracked subprojects."
+            # A repository that this Git cannot read (e.g., a SHA-256 repository
+            # with an old Git) looks untracked, so show why Git rejected it.
+            if reason := get_git_repo_error(self.subproject.local_abspath):
+                message += f" Git reported: {reason}"
+            raise UserMessageError(message)
         if self.subproject.is_dirty():
             raise UserMessageError(
                 "Destination repository is dirty; cannot continue. "
