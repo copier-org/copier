@@ -122,6 +122,22 @@ def is_in_git_repo(path: StrOrPath) -> bool:
         return False
 
 
+def get_git_repo_error(path: StrOrPath) -> str:
+    """Get the reason why Git does not see a path as inside a Git repository.
+
+    Args:
+        path: The path to check.
+
+    Returns:
+        The error reported by Git, or an empty string if Git cannot run.
+    """
+    try:
+        _, _, stderr = get_git(path)["rev-parse", "--show-toplevel"].run(retcode=None)
+    except OSError:
+        return ""
+    return stderr.strip()
+
+
 def is_git_shallow_repo(path: StrOrPath) -> bool:
     """Indicate if a given path is a git shallow repo directory."""
     try:
