@@ -1714,12 +1714,7 @@ class Worker:
             object_format: The object format (hash algorithm) of the repository.
         """
         git = get_git()
-        # Git versions older than SHA-256 support reject `--object-format`, so
-        # only pass it when the repository needs another format than the default.
-        if object_format == "sha1":
-            git("init", retcode=None)
-        else:
-            git("init", f"--object-format={object_format}", retcode=None)
+        git("init", f"--object-format={object_format}", retcode=None)
         git("add", ".")
         self._git_commit()
 
