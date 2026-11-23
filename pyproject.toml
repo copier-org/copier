@@ -90,7 +90,7 @@ cmd = "pytest --color=yes"
 help = "run tests"
 
 [tool.poe.tasks.types]
-cmd = "mypy ."
+cmd = "mypy"
 help = "run the type (mypy) checker on the codebase"
 
 [tool.ruff.lint]
@@ -131,6 +131,7 @@ keep-runtime-typing = true
 [tool.mypy]
 strict = true
 plugins = ["pydantic.mypy"]
+files = ["copier", "tests"]
 
 [[tool.mypy.overrides]]
 module = [
