@@ -143,6 +143,53 @@ url = "https://github.com/editorconfig-checker/editorconfig-checker/releases/dow
 url_api = "https://api.github.com/repos/editorconfig-checker/editorconfig-checker/releases/assets/574675794"
 provenance = "github-attestations"
 
+[[tools.tombi]]
+version = "1.11.3"
+backend = "aqua:tombi-toml/tombi"
+specifiers = ["1.11.3"]
+
+[tools.tombi."platforms.linux-arm64"]
+checksum = "sha256:083614471a69e15f147ba68c96fe1e3ea02e8efe38d6bcdb4606b5a37ab8758a"
+url = "https://github.com/tombi-toml/tombi/releases/download/v1.11.3/tombi-cli-1.11.3-aarch64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/tombi-toml/tombi/releases/assets/755626402"
+provenance = "github-attestations"
+
+[tools.tombi."platforms.linux-arm64-musl"]
+checksum = "sha256:083614471a69e15f147ba68c96fe1e3ea02e8efe38d6bcdb4606b5a37ab8758a"
+url = "https://github.com/tombi-toml/tombi/releases/download/v1.11.3/tombi-cli-1.11.3-aarch64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/tombi-toml/tombi/releases/assets/755626402"
+provenance = "github-attestations"
+
+[tools.tombi."platforms.linux-x64"]
+checksum = "sha256:36672279d05f093455f01fa5a2799a8cc2162a9195cbbb23f0f8d1107d0de497"
+url = "https://github.com/tombi-toml/tombi/releases/download/v1.11.3/tombi-cli-1.11.3-x86_64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/tombi-toml/tombi/releases/assets/755626452"
+provenance = "github-attestations"
+
+[tools.tombi."platforms.linux-x64-musl"]
+checksum = "sha256:36672279d05f093455f01fa5a2799a8cc2162a9195cbbb23f0f8d1107d0de497"
+url = "https://github.com/tombi-toml/tombi/releases/download/v1.11.3/tombi-cli-1.11.3-x86_64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/tombi-toml/tombi/releases/assets/755626452"
+provenance = "github-attestations"
+
+[tools.tombi."platforms.macos-arm64"]
+checksum = "sha256:4e7daae9197910fe3717d241e5ca85cafd0f7f0ead988056fdd0b2cf2a447600"
+url = "https://github.com/tombi-toml/tombi/releases/download/v1.11.3/tombi-cli-1.11.3-aarch64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/tombi-toml/tombi/releases/assets/755626399"
+provenance = "github-attestations"
+
+[tools.tombi."platforms.macos-x64"]
+checksum = "sha256:642900713c3cb04adf45264117649e5f4731395b62cbafee8a9a2824fa479684"
+url = "https://github.com/tombi-toml/tombi/releases/download/v1.11.3/tombi-cli-1.11.3-x86_64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/tombi-toml/tombi/releases/assets/755626407"
+provenance = "github-attestations"
+
+[tools.tombi."platforms.windows-x64"]
+checksum = "sha256:b6b2d9e6419216aaa0b8e74a5c81c48335cb193d6eb87f50a7d77468bce10073"
+url = "https://github.com/tombi-toml/tombi/releases/download/v1.11.3/tombi-cli-1.11.3-x86_64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/tombi-toml/tombi/releases/assets/755626450"
+provenance = "github-attestations"
+
 [[tools.uv]]
 version = "0.13.4"
 backend = "aqua:astral-sh/uv"

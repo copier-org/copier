@@ -11,6 +11,7 @@ vscode:
     - bpruitt-goddard.mermaid-markdown-syntax-highlighting
     - editorconfig.editorconfig
     - ms-python.python
+    - tombi-toml.tombi
 
 ports:
   # Mkdocs local server; start it with `poe docs`
