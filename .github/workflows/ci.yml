@@ -15,7 +15,6 @@ on:
 env:
   LANG: "en_US.utf-8"
   LC_ALL: "en_US.utf-8"
-  PRE_COMMIT_HOME: ${{ github.workspace }}/.cache/pre-commit
   PYTHONIOENCODING: "UTF-8"
   # renovate: datasource=github-releases depName=mise packageName=jdx/mise extractVersion=^v(?<version>.+)$
   MISE_VERSION: "2026.11.12"
@@ -59,22 +58,13 @@ jobs:
           name: copier
           token: ${{ secrets.CODECOV_TOKEN }}
 
-  mise:
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - macos-latest
-          - ubuntu-latest
-    runs-on: ${{ matrix.os }}
-    permissions:
-      contents: write # Allow pushing back pre-commit changes
+  lint:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - name: Install mise
         uses: jdx/mise-action@v5
         with:
           version: ${{ env.MISE_VERSION }}
-      - run: uv run copier --version
-      - run: uv run pre-commit run --all-files --show-diff-on-failure
-      - run: mise run test
+      - name: Run pre-commit
+        run: uv run pre-commit run --all-files --show-diff-on-failure
