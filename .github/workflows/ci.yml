@@ -13,8 +13,6 @@ on:
         required: false
 
 env:
-  LANG: "en_US.utf-8"
-  LC_ALL: "en_US.utf-8"
   PYTHONIOENCODING: "UTF-8"
   # renovate: datasource=github-releases depName=mise packageName=jdx/mise extractVersion=^v(?<version>.+)$
   MISE_VERSION: "2026.11.12"
