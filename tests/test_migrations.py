@@ -236,6 +236,46 @@ def test_prerelease_version_migration(tmp_path_factory: pytest.TempPathFactory) 
             run_update(defaults=True, overwrite=True, unsafe=True)
 
 
+def test_version_migration_between_untagged_commits_around_new_tag(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """A migration for a new dev tag runs when updating to a commit after it."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+
+    with local.cwd(src):
+        build_file_tree(
+            {
+                **COPIER_ANSWERS_FILE,
+                "copier.yml": (
+                    """\
+                    _migrations:
+                    -   version: 1.0.0.dev2
+                        command: touch foo
+                    """
+                ),
+            }
+        )
+    git_save(src, tag="1.0.0.dev1")
+    # The old commit is farther past its tag (3 commits) than the new commit
+    # will be past the next tag (1 commit); commit distance must not outweigh
+    # tag order.
+    for _ in range(3):
+        git_save(src, allow_empty=True)
+    old_sha = git("-C", str(src), "rev-parse", "HEAD").strip()
+
+    run_copy(str(src), dst, vcs_ref=old_sha)
+    git_save(dst)
+    assert not (dst / "foo").exists()
+
+    git_save(src, tag="1.0.0.dev2", allow_empty=True)
+    # Just 1 commit past the new tag, closer to its tag than the old commit is.
+    git_save(src, allow_empty=True)
+    new_sha = git("-C", str(src), "rev-parse", "HEAD").strip()
+
+    run_update(dst, vcs_ref=new_sha, defaults=True, overwrite=True, unsafe=True)
+    assert (dst / "foo").is_file()
+
+
 def test_migration_working_directory(tmp_path_factory: pytest.TempPathFactory) -> None:
     """Test the working directory attribute of migrations"""
     src, dst, workdir = map(tmp_path_factory.mktemp, ("src", "dst", "workdir"))
