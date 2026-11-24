@@ -3,6 +3,9 @@
   "python.testing.pytestEnabled": true,
   "markdown.extension.toc.updateOnSave": false,
   "biome.requireConfiguration": true,
+  "[toml]": {
+    "editor.defaultFormatter": "tombi-toml.tombi"
+  },
   "[css][json][jsonc][yaml]": {
     "editor.codeActionsOnSave": {
       "source.fixAll.biome": "explicit"

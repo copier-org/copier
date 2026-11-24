@@ -17,7 +17,8 @@
         "editorconfig.editorconfig",
         "elagil.pre-commit-helper",
         "ms-python.python",
-        "rvben.rumdl"
+        "rvben.rumdl",
+        "tombi-toml.tombi"
       ],
       "settings": {
         "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",

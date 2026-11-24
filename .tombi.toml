@@ -1,0 +1,2 @@
+[files]
+exclude = ["**/.mise/locks/**", "**/*.lock"]

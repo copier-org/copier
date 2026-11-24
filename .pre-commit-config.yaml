@@ -43,9 +43,16 @@ repos:
         types_or: [python, pyi]
         require_serial: true
 
-      - id: taplo
-        name: taplo
-        entry: uv run taplo format
+      - id: tombi-format
+        name: tombi-format
+        entry: tombi format
+        language: system
+        types: [toml]
+        require_serial: true
+
+      - id: tombi-lint
+        name: tombi-lint
+        entry: tombi lint
         language: system
         types: [toml]
         require_serial: true
