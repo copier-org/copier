@@ -11,6 +11,7 @@
   "customizations": {
     "vscode": {
       "extensions": [
+        "biomejs.biome",
         "bpruitt-goddard.mermaid-markdown-syntax-highlighting",
         "charliermarsh.ruff",
         "editorconfig.editorconfig",

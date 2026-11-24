@@ -3,7 +3,6 @@ _skip_if_exists:
 
 _jinja_extensions:
   - jinja2.ext.0
-
 ---
 !include ./include1.yml
 ---

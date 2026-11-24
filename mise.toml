@@ -3,10 +3,9 @@ experimental = true
 lockfile = true
 
 [tools]
+biome = "2.6.9"
 difftastic = "0.71.0"
 editorconfig-checker = "4.0.2"
-node = "24.22.2"
-prettier = "3.9.10"
 uv = "0.13.4"
 
 [deps.uv]

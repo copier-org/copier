@@ -1,0 +1,21 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.6.9/schema.json",
+  "root": true,
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": {
+    "ignoreUnknown": true,
+    "includes": [
+      "**/*.{css,json,jsonc,yaml,yml}",
+      // Ignore mise native dependency sidecars
+      "!**/.mise/locks",
+      // Those files have wrong syntax on purpose
+      "!tests/demo_invalid/copier.yml",
+      "!tests/demo_transclude_invalid/copier.yml",
+      "!tests/demo_transclude_invalid_multi/copier.yml"
+    ]
+  },
+  // Set explicitly because Biome doesn't apply the `.editorconfig` sections reliably
+  "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 88 },
+  "css": { "formatter": { "indentWidth": 4 } },
+  "linter": { "rules": { "complexity": { "noImportantStyles": "off" } } }
+}
