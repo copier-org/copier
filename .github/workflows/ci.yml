@@ -16,10 +16,7 @@ env:
   LANG: "en_US.utf-8"
   LC_ALL: "en_US.utf-8"
   PRE_COMMIT_HOME: ${{ github.workspace }}/.cache/pre-commit
-  PYTEST_ADDOPTS: ${{ github.event.inputs.pytest_addopts }}
   PYTHONIOENCODING: "UTF-8"
-  # renovate: datasource=github-releases depName=uv packageName=astral-sh/uv
-  UV_VERSION: "0.13.4"
   # renovate: datasource=github-releases depName=mise packageName=jdx/mise extractVersion=^v(?<version>.+)$
   MISE_VERSION: "2026.11.12"
 
@@ -34,25 +31,20 @@ jobs:
           - windows-latest
         python-version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
     runs-on: ${{ matrix.os }}
+    env:
+      PYTEST_ADDOPTS:
+        --cov=./ --cov-report=xml ${{ github.event.inputs.pytest_addopts }}
+      UV_PYTHON: ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0 # Needs all tags to compute dynamic version
-      - name: Install uv
-        uses: astral-sh/setup-uv@v10.3.3
+      - name: Install mise
+        uses: jdx/mise-action@v5
         with:
-          version: ${{ env.UV_VERSION }}
-          python-version: ${{ matrix.python-version }}
-          enable-cache: "true"
-          cache-suffix: ${{ matrix.python-version }}
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v7
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
-        run: uv sync --frozen
+          version: ${{ env.MISE_VERSION }}
       - name: Run pytest
-        run: uv run poe test --cov=./ --cov-report=xml -ra
+        run: mise run test
       - name: Upload coverage to Codecov
         continue-on-error: true
         uses: codecov/codecov-action@v7
