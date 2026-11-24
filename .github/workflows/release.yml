@@ -6,7 +6,7 @@ on:
     tags: ["*"]
 
 env:
-  # renovate: datasource=devbox depName=uv
+  # renovate: datasource=github-releases depName=uv packageName=astral-sh/uv
   UV_VERSION: "0.13.4"
 
 jobs:

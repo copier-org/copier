@@ -12,14 +12,16 @@ HERE = Path(__file__).parent
 def dev_setup() -> None:
     """Set up a development environment."""
     with local.cwd(HERE):
-        local["direnv"]("allow")
+        local["mise"]("trust")
+        local["mise"]("install")
         local["uv"]("sync", "--frozen")
+        local["uv"]("run", "pre-commit", "install")
 
 
 def lint() -> None:
     """Lint and format the project."""
     args = [
-        "run",
+        "exec",
         "--",
         "uv",
         "run",
@@ -29,28 +31,31 @@ def lint() -> None:
         "--all-files",
     ]
     try:
-        local["devbox"].with_cwd(HERE)[args] & TEE
+        local["mise"].with_cwd(HERE)[args] & TEE
     except CommandNotFound:
-        _logger.warning("Devbox not found; fallback to a container")
+        _logger.warning("mise not found; fallback to a container")
         runner = local.get("podman", "docker")
         try:
             (
                 runner[
                     "container",
                     "create",
-                    "--name=copier-lint-v1",
+                    "--name=copier-lint-v2",
                     f"--volume={HERE}:{HERE}:rw,z",
                     f"--workdir={HERE}",
-                    "docker.io/jetpackio/devbox:0.19.0",
-                    "devbox",
+                    "ghcr.io/jdx/mise:2026.11.12-debian",
+                    "bash",
+                    "-c",
+                    'mise trust && mise install && exec mise "$@"',
+                    "--",
                 ][args]
                 & TEE
             )
         except ProcessExecutionError:
             _logger.info(
-                "Couldn't create copier-lint-v1 container, probably because a previous one exists. "
+                "Couldn't create copier-lint-v2 container, probably because a previous one exists. "
                 "Remove it if you want to recycle it. Otherwise, this is OK."
             )
-        runner["container", "start", "--attach", "copier-lint-v1"] & TEE
+        runner["container", "start", "--attach", "copier-lint-v2"] & TEE
     except ProcessExecutionError as error:
         raise SystemExit(error.errno)

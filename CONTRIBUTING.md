@@ -57,7 +57,6 @@ The recommended way is:
 1. Click on
     [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/copier-org/copier)
 1. Wait until the terminal that pops up is ready.
-1. Accept the direnv pop-ups that appear.
 
 For local development with a similar experience, we also offer a
 [VS Code dev container](https://code.visualstudio.com/docs/devcontainers/containers)
@@ -65,26 +64,20 @@ integration.
 
 For local or more complex setups, continue reading.
 
-We use some tools as part of our development workflow which you'll need to install into
-your host environment:
+We use [mise](https://mise.jdx.dev/), which you'll need to install into your host
+environment, to provide a reproducible development environment.
 
-- [Devbox](https://www.jetify.com/docs/devbox/) to provide a reproducible development
-    environment.
-- [Direnv](https://direnv.net/) to load that environment automatically in your shell.
+### Without mise
 
-### Without Devbox/Nix
-
-For some reasons you might want to avoid installing Devbox/Nix in your system. Maybe you
-don't have enough permissions, you work on Windows, or you just don't want to add yet
-another package manager to your system. We believe Devbox/Nix is awesome enough so as to
-be the default tool for almost any developer, but we respect your choice.
+For some reasons you might want to avoid installing mise in your system. Maybe you don't
+have enough permissions or you just don't want to add yet another tool to your system.
 
 You can use standard Python tooling such as [uv][] and a valid Python installation
 installed in an imperative manner of your choice, e.g. using uv as well.
 
-However, you won't be able to auto-lint or auto-format code without Devbox/Nix. If you
-don't have Nix installed but you have Docker or Podman, you can run `poe lint` and get
-similar results. It will use a container to install Nix, and Nix to install the
+However, you won't be able to auto-lint or auto-format code without mise. If you don't
+have mise installed but you have Docker or Podman, you can run `poe lint` and get
+similar results. It will use a container to install mise, and mise to install the
 formatters.
 
 If you still don't have Docker or Podman, don't worry. You can push your changes without
@@ -106,19 +99,16 @@ Ready to contribute? Here's how to set up the project for local development.
     cd copier
     ```
 
-1. Use Direnv (or Devbox directly) to set up a development environment:
+1. Use mise to set up a development environment:
 
     ```shell
-    # Let direnv do its magic ...
-    direnv allow
-
-    # ... or use Devbox directly
-    devbox shell
+    mise trust
+    mise install
+    uv run pre-commit install
     ```
 
-    This process will take some time to load for the 1st time. It will download all
-    development dependencies, including [uv][], and it will use it to create a
-    virtualenv and install Copier with all its development dependencies too.
+    This will download all development tools, including [uv][], and then use it to
+    create a virtualenv and install Copier with all its development dependencies too.
 
 1. Create a branch for local development:
 
@@ -131,9 +121,11 @@ Ready to contribute? Here's how to set up the project for local development.
 1. When you're done making changes, check that your changes pass all tests:
 
     ```shell
-    uv run poe test
+    mise run test
     uv run poe lint
     ```
+
+    `mise run test` sets up the same environment as CI; `uv run poe test` works too.
 
     !!! note
 
