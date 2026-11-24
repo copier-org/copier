@@ -1,2 +1,4 @@
 # Markdown is formatted by `rumdl`
 *.md
+# mise sidecars
+**/.mise/locks/**

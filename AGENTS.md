@@ -2,8 +2,8 @@
 
 ## Developer commands
 
-- `devbox run -- uv run -- pytest` – run all tests
-- `devbox run -- uv run -- pre-commit run -a` – run all code quality checks
+- `mise exec -- uv run -- pytest` – run all tests
+- `mise exec -- uv run -- pre-commit run -a` – run all code quality checks
 
 ## Code conventions
 

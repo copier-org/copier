@@ -18,4 +18,4 @@ ports:
     onOpen: notify
 
 tasks:
-  - init: direnv allow
+  - init: mise trust && mise install && uv run poe dev-setup

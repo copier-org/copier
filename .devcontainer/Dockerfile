@@ -1,11 +1,10 @@
-# renovate: datasource=github-tags depName=devbox packageName=jetify-com/devbox
-ARG DEVBOX_VERSION=0.19.0
-FROM jetpackio/devbox:${DEVBOX_VERSION}
+FROM ghcr.io/jdx/mise:2026.11.12-debian
 
-WORKDIR /code
+RUN useradd --create-home --uid 1000 --shell /bin/bash vscode \
+    && chown -R vscode:vscode /mise
 
-COPY --chown=${DEVBOX_USER}:${DEVBOX_USER} devbox.json devbox.json
-COPY --chown=${DEVBOX_USER}:${DEVBOX_USER} devbox.lock devbox.lock
+RUN echo 'eval "$(mise activate bash)"' >> /home/vscode/.bashrc
 
-# Install the Devbox environment
-RUN devbox install && nix-store --gc
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends openssh-client \
+    && rm -rf /var/lib/apt/lists/*
