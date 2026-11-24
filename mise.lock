@@ -50,51 +50,51 @@ url_api = "https://api.github.com/repos/biomejs/biome/releases/assets/787684776"
 provenance = "github-attestations"
 
 [[tools.difftastic]]
-version = "0.71.0"
+version = "0.72.0"
 backend = "aqua:Wilfred/difftastic"
-specifiers = ["0.71.0"]
+specifiers = ["0.72.0"]
 
 [tools.difftastic."platforms.linux-arm64"]
-checksum = "sha256:5f046098b36ff985d0f99fec6f22cf74961db60386ff9d40df39fd99660aae2c"
+checksum = "sha256:0993a82a6708a24adc6c6b8de366924728ed08f537a5b488940082c8edc79353"
 checksum_source = "mise-versions"
-url = "https://github.com/Wilfred/difftastic/releases/download/0.71.0/difft-0.71.0-aarch64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/Wilfred/difftastic/releases/assets/573540796"
+url = "https://github.com/Wilfred/difftastic/releases/download/0.72.0/difft-0.72.0-aarch64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/Wilfred/difftastic/releases/assets/689925869"
 
 [tools.difftastic."platforms.linux-arm64-musl"]
-checksum = "sha256:5f046098b36ff985d0f99fec6f22cf74961db60386ff9d40df39fd99660aae2c"
+checksum = "sha256:0993a82a6708a24adc6c6b8de366924728ed08f537a5b488940082c8edc79353"
 checksum_source = "mise-versions"
-url = "https://github.com/Wilfred/difftastic/releases/download/0.71.0/difft-0.71.0-aarch64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/Wilfred/difftastic/releases/assets/573540796"
+url = "https://github.com/Wilfred/difftastic/releases/download/0.72.0/difft-0.72.0-aarch64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/Wilfred/difftastic/releases/assets/689925869"
 
 [tools.difftastic."platforms.linux-x64"]
-checksum = "sha256:61aea5394a53c56f144637cf39b3a0c0dafa27769731745e5851ff276e6478da"
+checksum = "sha256:33ea1f003081e9f2422299a434e6040c89085bd9f102b08f3fe30393720d5d4a"
 checksum_source = "mise-versions"
-url = "https://github.com/Wilfred/difftastic/releases/download/0.71.0/difft-0.71.0-x86_64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/Wilfred/difftastic/releases/assets/573539079"
+url = "https://github.com/Wilfred/difftastic/releases/download/0.72.0/difft-0.72.0-x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/Wilfred/difftastic/releases/assets/689921979"
 
 [tools.difftastic."platforms.linux-x64-musl"]
-checksum = "sha256:0a65e6715df992b0adae012e606bd9cc74fa6cfe90eaf13bbae165a0a19b3086"
+checksum = "sha256:27b9c1fe038a95682eed241265a3cacb781227730f106104b617e10067d38ff4"
 checksum_source = "mise-versions"
-url = "https://github.com/Wilfred/difftastic/releases/download/0.71.0/difft-0.71.0-x86_64-unknown-linux-musl.tar.gz"
-url_api = "https://api.github.com/repos/Wilfred/difftastic/releases/assets/573541111"
+url = "https://github.com/Wilfred/difftastic/releases/download/0.72.0/difft-0.72.0-x86_64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/Wilfred/difftastic/releases/assets/689922856"
 
 [tools.difftastic."platforms.macos-arm64"]
-checksum = "sha256:92acf8890543b6d6f436a87a7a5ec64f82a4b8dbe3a7e564c1e5cbfe60823bc7"
+checksum = "sha256:959ce3e4b661663a6bb0b79de5e03051897e521e99c1b85f3c810b54f025ec93"
 checksum_source = "mise-versions"
-url = "https://github.com/Wilfred/difftastic/releases/download/0.71.0/difft-0.71.0-aarch64-apple-darwin.tar.gz"
-url_api = "https://api.github.com/repos/Wilfred/difftastic/releases/assets/573540714"
+url = "https://github.com/Wilfred/difftastic/releases/download/0.72.0/difft-0.72.0-aarch64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/Wilfred/difftastic/releases/assets/689921777"
 
 [tools.difftastic."platforms.macos-x64"]
-checksum = "sha256:390b5299b0bc5059b5617f448eb1f3cb42c689933258fc57770c24d257a5d8a8"
+checksum = "sha256:31472d5cc1d40444beb697b58e6cf83febb3c7741df4007c3039952ffc1c36c6"
 checksum_source = "mise-versions"
-url = "https://github.com/Wilfred/difftastic/releases/download/0.71.0/difft-0.71.0-x86_64-apple-darwin.tar.gz"
-url_api = "https://api.github.com/repos/Wilfred/difftastic/releases/assets/573540008"
+url = "https://github.com/Wilfred/difftastic/releases/download/0.72.0/difft-0.72.0-x86_64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/Wilfred/difftastic/releases/assets/689924801"
 
 [tools.difftastic."platforms.windows-x64"]
-checksum = "sha256:9a979f9d96d739625a0fe69317f3197cc7bcef663a6d7195197d6c9bf96ed6f5"
+checksum = "sha256:7b6295a9a433ba79978b02ad4b4b27f955423b8eb379927409b9ff4e5156379e"
 checksum_source = "mise-versions"
-url = "https://github.com/Wilfred/difftastic/releases/download/0.71.0/difft-0.71.0-x86_64-pc-windows-msvc.zip"
-url_api = "https://api.github.com/repos/Wilfred/difftastic/releases/assets/573539441"
+url = "https://github.com/Wilfred/difftastic/releases/download/0.72.0/difft-0.72.0-x86_64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/Wilfred/difftastic/releases/assets/689923028"
 
 [[tools.editorconfig-checker]]
 version = "4.0.2"
