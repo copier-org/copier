@@ -59,7 +59,7 @@ repos:
 
       - id: rumdl
         name: rumdl
-        entry: uv run rumdl check --fix
+        entry: rumdl check --fix
         language: system
         types: [markdown]
         require_serial: true
