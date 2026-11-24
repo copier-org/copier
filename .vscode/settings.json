@@ -2,6 +2,13 @@
   "editor.formatOnSave": true,
   "python.testing.pytestEnabled": true,
   "markdown.extension.toc.updateOnSave": false,
+  "biome.requireConfiguration": true,
+  "[css][json][jsonc][yaml]": {
+    "editor.codeActionsOnSave": {
+      "source.fixAll.biome": "explicit"
+    },
+    "editor.defaultFormatter": "biomejs.biome"
+  },
   "[python]": {
     "editor.codeActionsOnSave": {
       "source.fixAll": "explicit",

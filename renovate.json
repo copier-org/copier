@@ -2,6 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended",
+    "customManagers:biomeVersions",
     "customManagers:dockerfileVersions",
     "customManagers:githubActionsVersions",
     ":semanticCommitTypeAll(build)"
@@ -28,6 +29,19 @@
     {
       "matchManagers": ["github-actions"],
       "addLabels": ["github_actions"]
+    },
+    {
+      "description": "Read the Biome schema version from GitHub tags, like the mise tool",
+      "matchManagers": ["custom.jsonata"],
+      "matchPackageNames": ["@biomejs/biome"],
+      "overrideDatasource": "github-tags",
+      "overridePackageName": "biomejs/biome"
+    },
+    {
+      "description": "Extract Biome versions from tags and update the tool and schema together",
+      "matchPackageNames": ["biomejs/biome"],
+      "extractVersion": "^@biomejs/biome@(?<version>.+)$",
+      "groupName": "biome"
     }
   ]
 }

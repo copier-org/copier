@@ -55,8 +55,7 @@ body:
     id: additional_info
     attributes:
       label: Screenshots/screencasts/logs
-      description:
-        If applicable, add screenshots/screencasts/logs to help explain your problem.
+      description: If applicable, add screenshots/screencasts/logs to help explain your problem.
 
   - type: dropdown
     id: env-os

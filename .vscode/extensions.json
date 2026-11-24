@@ -1,5 +1,6 @@
 {
   "recommendations": [
+    "biomejs.biome",
     "bpruitt-goddard.mermaid-markdown-syntax-highlighting",
     "charliermarsh.ruff",
     "editorconfig.editorconfig",

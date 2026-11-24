@@ -7,8 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       pytest_addopts:
-        description:
-          Extra options for pytest; use -vv for full details; see
+        description: Extra options for pytest; use -vv for full details; see
           https://docs.pytest.org/en/latest/example/simple.html#how-to-change-command-line-options-defaults
         required: false
 
@@ -31,8 +30,7 @@ jobs:
         python-version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
     runs-on: ${{ matrix.os }}
     env:
-      PYTEST_ADDOPTS:
-        --cov=./ --cov-report=xml ${{ github.event.inputs.pytest_addopts }}
+      PYTEST_ADDOPTS: --cov=./ --cov-report=xml ${{ github.event.inputs.pytest_addopts }}
       UV_PYTHON: ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v7

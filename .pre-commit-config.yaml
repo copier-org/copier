@@ -21,24 +21,13 @@ repos:
         types: [text]
         exclude: \.md$|\.noeof\.|\.bundle$
 
-      - id: prettier
-        name: prettier
-        entry: prettier --write --list-different --ignore-unknown
+      - id: biome
+        name: biome
+        entry: biome check --write --no-errors-on-unmatched
         stages: [pre-commit]
         language: system
         types: [text]
-        exclude: |
-          (?x)(
-            # Some API reference identifiers are dotted paths involving
-            # internal modules prefixed with `_` which are converted by
-            # Prettier to `\_`, making them invalid.
-            ^docs/reference/.+\.md$|
-            # Those files have wrong syntax and would fail
-            ^tests/demo_invalid/copier\.yml$|
-            ^tests/demo_transclude_invalid(_multi)?/demo/copier\.yml$|
-            # HACK https://github.com/prettier/prettier/issues/9430
-            ^tests/demo
-          )
+        require_serial: true
 
       - id: ruff-check
         name: ruff-check
