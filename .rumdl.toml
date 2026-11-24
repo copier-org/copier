@@ -1,0 +1,21 @@
+[global]
+flavor = "mkdocs"
+line-length = 88
+exclude = ["CLAUDE.md"]
+
+[per-file-flavor]
+"AGENTS.md" = "standard"
+"AI_POLICY.md" = "standard"
+
+[MD013]
+reflow = true
+code-blocks = false
+
+[MD029]
+style = "one"
+
+[MD033]
+allowed-elements = ["br", "code"]
+
+[MD060]
+enabled = true
