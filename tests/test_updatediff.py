@@ -587,6 +587,103 @@ def test_update_from_tagged_to_head(tmp_path_factory: pytest.TempPathFactory) ->
     assert load_answersfile_data(dst)["_commit"] == f"v1-1-g{sha}"
 
 
+@pytest.mark.parametrize(
+    ("old_tag", "next_tag"),
+    [
+        ("1.0.0.dev1", "1.0.0.dev2"),
+        ("1.0.0a1", "1.0.0a2"),
+        ("1.0.0", "1.0.1"),
+        ("1.0.0.post1", "1.0.0.post2"),
+    ],
+)
+def test_update_between_untagged_commits_around_new_tag(
+    tmp_path_factory: pytest.TempPathFactory, old_tag: str, next_tag: str
+) -> None:
+    """Updating to a descendant commit is never a downgrade.
+
+    The old commit is several commits past `old_tag`, while the new commit is
+    only one commit past `next_tag`, which was created after the old commit.
+    """
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "{{ _copier_conf.answers_file }}.jinja": (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+            src / "message.txt": "original",
+        }
+    )
+    git_save(src, tag=old_tag)
+    # The old commit is farther past its tag than the new commit will be
+    # past the next tag; commit distance must not outweigh tag order.
+    for _ in range(3):
+        git_save(src, allow_empty=True)
+    old_sha = git("-C", str(src), "rev-parse", "HEAD").strip()
+
+    run_copy(str(src), dst, vcs_ref=old_sha)
+    git_save(dst)
+
+    git_save(src, tag=next_tag, allow_empty=True)
+    # The new commit is only 1 commit past the new tag.
+    build_file_tree({src / "message.txt": "updated"})
+    git_save(src)
+    new_sha = git("-C", str(src), "rev-parse", "HEAD").strip()
+
+    run_update(dst, vcs_ref=new_sha, overwrite=True)
+    assert (dst / "message.txt").read_text() == "updated"
+
+
+def test_update_from_post_release_tag_to_descendant_commit(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    """A commit after a post-release tag is newer than that tag."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "{{ _copier_conf.answers_file }}.jinja": (
+                "{{ _copier_answers|to_nice_yaml }}"
+            ),
+            src / "message.txt": "original",
+        }
+    )
+    git_save(src, tag="1.0.0.post1")
+
+    run_copy(str(src), dst, vcs_ref="1.0.0.post1")
+    git_save(dst)
+
+    build_file_tree({src / "message.txt": "updated"})
+    git_save(src)
+    for _ in range(2):
+        git_save(src, allow_empty=True)
+    new_sha = git("-C", src, "rev-parse", "HEAD").strip()
+
+    run_update(dst, vcs_ref=new_sha, overwrite=True)
+    assert (dst / "message.txt").read_text() == "updated"
+
+
+def test_update_to_older_commit_is_a_downgrade(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> None:
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            src / "{{ _copier_conf.answers_file }}.jinja": (
+                "{{ _copier_answers|to_nice_yaml }}"
+            )
+        }
+    )
+    git_save(src, tag="1.0.0.dev1")
+    git_save(src, tag="1.0.0.dev2", allow_empty=True)
+    git_save(src, allow_empty=True)
+    newer_sha = git("-C", str(src), "rev-parse", "HEAD").strip()
+
+    run_copy(str(src), dst, vcs_ref=newer_sha)
+    git_save(dst)
+
+    with pytest.raises(UserMessageError, match="Downgrades are not supported"):
+        run_update(dst, vcs_ref="1.0.0.dev1", overwrite=True, unsafe=True)
+
+
 @pytest.mark.parametrize("subproject_path", [Path(), Path("subproject")])
 @pytest.mark.parametrize("skip_pattern", ["skip_me", "/skip_me"])
 def test_skip_update(

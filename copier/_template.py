@@ -654,17 +654,26 @@ class Template:
                 # Leverage dunamai by default; usually it gets best results.
                 # `dunamai.Version.from_git` needs `Pattern.DefaultUnprefixed`
                 # to be PEP440 compliant on version reading
+                version = dunamai.Version.from_git(
+                    pattern=dunamai.Pattern.DefaultUnprefixed
+                )
+                distance, commit = version.distance, version.commit
+                # Dunamai folds the commit distance into the version number
+                # (e.g. `.dev<N + distance>`), which doesn't preserve the order
+                # of tags. Serialize the tag only and keep the distance in the
+                # local version label, which sorts right after the tag's version
+                # and before any later tag's.
+                version.distance = 0
+                tag_version = version.serialize(style=dunamai.Style.Pep440)
                 return Version(
-                    dunamai.Version.from_git(
-                        pattern=dunamai.Pattern.DefaultUnprefixed
-                    ).serialize(style=dunamai.Style.Pep440)
+                    f"{tag_version}+{distance}.g{commit}" if distance else tag_version
                 )
         except ValueError:
             # A fully descriptive commit can be easily detected converted into a
             # PEP440 version, because it has the format "<tag>-<count>-g<hash>"
             if re.match(r"^.+-\d+-g\w+$", self.commit):
                 base, count, git_hash = self.commit.rsplit("-", 2)
-                return Version(f"{base}.post{count}+{git_hash}")
+                return Version(f"{base}+{count}.{git_hash}")
         # If we get here, the commit string is a tag
         try:
             return Version(self.commit)
