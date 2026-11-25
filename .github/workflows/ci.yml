@@ -62,5 +62,5 @@ jobs:
         uses: jdx/mise-action@v5
         with:
           version: ${{ env.MISE_VERSION }}
-      - name: Run pre-commit
-        run: uv run pre-commit run --all-files --show-diff-on-failure
+      - name: Run prek
+        run: prek run --all-files --show-diff-on-failure

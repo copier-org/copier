@@ -15,7 +15,7 @@ def dev_setup() -> None:
         local["mise"]("trust")
         local["mise"]("install")
         local["uv"]("sync", "--frozen")
-        local["uv"]("run", "pre-commit", "install")
+        local["prek"]("install")
 
 
 def lint() -> None:

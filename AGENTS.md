@@ -3,7 +3,7 @@
 ## Developer commands
 
 - `mise exec -- uv run -- pytest` – run all tests
-- `mise exec -- uv run -- pre-commit run -a` – run all code quality checks
+- `mise exec -- prek run -a` – run all code quality checks
 
 ## Code conventions
 

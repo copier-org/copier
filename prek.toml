@@ -1,0 +1,87 @@
+#:schema https://www.schemastore.org/prek.json
+
+[[repos]]
+repo = "local"
+hooks = [
+  {
+    id = "codespell",
+    name = "codespell",
+    entry = "uv run codespell",
+    language = "system",
+    types = ["text"],
+  },
+  {
+    id = "commitizen",
+    name = "commitizen check",
+    entry = "uv run cz check",
+    args = ["--allow-abort", "--commit-msg-file"],
+    stages = ["commit-msg"],
+    language = "system",
+  },
+  {
+    id = "editorconfig-checker",
+    name = "editorconfig-checker",
+    entry = "editorconfig-checker",
+    language = "system",
+    types = ["text"],
+    exclude = '\.md$|\.noeof\.|\.bundle$',
+  },
+  {
+    id = "biome",
+    name = "biome",
+    entry = "biome check --write --no-errors-on-unmatched",
+    stages = ["pre-commit"],
+    language = "system",
+    types = ["text"],
+    require_serial = true,
+  },
+  {
+    id = "ruff-check",
+    name = "ruff-check",
+    entry = "uv run ruff check --fix",
+    language = "system",
+    types_or = ["python", "pyi"],
+    require_serial = true,
+  },
+  {
+    id = "ruff-format",
+    name = "ruff-format",
+    entry = "uv run ruff format",
+    language = "system",
+    types_or = ["python", "pyi"],
+    require_serial = true,
+  },
+  {
+    id = "tombi-format",
+    name = "tombi-format",
+    entry = "tombi format",
+    language = "system",
+    types = ["toml"],
+    require_serial = true,
+  },
+  {
+    id = "tombi-lint",
+    name = "tombi-lint",
+    entry = "tombi lint",
+    language = "system",
+    types = ["toml"],
+    require_serial = true,
+  },
+  {
+    id = "rumdl",
+    name = "rumdl",
+    entry = "rumdl check --fix",
+    language = "system",
+    types = ["markdown"],
+    require_serial = true,
+    exclude = {
+      glob = [
+        # Those files have wrong syntax and would fail
+        "tests/demo_invalid/copier.yml",
+        "tests/demo_transclude_invalid{,_multi}/demo/copier.yml",
+        # HACK https://github.com/prettier/prettier/issues/9430
+        "tests/demo*",
+      ]
+    },
+  }
+]

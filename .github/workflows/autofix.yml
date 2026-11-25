@@ -24,10 +24,10 @@ jobs:
           version: ${{ env.MISE_VERSION }}
 
       # Autoformat and try to push back changes
-      - run: uv run pre-commit run -a --show-diff-on-failure
+      - run: prek run -a --show-diff-on-failure
         continue-on-error: true
       # HACK https://github.com/autofix-ci/action/pull/15
-      - run: uv run pre-commit uninstall -t pre-commit -t commit-msg
+      - run: prek uninstall -t pre-commit -t commit-msg
       - uses: autofix-ci/action@v1.3
         with:
-          commit-message: "style: autoformat with pre-commit"
+          commit-message: "style: autoformat with prek"
