@@ -10,7 +10,7 @@ prek = "0.5.11"
 rumdl = "0.3.2"
 tombi = "1.11.3"
 typos = "1.52.2"
-uv = "0.13.4"
+uv = "0.13.10"
 
 [deps.uv]
 auto = true
