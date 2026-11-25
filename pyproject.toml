@@ -49,7 +49,7 @@ dev = [
   "mypy==2.4.1",
   "pexpect==4.9.0",
   "poethepoet==0.49.0",
-  "pytest==9.1.1",
+  "pytest==9.2.0",
   "pytest-cov==7.1.0",
   "pytest-gitconfig==0.9.0",
   "pytest-xdist==3.8.0",
