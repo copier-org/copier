@@ -23,6 +23,13 @@
       "rangeStrategy": "pin"
     },
     {
+      "description": "Lower-bound pins are adjusted manually when the declared lower bounds change",
+      "matchManagers": ["pep621"],
+      "matchDepTypes": ["dependency-groups"],
+      "matchJsonata": ["$contains(managerData.depGroup, /^compat(-.+)?-lowest$/)"],
+      "enabled": false
+    },
+    {
       "matchCategories": ["python"],
       "addLabels": ["python"]
     },

@@ -1,0 +1,15 @@
+[project]
+name = "plumbum-stubs"
+version = "1.6.9"
+description = "Minimal local type stubs for untyped plumbum releases"
+requires-python = ">=3.11"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["plumbum-stubs"]
+
+[tool.uv]
+cache-keys = [{ file = "pyproject.toml" }, { file = "plumbum-stubs/**/*.pyi" }]
