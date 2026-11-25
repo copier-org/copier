@@ -19,6 +19,16 @@ run = "uv sync --locked --all-groups"
 [env]
 GIT_EXTERNAL_DIFF = "difft"
 
+[tasks.changelog]
+description = "Prepend a release section for unreleased changes to CHANGELOG.md"
+run = "git-cliff --unreleased --bump --prepend CHANGELOG.md"
+
+[tasks.changelog.env]
+GIT_CLIFF_OFFLINE = "{% if get_env(name='GITHUB_TOKEN', default='') == '' %}true{% else %}false{% endif %}"
+
+[tasks.changelog.tools]
+git-cliff = "2.14.2"
+
 [tasks.test]
 description = "Run tests"
 run = "uv run --no-sync poe test"

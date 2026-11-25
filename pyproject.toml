@@ -43,7 +43,6 @@ copier = "copier.__main__:CopierApp.run"
 
 [dependency-groups]
 dev = [
-  "commitizen==4.19.3",
   "inline-snapshot==0.36.1",
   "mypy==2.4.1",
   "pexpect==4.9.0",
@@ -68,13 +67,6 @@ docs = [
 [build-system]
 requires = ["hatch-vcs", "hatchling"]
 build-backend = "hatchling.build"
-
-[tool.commitizen]
-annotated_tag = true
-changelog_incremental = true
-tag_format = "v$version"
-update_changelog_on_bump = true
-version = "9.19.1"
 
 [tool.coverage.run]
 omit = [

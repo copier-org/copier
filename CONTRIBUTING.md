@@ -165,7 +165,7 @@ Ready to contribute? Here's how to set up the project for local development.
 
     ```shell
     git add .
-    cz commit  # use `git commit` if you prefer, but this helps
+    git commit
     git push origin name-of-your-bugfix-or-feature
     ```
 
@@ -183,11 +183,13 @@ Before you submit a pull request, check that it meets these guidelines:
 
 Follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) standard.
 
-We use [Commitizen](https://commitizen-tools.github.io/commitizen/) to handle Copier
-releases. This tool generates the appropriate tag based on that standard. It also writes
-our [changelog](CHANGELOG.md). Changes that are included there are of type `fix`, `feat`
-and `refactor`; also `BREAKING CHANGE:` trailers will appear. If your change is not
-meaningful in the changelog, then please don't use one of those categories.
+We use [git-cliff](https://git-cliff.org/) to draft our [changelog](CHANGELOG.md)
+following [Keep a Changelog] and determine the next Copier version. For security fixes,
+add `CVE:` and/or `GHSA:` trailers with the advisory IDs. Removals, including removals
+of deprecated features, are breaking changes and must be marked with `!` or a
+`BREAKING CHANGE:` footer.
+
+[Keep a Changelog]: https://keepachangelog.com/en/2.0.0/
 
 ### Maintainer notes
 
@@ -223,12 +225,21 @@ to create a new release is to open Copier repo locally and run:
 git checkout master
 git pull --tags
 
-# Create a new changelog entry and bump the version automatically
-cz bump --retry
+# Prepend a new changelog section for the next version
+mise run changelog
+
+# Review the changelog and curate it, then commit and tag it
+version="$(git-cliff --bumped-version)"
+git commit -am "chore: release $version"
+git tag -a "$version" -m "$version"
 
 # Push it
-git push --tags
+git push --follow-tags
 ```
+
+Include PR references in the generated changelog by exporting the environment variable
+`GITHUB_TOKEN` with a GitHub PAT with permissions `Contents: Read`, `Metadata: Read`,
+and `Pull requests: Read`.
 
 Now the tag is released, but GitHub won't display it in the releases page. For that:
 

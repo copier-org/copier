@@ -12,14 +12,6 @@ hooks = [
     types = ["text"],
   },
   {
-    id = "commitizen",
-    name = "commitizen check",
-    entry = "uv run cz check",
-    args = ["--allow-abort", "--commit-msg-file"],
-    stages = ["commit-msg"],
-    language = "system",
-  },
-  {
     id = "editorconfig-checker",
     name = "editorconfig-checker",
     entry = "editorconfig-checker",
