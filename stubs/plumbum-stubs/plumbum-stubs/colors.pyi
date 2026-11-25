@@ -1,0 +1,3 @@
+from plumbum.colorlib.factories import Style, StyleFactory as StyleFactory
+
+def __getattr__(name: str) -> Style: ...

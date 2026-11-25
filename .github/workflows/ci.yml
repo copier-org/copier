@@ -26,8 +26,11 @@ jobs:
           - ubuntu-latest
           - windows-latest
         python-version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
+        resolution: [highest, lowest]
     runs-on: ${{ matrix.os }}
     env:
+      # No `mise.highest.toml` exists; mise ignores missing env files
+      MISE_ENV: ${{ matrix.resolution }}
       PYTEST_ADDOPTS: --cov=./ --cov-report=xml ${{ github.event.inputs.pytest_addopts }}
       UV_PYTHON: ${{ matrix.python-version }}
     steps:
@@ -46,8 +49,9 @@ jobs:
         env:
           OS: ${{ matrix.os }}
           PYTHON: ${{ matrix.python-version }}
+          RESOLUTION: ${{ matrix.resolution }}
         with:
-          env_vars: OS,PYTHON
+          env_vars: OS,PYTHON,RESOLUTION
           fail_ci_if_error: true
           file: ./coverage.xml
           flags: unittests

@@ -127,6 +127,14 @@ Ready to contribute? Here's how to set up the project for local development.
 
     `mise run test` sets up the same environment as CI; `uv run poe test` works too.
 
+    To test against the lower bounds of the runtime dependencies, install the `lowest`
+    mise environment and run the tests against it:
+
+    ```shell
+    mise -E lowest install
+    mise -E lowest run test
+    ```
+
     !!! note
 
         If you get fails due to

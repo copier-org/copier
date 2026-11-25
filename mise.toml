@@ -14,10 +14,13 @@ uv = "0.13.4"
 
 [deps.uv]
 auto = true
-run = "uv sync --locked --all-groups"
+run = "uv sync --locked --group compat-{{ vars.resolution }}"
 
 [env]
 GIT_EXTERNAL_DIFF = "difft"
+
+[vars]
+resolution = "highest"
 
 [tasks.changelog]
 description = "Prepend a release section for unreleased changes to CHANGELOG.md"
