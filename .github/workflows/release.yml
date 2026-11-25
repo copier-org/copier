@@ -91,3 +91,31 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [publish]
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - name: Extract changelog section
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          awk -v tag="$REF_NAME" '
+            BEGIN { sub(/^v/, "", tag) }
+            /^## / { if (c) exit; if ($0 ~ tag) c = 1; next }
+            /^\[[^]]+\]:/ { exit }
+            c
+          ' CHANGELOG.md | git stripspace > "$RUNNER_TEMP/notes.md"
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          gh release create "$REF_NAME" \
+            --title "$REF_NAME" \
+            --notes-file "$RUNNER_TEMP/notes.md" \
+            --verify-tag
