@@ -384,6 +384,7 @@ def test_update_with_new_field_in_new_version_skip_answered(
     (
         (True, True),
         (False, False),
+        # spellchecker:ignore-next-line
         ("trUe", True),
         ("faLse", False),
         ("Yes", True),

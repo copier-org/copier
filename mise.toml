@@ -9,6 +9,7 @@ editorconfig-checker = "4.0.2"
 prek = "0.5.11"
 rumdl = "0.3.2"
 tombi = "1.11.3"
+typos = "1.52.2"
 uv = "0.13.4"
 
 [deps.uv]

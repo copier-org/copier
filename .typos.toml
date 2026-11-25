@@ -1,0 +1,6 @@
+[files]
+ignore-hidden = false
+extend-exclude = [".git/"]
+
+[default]
+extend-ignore-re = ["(#|//)\\s*spellchecker:ignore-next-line\\n.*"]

@@ -71,13 +71,11 @@ class CopierTemplateLoader(FileSystemLoader):
             ForbiddenPathError: If the source file path resolves to a path outside the
                 Copier template root.
         """
-        # codespell:ignore-next-line uptodate
         source, filename, uptodate = super().get_source(environment, template)
         if not (path := Path(filename).resolve()).is_relative_to(self.searchpath[0]):
             raise ForbiddenPathError(
                 path=path, hint="File path is outside the template root"
             )
-        # codespell:ignore-next-line uptodate
         return source, filename, uptodate
 
 
