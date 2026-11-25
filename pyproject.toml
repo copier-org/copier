@@ -43,7 +43,6 @@ copier = "copier.__main__:CopierApp.run"
 
 [dependency-groups]
 dev = [
-  "codespell[toml]==2.4.3",
   "commitizen==4.19.3",
   "inline-snapshot==0.36.1",
   "mypy==2.4.1",
@@ -69,13 +68,6 @@ docs = [
 [build-system]
 requires = ["hatch-vcs", "hatchling"]
 build-backend = "hatchling.build"
-
-[tool.codespell]
-# Ref: https://github.com/codespell-project/codespell#using-a-config-file
-skip = ".git*,*.svg,*.lock,*.css,pyproject.toml,.mypy_cache,.venv"
-check-hidden = true
-ignore-regex = '\bla vie\b'
-ignore-words-list = "ans"
 
 [tool.commitizen]
 annotated_tag = true

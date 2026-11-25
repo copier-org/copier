@@ -285,15 +285,6 @@ wheels = [
 ]
 
 [[package]]
-name = "codespell"
-version = "2.4.3"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/80/19/45e941380f69c042b43423513d201e6592346f992394347f5e7174c31407/codespell-2.4.3.tar.gz", hash = "sha256:cbe085e331227b37bb86ef8bddd08dc768c704ee9a07ca869852c093fa2793e2", size = 352773, upload-time = "2026-07-15T11:51:54.159Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/8b/bf/bdb951d34eb169140b546f44be9ec4525d1acefb9eb5572071f5492b19fc/codespell-2.4.3-py3-none-any.whl", hash = "sha256:af2505b335e8573dbd2d384d1c4ef498f4006f4ba2d6fceca01e55b91f52628a", size = 340736, upload-time = "2026-07-15T11:51:52.925Z" },
-]
-
-[[package]]
 name = "colorama"
 version = "0.4.6"
 source = { registry = "https://pypi.org/simple" }
@@ -346,7 +337,6 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "codespell" },
     { name = "commitizen" },
     { name = "inline-snapshot" },
     { name = "mypy" },
@@ -388,7 +378,6 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "codespell", extras = ["toml"], specifier = "==2.4.3" },
     { name = "commitizen", specifier = "==4.19.3" },
     { name = "inline-snapshot", specifier = "==0.36.1" },
     { name = "mypy", specifier = "==2.4.1" },

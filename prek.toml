@@ -4,9 +4,10 @@
 repo = "local"
 hooks = [
   {
-    id = "codespell",
-    name = "codespell",
-    entry = "uv run codespell",
+    id = "typos",
+    name = "typos",
+    entry = "typos",
+    args = ["--force-exclude"],
     language = "system",
     types = ["text"],
   },

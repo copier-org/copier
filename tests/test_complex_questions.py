@@ -307,7 +307,7 @@ def test_api_str_data(template_path: str, tmp_path: Path) -> None:
     )
 
 
-def test_cli_interatively_with_flag_data_and_type_casts(
+def test_cli_interactively_with_flag_data_and_type_casts(
     template_path: str, tmp_path: Path, spawn: Spawn
 ) -> None:
     """Assert how choices work when copier is invoked with --data interactively."""
