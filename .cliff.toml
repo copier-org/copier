@@ -1,0 +1,72 @@
+[remote.github]
+owner = "copier-org"
+repo = "copier"
+
+[changelog]
+header = """
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/), and
+this project adheres to [PEP 440](https://www.python.org/dev/peps/pep-0440/) versioning.
+"""
+body = '''
+{%- set repo_url = "https://github.com/" ~ remote.github.owner ~ "/" ~ remote.github.repo -%}
+## {% if version -%}
+  [{{ version | trim_start_matches(pat="v") }}]({{ repo_url }}/releases/tag/{{ version }}) - {{ timestamp | date(format="%Y-%m-%d") }}
+{%- elif previous.version -%}
+  [Unreleased]({{ repo_url }}/compare/{{ previous.version }}...HEAD)
+{%- else -%}
+  Unreleased
+{%- endif %}
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | striptags | trim }}
+
+{% for commit in commits -%}
+- {% set ids = commit.footers | filter(attribute="token", value="CVE") | concat(with=commit.footers | filter(attribute="token", value="GHSA")) | map(attribute="value") -%}
+  {%- if ids | length > 0 %}{{ ids | join(sep=", ") }}: {% endif -%}
+  {%- if commit.breaking %}**Breaking:** {% endif -%}
+  {{- commit.message | replace_regex(from="\s+\(#\d+\)$", to="") | upper_first | trim_end_matches(pat=".") }}
+  {%- if commit.remote.pr_number %} ([#{{ commit.remote.pr_number }}]({{ repo_url }}/pull/{{ commit.remote.pr_number }})){% endif -%}
+  {{- "." }}
+  {%- for footer in commit.footers | filter(attribute="breaking", value=true) %}
+
+    {{ footer.value | trim | indent(prefix="    ", first=false, blank=false) }}
+  {%- endfor %}
+{% endfor %}{% endfor %}'''
+footer = ""
+trim = false
+render_always = false
+
+[git]
+conventional_commits = true
+filter_unconventional = false
+filter_commits = true
+protect_breaking_commits = false
+sort_commits = "oldest"
+commit_preprocessors = [
+  # Link advisory IDs in `CVE:` and `GHSA:` trailers
+  { pattern = '(?m)^CVE:\s*(CVE-\d{4}-\d{4,})\s*$', replace = "CVE: [${1}](https://www.cve.org/CVERecord?id=${1})" },
+  { pattern = '(?m)^GHSA:\s*(GHSA(-[0-9a-z]{4}){3})\s*$', replace = "GHSA: [${1}](https://github.com/advisories/${1})" },
+]
+commit_parsers = [
+  { message = "^[Mm]erge ", skip = true },
+  { message = '^fix\(deps\)!?:', group = "<!-- 1 -->Changed" },
+  { message = "^fix", footer = "^(CVE|GHSA):", group = "<!-- 5 -->Security" },
+  # spellchecker:ignore-next-line
+  { message = '(?i)^fix(\(.*\))?!?:.*\b(security|vulnerabilit(y|ies)|\w+ injection|trust bypass|sandbox escape|code execution)\b', group = "<!-- 5 -->Security" },
+  # spellchecker:ignore-next-line
+  { message = '(?i)^feat(\(.*\))?!?:\s+deprecat', group = "<!-- 2 -->Deprecated" },
+  { message = '^(feat|fix|perf)(\(.*\))?!?:\s+(remove|drop|delete)\b', field = "breaking", pattern = "true", group = "<!-- 3 -->Removed" },
+  { message = "^(feat|fix|perf)", field = "breaking", pattern = "true", group = "<!-- 1 -->Changed" },
+  { message = '^feat(\(.*\))?!?:', group = "<!-- 0 -->Added" },
+  { message = '^fix(\(.*\))?!?:', group = "<!-- 4 -->Fixed" },
+  { message = '^perf(\(.*\))?!?:', group = "<!-- 1 -->Changed" },
+  { message = ".*", skip = true },
+]
+
+[bump]
+initial_tag = "v0.1.0"
+breaking_always_bump_major = false
+no_increment_regex = "^(chore|ci|docs|style|test|build)$"
