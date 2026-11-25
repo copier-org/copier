@@ -1395,8 +1395,8 @@ class Worker:
     def _apply_update(self) -> None:  # noqa: C901
         git = get_git()
         subproject_top = Path(
-            git.with_cwd(self.subproject.local_abspath)(
-                "rev-parse", "--show-toplevel"
+            git(
+                "-C", str(self.subproject.local_abspath), "rev-parse", "--show-toplevel"
             ).strip()
         )
         subproject_subdir = self.subproject.local_abspath.relative_to(subproject_top)
