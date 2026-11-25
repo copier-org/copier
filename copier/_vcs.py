@@ -49,7 +49,7 @@ def get_git(context_dir: OptStrOrPath = None) -> BaseCommand:
     # https://github.com/copier-org/copier/issues/2900.
     command = command["-c", "maintenance.auto=false", "-c", "gc.auto=0"]
     if context_dir:
-        command = command.with_cwd(context_dir)
+        command = command["-C", str(context_dir)]
     return command
 
 
