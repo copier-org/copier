@@ -3,7 +3,7 @@
     "dockerfile": "./Dockerfile"
   },
   "remoteUser": "vscode",
-  "postStartCommand": "mise trust && mise install --locked && uv run pre-commit install",
+  "postStartCommand": "mise trust && mise install --locked && prek install",
   "waitFor": "postStartCommand",
   "mounts": [
     "type=bind,source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/vscode/.ssh,readonly"
@@ -15,7 +15,6 @@
         "bpruitt-goddard.mermaid-markdown-syntax-highlighting",
         "charliermarsh.ruff",
         "editorconfig.editorconfig",
-        "elagil.pre-commit-helper",
         "ms-python.python",
         "rvben.rumdl",
         "tombi-toml.tombi"

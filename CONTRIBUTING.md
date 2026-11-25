@@ -104,7 +104,7 @@ Ready to contribute? Here's how to set up the project for local development.
     ```shell
     mise trust
     mise install
-    uv run pre-commit install
+    prek install
     ```
 
     This will download all development tools, including [uv][], and then use it to
@@ -198,7 +198,7 @@ meaningful. Remember to
 when squashing, especially if multiple authors were involved.
 
 If the last commit is pushed back by `github-actions[bot]` and named
-`style: autoformat with pre-commit`, it's most likely an automatic reformatting commit
+`style: autoformat with prek`, it's most likely an automatic reformatting commit
 done by the CI.
 [Those kind of commits cannot trigger other workflows](https://docs.github.com/en/actions/using-workflows/triggering-a-workflow#triggering-a-workflow-from-a-workflow).
 Thus, to be able to re-run CI, close and reopen the PR. Consider squashing on merge if

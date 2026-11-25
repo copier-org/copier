@@ -318,10 +318,8 @@ def test_updatediff(tmp_path_factory: pytest.TempPathFactory) -> None:
 @pytest.mark.xfail(
     condition=platform.system() == "Windows", reason="Git broken on Windows?"
 )
-@pytest.mark.impure
 def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> None:
     """Commit hooks are taken into account when producing the update diff."""
-    # Prepare source template v1
     src, dst1, dst2 = map(tmp_path_factory.mktemp, ("src", "dst1", "dst2"))
     with local.cwd(src):
         build_file_tree(
@@ -332,9 +330,26 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
                     _templates_suffix: {SUFFIX_TMPL}
                     _tasks:
                         - git init
-                        - pre-commit install -t pre-commit -t commit-msg
-                        - pre-commit run -a || true
+                        - chmod +x .githooks/pre-commit
+                        - git config core.hooksPath .githooks
+                        - .githooks/pre-commit || true
                     what: grog
+                    """
+                ),
+                # Minimal pre-commit hook that reformats `life.yml` and fails the
+                # commit when it changed the file, like formatters run by
+                # pre-commit frameworks do
+                ".githooks/pre-commit": (
+                    r"""\
+                    #!/bin/sh
+                    git ls-files --error-unmatch life.yml > /dev/null 2>&1 || exit 0
+                    sed 's/^\(Line [0-9.]*\):[[:space:]]*/\1: /' life.yml > life.yml.fmt
+                    if cmp -s life.yml life.yml.fmt; then
+                        rm life.yml.fmt
+                    else
+                        mv life.yml.fmt life.yml
+                        exit 1
+                    fi
                     """
                 ),
                 "[[ _copier_conf.answers_file ]].tmpl": (
@@ -342,28 +357,8 @@ def test_commit_hooks_respected(tmp_path_factory: pytest.TempPathFactory) -> Non
                     [[ _copier_answers|to_nice_yaml ]]
                     """
                 ),
-                ".pre-commit-config.yaml": (
-                    r"""
-                    repos:
-                    -   repo: https://github.com/pre-commit/mirrors-prettier
-                        rev: v2.0.4
-                        hooks:
-                        -   id: prettier
-                    -   repo: https://github.com/commitizen-tools/commitizen
-                        rev: v3.12.0
-                        hooks:
-                        -   id: commitizen
-                    -   repo: local
-                        hooks:
-                        -   id: forbidden-files
-                            name: forbidden files
-                            entry: found forbidden files; remove them
-                            language: fail
-                            files: "\\.rej$"
-                    """
-                ),
                 "life.yml.tmpl": (
-                    """
+                    """\
                     # Following code should be reformatted by pre-commit after copying
                     Line 1:      hello
                     Line 2:      [[ what ]]
