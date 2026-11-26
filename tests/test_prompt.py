@@ -15,8 +15,10 @@ from coverage.tracer import CTracer
 from pexpect.popen_spawn import PopenSpawn
 from plumbum import local
 
+from copier import run_copy, run_update
+from copier._jinja_ext import SandboxedEnvironment
 from copier._types import StrOrPath
-from copier._user_data import load_answersfile_data
+from copier._user_data import AnswersMap, Question, load_answersfile_data
 
 from .helpers import (
     BRACKET_ENVOPS,
@@ -1722,3 +1724,65 @@ def test_update_with_ask_setting(
         assert answers.get("foo") == ("prevx" if prompted else "prev")
     else:
         assert "foo" not in answers
+
+
+@pytest.mark.parametrize(
+    ("multiline", "expected"),
+    [
+        (True, "foo: foo\nnested:\n  zeta: 1\n  alpha: 2\nbar: bar"),
+        (False, "{foo: foo, nested: {zeta: 1, alpha: 2}, bar: bar}"),
+    ],
+)
+def test_yaml_default_rendered_preserves_key_order(
+    multiline: bool, expected: str
+) -> None:
+    """YAML prompt defaults preserve dictionary key insertion order."""
+    value = {"foo": "foo", "nested": {"zeta": 1, "alpha": 2}, "bar": "bar"}
+    question = Question(
+        var_name="settings",
+        answers=AnswersMap(last={"settings": value}),
+        context={},
+        jinja_env=SandboxedEnvironment(),
+        type="yaml",
+        multiline=multiline,
+    )
+
+    assert question.get_default_rendered() == expected
+
+
+def test_update_yaml_question_preserves_key_order(
+    tmp_path_factory: pytest.TempPathFactory,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Updating without skipping answered YAML questions keeps original key order."""
+    src, dst = map(tmp_path_factory.mktemp, ("src", "dst"))
+    build_file_tree(
+        {
+            (src / "copier.yml"): ("settings:\n  type: yaml\n  multiline: true\n"),
+            (src / "doc.md.jinja"): (
+                "{%- for key, val in settings.items() %}\n"
+                "* {{ key }}: {{ val }}\n"
+                "{%- endfor %}\n"
+            ),
+            (src / "{{ _copier_conf.answers_file }}.jinja"): (
+                "{{ _copier_answers | to_nice_yaml(sort_keys=False) }}"
+            ),
+        }
+    )
+    git_save(src, tag="1.0.0")
+    run_copy(
+        str(src), dst, data={"settings": {"foo": "foo", "bar": "bar"}}, defaults=True
+    )
+    git_save(dst)
+
+    def accept_default_prompt(
+        questions: list[dict[str, Any]], **_kwargs: Any
+    ) -> dict[str, Any]:
+        return {q["name"]: q["filter"](q["default"]) for q in questions}
+
+    monkeypatch.setattr("copier._main.unsafe_prompt", accept_default_prompt)
+    run_update(str(dst), overwrite=True)
+
+    assert (dst / "doc.md").read_text() == "\n* foo: foo\n* bar: bar\n"
+    answers = load_answersfile_data(dst)
+    assert list(answers["settings"].keys()) == ["foo", "bar"]

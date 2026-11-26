@@ -332,7 +332,10 @@ class Question:
             return json.dumps(default, indent=2 if self.get_multiline() else None)
         if self.get_type_name() == "yaml":
             return yaml.safe_dump(
-                default, default_flow_style=not self.get_multiline(), width=2147483647
+                default,
+                default_flow_style=not self.get_multiline(),
+                width=2147483647,
+                sort_keys=False,
             ).strip()
         # All other data has to be str
         return str(default)
