@@ -1357,11 +1357,12 @@ class Worker:
         if self.subproject.vcs != "git":
             # A repository that this Git cannot read (e.g., a SHA-256 repository
             # with an old Git) looks untracked, so show why Git rejected it.
-            reason = get_git_repo_error(self.subproject.local_abspath)
-            detail = f":\n{indent(reason.expandtabs(4), '    ')}" if reason else "."
-            raise UserMessageError(
-                f"Updating is only supported in git-tracked subprojects{detail}"
-            )
+            message = "Updating is only supported in git-tracked subprojects"
+            if reason := get_git_repo_error(self.subproject.local_abspath):
+                raise UserMessageError(
+                    f"{message}:\n{indent(reason.expandtabs(4), '    ')}"
+                )
+            raise UserMessageError(f"{message}.")
         if self.subproject.is_dirty():
             raise UserMessageError(
                 "Destination repository is dirty; cannot continue. "
