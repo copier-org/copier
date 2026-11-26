@@ -310,8 +310,7 @@ dependencies = [
     { name = "packaging", version = "26.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-6-copier-compat-highest' or extra != 'group-6-copier-compat-lowest'" },
     { name = "pathspec", version = "1.0.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-6-copier-compat-lowest'" },
     { name = "pathspec", version = "1.1.1", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-6-copier-compat-highest' or extra != 'group-6-copier-compat-lowest'" },
-    { name = "platformdirs", version = "4.3.6", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-6-copier-compat-lowest'" },
-    { name = "platformdirs", version = "4.14.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-6-copier-compat-highest' or extra != 'group-6-copier-compat-lowest'" },
+    { name = "platformdirs" },
     { name = "plumbum", version = "1.6.9", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-6-copier-compat-lowest'" },
     { name = "plumbum", version = "2.0.2", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-6-copier-compat-highest' or extra != 'group-6-copier-compat-lowest'" },
     { name = "pydantic", version = "2.4.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.13' and extra == 'group-6-copier-compat-lowest') or (extra == 'group-6-copier-compat-highest' and extra == 'group-6-copier-compat-lowest')" },
@@ -335,7 +334,7 @@ compat-lowest = [
     { name = "jinja2-ansible-filters", version = "1.3.1", source = { registry = "https://pypi.org/simple" } },
     { name = "packaging", version = "23.0", source = { registry = "https://pypi.org/simple" } },
     { name = "pathspec", version = "1.0.0", source = { registry = "https://pypi.org/simple" } },
-    { name = "platformdirs", version = "4.3.6", source = { registry = "https://pypi.org/simple" } },
+    { name = "platformdirs" },
     { name = "plumbum", version = "1.6.9", source = { registry = "https://pypi.org/simple" } },
     { name = "plumbum-stubs" },
     { name = "pydantic", version = "2.4.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.13' and extra == 'group-6-copier-compat-lowest') or (extra == 'group-6-copier-compat-highest' and extra == 'group-6-copier-compat-lowest')" },
@@ -1072,8 +1071,7 @@ version = "0.2.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "mergedeep" },
-    { name = "platformdirs", version = "4.3.6", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-6-copier-compat-lowest'" },
-    { name = "platformdirs", version = "4.14.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-6-copier-compat-highest' or extra != 'group-6-copier-compat-lowest'" },
+    { name = "platformdirs" },
     { name = "pyyaml" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/ce/25/b3cccb187655b9393572bde9b09261d267c3bf2f2cdabe347673be5976a6/mkdocs_get_deps-0.2.2.tar.gz", hash = "sha256:8ee8d5f316cdbbb2834bc1df6e69c08fe769a83e040060de26d3c19fad3599a1", size = 11047, upload-time = "2026-03-10T02:46:33.632Z" }
@@ -1313,28 +1311,9 @@ wheels = [
 name = "platformdirs"
 version = "4.3.6"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.15'",
-    "python_full_version == '3.14.*'",
-    "python_full_version == '3.13.*'",
-    "python_full_version < '3.13'",
-]
 sdist = { url = "https://files.pythonhosted.org/packages/13/fc/128cc9cb8f03208bdbf93d3aa862e16d376844a14f9a0ce5cf4507372de4/platformdirs-4.3.6.tar.gz", hash = "sha256:357fb2acbc885b0419afd3ce3ed34564c13c9b95c89360cd9563f73aa5e2b907", size = 21302, upload-time = "2024-09-17T19:06:50.688Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/3c/a6/bc1012356d8ece4d66dd75c4b9fc6c1f6650ddd5991e421177d9f8f671be/platformdirs-4.3.6-py3-none-any.whl", hash = "sha256:73e575e1408ab8103900836b97580d5307456908a03e92031bab39e4554cc3fb", size = 18439, upload-time = "2024-09-17T19:06:49.212Z" },
-]
-
-[[package]]
-name = "platformdirs"
-version = "4.14.0"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.15'",
-    "python_full_version < '3.15'",
-]
-sdist = { url = "https://files.pythonhosted.org/packages/40/28/1c058a9143d2304b3078f8dadcbb9dc27f7d3581b5d05157c84869c4cc0d/platformdirs-4.14.0.tar.gz", hash = "sha256:83f009c1e8c5fc36869b5171755b291887bd2cade7965233cdfabd23d754720b", size = 70387, upload-time = "2026-10-28T18:27:30.973Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/69/2b/887969ef4bb53e0cb271dc7c3f4a73d50c5d58bb88aeaae311e3340cd57e/platformdirs-4.14.0-py3-none-any.whl", hash = "sha256:1dadfc59a8a5d7565b3d9270ae8fa71c065595352c4277b41c11ee6c222c4b91", size = 35259, upload-time = "2026-10-28T18:27:29.659Z" },
 ]
 
 [[package]]
@@ -1421,8 +1400,7 @@ dependencies = [
     { name = "packaging", version = "26.3", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-6-copier-compat-highest' or extra != 'group-6-copier-compat-lowest'" },
     { name = "pathspec", version = "1.0.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-6-copier-compat-lowest'" },
     { name = "pathspec", version = "1.1.1", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-6-copier-compat-highest' or extra != 'group-6-copier-compat-lowest'" },
-    { name = "platformdirs", version = "4.3.6", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-6-copier-compat-lowest'" },
-    { name = "platformdirs", version = "4.14.0", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-6-copier-compat-highest' or extra != 'group-6-copier-compat-lowest'" },
+    { name = "platformdirs" },
     { name = "pyyaml" },
     { name = "pyyaml-env-tag" },
     { name = "watchdog" },
