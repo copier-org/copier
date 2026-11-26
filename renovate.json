@@ -30,6 +30,19 @@
       "enabled": false
     },
     {
+      "description": "Override conda package names to use mise's default channel conda-forge (https://github.com/renovatebot/renovate/discussions/46974)",
+      "matchManagers": ["mise"],
+      "matchDatasources": ["conda"],
+      "matchPackageNames": ["!/\\//"],
+      "overridePackageName": "conda-forge/{{{packageName}}}"
+    },
+    {
+      "description": "Lower-bound pins are adjusted manually when the declared lower bounds change",
+      "matchManagers": ["mise"],
+      "matchFileNames": ["**/mise.lowest.toml", "**/mise.*-lowest.toml"],
+      "enabled": false
+    },
+    {
       "matchCategories": ["python"],
       "addLabels": ["python"]
     },
