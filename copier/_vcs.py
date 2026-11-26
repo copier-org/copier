@@ -60,6 +60,22 @@ def get_git_version() -> Version:
     return Version(re.findall(r"\d+\.\d+(?:\.\d+)?", git("version"))[0])
 
 
+def get_git_object_format(path: StrOrPath) -> str:
+    """Get the object format (hash algorithm) of a Git repository.
+
+    Args:
+        path: A path inside the Git repository.
+
+    Returns:
+        The object format, `sha1` or `sha256`.
+    """
+    git = get_git(path)
+    # Repositories without the `extensions.objectFormat` setting use SHA-1, and
+    # reading the setting works with Git versions older than SHA-256 support.
+    object_format = git("config", "extensions.objectFormat", retcode=None).strip()
+    return object_format.lower() or "sha1"
+
+
 def is_git_available() -> bool:
     """Indicate if `git` is available in the system."""
     git_path: str | None = None
@@ -104,6 +120,22 @@ def is_in_git_repo(path: StrOrPath) -> bool:
         return True
     except (OSError, ProcessExecutionError):
         return False
+
+
+def get_git_repo_error(path: StrOrPath) -> str:
+    """Get the reason why Git does not see a path as inside a Git repository.
+
+    Args:
+        path: The path to check.
+
+    Returns:
+        The error reported by Git, or an empty string if Git cannot run.
+    """
+    try:
+        _, _, stderr = get_git(path)["rev-parse", "--show-toplevel"].run(retcode=None)
+    except OSError:
+        return ""
+    return stderr.strip()
 
 
 def is_git_shallow_repo(path: StrOrPath) -> bool:

@@ -20,6 +20,7 @@ from itertools import chain
 from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
 from shutil import rmtree
 from tempfile import TemporaryDirectory
+from textwrap import indent
 from types import TracebackType
 from typing import (
     Any,
@@ -76,7 +77,12 @@ from ._types import (
     VcsRef,
 )
 from ._user_data import AnswersMap, Question, load_answersfile_data
-from ._vcs import get_git, is_git_available
+from ._vcs import (
+    get_git,
+    get_git_object_format,
+    get_git_repo_error,
+    is_git_available,
+)
 from .errors import (
     CleanupWarning,
     ConfigFileError,
@@ -1349,9 +1355,14 @@ class Worker:
         self._check_unsafe("update")
         # Check all you need is there
         if self.subproject.vcs != "git":
-            raise UserMessageError(
-                "Updating is only supported in git-tracked subprojects."
-            )
+            # A repository that this Git cannot read (e.g., a SHA-256 repository
+            # with an old Git) looks untracked, so show why Git rejected it.
+            message = "Updating is only supported in git-tracked subprojects"
+            if reason := get_git_repo_error(self.subproject.local_abspath):
+                raise UserMessageError(
+                    f"{message}:\n{indent(reason.expandtabs(4), '    ')}"
+                )
+            raise UserMessageError(f"{message}.")
         if self.subproject.is_dirty():
             raise UserMessageError(
                 "Destination repository is dirty; cannot continue. "
@@ -1400,6 +1411,9 @@ class Worker:
             ).strip()
         )
         subproject_subdir = self.subproject.local_abspath.relative_to(subproject_top)
+        # The temporary repositories borrow Git objects from the real destination,
+        # so they must use the same object format to read them.
+        object_format = get_git_object_format(subproject_top)
 
         with (
             TemporaryDirectory(
@@ -1435,7 +1449,7 @@ class Worker:
             with local.cwd(subproject_top):
                 subproject_head = git("write-tree").strip()
             with local.cwd(old_copy):
-                self._git_initialize_repo()
+                self._git_initialize_repo(object_format)
                 # Configure borrowing Git objects from the real destination.
                 set_git_alternates(subproject_top)
                 # Save a list of files that were intentionally removed in the generated
@@ -1502,7 +1516,7 @@ class Worker:
             for filename in files_removed:
                 Path(new_copy, filename).unlink(missing_ok=True)
             with local.cwd(new_copy):
-                self._git_initialize_repo()
+                self._git_initialize_repo(object_format)
                 new_copy_head = git("rev-parse", "HEAD").strip()
             # Extract diff between temporary destination and real destination
             # with some special handling of newly added files in both the project
@@ -1704,10 +1718,14 @@ class Worker:
                 self.template.migration_tasks("after", self.subproject.template)  # type: ignore[arg-type]
             )
 
-    def _git_initialize_repo(self) -> None:
-        """Initialize a git repository in the current directory."""
+    def _git_initialize_repo(self, object_format: str = "sha1") -> None:
+        """Initialize a git repository in the current directory.
+
+        Args:
+            object_format: The object format (hash algorithm) of the repository.
+        """
         git = get_git()
-        git("init", retcode=None)
+        git("init", f"--object-format={object_format}", retcode=None)
         git("add", ".")
         self._git_commit()
 
