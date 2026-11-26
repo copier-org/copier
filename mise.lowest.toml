@@ -1,2 +1,8 @@
+[tools]
+"conda:git" = [
+  { version = "2.27.0", os = ["linux", "macos/x64", "windows"] },
+  { version = "2.29.2", os = ["macos/arm64"] },
+]
+
 [vars]
 resolution = "lowest"

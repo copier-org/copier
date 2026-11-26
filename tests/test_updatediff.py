@@ -2754,8 +2754,13 @@ def test_update_with_exec_bit_change_and_merge_conflict(
     # enforces. The snapshots are literal copies of git's output, so
     # editing them would defeat the regression guard.
     with local.cwd(dst):
+        # Normalize the default branch name for the snapshot comparison. We
+        # cannot rely on the `init.defaultBranch` setting because it was added
+        # in v2.28 while our declared minimum is v2.27, so lower-bound testing
+        # does not support it.
+        git_status = git("status").replace("On branch master", "On branch main")
         # editorconfig-checker-disable
-        assert git("status") == snapshot("""\
+        assert git_status == snapshot("""\
 On branch main
 Unmerged paths:
   (use "git restore --staged <file>..." to unstage)
