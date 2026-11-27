@@ -85,6 +85,8 @@ To generate a project from the template:
     copier copy path/to/project/template path/to/destination
     ```
 
+    Generate a JSON Schema for your `copier.yml` with `copier schema`.
+
 - Or in Python code, programmatically:
 
     ```python
